@@ -1,4 +1,4 @@
-# ISSUES.md — 问题登记（Bug / 技术债 / 已知风险）
+﻿# ISSUES.md — 问题登记（Bug / 技术债 / 已知风险）
 
 > 最后更新：2026-08-24
 > 每条带编号、严重度（🔴 blocker / 🟠 major / 🟡 minor）、位置、影响、建议、状态。
@@ -16,13 +16,14 @@
 - **位置**：根目录 git 仓库（无任何提交；`WORKSPACE-MAP.md` 处于"暂存新增 + 工作树删除"的矛盾态）
 - **影响**：首次提交若不清理，会把已删除的 WORKSPACE-MAP.md 一并入库；导航指针（收口方案 P0.4 曾要求根目录放三行指针文件）缺失
 - **建议**：提交记忆系统时先 `git restore --staged WORKSPACE-MAP.md`；并向用户确认是否按 P0.4 恢复根目录三行指针
-- **状态**：📌 已登记
+- **状态**：✅ 已解决（2026-08-24 提交 42152b4 仅含记忆系统+AGENTS.md，index 已清；根目录导航指针已恢复）
 
-## #3　8.1.psd 四语言连跑报告"写入成功但译文列为空"　🟠 major（待确认）
-- **位置**：`遇到的问题/8_1__20260824_084226158` ~ `8_1__20260824_092750849`（6 个运行输出，2026-08-24 早间调试批次）
-- **影响**：replace_report.html 显示"全部输出、三重回读验证通过"但译文单元格为空——可能是真实缺陷（译文未写入/回读丢失），也可能只是报告渲染问题；若为真实缺陷则直接影响交付正确性，且当天连跑 5 轮未解决
-- **建议**：用该目录素材复现，先区分"报告渲染"与"写入实际为空"；关联 ISSUES 线索：表格两行对单图层读取问题（0810）、OCR 带#问题
-- **状态**：📌 待复现确认
+## #3　8.1.psd 四语言连跑报告"写入成功但译文列为空"　🟠 major（根因已定位，待批准修复）
+- **位置**：`download/local-assistant/v15-runner.js:295`（渲染取值）；证据：`遇到的问题/8_1__20260824_*` 6 个运行目录 + 助手回执 `.tygf_v15_journals/receipts/` + 聚合数据 `report-data/8_1.json`
+- **影响**：报告译文列全空——**已证实为纯渲染 bug，PSD 写入真实有效**（回执各对象 actualTextDigest 各不相同；若写空应全等 sha256("")；v15-runner.js:74 回读不符会抛 REOPEN_READBACK_MISMATCH 中止）。但报告是用户交付物，空译列引发误判与返工
+- **根因**：隐私化后的回读证据只带 `actualTextDigest` 不带 `actualText`（v15-runner.js:77-81），渲染处 `ev ? ev.actualText : a.target_text` 中 `ev.actualText` 恒 undefined → 渲染空串
+- **建议**：一行修复——v15-runner.js:295 改为 `sanitizeReportText(a.target_text)`（verified=true 时 actual===target 已由三重验证保证）；可加回归断言防复发
+- **状态**：🔧 根因已定位（T-0018），**业务代码改动待用户批准**
 
 ## #4　BATCH_EXECUTION_READY 翻转 = 红线偏差，待用户追认　🟠 major
 - **位置**：`src/components/workbench/execute-step.tsx:85`（19452fc）
@@ -46,7 +47,7 @@
 - **位置**：`tygf-v0.2-source更新文档.txt`（曾将 DeepSeek/PaddleOCR 明文密钥写入文档）
 - **影响**：若密钥未吊销重生成，存在生产凭证泄露风险
 - **建议**：确认已吊销重生成，新密钥只放环境变量/后台 ApiCredential；扫描仓库是否有残留明文密钥（grep 敏感模式）
-- **状态**：📌 待确认
+- **状态**：🟡 文档层面已确认整改（2026-08-24 扫描：活动树跟踪文件无密钥、.env/.pem 未入库、历史文档第 7 行为 SHA256 校验和非密钥）；provider 侧吊销无法本地验证，保持登记。注意 `staging-site-access.txt`/`test-site-access.txt` 含访问 key（本地文件未入库，勿打包勿提交）
 
 ## #8　退款 runbook 待升级 v1.1 + 沙箱演练未做　🟡 minor
 - **位置**：`docs/退款与差错处理runbook_20260823.md`（P1.1 两处洞：S1 全额调减前不查消耗、S4 消耗口径含糊）；P1.2 演练表为空
@@ -58,13 +59,19 @@
 - **位置**：a83cb2b（fixture 断言）；素材在 `遇到的问题/脚本跑出来的问题/0810_五种语言测试__20260810_082418117/`
 - **影响**：真实 Photoshop + 本地助手下的最终闭环证据缺失（组合绑定/逐语言计费正确性未在真机验证）
 - **建议**：P1.4 三项回归之一，用真实 PSD+CSV 真机连跑
-- **状态**：📌 待办（P1.4）
+- **状态**：🟡 部分闭环（2026-08-24 早间真机 4 语言 TH/VI/ID/MS 全部 REOPEN_VERIFIED 发布，组合绑定真实执行有效；但 ES/TH 两语言因 PS 弹窗/UI 干扰失败 → 转 #15；完整 5 语言一次通过仍未达成）
 
-## #10　公开下载助手版本不一致嫌疑　🟡 minor（待确认）
-- **位置**：WORKSPACE-MAP 称当前唯一对外下载为 `tygf-engine-setup-3.3.4.exe`；docs 另有 3.3.8/3.3.9/3.3.10/3.4.4 变更记录
-- **影响**：对外分发版本与最新能力（授权持久化等）不一致，或文档过时
-- **建议**：核对 `/api/local-assistant/latest`、`public/downloads/` 与 WORKSPACE-MAP 三者一致性（P1.5 版本纪律已覆盖，跑 `check-release-identity.cjs` 确认）
-- **状态**：📌 待确认
+## #10　公开下载助手版本不一致嫌疑　🟠 major（2026-08-24 实锤并部分修复）
+- **位置**：`download/local-assistant/server.js` VERSION、`public/downloads/`、`config/release-identity.json`、`/api/local-assistant/latest`
+- **影响**：版本纪律断裂实锤——VERSION 冻结 3.6.8（安装包 8/16 构建后未再发版）而引擎协议 8/18-23 演进（select-file message 修复、批量 v3 等），前端 `assertAssistantCompatible` 比对永远相等 → **升级通道失效，用户永远停在旧引擎**；实测旧版 select-file/preparation 403 无 message 字段，用户只见兜底文案
+- **建议**：已构建 v3.6.9 全套并入库（0c7862f）；待办：合并部署 develop + 处理 `.gitignore:75` 白名单未含 3.6.9 exe（带外上传或补提交）；今后每次助手协议变更必须 bump VERSION+重打包+刷新发布标识
+- **状态**：🔧 修复已入库待部署
+
+## #14　测试站 SES 邮件服务未配置 → 新用户注册验证死循环　🔴 major（对内测拉新）
+- **位置**：`src/lib/server/mail/ses.ts:33 isMailConfigured()`；测试站服务器 env 缺 `TENCENT_SES_SECRET_ID/KEY`；关联 `login/route.ts:65 AUTH_EMAIL_NOT_VERIFIED` 挡人
+- **影响**：test.tuyigf.com 实测 resend 接口返回 `mailConfigured:false`——注册成功但验证邮件发不出 → `emailVerifiedAt=null` → 登录被拒 → 重发也无用。内测拉新完全阻塞
+- **建议**：①配腾讯云 SES（发信域名 mail.tuyigf.com DNS 验证 + CAM 最小权限密钥只授 SendEmail + MAIL_FROM 已在位）；②owner 手动验证兜底已实现（19db25b verify_email action，develop 已含，测试站部署确认后可用）；③禁止用改 TYGF_ENVIRONMENT=local 方式绕过
+- **状态**：⏳ 待配置密钥
 
 ## #11　dependabot 11 个依赖 PR 未合并（origin/develop）　🟡 minor
 - **位置**：origin/develop 远端分支（eslint 10.8.0、lucide-react 1.28.0、prisma 7.9.1、recharts 3.10.1、uuid 14 等）
@@ -76,7 +83,19 @@
 - **位置**：`worktrees/v1.5-trust-chain/` 的 `_cap.sql`、`_remote-check.cjs`（未跟踪）；`worktrees/dev-server.log`、`dev-server.err.log`
 - **影响**：无功能影响；但可能含敏感数据（_cap.sql 可能是抓包），不宜入库/外发
 - **建议**：确认后清理或加入 .gitignore；检查 _cap.sql 是否含敏感内容
-- **状态**：📌 待清理
+- **状态**：🟡 脚本已清理（2026-08-24 确认无敏感内容后删除 _cap.sql/_remote-check.cjs，工作树全净）；剩 `worktrees/dev-server*.log` 两个日志文件待处理
+
+## #15　V1.5 执行链对 Photoshop 弹窗/UI 干扰无防护　🟠 major
+- **位置**：`download/local-assistant/server.js:600-608`（displayDialogs=NO 仅包住 app.open）、`:176 PS_TIMEOUT_MS=3min`、`:1213`（wscript kill）；脚本 `TYGF_V15_Thin_Executor.jsx:87 save()`
+- **影响**：实测两类失败——① ES(084325) "用户取消了操作"@jsx:79（写文本被中断）；② TH 重跑(092750) save() 挂起 2h27m（疑 PSD 兼容性等模态弹窗），助手 3 分钟超时放弃并**移走工作副本**，PS 恢复后保存报"尚未存储该文档"→ 用户侧表现为偶发"扫描失败/执行失败"，且隔离动作与 PS 状态竞态
+- **建议**：① wrapper 全程 displayDialogs=NO（脚本始末设置/恢复）；② 超时放弃后延迟隔离或先探测文档关闭；③ 错误码区分"助手超时"vs"PS 端错误"；④ UI 明示执行期间勿操作 Photoshop
+- **状态**：📌 已登记（T-0018 排查结论），修复待立项
+
+## #16　WORKSPACE-MAP.md 助手版本段过时　🟡 minor
+- **位置**：`worktrees/v1.5-trust-chain/docs/WORKSPACE-MAP.md`（发布物节仍写"当前唯一对外下载 tygf-engine-setup-3.3.4.exe"）
+- **影响**：与实际不符——public/downloads 现有 3.5.4/3.6.4/3.6.8/3.6.9 四个包，当前版 3.6.9（server.js VERSION + 8-23 构建的安装包）；误导新会话与发布核对
+- **建议**：更新 WORKSPACE-MAP 发布物段（属规范文档，按纪律需明确要求再动）
+- **状态**：📌 待用户批准后修订
 
 ## #13　根目录 AGENTS.md graphify 规则指向空壳图（并入 #1）　🟡 minor
 - **位置**：根 `AGENTS.md` graphify 节
@@ -86,7 +105,15 @@
 
 ---
 
+---
+
 ## 修复记录（按时间）
+
+- 2026-08-24：#3 报告"译文列空"根因定位 = v15-runner.js:295 渲染 bug（证据 digest 链），PSD 写入真实有效；待批准一行修复（T-0018）
+- 2026-08-24：#2 根仓库 index 残留清理 + 根目录导航指针恢复（42152b4 + WORKSPACE-MAP.md）
+- 2026-08-24：#7 密钥扫描完成——文档层面整改确认；本地访问 key 文件已登记防打包
+- 2026-08-24：#12 调试脚本删除（_cap.sql/_remote-check.cjs 确认无敏感内容）
+- 2026-08-24：#10 引擎版本纪律断裂实锤，v3.6.9 全套构建并入库（0c7862f）→ 状态改"修复已入库待部署"
 
 - 2026-08-10：0810 五语言匹配 bug **逻辑级修复**（a83cb2b），真机 E2E 未做 → 转 #9
 - 2026-07-18：DeepSeek/PaddleOCR 明文密钥泄露**发现并整改**（吊销重生成）→ 转 #7 待确认

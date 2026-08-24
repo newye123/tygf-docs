@@ -1,10 +1,52 @@
-# TASK_LOG.md — 任务日志（每次任务一条，新记录置顶）
+﻿# TASK_LOG.md — 任务日志（每次任务一条，新记录置顶）
 
 > 最后更新：2026-08-24
 > 字段：任务目标 / 执行方案 / 修改文件 / 修改原因 / 测试结果 / 遗留问题。
 > 历史条目为首次盘点时从既有记录（worklog/records/HANDOFF/备份命名）继承登记；日期来自证据推断的标"约"。
 
 ---
+
+## T-0018 【2026-08-24 下午】8.1.psd"译文列空"根因排查 + 只读核验四项
+
+- **任务目标**：① 查明早间 8.1.psd 四语言连跑报告"写入成功但译文列为空"根因；② 密钥残留扫描；③ 助手版本核对；④ 清理调试脚本、恢复根目录指针
+- **执行方案**：读取 6 个运行目录产物（replace_report.html/executor-result.json/progress.log）+ 助手回执（.tygf_v15_journals/receipts）+ 聚合数据（report-data/8_1.json）+ 代码链路（v15-runner.js/TYGF_V15_Thin_Executor.jsx/server.js wrapper 与 PS_TIMEOUT_MS）
+- **修改文件**：根目录 `WORKSPACE-MAP.md`（三行导航指针，P0.4 补办）；删除 `worktrees/v1.5-trust-chain/_cap.sql`、`_remote-check.cjs`（确认无敏感内容）；`AI_MEMORY/*` 状态更新。**业务代码零改动**
+- **修改原因**：用户批准的盘点后跟进项
+- **测试结果**：
+  1. **报告译文列空 = 纯渲染 bug，PSD 写入真实有效**——聚合数据所有对象 `target:""` 但 `verified:true`；回执 actualTextDigest 各不相同（写空则应全等 sha256("")=e3b0c442…）；v15-runner.js:74 回读不符会抛 REOPEN_READBACK_MISMATCH。根因：隐私化证据只带 digest 不带 actualText（:77-81），渲染 :295 取 `ev.actualText` 恒 undefined。**修复方案：:295 改 `sanitizeReportText(a.target_text)`，待批准**
+  2. **两次隔离失败 = PS 弹窗/UI 干扰类**（登记 ISSUES #15）：ES "用户取消了操作"@jsx:79；TH 重跑 save() 挂起 2h27m，助手 PS_TIMEOUT_MS=3min（server.js:176,:1213）放弃并移走工作副本 → PS 恢复后报"尚未存储该文档"
+  3. **密钥扫描干净**：跟踪文件无 sk- 类密钥、.env/.pem 未入库、历史文档第 7 行是 SHA256 非密钥（#7 文档层面闭环）
+  4. **助手版本 = 3.6.9**（server.js VERSION + tygf-engine-setup-3.6.9.exe 2026-08-23）；WORKSPACE-MAP"唯一对外下载 3.3.4"过时（登记 #16）
+- **遗留问题**：报告渲染 bug 待批准一行修复；#15 执行链弹窗防护待立项；#16 文档修订待批准；staging/test-site-access.txt 含访问 key（未入库，勿打包）
+
+## T-0017 【2026-08-24】测试版「无法打开文件选择框/扫描失败」根因诊断 + 登录系统核查 + 本地引擎 3.6.9 修复全套
+
+- **任务目标**：①诊断测试站用户报告的「无法打开文件选择框」「扫描失败，请重试。」；②核查登录系统是否打通；③以对抗式审查方式落地修复
+- **执行方案**：
+  - 根因链（全部实测证据）：引擎事件日志 `download/local-assistant/logs/assistant-events.log` 实锤 8-22 共 6 次 `VERIFY_UNREACHABLE: server request timeout`（含 `/v1.5/select-file`）→ **引擎回云验票间歇性阻塞是两个症状的共同根因**（`/config` 与预扫描都要验票）；安装版 3.6.8 的 `/v1.5/select-file`、`/v1.5/preparation/scan` 403 响应**不带 message 字段**（本机双实例 49152 安装版/49155 dev 版对照实测）→ 前端退回兜底文案「无法打开文件选择框」（design-file-card.tsx:230），真因被吞；**版本纪律断裂**：VERSION 冻结 3.6.8（安装包 8/16 构建后未再发版）而协议 8/18-23 演进，`assertAssistantCompatible` 版本比对永远相等 → 升级通道失效
+  - 登录系统核查：test.tuyigf.com 实测 `/api/auth/login`（假凭据 401 AUTH_FAILED 秒回）、`/api/auth/me` 正常；`/api/auth/resend-verification` 返回 `mailConfigured:false`（TYGF_ENVIRONMENT=test 且服务器缺 SES 密钥）→ **新用户 注册→验证→登录 死循环**；当时无 admin 手动验证后门（同日稍后被并行窗口以 19db25b 补上 owner `verify_email` action + 双审计 + 冒烟脚本）
+  - 修复实施：server.js v3.6.8→v3.6.9——`verifyTicket` 回云验票超时 60s→10s；select-file/select-folder 操作不匹配、preparation scan 鉴权失败（新增 `scanTicketFailureMessage`）、scan status/cancel NOT_FOUND 全部补中文 message；`local-assistant-client.ts` 新增 `fetchLocal` 分档直连超时（普通 API 15s / 文件对话框 330s——对抗自纠：原方案"select-file 加 15s AbortSignal"会误杀用户挑文件的正常停留，改为长档兜底）；pkg+csc+Inno Setup 全链重建 `tygf-engine-setup-3.6.9.exe`；同步发布标识五件套（release-identity/local-assistant-release.json/latest releaseNotes/env.example/server-setup.sh/installer.iss）
+- **修改文件**：`download/local-assistant/server.js`、`src/lib/workbench/local-assistant-client.ts`、`download/local-assistant/build/installer.iss`、`config/release-identity.json`、`public/downloads/local-assistant-release.json`、`public/downloads/tygf-engine-setup-3.6.9.exe`（新产物）、`src/app/api/local-assistant/latest/route.ts`、`deploy/server-setup.sh`、`.env.example` —— 以上已由并行窗口以 **0c7862f 代提交入库**（commit 注明"本窗口代提交，改动内容来自并行窗口"）
+- **测试结果**：`node --check` ✅　eslint(client) ✅　tsc 仅剩当时并行 WIP 存量错（后随 79d348a 入库消失）　`check-release-identity.cjs` ✅　新 exe `--self-test-assets`/`--self-test-errors` ✅　重启 49155 dev 引擎实测：`/ping`=3.6.9 ✅、select-file/scan 无票据均返回带 message 的 403 ✅、内嵌替换组件 2.12-beta sha 与现役安装版一致（80d2624f…）无回归 ✅
+- **遗留问题**：① develop 落后 codex/v1.5-trust-chain 6 提交，测试站尚未部署 0c7862f——**用户侧修复未到达**；② `tygf-engine-setup-3.6.9.exe` 被 `.gitignore:75` 忽略且白名单仅含 3.5.4/3.6.8——部署时需带外上传 exe 或先补白名单提交，否则 latest 接口指向空文件；③ SES 密钥未配置，注册验证死循环待根治（登记为 ISSUES #14）
+
+## T-0005 【2026-08-24】条款文档 v0.3.4→v0.3.8 多轮修订 + 积分 888 + 工作台措辞统一
+
+- **任务目标**：①参照 LiblibAI/稿定设计完成《用户协议》《隐私政策》多轮精简与扩写；②对抗式审查条款与代码一致性；③内测赠送改 100+788=888；④工作台 UI"翻译"措辞统一为"替换/译文表"
+- **执行方案**：
+  - v0.3.4 对抗式审查：Cookie/激活存储修正（激活在 localStorage+本地文件非 Cookie）、保存期限补全（180/365/30/7/90 天对齐代码常量）、CDN 境内外调和、"不会收集"→"不会长期收集"、**字体名如实披露 TopN 计数**（typography-contract.ts 实际存 fontTopNJson，用户决策保留字体名+文档披露）
+  - 展示页 terms/privacy 重写同步母本（terms 19 节、privacy 11 节）
+  - 低优先项：2.4 链接 tuyigf.com/privacy、19.5 邮箱 tuyi@tuyigf.com、3.5 一人一号核验措辞
+  - v0.3.5：智能学习删"组成部分/不同意无法使用"；第三方与 AI 删供应商名与功能举例；免责声明扩写 6 类场景（现状保证/结果准确性/第三方信息/不可抗力/设备操作含 PSD 备份/审核权非义务）+ 责任限制细化
+  - v0.3.6：定义/服务内容精简、"可接受使用"更名"禁止行为"、隐私政策删第三方名单明细表
+  - v0.3.7：移除全部"翻译服务"表述（产品定位=替换执行工具）
+  - v0.3.8 对抗式审查措辞：1.4"生成的译文"→"您提交的译文表"；14.2 删内容过滤承诺句（代码无此功能）+"AI 生成内容"统一"AI 输出"；14.3 删"广告"；SEO keywords "CSV 翻译"→"CSV 替换"；survey 页"单语言翻译"→"单语言替换"
+  - 积分：DEFAULT_BETA_EXCLUSIVE_BONUS 700→788、LEGACY_SIGNUP_GRAND_TOTAL 800→888（上限不改则 topUp 截断发不出 788）
+  - 工作台：4 处用户可见文案（确认替换范围按钮/排除提示/绑定报错×2）+ 5 处注释；边界保留 csv.ts 表头识别词'deepseek-align.ts 防翻译提示词/英文标识符
+- **修改文件**：`docs/用户协议_草案_20260818.md`(v0.3.8)、`docs/隐私政策_草案_20260818.md`(v0.3.6)、`src/app/terms/page.tsx`、`src/app/privacy/page.tsx`、`src/lib/server/credits.ts:36-38`、`src/config/featureFlags.ts`、`src/lib/server/onboarding-credits.ts`、`src/lib/workbench/credits-client.ts`、`src/lib/server/credit-ledger-query.ts`、`src/app/api/workbench/credits/route.ts`、`src/components/workbench/workbench-view.tsx`、`src/lib/workbench/prepare-check-labels.ts`、`src/lib/workbench/workbench-object.ts`、`src/lib/workbench/merge-tables.ts`、`src/lib/trust-chain/binding-core.ts`、`src/app/layout.tsx`、`src/app/survey/page.tsx`
+- **修改原因**：条款与代码实际行为一致（审查要点①）；产品定位口径统一（不做翻译）；新用户入门积分调整为 888
+- **测试结果**：tsc ✅ eslint ✅ /terms /privacy 均 200 且版本号正确；三核心文件中文"翻译"残留清零；无测试文件需同步
+- **遗留问题**：工作台英文标识符 translation_* 有意保留（内部命名，改动破坏 schema 兼容）；13.1 注销"正在规划后续版本"为承诺性表述已知晓并接受
 
 ## T-0001 【2026-08-24】建立 AI 长期记忆系统（首次盘点）
 

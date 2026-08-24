@@ -1,4 +1,4 @@
-# CURRENT_STATUS.md — 图译工坊当前状态
+﻿# CURRENT_STATUS.md — 图译工坊当前状态
 
 > 最后更新：2026-08-24　维护：AI 项目管理员
 > 本文档回答"现在做到哪里"。更新前先读 PROJECT_CONTEXT.md。
@@ -24,6 +24,7 @@
 | 2026-08-23 | **收口方案 v1**；v2 取代 v1，主线改为支付生产上线 | docs/收口方案 v1/v2 |
 | 2026-08-24 | **跨窗口协作协议落地**（HANDOFF/plans/records） | docs/跨窗口AI协作协议_20260824.md |
 | 2026-08-24 14:30 | **发布链路阶段一**：分主题提交 5 个 + 推送 origin（分支首次上远端） | docs/records/20260824_1430_提交推送阶段一.md |
+| 2026-08-24 | **条款 v0.3.8 / 积分 888 / 工作台措辞统一**（未提交，工作树待提交） | TASK_LOG T-0005 |
 
 ## 进行中事项
 
@@ -33,6 +34,9 @@
    - ⏳ 阶段三：main 合并 → 正式发布内测宣传版 —— **待用户批准**
 2. **支付上线收口（收口方案 v2）**：P0 止血已收尾；P1 待执行（见下一步）
 3. **悬置的用户追认**（HANDOFF.md:14-18）：BATCH_EXECUTION_READY 翻转、Owner 退款 API 口径 —— **待用户追认**
+4. **引擎 v3.6.9 待部署**（T-0017，ISSUES #10/#14）：验票超时 60s→10s + 报错原因可见化 + 版本通道修复已入 codex/v1.5-trust-chain（0c7862f），develop 落后 6 提交未部署；⚠️ `.gitignore:75` 白名单未含 3.6.9 exe，部署需带外上传或先补白名单
+5. **测试站 SES 邮件未配置**（ISSUES #14）：新用户注册→验证→登录死循环；owner 手动验证兜底（19db25b）随 develop 部署后可用；根治需配腾讯云 SES 密钥
+6. **报告"译文列空"渲染 bug 待批准修复**（ISSUES #3，T-0018）：v15-runner.js:295 一行修复方案已给出——**PSD 写入真实有效，仅报告渲染错**；另 #15 执行链 PS 弹窗防护、#16 WORKSPACE-MAP 版本段过时，均待用户决策
 
 ## 下一步建议顺序
 
@@ -40,7 +44,7 @@
 
 1. P1.1 runbook 升级 v1.1（修 S1 消耗前置门 + S4 消耗口径两处洞）—— 可立即做
 2. P1.2 沙箱演练（须经 v1.1 消耗前置门）—— 依赖 1
-3. P1.3 合并 + 部署测试站 —— **需用户批准**
+3. P1.3 合并 + 部署测试站 —— **需用户批准**（⚠️ 部署时必须带外上传 tygf-engine-setup-3.6.9.exe 并核验 latest 指向，见 T-0017 遗留②）
 4. P1.4 测试站全链回归（27 smoke + A2 用例 3 实弹 + 0810 真 PSD E2E）—— 依赖 3
 5. P1.5 助手版本纪律（发布新版助手时执行）
 6. P1.6 生产三步放（网站→助手灰度→支付开关）—— **每步需用户批准**
@@ -51,7 +55,7 @@
 - `tsc --noEmit` ✅　`eslint` ✅
 - smoke-refund-close 13/13 ✅　smoke-alipay-payment ✅
 - 发布安全态：支付相关 6 flag（creditPacks/manualPayment/alipay/alipayClose/alipayRefund/manualQrFallback）代码默认 + DB 覆盖全 false ✅
-- 工作树干净（仅 2 个未跟踪调试脚本 `_cap.sql`/`_remote-check.cjs`）
+- 工作树全净（调试脚本 `_cap.sql`/`_remote-check.cjs` 已确认无敏感内容后删除，T-0018）
 
 ## 关键路径速查
 
