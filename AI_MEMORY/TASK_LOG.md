@@ -10,7 +10,17 @@
 - **CP5（P1-B，`8c14bb8`）**：prepare-check-labels 加 case 'combined'（两种 V15_COMBINED_* 各有人话文案+处置指引+「返回智能检测」）；object-inspector gotoReview 纳入 combined；smoke 断言三种码非裸码/有说明/有出路。
 - **CP6（P2，`0c569c7`）**：review-step 加 onAfterApply；workbench-view 接 runBatchCheck 应用后自动重查 + 检查台收敛进度横幅（已应用 N 条/剩余 M 项）。
 - **验证**：每 commit 均 `npx tsc --noEmit` 0 错误、`npm run lint` 0 错误（2 既有警告）、`npm run test:trust-chain` 18 项 passed；P0-A 加跑 `test:batch-row-contract` passed；新 smoke `scripts/smoke-deepseek-review-filters.mjs` passed。diff 对账：`git show <hash> --stat` 与白名单一致（期间发现并行窗口提交 bc1e84b 把 csv-step/siteContent 改动入库，非本窗口提交内容）。
-- **遗留**：① 新 smoke 未接入 package.json scripts（白名单外待批准）；② 未部署测试站——人工验收路径：JP-5294 CSV 实跑应见 4 条组合阻塞消失、检测出建议、无英文报错；③ AiTokenUsage 超时记录与 deepseekModel 型号待确认；④ HANDOFF 偏差登记表已登记【合同变更】待追认。
+- **遗留**：① 新 smoke 未接入 package.json scripts（白名单外待批准）；② ~~未部署测试站~~ → **已于同日部署**（见 T-0055）；③ AiTokenUsage 超时记录与 deepseekModel 型号待确认；④ HANDOFF 偏差登记表已登记【合同变更】待追认。
+
+---
+
+## T-0055 【2026-08-29】T-0054 五阶段修复部署测试站（ff87acb）
+
+- **流程**：codex/v1.5-trust-chain `25ba533` → 合并 develop（`ff87acb`，干净合并）→ develop worktree 跑 `scripts/package-release.cjs test`（preflight + release identity 通过：branch develop、树干净、assistant 3.6.16/Node 22）→ paramiko 上传归档+收据 → 服务器 `deploy-test-release.sh`（自带收据 SHA 校验/备份/健康检查/失败回滚）。
+- **结果**：`[test-release-deploy] deployed commit ff87acb772fab602ccf03aac6525749f093cfdc2`；备份 `/var/www/tygf-test-backups/deploy-20260829_210843-ff87acb772fa`；归档 SHA-256 `A34D1A6B8F809E40048EC4775CA040DDE0047B2A1DC2A3EC80E8544190A6E77A` 与收据一致；`.deploy-commit` 回读一致。
+- **验证**：PM2 tygf-test + tygf-test-auth-mail online；本地 3001=200；standalone sanitize（移除 env 文件）+ boundary + assistant contract + Prisma in sync 全过；AI usage backfill `updated aiUsage:95`（0 新事件）。公网无 key=403（nginx `?key=` 门，`$tygf_test_token` 定义于 sites-available/tygf-test:11，属设计行为），**带 key=200** ✅。支付 flag 未触碰。
+- **记录与清理**：部署用临时 paramiko 脚本（含服务器凭据）已按密钥纪律删除；develop worktree 停留在部署 commit，记录类提交按既有实践留在 codex/v1.5-trust-chain。
+- **遗留**：用户用 JP-5294 CSV 人工验收；新 smoke 接 package.json 待批。
 
 ---
 
