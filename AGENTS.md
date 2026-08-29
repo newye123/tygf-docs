@@ -29,6 +29,11 @@ Rules:
 
 > 注：本项目是"容器仓库 + 多 worktree"结构。真实代码在 `worktrees/v1.5-trust-chain/`（当前唯一活动目录），工作区地图见 `worktrees/v1.5-trust-chain/docs/WORKSPACE-MAP.md`，接力入口 `worktrees/v1.5-trust-chain/docs/HANDOFF.md`。
 
+### 状态文件优先级（HANDOFF vs AI_MEMORY，2026-08-25 审查后新增）
+- `docs/HANDOFF.md` = 接力指针层（对账入口、当前占用、偏差登记）；`AI_MEMORY/CURRENT_STATUS.md` = 状态详情层。
+- 两者不一致时：以 git 实测为准（对账步骤），并立即将较新一方同步到另一方。
+- 任务收工时两个文件**成对更新**，只更新一个视为记录未完成。
+
 ### 任务结束必做
 
 1. `AI_MEMORY/TASK_LOG.md` 置顶追加本次记录（目标/方案/修改文件/原因/测试结果/遗留问题）
@@ -44,6 +49,7 @@ Rules:
 - **结论必须有 file:line 证据**；不确定标"待确认"，不编造
 - **不动存档和规范文档**（archives/、backups/、docs 既有方案文档）除非明确要求
 - **只改活动目录** `worktrees/v1.5-trust-chain/`；禁止 `git reset --hard` / `git checkout -- .` / `git clean -fd` / `git restore .` / force push
+- **合同变更纪律（2026-08-29 事故后新增）**：凡改"行排除 / 计费口径 / 回执 / 冻结"语义——同一提交内必须同步全部受影响层（浏览器投影 / 助手 evidence / 服务端报价 / 结算闸）+ 更新 `smoke-batch-row-contract` 的 fixture，并在 HANDOFF 偏差登记表标注【合同变更】；未跑 `npm run test:batch-row-contract` 与 `test:trust-chain` 不得部署测试站。跨层基准是无争议权威（服务端+真实绑定），不是任一层实现
 - **密钥纪律**：DeepSeek/PaddleOCR 等密钥只放环境变量或后台 ApiCredential，禁止明文进文档/提交
 
 ### 项目关键路径速查
