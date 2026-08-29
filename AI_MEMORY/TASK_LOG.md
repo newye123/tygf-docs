@@ -11,6 +11,17 @@
 - **CP6（P2，`0c569c7`）**：review-step 加 onAfterApply；workbench-view 接 runBatchCheck 应用后自动重查 + 检查台收敛进度横幅（已应用 N 条/剩余 M 项）。
 - **验证**：每 commit 均 `npx tsc --noEmit` 0 错误、`npm run lint` 0 错误（2 既有警告）、`npm run test:trust-chain` 18 项 passed；P0-A 加跑 `test:batch-row-contract` passed；新 smoke `scripts/smoke-deepseek-review-filters.mjs` passed。diff 对账：`git show <hash> --stat` 与白名单一致（期间发现并行窗口提交 bc1e84b 把 csv-step/siteContent 改动入库，非本窗口提交内容）。
 - **遗留**：① 新 smoke 未接入 package.json scripts（白名单外待批准）；② ~~未部署测试站~~ → **已于同日部署**（见 T-0055）；③ AiTokenUsage 超时记录与 deepseekModel 型号待确认；④ HANDOFF 偏差登记表已登记【合同变更】待追认。
+ 
+---
+
+## T-0056 【2026-08-29】验收反馈：真歧义就地二选一选择器 + 随 eb780e 上线（含多窗口部署事故复盘）
+
+- **触发**：用户测试站验收截图——8 项真歧义（6 合并图层组合歧义 + 同源多译 + 表级重复）只有「返回智能检测」没有解决动作，问"怎么没有给出解决方法"。这正是 P1-B 承诺未交付完的部分（CP5 只给了文案+出路，没给选择器）。
+- **实现（`cfc152e`）**：binding-core 歧义时返回候选组合附着到检查项（combinedCandidates 写入文本+来源行 / conflictTargets 冲突译文）；object-inspector 三类 radio 选择器——combined/逐层同源多译 → forced 绑定（fragmentRowIds 精确消费），表级重复 → onUnifyTranslation 统一当前语言冲突行后重查；nextTrio 透传 fragmentRowIds，`V15_DUPLICATE_SOURCE_ROW` 豁免 structural 跨语言广播。红线不动：工具不静默二选一，人显式选。RED→GREEN（smoke 用例 27/28/28b）。
+- **部署事故（e4483a4，已回滚无损失）**：`cfc152e` 提交时把并行窗口当时未提交的 workbench-view 改动（引用未提交文案键）一并扫入 → 服务器 next build TS 检查失败，deploy 脚本自动回滚，现网保持 ff87acb。教训：多窗口并行时，提交/打包前 `git status` 对账，见非本窗口改动即停；打包基线取 develop 最新 HEAD。
+- **最终部署**：并行窗口把我的提交并入 develop 并推进（`d3483f5` 降噪修好类型错误）→ `eb780ed` 双方全量验证绿（tsc/lint/18 smoke/review-filters）。本窗口一次重复部署被脚本 "already deployed" 护栏安全拒绝（并行窗口 23:26 已部署成功）→ **现网 = eb780e，包含选择器 + 降噪**，PM2 online、本地 200、公网带 key 200，备份 `deploy-20260829_232615`。
+- **验证**：tsc 0 错误、lint 0 错误（2 既有警告）、test:trust-chain 18 项、test:review-filters 全绿（develop eb780ed 实测）。
+- **遗留**：用户重新验收——8 项阻塞应可逐项点开就地选择；全局争夺项仍走「返回智能检测」（如需要也可加选择器，待反馈）。
 
 ---
 
