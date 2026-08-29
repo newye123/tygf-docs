@@ -20,7 +20,7 @@
 - **结果**：`[test-release-deploy] deployed commit ff87acb772fab602ccf03aac6525749f093cfdc2`；备份 `/var/www/tygf-test-backups/deploy-20260829_210843-ff87acb772fa`；归档 SHA-256 `A34D1A6B8F809E40048EC4775CA040DDE0047B2A1DC2A3EC80E8544190A6E77A` 与收据一致；`.deploy-commit` 回读一致。
 - **验证**：PM2 tygf-test + tygf-test-auth-mail online；本地 3001=200；standalone sanitize（移除 env 文件）+ boundary + assistant contract + Prisma in sync 全过；AI usage backfill `updated aiUsage:95`（0 新事件）。公网无 key=403（nginx `?key=` 门，`$tygf_test_token` 定义于 sites-available/tygf-test:11，属设计行为），**带 key=200** ✅。支付 flag 未触碰。
 - **记录与清理**：部署用临时 paramiko 脚本（含服务器凭据）已按密钥纪律删除；develop worktree 停留在部署 commit，记录类提交按既有实践留在 codex/v1.5-trust-chain。
-- **遗留**：用户用 JP-5294 CSV 人工验收；新 smoke 接 package.json 待批。
+- **遗留**：用户用 JP-5294 CSV 人工验收；~~新 smoke 接 package.json 待批~~ → **已接 `fa361f0`**（`npm run test:review-filters`，用户"继续"视为批准）。
 
 ---
 
