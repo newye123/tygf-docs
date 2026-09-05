@@ -1,7 +1,16 @@
 # CHANGELOG.md — 重要变化记录（架构/功能/技术决策，新条目置顶）
 
-> 最后更新：2026-08-29
+> 最后更新：2026-08-30
 > 只记重要的：架构变化、功能变化、技术决策（附理由）。修复细节见 TASK_LOG。
+
+## 2026-08-30　助手安装绑定、3.6.17 发布身份、失败报告与结算合同收口
+- **变化**：
+  - legacy redeem 对缺少 activation 的授权码 fail-closed；只允许当前 origin 的一次安全配对、读回和授权重试，保留服务端 activation-bound 安全门。
+  - 助手身份不可变升至 3.6.17，统一 server、renderer、schema、manifest、installer 与 download 发布声明，并加入发布一致性门禁。
+  - 失败语言进入同一份中文聚合 HTML，报告只列真实输出；可信失败通过现有幂等 finish 释放，回执未知时保持冻结，到期 sweep 只收尾一次。
+- **理由**：旧 redeem 能签发空 `inviteActivationId` token，必然触发 `ASSISTANT_INSTALL_BINDING_INVALID`；组件身份漂移会让安装包与站点合同不一致；失败报告曾把未发布语言呈现为正常/虚假文件，容易误判账务和交付状态。
+- **安全边界**：不放宽授权校验、不重放 Photoshop、不直接写积分、不回溯历史批次；本轮只准备测试站发布，生产站、`main`、支付 flag 不动。
+- **实施**：`03df623`、`6e3e495`、`1b2b6fe`、`0623e62`、`c631ee5`、`4f291b1`、`9a3c2e3`；develop 候选 `26cc58b` 已推送并部署测试站。安装包 SHA-256=`469862102A364ABC2CFBBABC93B7E0F0553D4A3D2FF6D08FDAA91A2F8148D59E`，大小 12637266 bytes；测试归档 SHA-256=`2D9C79CABE1A333D05D112ED47D705BD6C8CD71CAAAEEDCAA479EACD84EDDF65`。
 
 ## 2026-08-29　组合绑定等价裁决 + 智能检测分批化（重复区块场景根治）
 - **变化**：

@@ -1,6 +1,19 @@
  
 ---
 
+## T-0060 【2026-09-04/05】Batch-1 Web-only Kill Switch 闭环上线（TEST_BATCH_1_WEB_ONLY_LIVE）
+
+- **任务目标**：按 Batch-1 交接文档完成 Web-only Kill Switch（TYGF_EXECUTION_ENABLED 严格 ==='1'）的诊断→修复→部署→验收全链。
+- **根因诊断（#33，TEST_A/A1b/A2 三实验）**：ETIMEDOUT 非 Prisma 缺陷——SQLite DELETE journal 模式下 baseline（58 表+186 索引）逐条 fsync 真实耗时 ~58s（WAL 仅 12.5s），45s 子进程边界物理不足。实验证据：`_verification-ca30524-20260904-evidence/` 三份。
+- **修复**（commit `0e8eece`+`3cb32f7` on `codex/batch1-web-only-20260904`，34+4 文件）：20 个 execution/billing/assistant API 边界 gate；execution-gate.ts；UI 双保险（capabilities.executionEnabled + runExecution throw 兜底）；verify 改查询语义（200 valid:false，对抗审查发现 1）；两 harness timeout 90s+WAL 预设（发现 2 加 warn）；Node22 strip-only 兼容（site-settings parameter property 显式化）。
+- **验证**：BATCH1_EXECUTION_KILL_SWITCH_PASS（20 边界/DB 不变量 11 表 UNCHANGED/external count=0/preflight PASS+BLOCK）；Node22 tsc/lint/diff/isolation 全绿。
+- **部署链**：merge `fee8391` → develop。两次部署挫折均定位并修复：① 本地 `localAssistant.ts` createRequire 被 Turbopack 打进浏览器 chunk（download page 'use client'）→ build panic，改回 ESM `with { type: 'json' }`（`f962c64`，Node22/SWC 双端实测兼容）；② Test DB push 两个新 unique 约束警告——先审计（存量行新列全 NULL，物理不可能冲突）再带 `--accept-data-loss` 预推（数据零丢失 BF=3/RDE=208）→ live DB 换入（备份 `pre-batch1-20260905_121422`）→ 部署成功（备份 `deploy-20260905_123703`）。
+- **线上验收**：capabilities executionEnabled=false ✅；4 边界抽验 503 ✅；Web-only 端点（site-content/capabilities/页面）200 ✅；公网带 key 200/无 key 403 ✅；latest=3.6.21 ✅；Test DB preflight 工具按合同拒 custom.db（设计如此），active/reserved 用只读 SQL 复现检查。
+- **Owner 裁决偏差**：Test DB 历史残留（CA_reserved=1270、CR=27、EA=22、EB=9、ELA=8、PJ=18）可容忍，留待清理。
+- **遗留**：Test DB 活跃残留待清理；deploy 脚本 db push 无 accept-data-loss 透传机制（本次用预推方案绕过，长期需脚本支持 receipt 声明）；`localAssistant.ts` 教训——客户端组件禁 node:module。
+
+---
+
 ## T-0054 【2026-08-29】智能检测失效与组合绑定伪阻塞——按 Goal Contract 五阶段实施（未部署）
 
 - **执行方式**：用户下达 Goal Contract（文件白名单/红绿证明/原始输出证据/stop conditions），本条为合同执行记录。方案根因见 T-0053 与 `docs/图译工坊_智能检测失效与组合绑定优化方案_20260829.md`。
@@ -14,13 +27,27 @@
  
 ---
 
+## T-0058 【2026-08-30】助手安装绑定、3.6.17 发布身份、中文失败报告与失败结算收口
+
+- **任务**：按 `docs/plans/20260829_助手安装绑定与HTML发布一致性_对抗审查执行方案.md` 从批次 0 执行；只改活动 worktree `worktrees/v1.5-trust-chain`，不碰 `main`、生产站、支付 flag、历史批次。
+- **批次 0 对账**：起始 HEAD `08582d8`，原有 `docs/HANDOFF.md` 修改、`_check-codes.sh` 与方案文档保留且未混入代码提交；实施阶段分支最多领先 origin 8 个提交，最终代码分支已推送到 origin。graphify 更新已尝试，但本机无 `graphify` 命令。
+- **批次 1（`03df623`）**：legacy redeem 对缺少 `inviteActivationId` 的 code 返回结构化绑定错误，不再签发可执行 token；服务端 activation-bound 门保持 fail-closed；当前 origin 仅允许一次配对/读回/授权重试；错误按 code 中文分级；授权迁移 smoke 接入 trust-chain。
+- **批次 2（`6e3e495`、`4f291b1`）**：助手不可变升至 3.6.17，统一 release identity、server、renderer、schema、manifest、installer/download 声明；发布门禁加入组件身份校验，并把已核验安装包纳入 Git 归档。安装包 `tygf-engine-setup-3.6.17.exe` SHA-256=`469862102A364ABC2CFBBABC93B7E0F0553D4A3D2FF6D08FDAA91A2F8148D59E`，大小 12637266 bytes；未覆盖 3.6.16。
+- **批次 3（`1b2b6fe`、`0623e62`）**：V1.5 runner 在失败语言也写入同一份中文聚合报告；红色显示执行失败和真实中文原因；报告只列真实发布文件，不生成“未生成.psd”假输出；报告重建不重跑 Photoshop、不重复冻结积分；`smoke-v15-runner` 增加成功/失败/报告重建断言。
+- **批次 4（`c631ee5`）**：新增独立 SQLite `smoke-batch-failure-settlement`，验证可信失败回执通过现有幂等 finish 全额释放、同 finish 重放只读首次事实、未知状态返回 `BATCH_RECEIPT_INCOMPLETE` 且保持冻结、到期 sweep 只收尾一次；未改账务实现。
+- **批次 5（`9a3c2e3`）**：latest 接口发布说明改为从当前助手版本生成，并新增 smoke 防止旧版文案回归；develop 候选 `26cc58b` 已重新打包并部署测试站。
+- **验证**：`npx tsc --noEmit` ✅；`npm run lint` ✅（0 error，2 条既有 TanStack warning）；`test:trust-chain`、`test:batch-row-contract`、`test:v3-batch-flow`、`test:batch-failure-settlement`、`smoke-v15-runner` ✅；`check-release-identity` ✅；`smoke-release-consistency` 21 项 ✅。测试数据库通过提升权限串行执行，避免沙箱 EPERM 误判。
+- **当前状态**：代码级完成；测试站候选 `26cc58b` 已完成预检、构建、远端数据库备份、健康检查、PM2 重启和公网身份回读。归档 SHA-256=`2D9C79CABE1A333D05D112ED47D705BD6C8CD71CAAAEEDCAA479EACD84EDDF65`，备份 `/var/www/tygf-test-backups/deploy-20260830_012228-26cc58b489ac`。之后需真人 Windows/Photoshop 覆盖安装 3.6.17 验收连接、扫描、智能检测、单/双语言、失败报告/结算；未知状态不得自动重跑。6 个历史悬挂批次不处理、不直接写积分。
+
+---
+
 ## T-0057 【2026-08-29】验收第二次反馈根因：本机引擎 3.6.15 从未收到任何引擎侧修复——已构建替换 3.6.16+chooser
 
 - **用户反馈**："返回智能检测也没有解决问题"，截图弹窗仍是旧文案+无选择器。
 - **根因链（三层叠加）**：① 浏览器 bundle 可能陈旧（部署仅数分钟）；② 决定性：检查编译发生在**本机助手引擎内**（浏览器只转发 `/v1.5/prepare/check`，引擎 `require(__dirname+'/generated/binding-core.js')`），而用户本机引擎是 **3.6.15**（buildId v15-billing-scope-20260828，T-0052 的 3.6.16 一直没装）——P0-A 等价裁决、选择器候选数据**从未到达用户机器**；③ `cfc152e` 漏跑 `build-local-binding-core.mjs`（binding-core 头部纪律），仓库生成产物陈旧（服务器部署构建现场重生成了所以站点没事）。
 - **修复**：重跑 `build-local-binding-core.mjs` + parity smoke 通过（`867147c`）；构建新引擎 exe（build-engine.bat/pkg，内嵌 combinedCandidates×2 + chooser buildId）→ 备份旧引擎（`图译工坊引擎.exe.bak-20260829-2355`）→ 原地替换 → 托盘自动拉起 → `/ping` 确认 `assistantBuildId: v15-chooser-candidates-20260829`（`08582d8`）。VERSION 保持 3.6.16（与站点 latest 安装包合同一致），以 buildId 区分。
 - **用户动作**：浏览器强刷（Ctrl+Shift+R）→ 重新检查 → 等价冗余阻塞应消失，真歧义项弹窗内出现候选译文单选。
-- **遗留**：① 其他测试机需重装/更新助手才有选择器（正式 3.6.17 安装包待裁，含 installer.iss/ISCC 流程）；② 引擎内嵌架构意味着**每次改 binding-core 都必须：重生成产物 + 重发助手**——考虑把这条加进 AGENTS.md 合同变更纪律；③ 浏览器 bundle 缓存问题靠强刷解决，长期可考虑版本化提示。
+- **遗留**：① 其他测试机需覆盖安装测试站 3.6.17 才有最新选择器与报告 renderer；② 引擎内嵌架构意味着**每次改 binding-core 都必须：重生成产物 + 重发助手**——考虑把这条加进 AGENTS.md 合同变更纪律；③ 浏览器 bundle 缓存问题靠强刷解决，长期可考虑版本化提示。
 
 ---
 

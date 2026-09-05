@@ -1,33 +1,36 @@
 ﻿# CURRENT_STATUS.md — 图译工坊当前状态
 
-> 最后更新：2026-08-29　维护：AI 项目管理员
+> 最后更新：2026-08-30　维护：AI 项目管理员
 > 本文档回答"现在做到哪里"。更新前先读 PROJECT_CONTEXT.md。
 
 ## 一句话状态
 
-> **智能检测失效修复已部署测试站 `ff87acb`**（T-0054/T-0055）：重复区块 CSV 的组合绑定伪阻塞与检测超时已根治（等价裁决+分批+孤儿锚定分段检测+combined 出路+收敛进度），部署备份 `deploy-20260829_210843`，公网带 key 200。待用户 JP-5294 CSV 人工验收。新 smoke 未接 package.json（待批准）。
+> **TEST_BATCH_1_WEB_ONLY_LIVE 达成（2026-09-05）**：Batch-1 Web-only Kill Switch 已部署测试站 `f962c64`（BATCH_1_SOURCE_SHA=`3cb32f7`，merge=`fee8391`，import 修复=`f962c64`）。`TYGF_EXECUTION_ENABLED=0` fail-closed：20 边界 503 EXECUTION_DISABLED（服务器实测）、capabilities executionEnabled=false、verify 查询语义 valid:false。ETIMEDOUT 根因 #33（journal fsync）修复=两 harness 90s+WAL。运行验证：BATCH1_EXECUTION_KILL_SWITCH_PASS、Test DB preflight 数据零丢失（BF=3/RDE=208）、公网带 key 200/无 key 403。Owner 裁决 Test DB 历史残留（1270 冻结/22 attempt）可容忍留待清理。
 
-> **当前阻断转移到 Photoshop 3.6.16 真实验收**：T-0052 已提交并部署测试站 `9709686`；latest=3.6.16。6 个历史 RUNNING 批次已只读核对，冻结共 240 分，暂无回执/结算/退回流水，本轮未改积分。
+> **多窗口并行注意**：develop 在 9/01-9/05 间被多窗口推进（3.6.17-3.6.21、content studio、runtime provenance 等），本轮 batch1 基于 72267fd 干净分叉。`localAssistant.ts` 曾用 createRequire 被浏览器 chunk 打包炸 build（Turbopack panic），已改回 ESM `with { type: 'json' }`——**客户端组件禁用 node:module**，此教训记录在案。
 
-> **UX #25 已完成 `c3a09e5`**：执行确认页计费明细默认折叠；票据/授权错误保留真实 `message/code`，“本地助手未运行”仅用于 ping 离线。
+> **UX #25 与本轮报告合同均已覆盖**：执行确认页计费明细默认折叠；票据/授权错误保留真实 `message/code`；“本地助手未运行”仅用于 ping 离线；失败报告使用红色中文原因，不伪造未生成文件。
 
-> **测试站已更新至 `43202f1`（2026-08-27）**：助手 3.6.13 修复中文目录 picker 输出乱码，站内下载入口保留 access key；本机 49152 已覆盖安装，latest API 和安装包合同通过。无 key 的 `/download` 仍受保护，是否公开说明页待用户批准。生产站与 `main` 未动。
+> **发布安全态保持不变**：3.6.16 不覆盖；本轮未触碰 `main`、生产站、支付 flag、历史批次。无 key 的 `/download` 保护策略不变。
 
 ## 进行中事项
 
-1. **批次完成率一致性方案已实施完成**（P0-P4）：投影模块 + 单一投影接线 + 冻结 token + 合成终态 + fail-closed 门禁 + expectedRowTokens 完整接线 + 双指标展示 + 报告增强。tsc + 全部 smoke 绿。待测试站真实批次验证后用户决定是否翻闸。
-2. **支付上线收口（收口方案 v2）**：P1.3-P1.6 待执行（多项需用户批准）
-3. **悬置的用户追认**：BATCH_EXECUTION_READY=true 翻转（19452fc）、Owner 退款 API（2508989）
-4. **A5 用户亲自**：协议定稿 + 支付宝资质确认
+1. **助手安装绑定与 3.6.17 发布收口**：代码、离线 smoke、测试站预检、远端部署与公网回读已完成。
+2. **测试机真人验收**：覆盖安装 3.6.17 后验证连接、扫描、智能检测、单语言、双语言、失败报告与失败结算；未知状态不得自动重跑。
+3. **批次完成率与按语言计费**：代码 smoke 已绿，真实跨层/Photoshop E2E 仍是批量入口的证据门。
+4. **支付上线收口与用户追认**：支付 flag、`BATCH_EXECUTION_READY`、Owner 退款 API、支付宝资质仍按既有红线处理。
 
 ## 下一步建议顺序
 
-1. 在测试站重跑真实批次验证 P0-P4（expectedRowTokens 冻结 + 合成终态 + 双指标展示 + 报告守恒摘要）
-2. 用户决定是否翻闸 BATCH_EXECUTION_READY=true
-3. A5 协议定稿 + 支付宝资质确认 —— 用户亲自
-4. P1.3-P1.6 生产上线流程 —— 每步需用户批准
+1. 测试机覆盖安装 3.6.17，完成人真人 Windows/Photoshop 验收；未完成前保持 `BATCH_EXECUTION_READY=false`。
+2. 记录测试站 3.6.17 的版本、build、schema、renderer、安装包 SHA 和批次证据，确认网页与本地报告一致。
+3. 对现有悬挂批次只读核对；未知账务状态不猜、不重跑、不直接改积分。
+4. A5 协议/支付宝资质与生产上线流程继续由用户逐项批准。
 
-## 最近验证基线（2026-08-26）
+## 最近验证基线（2026-08-30）
+
+- 2026-08-30 本轮：`npx tsc --noEmit` ✅；`npm run lint` ✅（0 error，2 条既有 TanStack warning）；`test:trust-chain` ✅；`test:batch-row-contract` ✅；`test:v3-batch-flow` ✅；`test:batch-failure-settlement` ✅（独立 SQLite：失败释放/finish 幂等/未知态冻结/到期 sweep）；`smoke-v15-runner` ✅（失败语言中文报告/真实输出文件）；`check-release-identity` ✅；`smoke-release-consistency` 21 项 ✅。graphify 更新因本机无命令未执行。
+- 2026-08-30 发布包与测试站：助手 3.6.17，build `v15-chooser-candidates-20260829`，schema `local-report-v2`，renderer `renderer-v2`；`tygf-engine-setup-3.6.17.exe` SHA-256=`469862102A364ABC2CFBBABC93B7E0F0553D4A3D2FF6D08FDAA91A2F8148D59E`，大小 12637266 bytes。develop 候选 `26cc58b` 已部署；归档 SHA-256=`2D9C79CABE1A333D05D112ED47D705BD6C8CD71CAAAEEDCAA479EACD84EDDF65`，备份 `/var/www/tygf-test-backups/deploy-20260830_012228-26cc58b489ac`，公网 latest/安装包回读通过。
 
 - 2026-08-29 T-0052 发布：功能提交 `af5abb6`，develop/测试候选 `9709686`；完整 build、发布预检、服务器构建、Prisma 同步、源站 200、PM2 双进程、latest=3.6.16、安装包 200/12634364/SHA 一致。六个悬挂批次只读审计为 6×40=240 reserved，终态积分流水 0。
 

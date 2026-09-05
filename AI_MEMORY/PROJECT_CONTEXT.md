@@ -59,7 +59,7 @@
 - **三层画布**：官网（`src/app/page.tsx` + 板块）+ 本地工作台（`src/components/workbench/`）+ 运营台（`src/app/admin/`）。
 - **模块开关集中配置**：`src/config/featureFlags.ts:4-52` —— 支付/套餐/积分/公开注册/OCR/团队等**默认全关**；内测宣传版安全态要求 6 个支付 flag 全 `false`（:24-33）。
 - **V1.5 信任链执行路径**：readiness → attempt → ticket → execute；`workbenchV15ExecutionEnabled` 默认开（featureFlags.ts:15）。
-- **批量执行组合闸（纵深防御）**：运营台开关 `batchBillingV3Enabled` 与代码级硬闸 `BATCH_EXECUTION_READY` 同时满足才开（`src/components/workbench/execute-step.tsx:221-223`）。⚠️ 硬闸当前 = `true`（execute-step.tsx:85，19452fc 翻转，**待用户追认**，可整体 revert）。
+- **批量执行组合闸（纵深防御）**：运营台开关 `batchBillingV3Enabled` 与代码级硬闸 `BATCH_EXECUTION_READY` 同时满足才开（当前实现见 `src/components/workbench/execute-step.tsx:90,235-236`）。硬闸当前 = `false`；完成真实 7 语言跨层 E2E 并获用户明确批准前不得翻转。
 - **本地助手 v1.5 引擎**：`download/local-assistant/` —— v15-runner.js（编排）、readiness.js（就绪）、attempt-runtime.js（单次执行）、execution-manifest.js / execution-journal.js / working-copy.js（清单与恢复）、report-outbox.js（交付报告）、receipts.js（回执隐私）、learning-evidence.js（排版特征采集）。
 - **版本纪律**：助手版本比对在 `src/lib/local-assistant-version.ts`；发布标识校验 `scripts/check-release-identity.cjs`；发布身份需与 `/api/local-assistant/latest` 完全一致（版本/URL/大小/SHA-256）。
 
@@ -69,7 +69,7 @@
 
 1. 不得引入任何静默降级；未完成能力必须明确报错；
 2. 不得从 develop 直接构建生产站；不得静默替换下载 URL；
-3. `BATCH_EXECUTION_READY` 保持 `false`（当前已翻 true，待追认）；
+3. `BATCH_EXECUTION_READY` 保持 `false`（当前源码已恢复为 false；真实批次 E2E 和用户批准前不得翻转）；
 4. 助手行为变更的发布必须走版本纪律；
 5. 生产支付开放必须满足开放 checklist，缺一不可。
 
