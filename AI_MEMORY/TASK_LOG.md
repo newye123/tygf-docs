@@ -1,7 +1,22 @@
   
 ---
 
-## T-0064 【2026-09-06 晚】账号即资格（Account-First）激活模型方案（待 Owner 批准）
+## T-0064 C1 【2026-09-06 晚二】Account-First 云端身份解析落地（已部署）
+
+- **范围（C1-lite：零写入、零助手发版）**：commit `647184a`。
+  1. `require-activation.ts`：requireActiveInstallation 增加会话 fallback（token 路径失败→LoginSession 账号级解析名下激活，canonical installId 取自激活行本体；新增 identitySource 字段）。账号门语义=「登录会话证明资格，激活行是设备名额台账」。
+  2. `assistant-authorization.ts`：两步解析——先按提示 installId 精确匹配，失败按 token（machineId+运行码）解析运行码绑定的激活行；**返回规范 installId**（浏览器无关）。
+  3. attempt/readiness/review-evidence 三路由：授权后统一改用规范 installId（machineBindingDigest/查询一致）。
+  4. `/api/invite/session`：空 installId 也可走会话解析；响应返回规范 anonymousInstallId（客户端自愈依据）；无 matchedToken 不再 set cookie。
+  5. `activation-gate.tsx`：本地激活标记缺失时先向 /api/invite/session 发空探测→服务端采纳→本地写入规范 ID→activated；verify 成功路径同样跟随规范 ID。
+- **对抗复核（切片级）**：无会话→403 fail-closed ✅；账号越权采纳被 betaUserId+billingPrincipalId 双过滤阻断；多机账号 fallback 取最近激活仅影响 web 展示层（执行路径 canonical 来自助手 token，确定性）；stolen session 不扩大权限面；老 bundle/无会话浏览器行为与现状一致（无回归）；速率限制与既有共用。
+- **验证**：tsc ✅、lint 0 error ✅、test:trust-chain ✅（含 smoke-assistant-binding-migration fixture 更新为 canonical 断言）、test:batch-row-contract ✅、test:auth 70 ✅、test:review-evidence-provenance ✅、test:photoshop-cancel-refund ✅；部署 `647184a`（备份 deploy-20260906_185242）后 PM2 online、session 无会话探测 403、bundle 含 fallback。
+- **遗留**：① Owner 换浏览器实测验收（Edge↔Chrome/清缓存应零输码）；② C2（助手自持持久 installId，Keygen 正统长方案）与 C3（登录自动激活新机+名额自服务）排队；③ 多码账号（DEMO/TYGF 双链并存）的 web 层 fallback 可能取另一链激活——身份合并（T-0062 Phase B）时收口。
+- **未做**：生产部署、push、支付/账务（红线不变）。
+
+---
+
+## T-0064 【2026-09-06 晚】账号即资格（Account-First）激活模型方案 → C1 已执行（见上条）
 
 - **触发**：Owner 指示「激活过的账号换浏览器后还需重新激活，不行；激活码只需要在注册时使用」。
 - **根因（全部 file:line 实测）**：installId = 浏览器 localStorage 随机 UUID（register/login page.tsx），激活锚与助手配对全挂它（assistant-authorization.ts:33 校验 inviteActivation.anonymousInstallId === body.installId；助手自身无设备身份，server.js:2547 直接采用浏览器传入值）→ 换浏览器=新身份=重激活+占新名额+助手绑定断裂。信任根放错：浏览器存储不是设备身份载体（Keygen 官方：指纹必须由装机软件自生成并持久化）。

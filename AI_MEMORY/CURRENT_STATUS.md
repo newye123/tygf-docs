@@ -5,9 +5,9 @@
 
 ## 一句话状态
 
-> **T-0064 方案待批（2026-09-06 晚）**：Owner 指示换浏览器不应重激活、激活码只在注册用。根因=installId 是浏览器 localStorage UUID（信任根放错）。方案=Account-First 三阶段（Web 门挂账号 / 助手 3.6.22 自持持久 installId / 登录自动激活），100 向量对抗审查，文档 `worktrees/develop/docs/records/20260906_account_first_activation_plan.md`，取代旧 device_activation_plan Phase B。**待 Owner 批准后执行**。
+> **T-0064 C1 已落地（2026-09-06 晚二）**：Account-First 云端身份解析已部署测试站 `647184a`——换浏览器/清缓存不再要求重输邀请码（登录会话 fallback + 助手 token 权威化 + 客户端规范 ID 采纳）。验证全绿（tsc/lint/trust-chain/batch-row-contract/auth70 等）；无会话 403 fail-closed 实测。**待 Owner 验收**：换浏览器登录→工作台应零输码直达。排队：C2 助手自持持久 ID、C3 登录自动激活新机、P1 每日积分。develop ahead 26 未推送（push 需 Owner 授权）。
 
-> **T-0063 收口（2026-09-06 晚）**：P0-A 修复已部署（云端缺 digest → `ATTEMPT_EVIDENCE_REQUIRED` + "请升级助手"文案，`348de03`/`314df9d`）；68 积分守恒 **PASS**（4 次 −68/+68 全配对 user_cancelled，余额 888，零残留）；P0-B 定位=服务端 60s 超时从未触发、499 为客户端断开，已加 abort 传播+耗时提示。测试站现部署 **314df9d**（develop ahead 24 未推送）。**排队任务：P1 每日积分合同、T-0064 账号即资格**。待 Owner：新电脑重装 3.6.21 助手；ISSUES #34 生产野进程 / #35 清理 cron 处置授权。
+> **T-0063 收口（2026-09-06 晚）**：P0-A 修复已部署（云端缺 digest → `ATTEMPT_EVIDENCE_REQUIRED` + "请升级助手"文案，`348de03`/`314df9d`）；68 积分守恒 **PASS**（4 次 −68/+68 全配对 user_cancelled，余额 888，零残留）；P0-B 定位=服务端 60s 超时从未触发、499 为客户端断开，已加 abort 传播+耗时提示。待 Owner：新电脑重装 3.6.21 助手；ISSUES #34 生产野进程 / #35 清理 cron 处置授权。
 
 > **TEST_AUTH_MAIL_GOLDEN_PASS 达成（2026-09-06 凌晨）**：邮件登录链路全闭环（T-0061）——注册验证邮件真实送达、点链接验证成功、登录成功、忘记密码+新密码重登成功（Owner 实测）。四层根因修复：HtmlBody 参数不存在（模板模式重写 b6f98e0）、区域 ap-singapore+intl 端点（7c3bd03）、模板被拒=变量携完整链接→固定域名版过审（71676/71677，Status=0）、双斜杠链接（8400b65）。key 门真身=源站 nginx，已豁免 /auth/verify+/auth/reset（其余 403 保留）。测试站现部署 8400b65。附带：Owner 走完 Batch-1 Web-only 人工验收（执行被 Kill Switch 正确拦截）。遗留：Yt 策略还原、废密钥禁用、BetaUser 窗口无 admin 端点（手改过一次 DB，旧值已备份）。
 >
