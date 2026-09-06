@@ -1,4 +1,71 @@
- 
+  
+---
+
+## T-0063 续 【2026-09-06 晚】P0-A/P0-B 修复部署 + 守恒 PASS（已收口，P1 待下一会话）
+
+- **P0-A 修复（已部署测试站 314df9d，含 348de03）**：
+  1. `348de03`：`src/app/api/local-assistant/attempt/route.ts` create 校验前置区分——digest **缺失**（旧助手协议）→ 400 `ATTEMPT_EVIDENCE_REQUIRED`；digest 非法 → 原 `ATTEMPT_CREATE_INVALID`。客户端 `local-assistant-client.ts` V15_ERROR_CODE_ZH + PREPARE_CODE_ZH 增映射："本地助手版本过旧，缺少执行所需的冻结证据摘要……请到下载页更新本地助手"。
+  2. 部署后活体验证：编译产物含 `if(!s||!r)return json({code:'ATTEMPT_EVIDENCE_REQUIRED'},400)`；浏览器 bundle 3 个 chunk 含该码；PM2 双 online；provenance 200。（假 token 活体探测只能到 403 授权层，新分支无法用假凭据触达——以编译产物+bundle 为证。）
+- **68 积分守恒（CREDITS_68_REFUND_CONSERVATION=PASS，只读取证）**：principal `cms1o40un`（freedesignyes 钱包）今日：15:52 grant +88（beta_exclusive_bonus，800→888 基线）+ 4×（reserve −68 → release +68 user_cancelled）＝15:57:16→:23、16:02:51→:58、17:49:23→:30、17:49:55→17:50:02（后两次为 Owner 部署前重试，nginx 同 400/55B 同根因）。4 个 CreditReservation 全部 `released`、actualUnits 空、无 committed 流水、非终态=0、net=+88。**无双扣、无双退、单赢家 release。**
+- **P0-B（定位+止血，已部署 314df9d）**：服务端本有 60s 批次超时（deepseek-align.ts REVIEW_BATCH_TIMEOUT_MS）且日志无 ai-review 失败 → 服务端从未超时，499=客户端断开。`314df9d`：① `AbortSignal.any` 把 req.signal 传入 DeepSeek fetch（断开即取消、不白烧 token；重试循环遇 abort 立即抛）；② review-step 检测中显示"约需 1 分钟，请勿关闭或刷新页面"。
+- **验证**：tsc ✅、lint 0 error ✅、test:trust-chain ✅、test:batch-row-contract ✅、test:review-filters ✅；两次部署（备份 deploy-20260906_175528-c549f896114f / deploy-20260906_181349-314df9dbbb7b）后 PM2 online + provenance 200。
+- **提交**：`348de03` / `c549f89` / `314df9d`（develop 分支本地，未 push——push 需 Owner 授权）。
+- **遗留/下一步**：
+  1. **P1 每日积分合同**（守恒已 PASS，可开工）：独立提交×2 + disposable DB 回归矩阵（幂等 grant/earliest-expiry-first/refund 不复活过期每日积分/888 只补差）。
+  2. Owner 在新电脑**重装 3.6.21 助手**（下载页），或直接体验新错误码提示。
+  3. ISSUES #34（生产野进程 3000）/ #35（清理 cron FK 刷屏）待 Owner 授权处理。
+  4. develop ahead 23 未推送。
+
+---
+
+## T-0063 【2026-09-06 傍晚】三轨收口 Phase 0 + P0-A 取证 ROOT CAUSE 破案（进行中）
+
+- **任务目标**：执行三轨收口文档（P0-A `ATTEMPT_CREATE_INVALID` 取证 + 68 积分守恒、P0-B 智能检测超时、P1 新积分合同）。Phase 0 完成，P0-A 根因已破案（修复未实施）。
+- **Phase 0 身份实测**：develop HEAD=`bffcaa3`（ahead 21 未推送）、工作树干净；测试站部署=`a307ce5`（receipt 实测 assistantVersion 3.6.21）；PM2 双 online（tygf-test 15:09:04 起，↺0）；BUILD_ID=`uP_zaF45wY1z-0ZOq0-6i`。
+- **P0-A ROOT CAUSE（证据链完整，推翻旧假设）**：
+  1. **字节指纹修正**：nginx 记录 400/55B 曾被解读为 `ASSISTANT_INSTALL_BINDING_INVALID`（55B 裸 body）。**错误**——实测部署 build 通过 nginx 时 `$body_bytes_sent` 含 chunked 帧开销 +11B（实测对照：41B body 记 52B，脚本 chunk_test.sh）。**55−11=44 = `{"ok":false,"code":"ATTEMPT_CREATE_INVALID"}`，状态 400**。
+  2. **触发链**：新电脑安装的本地助手是**旧版（<3.6.19，早于 746569e 08-31"bind runtime identity"）**——其 prepare 流程为"编译→readiness 上传→直接 attempt"，不发 `reviewDecisionDigest`/`provenanceDigest`；云端 attempt 路由（attempt/route.ts:41，90d6b5a 合同）要求两个 64-hex digest → `!SHA256.test('')` → 400/44B。助手包装 502 给浏览器 → 补偿 cancel 释放 68 分。
+  3. **流量指纹证据**：15:57/16:02 两窗口 nginx 日志中助手→云端只有 ticket/verify、readiness、attempt——**无 `/api/runtime-provenance`、无 `/api/local-assistant/review-evidence`**（这两步只存在于 746569e+ 的新 prepare 流程；日志中的 provenance 调用是浏览器 UA 发的）。旧 PC 11:45 成功批次用的是新版助手+batch v3 流程，故不受影响。
+  4. **排除项**：ASSISTANT_INSTALL_BINDING_INVALID（活体实验：合法格式 token → 403/55B，且 readiness 200 证明授权通过）；生产 build（无 attempt 路由，404）；部署 build 陈旧（编译产物逐行比对 = 源码语义）；中间件（无）。
+  5. **活体复现证据**：服务器上用 env 密钥签合法 token 打 3001 → 403/55B binding-invalid（证明部署 build 403）；`bash /tmp/chunk_test.sh` → 41B/400 → nginx 记 52B（帧开销实锤）。
+- **P0-B 修正**：**测试站流量直连源站，CF 不在路径上**（$remote_addr=真实客户端 IP；403/63B key 门 = nginx 文本实锤）。"CF 524"假说作废；16:00:45/15:54:48 的 499 = 客户端/代理侧断开（ai-review 无 AbortController，review-step.tsx:308 裸 fetch；嫌疑=用户网络中间层或浏览器长连接断）。修复方向不变：服务端内部 timeout < 中间层时限 + typed failure。
+- **附带发现（运维卫生）**：3000 端口有 8/25 启动的生产野进程（`/var/www/tygf` 旧 build，目录已删，仅内存存活，0.0.0.0 暴露，生产域名 tuyigf.com→3000 仍在 nginx 指向它）； nginx /etc/nginx/sites-enabled 只剩 .bak-20260906 一个真文件（有效但命名误导）；Test DB 隐私清理 cron 每次跑都 FK 失败刷屏（reviewSnapshot.delete，out-0.log 大量噪音）——已登记待修。
+- **修改文件**：无代码修改（纯取证）。临时脚本均在服务器 /tmp 与本机 Temp。
+- **遗留/下一步**：
+  1. P0-A 修复三选一（报 Owner 决策）：a) 云端对缺 digest 返回专用码 `ATTEMPT_EVIDENCE_REQUIRED` + 浏览器映射"请升级助手"；b) 工作台/助手握手强制最低协议版本；c) 兼容旧助手（不推荐，违背合同）。推荐 a+b。
+  2. 68 积分守恒 DB 取证仍未做（credits 窗口 15:57/16:02）。
+  3. P0-B 499 需要请求起始时间证据（nginx 加 request_time 或应用日志）。
+  4. 生产野进程/3000 暴露需 Owner 授权处理（涉及生产站！）。
+- **验证**：活体探测均为只读请求（假 token/假 body，授权层即拒，无业务事实产生）；未运行 tsc/lint（无代码变更）。
+
+---
+
+## T-0062 【2026-09-06 凌晨】执行开放 + 12 语言全量准备 + auth UI 补齐（进行中）
+
+- **任务目标**：Owner 指示开放执行测试，全量=12 语言（纠正原「7 语言」口径）；补齐登录后无账号信息/无退出按钮的 UI 缺口。
+- **已完成**：
+  1. 执行三道闸全开：TYGF_EXECUTION_ENABLED=1（.env，备份 .env.bak-exec-off-20260906）、TYGF_BATCH_EXECUTION_MODE=canary（白名单空=全部已激活用户）、batchBillingV3Enabled 默认已开。capabilities: executionEnabled=true, mode=canary，仅剩 BATCH_ACTIVATION_REQUIRED（浏览器+助手激活实例通过）。
+  2. **批量语言上限 10→12**：commit 202a3dc（batch-limits.ts 单一来源 + smoke-batch-limits 断言/fixture 同步 + pack 页声明）。注意 smoke fixture 需 13 个语言码触发超限。
+  3. **部署护栏合同更新**：commit e19294b——check-environment-isolation.cjs 从「test 强制 =0」改为「test 允许显式 0/1 + canary」；**生产红线补强**（production TYGF_EXECUTION_ENABLED=1 直接 fail）。首次部署曾被旧护栏挡（failed candidate 留存 /var/www/tygf-test-failed/20260906_021703-*），属设计内拦截。
+  4. **auth UI**：commit cae25e7——工作台右上角账号菜单（头像+邮箱+/auth/sessions 入口+退出登录，调既有 /api/auth/logout）；登录页检测已有会话显示「已在登录状态」卡片。调研依据：shadcn/ui 官方 Account dropdown 模式（taxonomy starter user-account-nav），项目已有 dropdown-menu/avatar 组件零新依赖。
+  5. **测试站现部署 202a3dc**（备份 deploy-20260906_023451）。
+- **运维修复（同前例：测试环境运营字段外科手术，旧值已记录可回滚）**：BetaUser.accessExpiresAt 延长 30 天（旧值 1786279275011）；CreditAccount signup_bonus(800分,id=cms61cd07000ewjhsiv36q6fe) expiresAt 延长 30 天（旧值 1787918568856，原 8/28 已过期导致可用余额=0、执行冻结必败）。积分过滤逻辑证据：credits.ts:657 expiresAt>now。
+- **待 Owner 醒来执行**：刷新工作台（助手在线+激活应过 ACTIVATION 门）→ 先跑 1 语言单次执行验证 Photoshop 真机链 → 再 12 语言全量批次；盯 receipt/结算/积分冻结-释放。
+- **看护**：已建每 30 分钟只读巡检自动化（automation-de5a4130，异常才播报；日志 tmp/t0062-watch.log）。
+- **运行验证**：tsc ✅ smoke-batch-limits ✅ smoke-security-hardening ✅ lint 0error；公网 key 门 403 保留、auth 豁免 200、assistant 3.6.21 正常。
+
+---
+## T-0061 【2026-09-05/06】邮件登录链路收官：TEST_AUTH_MAIL_GOLDEN_PASS ✅
+
+- **任务目标**：修复测试站注册收不到验证邮件问题（ISSUES #14），打通 邮件→验证→登录→忘记密码 全闭环。
+- **最终根因链（四层，全部实证）**：① 代码：`ses.ts` 的 `HtmlBody` 参数在 SendEmail API schema 中不存在（UnknownParameter）——邮件代码从未真正打通过；② 账号：国际站账号未开通自定义内容权限（API `WithOutPermission`、SMTP `SMTPForbidden`）→ 仅支持模板发送；③ 区域：仅 `ap-singapore` 可用（intl 端点 ses.intl.tencentcloudapi.com，commit `7c3bd03` SES_HOST 可配置化）；④ 模板被拒：审核员通知给出原因——**变量携带完整链接违反链接规范**，须「固定域名+变量」形式（API `GetEmailTemplate.TemplateStatus=2` 为 ground truth，控制台状态可能脱节）。
+- **修复 commit（develop）**：`b6f98e0` SES 模板模式重写 + `7c3bd03` intl Host + `d37c951` 模板变量只传路径 + `8400b65` 变量去前导斜杠（修双斜杠）+ `9d3f2e9` 收官记录。部署 8400b65（备份 deploy-20260906_003325）。
+- **配置/基础设施**：模板 71676/71677 固定域名版过审（API Status=0 验证）；服务器 env 10 个邮件变量（含 TENCENT_SES_HOST/TEMPLATE_*）；**key 门真身=源站 nginx**（`sites-enabled/tygf-test` 的 `location /` if $arg_key；CF 侧 WAF/Worker/Snippets/Access 全部排查为空或无关）——已在 nginx 插入 `location ~ ^/auth/(verify|reset)(/|$)` 豁免（备份 .bak-20260906），实测豁免路径 200、其余 403。
+- **Gate 6/7 真实闭环证据**：验证邮件 sent(00:16)→送达→点击→emailVerifiedAt 写入(01:11)；登录首报「账号当前不可用」→根因 BetaUser.accessExpiresAt=8/9 过期（login-user.ts:62）→延长 30 天（旧值 1786279275011 备份可回滚，未触碰账务）→登录成功；忘记密码 reset_password sent×2→新密码登录成功（Owner 实测）。Owner 顺带走完 Batch-1 Web-only 人工验收（执行页被 Kill Switch 正确拦截）。
+- **运行验证**：tsc ✅ test:auth-mail ✅ test:auth 70 项 ✅ lint 0error；带 key 200/无 key 403/executionEnabled=false；outbox verify=sent、reset=sent。
+- **遗留待办（不阻塞）**：① Yt CAM 策略还原单语句 SendEmail-only（现 v2 含两个只读诊断权限）；② 禁用废密钥 IKID572m…；③ BetaUser 访问窗口无 admin API 端点（本次手改 DB，建议补）；④ 本地 key/SecretKey.csv 由 Owner 决定去留。
+- **下一步（Owner 已指示）**：T-0062 开放全量语言执行测试——即 Wave 1 的 Execution 开放前置链（真机验收、Batch 实测、7 语言 E2E、结算回归、Owner 批准翻 TYGF_EXECUTION_ENABLED=1）。
+
 ---
 
 ## T-0060 【2026-09-04/05】Batch-1 Web-only Kill Switch 闭环上线（TEST_BATCH_1_WEB_ONLY_LIVE）

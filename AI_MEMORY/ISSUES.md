@@ -1,8 +1,22 @@
 ﻿# ISSUES.md — 问题登记（Bug / 技术债 / 已知风险）
 
-> 最后更新：2026-08-30
+> 最后更新：2026-09-06
 > 每条带编号、严重度（🔴 blocker / 🟠 major / 🟡 minor）、位置、影响、建议、状态。
 > 修复后更新状态，不删除条目。
+
+---
+
+## #34　测试站服务器生产野进程占用 0.0.0.0:3000　🟠 major
+- **位置**：服务器 43.134.175.26；pid 2698199（8/25 10:23 启动，next-server v16.2.10），cwd 指向已删除的 `/var/www/tygf/.next/standalone`（build 仅存活于内存）；nginx `sites-available/tygf`（生产域名 tuyigf.com/www）proxy_pass → localhost:3000。
+- **影响**：① 生产站由一个不属于任何进程管理器、加载已删文件系统的野进程服务（runtime 身份不可审计，违反"源码≠runtime 身份"铁律）；② 0.0.0.0 暴露 3000 端口（无 TLS、无 key 门）。2026-09-06 排查 P0-A 时发现。
+- **建议**：以生产站正常发布流程重建 `/var/www/tygf` 部署 + PM2 托管后杀掉野进程（**涉生产站，需 Owner 明确授权，不得擅动**）；期间可临时将 3000 收敛为 127.0.0.1 监听。
+- **状态**：🆕 登记，待 Owner 决策。
+
+## #35　Test DB 隐私清理 cron 每 30 分钟 FK 失败刷屏　🟡 minor
+- **位置**：`logs/error-0.log` / `out-0.log`（[privacy-retention] review_snapshot_cleanup，`prisma.reviewSnapshot.delete()` Foreign key constraint violated）；logs/out-0.log 864 行中大半为该噪音。
+- **影响**：真实错误被淹没；清理任务从未成功（scanned 46/deleted 0/failed 10，oldestExpiredAt 2026-08-09）。
+- **建议**：清理逻辑应先删子引用或改级联顺序；登记后与 Test DB 残留清理（T-0060 遗留）一并处理。
+- **状态**：🆕 登记。
 
 ---
 

@@ -1,9 +1,16 @@
 ﻿# CURRENT_STATUS.md — 图译工坊当前状态
 
-> 最后更新：2026-08-30　维护：AI 项目管理员
+> 最后更新：2026-09-06　维护：AI 项目管理员
 > 本文档回答"现在做到哪里"。更新前先读 PROJECT_CONTEXT.md。
 
 ## 一句话状态
+
+> **T-0063 收口（2026-09-06 晚）**：P0-A 修复已部署（云端缺 digest → `ATTEMPT_EVIDENCE_REQUIRED` + "请升级助手"文案，`348de03`/`314df9d`）；68 积分守恒 **PASS**（4 次 −68/+68 全配对 user_cancelled，余额 888，零残留）；P0-B 定位=服务端 60s 超时从未触发、499 为客户端断开，已加 abort 传播+耗时提示。测试站现部署 **314df9d**（develop ahead 23 未推送）。**下一任务 = P1 每日积分合同**（守恒已关）。待 Owner：新电脑重装 3.6.21 助手；ISSUES #34 生产野进程 / #35 清理 cron 处置授权。
+
+> **TEST_AUTH_MAIL_GOLDEN_PASS 达成（2026-09-06 凌晨）**：邮件登录链路全闭环（T-0061）——注册验证邮件真实送达、点链接验证成功、登录成功、忘记密码+新密码重登成功（Owner 实测）。四层根因修复：HtmlBody 参数不存在（模板模式重写 b6f98e0）、区域 ap-singapore+intl 端点（7c3bd03）、模板被拒=变量携完整链接→固定域名版过审（71676/71677，Status=0）、双斜杠链接（8400b65）。key 门真身=源站 nginx，已豁免 /auth/verify+/auth/reset（其余 403 保留）。测试站现部署 8400b65。附带：Owner 走完 Batch-1 Web-only 人工验收（执行被 Kill Switch 正确拦截）。遗留：Yt 策略还原、废密钥禁用、BetaUser 窗口无 admin 端点（手改过一次 DB，旧值已备份）。
+>
+> **下一任务 T-0062（Owner 已指示）**：开放全量语言执行测试——走 Wave 1 Execution 开放前置链。
+
 
 > **TEST_BATCH_1_WEB_ONLY_LIVE 达成（2026-09-05）**：Batch-1 Web-only Kill Switch 已部署测试站 `f962c64`（BATCH_1_SOURCE_SHA=`3cb32f7`，merge=`fee8391`，import 修复=`f962c64`）。`TYGF_EXECUTION_ENABLED=0` fail-closed：20 边界 503 EXECUTION_DISABLED（服务器实测）、capabilities executionEnabled=false、verify 查询语义 valid:false。ETIMEDOUT 根因 #33（journal fsync）修复=两 harness 90s+WAL。运行验证：BATCH1_EXECUTION_KILL_SWITCH_PASS、Test DB preflight 数据零丢失（BF=3/RDE=208）、公网带 key 200/无 key 403。Owner 裁决 Test DB 历史残留（1270 冻结/22 attempt）可容忍留待清理。
 
