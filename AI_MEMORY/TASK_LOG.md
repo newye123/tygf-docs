@@ -1,6 +1,17 @@
   
 ---
 
+## T-0064 【2026-09-06 晚】账号即资格（Account-First）激活模型方案（待 Owner 批准）
+
+- **触发**：Owner 指示「激活过的账号换浏览器后还需重新激活，不行；激活码只需要在注册时使用」。
+- **根因（全部 file:line 实测）**：installId = 浏览器 localStorage 随机 UUID（register/login page.tsx），激活锚与助手配对全挂它（assistant-authorization.ts:33 校验 inviteActivation.anonymousInstallId === body.installId；助手自身无设备身份，server.js:2547 直接采用浏览器传入值）→ 换浏览器=新身份=重激活+占新名额+助手绑定断裂。信任根放错：浏览器存储不是设备身份载体（Keygen 官方：指纹必须由装机软件自生成并持久化）。
+- **方案**：三阶段 Account-First（详见 `worktrees/develop/docs/records/20260906_account_first_activation_plan.md`）——W：Web 能力门改挂账号（requireAuthenticatedBetaAccount 拆分）；A：助手 3.6.22 自生成持久 installId + 浏览器 adopt + 配对换锚；B：登录自动激活助手 ID + 名额自服务闭环。100 向量对抗式审查全部有处置（身份/门/配对/名额/状态机/计费/数据/UI/安全/运维/回归 11 类）。
+- **取代关系**：本方案取代 device_activation_plan.md 的 Phase B（旧 Phase B 仍以浏览器 installId 为锚，不解决本问题）；原 Phase A 设备管理项（A3/A4/A5）并入本方案 C3。
+- **状态**：纯方案，零代码变更；待 Owner 批准后按 C1-C4 提交序列执行。执行边界换锚为高风险状态机变更，编码前须按 12 问逐条落实。
+- **验证**：NOT_RUN（无代码变更）。
+
+---
+
 ## T-0063 续 【2026-09-06 晚】P0-A/P0-B 修复部署 + 守恒 PASS（已收口，P1 待下一会话）
 
 - **P0-A 修复（已部署测试站 314df9d，含 348de03）**：
