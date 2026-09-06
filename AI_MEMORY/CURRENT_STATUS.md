@@ -5,7 +5,9 @@
 
 ## 一句话状态
 
-> **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。**待 Owner 批准**（C1 引擎→C2 接线→C3 收敛）。
+> **T-0065 C1 已落地（2026-09-06 深夜三，`fac314c`）**：双语对齐修复引擎（孤儿重复双向判定+孤儿锚定开窗 DP+五算子计划）——真实数据验证 5472/5477 一次计划全修、文本零丢失、应用即收敛 healthy。**C1=纯引擎未接 UI**；下一步 C2（审核台接线+EXCLUDED 四层同步，合同变更级）。排队：T-0064 C2/C3、P1 每日积分。测试站=314df9d；develop ahead 32 未推送（push 需 Owner 授权）。
+
+> **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 
 > **T-0064 C1 已落地（2026-09-06 晚二）**：Account-First 云端身份解析已部署测试站 `647184a`——换浏览器/清缓存不再要求重输邀请码（登录会话 fallback + 助手 token 权威化 + 客户端规范 ID 采纳）。验证全绿；无会话 403 fail-closed 实测。**待 Owner 验收**：换浏览器登录→工作台应零输码直达。排队：C2 助手自持持久 ID、C3 登录自动激活新机、P1 每日积分。develop ahead 29 未推送（push 需 Owner 授权）。
 

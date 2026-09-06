@@ -1,7 +1,18 @@
   
 ---
 
-## T-0065 【2026-09-06 深夜】双语表对齐修复引擎方案（待 Owner 批准；对抗审查 v2 已修订）
+## T-0065 C1 【2026-09-06 深夜三】双语对齐修复引擎落地（commit fac314c，未接 UI）
+
+- **交付**：`src/lib/server/bilingual-align.ts`（纯函数引擎）+ `scripts/smoke-bilingual-align.mjs`（test:bilingual-align）。
+  - 算子五类：KEEP/REALIGN(targetFromRow 快照语义)/DROP_ORPHAN(duplicateOf)/FLAG_MISSING/EXCLUDE_NOISE；
+  - 机制：孤儿重复双向判定（孪生可在前一行——5472 实测）→ 孤儿锚定开窗（向后覆盖"缺译/非标记守恒"行≤12、向前≤24，硬边界=健康对）→ 窗口内 DP 序列对齐（match/skipSource/skipTarget，长度中值比自适应+标记守恒 penalty）→ 每行命运唯一；
+  - **关键 bug 自曝**：ops Map 键用 rowIndex 但多处用数组下标做 has/set——错位覆盖，单测逼出后修复（教训：键语义统一）。
+- **真实数据验证**（parseCsv 管道→引擎→模拟应用→re-analyze）：
+  - 5477（81 行）：两个 11 行移位段 REALIGN×20+DROP×2 **一次计划全修**，distinct 文本零丢失 PASS，应用后 healthy=true；
+  - 5472（41 行）：2 REALIGN+5 孤儿重复 DROP+URL EXCLUDE，缺译行经 REALIGN 复活（flagMissing=0），零丢失 PASS，收敛 healthy=true；
+  - v2 战果 1（错配对）**自我否定**：完整内容显示行 3/4 是完美配对（此前 18 字符截断显示造成误判）——标记守恒降级为 cost 辅助信号（已如实记录）。
+- **验证**：tsc ✅ lint ✅ test:bilingual-align ✅ test:trust-chain ✅ test:batch-row-contract ✅ test:review-filters ✅。
+- **下一步（C2）**：deepseek-align 确定性层升级为计划输出 + 审核台按 op 分组渲染 + "缺少译文/原文为空"解除阻断（EXCLUDED 四层同步 + smoke-batch-row-contract fixture 更新）+ C3 自动收敛。C2 是合同变更级改动（铁律：未跑 batch-row-contract 与 trust-chain 不得部署）。
 
 - **对抗式审查 v2 战果（实机复现后修订，commit cd7c0fc）**：
   1. 用真实 parseCsv 复现工作台行集：5472=41 行（含 URL 占位行）、5477=**81 行**（两重复块不折叠，v1 的"40 逻辑行"说法有误——图一实际是 5472）。
@@ -10,6 +21,10 @@
   4. 导入卫生：表头=URL 行脏数据、URL 行占执行位 → 并入 C1 可选小修；**fixture 必须走 parseCsv 管道输出**（硬约束升级）。
   5. 待确认：图一逻辑行 31 译文与实测行集不一致（最可能 Owner 手工编辑；"编辑行不参与 REALIGN"已覆盖）。
   6. 未解剖的 9 个供应商文件 → C1 完成后批量跑只读对账报告再定是否需要第五类算子（防过度设计）。
+
+---
+
+## T-0065 原方案条目 【2026-09-06 深夜】（已由 C1 落地）
 
 - **触发**：Owner 反馈供应商双语 CSV（5477/5472"主图+A+"）审核跑不通；并问图三「未调用 AI，不消耗 token」是怎么识别的。
 - **问题解答**：智能检测两道防线——第一道确定性规则零 token（detectColumnShift 长度方差法 :579 + detectOrphanTargetSegments 孤儿译文分段法 :629，"未调用 AI"即此层，错位是结构特征非语义问题）；第二道 AI 只做语义。
