@@ -1,7 +1,12 @@
   
 ---
 
-## T-0065 C2 【2026-09-07 凌晨】对齐引擎接入智能检测（commit 26f2c82，未部署）
+## T-0065 C2 部署 【2026-09-07 凌晨】e164882 上线测试站（待 Owner 实测）
+
+- **部署**：`e164882`（备份 /var/www/tygf-test-backups/deploy-20260906_222304-e1648829e563）。首次部署尝试因 ssh 超时中断 + 服务器 /tmp zip 损坏（SHA 不符被护栏拦截——护栏工作正常），重传校验后 nohup 部署成功。
+- **活体验证**：PM2 双 online、provenance 200、BUILD_ID 更新（Xxog8TQei5PGbvtUYZY3L）、服务端+客户端 chunk 含 DROP_ORPHAN 算子标记。
+- **Owner 验收路径**：导入 JP-5472 / JP-5477 → 智能检测 → 应出现「对齐修复计划（未调用 AI）」分组建议 → 一键采用 → 再跑智能检测做语义审查 → 缺译行复活后正常执行（12 语言批量同理）。
+- **遗留**：C3（应用后自动重跑）、单语言 invalid_target→excluded（高风险需 12 问）、9 个供应商文件批量对账报告、develop ahead 36 未推送。
 
 - **交付**：① `reviewRowsWithDeepSeek` 确定性层从旧两段启发式切换为双语对齐引擎（旧 detectColumnShift/detectOrphanTargetSegments 函数保留供测试）；② 建议增加 `op` 标记（REALIGN/DROP_ORPHAN/EXCLUDE）——审核台过滤器放行带 op 的空 target 建议（置空/排除语义），AI 语义建议仍要求非空；③ 应用语义=快照 target 文本，顺序无关，UI 其余零改动。
 - **算法调优（对抗过程中三轮）**：① skipTarget 差异化——孤儿译文 skip=-8（错位指纹先验，否则长度分打平时选"丢孤儿保对角"漏报移位）；② 窗口边界=强守恒（有标记且守恒）——无标记对是空真不能停窗；③ 已知局限：5294 型尾段（row11-12 长度巧合无标记）引擎只确定性修复 8-10，其余交 AI 语义层兜底；旧 smoke 期望已更新（[8,9,10]+DROP7）。
