@@ -1,6 +1,18 @@
   
 ---
 
+## T-0065 【2026-09-06 深夜】双语表对齐修复引擎方案（待 Owner 批准）
+
+- **触发**：Owner 反馈供应商双语 CSV（5477/5472"主图+A+"）审核跑不通；并问图三「未调用 AI，不消耗 token」是怎么识别的。
+- **问题解答**：智能检测两道防线——第一道确定性规则零 token（detectColumnShift 长度方差法 :579 + detectOrphanTargetSegments 孤儿译文分段法 :629，"未调用 AI"即此层，错位是结构特征非语义问题）；第二道 AI 只做语义。
+- **文件解剖（实测）**：5477=112 物理行/40 逻辑行、两重复块各含 11 行"译文上移 1"错位（段长>segmentSpan=6）；5472=缺陷异构四类并存——局部移位(41-43)、孤儿重复行(53/57/9/14/18，正确修法=删行而非移位！)、真空缺、URL 噪声行(34)。
+- **跑不通根因**：修复算子只有"改用第N行译文"一种（对孤儿重复行是破坏性的）；segmentSpan=6<11 需多轮"应用再检测"；缺译/空原文被阻断且无排除出路（违背 #29 未匹配行排除先例）；URL 行无剔除路径。
+- **方案**：Gale-Church DP 对齐器（业界标准，六操作恰好覆盖四类缺陷；GitHub 取样 vchahun/dowobeha/gachalign；关键教训=EN↔JP 纯长度法 F 仅 62.9%，c/方差必须从锚定对自适应估计）+ TypedRepairPlan 五算子（KEEP/REALIGN/DROP_ORPHAN/EXCLUDE/FLAG_MISSING）+ hard anchor 分块（空行/URL 行）+ 不变量"文本零丢失"+ EXCLUDED 行四层同步（#29 合同）。
+- **文档**：`docs/records/20260906_bilingual_align_qa_plan.md`（100 向量对抗审查；C1 引擎→C2 审核台接线→C3 自动收敛，三提交）。
+- **状态**：纯方案零代码；待 Owner 批准。验证 NOT_RUN。
+
+---
+
 ## T-0064 C1 【2026-09-06 晚二】Account-First 云端身份解析落地（已部署）
 
 - **范围（C1-lite：零写入、零助手发版）**：commit `647184a`。
