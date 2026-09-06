@@ -1,6 +1,16 @@
   
 ---
 
+## T-0065 C2 【2026-09-07 凌晨】对齐引擎接入智能检测（commit 26f2c82，未部署）
+
+- **交付**：① `reviewRowsWithDeepSeek` 确定性层从旧两段启发式切换为双语对齐引擎（旧 detectColumnShift/detectOrphanTargetSegments 函数保留供测试）；② 建议增加 `op` 标记（REALIGN/DROP_ORPHAN/EXCLUDE）——审核台过滤器放行带 op 的空 target 建议（置空/排除语义），AI 语义建议仍要求非空；③ 应用语义=快照 target 文本，顺序无关，UI 其余零改动。
+- **算法调优（对抗过程中三轮）**：① skipTarget 差异化——孤儿译文 skip=-8（错位指纹先验，否则长度分打平时选"丢孤儿保对角"漏报移位）；② 窗口边界=强守恒（有标记且守恒）——无标记对是空真不能停窗；③ 已知局限：5294 型尾段（row11-12 长度巧合无标记）引擎只确定性修复 8-10，其余交 AI 语义层兜底；旧 smoke 期望已更新（[8,9,10]+DROP7）。
+- **验证**：tsc ✅ lint ✅ test:bilingual-align ✅ test:review-filters ✅（旧期望按新行为更新）test:trust-chain ✅ test:batch-row-contract ✅。
+- **未做**：部署（等部署窗口）；C3（应用后自动重跑收敛）；单语言 binding-core invalid_target→excluded 语义（高风险状态机变更，需 12 问 + 助手合同评估）；批量对账报告（其余 9 个供应商文件）。
+- **红线**：未动支付/账务/生产；EXCLUDED 执行口径走既有 #29 合同（batch-executable-rows 规则 2/3 已存在，无需四层改动——本次确认）。
+
+---
+
 ## T-0065 C1 【2026-09-06 深夜三】双语对齐修复引擎落地（commit fac314c，未接 UI）
 
 - **交付**：`src/lib/server/bilingual-align.ts`（纯函数引擎）+ `scripts/smoke-bilingual-align.mjs`（test:bilingual-align）。
