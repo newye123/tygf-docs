@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0065 C2 部署+三轮 UX 修复（2026-09-07 晨，测试站=`5bfd391`）**：① ATTEMPT_EVIDENCE_REQUIRED 裸码回显已修（旧助手正确拦截、79 分正常退回，显示改为人话+升级引导——**Owner 仍需重装 3.6.21 助手根治**）；② "N 项需要确认"卡死已修（对齐计划算子不再转确认项 + 报错自动展开滚动 + 全部确认知晓）；③ 确认卡片一行化（砍系统判断/采取的处理/最终结果标签仪式 + 引擎 reason 瘦身，5bfd391）。UX-1 后续（跳行锚点/指标卡可点/分型批量）待批。排队：C3、单语言 invalid_target 语义、P1、T-0064 C2/C3。develop ahead ~40 未推送。
+> **候选 c59e288 已 code-only 部署测试站（2026-09-07 晚，全项 PASS）**：T-0065 收口+助手 3.6.22+Route Handler 修复（GitHub develop 精确 SHA，HTTPS 非强推）。runtime=c59e288、assistant=3.6.22、PM2 双 online、公网 provenance 200、**DB 零变更**（live=previous=pre 全 `c037675c…`）、回滚就绪（备份 deploy-20260907_201455）。部署脚本加固已提交 f9c5d8a（默认跳过 db push/backfill+漂移即停；教训：set -u unbound 致命退出不走 ERR trap）。**Owner 验收：新机装 3.6.22 助手 → 5472/5477 全流程；换浏览器验收 T-0064 C1。**排队：codex_handoff §5 P1-P5 暂缓，先等实测。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 

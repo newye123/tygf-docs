@@ -1,6 +1,16 @@
   
 ---
 
+## c59e288 code-only 部署 【2026-09-07 晚】接管无额度窗口完成发布（develop f9c5d8a）
+
+- **目标**：Owner 批准 TEST_CODE_ONLY_DEPLOY——GitHub develop `c59e28873de0` 部署 test.tuyigf.com，DB 零变更。
+- **执行**：上传 zip+receipt（SHA 精确匹配）→ 加固 deploy 脚本（默认 code-only：跳过 db push+backfill-beta-users+backfill-user-profile，schema 漂移 ABORT，显式旁路 env）→ 首跑死于 set -u unbound（`TYGF_ALLOW_DESTRUCTIVE_DB_SYNC` 未设致命退出不走 ERR trap → 站点停机 ~1 分钟，手动 pm2 start 恢复）→ 改 `${VAR:-}` 重跑 → stale next 目录移入 tygf-test-failed → 第二次成功。
+- **结果**：runtime=c59e288、assistant 3.6.22（v15-frozen-evidence-contract-20260907-r1）、PM2 双 online、公网 provenance 200、DB 三方 SHA 一致（零写）、回滚链就绪（previous+备份 deploy-20260907_201455+LATEST）。脚本提交 f9c5d8a（ops-only）。
+- **教训**：① set -u 下读未设变量是 fatal 不触发 ERR trap——恢复逻辑必须假设任何步都可能 shell 级死亡；② 失败运行的 NEXT_DIR 不含敏感数据时移入 FAILED_ROOT 而非 rm（保留取证）；③ /tmp 旧脚本（8 月遗留）是误执行风险，部署后清理。
+- **遗留**：Owner 验收（3.6.22 全流程/换浏览器）；codex_handoff P1-P5 暂缓；#34/#35 未动。
+
+---
+
 ## T-0065 UX 瘦身 【2026-09-07 晨三】确认卡片一行化（commit 5bfd391，已部署）
 
 - **Owner 反馈**：确认项四行标签仪式（系统判断/采取的处理/最终结果）信息过载，用户懵。
