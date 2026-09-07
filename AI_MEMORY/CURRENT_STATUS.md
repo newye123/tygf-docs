@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0065 C2 已部署 + 裸码回显修复（2026-09-07 晨，测试站=`5ba39c8`）**：Owner 实测触发 ATTEMPT_EVIDENCE_REQUIRED（旧助手正确拦截、79 分正常退回）但显示裸码——已修（message===code 视为伪回显，强制走中文映射，四处）。**Owner 待办：新电脑下载页重装 3.6.21 助手（根治）**，或重试看新引导文案。排队：C3、单语言 invalid_target 语义、P1、T-0064 C2/C3。develop ahead 37 未推送。
+> **T-0065 C2 部署+两轮 UX 修复（2026-09-07 晨，测试站=`865b729`）**：① ATTEMPT_EVIDENCE_REQUIRED 裸码回显已修（旧助手正确拦截、79 分正常退回，显示改为人话+升级引导——**Owner 仍需重装 3.6.21 助手根治**）；② "N 项需要确认"卡死已修（对齐计划算子不再转确认项 + 报错自动展开滚动 + 全部确认知晓）。UX-1 后续（跳行锚点/指标卡可点/分型批量）待批。排队：C3、单语言 invalid_target 语义、P1、T-0064 C2/C3。develop ahead 38 未推送。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 

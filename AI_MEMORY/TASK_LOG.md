@@ -1,6 +1,17 @@
   
 ---
 
+## T-0065 UX 修复 【2026-09-07 晨二】"N 项需要确认"卡死修复（commit 865b729，已部署）
+
+- **Owner 反馈**：智能检测后报「还有 6 项需要明确确认，处理后才能继续」，确认入口藏在折叠面板里没有按钮。
+- **根因（两个叠加）**：① **C2 回归**——对齐修复计划的建议（DROP_ORPHAN/EXCLUDE，target=''）被 buildSuggestionSmartReviewDecisions 的 `target.length===0` 规则转成 NEEDS_CONFIRMATION 阻断项（两套门叠加同一事实）；② 确认卡片藏在默认折叠的 `<details>` 里，报错只给数量不给入口。
+- **修复**：① 带 op 的建议不再转确认项（smart-review-contract：空 target 且无 op 才确认）；② 点继续遇未确认项 → 自动展开检测明细 + scrollIntoView 到确认卡片；③ 确认卡片新增「全部确认知晓」批量按钮（确认=知悉登记语义，消灭 N 连点）。
+- **UX 方案**（§8 增补，部分已实施）：报错自带出路/批量知悉/指标卡可点击/reasonCode 分型（选择型不给批量）/文案字典同步——Phase UX-1 待批（d-g 项）。
+- **验证**：tsc ✅ lint ✅ bilingual-align ✅ review-filters ✅；部署 865b729（备份 deploy-20260907_091252），PM2 online、provenance 200、客户端 bundle 含「全部确认知晓」。
+- **教训**：空 target 建议的语义分支改动必须同步 decisions 构建层（同一事实两套门=回归源）。
+
+---
+
 ## T-0065 C2 补丁 【2026-09-07 晨】裸错误码回显修复（commit 5ba39c8，已部署测试站）
 
 - **Owner 实测反馈**：「ATTEMPT_EVIDENCE_REQUIRED 本次尚未启动，已自动退回 79 积分。」——P0-A typed error 在**真实旧助手**上正确触发（79 分冻结并正常退回，补偿链健康），但 UX 显示裸码：旧助手 server.js 的 postJson 用 `parsed.code` 兜底 `error.message` → 助手回给浏览器 message=code → 浏览器 `prepared?.message ||` 短路了 ZH 映射。
