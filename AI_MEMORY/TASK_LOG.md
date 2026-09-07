@@ -1,6 +1,15 @@
   
 ---
 
+## T-0065 C2 补丁 【2026-09-07 晨】裸错误码回显修复（commit 5ba39c8，已部署测试站）
+
+- **Owner 实测反馈**：「ATTEMPT_EVIDENCE_REQUIRED 本次尚未启动，已自动退回 79 积分。」——P0-A typed error 在**真实旧助手**上正确触发（79 分冻结并正常退回，补偿链健康），但 UX 显示裸码：旧助手 server.js 的 postJson 用 `parsed.code` 兜底 `error.message` → 助手回给浏览器 message=code → 浏览器 `prepared?.message ||` 短路了 ZH 映射。
+- **修复**：四处（prepare/authorize/run/批次语言执行）识别"伪 message"（message===code），已知错误码强制走 V15_ERROR_CODE_ZH/PREPARE_CODE_ZH 映射。现在该场景显示：「本地助手版本过旧，缺少执行所需的冻结证据摘要……请到下载页更新本地助手。本次尚未启动，已自动退回 79 积分。」
+- **验证**：tsc/lint/bilingual-align/review-filters 全绿；部署 5ba39c8（备份 deploy-20260907_085017），PM2 online、provenance 200、客户端 chunk 含映射文案（3 处）。
+- **Owner 待办**：① 新电脑到下载页重装 3.6.21 助手（根治——升级后 digest 会随 prepare 上报，直接跑通）；② 或重试执行看新文案确认引导。79 分退回正常，无账务问题。
+
+---
+
 ## T-0065 C2 部署 【2026-09-07 凌晨】e164882 上线测试站（待 Owner 实测）
 
 - **部署**：`e164882`（备份 /var/www/tygf-test-backups/deploy-20260906_222304-e1648829e563）。首次部署尝试因 ssh 超时中断 + 服务器 /tmp zip 损坏（SHA 不符被护栏拦截——护栏工作正常），重传校验后 nohup 部署成功。

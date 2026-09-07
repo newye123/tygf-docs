@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0065 C1+C2 已部署（2026-09-07 凌晨，测试站=`e164882`）**：双语对齐引擎接入智能检测——5472/5477 类错位表一次计划全修、缺译行复活、文本零丢失、应用即收敛。**待 Owner 实测验收**（导入 5472/5477 → 智能检测 → 一键采用修复计划）。排队：C3 自动收敛、单语言 invalid_target 语义（高风险需 12 问）、P1 每日积分、T-0064 C2/C3。develop ahead 36 未推送（push 需 Owner 授权）。
+> **T-0065 C2 已部署 + 裸码回显修复（2026-09-07 晨，测试站=`5ba39c8`）**：Owner 实测触发 ATTEMPT_EVIDENCE_REQUIRED（旧助手正确拦截、79 分正常退回）但显示裸码——已修（message===code 视为伪回显，强制走中文映射，四处）。**Owner 待办：新电脑下载页重装 3.6.21 助手（根治）**，或重试看新引导文案。排队：C3、单语言 invalid_target 语义、P1、T-0064 C2/C3。develop ahead 37 未推送。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 
