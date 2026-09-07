@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **候选 c59e288 已 code-only 部署测试站（2026-09-07 晚，全项 PASS）**：T-0065 收口+助手 3.6.22+Route Handler 修复（GitHub develop 精确 SHA，HTTPS 非强推）。runtime=c59e288、assistant=3.6.22、PM2 双 online、公网 provenance 200、**DB 零变更**（live=previous=pre 全 `c037675c…`）、回滚就绪（备份 deploy-20260907_201455）。部署脚本加固已提交 f9c5d8a（默认跳过 db push/backfill+漂移即停；教训：set -u unbound 致命退出不走 ERR trap）。**Owner 验收：新机装 3.6.22 助手 → 5472/5477 全流程；换浏览器验收 T-0064 C1。**排队：codex_handoff §5 P1-P5 暂缓，先等实测。
+> **T-0066 已部署（2026-09-07 深夜，测试站=`fdf3af5`）**：执行准备参数失败根因=3.6.22 冻结证据合同新增三必填字段而浏览器直连载荷未带（两台机 100% 复现，79 分退回健康）——修复：载荷携带三字段 + contract 门双端交叉断言（防再漏）+ 空行跳过（Owner 指示）。验证全绿。**Owner 验收：重试单语言执行应过 prepare 进 Photoshop。** c59e288（3.6.22 候选）code-only 部署见 TASK_LOG。排队：codex_handoff P1-P5 暂缓等实测。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 

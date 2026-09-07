@@ -1,6 +1,17 @@
   
 ---
 
+## T-0066 执行准备参数修复 【2026-09-07 深夜】3.6.22 冻结证据合同补浏览器侧（fdf3af5 已部署）
+
+- **Owner 反馈**：本地+测试两台机单语言执行全挂「执行准备参数不完整…退回 79 积分」，卡关；另空行（原文空+译文空）不该列进需要处理的行。
+- **根因（第一性+对抗审查）**：3.6.22（2ea2d00）冻结证据合同令助手 prepare 新增必填三字段 reviewSchemaVersion/reviewEngineVersion/ruleSetVersion（server.js:3812）；服务端编排路径自取 DB（orchestrator:216-218）无恙，浏览器直连载荷（local-assistant-client.ts:862）没带 → 100% 400。数据一直在手（review-snapshot API :170-172 早返回），只是 snapshot-client 没接收。79 分每次正常退回（补偿健康）。
+- **修复 fdf3af5**：① snapshot-client 接收三字段 → submitV15Execution params+载荷携带；② verify-client-assistant-contract.cjs 新增双端交叉断言（客户端载荷缺字段/助手取消强制 任一即 fail）——该门此前只查 diagnostic，属漏网；③ review-step attentionRows 跳过双空行（Owner 指示，恢复旧行为）。
+- **验证**：tsc/lint/test:trust-chain/test:review-filters/test:batch-row-contract 全绿；部署 fdf3af5（备份 deploy-20260907_213800），provenance BOUND、PM2 双 online、公网 200。
+- **教训**：① 助手合同新增必填字段必须同时改浏览器直连载荷+contract 门（单侧自测抓不到跨端缺字段）；② scp 慢链路：99MB 单连接 ~15min 超时，6 块并行 ~3min，合并后 SHA 门兜底。
+- **Owner 验收**：重试单语言执行（应过 prepare 进 Photoshop）；空行不再出现。
+
+---
+
 ## c59e288 code-only 部署 【2026-09-07 晚】接管无额度窗口完成发布（develop f9c5d8a）
 
 - **目标**：Owner 批准 TEST_CODE_ONLY_DEPLOY——GitHub develop `c59e28873de0` 部署 test.tuyigf.com，DB 零变更。
