@@ -12,6 +12,17 @@
   
 ---
 
+## 官网文案直改 B 方案（执行方案）【2026-09-09】100 问对抗审查后定稿，待 Owner 批准
+
+- **需求**：Owner 拍板启动搁置的 ISSUES #31（官网前端直改文字），要求第一性原理 + GitHub 调研 + 100 次对抗式审查。
+- **调研**（copy-ink/better-content/svedit/TinaCMS/Chalk/inlinecms 六项目）：核心教训=①popover 而非 contenteditable（contenteditable 与中文 IME/粘贴/React 受控输入全面为敌）；②访客零编辑 JS（editor bundle 仅 admin 会话懒加载）；③纯文本编辑（XSS 面趋零）；④发布即生效 messaging 不需要（我们 force-dynamic）。
+- **关键发现**：**Content Studio V1 后端已齐全**——SiteContentRevision/SiteContentPublication 表 + digest 校验（site-settings.ts:386）+ ACTIVE 指针（:417）+ 发布/回滚 API（api/admin/site-content/*）+ 官网唯一读取入口 getMergedSiteContent（:443）+ homepage force-dynamic（page.tsx:5）。**零 DB 迁移，只补 4 件**：N1 key 标注层（t(key) 帮助函数，编辑模式才注 data-sc-key）、N2 服务端 edit 会话判定、N3 popover 编辑器（~400 行，无第三方依赖）、N4 字段级草稿 PATCH API。估 4 个工作日。
+- **产物**：`worktrees/develop/docs/records/20260908_官网文案直改_B方案_执行方案.md`（提交 37d7831）——第一性原理 6 命题、调研教训表、架构图、100 问对抗审查（10 维度×10 问，Q48 水合/Q71 大文件改造回归/Q26 爆版/Q42 SSG 误判/Q81 flag 关死为五大推翻点，全部有对策）、DoD 验收 7 条、待 Owner 决策 3 项。
+- **事故（自我纠正）**：commit 37d7831 把并行窗口暂存的 HANDOFF.md 2 行删除裹进了提交（我的 T-0068 条目被删）；发现后 16f7837 恢复并补登记。**教训：直接 git commit 前必须 git status 检查暂存区，多窗口并行下暂存区不属于你。**
+- 遗留：①12 语言批次 DE 卡死根因仍未破案（等 Owner 测试机 .execution 证据）；②方案待 Owner 批准 3 项决策（范围/工期/纯文本边界）。
+
+---
+
 ## T-0068 语言自称表头识别 【2026-09-08 深夜】13 国 xlsx 只认 2 语修复（develop ffa5702，已部署）
 
 - **Owner 反馈**：`5477_13国语言_欧洲东南亚_英文在前.xlsx` 只识别出意大利语/葡萄牙语。

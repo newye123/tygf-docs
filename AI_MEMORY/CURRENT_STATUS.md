@@ -5,7 +5,8 @@
 
 ## 一句话状态
 
-> **T-0068 已部署（2026-09-08 深夜，测试站=`ffa5702`）**：13 国 xlsx 只认 2 语根因=语言词典无自称（endonym）——补 30+ 自称别名（注意 cleanHeaderName 删空格，多词自称写无空格形态），实测 13/13+286 例冒烟全绿。**Owner 验收：重传 xlsx 应出 12 个语言页签。** develop tip=ffa5702（含并行窗口 cost-guard 2472ea9/21a4632）。T-0067（c23d1c2，助手 3.6.23 智能引号修复）见下。**多窗口纪律：打包需 develop 分支+干净树——用临时 worktree+junction node_modules+symbolic-ref 临切分支名，打包后立即 detach。**
+> **B 方案执行方案已定稿（2026-09-09）**：官网文案直改——方案文档 `worktrees/develop/docs/records/20260908_官网文案直改_B方案_执行方案.md`（37d7831）。核心结论：Content Studio V1 后端已齐全，零 DB 迁移，只补 4 件（key 标注层/edit 会话判定/popover 编辑器/字段级草稿 API），估 4 工作日。**待 Owner 批准 3 项：范围边界/实施窗口/纯文本限制。** 上一节点：T-0068 已部署 ffa5702（xlsx 13 语言识别修复）。
+> **未破案**：12 语言批次德语卡死（3 次 attempt 0/27 零进度 RUNNING 无终态，其余语言正常）——等 Owner 测试机 `.execution` 证据 + assistant-events.log；DE 疑似 5 行 AI 建议行触发的 PS 前置挂起。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 
