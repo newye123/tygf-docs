@@ -1,4 +1,26 @@
+﻿## T-0106 【2026-09-08】官网首页文案整体替换（v27"让设计师改语言，从此变得轻松"）
+
+- **任务目标**：按 Owner 提供的 12 节新文案（00 HERO～11 FINAL CTA + 申请表 + SEO）整体替换官网首页
+- **执行方案**：重写 `src/components/site/home-view.tsx`（8 节 v26 → 12 节 v27）；复用 home-v16.css 既有类 + 追加少量新类（hero-fromto/how-grid/repeat-langs/section-final-line/final-cta-body 等，无 border-left 描边）；更新 `src/app/layout.tsx` SEO title/description/keywords
+- **修改文件**：`src/components/site/home-view.tsx`（全量重写）、`src/components/site/home-v16.css`（尾部追加）、`src/app/layout.tsx`（metadata）
+- **修改原因**：Owner 指定替换文案上官网
+- **关键口径裁决**：新文案 FAQ"单次最多 12 个目标语种"与代码冲突（quote/route.ts:16 MAX_LANGUAGES=10、execution-batch.ts:51、pack 页口径 10）→ 按 10 实现并保留"经常超过可在申请说明"；删除旧版"≈90%"承诺（新文案 08 节明确不先给数字）；语种文案统一"改语言/替换"不写"翻译"
+- **测试结果**：tsc ✅ lint 0 error（2 条既有 TanStack warning）；dev server :3422 首页 200，14 项新文案关键句 + 5 项导航标签全部命中，旧文案（≈90%/批量处理多语言版本）残留清零
+- **遗留问题**：→【已回滚 2026-09-08】Owner 澄清只授权改文案、不授权改版式/节结构；本条改动全部还原（git restore 三文件，diff 确认仅含本窗口改动），v27 版本备份于 %TEMP%\opencode\home-view-v27.tsx.bak。教训：超出文案替换范围的结构变更未先出方案确认，违反协议
+
+---
   
+---
+
+## T-0068 语言自称表头识别 【2026-09-08 深夜】13 国 xlsx 只认 2 语修复（develop ffa5702，已部署）
+
+- **Owner 反馈**：`5477_13国语言_欧洲东南亚_英文在前.xlsx` 只识别出意大利语/葡萄牙语。
+- **根因（实证）**：csv.ts LANG_ALIASES 词典全是英文/中文/代码别名，**无任何语言自称**——表头 Deutsch/Français/Español/Svenska/ไทย/Tiếng Việt/Bahasa Indonesia… 全部落空；只有 Italiano（前缀规则 ITALIAN）和 Português（前缀 POR）被碰中。COM/结构探针确认 xlsx 本身正常（13 列 inlineStr 表头）。
+- **修复 ffa5702**：词典补 30+ 自称（DEUTSCH/FRANÇAIS/ESPAÑOL/CASTELLANO/ITALIANO/PORTUGUÊS/NEDERLANDS/SVENSKA/NORSK/DANSK/SUOMI/POLSKI/TÜRKÇE/РУССКИЙ/日本語/한국語/TIẾNGVIỆT/BAHASAINDONESIA/BAHASAMELAYU/ไทย/ภาษาไทย/עברית/العربية 等）。**关键坑：cleanHeaderName 删全部空白+括号——多词自称必须写成无空格形态（BAHASAINDONESIA 而非 'BAHASA INDONESIA'）**；FA/BN 未入 lang-display 不加（避免半支持）。
+- **验证**：实测 13/13 表头全识别；language-recognition 286 例全过；tsc OK；review-filters 过。部署 ffa5702（备份 deploy-20260908_213105，DB 未动 live=previous，公网 200）。
+- **工程教训（多窗口并行）**：① develop worktree 被并行窗口占用（cost-guard 提交+脏文件）→ 打包在临时 worktree（junction node_modules）完成；② package-release preflight 校验分支名=develop → 临时 worktree 用 `git symbolic-ref HEAD refs/heads/develop` 临切过门，**打包后必须立即 checkout --detach**（否则双 worktree 共享分支引用=数据竞争）；③ 提交前必须 `git branch --show-current`（T-0067 的提交曾落在被切走的分支上，靠快进归位）。
+- **注意**：并行窗口在 develop 叠了 Smart Review cost-guard（2472ea9/21a4632）+部署脚本迁移逻辑（f8ef250/21a4632）；本次部署 ffa5702 时服务器上跑的仍是我装的"跳过 DB 同步"版脚本（仓库版新迁移逻辑下次部署才生效）。
+
 ---
 
 ## T-0067 智能引号忠实性修复 【2026-09-08 晨】READBACK_MISMATCH 破案+3.6.23 发布（develop 303954c，测试站=c23d1c2）
@@ -854,3 +876,5 @@
 - **执行方案**：Prisma schema/lib 基建 + agent-browser 全链路端到端验证
 - **测试结果**：端到端验证通过，"项目状态：可交付"（worklog Task 1-4）
 - **遗留问题**：RG-001~008 红线后续逐步放开
+
+

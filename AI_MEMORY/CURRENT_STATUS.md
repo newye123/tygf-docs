@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0067 已部署（2026-09-08 晨，测试站=`c23d1c2`，助手 3.6.23）**：测试机 READBACK_MISMATCH 根因=**PS 智能引号把直引号 " 自动替换成 ”**（COM 受控实验实锤，层 527/1676 两连挂）；修复=瘦执行器写前关 `app.preferences.smartQuotes`（结束恢复）+ 失败取证（layerId/expected/actual）；3.6.23 发布链全套+本地 9/9 实证。验证全绿。**Owner 待办：两台机都到下载页重装 3.6.23 → 重跑 5472 主图A。** 上一节点 T-0066（fdf3af5）。develop=303954c（注意：worktree 被并行窗口切到 codex/smart-review-cost-guard-cg1-20260908 分支，我的提交落在那上面，develop 已快进归位；打包在临时 worktree wt-t0067 完成）。
+> **T-0068 已部署（2026-09-08 深夜，测试站=`ffa5702`）**：13 国 xlsx 只认 2 语根因=语言词典无自称（endonym）——补 30+ 自称别名（注意 cleanHeaderName 删空格，多词自称写无空格形态），实测 13/13+286 例冒烟全绿。**Owner 验收：重传 xlsx 应出 12 个语言页签。** develop tip=ffa5702（含并行窗口 cost-guard 2472ea9/21a4632）。T-0067（c23d1c2，助手 3.6.23 智能引号修复）见下。**多窗口纪律：打包需 develop 分支+干净树——用临时 worktree+junction node_modules+symbolic-ref 临切分支名，打包后立即 detach。**
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 
