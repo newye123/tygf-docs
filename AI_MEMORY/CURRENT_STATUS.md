@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0066 已部署（2026-09-07 深夜，测试站=`fdf3af5`）**：执行准备参数失败根因=3.6.22 冻结证据合同新增三必填字段而浏览器直连载荷未带（两台机 100% 复现，79 分退回健康）——修复：载荷携带三字段 + contract 门双端交叉断言（防再漏）+ 空行跳过（Owner 指示）。验证全绿。**Owner 验收：重试单语言执行应过 prepare 进 Photoshop。** c59e288（3.6.22 候选）code-only 部署见 TASK_LOG。排队：codex_handoff P1-P5 暂缓等实测。
+> **T-0067 已部署（2026-09-08 晨，测试站=`c23d1c2`，助手 3.6.23）**：测试机 READBACK_MISMATCH 根因=**PS 智能引号把直引号 " 自动替换成 ”**（COM 受控实验实锤，层 527/1676 两连挂）；修复=瘦执行器写前关 `app.preferences.smartQuotes`（结束恢复）+ 失败取证（layerId/expected/actual）；3.6.23 发布链全套+本地 9/9 实证。验证全绿。**Owner 待办：两台机都到下载页重装 3.6.23 → 重跑 5472 主图A。** 上一节点 T-0066（fdf3af5）。develop=303954c（注意：worktree 被并行窗口切到 codex/smart-review-cost-guard-cg1-20260908 分支，我的提交落在那上面，develop 已快进归位；打包在临时 worktree wt-t0067 完成）。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 

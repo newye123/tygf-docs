@@ -1,6 +1,19 @@
   
 ---
 
+## T-0067 智能引号忠实性修复 【2026-09-08 晨】READBACK_MISMATCH 破案+3.6.23 发布（develop 303954c，测试站=c23d1c2）
+
+- **Owner 反馈**：测试机 5472 主图A JP 单语言执行失败「V1.5 执行在 Photoshop 阶段未成功」，34 分退回，两连挂。
+- **取证链（对抗式，每步实证）**：① 云端 attempt=READBACK_MISMATCH、3/9、QUARANTINED（行级证据不上云）；② Owner 提供本地报告（9 绑定层清单：4×Secure Back-Clip Magnets / 2×Streamline / 2×Mount via 1/4"-20 Screw / 1×Mount via Cold Shoe）+ 隔离 PSB（原始未写状态）；③ 本机 PS COM 探针逐层写入+回读+字符码 dump → **U+0022 直引号被 PS 智能引号替换成 U+201D**（仅层 527/1676，其余 7 层 match）；④ 探针试偏好：`app.preferences.smartQuotes=false` 真实生效（typographerSmartQuotes/useSmartQuotes 假属性）；⑤ 修复后受控重跑 9/9 全 match+保存+预览。
+- **修复**：瘦执行器 EXECUTOR_VERSION 1.1.0（写前关智能引号/全退出路径恢复/READBACK_MISMATCH details 带 layerId+expected+actual）；3.6.23 发布链全套同步；安装包入库（.gitignore/.gitattributes export 规则——每版发布必加）；c23d1c2 打包部署。
+- **12 问要点**：修改业务事实=执行清单 target_text 语义（现在=逐字符忠实写入）；authority=本地助手执行器；幂等键不变（attempt/manifest digest 随内容变化属正常）；crash 窗口=偏好恢复失败（可容忍，PS 会话级）；并发=单 PS 会话；不变量=回读一致性（修复使直引号译文可达）。
+- **验证**：tsc/lint/trust-chain 12 项/batch-row-contract/release-consistency 23 项 全绿；部署后 provenance BOUND 3.6.23、PM2 双 online、公网 200、DB live=previous 一致。
+- **教训**：① PS 脚本文本写入受智能引号等排版自动替换影响——凡"回读必须等于写入"的合同，必须先关自动化替换；② 行级失败取证不能为 null（自诊成本）；③ worktree 分支会被并行窗口切走，提交前先 `git branch --show-current`（本次提交落在 cg1 分支，develop 已快进归位）；④ 每版助手发布 = .gitignore+.gitattributes+release-identity+manifest+安装包 五件套。
+- **Owner 待办**：测试机重装 **3.6.23**（下载页），重跑 5472 主图A；本地机同样更新。
+- **AI 生成译文注意**：层 16 的「コールドシュー経由でマウント」为 AI 建议（源 CSV 空译文行）——走的是用户确认路径，非缺陷，但产品上应确保此类 AI 生成译文有明确标识（后续 UX 可加标记）。
+
+---
+
 ## T-0066 执行准备参数修复 【2026-09-07 深夜】3.6.22 冻结证据合同补浏览器侧（fdf3af5 已部署）
 
 - **Owner 反馈**：本地+测试两台机单语言执行全挂「执行准备参数不完整…退回 79 积分」，卡关；另空行（原文空+译文空）不该列进需要处理的行。
