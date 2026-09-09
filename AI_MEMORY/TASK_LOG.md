@@ -12,6 +12,19 @@
   
 ---
 
+## T-0069 【2026-09-09】Batch 执行与积分闭环修复（P0 止血完成，P1→P10 进行中）——本窗口全权实施
+
+- **背景**：Owner 提交《TYGF Batch Photoshop 执行与积分闭环修复方案 v1》（P0-P10+100 审查），授权本窗口全权实施。方案先对账：5 项核心指控全部属实（quotePayloadHash 含随机 quoteRequestId=execution-batch.ts:206；reserve→project_charge=activity-projection.ts:40；助手实跑 3.6.22/合同 3.6.23=本机 /ping 实测；20 分钟超时=local-assistant-client.ts:1414；跨批无 single-winner）。
+- **数字偏差修正**（方案→实测，因方案写完后用户又重试 4 次）：active batches 15→**26（17 RUNNING 冻结 2670 + 9 QUOTED 未冻结）**；重点批次清单已更新：17 个 RUNNING 全部「首语言 RUNNING、其余 PENDING、0 VERIFIED」。e3ed2fe1 run=cmtsqn2li 批次 SETTLED 112/112 守恒 ✓；7 条历史 BatchSettlement 全部 committed=quoted、pending=0 ✓（结算路径本身没问题）。
+- **P0.1 止血（已生效）**：测试站 `.env` `TYGF_EXECUTION_ENABLED=1→0`（execution-gate 文档化总闸，quote 等执行边界 503 EXECUTION_DISABLED，只读准备类 ticket 保留），`pm2 reload tygf-test --update-env`。验证：quote POST=503 ✓、首页 200 ✓、止血后 30 分钟新批次=0 ✓。备份 `.env`（注：第一次 scp 备份文件名被 PowerShell 吞成 `.env.bak-p0-`，内容完整可用）。
+- **P0.4 快照（PASS）**：测试站 `/var/www/tygf-test/p0-snapshot-20260909_092615/`（batches.json 26 + jobs.json 126 + reservations.json 17 + settlements.json 空 + SHA256SUMS；全程 ro URI+readonly）。
+- **根因模式修正（重要）**：卡死语言跨 ES(8/29)/NL(8/30,22 正常行数也卡)/SV(9/6)/DE(9/8-9/9)，且两批（cmtptdsa/cmtfo999）是先完成 5/3 语言才卡——**任意时刻刻、任意语言都可能 0 进度挂死且云端永无 receipt**，不是 DE/特殊行内容特有。根因指向执行链机制三缺陷：PS 挂起无解、助手 attempt 内存态（重启即 404/无 journal）、回执无 outbox 断链。与方案诊断 C/E/F 组一致。
+- **占用声明**：`src/lib/server/execution-batch.ts`、`batch-execution-mode.ts`、`execution-gate.ts`、`activity-projection.ts`、`download/local-assistant/server.js`、`scripts/TYGF_V15_Thin_Executor.jsx`、`src/lib/workbench/local-assistant-client.ts` 归本窗口；其他窗口勿动（并行事故已有两次前科）。
+- **下一步**：12 问状态机门（P2/P3 合同变更强制产物）→ P1 版本门禁 → P2 single-winner → P3 两阶段接受 → …（见 docs/records/ 12 问文档）。
+- **纪律**：测试站执行闸门保持 0 直到 P10 Gate；不碰 Credits/Ledger 历史；不部署生产。
+
+---
+
 ## 官网文案直改 B 方案（执行方案）【2026-09-09】100 问对抗审查后定稿，待 Owner 批准
 
 - **需求**：Owner 拍板启动搁置的 ISSUES #31（官网前端直改文字），要求第一性原理 + GitHub 调研 + 100 次对抗式审查。
