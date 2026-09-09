@@ -23,6 +23,18 @@
 
 ---
 
+## T-0107 进度 1 【2026-09-10】反破解 Phase 1 已实施并部署（ec12084，助手 3.6.26）
+
+- **Owner 批准**：「反破解可以行动了」（Phase 1 范围）。
+- **实施**（35cc16a + 7a739e4 重构建 + ec12084 白名单）：①云端分发端点 `/api/local-assistant/scripts/distribute`（assistantToken 门+版本门 compareAssistantVersions+30/分钟限流+LF sha+审计日志，白名单 5 脚本，D1-D5 契约测试全绿）；②助手 `script-distribution.cjs`（启动预取+30 分钟周期+缺件按需重试，内容寻址缓存 `.tygf_script_cache/<sha8>/`，同步调用点零改动，依赖注入避免循环 require）；③**pkg bytecode 修复**：新增 package.json（private+bin）+ bat 改 `pkg .` 包模式（单文件模式不走 walker 不出 bytecode——Phase 0 根因）；④**资产移除**：pkg-config 去 `../scripts/**/*`，`--self-test-assets` 反转为"打包形态无明文脚本"合同 + 新增 `--self-test-distribution`；⑤MachineGuid 缺失硬失败（start() 顶部 exit 1，stateCipherKey 去固定 fallback）；⑥自攻验收脚本 `scripts/check-exe-no-plaintext.cjs`（注释+jsx 双探针，ascii+utf16le；教训：运行时字面量在 bytecode 常量池存活是正常，探针必须用纯注释）。
+- **实测验收**：发布 exe 36.5MB——server.js 注释零命中（bytecode 生效）、jsx 内容零命中（资产移除生效）、`pkg .`+private 是唯一可靠组合（单文件模式三条路全试均明文）。
+- **部署**：测试站 `ec12084`（SHA 5F3CF2DF...A62），latest=3.6.26（43E1765F...2336 与本地一致），分发端点实弹验证（无凭证 400/坏凭证 403），服务器 scripts/ 源就位，PM2 online，quick_check ok，备份 deploy-20260910_002934。
+- **过程修复**：attachCloudReceipt 三处调用签名错位（options 无 .options 属性）+ 无 rowTokenByRowId 静默跳过（旧调用方兼容）——smoke-v15-runner 抓出。
+- **残余风险（如实）**：运行时内存提取不可防（方案 #100）；分发端点单次响应即明文（限流+吊销缓解）；缓存的脚本副本在本机磁盘（内容寻址，证据门兜底篡改）。Phase 2（完整性自检上报/遥测/ACL/法务）未实施。
+- **兼容性**：旧助手 3.6.25 及更早仍用内置脚本（不调新端点），不受影响；3.6.26 起联网拉取。
+
+---
+
 ## T-0111 进度 2 【2026-09-09】已部署测试站 10dd93a（助手 3.6.25）
 
 - **授权后执行**：①push（先合并并行窗口的官网 v5.6 重建 41e58ee → a522790）；②迁移 20260909120000 服务器一次性副本演练（col=1/idx=1/quick=ok，行数不变）；③allowlist 追加第三条目 + **skip-if-already-applied 三态回放语义**（否则旧条目重放会拒部署——8a2e626）；④助手 **3.6.25**（v15-batch-recovery-20260909-r1，UnsignedBeta，SHA 168243CD...EB80）全链发布（七声明点 bump + build-engine + ISCC + publish + gitignore/gitattributes 白名单 + release-consistency 23 + frozen-evidence 自检）；⑤release:package:test（SHA 1F34065E...F7A）→ 分块上传 → 部署。
