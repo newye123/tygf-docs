@@ -12,6 +12,25 @@
   
 ---
 
+## T-0069 进度 4 【2026-09-09】P4-P10 全链完成，测试站已部署 4e3e9d9
+
+- **P4 ✅（36d4a8b）**：STALLED 读取侧判定抽为领域纯函数 `attemptProgressView`（execution-batch.ts，3 分钟阈值、终态永不 STALLED、legacy state=NULL 不参与）；批次状态路由暴露 progress（state/checkpoint/acceptedAt/heartbeatAt/completedAssignmentCount/stalled）；30 分钟硬上限复核确认（PS_EXECUTION_HARD_TIMEOUT_MS）。
+- **P5 ✅（36d4a8b）**：回执 outbox。云端 receipt 路由新增**无票据重放路径**（票据过期后，以 acceptance 记录的 executionHostDigest 绑定执行宿主锁；DISPATCHING 无宿主记录天然拒绝）；助手侧 `receipts-pending/`（journals 下）持久化 + 启动续投递 + 5 分钟 sweep + 30 秒快速重试 + ACK 清除；重放不带票据（静态合同测试断言）。
+- **P6 ✅（d29f0fa）**：部分结算守恒矩阵 `test:batch-partial-language-settlement`（k=0/1/3/5：committed+released==quoted、线性比例扣费、B1 缺口 INCOMPLETE→补收回执自愈→账本 used=48/reserved=0）。
+- **P8 ✅（d29f0fa）**：只读裁决工具 `scripts/batch-remediation-dry-run.cjs`（8 类分类×建议、严格只读、库标识脱敏、production 需 --allow-production）；smoke D1-D4（含"跑前后 DB 计数不变"只读证明）。**15/17 历史批次裁决：Owner 部署后在测试站跑此工具，依输出走受控脚本**（本轮未执行真裁决）。
+- **P9 ✅（1a6ca4e）**：`test:batch-receipt-outbox-replay`（O1 助手 outbox 布线静态合同 / O2 助手重启后无票据迟到投递幂等 / O3 未知窗口批次 RUNNING+预留 reserved+迟到回执到齐后正常结算 / O4 4 波×8 并发唯一 winner）。**发现并如实登记**：32 路并发会打穿 SQLite 交互事务 5s 上限（引擎层超时，非不变量破坏）——内测并发规模下可接受，已波次化测试。
+- **助手 3.6.24 ✅（9af93cf/9d8b3a1）**：build-engine.bat + ISCC 构建，runtime exe 自检 frozen-evidence PASS（版本 3.6.24/buildId v15-batch-execution-closure-20260909-r2），UnsignedBeta，SHA-256 3F7A31F8...6B2F 入库（gitignore/gitattributes 白名单照例补）。
+- **P10 ✅（b8bb5c1 merge + 4e3e9d9 + 8e5cb00）**：合并 develop→push→release:package:test（SHA 1464FF4B...843）→分块 scp→**部署成功**。
+- **部署过程揪出并修复两个真实缺陷**：
+  1. **LF/CRLF 跨平台 sha 漂移（4e3e9d9）**：release-identity 的 replacementScriptSha256 记的是 Windows 工作树 CRLF sha（80d2624f），服务器 git archive 出 LF 字节（ce248c3a）→ 部署检查 fail-closed 拦下。修复：checker + 助手 runtime（replacementComponentInfo）均按 LF 归一化后哈希，identity 改为 ce248c3a，buildId r1→r2 重打包。**此缺陷若上线会导致每次执行 ASSISTANT_SCRIPT_DIGEST_MISMATCH——身份门 fail-closed 在部署侧拦截，机制本身工作正常**。
+  2. **旧测试库 additive allowlist 过时（8e5cb00）**：deployer 只认单条 smart_review_async_audit 迁移且前置检查已不匹配线上现实 → 泛化为有序 allowlist（名称+SHA 锁+对象目录前后校验+保护表计数+quick_check），本轮两条 batch 迁移（20260909100000/20260909110000）入清单。
+- **部署验证**：PM2 三进程 online；local 3001=200；公网无 key 403（访问 key 设计行为）；batch-columns=3、batch-indexes=3、quick_check=ok；**TYGF_EXECUTION_ENABLED=0 保持**（P0 闸未开）；latest=3.6.24（sha 3F7A31F8 与本地一致）；部署备份 deploy-20260909_181730-4e3e9d9c7b5e；候选失败目录 tygf-test-failed/20260909_175420-b8bb5c126936-pre-switch（首次被 sha 漂移拦下的候选，可留可清）。
+- **验证汇总**：tsc 0 错误；lint 0 error（2 既有 warning）；row-contract/trust-chain/dispatch-acceptance(A1-A7)/partial-settlement/remediation-dry-run(D1-D4)/receipt-outbox-replay(O1-O4)/billing-v3/recovery/settlement-idempotency/failure-settlement/adversarial/single-winner/release-consistency(23) 全绿。
+- **遗留（Owner 动作）**：①测试机重装助手 **3.6.24**（带 key 访问测试站下载页）；②重跑单语言 Golden→逐级开放（闸 OFF 保持，翻闸需 Owner 明示）；③测试站跑 dry-run 裁决工具并审计 15/17 历史批次的分类输出；④受控真机验收后由 Owner 决定闸级。
+- **教训**：①跨平台 sha 必须行尾归一化；②deploy 脚本改动要先本地 bash -n + 服务器 LF 转换；③PS5.1 无 -Parallel/-ForEachObject -Parallel，Start-Job 相对路径基于 job 自身 CWD——scp 分块必须绝对路径。
+
+---
+
 ## T-0069 进度 3 【2026-09-09】P3 两阶段本地接受完成（b284b0b）
 
 - **P3 ✅（b284b0b）**：①attempt 创建即 `state=DISPATCHING`（浏览器无权确认启动）；②runner 新增 `onJournalReady` 钩子——journal 落盘即本地接受事实成立，助手直报云端 `/api/local-assistant/execution-attempts/[id]/accept`（票据+install+manifest 三重绑定，幂等），**acceptance 失败=PS 未启动即中止**（fail-closed 无孤儿 RUNNING）；③`/heartbeat` 路由：checkpoint+单调 seq+进度计数（旧 seq 不回退、计数只增），checkpoint 推进细分态 PHOTOSHOP_RUNNING→OUTPUT_WRITTEN→REOPEN_VERIFIED（助手 4 秒节流上报，失败不阻塞执行——STALLED 由云端读取侧判定）；④回执门禁 `RECEIPT_BEFORE_ACCEPTANCE`：DISPATCHING 状态的「成功回执」不可能为真，拒绝；遗留 attempt（state=NULL）全链路 legacy 放行（P8 裁决）；⑤浏览器超时文案改为「不判失败、禁止重复执行」（E44/E45）。

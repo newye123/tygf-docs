@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0069 执行中（2026-09-09，本窗口全权）**：Batch 执行与积分闭环修复。分支 `codex/batch-execution-closure-20260909`（P0 止血/P1 助手身份门/P2 跨批 single-winner/P3 两阶段本地接受 全部完成，契约测试全绿）。**已完成**：DISPATCHING→LOCAL_ACCEPTED→PHOTOSHOP_RUNNING 状态机（journal 落盘直报 acceptance、心跳单调 seq+checkpoint 推进、DISPATCHING 回执拒收、浏览器超时不再判失败）。Owner 决策：**P7 不批**。下一步：P4 收尾（STALLED 读取判定+状态展示）→P5 receipt outbox→P6→P8 裁决工具→P9→助手 3.6.24 合并发布→P10 部署（执行闸 OFF 到 Gate）。
+> **T-0069 P0-P10 全链完成（2026-09-09，本窗口）**：Batch 执行与积分闭环修复。**测试站已部署 `4e3e9d9`（develop@b8bb5c1 merge + 2 fix）**，助手 **3.6.24**（buildId v15-batch-execution-closure-20260909-r2，UnsignedBeta，SHA 3F7A31F8...）已发布。落地：P0 止血（闸 OFF）/P1 助手身份门/P2 跨批 single-winner/P3 两阶段接受+心跳/P4 STALLED 读取视图/P5 回执 outbox（宿主绑定无票据重放）/P6 部分结算守恒矩阵/P8 只读裁决 dry-run 工具/P9 outbox 重放+并发波次契约。部署中 fail-closed 拦下两个真实缺陷并修复：LF/CRLF 跨平台 sha 漂移（identity/checker/助手 runtime 三方统一 LF 归一化）、旧测试库 additive allowlist 泛化（8e5cb00）。**验证**：全部契约 smoke+tsc+lint+release-consistency(23) 绿；部署后 DB 3 列+3 索引、quick_check ok、闸 TYGF_EXECUTION_ENABLED=0 保持、PM2 online、local 200。Owner 决策：P7 不批。**待 Owner**：①测试机重装 3.6.24；②闸 OFF→Golden 单语言逐级开放（翻闸需明示）；③测试站跑 `batch-remediation-dry-run.cjs` 审计 15/17 历史批次。
 > **待批**：官网文案直改 B 方案（`docs/records/20260908_官网文案直改_B方案_执行方案.md`，Content Studio V1 上加前端直改层，估 4 工作日）。
 > **未破案**：12 语言批次卡死——云端分类已完成（卡死语言跨 ES/NL/SV/DE，非 DE 特有；根因=执行链机制：PS 挂起+助手内存态+回执断链），本方案 P3/P4/P5 即根因修复；等 Owner 测试机 `.execution` 取证补充现场细节。
 
