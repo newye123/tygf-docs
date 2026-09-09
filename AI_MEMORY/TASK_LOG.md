@@ -23,6 +23,15 @@
 
 ---
 
+## T-0111 进度 2 【2026-09-09】已部署测试站 10dd93a（助手 3.6.25）
+
+- **授权后执行**：①push（先合并并行窗口的官网 v5.6 重建 41e58ee → a522790）；②迁移 20260909120000 服务器一次性副本演练（col=1/idx=1/quick=ok，行数不变）；③allowlist 追加第三条目 + **skip-if-already-applied 三态回放语义**（否则旧条目重放会拒部署——8a2e626）；④助手 **3.6.25**（v15-batch-recovery-20260909-r1，UnsignedBeta，SHA 168243CD...EB80）全链发布（七声明点 bump + build-engine + ISCC + publish + gitignore/gitattributes 白名单 + release-consistency 23 + frozen-evidence 自检）；⑤release:package:test（SHA 1F34065E...F7A）→ 分块上传 → 部署。
+- **部署验证**：commit 10dd93a；新列+索引就位、quick_check=ok；迁移 skip 2/apply 1（sha 精确匹配）；闸 TYGF_EXECUTION_ENABLED=1（保持开放）；latest=3.6.25；PM2 三进程 online；local 200；公网无 key 403（设计）；备份 deploy-20260909_231353-10dd93a2ca85。
+- **交接 Owner（真人验收序列）**：测试机重装 **3.6.25** → 1 语言 Golden → 5 语言 → receipt 断网恢复（上传失败→重启助手→回执自动重放）→ WRITE_DONE 后重启助手（verification-only，不重跑 PS）→ 文件夹选择器/多显示器 → 8 语言 → 12 语言；每级查：输出文件/readback/receipt/language settlement/reservation/Ledger 守恒/无第二活动 attempt。
+- **T-0107 反破解方案**：仍待批（未实施）。
+
+---
+
 ## T-0111 【2026-09-09】批量执行可靠性修复（Owner 调整方案 P0-P6，LOCAL_ONLY 停车）
 
 - **任务目标**：Owner 给出收窄版执行方案（PS 超时恢复/重复活动执行/文件夹选择器置顶），六阶段，本地完成即停车等 push/deploy 授权。
