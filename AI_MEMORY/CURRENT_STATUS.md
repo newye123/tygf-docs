@@ -5,8 +5,9 @@
 
 ## 一句话状态
 
-> **B 方案执行方案已定稿（2026-09-09）**：官网文案直改——方案文档 `worktrees/develop/docs/records/20260908_官网文案直改_B方案_执行方案.md`（37d7831）。核心结论：Content Studio V1 后端已齐全，零 DB 迁移，只补 4 件（key 标注层/edit 会话判定/popover 编辑器/字段级草稿 API），估 4 工作日。**待 Owner 批准 3 项：范围边界/实施窗口/纯文本限制。** 上一节点：T-0068 已部署 ffa5702（xlsx 13 语言识别修复）。
-> **未破案**：12 语言批次德语卡死（3 次 attempt 0/27 零进度 RUNNING 无终态，其余语言正常）——等 Owner 测试机 `.execution` 证据 + assistant-events.log；DE 疑似 5 行 AI 建议行触发的 PS 前置挂起。
+> **T-0069 执行中（2026-09-09，本窗口全权）**：Batch 执行与积分闭环修复。分支 `codex/batch-execution-closure-20260909`。已完成：**P0 止血**（测试站执行闸 OFF、快照、26 非终态批分类）、**P1 助手身份门**（证据信封带 assistantIdentity+冻结前比对发布合同+脚本 sha 进发布身份，fail-closed 旧助手被拒在冻结前）、**P2 跨批 single-winner**（logicalExecutionKey+activeLanguageKey 两级部分唯一索引+去重回原批+竞态兜底；迁移已在测试 DB 副本演练；契约测试 I1-I5 全绿）。Owner 决策：**P7 不批**（reserve=项目使用维持原设计）。下一步：P3 两阶段接受+P4 心跳 checkpoint+P5 outbox（合并一次助手 3.6.24 发布）→P8 裁决工具→P9 测试→P10 部署。测试站执行闸保持 OFF 直到 P10 Gate。
+> **待批**：官网文案直改 B 方案（`docs/records/20260908_官网文案直改_B方案_执行方案.md`，Content Studio V1 上加前端直改层，估 4 工作日）。
+> **未破案**：12 语言批次卡死——云端分类已完成（卡死语言跨 ES/NL/SV/DE，非 DE 特有；根因=执行链机制：PS 挂起+助手内存态+回执断链），本方案 P3/P4/P5 即根因修复；等 Owner 测试机 `.execution` 取证补充现场细节。
 
 > **T-0065 方案待批（2026-09-06 深夜）**：供应商双语 CSV 跑不通根因=修复算子单一+segmentSpan=6<实际段长+缺译/空原文无排除出路；解法=Gale-Church DP 对齐器+五算子 TypedRepairPlan+EXCLUDED 四层同步。文档 `docs/records/20260906_bilingual_align_qa_plan.md`（100 向量）。~~待 Owner 批准~~ → C1 已执行。
 

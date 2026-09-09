@@ -12,7 +12,19 @@
   
 ---
 
-## T-0069 【2026-09-09】Batch 执行与积分闭环修复（P0 止血完成，P1→P10 进行中）——本窗口全权实施
+## T-0069 进度 2 【2026-09-09】P0/P1/P2 完成（分支 codex/batch-execution-closure-20260909）
+
+- **Owner 决策**：P7（积分投影三态改造）**不批**——「reserve=项目使用」维持原设计；其余 P1-P10 授权本窗口自主实施。
+- **P0（已生效）**：测试站 `TYGF_EXECUTION_ENABLED=0`（quote=503 实测、30 分钟零新批次、首页 200）；快照 `/var/www/tygf-test/p0-snapshot-20260909_092615`（26 非终态=17 RUNNING 冻结 2670+9 QUOTED）；云端分类完成：17 批全「首语言 RUNNING 0 VERIFIED」，卡死语言跨 ES/NL/SV/DE（非 DE 特有），两批先成功 3-5 语言才卡。**修正方案文档的两个过期数字与 DE 特有假设。** e3ed2fe1→cmtsqn2li SETTLED 112/112 守恒 ✓；7 条历史 settlement 全 committed=quoted ✓（结算数学健康，问题全在执行→回执段）。
+- **P1 ✅（7ee365d）**：助手执行身份门——①证据信封带 `assistantIdentity`（助手 server.js 生成，assistantToken 直连链路，浏览器不可伪造）；②云端 `assertAssistantExecutionIdentity` 在 quote 冻结前比对发布合同（版本>=、buildId/schema/renderer 相等、**脚本 sha 相等**）；③`replacementScriptSha256` 进 release-identity.json（check-release-identity 双断言：信封必须带身份块+仓库脚本实算 sha 必须等于声明）；④fail-closed：旧助手（无身份块）部署后即被拒在冻结前=「只允许升级和查看历史」。测试站实测 3.6.22 会命中 ASSISTANT_VERSION_MISMATCH。
+- **P2 ✅（8a2dd8d+a5c47d0）**：跨批 single-winner——`logicalExecutionKey`（内容寻址，去随机 ID）+ `activeLanguageKey`（=sha256(键+语言码)）两级部分唯一索引（RESERVED+/非终态 attempt）；quote 去重回原批（dedupedBy）；confirm 预检 BATCH_ALREADY_ACTIVE+竞态兜底（P2002→释放孤儿冻结→返回获胜批指针）；claim 跨批拒绝+指针。**迁移 20260909100000 已在测试 DB 副本演练通过**（additive，历史 26 批 key=NULL 不回填不封堵）。
+- **验证**：test:batch-cross-batch-single-winner I1-I5 全 PASS（新增注册）；batch-billing-v3/row-contract/routes/recovery/settlement-idempotency/adversarial 全绿；tsc 0 错误。
+- **下一步**：P3 两阶段本地接受（DISPATCHING→LOCAL_ACCEPTED→RUNNING，助手直报 acceptance）→P4 心跳 checkpoint→P5 receipt outbox——三者都动助手，**合并为一次 3.6.24 发布**（release-identity 需同步 bump：3.6.24+新 buildId+新脚本 sha），避免 Owner 多次重装。之后 P8 dry-run 裁决工具、P9 其余 7 测试、P10 部署逐级开放。
+- **分支纪律**：全部工作在 `codex/batch-execution-closure-20260909`（基于 3405fd7），P10 Gate 后才合 develop 部署测试站；测试站执行闸门保持 OFF。
+
+---
+
+## T-0069 【2026-09-09】Batch 执行与积分闭环修复启动（P0 止血）——本窗口全权实施
 
 - **背景**：Owner 提交《TYGF Batch Photoshop 执行与积分闭环修复方案 v1》（P0-P10+100 审查），授权本窗口全权实施。方案先对账：5 项核心指控全部属实（quotePayloadHash 含随机 quoteRequestId=execution-batch.ts:206；reserve→project_charge=activity-projection.ts:40；助手实跑 3.6.22/合同 3.6.23=本机 /ping 实测；20 分钟超时=local-assistant-client.ts:1414；跨批无 single-winner）。
 - **数字偏差修正**（方案→实测，因方案写完后用户又重试 4 次）：active batches 15→**26（17 RUNNING 冻结 2670 + 9 QUOTED 未冻结）**；重点批次清单已更新：17 个 RUNNING 全部「首语言 RUNNING、其余 PENDING、0 VERIFIED」。e3ed2fe1 run=cmtsqn2li 批次 SETTLED 112/112 守恒 ✓；7 条历史 BatchSettlement 全部 committed=quoted、pending=0 ✓（结算路径本身没问题）。
