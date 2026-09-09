@@ -1,4 +1,14 @@
-﻿## T-0106 【2026-09-08】官网首页文案整体替换（v27"让设计师改语言，从此变得轻松"）
+﻿## T-0069 进度 5 【2026-09-09】执行闸开放（Owner 指示「直接开放合量改语言」）
+
+- **目标**：Owner 授权直接开放批量改语言，跳过 Golden 逐级方案。
+- **执行**：测试站 `/var/www/tygf-test/.env` `TYGF_EXECUTION_ENABLED` 0→1 + `pm2 restart tygf-test --update-env`。
+- **验证**：receipt 探针（无凭证 POST /api/local-assistant/execution-attempts/gate-probe/receipt）503 EXECUTION_DISABLED → 400 BATCH_RECEIPT_INVALID（穿过闸门进入参数校验=闸开）；local 3001=200；批量能力三件套：TYGF_ENVIRONMENT=test ✓、BATCH_EXECUTION_MODE=canary ✓、batchBillingV3Enabled 默认 true（SiteSetting featureFlagsV1 仅含 alipayPaymentsEnabled:false，无覆盖）✓；canary 白名单空=全部已激活设备。
+- **行为边界（如实登记）**：①旧助手 3.6.23 会被 P1 身份门 fail-closed 拒绝（提示升级 3.6.24）——设计行为；②闸开同时启用单语言执行（env 级 all-or-nothing）；③15/17 历史批次仍待 dry-run 裁决，不阻塞新批次（P2 迁移 legacy 键 NULL 不占位）。
+- **遗留**：Owner 测试机重装 3.6.24 后真机跑批；观察首批 STALLED/心跳/结算实测行为。
+
+---
+
+## T-0106 【2026-09-08】官网首页文案整体替换（v27"让设计师改语言，从此变得轻松"）
 
 - **任务目标**：按 Owner 提供的 12 节新文案（00 HERO～11 FINAL CTA + 申请表 + SEO）整体替换官网首页
 - **执行方案**：重写 `src/components/site/home-view.tsx`（8 节 v26 → 12 节 v27）；复用 home-v16.css 既有类 + 追加少量新类（hero-fromto/how-grid/repeat-langs/section-final-line/final-cta-body 等，无 border-left 描边）；更新 `src/app/layout.tsx` SEO title/description/keywords
