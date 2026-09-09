@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0069 执行中（2026-09-09，本窗口全权）**：Batch 执行与积分闭环修复。分支 `codex/batch-execution-closure-20260909`。已完成：**P0 止血**（测试站执行闸 OFF、快照、26 非终态批分类）、**P1 助手身份门**（证据信封带 assistantIdentity+冻结前比对发布合同+脚本 sha 进发布身份，fail-closed 旧助手被拒在冻结前）、**P2 跨批 single-winner**（logicalExecutionKey+activeLanguageKey 两级部分唯一索引+去重回原批+竞态兜底；迁移已在测试 DB 副本演练；契约测试 I1-I5 全绿）。Owner 决策：**P7 不批**（reserve=项目使用维持原设计）。下一步：P3 两阶段接受+P4 心跳 checkpoint+P5 outbox（合并一次助手 3.6.24 发布）→P8 裁决工具→P9 测试→P10 部署。测试站执行闸保持 OFF 直到 P10 Gate。
+> **T-0069 执行中（2026-09-09，本窗口全权）**：Batch 执行与积分闭环修复。分支 `codex/batch-execution-closure-20260909`（P0 止血/P1 助手身份门/P2 跨批 single-winner/P3 两阶段本地接受 全部完成，契约测试全绿）。**已完成**：DISPATCHING→LOCAL_ACCEPTED→PHOTOSHOP_RUNNING 状态机（journal 落盘直报 acceptance、心跳单调 seq+checkpoint 推进、DISPATCHING 回执拒收、浏览器超时不再判失败）。Owner 决策：**P7 不批**。下一步：P4 收尾（STALLED 读取判定+状态展示）→P5 receipt outbox→P6→P8 裁决工具→P9→助手 3.6.24 合并发布→P10 部署（执行闸 OFF 到 Gate）。
 > **待批**：官网文案直改 B 方案（`docs/records/20260908_官网文案直改_B方案_执行方案.md`，Content Studio V1 上加前端直改层，估 4 工作日）。
 > **未破案**：12 语言批次卡死——云端分类已完成（卡死语言跨 ES/NL/SV/DE，非 DE 特有；根因=执行链机制：PS 挂起+助手内存态+回执断链），本方案 P3/P4/P5 即根因修复；等 Owner 测试机 `.execution` 取证补充现场细节。
 

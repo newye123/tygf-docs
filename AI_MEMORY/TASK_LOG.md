@@ -12,6 +12,15 @@
   
 ---
 
+## T-0069 进度 3 【2026-09-09】P3 两阶段本地接受完成（b284b0b）
+
+- **P3 ✅（b284b0b）**：①attempt 创建即 `state=DISPATCHING`（浏览器无权确认启动）；②runner 新增 `onJournalReady` 钩子——journal 落盘即本地接受事实成立，助手直报云端 `/api/local-assistant/execution-attempts/[id]/accept`（票据+install+manifest 三重绑定，幂等），**acceptance 失败=PS 未启动即中止**（fail-closed 无孤儿 RUNNING）；③`/heartbeat` 路由：checkpoint+单调 seq+进度计数（旧 seq 不回退、计数只增），checkpoint 推进细分态 PHOTOSHOP_RUNNING→OUTPUT_WRITTEN→REOPEN_VERIFIED（助手 4 秒节流上报，失败不阻塞执行——STALLED 由云端读取侧判定）；④回执门禁 `RECEIPT_BEFORE_ACCEPTANCE`：DISPATCHING 状态的「成功回执」不可能为真，拒绝；遗留 attempt（state=NULL）全链路 legacy 放行（P8 裁决）；⑤浏览器超时文案改为「不判失败、禁止重复执行」（E44/E45）。
+- **验证**：新增 `test:batch-dispatch-acceptance`（A1-A5 全 PASS：DISPATCHING 创建/回执拒绝/accept 三重校验+幂等/心跳单调+状态推进/legacy 放行）；受影响 smoke 全部改为模拟真实助手链（fixture 新增 `createAcceptedLanguageAttempt` 包装）；batch-billing-v3/recovery/settlement-idempotency/failure-settlement/v3-adversarial/single-winner 全绿；tsc 0 错误；迁移 20260909110000 副本演练通过。
+- **进度报销记录**：adversarial 的 `createAttempt` 局部箭头（无 await 前缀）逃过 replaceAll，踩了一次 ReferenceError/一次断言错——教训：批量替换后必须 grep 验证无残留旧调用。
+- **下一步**：P4 收尾（STALLED 读取侧判定+getBatchStatus 暴露 checkpoint/heartbeatAt+30 分钟硬上限复核）→P5 receipt outbox（稳定事件 ID+助手重启重放）→P6 部分结算测试→P8 裁决工具→P9 其余测试→助手 3.6.24 发布（release-identity 同步 bump）→P10 部署。
+
+---
+
 ## T-0069 进度 2 【2026-09-09】P0/P1/P2 完成（分支 codex/batch-execution-closure-20260909）
 
 - **Owner 决策**：P7（积分投影三态改造）**不批**——「reserve=项目使用」维持原设计；其余 P1-P10 授权本窗口自主实施。
