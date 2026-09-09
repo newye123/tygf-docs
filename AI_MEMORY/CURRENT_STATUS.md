@@ -5,7 +5,7 @@
 
 ## 一句话状态
 
-> **T-0069 P0-P10 全链完成（2026-09-09，本窗口）**：Batch 执行与积分闭环修复。**测试站已部署 `4e3e9d9`（develop@b8bb5c1 merge + 2 fix）**，助手 **3.6.24**（buildId v15-batch-execution-closure-20260909-r2，UnsignedBeta，SHA 3F7A31F8...）已发布。落地：P0 止血/P1 助手身份门/P2 跨批 single-winner/P3 两阶段接受+心跳/P4 STALLED 读取视图/P5 回执 outbox（宿主绑定无票据重放）/P6 部分结算守恒矩阵/P8 只读裁决 dry-run 工具/P9 outbox 重放+并发波次契约。部署中 fail-closed 拦下两个真实缺陷并修复：LF/CRLF 跨平台 sha 漂移（三方统一 LF 归一化）、旧测试库 additive allowlist 泛化（8e5cb00）。全部契约 smoke+tsc+lint+release-consistency 绿；部署后 DB 3 列+3 索引、quick_check ok、PM2 online。
+> **T-0111 本地完成待授权（2026-09-09）**：批量执行可靠性修复（Owner 调整方案）——**`BATCH_RECOVERY_LOCAL_GREEN_READY_FOR_PUSH_APPROVAL`**。develop 本地 4 提交（0583ec5/b814ff5/11ba256/f9d7474）**未 push**：①载荷无关互斥键 activeDocumentLanguageKey（同文档同语言改译文也不能并行，迁移 20260909120000）；②心跳计数钳制+批次结算统一释放互斥键（修复到期 sweep 死锁）；③回执 write-ahead outbox（执行前预持久化输入、载荷与 journal 同刻落盘、receiptEventId、verification-only 恢复绝不重跑 PS）；④文件/文件夹选择器统一置顶合同（picker-dialogs.cjs）。全量验证绿（12 smoke+tsc+lint+build+trust-chain+row-contract+release-consistency+助手自检）。**待 Owner**：授权 push → 迁移演练（allowlist 扩展）→ 助手 3.6.25 打包 → Test 部署 → 1/5/8/12 逐级 Golden。另：T-0107 反破解方案文档待批（docs/records/20260909_助手反破解加固_执行方案.md）。
 > **闸已开（2026-09-09，Owner 指示「直接开放合量改语言」）**：测试站 TYGF_EXECUTION_ENABLED 0→1，实测探针穿过执行闸（receipt 探针 503→400 参数校验）。批量能力三件套齐：TYGF_ENVIRONMENT=test + BATCH_EXECUTION_MODE=canary + batchBillingV3Enabled 默认 true（canary 白名单空=全部已激活设备）。**旧助手 3.6.23 会被 P1 身份门 fail-closed 拒绝（提示升级 3.6.24）——属设计行为**。跳过原 Golden 逐级方案=Owner 授权覆盖；历史 15/17 批次裁决仍待 dry-run 审计（不阻塞新批次：legacy 键保持 NULL 不占位）。
 > **待批**：官网文案直改 B 方案（`docs/records/20260908_官网文案直改_B方案_执行方案.md`，Content Studio V1 上加前端直改层，估 4 工作日）。
 > **未破案**：12 语言批次卡死——云端分类已完成（卡死语言跨 ES/NL/SV/DE，非 DE 特有；根因=执行链机制：PS 挂起+助手内存态+回执断链），本方案 P3/P4/P5 即根因修复；等 Owner 测试机 `.execution` 取证补充现场细节。

@@ -8,6 +8,22 @@
 
 ---
 
+## T-0111 【2026-09-09】批量执行可靠性修复（Owner 调整方案 P0-P6，LOCAL_ONLY 停车）
+
+- **任务目标**：Owner 给出收窄版执行方案（PS 超时恢复/重复活动执行/文件夹选择器置顶），六阶段，本地完成即停车等 push/deploy 授权。
+- **P0 ✅**：测试站悬挂批次只读导出（batch-remediation-dry-run.cjs）：20 活跃批 = 16 legacy / 5 部分回执 / 8 可 RUN_FINISH / 3 硬停滞 / 124 未发起；零写库；机器侧 journal 取证留待 Owner 真机（金标时）。
+- **P1 ✅（0583ec5）**：5 个 RED 测试全部"因对的原因红"——mutex-payload-variation（同文档同语言不同译文当前可并行 RUN）/ progress-count（越界计数原样存储）/ select-folder-topmost（helper 缺失+内联实现）/ outbox-write-ahead（持久化在 catch 补救路径）/ verification-only-recovery（恢复函数不存在）。**顺带抓出 4e3e9d9 遗留缺陷**：smoke fixture 仍按原始字节算 script sha（CRLF）→ fixture 自我矛盾——修复为 LF 归一化（合同测试基建抓真 bug 的实证）。
+- **P2 ✅（b814ff5）**：新增 `activeDocumentLanguageKey = sha256(principalId+installId+documentFingerprint+languageCode)`（明确排除译文/scope/语言集/binding/runId/requestId）+ 部分唯一索引（迁移 20260909120000）；冲突返回 `DOCUMENT_LANGUAGE_ACTIVE`+原 attempt 指针；预查排除当前 job（保留 requestId 幂等与同批 ATTEMPT_ACTIVE 语义）；**附带修复两个既有缺陷**：①心跳计数无钳制（越界对象计数污染）→ 钳到 totalAssignmentCount；②**到期 sweep 不终结 attempt → 互斥键永久死锁**（今天上午 P2 自己埋的）→ 批次结算四分支统一终态化 attempt+释放双键。
+- **P3 ✅（11ba256）**：回执 write-ahead outbox——执行前预持久化派生输入（行映射+清单）；云端载荷构建移入 runner（与本地回执同一落盘时刻，`.cloud.json`）；先 fsync+原子 rename 落 pending（含 receiptEventId）再发送；云端 ACK 回显 receiptEventId 并清 pending+inputs；启动 verification-only 恢复（journal 回执+输入俱在→重建重放；无法判定→COMPLETION_UNKNOWN 交结算闸；**绝不重跑替换**——静态断言禁止恢复路径引用 executor）；重放遇云端终态拒绝（BATCH_TERMINATED 等）即删除停止噪音。
+- **P4 ✅（11ba256）**：`picker-dialogs.cjs` 单一事实源——文件/文件夹选择共用命令构造+执行器；完整置顶合同（TopMost/无任务栏/Manual/锚点屏幕钳制/Activate/BringToFront/DoEvents/双 Dispose/单实例 Mutex）；锚点（select-file 既有能力）保留；UTF-8 no BOM；固定 System PowerShell 绝对路径；错误码可区分（cancelled/timeout/launch-failed/busy）。
+- **P5 ✅**：12 个定向 smoke + tsc 0 错 + lint 0 错（2 既有 warning）+ row-contract + trust-chain 全链 + release-consistency 23 项 + package-hygiene + npm run build + 助手自检（错误分类/frozen-evidence 3.6.24-r2）全绿。**并发覆盖**：8 并发报价（I5）+ 4 波×8 attempt claim（O4）；32 路同发打穿 SQLite 5s 事务超时（引擎层限制，已登记，波次化等效覆盖不变量）。
+- **P6 停车**：4 个提交（0583ec5 测试 / b814ff5 互斥 / 11ba256 P3+P4 / f9d7474 断言更新）；worktree CLEAN；**未 push、未 deploy、未打包新助手**（server.js/v15-runner/picker 变更需 3.6.25 发布——待授权后执行）。
+- **最终状态**：`BATCH_RECOVERY_LOCAL_GREEN_READY_FOR_PUSH_APPROVAL`
+- **部署顺序（待授权）**：push → 一次性 Test DB 副本演练迁移 20260909120000（扩展 additive allowlist）→ 打包 3.6.25（bump 身份）→ 只部署 Test → provenance 回读 → 1/5/8/12 语言逐级 Golden（含 receipt 断网恢复、WRITE_DONE 重启、文件夹选择器多显示器）。
+- **不纳入（遵 Owner 指示）**：反破解方案（T-0107 文档待批）、Smart Review、邮件/支付、历史账务批量修复、production/main。
+
+---
+
 ## T-0106 【2026-09-08】官网首页文案整体替换（v27"让设计师改语言，从此变得轻松"）
 
 - **任务目标**：按 Owner 提供的 12 节新文案（00 HERO～11 FINAL CTA + 申请表 + SEO）整体替换官网首页
