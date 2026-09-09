@@ -1,10 +1,11 @@
 ﻿# CURRENT_STATUS.md — 图译工坊当前状态
 
-> 最后更新：2026-09-06　维护：AI 项目管理员
+> 最后更新：2026-09-09　维护：AI 项目管理员
 > 本文档回答"现在做到哪里"。更新前先读 PROJECT_CONTEXT.md。
 
 ## 一句话状态
 
+> **T-0112 官网首页 v5.6 已上线测试站（2026-09-09）**：Owner 指定 mock（`docs/官网定位调整/图译工坊_模拟首页_v5.6_无句末标点_思源黑体.html`）已完整落地并部署——`home-view.tsx` 重写为 v5.6 八区块、`home-v16.css`→`home-v17.css`（作用域化）、真实申请表保留。提交 `442526e`（codex）→ develop merge `41e58ee` 已部署，备份 `deploy-20260909_222319-41e58ee408ab`。验证全绿（tsc/lint/trust-chain/row-contract + 本地与公网多视口零溢出）。**遗留**：①页面写「最多 12 语种」但代码上限 10（Owner 裁决按 mock，产品待追平）；②思源黑体走 jsdelivr CDN，上线前需自托管；③T-0111 的 4 提交仍未 push，下次部署先合并最新 develop。详见 TASK_LOG T-0112 / HANDOFF。
 > **T-0111 本地完成待授权（2026-09-09）**：批量执行可靠性修复（Owner 调整方案）——**`BATCH_RECOVERY_LOCAL_GREEN_READY_FOR_PUSH_APPROVAL`**。develop 本地 4 提交（0583ec5/b814ff5/11ba256/f9d7474）**未 push**：①载荷无关互斥键 activeDocumentLanguageKey（同文档同语言改译文也不能并行，迁移 20260909120000）；②心跳计数钳制+批次结算统一释放互斥键（修复到期 sweep 死锁）；③回执 write-ahead outbox（执行前预持久化输入、载荷与 journal 同刻落盘、receiptEventId、verification-only 恢复绝不重跑 PS）；④文件/文件夹选择器统一置顶合同（picker-dialogs.cjs）。全量验证绿（12 smoke+tsc+lint+build+trust-chain+row-contract+release-consistency+助手自检）。**待 Owner**：授权 push → 迁移演练（allowlist 扩展）→ 助手 3.6.25 打包 → Test 部署 → 1/5/8/12 逐级 Golden。另：T-0107 反破解方案文档待批（docs/records/20260909_助手反破解加固_执行方案.md）。
 > **闸已开（2026-09-09，Owner 指示「直接开放合量改语言」）**：测试站 TYGF_EXECUTION_ENABLED 0→1，实测探针穿过执行闸（receipt 探针 503→400 参数校验）。批量能力三件套齐：TYGF_ENVIRONMENT=test + BATCH_EXECUTION_MODE=canary + batchBillingV3Enabled 默认 true（canary 白名单空=全部已激活设备）。**旧助手 3.6.23 会被 P1 身份门 fail-closed 拒绝（提示升级 3.6.24）——属设计行为**。跳过原 Golden 逐级方案=Owner 授权覆盖；历史 15/17 批次裁决仍待 dry-run 审计（不阻塞新批次：legacy 键保持 NULL 不占位）。
 > **待批**：官网文案直改 B 方案（`docs/records/20260908_官网文案直改_B方案_执行方案.md`，Content Studio V1 上加前端直改层，估 4 工作日）。

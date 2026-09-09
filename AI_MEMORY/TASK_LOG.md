@@ -1,4 +1,19 @@
-﻿## T-0069 进度 5 【2026-09-09】执行闸开放（Owner 指示「直接开放合量改语言」）
+﻿## T-0112 【2026-09-09】官网首页 v5.6 定位调整版已部署测试站
+
+- **任务目标**：Owner 指定 `docs/官网定位调整/图译工坊_模拟首页_v5.6_无句末标点_思源黑体.html`（2026-09-09 10:31 版）"按这个帮我更新上测试站"；语种口径冲突裁决时 Owner 答"直接按这个HTML改就好"（页面写 12，代码 `MAX_LANGUAGES=10`，见偏差登记）。
+- **执行方案**：`home-view.tsx` 整体重写为 v5.6 结构（nav+hero 产品示意卡+01 TIME COST+02 WHAT EASY MEANS+03 REVIEW·EXECUTE·VERIFY+04 TASK STATUS+05 TEAM VALUE+06 FAQ+07 TRY IT+footer）；mock 交互全部 React 化（workflow 标签页/任务筛选/FAQ 手风琴/角色单选+物料多选表单/reveal 动画）；**复用真实表单提交**（POST `/api/beta-applications`，字段映射同 v26：problem→useCase/painPoint、scope→monthlyVolume、物料+人工耗时→note）；`home-v16.css` 删除，新增 `home-v17.css`（mock `<style>` 经 `tmp/scope-v17-css.cjs` 全选择器作用域化到 `.home-v17`，零全局污染；keyframes fade→v17fade；reveal 改渐进增强 `.reveal-armed`）；`layout.tsx` SEO 换 mock 的 title/description；`next.config.ts` CSP `font-src` 加 `https://cdn.jsdelivr.net`（思源黑体 WOFF2，上线前应自托管）。
+- **修改文件**：`src/components/site/home-view.tsx`、`src/components/site/home-v17.css`（新）、`src/components/site/home-v16.css`（删）、`src/app/layout.tsx`、`next.config.ts`。提交 `442526e`（codex 分支，只 stage 这 5 个文件）。
+- **过程中抓到的 bug**：①首版截图发现整页内容不可见——渐进增强特异性冲突（`.reveal.in` 与 `.reveal-armed .reveal` 同特异性后者赢），改为 `.reveal-armed .reveal:not(.in)` 修复；②CSP 拦 jsdelivr 字体（思源黑体不生效），加 font-src 放行后字体正常加载。
+- **部署**：develop 合并在共享 clone 中完成（`worktrees/develop` 被另一窗口占用且有未推送 T-0111 提交，未触碰）；origin/develop `9ea862e→41e58ee`（merge 提交）；`tygf-test-41e58ee408ab.zip` SHA-256 `5EEE58B9F729A7536EF6166433F78628CD2B602985D422BFD0E96AE755FA241F`（123,654,476 bytes，助手 3.6.24 身份保持）；`deploy-test-release.sh` 成功，备份 `/var/www/tygf-test-backups/deploy-20260909_222319-41e58ee408ab`；PM2 双进程 online，本机 3001=200。
+- **验证**：tsc 0 错、lint 0 错（2 既有 warning）、`test:batch-row-contract` passed、`test:trust-chain` 22 项全 passed；本地生产构建 390/768/1280/1920 四视口零横向溢出、零 console 错误、reveal 全部就位；公网 `https://test.tuyigf.com/?key=…` 200，SSR 命中新 SEO 标题与「让设计师改语言/单次最多 12 个目标语种」，CSS chunk 含思源黑体 URL；公网复测 390/1280 同样零溢出。CF insights beacon 被 CSP 拦截为既有状况（Cloudflare 注入，与本变更无关）。
+- **遗留问题**：①页面承诺「单次最多 12 个目标语种」但代码上限 10（Owner 明示按 mock），产品需追平或改口径；②思源黑体走 jsdelivr CDN（~40MB 变量字体，font-display:swap 兜底），正式上线前应自托管/子集化；③下一窗口部署前需先合并 develop 最新（T-0111 的 b814ff5/11ba256/f9d7474 尚未 push）。
+- **不纳入**：生产站/main/支付 flag/历史批次均未触碰；Mock 文件与诊断脚本留在 `tmp/` 未提交。
+
+---
+
+
+
+## T-0069 进度 5 【2026-09-09】执行闸开放（Owner 指示「直接开放合量改语言」）
 
 - **目标**：Owner 授权直接开放批量改语言，跳过 Golden 逐级方案。
 - **执行**：测试站 `/var/www/tygf-test/.env` `TYGF_EXECUTION_ENABLED` 0→1 + `pm2 restart tygf-test --update-env`。
