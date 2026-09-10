@@ -1,4 +1,15 @@
-﻿## T-0112 进度 2 【2026-09-10】官网 v5.6 第二轮评审修复已部署（ee6add0）
+﻿## T-0107 热修 3.6.29【2026-09-10】脚本分发诊断增强已部署（Owner 实机仍报 unknown/unknown 的对抗式排查）
+
+- **目标**：Owner 装完 3.6.28 后工作台仍报「本地助手替换组件版本不兼容（脚本 unknown / schema unknown）」——需实锤根因而非再盲改。
+- **取证（服务器日志）**：云端 `/api/local-assistant/scripts/distribute` **成功记录 1 条**：`09:56:20 install=fb456ddd… version=3.6.28 scripts=5 exeSha=c3a137f6…`——3.6.28 引擎成功拉到 5 个脚本且 exeSha 锚点在。之后无第二轮请求（30min 周期未到或引擎已死）。out/error 日志零脚本相关报错（分发路由仅记成功，失败本就不落盘——后续可加）。
+- **对抗式结论（按嫌疑排序）**：①**旧引擎进程仍占 49152 端口服务 /ping**（托盘重启陷阱：新装文件落盘但内存里跑的还是 3.6.27，其缓存态=unknown）；②客户端写缓存被部分破坏（杀软/EPERM）→ manifest 未落 → 全部候选 null；③浏览器 /ping 竞态早于 boot 刷新完成（瞬时）。此前 /ping 无任何诊断字段，Owner 报障无法定位。
+- **修复（fc1884e，助手 3.6.29 v15-script-distribution-diag-20260910-r2，exe SHA 1461EDF4…F405）**：①`script-distribution.cjs` 的 `distributionStatus()` 逐脚本回读 manifest+existsSync（sha8 或 MISSING）；②/server /ping 不兼容时 `kickRefreshIfDegraded(cfg)` 后台重试 + 新增 `scriptDistributionStatus` 字段（lastRefreshAt/lastError/scripts）；③浏览器 `local-assistant-client.ts:649` 报错文案附诊断摘要（上次拉取/上次错误/缓存逐脚本 MISSING 或 sha8 + 运行版本）——Owner 下次截图即得全部证据。
+- **验证**：tsc 0 错；node --check 双文件 OK；check-release-identity passed（3.6.29）；check-exe-no-plaintext CLEAN（36.5MB）；smoke-release-consistency 23 checks passed；部署成功备份 `deploy-20260910_100553-fc1884ed2d22`；公网 release 接口已返回 3.6.29。
+- **待 Owner**：装 3.6.29 前先**退出托盘并结束引擎进程（或直接重启电脑）**再安装；若再报错，错误文案已含 [脚本缓存诊断]/[运行版本]，直接截图。
+
+---
+
+## T-0112 进度 2 【2026-09-10】官网 v5.6 第二轮评审修复已部署（ee6add0）
 
 - **目标**：Owner 9 处截图评审意见全部落实并重新部署测试站。
 - **落实**：①batch 头删「批量 / 多语言」；②品牌 ICON 恢复 v26「图」字黑方块（删 mock 的 CSS 圆弧 `::after`）；③02/03/04 section-lead 各插一处 `<br/>`；④05 TEAM VALUE lead 按 Owner 原话改为「…和最终问题都算进去以后<br/>设计师实际少投入了多少时间」；⑤FAQ 首条答案在「图译工坊处理的是」前换行（数据用 `\n`，FaqItem 渲染 split 转 `<br/>`）；⑥07 TRY lead 删「先看设计师的实际投入有没有变轻，再决定值不值得继续」；⑦try 左栏底部加 `.try-contact`（微信 tuyigf / 邮箱 tuyi@tuyigf.com，flex+margin-top:auto 钉底）。
@@ -30,6 +41,16 @@
 - **验证**：receipt 探针（无凭证 POST /api/local-assistant/execution-attempts/gate-probe/receipt）503 EXECUTION_DISABLED → 400 BATCH_RECEIPT_INVALID（穿过闸门进入参数校验=闸开）；local 3001=200；批量能力三件套：TYGF_ENVIRONMENT=test ✓、BATCH_EXECUTION_MODE=canary ✓、batchBillingV3Enabled 默认 true（SiteSetting featureFlagsV1 仅含 alipayPaymentsEnabled:false，无覆盖）✓；canary 白名单空=全部已激活设备。
 - **行为边界（如实登记）**：①旧助手 3.6.23 会被 P1 身份门 fail-closed 拒绝（提示升级 3.6.24）——设计行为；②闸开同时启用单语言执行（env 级 all-or-nothing）；③15/17 历史批次仍待 dry-run 裁决，不阻塞新批次（P2 迁移 legacy 键 NULL 不占位）。
 - **遗留**：Owner 测试机重装 3.6.24 后真机跑批；观察首批 STALLED/心跳/结算实测行为。
+
+---
+
+## T-0107 进度 3 【2026-09-10】脚本分发 3.6.26/3.6.27 实机故障热修（0dca91c，助手 3.6.28）
+
+- **Owner 实机故障**：3.6.27 报「替换组件版本不兼容（脚本 unknown / schema unknown）」。根因链（三因叠加）：①`authorizationForOrigin` 不返回 installId → 分发请求 installId 空 → 云端 400 → 预取失败 → 缓存缺失；②分发端点只打到 `serverBase(cfg)`（默认生产站），测试站授权的 token 用不上；③`replacementComponentInfo` 候选顺序 APP_DIR/rel 先于缓存 → **旧安装残留的 scripts/ 副本（unknown 版本）抢先命中** → 不兼容报错。
+- **修复（3.6.28，v15-script-distribution-hotfix-20260910-r1，SHA 5FE3ECC0...A055）**：①分发路由 installId 改为可选提示（身份权威=token，服务端解析规范安装号）；②助手多 origin 刷新（遍历全部已授权 origin + serverBase，首个成功即用）；③候选序改为 bundled→缓存→APP_DIR，且解析失败（unknown）候选跳过不抢先；④resolveScriptPath 自愈：不兼容→强制刷新一次→重读（error 文案同步改为"请重启本地助手"）。
+- **验证**：tsc 0 错；distribution D1-D5 绿；frozen-evidence/错误分类/资产移除/分发合同/strings-CLEAN 全过；部署测试站 0dca91c（SHA 374282D6...76AC，备份 deploy-20260910_093224），latest=3.6.28，闸开。
+- **过程事故（如实）**：bump 脚本替换串丢键（release-identity JSON 断裂+report-renderer const 丢失）→ build 首次失败被自检拦下 → 手工修复重构建。
+- **Owner 动作**：重装 **3.6.28**（替代此前所有版本指引）→ 重试执行。若仍报错，看助手窗口有无"[scripts] 脚本组件预取失败"与云端日志 script-distribute 行，把两行日志发回来。
 
 ---
 
