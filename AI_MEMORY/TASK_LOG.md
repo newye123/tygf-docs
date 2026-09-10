@@ -1,3 +1,12 @@
+## T-0113 对抗审查修正（阈值竞态）【2026-09-11】已部署 Test（9591fba）
+
+- **发现（F1 严重）**：服务端自动放弃阈值 `ATTEMPT_ABANDON_AFTER_MS`=30min **等于**助手 `PS_EXECUTION_HARD_TIMEOUT_MS`=30min → PS 在边界完成时，成功回执可能在 reaper 标记 ABANDONED 之后到达，被 fencing 拒绝 → **丢弃已完成的执行**（0 单位/释放积分）且解锁后可能同文件双写。
+- **发现（F2 重要）**：单信号（仅心跳年龄）自动释放文档锁，无法区分助手死亡/卡住——方案自身即警告过双执行风险。
+- **修正**：`ATTEMPT_ABANDON_AFTER_MS` 30min → **2h**（显著大于助手超时；force/助手重启上报不受限）；`smoke-batch-stale-attempt-reaper` R1 用 3h 回拨、R5 改为 45min（>助手超时且<2h）断言**不终态化**，保护迟到成功回执。
+- **其它次要发现**：旧 journal 无 cloudContext → abort 跳过（reaper 兜底）；abort body installId 未被使用；force 无停滞门槛（助手为执行权威，低风险）；单语 id 触 abort 会 404（噪音）；abort 受 execution gate 影响（reaper 兜底）。
+- **验证**：tsc 0 错；批次全量 **24/24**；trust-chain 全过；包 `tygf-test-9591fbaa9ff6.zip` SHA `EC83FD73…806A`；部署成功（备份 `deploy-20260911_074047-9591fbaa9ff6`）；pm2 3 online；release=3.6.33。
+
+---
 ## T-0113 P2（#38）助手重启孤立执行上报 + 3.6.33【2026-09-11 凌晨】已部署 Test（efc78bc）
 
 - **根因（#38）**：助手启动恢复只标本地终态、不上报云端；journal 未持久化云端上下文 → 云端 attempt 永远 RUNNING。
