@@ -1,4 +1,14 @@
-﻿## T-0112 【2026-09-09】官网首页 v5.6 定位调整版已部署测试站
+﻿## T-0112 进度 2 【2026-09-10】官网 v5.6 第二轮评审修复已部署（ee6add0）
+
+- **目标**：Owner 9 处截图评审意见全部落实并重新部署测试站。
+- **落实**：①batch 头删「批量 / 多语言」；②品牌 ICON 恢复 v26「图」字黑方块（删 mock 的 CSS 圆弧 `::after`）；③02/03/04 section-lead 各插一处 `<br/>`；④05 TEAM VALUE lead 按 Owner 原话改为「…和最终问题都算进去以后<br/>设计师实际少投入了多少时间」；⑤FAQ 首条答案在「图译工坊处理的是」前换行（数据用 `\n`，FaqItem 渲染 split 转 `<br/>`）；⑥07 TRY lead 删「先看设计师的实际投入有没有变轻，再决定值不值得继续」；⑦try 左栏底部加 `.try-contact`（微信 tuyigf / 邮箱 tuyi@tuyigf.com，flex+margin-top:auto 钉底）。
+- **提交/部署**：`58f5855`（codex）→ develop merge `ee6add0`（HANDOFF.md 冲突取 develop 侧——其已含 41e58ee 同内容；并行窗口 T-0107 Phase 2/3.6.27 已先推进 develop）→ zip SHA-256 `792B96CA…8CC26`（159,457,617 bytes，助手 3.6.27 保持）→ 部署成功，备份 `deploy-20260910_085735-ee6add042dfe`。本次上传仅 5 分钟（前次 123MB 走了 1 小时，网络波动）。
+- **验证**：tsc 0 错、lint 0 错；本地 build + 公网程序化断言 9/9 命中、零横向溢出；公网截图目检联系方式落位。
+- **流程经验（可复用）**：develop worktree 被并行窗口占用时 → `git clone --shared` 共享 clone → checkout develop → merge → push 需添加 GitHub 远端推 `HEAD:develop`（推本地 worktree origin 会被 checked-out 分支拒绝；clone 需补 user.name/email）。
+
+---
+
+## T-0112 【2026-09-09】官网首页 v5.6 定位调整版已部署测试站
 
 - **任务目标**：Owner 指定 `docs/官网定位调整/图译工坊_模拟首页_v5.6_无句末标点_思源黑体.html`（2026-09-09 10:31 版）"按这个帮我更新上测试站"；语种口径冲突裁决时 Owner 答"直接按这个HTML改就好"（页面写 12，代码 `MAX_LANGUAGES=10`，见偏差登记）。
 - **执行方案**：`home-view.tsx` 整体重写为 v5.6 结构（nav+hero 产品示意卡+01 TIME COST+02 WHAT EASY MEANS+03 REVIEW·EXECUTE·VERIFY+04 TASK STATUS+05 TEAM VALUE+06 FAQ+07 TRY IT+footer）；mock 交互全部 React 化（workflow 标签页/任务筛选/FAQ 手风琴/角色单选+物料多选表单/reveal 动画）；**复用真实表单提交**（POST `/api/beta-applications`，字段映射同 v26：problem→useCase/painPoint、scope→monthlyVolume、物料+人工耗时→note）；`home-v16.css` 删除，新增 `home-v17.css`（mock `<style>` 经 `tmp/scope-v17-css.cjs` 全选择器作用域化到 `.home-v17`，零全局污染；keyframes fade→v17fade；reveal 改渐进增强 `.reveal-armed`）；`layout.tsx` SEO 换 mock 的 title/description；`next.config.ts` CSP `font-src` 加 `https://cdn.jsdelivr.net`（思源黑体 WOFF2，上线前应自托管）。
@@ -20,6 +30,16 @@
 - **验证**：receipt 探针（无凭证 POST /api/local-assistant/execution-attempts/gate-probe/receipt）503 EXECUTION_DISABLED → 400 BATCH_RECEIPT_INVALID（穿过闸门进入参数校验=闸开）；local 3001=200；批量能力三件套：TYGF_ENVIRONMENT=test ✓、BATCH_EXECUTION_MODE=canary ✓、batchBillingV3Enabled 默认 true（SiteSetting featureFlagsV1 仅含 alipayPaymentsEnabled:false，无覆盖）✓；canary 白名单空=全部已激活设备。
 - **行为边界（如实登记）**：①旧助手 3.6.23 会被 P1 身份门 fail-closed 拒绝（提示升级 3.6.24）——设计行为；②闸开同时启用单语言执行（env 级 all-or-nothing）；③15/17 历史批次仍待 dry-run 裁决，不阻塞新批次（P2 迁移 legacy 键 NULL 不占位）。
 - **遗留**：Owner 测试机重装 3.6.24 后真机跑批；观察首批 STALLED/心跳/结算实测行为。
+
+---
+
+## T-0107 进度 2 【2026-09-10】Phase 2 加固已部署（b31c232，助手 3.6.27）
+
+- **实施**：①运行时完整性自检锚点——打包形态助手启动时计算自身引擎 exe sha256，随每次脚本分发上报，云端 distribute 端点接收并记录（同版本主流值形成可审计分歧信号；日志层面，不作为执行权依据——如实登记）；②临时脚本删除自证（secureDelete 后验存在性，残留告警）；③会话文件 ACL 收紧（`.tygf_session`/.bak 仅当前用户，icacls /inheritance:r，尽力而为不阻塞）；④会话格式 v3——AES-256-GCM 增加 MachineGuid AAD 显式绑定（v2 会话仍可读，首次写回自动升级 v3，无需重新激活）。
+- **发布**：3.6.27（v15-anticrack-phase2-20260910-r1，SHA DC4142AA...A330）；部署测试站 b31c232（SHA FECCDCC7...F0BE，备份 deploy-20260910_085143）；验证 local 200 / latest=3.6.27 / PM2 online / quick=ok / 闸保持开。
+- **过程事故**：distribute 路由改动漏出首次提交（release-preflight "working tree must be clean" 拦截——门禁起效）；补提交后重新打包部署。
+- **T-0107 状态**：Phase 1+2 全部上线。**未实施（登记）**：2.4 法务条款（需产品文案审阅）、Phase 3（WASM/原生，永久搁置）。残余：运行时内存提取不可防（方案 #100）。
+- **Owner 验收**：与 T-0111 Golden 同次——重装 **3.6.27**（一步到位，含全部修复）。
 
 ---
 
