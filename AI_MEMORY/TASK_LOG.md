@@ -1,3 +1,15 @@
+## T-0113 批次停滞/互斥冻结/回执陈重复活 一体化修复【2026-09-10】P0-P3 完成，P4 待部署授权
+
+- **背景**：Owner 12 语种批次失败。服务端取证：JP 17:33 单语（另一文档，34 对象）全链路成功；12 语种批次（文档 b9cb74fd）首个 DE 卡在 REOPEN_START（26/27，助手 3.6.29，无回执）持 `activeDocumentLanguageKey`，导致同文档 DE 无法派发；同文档积压 13 批次、全库 15 僵尸 attempt、batch-v3 23 笔预占（8 笔过期）→ 账户冻结 3780。
+- **方案**：`docs/records/20260910_批次停滞与互斥冻结_一体化修复_执行方案.md`（含 12 问/失败窗口矩阵/工业界对照：fencing token、Airflow zombie、Temporal heartbeat、SQS visibility+DLQ）。
+- **P0**：取证归档（14 类 JSON+MANIFEST+DB 副本，仓库外 `%TEMP%/opencode/batch-forensics-20260910`）；只读 dry-run 23 批/4452 冻结（10 批过期 672）；3 个 RED 用例首失败存档（`tmp/red-evidence-*-p0.log`）。
+- **P1**（`915d8d5`）：`reconcileStaleAttempts`（30min 硬超时+CAS 终态化+释放双锁+语言任务重算）、`reconcileBatchReservations`（到期回收，复用 finish EXPIRED 绕过缺口门禁）、派发前自愈、锁键**去 installId**（修跨 install 绕过 L1）、`DOCUMENT_LANGUAGE_ACTIVE` 文案、`abandon` 端点、in-process 10min sweep + `POST /api/billing/batch/reconcile`。
+- **P2**（`dd0df97`）：回执 fencing「终态来源门」——reaper 终态（ABANDONED/硬超时）后的迟到回执返回 `ATTEMPT_ALREADY_TERMINAL`，不改状态不计费；回执自身 FAILED 仍幂等重放（response-lost 重试不破）。未引 epoch 字段（避免迁移，语义等价）。
+- **验证**：tsc/lint 0 错；批次回归 **23/23**（含 4 个新用例 RED→GREEN）；`test:trust-chain` 全过；Web build + standalone-boundary + assistant-contract 通过；`release:package:test` → `tygf-test-dd0df97aaad5.zip` SHA `3B18E3621F3C9390E5A16FE3501FD1C71B536C7C481A4ED1F397AD7C72478D31`（助手 3.6.32 不变，hygiene GREEN）。
+- **偏差**：①助手 3.6.33（REOPEN 看门狗/孤立 journal 上报）未做——根因需独立排查（助手已有 30min 硬超时，无回执更可能进程被替换/关闭），服务端 reaper 已覆盖恢复，登记 ISSUES #38；②锁身份仍用内容指纹（去 installId 已修 L1），改稿绕过列 ISSUES #36；③fencing 用终态来源门替代 epoch（ISSUES #37 已标修复）。
+- **待办 P4（需授权）**：部署 zip 到 Test；**部署后 in-process reaper 会自动终态化 15 僵尸 + 释放 10 笔过期预占（672 单位）**，属对账/积分变更，须 Owner 明确授权（先备份 DB）。
+
+---
 ## T-0107 缓存完整性+浏览器门控合同【2026-09-10 晚】00de7fb（已部署 Test，助手 3.6.32）
 
 - **独立审查复现（tmp/independent-dist-review-*）纳入正式回归并 RED→GREEN**：①健康≠兼容（无版本 fixture healthy=true）→ A15+H3 断言分离；②缓存损坏未检出（existsSync 判定）→ A13+H2；③刷新不修复坏文件（existsSync 跳过写）→ A13/H2 修复断言。RED 证据：tmp/red-evidence-module-round3.log（A13 损坏路径被返回）、tmp/red-evidence-browser-round3.log（B6/B7 报升级、B8 并发 0 选框）。

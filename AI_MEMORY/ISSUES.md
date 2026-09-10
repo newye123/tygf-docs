@@ -12,11 +12,17 @@
 - **建议**：后续引入稳定 `documentIdentity`（projectId + 工作副本/文件路径身份）后把锁键切过去，并把 `smoke-batch-document-lock-scope` 的 L2 从"已知残余"恢复为断言互斥。
 - **状态**：🆕 登记（T-0113 已修 L1 跨 install 绕过；L2 明确不在本轮范围）。
 
-## #37　epoch fencing 未实现（回执陈重复活防护）　🟠 major
-- **位置**：`src/lib/server/execution-batch.ts` 回执路径；`download/local-assistant/server.js` 回执构造。
-- **影响**：当前防重复执行依赖唯一部分索引 + 终态 CAS；一旦"放弃+释放+重试"发生，旧执行复活提交的回执缺少单调 epoch 拦截，理论可双写（计费侧靠终态/幂等缓解，文件侧不可回滚）。
-- **建议**：T-0113 P2 随助手 3.6.33 一起落地——`ExecutionLanguageAttempt.epoch` + 回执携带 epoch + 陈旧 epoch 拒绝并转 MANUAL_REVIEW。
-- **状态**：🆕 登记（P1 已交付 reaper/回收/锁范围；epoch 属 P2，与助手协调）。
+## #37　回执 fencing（已用终态来源门覆盖）　🟠 major
+- **位置**：`src/lib/server/execution-batch.ts` `recordLanguageAttemptReceipt`；`download/local-assistant/server.js` 回执构造。
+- **影响**：若"放弃+释放+重试"后旧执行复活提交回执，需防止双写/重复计费。
+- **处置（T-0113 P2）**：已实现「终态来源门」——被 reaper 终态化（`terminalReason` 前缀 `ATTEMPT_ABANDONED*` 或 `ATTEMPT_START_TO_CLOSE_EXCEEDED`）的 attempt，其迟到回执返回 `ATTEMPT_ALREADY_TERMINAL`，不改状态、不计费；由回执自身产生的 FAILED 仍走幂等重放（response-lost 重试不破）。未引入 `epoch` 字段（避免 schema 迁移），语义等价。
+- **状态**：✅ 已修复（T-0113 P2，`smoke-batch-fencing-late-receipt` 覆盖）。
+
+## #38　助手 REOPEN 阶段卡死无回执（根因待查）　🟠 major
+- **位置**：`download/local-assistant/v15-runner.js`（reopen 调用 `launchExecutor`）+ `server.js`（`PS_EXECUTION_HARD_TIMEOUT_MS=30min`）。
+- **影响**：实测跳台 11:54 attempt 卡在 `REOPEN_START`（26/27），7 小时无回执。助手已有 30min 硬超时，但无 outbox 记录 → 更可能进程在超时前被替换/关闭，未落盘失败回执。
+- **建议**：独立任务——(a) 启动时扫描 execution journal 的孤立 in-flight attempt 并合成终态失败回执上报；(b) 复核 `launchExecutor` 超时路径是否覆盖 reopen 阶段；需助手改版（3.6.33）。服务端 reaper 已提供恢复，此条为根因治理。
+- **状态**：🆕 登记。
 
 ---
 
