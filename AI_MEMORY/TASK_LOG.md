@@ -1,3 +1,13 @@
+## T-0107 对抗第二轮【2026-09-10】候选升至 3.6.31（49c56fe，本地，未 push 未 deploy）
+
+- **对抗发现（3 个）**：①`kickRefreshIfDegraded` 以 cacheHealthy 早退——缓存健康但内容为旧版本（云端发版后本地落后）时 /ping 永不自愈；②A11 为假测试（30min 定时器不触发，仅验证签名，不证明任何不变量）；③同版本号重打 exe 产生两个不同 SHA 的 3.6.30 → publish 脚本正确拒绝（"文件名≠版本证据"陷阱被防线拦下），整套升 3.6.31 并删除未发布的 3.6.30 exe。
+- **修复**：kick 判定权交调用方（server /ping 仅在不兼容时调），内部只留 20s 节流 + singleflight（旧版本缓存亦可自愈）；抽出 `periodicTick(getCfg)` 可测函数；A11 改为真实断言每 tick 重读 cfg；新增 A12（健康但过期缓存 → kick 重拉 → sha 变化断言）。
+- **验证**：12/12 对抗场景 + D1-D5 全绿；tsc 0 错；lint 0 错 2 既有 warning；release-identity passed（3.6.31）；check-exe-no-plaintext CLEAN；release-consistency 23 checks。
+- **3.6.31 身份**：`tygf-engine-setup-3.6.31.exe` SHA-256 `C7A2DB9AEBAFA1B1A6FB699ABF6C745468D7FA17EF798818C4829B24F17F2BA7`，buildId `v15-script-distribution-timing-20260910-r4`。
+- **已知边界**：浏览器侧有界等待逻辑（awaitAssistantComponentRefreshOnce）无单测基础设施，属 NOT RUN（靠 12 场景 + 手动 Golden 覆盖）；3.6.30 r3 exe 已从工作树删除（git 历史保留）。
+- **授权边界**：未 push、未 deploy、未触碰 Photoshop 语义/Credits/结算/DB/生产。develop 本地领先 origin：49c56fe、b26a384、8525c3f、4a69ba9。
+
+---
 ## T-0107 时序修复 3.6.30 候选【2026-09-10】4a69ba9（本地，未 push 未 deploy）
 
 - **目标**：Owner 复审实锤三缺陷后按收口方案 P1/P2 实施（P0 测试机取证待 Owner 执行）：启动预取误入 5 分钟定时器、/ping 只异步 kick 却立即返回旧 unknown、kick 依据内存 lastRefreshAt 跳过自愈、manifest 非原子写。
