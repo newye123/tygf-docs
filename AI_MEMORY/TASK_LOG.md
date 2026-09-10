@@ -1,3 +1,13 @@
+## T-0113 P4 部署 + 自动回收【2026-09-10 晚】已上线 Test（dd0df97）
+
+- **授权**：Owner 选择"部署并允许自动回收"。
+- **部署**：DB 备份 `/var/www/tygf-test-backups/db-20260910-t0113-predeploy.db`（SHA `af00770310c2…`）；zip 6 分块上传 sha 核对 `3B18E362…`；`deploy-test-release.sh` 成功（备份 `deploy-20260910_223342-dd0df97aaad5`）；pm2 3 进程 online；release 接口 = 3.6.32（助手不变）。
+- **手动触发外部调度** `POST /api/billing/batch/reconcile`（Bearer PHOTOSHOP_RECONCILE_SECRET）：`stale inspected 20 / terminalized 20（ATTEMPT_ABANDONED_STALE）`，`reservations inspected 10 / released 10`。
+- **库核验**：非终态 attempt **0**；持锁 **0**；20 条 attempt 终态 `FAILED/ATTEMPT_ABANDONED_STALE`；10 个过期批次 → **EXPIRED**（22:37）；batch-v3 预占：released 7×40=280 + committed 3（392，部分核实）合计 672（与 dry-run 一致）；原阻塞 `cmtuztd2p000ww` DE job → **FAILED_RETRYABLE**（可重试）。
+- **遗留**：Owner 账户另有 13 个在窗口内的 abandoned 批次（3780 单位），按设计在各自到期日（09-11..09-13）自动释放；DE 锁已解除，可立即用新批次重试。如需提前释放该 13 批，可扩展 reaper（无在途 attempt 且最后信号超阈即结算）或逐批人工 finish。
+- **回滚**：Web 切 `deploy-20260910_223342-dd0df97aaad5` 或重部署上一 receipt；DB 用 `db-20260910-t0113-predeploy.db`。
+
+---
 ## T-0113 批次停滞/互斥冻结/回执陈重复活 一体化修复【2026-09-10】P0-P3 完成，P4 待部署授权
 
 - **背景**：Owner 12 语种批次失败。服务端取证：JP 17:33 单语（另一文档，34 对象）全链路成功；12 语种批次（文档 b9cb74fd）首个 DE 卡在 REOPEN_START（26/27，助手 3.6.29，无回执）持 `activeDocumentLanguageKey`，导致同文档 DE 无法派发；同文档积压 13 批次、全库 15 僵尸 attempt、batch-v3 23 笔预占（8 笔过期）→ 账户冻结 3780。
