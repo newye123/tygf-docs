@@ -6,6 +6,21 @@
 
 ---
 
+## #36　文档执行锁的"改稿绕过"残余（内容指纹身份）　🟡 minor
+- **位置**：`src/lib/server/execution-batch.ts`（`activeDocumentLanguageKey` 计算，T-0113 改动后）。
+- **影响**：锁键 = principal + `documentFingerprint`(内容) + language（已移除 installId，修复了跨 install 绕过）。但 `documentFingerprint` 是内容指纹，用户改稿后指纹变化 → 锁不再匹配同一文件路径的历史执行，理论上同一 PSD 可被并发执行（缺稳定"文档/路径身份"）。数据模型无稳定 document id 列。
+- **建议**：后续引入稳定 `documentIdentity`（projectId + 工作副本/文件路径身份）后把锁键切过去，并把 `smoke-batch-document-lock-scope` 的 L2 从"已知残余"恢复为断言互斥。
+- **状态**：🆕 登记（T-0113 已修 L1 跨 install 绕过；L2 明确不在本轮范围）。
+
+## #37　epoch fencing 未实现（回执陈重复活防护）　🟠 major
+- **位置**：`src/lib/server/execution-batch.ts` 回执路径；`download/local-assistant/server.js` 回执构造。
+- **影响**：当前防重复执行依赖唯一部分索引 + 终态 CAS；一旦"放弃+释放+重试"发生，旧执行复活提交的回执缺少单调 epoch 拦截，理论可双写（计费侧靠终态/幂等缓解，文件侧不可回滚）。
+- **建议**：T-0113 P2 随助手 3.6.33 一起落地——`ExecutionLanguageAttempt.epoch` + 回执携带 epoch + 陈旧 epoch 拒绝并转 MANUAL_REVIEW。
+- **状态**：🆕 登记（P1 已交付 reaper/回收/锁范围；epoch 属 P2，与助手协调）。
+
+---
+
+
 ## #34　测试站服务器生产野进程占用 0.0.0.0:3000　🟠 major
 - **位置**：服务器 43.134.175.26；pid 2698199（8/25 10:23 启动，next-server v16.2.10），cwd 指向已删除的 `/var/www/tygf/.next/standalone`（build 仅存活于内存）；nginx `sites-available/tygf`（生产域名 tuyigf.com/www）proxy_pass → localhost:3000。
 - **影响**：① 生产站由一个不属于任何进程管理器、加载已删文件系统的野进程服务（runtime 身份不可审计，违反"源码≠runtime 身份"铁律）；② 0.0.0.0 暴露 3000 端口（无 TLS、无 key 门）。2026-09-06 排查 P0-A 时发现。
