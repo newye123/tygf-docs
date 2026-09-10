@@ -1,3 +1,12 @@
+## T-0113 P2（#38）助手重启孤立执行上报 + 3.6.33【2026-09-11 凌晨】已部署 Test（efc78bc）
+
+- **根因（#38）**：助手启动恢复只标本地终态、不上报云端；journal 未持久化云端上下文 → 云端 attempt 永远 RUNNING。
+- **实现**：journal 增 `cloudContext{installId,jobId}`（向后兼容）；`server.js` 启动 `reportInterruptedAttempts` 逐已授权 origin 上报 `POST /api/local-assistant/execution-attempts/[id]/abort`；服务端 abort 路由（assistantToken 鉴权 + 本机归属 + `ATTEMPT_INTERRUPTED_ASSISTANT_RESTART` + 幂等 + fencing 覆盖）。
+- **验证**：`smoke-batch-interrupted-abort` A1-A4 GREEN；批次全量 **24/24** + `test:trust-chain`；助手 **3.6.33**（SHA `F370E2D8B67776B1AAAA891116D9762778E387604DE2D193DD9D82799B999FA5`，零明文 CLEAN，consistency 23 checks）；包 `tygf-test-efc78bc685e4.zip` SHA `101880F5928B58593CE6083F8D6FE4A32B8200170B5AB5898C63DE076777EC8B`（hygiene GREEN）。
+- **部署**：DB 备份 `db-20260910-t0113-p2-predeploy.db` + `deploy-20260911_000650-efc78bc685e4`；pm2 3 online；release 接口=3.6.33；abort 路由存活（400）；reaper 幂等 0/0；非终态 attempt=0、持锁=0。
+- **提交**：develop `efc78bc`（已 push）。
+
+---
 ## T-0113 P4 部署 + 自动回收【2026-09-10 晚】已上线 Test（dd0df97）
 
 - **授权**：Owner 选择"部署并允许自动回收"。

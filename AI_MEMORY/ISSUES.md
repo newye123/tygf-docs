@@ -18,11 +18,12 @@
 - **处置（T-0113 P2）**：已实现「终态来源门」——被 reaper 终态化（`terminalReason` 前缀 `ATTEMPT_ABANDONED*` 或 `ATTEMPT_START_TO_CLOSE_EXCEEDED`）的 attempt，其迟到回执返回 `ATTEMPT_ALREADY_TERMINAL`，不改状态、不计费；由回执自身产生的 FAILED 仍走幂等重放（response-lost 重试不破）。未引入 `epoch` 字段（避免 schema 迁移），语义等价。
 - **状态**：✅ 已修复（T-0113 P2，`smoke-batch-fencing-late-receipt` 覆盖）。
 
-## #38　助手 REOPEN 阶段卡死无回执（根因待查）　🟠 major
-- **位置**：`download/local-assistant/v15-runner.js`（reopen 调用 `launchExecutor`）+ `server.js`（`PS_EXECUTION_HARD_TIMEOUT_MS=30min`）。
-- **影响**：实测跳台 11:54 attempt 卡在 `REOPEN_START`（26/27），7 小时无回执。助手已有 30min 硬超时，但无 outbox 记录 → 更可能进程在超时前被替换/关闭，未落盘失败回执。
-- **建议**：独立任务——(a) 启动时扫描 execution journal 的孤立 in-flight attempt 并合成终态失败回执上报；(b) 复核 `launchExecutor` 超时路径是否覆盖 reopen 阶段；需助手改版（3.6.33）。服务端 reaper 已提供恢复，此条为根因治理。
-- **状态**：🆕 登记。
+## #38　助手 REOPEN 阶段卡死无回执（已修复：重启孤立上报）　🟠 major → ✅
+- **位置**：`download/local-assistant/v15-runner.js`、`execution-journal.js`、`server.js`；`src/app/api/local-assistant/execution-attempts/[id]/abort/route.ts`（新）。
+- **根因**：启动恢复链只把孤立 journal 标本地终态（`reconcileUnfinishedJournals` + `attemptRuntime.terminal`），**不向云端补发失败回执**；journal 也未持久化云端上下文 → 云端 attempt 永远 RUNNING。
+- **处置（T-0113 #38，助手 3.6.33）**：journal 持久化 `cloudContext{installId,jobId}`；启动 `reportInterruptedAttempts` 逐已授权 origin 上报 `POST .../execution-attempts/[id]/abort`（assistantToken 鉴权、仅本机归属、`ATTEMPT_INTERRUPTED_ASSISTANT_RESTART`、幂等、fencing 覆盖）；失败仍由服务端 reaper 兜底。
+- **验证**：`smoke-batch-interrupted-abort`（A1 终态化+锁释放 / A2 幂等 / A3 他机 403 / A4 坏令牌 403）GREEN；批次全量 24/24 + trust-chain；3.6.33 发布检查全过；Test 部署后 abort 路由存活（400）、reaper 幂等 0/0。
+- **状态**：✅ 已修复并部署（T-0113 P2，2026-09-11）。
 
 ---
 
