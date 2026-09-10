@@ -1,3 +1,10 @@
+## T-0107 发布前收口【2026-09-10】候选定稿 708b226（develop 领先 origin 6 提交，未 push 未 deploy）
+
+- **七项收口**：①唯一发布 SHA=997ec7c0fb48250e89218e06bd678cde69559f17（代码定稿；HEAD 含 HANDOFF 708b226）；②A12 补终态 compatible 等价断言 + /ping 真实 kick 路径（3 连 kick 节流合并 1 次云端、21s 后恢复可用）；③A11 补真实 setInterval 接线（短 interval 实测 tick + 重复 start 不叠加定时器，需 module 增可选 intervalMs 参数）；④浏览器证据 5/5（B1 刷新成功/B2 慢刷新仅一次重读不循环/B3 重读离线回落首读单一稳定失败/B4 3 并发点击恰 6 ping 9.5s 内/B5 快路径零等待——真实 Chromium + esbuild 打包真实生产模块 assistant-client.mjs；harness 在 tmp/browser-evidence/ 未提交；首测 B4 FAIL 为 harness FIFO 设计缺陷非模块缺陷）；⑤row-contract passed、trust-chain 22 项 passed、npm run build + standalone-boundary + assistant-contract passed；⑥exe 重打（module 源码因 intervalMs 变更）：最终 **tygf-engine-setup-3.6.31.exe SHA-256 F086CC1805E16DA54B6281FA531EE1E54A0B916A006BFB115CD7D27B62D2665A（buildId r5）**；Web 包 tygf-test-997ec7c0fb48.zip SHA-256 D762FAEF2FAEDDF86CDDDCF56E4EB2AE62C75EBD6004620B2AD00323BFF0A031（194,921,147 bytes），receipt 交叉核对 assistantSha256 与实际 exe hash 一致。
+- **分层状态**：模块/路由=PASS（D1-D5+A1-A12）；浏览器=PASS（B1-B5，真实 Chromium）；发布=PASS（identity/零明文/consistency 23 checks/receipt 交叉核对）；真机 Golden=NOT RUN（部署后必做：/ping 身份核验 + 单语言 disposable 执行 + Credits 结算核对）。
+- **待授权**：push（6 提交）+ Test 部署。回滚：/var/www/tygf-test-backups 既有备份目录或重部署上一 receipt。
+
+---
 ## T-0107 对抗第二轮【2026-09-10】候选升至 3.6.31（49c56fe，本地，未 push 未 deploy）
 
 - **对抗发现（3 个）**：①`kickRefreshIfDegraded` 以 cacheHealthy 早退——缓存健康但内容为旧版本（云端发版后本地落后）时 /ping 永不自愈；②A11 为假测试（30min 定时器不触发，仅验证签名，不证明任何不变量）；③同版本号重打 exe 产生两个不同 SHA 的 3.6.30 → publish 脚本正确拒绝（"文件名≠版本证据"陷阱被防线拦下），整套升 3.6.31 并删除未发布的 3.6.30 exe。
