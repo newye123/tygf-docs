@@ -1,3 +1,14 @@
+## T-0107 缓存完整性+浏览器门控合同【2026-09-10 晚】00de7fb（已部署 Test，助手 3.6.32）
+
+- **独立审查复现（tmp/independent-dist-review-*）纳入正式回归并 RED→GREEN**：①健康≠兼容（无版本 fixture healthy=true）→ A15+H3 断言分离；②缓存损坏未检出（existsSync 判定）→ A13+H2；③刷新不修复坏文件（existsSync 跳过写）→ A13/H2 修复断言。RED 证据：tmp/red-evidence-module-round3.log（A13 损坏路径被返回）、tmp/red-evidence-browser-round3.log（B6/B7 报升级、B8 并发 0 选框）。
+- **修复**：模块统一 inspectCacheEntry（manifest 字段校验/白名单+缓存目录边界/可读/实际 LF SHA=manifest）供 scriptComponentPath、cacheHealthy、distributionStatus 复用；integrityOk 与 compatible 分离；跳过写盘唯一依据=磁盘实际 SHA 一致；损坏修复=同目录临时+校验+rename 原子替换，失败 SCRIPT_CACHE_REWRITE_FAILED fail-closed；manifest 发布前逐条终验。浏览器：resolveAssistantComponentGate（共享单飞等待链，重读失败=明确 offline 不保留 refreshing 旧事实；refreshing→"执行组件正在准备"不报升级；failed→准确原因；incompatible→升级+诊断），接入 selectDesignFileDirect + 批量能力检查；fetchAssistantComponentStatus 只查状态不恢复执行。
+- **测试（Node22 v22.23.2 实测）**：模块 A1-A16；HTTP /ping 集成 H1-H3（复制运行时到 tmp、禁 PS 探测、mock 云端、真实 server.js 路由：全新自愈/损坏降级+修复 SHA 核对/旧版如实上报+换新自愈）；Chromium 入口 B6-B9（真实 selectDesignFileDirect：慢下载不报升级不请求票据不触发选框、重读离线明确、并发共享等待 ≤3 ping、成功走通票据+选框）；row-contract passed、trust-chain 22 项 passed、tsc/lint 0 错、build+boundary+contract passed。
+- **发布身份**：SOURCE_SHA=00de7fb3bfae98858fdbc6b8894aad9d6335f924；WEB_ARCHIVE_SHA256=3A1CAA59325C77E135E3F9EB53FFD2A32D3F7091170CBD4B5BC8D17FF865876B；INSTALLER_VERSION=3.6.32；INSTALLER_BUILD_ID=v15-cache-integrity-gate-20260910-r1；INSTALLER_SHA256=CF67F53FB5A2EBB428A40ED47C1A9EFA3DC5BE6DF80C0EEE44B8860834BDAF02；RECEIPT_IDENTITY_MATCH=true（receipt.assistantSha256 与 exe 实测一致）。3.6.32 未被占用，未删包复用。
+- **Test 部署**：成功（备份 deploy-20260910_163733-00de7fb3bfae）；pm2 3 进程 online；公网 release 接口=3.6.32+SHA 一致；首页带 key 200。
+- **待 Owner 真机 Golden**：身份核验→全新缓存→覆盖升级→慢网提示→重启缓存可用→单语言 disposable→输出/回执/积分核对；缓存损坏实验只在隔离目录。
+- **回滚**：Web=切换备份目录或重部署 fc1884e receipt；助手=装 3.6.31（F086CC18...65A）退托盘重启。
+
+---
 ## T-0107 发布前收口【2026-09-10】候选定稿 708b226（develop 领先 origin 6 提交，未 push 未 deploy）
 
 - **七项收口**：①唯一发布 SHA=997ec7c0fb48250e89218e06bd678cde69559f17（代码定稿；HEAD 含 HANDOFF 708b226）；②A12 补终态 compatible 等价断言 + /ping 真实 kick 路径（3 连 kick 节流合并 1 次云端、21s 后恢复可用）；③A11 补真实 setInterval 接线（短 interval 实测 tick + 重复 start 不叠加定时器，需 module 增可选 intervalMs 参数）；④浏览器证据 5/5（B1 刷新成功/B2 慢刷新仅一次重读不循环/B3 重读离线回落首读单一稳定失败/B4 3 并发点击恰 6 ping 9.5s 内/B5 快路径零等待——真实 Chromium + esbuild 打包真实生产模块 assistant-client.mjs；harness 在 tmp/browser-evidence/ 未提交；首测 B4 FAIL 为 harness FIFO 设计缺陷非模块缺陷）；⑤row-contract passed、trust-chain 22 项 passed、npm run build + standalone-boundary + assistant-contract passed；⑥exe 重打（module 源码因 intervalMs 变更）：最终 **tygf-engine-setup-3.6.31.exe SHA-256 F086CC1805E16DA54B6281FA531EE1E54A0B916A006BFB115CD7D27B62D2665A（buildId r5）**；Web 包 tygf-test-997ec7c0fb48.zip SHA-256 D762FAEF2FAEDDF86CDDDCF56E4EB2AE62C75EBD6004620B2AD00323BFF0A031（194,921,147 bytes），receipt 交叉核对 assistantSha256 与实际 exe hash 一致。
