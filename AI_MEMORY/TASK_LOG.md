@@ -1,4 +1,14 @@
-﻿## T-0107 热修 3.6.29【2026-09-10】脚本分发诊断增强已部署（Owner 实机仍报 unknown/unknown 的对抗式排查）
+## T-0107 时序修复 3.6.30 候选【2026-09-10】4a69ba9（本地，未 push 未 deploy）
+
+- **目标**：Owner 复审实锤三缺陷后按收口方案 P1/P2 实施（P0 测试机取证待 Owner 执行）：启动预取误入 5 分钟定时器、/ping 只异步 kick 却立即返回旧 unknown、kick 依据内存 lastRefreshAt 跳过自愈、manifest 非原子写。
+- **修改**：`script-distribution.cjs`（启动即预取移出定时器→server.js 监听回调；singleflight 保持；kickRefreshIfDegraded 改磁盘实况 cacheHealthy 判定 + 20s 节流防 ping 风暴；manifest 临时文件+校验+rename 原子写，失败清理；assistantVersion 恒取不可变运行时版本，旧配置禁伪造；startPeriodicRefresh 改 getCfg 每 tick 重读；distributionStatus 新增 phase=ready|refreshing|failed|missing 且移除 cacheDir 不暴露磁盘路径）；`server.js`（监听回调立即预取 + startPeriodicRefresh(loadConfig)；/ping 不兼容时 kick）；`local-assistant-client.ts`（ping 类型加 phase；awaitAssistantComponentRefreshOnce 有界等待 6s 一次+重读一次，绝不循环；报错文案加阶段）；`batch-execution-client.ts`（能力检查接同一有界等待）。
+- **测试**：新增 `scripts/smoke-assistant-script-distribution-module.mjs`（11 对抗场景 A1-A11：全新安装即预取/refreshing 阶段/并发 singleflight 只打云一次/manifest 损坏自愈/缺文件重拉/sha 不匹配 fail-closed/中断不留 manifest/4xx5xx 错误码保留/不可变版本/云不可达不降级/周期重读配置），并入 `npm run test:assistant-script-distribution`。全绿：D1-D5 + A1-A11；tsc 0 错；node --check 双文件 OK；check-release-identity passed（3.6.30）；check-exe-no-plaintext CLEAN（36.5MB）；smoke-release-consistency 23 checks。
+- **产物**：`tygf-engine-setup-3.6.30.exe` SHA-256 `3997086E40D5CA446B6C4F9938456875B19E000682849498E3AB48FC3B8D9B39`，buildId `v15-script-distribution-timing-20260910-r3`。
+- **授权边界**：未 push、未 deploy、未触碰 Photoshop 执行语义/Credits/结算/数据库/生产。待 Owner：①测试机 P0 只读取证（/ping JSON + 49152 占用进程 + exe hash）分类 A-D；②P0 分类后申请 Test 部署授权（含网页 bundle 同步部署——STALE_TEST_WEB_BUNDLE 分类可能只差浏览器 chunk）。
+- **遗留**：`worktrees/develop` 分支领先 origin 3 个本地提交（4a69ba9+8525c3f+fc1884e 之前已推过——实际领先=4a69ba9、8525c3f）；容器仓库 master 无 remote（bfefb40 仅本地）。
+
+---
+## T-0107 热修 3.6.29【2026-09-10】脚本分发诊断增强已部署（Owner 实机仍报 unknown/unknown 的对抗式排查）
 
 - **目标**：Owner 装完 3.6.28 后工作台仍报「本地助手替换组件版本不兼容（脚本 unknown / schema unknown）」——需实锤根因而非再盲改。
 - **取证（服务器日志）**：云端 `/api/local-assistant/scripts/distribute` **成功记录 1 条**：`09:56:20 install=fb456ddd… version=3.6.28 scripts=5 exeSha=c3a137f6…`——3.6.28 引擎成功拉到 5 个脚本且 exeSha 锚点在。之后无第二轮请求（30min 周期未到或引擎已死）。out/error 日志零脚本相关报错（分发路由仅记成功，失败本就不落盘——后续可加）。
