@@ -1,3 +1,16 @@
+## T-0114 文字对齐与 REOPEN 卡死【2026-09-11】已部署 Test（6e6d053，助手 3.6.34）
+
+- **实证修正**：`×→x` 早已归一（2f3521f）非缺陷；复合匹配"非连续行不自动拼接"是产品不变量（子序列兜底已回退）；正文差异是真实数据（多 `etc.`）；系统早已产出 missing/unmatched/combined/uneditable（多为 blocking），缺的是**报告口径**。
+- **A4 报告如实性**：`report-renderer.js`/`v15-runner.js` 增"跳过（未翻译）"口径——存在排除图层/忽略译文行时显示"已生成，需复查（有未翻译对象）"并列出清单，不再声称完整；新增 `smoke-report-coverage-honesty`。
+- **A5 可恢复**：批次语言执行超时即调用 `abandonBatchLanguage` 释放该语言锁；文案改"已尝试释放锁，可重试"（`batch-execution-client.ts`/`execute-step.tsx`）。
+- **B1 reopen 打开改造**：`executeAction("open",…,DialogModes.NO)` + 关同名文档 + 校验 activeDocument + `displayDialogs=NO`（`TYGF_V15_Reopen_Verifier.jsx`）。
+- **B2 带外看门狗**：reopen 期间独立心跳（15s）+ 6min `taskkill /F /T`（wscript+Photoshop）看门狗 → `REOPEN_WATCHDOG_TIMEOUT` → 失败回执（`server.js`）。
+- **发布**：助手 **3.6.34** SHA `D3950D602D8EEC0B9524E7FBF204BCDEF99D192C87AF78845850E4DD910825B3`（零明文 CLEAN，consistency 23 checks）；包 `tygf-test-6e6d0536215a.zip` SHA `5F2068E54CF4E872C4F4C4936D7E8140B4FDD33E36B5AA16C91A597139AD93F1`；部署成功（备份 `deploy-20260911_111533-6e6d0536215a`）。
+- **验证**：tsc/lint 0 错；`test:trust-chain`、`test:batch-row-contract` 全过；公网 release=3.6.34。
+- **卡死解封**：`cmtw74hj6005` 已由 reaper 于 **10:09:26** 自动终态化（`ATTEMPT_ABANDONED_STALE`）；非终态 attempt=0、持锁=0。
+- **遗留**：A3 扫描生成译表模板（身份绑定）未做；缺字体按 Owner 决定**不处理**；真机 Golden（测试机装 3.6.34 跑 12 语种）待 Owner。
+
+---
 ## T-0113 对抗审查修正（阈值竞态）【2026-09-11】已部署 Test（9591fba）
 
 - **发现（F1 严重）**：服务端自动放弃阈值 `ATTEMPT_ABANDON_AFTER_MS`=30min **等于**助手 `PS_EXECUTION_HARD_TIMEOUT_MS`=30min → PS 在边界完成时，成功回执可能在 reaper 标记 ABANDONED 之后到达，被 fencing 拒绝 → **丢弃已完成的执行**（0 单位/释放积分）且解锁后可能同文件双写。
