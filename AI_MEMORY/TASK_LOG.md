@@ -1,3 +1,15 @@
+## T-0114 真机测试 + 3.6.35 热修【2026-09-11】
+
+- **本机安装测试**：停 3.6.33 → 静默安装 → 启动；`/ping` = 3.6.34（后升 3.6.35），buildId 正确，compatible=true、phase=ready、psHandshake=true。
+- **真实 Photoshop 测试（B1）**：用改版 reopen 脚本对**真实缺字体 86MB PSB**（5477 JP 输出）执行：
+  - 隔离 open 测试：Action Manager `executeAction("open")` 5.7s 完成、无挂起；
+  - 完整 reopen（含 wrapper 补丁：JSON polyfill/Folder patch/displayDialogs）：`REOPEN_START→REOPEN_DONE→VERIFY 58/58→REOPEN_RESULT_WRITTEN`，`ok=true`、`REOPEN_VERIFIED`，约 8.8s。
+- **发现并热修**：真实测试抓到 B1 的 `documentRef.name !== workingFile.name` 严格校验**误判**（`REOPEN_OPEN_MISMATCH`），会破坏正常 reopen；移除该校验（保留 open 动作/关同名文档/看门狗）→ 发 **3.6.35**。
+- **发布**：助手 **3.6.35** SHA `25BA725462654158527E2AF4839CB2702CB60175D8011FCF1665BAF69D19B1E3`（零明文 CLEAN、consistency 23 checks）；包 `tygf-test-af5cbe65d832.zip` SHA `2F46902D25A64E6BEBBB09548A18EA8F2D81A9299DBE35BD8CB1F7A2F236E194`；部署成功（备份 `deploy-20260911_124157-af5cbe65d832`）；公网 release=3.6.35；本机亦装 3.6.35。
+- **自动化**：批次套件 26/26、trust-chain、tsc/lint、row-contract 全过。
+- **重要提示**：wrapper 已全局 `displayDialogs=NO` 且 patch `app.open`，并**禁用 Action Manager `'Opn '`（写 textItem.contents 会挂死）**；B1 仅用于 reopen（只读）实测正常，executor 写阶段仍走原生 open。
+
+---
 ## T-0114-A3 译文表模板【2026-09-11】已部署 Test（dbfb36b）
 
 - **实现**：新增 `src/lib/workbench/translation-template.ts`（`buildSourceTemplateCsv`：源文列逐字来自 PSD 扫描，含 ×/逗号/多行，BOM，去重语言列）；`photoshop-step.tsx` 增"导出译文表模板"按钮（`targetLanguages` prop 由 `workbench-view` 传入）；新增 `smoke-translation-template`。
