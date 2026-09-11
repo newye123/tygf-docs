@@ -1,3 +1,11 @@
+## T-0114-A3 译文表模板【2026-09-11】已部署 Test（dbfb36b）
+
+- **实现**：新增 `src/lib/workbench/translation-template.ts`（`buildSourceTemplateCsv`：源文列逐字来自 PSD 扫描，含 ×/逗号/多行，BOM，去重语言列）；`photoshop-step.tsx` 增"导出译文表模板"按钮（`targetLanguages` prop 由 `workbench-view` 传入）；新增 `smoke-translation-template`。
+- **验证**：smoke 全过；tsc/lint 0 错；`test:trust-chain`、`test:batch-row-contract` 全过。
+- **发布**：包 `tygf-test-dbfb36b9d4d7.zip` SHA `388A9595C453CBF7F493034AF6A954F2AF0F4F18891ACE566DFD41FAFCD541B5`；部署成功（备份 `deploy-20260911_113418-dbfb36b9d4d7`）；pm2 3 online；release=3.6.34（助手未变）。develop 已推送。
+- **T-0114 全部实现完成**：A3 模板 / A4 报告如实性 / A5 abandon / B1 reopen open 动作 / B2 独立心跳+看门狗；缺字体按 Owner 不处理。**待 Owner 真机 Golden（测试机装 3.6.34 跑 12 语种）**。
+
+---
 ## T-0114 文字对齐与 REOPEN 卡死【2026-09-11】已部署 Test（6e6d053，助手 3.6.34）
 
 - **实证修正**：`×→x` 早已归一（2f3521f）非缺陷；复合匹配"非连续行不自动拼接"是产品不变量（子序列兜底已回退）；正文差异是真实数据（多 `etc.`）；系统早已产出 missing/unmatched/combined/uneditable（多为 blocking），缺的是**报告口径**。
