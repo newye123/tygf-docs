@@ -1,7 +1,17 @@
-## F1–F7 核心批次实施 + 3.6.42 发布测试站【2026-09-12 深夜｜已部署】
+## P0 事故修复：批量证据放行 / 失败隔离 / 回收器 / 沙箱【2026-09-13 深夜｜已部署 09f7122】
+
+- 事故与根因：批量第二语种起 409（快照 targetLanguage=主语言 vs languages=全集）→ 整批停摆；4 批 RUNNING + 1 批 RESERVED 悬挂。
+- 修复：R1 成员放行（474a565）；R2 batch-error-policy + 捕获/abandon/继续（09f7122）；R3 RESERVED 0-attempt 回收（09f7122，F10）；R4 systemd ReadWritePaths 补 db 并入库（09f7122）。
+- 收口：3×39 + 18 commit（真实完成的日语产出），RESERVED 216 released；5 批全终态。
+- 部署核验：09f7122（备份 deploy-20260913_002627-09f7122d566b）；健康 200、PM2 三 online、latest=3.6.43、前端 chunk 含新逻辑；服务器分片已清。
+- 验证：tsc/lint/trust-chain 24 段（含 F10）/v3-batch-flow（策略断言）/row-contract/workbench-flow/review-filters/报告 smoke 全绿。
+- 交付：`worktrees/develop/docs/records/20260913_P0事故修复与可靠性强化_执行方案.md`。
+- 遗留：F9–F14；ISSUES #39/#40。
+
+## F1–F7 核心批次实施 + 3.6.42 版本面 【2026-09-12 深夜｜已发布部署】
 
 - 目标：按第一性原理方案把「卡死 / 未覆盖可见 / 同文 / 证据链 / 报告诚实」一次做完，最后统一部署。
-- 改动（18 文件，+492/-66，未提交）：
+- 改动（18 文件，+492/-66）：
   - F3（卡死）：`binding-core.ts` 全局争夺项附 `combinedCandidates`；`object-inspector.tsx` 出现「选择归属」（单候选免点选）；`workbench-view.tsx` 一次确认跨 12 语言广播（各语言用本语言候选译文）；`prepare-check-labels.ts` 文案与出路。
   - F1：`binding-core.ts` check 产出 `missing/V15_SCOPE_NOT_CLOSED`（execute 不变；组合问题层不重复报），`targetedCount` 排除 missing；`prepare-check-summary.ts` 范围横幅只由 missing 驱动、`writableCount` 优先；`server.js` 计算 `unreplacedObjects`；`v15-runner.js`/`report-renderer.js` 未覆盖块 + 卡片/下一步。
   - F2：renderer NFKC 同文判定 →「疑似未翻译」块；存在未覆盖/同文不得显示「完整输出」；计费不变。

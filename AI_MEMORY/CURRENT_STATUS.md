@@ -1,5 +1,15 @@
 # CURRENT_STATUS.md — 图译工坊当前状态
 
+## 2026-09-13 深夜 P0 事故修复与可靠性强化（已部署测试站 09f7122）
+
+- **事故**：09-12 23:45–00:00 批量执行第二语种起 409 `REVIEW_EVIDENCE_BINDING_INVALID`，整批停摆、预留悬挂（用户三轮仅完成日语）。根因=快照 `targetLanguage` 是主语言、`languages` 才是整批全集，云端路由按主语言等值放行。
+- **修复**：R1 证据按 `languages` 成员放行（`474a565`）；R2 预执行业务拒绝→语言级失败 + abandon + 其余语言继续（`09f7122`）；R3 回收器覆盖「确认后未派发」的 RESERVED（15min→STALLED 全额释放，F10 回归）；R4 systemd 回收单元 `ReadWritePaths` 补 db（此前 readonly database 实证）并入库。
+- **收口**：事故 5 批全终态——3×39 + 18 commit（各轮真实完成的日语产出），RESERVED 216 released。
+- **部署**：`09f7122`（备份 deploy-20260913_002627-09f7122d566b）；健康 200、PM2 三 online、latest=3.6.43；前端 chunk 已核验。
+- **验证**：tsc/lint 0；trust-chain 24 段（含 F10）；v3-batch-flow/row-contract/workbench-flow/review-filters/报告 smoke 全绿。
+- **交付**：`docs/records/20260913_P0事故修复与可靠性强化_执行方案.md`（第一性原理 + GitHub/官方对照 + 100 轮对抗审查）。
+- **遗留**：F9–F14 未实施；ISSUES #39/#40（HEAD 既有测试失败）。
+
 ## 2026-09-12 深夜 F1–F7 核心批次实施 + 3.6.42 已发布测试站（终态）
 
 - 范围：F1 未覆盖可见性、F2 同文轴、F3 争夺归属（解卡死）、F4 回执逐对象判定、F5 批量证据链、F6 合并诚实+产物可用、F7 报告卡片与术语。
