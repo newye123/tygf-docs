@@ -4,6 +4,33 @@
 > 每条带编号、严重度（🔴 blocker / 🟠 major / 🟡 minor）、位置、影响、建议、状态。
 > 修复后更新状态，不删除条目。
 
+## #39　smoke-prepare-check-closure 正则误报（HEAD 已存在，非 trust-chain 链）　🟡 minor
+- **位置**：`scripts/smoke-prepare-check-closure.mjs:53`（`/masterFileStat[\s\S]{0,200}?browserPreparationSummary/`）。
+- **影响**：合法代码 `summary: browserPreparationSummary(...)` 紧跟在 `masterFileStat?.mtimeMs` 快路径判断之后，被正则误判为"文件 stat 进入浏览器摘要"→ 该 smoke 在 HEAD 即 FAIL；不在 `test:trust-chain` 链内，不阻塞标准门禁。
+- **建议**：断言语义化——直接断言 `browserPreparationSummary` 返回对象不含 stat 字段（函数体或返回值检查），而非源码邻近正则。
+- **状态**：🆕 登记（`git show HEAD` 已复现，非 F1–F7 批次回归）。
+
+---
+
+## FREEZE-20260912 — 卡点与核心最小集新证据（待修）
+
+- generated构建一致性FAIL：binding-core.ts:568–577含×→x，generated/binding-core.js:429–437不含；--check exit1，LF规范化也不匹配清单。待固定候选后重建、同提交/发版/真机验证。
+- local-assistant-client.ts detectAssistant:362、fetchTicket:185、runPrepareCheckBatch:1348缺AbortSignal；受控挂起实测，不代表已复现用户现场。
+- 原方案C2单独移除missing无法令scopeNeedsConfirmation=true（prepare-check-summary.ts:137固定false），且漏prepare-batch-core.ts:126–140的权威聚合合同；需重写范围确认而非仅改blocking列表。
+- v15-runner.js:741–759非连续成功对象1/3、completed=2时仅认1，3漏认；缺证据禁止slice兜底，待合同修复。
+- 本机3.6.39/expired vs本地3.6.40合同，明确UPDATE_REQUIRED；未核验当前线上合同。旧5294报告220/324同文和12个PSB链接缺失为现有文件事实，不证明删除、PS内容或实际收费。
+- 交付及反例见根outputs/project-audit-20260912-1142/20260912_卡点诊断与核心最小集_对抗审查执行方案.html。未部署、未更改业务状态。
+
+## AUDIT-20260912 — 全项目审计新风险（待修，未部署）
+
+- 证据报告：`outputs/project-audit-20260912-1142/report.html`，配套 `inventory.json` 与 `verification.json`。源码基线 develop `7ee5cb8` + T-0118 未提交修改，远端 `2fad331`。
+- H1（高，dirty）：助手所有 HTTP 409 被永久化并移除 pending/inputs，但 `BATCH_CAPABILITY_CHECK_FAILED` / `BATCH_FEATURE_FLAG_OFF` 可恢复。`server.js:2091–2097,2764–2765`；能力门 `batch-execution-mode.ts:184–191,241–254`。隔离函数探针已确认误分类，未做现场 HTTP 复现。
+- H2（高，dirty）：STALLED 先查询后 finish，事务写入前未重新验证无在途/活动时钟；`execution-batch.ts:1678–1719,1915,1971–1982`。并发风险静态推导，未复现。
+- H3/H4（高，HEAD 已有）：accept CAS 未检查 status，已 FAILED 的 DISPATCHING 可被迟到接受；reaper CAS 未绑定 heartbeat/租约版本，云端释锁不等于本地停执行。`execution-batch.ts:1004–1047,1564–1575`；`server.js:4716,4766–4771`。静态推导。
+- H5（高，HEAD）：实际运行 `check-repo-policy.cjs` 退出 1，三项旧迁移正则与当前 deploy-test 脚本失配；不是 GitHub Actions 现场查询。
+- H6/H7/H8/M1：远端批准 SHA/CI 未绑定发布收据；生产先改运行库后 build、数据库人工回滚；两套生产环境策略矛盾；测试 stop 忽略失败与非单步目录切换。均为源码级发现，未执行部署或触碰线上。
+- G1：活动目录与记忆漂移；实测 9 套 common dirs、42 个 Git 工作目录。所有风险均待 Owner 决定后修复；本轮没有修改业务代码、删文件或开启开关。
+
 ---
 
 ## #36　文档执行锁的"改稿绕过"残余（内容指纹身份）　🟡 minor
@@ -232,6 +259,12 @@
 - **影响**：若密钥未吊销重生成，存在生产凭证泄露风险
 - **建议**：确认已吊销重生成，新密钥只放环境变量/后台 ApiCredential；扫描仓库是否有残留明文密钥（grep 敏感模式）
 - **状态**：🟡 文档层面已确认整改（2026-08-24 扫描：活动树跟踪文件无密钥、.env/.pem 未入库、历史文档第 7 行为 SHA256 校验和非密钥）；provider 侧吊销无法本地验证，保持登记。注意 `staging-site-access.txt`/`test-site-access.txt` 含访问 key（本地文件未入库，勿打包勿提交）
+- **2026-09-12 凭证防护核查（午间审计更正证据边界）**：
+  - **覆盖有限，不得推导“从未泄露”**：早间查询了主仓库指定路径的跟踪/历史、三个 ZIP 的成员列表与有限备份目录，未发现对应文件名。未扫描全部 Git 历史内容、所有归档或外传渠道，未核验 provider 吊销；此前“凭证从未进入 git 与任何归档”结论撤回。
+  - **指定文件忽略检查通过**：6 份 `.env` 的 check-ignore 命中；根容器新增 `.gitignore` 后，key/ 下两个 CSV 与两个 site-access 文本均被忽略。普通误添加防护已补齐；ignore 不等于加密、不防强制添加或目录拷贝。根仓库没有 remote 不能证明无外泄。
+  - **原件保留**：key/ 两个 CSV、两个 site-access 文本、六份 .env、两个 PEM 均未删。变量非空及长度不证明密钥有效；未比较 PEM 与 env 内容等价，有限文件名引用搜索不能证明无人使用，不据此建议安全删除。
+  - **备份与用户决定**：已创建 `safety-snapshots/凭证归档_20260912.rar`，包含上述 12 份原件；密码文件仍同目录。用户明确“先不要删除”，不得擅自删除或移动原件、归档和密码。若两者一起被复制，归档密码没有独立保密隔离作用。
+  - **午间全目录元数据审计**：命中 14 个凭证命名文件（含归档及密码），没有读取内容。报告 `outputs/project-audit-20260912-1142/report.html`；不把元数据扫描当作泄露审计。
 
 ## #8　退款 runbook 待升级 v1.1 + 沙箱演练未做　🟡 minor
 - **位置**：`docs/退款与差错处理runbook_20260823.md`（P1.1 两处洞：S1 全额调减前不查消耗、S4 消耗口径含糊）；P1.2 演练表为空

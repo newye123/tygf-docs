@@ -1,3 +1,45 @@
+## F1–F7 核心批次实施 + 3.6.42 发布测试站【2026-09-12 深夜｜已部署】
+
+- 目标：按第一性原理方案把「卡死 / 未覆盖可见 / 同文 / 证据链 / 报告诚实」一次做完，最后统一部署。
+- 改动（18 文件，+492/-66，未提交）：
+  - F3（卡死）：`binding-core.ts` 全局争夺项附 `combinedCandidates`；`object-inspector.tsx` 出现「选择归属」（单候选免点选）；`workbench-view.tsx` 一次确认跨 12 语言广播（各语言用本语言候选译文）；`prepare-check-labels.ts` 文案与出路。
+  - F1：`binding-core.ts` check 产出 `missing/V15_SCOPE_NOT_CLOSED`（execute 不变；组合问题层不重复报），`targetedCount` 排除 missing；`prepare-check-summary.ts` 范围横幅只由 missing 驱动、`writableCount` 优先；`server.js` 计算 `unreplacedObjects`；`v15-runner.js`/`report-renderer.js` 未覆盖块 + 卡片/下一步。
+  - F2：renderer NFKC 同文判定 →「疑似未翻译」块；存在未覆盖/同文不得显示「完整输出」；计费不变。
+  - F4：`v15-runner.js buildCloudReceiptPayload` 去 `slice` 前缀，逐对象证据判定；成功声明缺证据只告警、按未验证上报；smoke 新增 R4 非连续用例。
+  - F5：批量 manifest 补 `runtimeProvenance`/`reviewEvidence`（浏览器批量执行载荷直传审查五字段，`executeBatchLanguageDirect` + `execute-step.tsx` 成对）；执行器终态失败报告补 `executionManifestDigest`。
+  - F6：同语言「旧完整 + 新失败」双条（历史条目标记，状态聚合忽略历史）；产物可用性核验；缺失显示「当前找不到原产物」。
+  - F7：卡片改「已写入/计划、未覆盖对象、疑似未翻译」；守恒摘要→计费对照（按译文行）；执行证据→溯源信息（排障用）折叠；语言表头改「已写入/计划」。
+- 验证（Node22）：`tsc` 0；`lint` 0 error/2 既有 warning；`build-local-binding-core --check` fresh；`test:trust-chain` 24 段全绿；`test:batch-row-contract`/`test:workbench-flow`/`test:review-filters`/`smoke-user-report-fixtures`/`smoke-report-coverage-honesty`/receipt payload（R1–R4）/receipt e2e 全绿；server/renderer `node --check` OK。测试期望同步更新：binding-compiler（missing 可见）、prepare-check-summary（missing 触发 / unmatched 不触发）、runtime-provenance 与 v15-runner（溯源信息）。
+- 发布与部署：提交 `a2de7fb`（代码 + 版本面 3.6.42 `v15-scope-visible-20260912-r1` + 记忆）、`7793e6b`（安装包入库，exe SHA `BC5071C1…FF19`，12,345,397 bytes）、`f9a9817`（latest 更新说明修正）、`48451d4`（部署记录）；远端 develop 回读 `48451d4`。测试站两轮部署：首轮 `7793e6bdbe13` → 发现更新说明旧文案 → 修正后终轮 `f9a981731d54`（备份 `deploy-20260912_231653-f9a981731d54`；首轮备份 `deploy-20260912_230236-7793e6bdbe13`）。终态核验：`.deploy-commit=f9a9817`、健康 200、PM2 三 online、latest=3.6.42（更新说明为本批次内容）、安装包公网 200 且 SHA 与本地一致；DB 未变更；服务器上传分片已清理。
+- 发布门禁：release identity ✅、consistency 23 项 ✅、exe no-plaintext CLEAN ✅、exe 四个自检 ✅（frozen-evidence 报 3.6.42 + 新 buildId）、安装包 Inno 编译成功 ✅、`publish-local-assistant --allow-unsigned-beta` ✅。
+- 遗留：F9/F10/F11/F12/F13/F14 未实施；`smoke-prepare-check-closure` 正则误报为 HEAD 既有、非本轮回归（ISSUES #39）；Owner 待办=测试机装 3.6.42 并做 1 语言/12 语言真机验证。
+
+---
+
+
+
+- 目标：接续测试站无法下一步排查，完整读取并对抗审查核心最小集原方案。交付 `outputs/project-audit-20260912-1142/20260912_卡点诊断与核心最小集_对抗审查执行方案.md` / `.html`，含12节、函数级改动、资源、相对工作日节点及17组验收；三份 freeze/batch 证据JSON同目录。
+- 实测：本机ping=3.6.39/expired，本地合同3.6.40；12项隔离断言与3项挂起观察已采集。真实兼容函数对当前ping报UPDATE_REQUIRED；三个请求缺AbortSignal；C2移除missing仍scope=false；对象1/3成功时前缀算法漏认3；源码×→x而generated不支持。
+- 失败项：generated --check exit1（排除仅CRLF）；线上未授权HTTP403，独立浏览器错误页，未取得应用页面。旧报告324条中220条规范化同文，169次未记录，12个PSB链接不存在/12个JPG存在；不推断删除或账务。两路子研究500失败，主线程补查，未冒充其成功。
+- 验证：git diff --check PASS；HTML解析/12章节/锚点PASS，浏览器实际预览无横向页面溢出、截图已检视。未跑tsc/lint/trust-chain/业务DB/PS，未改业务代码、原方案、个人素材，未提交推送部署。未绕过凭证授权。
+- 遗留：用户补发带key链接和两张原截图；现场根因尚未闭环。优先核对运行身份，再补请求生命周期、生成一致性、C6契约，再实施跨层C1-C7与产物真实性。修改仅为新交付文件与记忆/HANDOFF登记。
+
+---
+
+## AUDIT-20260912 全项目元数据遍历与关键链路审查【2026-09-12】
+
+- **目标**：承接用户“遍历整个项目”“请继续执行任务”，做只读盘点，保留此前“先不要删除”决定。
+- **产出**：`outputs/project-audit-20260912-1142/report.html`、`inventory.json`、`verification.json`；扫描/验证/渲染脚本留同目录。报告含十项风险、源码行号、HEAD/dirty 区分、测试覆盖及纠错。
+- **规模**：11:45:52–12:02:44 元数据遍历 1,129,746 文件 / 116,582 普通目录 / 61.77 GB 逻辑大小，跳过 699 重解析点、访问错误 0；9 套 common dirs / 42 个有效 Git 工作目录。不是可回收空间或逐文件源码审计。
+- **Git**：12:22 本地 develop=7ee5cb8，远端=2fad331；早间授权的 12 提交已推，随后新增 3 本地提交未推。未提交 T-0118 业务文件不动；本轮仅在既有记忆/HANDOFF顶部加审计登记。
+- **实测**：git diff --check PASS（LF/CRLF 警告）；server.js node --check PASS；两部署脚本 bash -n PASS；check-repo-policy FAIL/exit 1（三项旧迁移正则失配）；隔离回执分类确认两种临时 409 被错误判永久。JSON证据保留退出码和内容哈希。
+- **高风险**：T-0118 回执误删、STALLED 收口竞态；HEAD 已有终态 accept 与心跳回收竞态；CI 合同漂移；发布远端批准绑定、生产写库时序、环境隔离入口矛盾；测试部署停写和切换边界。除分类函数和策略检查外为静态推导，未现场复现。
+- **未运行/未操作**：tsc/lint/trust-chain/row-contract、浏览器/Photoshop、真实 DB/provider、部署/push/commit、删除/移动。未核查 GitHub PR/Actions/保护规则和现网状态。
+- **治理记录**：根 CURRENT_STATUS 与 develop CURRENT_STATUS/HANDOFF 成对加审计指针；根 ISSUES 登记风险并纠正本会话此前“从未泄露、PEM重复、无remote故无外泄”等过度结论；日记只追加。未改 SOUL/IDENTITY、AGENTS 或既有规范方案。
+- **执行边界**：仓库治理子任务服务端 400 未交回结果，由主线程补做 Git/元数据/记忆副本核对；不冒充子任务成功。所有修复、发版、目录治理仍待后续指示。
+
+---
+
 ## T-0114 真机测试 + 3.6.35 热修【2026-09-11】
 
 - **本机安装测试**：停 3.6.33 → 静默安装 → 启动；`/ping` = 3.6.34（后升 3.6.35），buildId 正确，compatible=true、phase=ready、psHandshake=true。

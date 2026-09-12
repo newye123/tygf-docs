@@ -1,5 +1,32 @@
 # CURRENT_STATUS.md — 图译工坊当前状态
 
+## 2026-09-12 深夜 F1–F7 核心批次实施 + 3.6.42 已发布测试站（终态）
+
+- 范围：F1 未覆盖可见性、F2 同文轴、F3 争夺归属（解卡死）、F4 回执逐对象判定、F5 批量证据链、F6 合并诚实+产物可用、F7 报告卡片与术语。
+- 发布：develop `a2de7fb`（代码+版本面 3.6.42/v15-scope-visible-20260912-r1）、`7793e6b`（安装包入库，exe SHA `BC5071C1…FF19`）、`f9a9817`（latest 更新说明修正）、`48451d4`（部署记录）；远端 develop 回读 `48451d4`。
+- 部署（测试站两轮）：终轮 `f9a981731d54`（备份 `deploy-20260912_231653-f9a981731d54`）；健康 200、PM2 三 online、latest=3.6.42、安装包公网 200/SHA 一致；DB 未变更。
+- 验证全绿：`tsc`/`lint`（0 error）/`build-local-binding-core --check` fresh/`test:trust-chain` 24 段/`test:batch-row-contract`/`test:workbench-flow`/`test:review-filters`/报告与回执 smoke（含 F1/F2/F3/F4 新断言）；release identity + consistency(23) + exe CLEAN 通过。
+- Owner 待办：测试机卸载旧助手 → 装 **3.6.42** → 1 语言（日语）真机验证「选择归属」与报告新块 → 12 语言。
+- 已知非本轮回归：`smoke-prepare-check-closure` 正则在 HEAD 即误报（不在 trust-chain 链，见 ISSUES #39）。
+
+## 2026-09-12 13:16 卡点诊断与核心最小集审查（仅方案，未修复）
+
+- 新交付：`outputs/project-audit-20260912-1142/20260912_卡点诊断与核心最小集_对抗审查执行方案.html` / `.md`，与 develop HANDOFF 成对登记。
+- HEAD仍7ee5cb8+T-0118 dirty；本机ping3.6.39/expired，本地合同3.6.40，真实函数报UPDATE_REQUIRED；线上版本未核验，不能称现场卡死已定位。
+- 新实证：generated --check FAIL且×→x语义与源码不同；三处请求缺AbortSignal；C2原改法横幅仍false并漏助手聚合器；C4非连续成功漏认。详见12断言＋3观察的freeze-probe-evidence.json。
+- 旧5294报告324记录中220规范化同文/169未记录；12个PSB链接当前缺失、12个JPG存在。未打开PS验证，不认定删除/丢失历史或收费错误。
+- 等用户补发授权链接和两张截图；未改业务代码、个人文件、旧方案或部署。C1-C7需重写部分合同，详见完整新方案。
+
+## 2026-09-12 午间只读审计指针（不改发布/活动目录授权）
+
+- 报告：`outputs/project-audit-20260912-1142/report.html`，原始数据 `inventory.json` / `verification.json`。与 `worktrees/develop/docs/HANDOFF.md` 成对登记。
+- 本地 develop `7ee5cb8`，远端 develop `2fad331`：原 12 个提交早间已推；随后新增 3 个本地提交未推，另有 T-0118 未提交修改。本轮未追加推送、未部署。
+- 元数据遍历 1,129,746 文件、61.77 GB 逻辑大小，699 重解析点跳过、0 访问错误；9 套 Git common dirs、42 个有效 Git 工作目录。不等于可回收空间。
+- 不应直接把 T-0118 当可部署候选：回执临时 409 误分类已隔离验证；STALLED/accept/reaper 并发边界待修；仓库策略检查真实 FAIL（三项迁移正则失配）。详见报告 H1–H8/M1/G1 与 ISSUES 的 AUDIT-20260912。
+- 本轮未跑 tsc/lint/trust-chain/真机；未核验实时线上数据库。以下旧状态保留为历史记录，不可把旧 3.6.17/3.6.30、10 语言或“12 提交未推”当作当前事实。当前源码语言上限 12。
+- 凭证原件、RAR 与密码文件继续按用户“先不要删除”保留。未统一活动目录规范，未覆盖并行窗口的业务修改。
+
+
 > 最后更新：2026-09-09　维护：AI 项目管理员
 > 本文档回答"现在做到哪里"。更新前先读 PROJECT_CONTEXT.md。
 
