@@ -3,12 +3,19 @@
 > 最后更新：2026-09-06
 > 每条带编号、严重度（🔴 blocker / 🟠 major / 🟡 minor）、位置、影响、建议、状态。
 > 修复后更新状态，不删除条目。
+## #39　smoke-prepare-check-closure 正则误报（HEAD 已存在，非 trust-chain 链）　🟡 minor → ✅
 
-## #39　smoke-prepare-check-closure 正则误报（HEAD 已存在，非 trust-chain 链）　🟡 minor
 - **位置**：`scripts/smoke-prepare-check-closure.mjs:53`（`/masterFileStat[\s\S]{0,200}?browserPreparationSummary/`）。
+- **修复**：2026-09-13 改为函数体语义断言（`browserPreparationSummary` 不含 `masterFileStat|masterPath|masterFile`），实跑通过。
 - **影响**：合法代码 `summary: browserPreparationSummary(...)` 紧跟在 `masterFileStat?.mtimeMs` 快路径判断之后，被正则误判为"文件 stat 进入浏览器摘要"→ 该 smoke 在 HEAD 即 FAIL；不在 `test:trust-chain` 链内，不阻塞标准门禁。
 - **建议**：断言语义化——直接断言 `browserPreparationSummary` 返回对象不含 stat 字段（函数体或返回值检查），而非源码邻近正则。
-- **状态**：🆕 登记（`git show HEAD` 已复现，非 F1–F7 批次回归）。
+- **状态**：✅ 已修复（2026-09-13，随 `cbcf36c` 部署；语义断言替代邻近正则并实跑通过）。
+
+## #40　smoke-review-evidence-persistence 过时断言（HEAD 已存在）　🟡 minor → ✅
+
+- **位置**：`scripts/smoke-review-evidence-persistence.mjs`（重复 decisionId 期望 P2002 拒绝）。
+- **定位**：代码自 `d8070f0` 起按 decisionId 保序去重（对旧客户端 bundle 免疫），不再触发唯一约束；原断言是过时测试，非真实重绑定漏洞。
+- **修复**：2026-09-13 更新为去重合同断言（新 requestId 新建快照、savedDecisions=1、单条事件）；projectId 重绑定冲突断言保留且通过。随 `cbcf36c` 部署。
 
 ---
 

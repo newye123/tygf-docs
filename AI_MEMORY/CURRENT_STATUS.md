@@ -8,7 +8,8 @@
 - **部署**：`09f7122`（备份 deploy-20260913_002627-09f7122d566b）；健康 200、PM2 三 online、latest=3.6.43；前端 chunk 已核验。
 - **验证**：tsc/lint 0；trust-chain 24 段（含 F10）；v3-batch-flow/row-contract/workbench-flow/review-filters/报告 smoke 全绿。
 - **交付**：`docs/records/20260913_P0事故修复与可靠性强化_执行方案.md`（第一性原理 + GitHub/官方对照 + 100 轮对抗审查）。
-- **遗留**：F9–F14 未实施；ISSUES #39/#40（HEAD 既有测试失败）。
+- **同日追加**：F11 CSV 健壮性（GB18030 回退/引号首字符/分隔符投票/缺列警告）+ ISSUES #39/#40 清零，已部署 `cbcf36c`；验证全绿。
+- **遗留**：F9–F14 未实施（F9/F10/F12/F14 需探针/Owner 决策/Photoshop 真机）。
 
 ## 2026-09-12 深夜 F1–F7 核心批次实施 + 3.6.42 已发布测试站（终态）
 

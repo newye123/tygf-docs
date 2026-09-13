@@ -6,6 +6,7 @@
 - 部署核验：09f7122（备份 deploy-20260913_002627-09f7122d566b）；健康 200、PM2 三 online、latest=3.6.43、前端 chunk 含新逻辑；服务器分片已清。
 - 验证：tsc/lint/trust-chain 24 段（含 F10）/v3-batch-flow（策略断言）/row-contract/workbench-flow/review-filters/报告 smoke 全绿。
 - 交付：`worktrees/develop/docs/records/20260913_P0事故修复与可靠性强化_执行方案.md`。
+- 同日追加：F11 CSV 健壮性（GB18030 回退/引号首字符/分隔符投票/缺列警告）+ #39/#40 清零，已部署 `cbcf36c`；验证全绿。
 - 遗留：F9–F14；ISSUES #39/#40。
 
 ## F1–F7 核心批次实施 + 3.6.42 版本面 【2026-09-12 深夜｜已发布部署】
