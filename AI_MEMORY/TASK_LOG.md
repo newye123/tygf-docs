@@ -1637,3 +1637,10 @@
   3. ⇒ 实现方向:收口分支条件=job.status='running' 且其关联 languageAttempt 的 heartbeatAt 停滞 >15 分钟(批次 STALLED 同阈值)或 attempt 不存在且 job 超过 30 分钟 ⇒ **提前送 manual_review**(复用 :800-830 的事务 CAS,不自动退钱——保持"running 后不自动放钱"的谨慎设计,只加速人工介入)。
   4. 待核(实现前必查):旧 COM 路径的 ExecutionAttempt(无心跳)如何关联;job→languageAttempt 的关联键;smoke 负控(心跳活的 job 不收口/挂死收口进 manual_review/预留不动)。
 - **本轮不做代码改造的原因**:账务状态机+四层同步+负控需完整窗口;本会话上下文已长,草率改违反"不砸已复验流程"教训(对抗审查 #8)。下窗口直接从本条开工。
+
+## 立案②实测修正：两个挂死 job 已自愈 released、100 积分已全部退回【2026-09-26 21:4x｜ZCode 主线会话，只读】
+
+- **实测推翻上轮判断**：`a645ace2`(16:06)与 `9d3d44f8`(18:29)两个挂死 running job 现均已 **released**（后者 finishedAt=19:52:39+08）；两条 photoshop-job:cmui8z/cmui3v 预留均 **released** ⇒ **100 积分已回余额，Owner 无需任何操作**。收口路径＝系统既有惰性清理/用户取消/收口状态机之一（精确归属未逐条追，不影响结论）。
+- **立案②重新定性**：从「单语言无停滞收口＝永远悬挂」降级为「**收口延迟体验问题**（实测 ~3.5h）」——系统最终自愈，但 3.5h 内用户看到的是 running+「取消被拒」。是否仍要做「heartbeat 停滞提前进 manual_review」＝产品决策（上轮考证定案 file:line 仍有效，开工成本低）。
+- **正面证据**：Owner 在收口后继续真实使用——19:41 job settled、21:26 job settled（成功）——V1 修复后的工作台在真实使用中跑通了。
+- V2-a（确认队列合并）留待完整窗口，本轮未开工。
