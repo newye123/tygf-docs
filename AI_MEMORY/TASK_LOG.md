@@ -1,3 +1,11 @@
+## 22:11 十二语言批次"失败"定案：助手忙锁停派发；停滞收口自主生效（40 commit＋200 release）【2026-09-26 22:5x｜ZCode 主线会话；Owner 授权"你继续吧"】
+
+- 现场：批次 `cmuigxan40`（22:11:38，12 语言，预留 240）。FR/ID VERIFIED_COMPLETE（20+20 单位，成品已落盘 22:13/22:14）；ES/IT/JP 三单分派从未被助手接受 → attempt reaper 判 `ATTEMPT_ABANDONED_STALE`（FAILED_RETRYABLE）；其余 7 语言 PENDING。客户端 22:12:02 `batch/execute 未授权`（一次性）→ 22:19:39 `本地助手正在执行其他任务` → 22:19:41 **`ASSISTANT_BUSY_PERSISTENT` 停止派发**＝Owner 所见"失败"。真因＝老根因族"PS 挂起＋助手内存态"：本机 PS(12:29 启) 挂死 12.4GB 无窗口 + 9/23 僵尸 PS 残留。
+- 处置：杀助手(13596)+引擎(8420)+双 PS → 助手/引擎重启（引擎自动拉起新 PS 44872，工作态健康）→ **批次 22:42:39 自主 STALLED**（应用侧收口路径，早于本会话两次 reconcile 路由调用；账本 commit −40 ＋ release +200 `unused_reserve_refund`，可用 18893 与余额公式吻合）。
+- 附带核实：21:26-21:38 Owner 解锁后成功跑 2 单单语言（各 commit 50）+1 单 user_cancelled 退回——上轮修复有效。22:47/22:52 两次手动调 `POST /api/billing/batch/reconcile`（Bearer PHOTOSHOP_RECONCILE_SECRET，经 127.0.0.1:3001）均 ok:true 但 summary 全 0（批次已被收口）；注意 **3000 端口被 root 进程占用（ss 无 users 字段）**，真主站=3001。
+- 新立案：①`reconcileStalledBatches` 唯一显式入口是需 secret 的外部调度路由，服务器无 cron——本次收口由应用内路径触发，但调度拓扑待查清（或补 systemd timer）；②PS 僵尸对象（HasExited 24432/44824）待重启回收，无害。
+- Owner 下一步：刷新工作台（恢复路径见 STALLED 终态自动解锁 `execute-step.tsx:487`）→「重新配置」→ 只勾 10 个未完成语言重跑（ES/IT/JP/MS/NL/PL/RU/TH/TL/VI，排除已交付 FR/ID）。
+
 ## 两单挂死单语言 job 云端终态化＋100 积分释放已执行【2026-09-26 21:1x｜ZCode 主线会话；Owner 授权"来吧继续"；写库=双阶段干跑→提交】
 
 - 背景：Owner 晚间再报「卡执行阶段、重置/返回无反应」。对抗审查定案=五门互锁死局：①重置锁 `execute-step.tsx:1781` 文案承诺"15 分钟自动退回"只对批次成立（`execution-batch.ts:952`），单语言无 reaper；②重置按钮仅 completed/failed 渲染（`execute-step.tsx:2144`）；③返回锁 `workbench-view.tsx:203` 指向的退分按钮对 running job 必 409（`cancel/route.ts:4,36`）；④批次面板只读且单语言不渲染；⑤恢复锁无 TTL 且 `execute-step.tsx:389` 分支不回查服务端。
@@ -1651,3 +1659,10 @@
 - **立即修包 6 件**(`d9bbcc7`,4 文件 +77/−20):F1 refundNotice 三态配色(7 调用点归类)、F2 检测中止 amber 提示、F3 unify 三段式、F4 语言勾选 sr-only+焦点环、F5 检测徽标 stale 标注、F6 抽屉 dirty 两击关闭确认(sticky 条+3s 复位)。tsc/lint/row-contract/trust-chain 全 rc=0。
 - **V2/独立立项**:确认队列合并(#14 队列进度并入)、建议过期遮罩、恢复横幅诚实化、ErrorBanner 统一原语、抽屉迁 Sheet→V2;输入防抖分层(#1)与多标签互斥(#4)各需完整窗口,独立立项。
 - **部署冻结中**:Owner 正在跑 12 语批次(单语言 21:33 已 settled 跑通,产物三件套核验),`d9bbcc7` 等批次收口后随按钮包(范围默认值待 Owner 拍板)一并部署。
+
+## 测试站已上 `d9bbcc7`(全部修复);Owner 批次被强上打断,恢复路径已给【2026-09-26 23:0x｜ZCode 主线会话】
+
+- Owner 三次明确指令部署("来吧,上线"/"部署到测试站吧"),批次 cmuiiddup(22:52,12 语)在飞。第一道防线自动上线器(轮询+收口自动部署)已建并运行;Owner 二次指令后停用,改强上:服务器端在飞红线正确拦截(RUNNING=1)⇒ 给 deploy-test-release.sh 加 `TYGF_ALLOW_INFLIGHT_DEPLOY=1` 知情强制开关(`a53dacb`,风格对齐既有 ALLOW 宏),Owner 知情后部署 rc=0。
+- **结果**:公网 provenance BOUND/d9bbcc7(六件反馈修复+今日全部修复上线);**代价如实**:批次 ES/FR 两 attempt FAILED(DISPATCHING 被重启打断),0/12——强上部署与在飞批次的固有冲突(部署前已两次警告,Owner 拍板)。
+- **恢复路径**(批次设计内置):工作台刷新 → 执行步恢复态 →「重新配置后开始」会从断点续跑;预留 0 完成等终态自动退回。新上线的实时逐语言面板正好用于观察恢复。
+- 部署树已清、主树无损;本次会话累计 11 笔提交全部 push,测试站 4 次部署。
