@@ -1,3 +1,12 @@
+## 两单挂死单语言 job 云端终态化＋100 积分释放已执行【2026-09-26 21:1x｜ZCode 主线会话；Owner 授权"来吧继续"；写库=双阶段干跑→提交】
+
+- 背景：Owner 晚间再报「卡执行阶段、重置/返回无反应」。对抗审查定案=五门互锁死局：①重置锁 `execute-step.tsx:1781` 文案承诺"15 分钟自动退回"只对批次成立（`execution-batch.ts:952`），单语言无 reaper；②重置按钮仅 completed/failed 渲染（`execute-step.tsx:2144`）；③返回锁 `workbench-view.tsx:203` 指向的退分按钮对 running job 必 409（`cancel/route.ts:4,36`）；④批次面板只读且单语言不渲染；⑤恢复锁无 TTL 且 `execute-step.tsx:389` 分支不回查服务端。
+- 取证（ssh 只读 sqlite）：非终态 PhotoshopJob 恰好 2 单（JP `9d3d44f8` 18:29 / `a645ace2` 16:06，与 TASK_LOG 19:3x 记录一致），预留各 50 冻于账户 `cmtwymdl4…`（principal `cms1o40un…`），**今晚无新增第三单**；attempt 已 TICKET_CONSUMED；无既有 JobBillingResult。
+- 执行（`/var/www/tygf-test/db/custom.db`）：先 `.backup` 整库快照 → `/var/www/tygf-test-backups/db-before-manual-release-20260926.sqlite`；事务 14 步逐条 `changes()=1`（先干跑：不 COMMIT 连接关闭自动回滚，核对终态后再同脚本加 COMMIT）：reservation→released、CreditAccount.reserved −50×2、PlatformCreditCounter(2026-09-26).reserved −50×2、CreditLedger release +50×2（availableAfter 18983→19033，reason=`manual_owner_authorized_hang_release_20260926`）、JobBillingResult（released/50，reportHash=sha256(`manual:<jobId>`)）、job→released、quote→consumed——逐字段对齐 `credits.ts:884-921` releaseReservation＋`photoshop-billing.ts:869-901` onReleased 语义。
+- 新连接独立复核：非终态 job=0、reserved 预留=0、manual release 账本 2 条共 +100、可用余额 **18933→19033**；pm2 三进程 online 0 重启。
+- Owner 侧收尾：浏览器仍会被 localStorage 恢复锁卡住——控制台 `localStorage.removeItem('tygf.v15.execution.recovery')` 后刷新即解锁。
+- 修复清单立案（优先级）：①单语言停滞收口 ②恢复锁分支回查服务端终态 ③锁定文案不得承诺批次专属 15 分钟 ④in-flight 态给显式出口。三条令未动（CURRENT_STATUS 单写者属主未触碰）。
+
 ## 治理三令草案 v2 起草落盘：节流令／单写者令／法条萃取令，待 Owner 拍板【2026-09-26 18:33｜ZCode 审查会话；Owner 授权"好来吧"（草拟三令）】
 
 - 目标：治理瘦身 v2（四机制）落地第一步——只立零成本三令，不动目录结构、不动三账。
@@ -1612,3 +1621,9 @@
 - **待 Owner 授权的账务动作**：两个挂死 job（16:06/18:29 各冻结 50 积分）的云端终态化＋预留释放（合计退 100），带审计留痕；或等「单语言停滞收口」机制上线后自动收口（修法待拍）。Owner 本机侧：检查 Photoshop 卡住的进度/对话框，必要时结束 PS 与托盘助手后重开。
 - 遗留：`worktrees/8b1e-deploy` 目录删除遇 Windows 占用（junction 已摘、git 注册 prunable、主树 node_modules 完好），待占用释放后 `git worktree prune`＋删目录，无害。
 - 本会话累计：develop 7 笔（8f1a0bb…8b1eb63）全部 push；测试站 d24d2b0→8b1eb63 两次部署；三个新立案（#115 族诊断 code 不可信复核、单语言无停滞收口 🔴、outbox REPLAY_RETRY 1704 续涨）。
+
+## UIUX V1 六件落地并部署 `e8ae370`【2026-09-26 20:1x｜ZCode 主线会话】
+
+- 对抗式 UIUX 方案(第一性原理+12 轮自审)获 Owner「全部开始」⇒ V1 全量落地:`e8ae370`(6 文件 +70/−19):①草稿恢复全语言+交集校验(draft.ts 此前只存 [0]＝刷新后 12 语言丢 11 个勾选);②执行受理按钮行显示「已冻结约 N 积分」(报价值;credits API 无独立冻结字段,#3 预案);③BatchResultPanel live 轮询 5s 终态即停(执行等待黑箱→逐语言实时列表);④对账等待 ElapsedSeconds 独立计时组件(服务端原子检查无分语言进度,不编 ETA);⑤V1-5 反转关闭:取证实测 assistant-setup-banner 已状态化,不修已修;⑥演示文案动词 2 处统一,grep 断言「开始执行」0 命中。
+- 验证:tsc/lint/row-contract/trust-chain/repo:check 五门 rc=0;preflight 六门 PASS;出包 tygf-test-e8ae370973c0.zip(SHA 51C70331…);部署 rc=0,公网 provenance BOUND/e8ae370。无合同变更。
+- V2 待开工(确认队列合并/任务页拆分/首次引导);V3 待产品拍板。
