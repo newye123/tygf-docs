@@ -1627,3 +1627,13 @@
 - 对抗式 UIUX 方案(第一性原理+12 轮自审)获 Owner「全部开始」⇒ V1 全量落地:`e8ae370`(6 文件 +70/−19):①草稿恢复全语言+交集校验(draft.ts 此前只存 [0]＝刷新后 12 语言丢 11 个勾选);②执行受理按钮行显示「已冻结约 N 积分」(报价值;credits API 无独立冻结字段,#3 预案);③BatchResultPanel live 轮询 5s 终态即停(执行等待黑箱→逐语言实时列表);④对账等待 ElapsedSeconds 独立计时组件(服务端原子检查无分语言进度,不编 ETA);⑤V1-5 反转关闭:取证实测 assistant-setup-banner 已状态化,不修已修;⑥演示文案动词 2 处统一,grep 断言「开始执行」0 命中。
 - 验证:tsc/lint/row-contract/trust-chain/repo:check 五门 rc=0;preflight 六门 PASS;出包 tygf-test-e8ae370973c0.zip(SHA 51C70331…);部署 rc=0,公网 provenance BOUND/e8ae370。无合同变更。
 - V2 待开工(确认队列合并/任务页拆分/首次引导);V3 待产品拍板。
+
+## 「单语言停滞收口」考证定案(下窗口首件,零重复考证)【2026-09-26 20:3x｜ZCode 主线会话,只读取证】
+
+- **既有兜底确认**:挂死的 2 个 running PhotoshopJob(cmui8z/cmui3v,各冻结 50)会在 `reportDeadlineAt`(创建起 48h+168h 人工核对窗)到期后被 `reconcileExpiredPhotoshopJobs`(photoshop-billing.ts:776-830)转为 **manual_review**——不自动退钱、转人工核对,Owner 后台核实无交付物后释放。⇒ 100 积分**不会永久丢失**,最迟 ~48h 进人工核对;急于拿回可走后台人工,不需要手工 SQL。
+- **停滞判据考证**(防误伤是关键):
+  1. `PhotoshopJob` **无心跳列**;running 期间无人 touch job.updatedAt(@updatedAt 仅在字段变更时刷)⇒ **job.updatedAt 不能做停滞判据**(会把正常长任务误杀)。
+  2. v15 单语言执行的心跳链路:助手 `server.js:5811/5833` attemptRuntime.heartbeat → 云端 `/api/local-assistant/execution-attempts/[id]/heartbeat` → `heartbeatLanguageAttemptExecution` ⇒ 心跳写在 **ExecutionLanguageAttempt 表**(heartbeatAt:1451/heartbeatSeq:1452),不是 ExecutionAttempt(990,无心跳列)。
+  3. ⇒ 实现方向:收口分支条件=job.status='running' 且其关联 languageAttempt 的 heartbeatAt 停滞 >15 分钟(批次 STALLED 同阈值)或 attempt 不存在且 job 超过 30 分钟 ⇒ **提前送 manual_review**(复用 :800-830 的事务 CAS,不自动退钱——保持"running 后不自动放钱"的谨慎设计,只加速人工介入)。
+  4. 待核(实现前必查):旧 COM 路径的 ExecutionAttempt(无心跳)如何关联;job→languageAttempt 的关联键;smoke 负控(心跳活的 job 不收口/挂死收口进 manual_review/预留不动)。
+- **本轮不做代码改造的原因**:账务状态机+四层同步+负控需完整窗口;本会话上下文已长,草率改违反"不砸已复验流程"教训(对抗审查 #8)。下窗口直接从本条开工。
