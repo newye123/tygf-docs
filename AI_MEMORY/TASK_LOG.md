@@ -1,3 +1,374 @@
+## 修复批次统一交付：UIUX 八处＋门禁解锁＋#111 引信＋#118 脱敏 → push + 部署测试站 d24d2b0【2026-09-26 18:1x｜ZCode 主线会话；Owner 授权"修复+push+部署"】
+
+- **UIUX 对抗审查**（宽扫四步流，8 条全确认）：最重三条=①六处文案指向不存在的「执行进度」面板；②「忽略行」单击生效无确认无撤销（唯一静默影响交付物完整性的操作门槛反而最低）；③「返回智能检测」跳到「准备素材」。系统性病灶=文案承诺超出实现、可逆性与风险错配、导航语义漂移。
+- **修复（develop 五笔，全部有真实 rc）**：`8f1a0bb` 执行步三处静默拦截（下一节）；`8f19d0a` tsconfig/eslint 排 tmp ⇒ **tsc 574s OOM→53s rc=0、lint 1500 假红→rc=0**；`d6f60fe`+`d24d2b0` UIUX 八处（导航两处/忽略行两击确认/清洗 60s 超时/execRetry 改「重新配置」/幻影文案六处/两 title）；`9418cac` #111 引信拆除（缺省只数+--apply 才删；拆前实测服务器无任何调度引用该脚本⇒无停摆风险）+ #118 账号标识向前脱敏（develop 5 处+容器根 7 处占位，历史未改写）。
+- **事故留痕**：d6f60fe 的 git add 含错路径且被 `2>/dev/null` 吞 rc ⇒ 只提交 1 文件，d24d2b0 补全并留痕（违反本仓"禁管道丢 rc"纪律，自记）。
+- **push**：`cf926b8..d24d2b0 develop -> develop`（Owner 授权，积压全量上 GitHub）。
+- **部署**（RELAX 合法路径）：干净 detached 树 `d24d-deploy`（porcelain=0+依赖可解析）→ `release:preflight:test --allow-detached-head` **六门全 PASS** → `release:package:test`（tygf-test-d24d2b0c88c3.zip，SHA B4FC92A7…）→ scp+ssh `deploy-test-release.sh`（**坑：checkout 出的脚本是 CRLF，服务器 bash 报 pipefail 无效——tr -d '\r' 重传后过**）rc=0；备份 `deploy-20260926_181115-d24d2b0c88c3`；公网 provenance **BOUND/d24d2b0**（40 位逐位）、latest 200/3.7.3、首页 403=口令门（设计）。部署树已按规矩清理（junction 先摘、指名 remove、prune 只 -n、主树无损）。
+- **遗留**：①批次运行页/事件流水/逐语言重试入口=P1（审查#1 的完整修法）；②批次建议落盘恢复=新功能未做（#2 只改了文案侧）；③批次级取消退回路由仍等 Owner 拍结算口径；④五笔均已挂号待复验队列（`GATE-UNLOCK-TMP`/`UIUX-ADVERSARIAL-8`/`FUSE-111-DESENS-118`）。
+
+## 执行步反馈层修复：批次卡住时「重新执行/取消退积分」无响应——三处静默拦截改如实提示【2026-09-26 17:2x｜ZCode 主线会话；develop `7f93fca`→`8f1a0bb`，他人现场 2 行未动】
+
+- 目标：Owner 在测试站亲测批次卡住，点「重新执行」与「取消返回积分」均无反应，要求修复。
+- 根因（代码实证，非猜测）：① `resetExecution`/`runExecution` 的 `unsettledExecution` 拦截只把提示写进 `refundNotice`，其渲染点在批次场景不可见；② `cancelRefund` 开头 `if (!jobId) return` 静默——**批次 v3 主链（`v3-batch-flow.ts`）只产生 `batchId` 不产生 `jobId`**，`setLastJobId` 仅在旧单语言路径与恢复路径被调用 ⇒ 批次卡住时退回按钮与提示互斥/缺失；③ 旧文案「请先核对原任务并完成退回」指引到当前态不渲染的按钮；④ cancel fetch 无超时，连接挂起＝永久转圈。
+- 修改（`8f1a0bb`，2 文件 +22/−5）：`execute-step.tsx` 三处拦截改 `setRefundNotice`＋全局 toast（dedupeKey：`execution-refund-no-job`/`execution-start-locked`/`execution-reset-locked`），文案如实告知「停滞约 15 分钟自动全额退回」（依据 `execution-batch.ts` `BATCH_STALL_SETTLE_AFTER_MS`＝15min＋`reconcileStalledBatches` 全额释放，引用前已实测）；cancel fetch 加 `AbortSignal.timeout(15000)`；`siteContent.ts` `execRunning`/`execSubmittedWithPath` 补积分自动退回说明。
+- 验证（真实退出码）：单文件 eslint（仅本件两文件）rc=0；`test:batch-row-contract` rc=0；`test:trust-chain` rc=0；全量 tsc **NOT RUN**（HEAD 基线即 OOM 崩＝tsconfig 未排 `tmp/`，门下省 0925 §2b 同因）；全量 lint **NOT RUN**（基线即红 1500 error，全来自 `tmp/assist-gate-copy-20260925` 拷贝，本件两文件 0 命中）。无合同变更（结算真值/`success`/预留面零触碰）。
+- 遗留：① **批次级「整批取消退回」服务端出口仍缺**（旧 `/api/billing/photoshop/cancel` 是单语言语义，够不着批次级 `CreditReservation`）——账务语义需 Owner 拍板后才做；② 执行中无停滞事件源，「卡住了？」逃生门排 P1 批次运行页；③ 本件已挂号 `总控/待复验队列.md`（件名 `EXEC-STEP-SILENT-BLOCK`），未 push 未部署。
+
+
+
+- 目标：拆"55/60/86 三数同存于一份 5857-A"这一前提，判是否回归、判对照方法、给可证伪的修法分桶。**结论：前提不成立——55 是乙件（12 语）、60 与 86 是甲件（单语）。**
+- **第三方法直测**（不依赖我方扫描器，也不依赖对手产物）：`ag-psd@31.0.2` 解析源稿与交付稿，按 `layer.id` 配对 ＋ 文本多重集两种配法**同数**。乙件 源 **55**＝交付 55，每语 **25 真改写／30 仍原文**（12 语全等）；甲件 源 **86**＝交付 86，**52 真改写＋3 仅空白差异＋31 与源逐字节同**。⇒ **"扫描漏层"与"xlsx 只吃一个 sheet"两支被实测否证**（两份表 `sheets=1`，非空 46／52 行）。
+- **卡片分母的定义错**：`report-renderer.js:507` `totalObjects=Σ languages.total`、装配点 `v15-runner.js:445` `total: assignments.length` ⇒ "文字层总数"实为**逐语言计划条数**，不含 24 未覆盖、不含甲件 26 排除，还会把同语言重跑历史一并求和（**昨日 744 vs 今日 372，同稿同表**）。⇒ **本案第一处失真是回执层，不是匹配梯。**
+- **甲件那 26 层的来源**：`workbench-view.tsx:1411-1421` 从 **localStorage 按 `scanId`＋文档指纹＋译文摘要恢复上轮决策**（含 `excludedLayerObjectIds`），`:249` 初值为空 ⇒ 用户看不到"这是上一轮沿用"。与今晨户部 `FG-STALE-TABLE…:①`（就绪判据只比表不比文档）同一根因族。
+- **非回归定案**：两批译文表 **sha256 逐字节相同**（`a88248e155f13d2d…`）；两批跨 **`f5b610c`→`f056a8d`（3.7.3 bump）** 两个构建，逐语言层层**逐格相同** ⇒ 中间 4 笔提交可排除，**不必 bisect**。
+- 面三：三处假法中"按行序对"与"第 0 列 URL 表"**不成立**（工部 `YT-RIVAL-DIFF:22/:144` 自陈实测 0/68、3/86 后自纠为按层身份，86/86 命中；两份 xlsx 第 0 列实测非 URL）；"拿对手当靶"**部分成立 1 处**（`YT-EXCLUDE-CENSUS:14` 把 86 的旁证系在对手 `text=86`，我已用直测顶掉）。**observation 解密一手：认，不记违规**（`YT-EXCLUSION-BRANCH-TRACE:112` 主动交代＋预设降级规则＋只读；其 55 与 24/24 id-join 已被我从文件侧独立复现）——但须立规矩：**解密通道所得任何片段不得入产出件**，且**同一上午 Q1`:32`（允许 12 字符原文）与 DX-B373（一律禁止）对同一语料给了不兼容脱敏级别＝真偏差在派工侧**，另记我任务书两处引用不存在的交付件路径（`stat` rc=1）。
+- 面四：分 7 桶给代价与负控（B1 分母标签＝**头号动作、代价最小**；B2 沿用不告知；B3 ① 类 22 条＝匹配梯／抢归属；B4/B4b 素材缺口与不该翻；**B5 智能对象边界＝结构上修不了，本批实测 0 层但明写不许因此归零**；B6 排除层被改空白 3 层＝契约级异常，先归因）。
+- 交付：`总控/功能普查/DX-B373_今晨未替换图层四面对抗审查_20260925.md`。脱敏探针 9 类**阳性对照 9/9 通过后**，本件第三轮 **9 类全 0**；**已点名撤回我自己写下的一条未跑过的过程叙述**（初稿称"命中 1"，实测第一轮 2、第二轮 1，均为脚注自指）。
+- 遗留未核实 6 条（含甲件扫描侧读数、"未纳入替换=1"归属、3 层空白成因、组合梯 5 条各触哪档、共享摘要串字段名、`.csv` 变体第 0 列）。
+
+## 取证：测试站 3.7.3 部署窗口"拖动"定案——**502 是源站发的、522/520/多数超时是 Cloudflare 发的，且交包时仍在复现**【2026-09-24 22:3x–23:0x｜刑部 `533c9856`，`NGFLAP` 只读取证，仓库码零改动、服务器零写、现网零改动】
+
+- 目标：拆 `TESTSITE-DEPLOY-WINDOW-FLAP`（总控 22:3x 立案：17 次采样 7×200/6×000/2×502/1×522/1×520，时延 1.1↔8.4 s）——**这些码到底是谁发的**，三问：源站 nginx 日志、应用层重启、部署动作痕迹。
+- 方案与关键读数（全部命令原式＋真实计数在交付件）：
+  - **钟差先钉**：源站 CST(+0800)、`System clock synchronized: yes`，与本机差 ≈ +11 s ⇒ 逐条配对容差 ±15 s。
+  - **源站侧**：窗口 39 行＝200×26／403×10／**502×2**／404×1；`504=0`、`499=0`；**CF 专属码全天 0 行**（520/521/522/523/524/525/530 逐个 `grep -c` 皆 0）；`/api/runtime-provenance` 19 行＝200×17＋502×2；`…-3.7.3.exe` 全天 3 行（22:24:42 整包 12,395,703／22:31:03 与 22:41:55 各 **137,967**）。`$request_time` **不可测**（`nginx.conf:40` 用默认 combined，`log_format` 0 命中）。
+  - **应用层**：`pm2.log` 原文 `22:16:08 Stopping app:tygf-test → exited 130/SIGINT`（三个进程同批停）→ **`22:18:46 starting/online`** ⇒ **计划内停机 158 s**；此后到 23:00 **再无一条 start/exit**（**23:0x 复验更正：全天实为两轮——第二次 `23:02:46 Stopping → 23:03:40 starting`＝54 s，且它不是部署**：`.deploy-commit`/`.deploy-receipt.json` mtime 仍 22:16:36、`tygf-test-backups` 无新目录；期间零请求到达、无新增 502，`23:03:52` 有一条 `/api/…/scripts/distribute` 返 **408**）；`restarts 0`、`unstable 0`、`error-0.log` **0 字节**、内核 OOM 全天 **0 命中**、`load 0.00`；nginx master 起于 7/12、`journalctl -u nginx` 窗口内 `-- No entries --`、配置 mtime 9/23 ⇒ **部署没碰 nginx**。⇒ **"源站反复重启或负载抖"被推翻**。
+  - **部署痕迹**：`.deploy-commit`/`.deploy-receipt.json` mtime 22:16:36、`tygf-test` 22:17:58、`.next` 22:18:37、备份目录 `deploy-20260924_221636-f056a8d03e29`、`LATEST` 22:18:47.88 ⇒ 158 s 里 **121 s 花在传文件/解包**，收敛点＝`pm2 start` 那一秒；服务器上没有本轮部署日志（最新 `deploy-*.log` 是 9/20）。
+  - **现场复现（这件真正的结论）**：22:51–23:00（部署结束后 ≥33 分钟、应用在线）本机走公网域名 **`/api/runtime-provenance` 10/10 超时**、`favicon.ico` 同形、`/downloads/…exe` 当场拿到 **`522 / body 16 B / t_first 20.28 s`**；**同一分钟源站侧** `127.0.0.1:3001` ⇒ `200 0.0025 s`、`https://127.0.0.1 + Host` ⇒ `200 0.0637 s`、**源站本机走公网域名** ⇒ `200 0.0665 s`（nginx 有该行）；`iptables` 无限速、`ufw inactive`、无 conntrack 告警、`ping` 0% 丢包 RTT 489–530 ms。⇒ 锅在 **CF 中国方向 PoP → 新加坡源站** 这一跳。
+- 修改文件：**仅新增交付件** `总控/回收_20260924/NGFLAP_拖动定案_20260924.md`（281 行，含 23:0x 复验更正与 §⑩ 收窄追加）＋ 本台账与 `ISSUES.md`（#119/#120）。`worktrees/develop` **未碰**：开工 `status --porcelain`=**2**（他手在制品 `receipts.js`/`cleanup-learning-evidence.mjs`）、交包=**2**、同一组文件、HEAD 仍 `f056a8d`。
+- 结果：三态＝**已有机核 4／真缺 6／待核 5**；定案 **(b) 为主 ＋ (a) 一次计划内停机**，另 **3 条不可归因**（同机两会话同 UA 的配对歧义、样本 #17 走了源站还是 CF 边缘缓存、回源失败的物理层原因）。
+- 遗留：①**明早 08:00 开测前必须先分诊**（交付件 ⑨ 第 2 条：一条 `curl 127.0.0.1:3001` 判"源站 vs 链路"），首页 403 与 `/downloads` 200 **都不能当健康判据**（口令门 `return 403` 在 `proxy_pass` 之前、`/downloads` 是 `alias` 直发，都不经 Node）；②拉安装包必须断言 `size_download==manifest.size`（记 200 也可能只发出 1.1%）；③ 加 `$host $request_time` 的 `log_format` 属**改 nginx**，需 Owner 拍板，本件未做；④ 生产站是否同链路**未核实**（本单禁访问生产，一次请求都没发）；⑤ 立案名 `TESTSITE-DEPLOY-WINDOW-FLAP` 建议改名为"链路抖动"，因为部署窗口只贡献 2 条 502。
+
+## 治理：晚间真机窗口预置（9/24 第 2 次执行）⇒ **判"不可测"**，缺口派合流手＋兵部夜里补【2026-09-24 20:0x｜总控 `4ffb89ca`，只读取证 + 治理文件，业务码零改动、现网零改动】
+
+- 目标：同一道常设令在 9/24 的第 2 次执行——判"今晚 20:00–22:00 能不能测"，并把缺口在夜里补上（只派不做）。
+- **三问实测（两问不过 ⇒ 不可测）**：① 候选包==部署 SHA **不过**：现网仍 `f5b610c`/要求 3.7.2（provenance http=200 rc=0），而今晚值得测的候选 `c0a5f17` 比现网多 **10 笔**（`git rev-list --count` 实测；`git diff --stat f5b610c..HEAD -- download/local-assistant` = `server.js +99/−18` ⇒ 助手侧确有改动）且**无任何包**（`release/test/tygf-test-c0a5f17*` 与 `f82b339*` 零命中）⇒ 拿旧包代抵正是被禁的那件事；② 六门独立复验 **不过**：`worktrees/develop` `status --porcelain` = **3 行**未提交（`receipts.js`/`cleanup-learning-evidence.mjs`/`smoke-receipt-privacy.mjs`）⇒ 跑门树≠部署树，`c0a5f17` 上六门码**未核实**；③ 版本相等 **现在过**（本机 `/ping` http=200 = `3.7.2`/`source-boundaries-20260923-r1`/`queueLength=0`/分发 ready/`active`，与现网期望逐字段相等）**但 S5 一部署就翻转**——`config/release-identity.json` 在 HEAD 与 `f5b610c` 目前同为 3.7.2，bump 到 3.7.3 后相等门会双向拒装 3.7.2 的机器 ⇒ 明早顺序只能"先装 3.7.3 → 重点『连接当前电脑』→ 再跑批"。
+- 第二理由：`总控/官制.md` 18:0x 一节记 Owner **明晚才回来**、今晚窗口取消（**该条系另一手转述，未独立核实**）；我独立核到的是**昨晚那窗他确实没测**——测试站库只读 `count(*) from ExecutionLanguageAttempt where createdAt>='2026-09-23 12:00:00'`（UTC）= **0**，rc=0。
+- 夜里补的缺口（只派不做，两张单已 `send_message` accepted，两手 runtimeState `opening`）：**合流手 `dddd104d`** 领 `S1S3-REMID`（收 3 个未提交文件的归属→合 `FG-RECEIPT-STALE`+`FG-SNAP-FK_r2`→并既复验件；禁 stash/restore/覆盖；目标 21:30 交）；**兵部 `0ecb1d0a`** 领 `S4S5-PAIR373`（3.7.3 成对出包 + **只部署测试站**，被 S3 交包闸住；出包后不再合任何一笔；门禁红且需越线 ⇒ **宁可不部署**）。预估 **S5 落在 23:30 前后、最晚 00:30**，否则明早 08:00 的靶不成立。
+- 我判自己一处读数作废并写进单里：按 `ExecutionBatch.createdAt` 查近 3 天得 `batches=0`，与 09-23 台账"今日批次 1"矛盾 ⇒ 列名/口径有错，**"3.7.3 会当场挡掉几个 3.7.2 用户"这个杀伤面数作废**，改由兵部用正确列名（安装号在 `ExecutionBatch.installId`，attempt 表无该列）重取后才谈 S5 放行。
+- 制度细化：`总控/作战线_9月28日交付八条_20260923.md` 节奏节**只追加**一条"例外的唯一形状"——Owner 当晚不在场才能把部署排进 20:00–23:30，且**必须有当轮判定件留痕**（`总控/窗口判定_晚间测试窗口_<日期>.md`），缺件按"窗口照常在"处理。
+- 未做/未碰：现网零改动（未部署、未 push）、未碰 Owner 本机 PS 与助手（只读 GET `/ping`）、未 rmdir `总控/.locks/round.lock`（实测 `owner` mtime 09-24 18:30，锁在别人手里）、未写 `日报_*`（单写者协议，另用 `窗口判定_…` 独占命名）、未跑任何会写客户 PSD 的任务。
+- 未核实：`c0a5f17` 上六门逐条码；那 3 个未提交文件归属（S1 要判的，不代判）；Owner 今晚是否真不在场；部署对 3.7.2 用户的真数（我那条已作废）。
+
+## 对抗审查：「看板.json＋HTML＋延后站点」三步方案 ⇒ **封驳**（根因＝把读侧失效当写侧问题补）【2026-09-24 18:1x｜御史台新会话 `259db92e`，只读，未写 `worktrees/**`、未访问两站】
+
+- 目标：拆 Owner 提的"接个站点让任务实时更新"三步方案（① `总控/看板.json` 为唯一事实源＋worker 交包追加；② 一条命令生成自包含 HTML；③ 填得上再做带口令门真站点）。裁决＝**封驳**，把握度 0.85。
+- **一句话根因**：病根已自陈在 `总控/官制.md:180`「病根不在工人不报，在交付只落盘、不敲门，而我不扫盘」——读侧失效；方案补写侧新面，方向正交。
+- 六面要点（全部带 `file:line` 或真实 rc，细节在交付件）：
+  - **重复建设命中 9 处**：`官制.md:6`「唯一在册账」＋表头 `:12` 已含"收包路径"列；`官制.md:210` 标题「三层，**不再依赖任何人的自觉**」＋`:213` 定"唯一台账＝官制.md，其余一律草稿" ⇒ 提案再立"唯一事实源"＝**两个"唯一"打架**；**站点侧已有运营台**＝`src/app/admin/page.tsx`（host 门＋Cloudflare Access 双门）＋`admin-dashboard.tsx` 12 页签＋64 条 admin 路由＋`admin-sidebar-data.ts:3`「新增板块：在本文件加一项即可」。
+  - **写侧强制力＝0（判无效的决定性一条）**：`git check-ignore -v 总控/看板.json` → `.gitignore:32:总控/` **rc=0** ⇒ 板上文件对 git 永久不可见，**任何 hook/门禁原理上观测不到它被改**；两棵树只有 `post-checkout`/`post-commit`（容器那份是 Qoder tracker、末行 `|| true`），无 husky、无 pre-commit；`git grep -l -I "总控/|官制|值守_最新" -- scripts/ .github/ src/` 仅 2 命中且**全是注释**（`smoke-fold-no-report-loss.mjs:4`、`template-test-db.mjs:6`）⇒ 无挂载点。
+  - **外泄面**：既有最小化先例 `src/app/api/admin/attempt-diagnostics/[attemptId]/route.ts:2`「只返回白名单字段，**无正文/路径**」，而提案主字段恰是交付物路径；`.gitignore:31` 自陈总控"含运维画像与取证，勿入库、勿打包"；外置探针（阳性对照 7/7 过）量 `总控/` 全树＝IPv4 26／Linux 路径 79／Win 绝对路径 152／installId 类 59／域名 32／凭据字样 584／服务与通道标识 286；明文样例 `任务书_FG-RECEIPT-STALE_…_20260924.md:13`（SSH 别名＋免密 sudo＋库绝对路径同一行）。
+  - **并发写**：提案"worker 追加＋御史改状态"＝**一文件两类作者**，废掉现行"一槽一写"（`官制.md:8`、`在册账实况_御史_20260924.md:3`、`产品功能全景_20260923.md:8` append-only）；同类事已红过一次＝`值守_最新.md:19`「一份单两个手⇒合流手会撞或将作白跑」；取证期间 `官制.md` 正被写（18:04:12／62,628 B，从 61,253 B 长上来）。
+  - **反方案 A/B/C/D 对比**（含成本与失效模式）：**推荐 D＝复活已派未落的 ZK-RECONCILE**——`任务书_ZK-RECONCILE_自动对账_20260923.md` 已把三态数据源、三类超时点名（90/60/30 分）、"读不到就报未复验"、"它自己要有牙"写完 ⇒ 设计成本 0、新写面 0；实测它从未落地（`对账_最新.md`／`对账_流水.md`／`治理件_…md` 三条 `ls` **全 rc=2**；`find -iname "*ZK-RECONCILE*"` 只有任务书；作者吏部 `d4704da5` 在 cold 名单），**死因＝派给了沉睡会话**，复活须先解决"派给活人"且**第一轮不加定时器**。
+  - **验收判据我自己重推**：提案"板条目数==当日交付物文件数"两处不成立——生成式板恒等（构造性假绿）；分母本身不齐（今日 4 份任务书 vs 6 份交付件，`RCP-FLOAT`／`W9`／`GATE-ONLY-KEY r2` 无今日任务书）。改为 J1 悬空率＝0／J2 **漏收率**（\|D∖板\|/\|D\|，D＝`回收_*/**回包*`∪`功能普查/*`∪`御史复验_*` 的 mtime 集）／J3 已合入必须能在 `git log` grep 到件号（今日实测 **0 笔** ⇒ "已合入"列今日须全空）＋三条对应负控，不红即停用。
+- 交付：`总控/对抗审查_看板与站点方案_20260924.md`（含未核实清单 3 条：`ops.tuyigf.com` 服务内容、两槽是否真死、线上 `ADMIN_ALLOWED_HOSTS`）。
+- 探针自命中已点名：本件自扫 IPv4／Linux 路径／Win 路径均 **0**，其余四类命中主要来自我写的判据图例本身，未当"零敞口"卖。
+- 遗留：本件不改 `官制.md` 本体，是否并入台账由总控定；`值守_最新.md` 实测 ≈19 小时未更新（mtime 09-23 22:58）。
+
+## 重开 W1/W2：补丁未进主干 ⇒ 重取基线重验＋出 `_r2`（排 3.7.4）【2026-09-24 18:0x｜刑部槽 533c9856，自建干净树 `worktrees/gok-r2-20260924` @ `c0a5f17`，未写 develop、未碰 receipts.js】
+
+- 触发：总控说 r1 件"值守 22:52 实测未送达、今晚不在发布包"⇒ 派我重开三件（重取基线、W1 判据自证、W2 定案），要求"不得只读代码交包"。
+- **一条前提被实测推翻**：`git -C worktrees/develop log --oneline -1` 与 `rev-parse --short=7 HEAD` 都是 **`c0a5f17`**，正是我 r1 补丁的基线（值守说"主干已从 f82b339 推到 c0a5f17、旧补丁基线已失效"把两件事混了：主干确实推过，但推到的就是我用的那个点）。所以 `_r2` 与 r1 **逐字节相同**（`cmp` 证），不是重做而是重验＋换个可投递的文件名。
+- 件1：自建 detached 干净树（开工 porcelain=0）里 `git apply --check` **rc=0**、真 apply **rc=0**、`node --check` **rc=0**；`git diff --numstat` 仍是 `161/24` 单文件。
+- 件2（真跑，不读码）：`--only=nosuchkey` **rc=1** 且打印 `可用键：…`；`--only=repo-policy,mount-audit`（真键夹假键）**rc=1**；`--self-test` **rc=0**、`19/19`（归档夹具 6/6 ＋ 过滤器与报表 13/13，含两格 `spawnSync` 真起进程的端到端负控）。
+- 件3：W2 仍定案**改名 `mount-audit-report` ＋ 报表页分区 ＋ 扫描健康度红**；理由不变（`scriptsNoChain=110` 的阈值归 Owner，自造＝门常红逼出绕道），健康度在残缺盒上实测 rc=1、补回 rc=0。
+- 交付：`总控/补丁草案_GATE-ONLY-KEY_20260924_r2.patch` ＋ `总控/回收_20260923/GATE-ONLY-KEY_r2_回包.md`（**135 汉字**，符合 ≤150）；#113 状态改为"修在飞、未进主干、排 3.7.4"。
+- 仍欠（不藏）：全量端到端 `requested=9` 未实测——新 worktree 无 `node_modules`，跑满只会拿到环境红；`lint`/`tsc` 同理未跑，只有 `node --check` 这一条语法级证据。合流手需在装好依赖的树上补这两项。
+- 现场：我的 r2 树留着作者态（` M scripts/release-gate.cjs`）便于复跑；`worktrees/develop` HEAD `c0a5f17`、porcelain 3 行全是别人在飞件（含 `receipts.js`），本包一次未写。
+
+## FG-RECEIPT-STALE：测试站 12 语"本机成功、云端记失败"定案＝回执摘要在浮点度量值上抛（断在**生成**）＋该修零提交且不在 3.7.2 里（补丁草案已出）【2026-09-24 17:0x｜兵部执行手（新会话），基线 `c0a5f17`，实测树＝自建 detached `worktrees/fg-receipt-stale-20260924`，develop 现场零改动】
+
+- 目标：判清 09-24 09:22 那批（`cmueuk0e…`，12 语／报价 240）断在哪一环，并给最小补丁。定案＝**生成**（回执摘要计算抛异常），非落盘／投递／判决。
+- 取证（命令原式与真实 rc 全在交付件 ③⑤）：
+  - 云端只读：12 attempt 全 `ATTEMPT_ABANDONED_STALE`、`completedAssignmentCount=20/20` 但 `verifiedAssignmentCount=0`、`localReceiptDigest=NULL`；终态三波（01:29:17/01:30:28/01:39:17 UTC）＝各 attempt 最后一次心跳 +300s 后（`execution-batch.ts:941`＋`reconcileStaleAttempts :1552`）⇒ **判决本身不过早**。
+  - 诊断：12 条全 `__OBJECTS_0__RENDEREDLEADING_CANONICAL_NUMBER_INVALID`（＝异常消息被 `server.js:6037` 磨平的后缀形状）；归属仍整体错位一条（本批 ES 名下那条实为上一批 VI 溢出）⇒ 登记 **#115**。
+  - 投递侧（nginx）：该批 12 个 attempt id 命中 63＝heartbeat 39＋manifest 12＋accept 12 全 200；`attempt/report` 全天 2 条且在 11:22（窗口外）；`/api/local-assistant/*` 当日 4xx 只有 `scripts/distribute` 403 与 `ticket` 403 ⇒ **零 409、零投递记录＝载荷没建出来的指纹**（否证"投不出去"）。
+  - 本机侧**纠一条任务书前提**：这批不在本机跑——12 个 attempt id 在本机 `engine.log` 与状态目录全 0 命中（对照：本机 `.tygf_v15_journals/receipts/` 有 20 个 `cmub*`＝09-22 本机批产物），云端 `executionHostDigest` 前 7 位本批与 09-23 批同为 `2e117a8`、09-22 批为 `dcbf37f`。故 ③-1 对本批＝未核实（那台机器本会话无读权限）。
+  - 出厂面（替代证据）：本机安装包 exe `grep -a -c` → `toCanonicalReceiptNumbers` **0**、`RECEIPT_METRIC_NUMBER_NOT_CANONICAL` **0**、`CANONICAL_NUMBER_INVALID` 1 ⇒ **3.7.2 不含此修**；`release-identity.json` 版本/buildId 与 attempt 上报值一致（3.7.2／`source-boundaries-20260923-r1`）。
+- "修是否已存在"（任务书第一步）：**存在且零提交**。逐树 `git status --porcelain -- download/local-assistant` 只在 develop 命中 `receipts.js`（numstat 32/5，非 CRLF 幻脏）；`git log --all --since=2026-09-20 -- …receipts.js` 无输出（rc=0），HEAD blob 仍是改前 `b7f553f` ⇒ 一次 `checkout --`／`apply -R` 即不可恢复。**按"接出来不重写"处理**：原样接出两份未提交件＋**本会话新写**一条端到端小数 fixture（`smoke-v15-runner.mjs +42/−0`，因其 `:122` 原 fixture 全整数＝该门对"回执零落盘"长期无感）。
+- 根因链（file:line）：`canonical-json.js:21` 只接受安全整数 ← `receipts.js:53` 对整个 receipt 求摘要（`:37` 含 `objects`）← `v15-runner.js:104/:107` 的 `finiteOrNull` 只判 isFinite ← 小数源 `TYGF_V15_Reopen_Verifier.jsx:131`（行距两位定点）/`:80`（分辨率未取整）。抛在 `attachCloudReceipt`（`:1023`）与落盘 `atomicJson`（`:958`）之前 ⇒ `.json` 与 `.cloud.json` 同时不写；`objectEvidenceDigest`（`:1003`）只散列 objectId/layerId/actualTextDigest ⇒ 归一不影响它；报告度量取自 `actualObjectEvidence`（`:427/:529`）非归一副本 ⇒ 原精度保留（已核）。
+- 验证（自建 detached 树，`node_modules` junction 接 develop；未污染任何他人现场）：**红**＝只贴测试件时 `smoke-receipt-privacy` rc=1、`smoke-v15-runner` rc=1，签名 `$.objects[0].renderedLeading:CANONICAL_NUMBER_INVALID`（抛出点 `receipts.js:53`）；**绿**＝两份件贴齐后均 rc=0；`npm run test:batch-row-contract` rc=0；`npm run test:trust-chain` rc=0（28 个 passed）；`npx eslint` 三文件 rc=0（`download/local-assistant/**` 被 lint 忽略，非放宽断言）；`git apply -R --check` 对交付的 patch rc=0（⇒ 对干净 `c0a5f17` 正向可合）。NOT RUN：`tsc --noEmit`、全量 lint、真机 12 语跑。
+- 界面侧（③-4）：`execute-step.tsx:1188-1190` 对 `RECEIPT_NOT_DELIVERED` 已是双句式如实文案，但本形的磨平滑码落到 `:1193` ⇒ 显示"语言 X 未完成：原因码 …"且 `finalPath:null`。登记 **#116**（另单，不进本补丁；并写明不得顺手改成"默认按成功计"——`server.js:6015-6016` 是 finish 提前结算安全闸）。
+- 交付：`总控/功能普查/FG-RECEIPT-STALE_回执断链定位_20260924.md` ＋ `总控/补丁草案_FG-RECEIPT-STALE_20260924.patch`（3 文件，`+32/−5`、`+46/−0`、`+42/−0`；hunk 头函数上下文已剥除，正文与实测件逐字节相同）→ 交御史复验，**未自行合入 develop**。登记 **#114（blocker）／#115／#116／#117**。CHANGELOG 不写（未合入＝无状态变化）。
+- 遗留／未核实：① host `2e117a8` 那台机器的一手本机证据未取；② 09-22 三批 SETTLED 是否"恰好行距为整数"仍未取；③ 出包 bump 面本轮只实测了 buildId 3 文件／版本串 9 文件（含噪声），记忆记"真实 12 处、守卫只核 10"未复核；④ `collision_policy` 落地检查缺失＝**#117**；⑤ `receipts-pending` 4 张 09-11 占位每轮重启盲投 `::1:3000` 被 ECONNREFUSED（既案，与本件不同因）。
+- 脱敏自检：探针外置系统临时目录（`String.raw` 阳性对照，7 类全 ≥1 才继续），交付两份件逐类命中数＝盘符绝对路径 1＋1（分别是 sqlite `file:/…` URI 与测试断言里的 `…:\$\.` 正则字面量，均非客户素材），其余 6 类两份件均 0。
+- **追加件（Owner 确认"12 语本机 psb 全产出"后，17:3x 本地）**：新交付 `总控/操作卡_回执补投_20260924.md`＝**只评估不执行**。定案＝**该批不可补投**，四道独立 fail-closed 门逐条带 file:line：源件从未生成（抛在 `atomicJson` 落盘前；本机三处目录该批 0 命中）→ 批 `STALLED` 被 `execution-batch.ts:1285` 判 `BATCH_TERMINATED` → attempt 终态被 `:1298-1302` 判 `ATTEMPT_ALREADY_TERMINAL` → 即便投进也不结算（`finishExecutionBatch :1801` 把 STALLED 视为已结算），另有无票据重放路径绑宿主（`…/execution-attempts/[id]/receipt/route.ts:148`）。恢复只有"出厂＋**新建批次**重跑"：`createLanguageAttempt :600` 只放行 `RESERVED/RUNNING` ⇒ 原地重试会拿 `BATCH_NOT_RUNNABLE`（代码读法，未真机点击），而新批会**再冻结 240 并在成功时真扣**（本笔未扣）＝已摆给 Owner 的账务决策。验收靶子做成可复跑判据（单条 SQL＋awk 折退出码），**三向实测**：坏批 `cmueuk0e` 输出 `STALLED,12,0,0,240,0,240,0` judge_rc=**1**、已知好批 `cmubzoh1` 输出 `SETTLED,11,11,517,517,517,0,1` judge_rc=**0**、查无此批空输出 judge_rc=**1**（防"查不到＝通过"）。原报告 ① 与 ISSUES #114 已同步该定案收紧。
+- **Owner 拍板后的收口（18:1x）**：账不救＝不补投、不追补、停在失败态（积分已整笔退回，用户未被扣）⇒ **操作卡按指示撤销**（`mv` 出仓库到系统临时目录，未硬删；四条技术结论并入报告 ①⑦⑩ 与 #114 备查）。**第 3 项"界面如实说"并入本补丁**：`receipts.js` 抛错补 `code`（判据来源不再是被磨平的消息串，`server.js:6037` 取的就是它）→ 新增分类 `RECEIPT_MISSING_ERROR_CODES`＋`isReceiptMissingErrorCode()`（`batch-error-policy.ts`）→ 三条码的两句式中文（`local-assistant-client.ts` 的 `V15_ERROR_CODE_ZH`）→ `execute-step.tsx` 两个渲染点（执行中 `:1188` 一带、恢复后 `:432` 一带）按分类出话，**`success`/`matchedCount`/`finalPath`/结算与重试资格逐字未动**；积分那句只认助手回传的 `settlement.finalStatus==='released'`（`server.js:1856-1863`）。新守卫 `scripts/smoke-receipt-honesty.mjs`（新建 54 行）挂进 `test:trust-chain`＋独立入口 `test:receipt-honesty`：**5 条负控全 rc=1**（删码／文案塞"失败"／恢复点退回旧写法／积分句判据来源改假／分类函数恒假），第一轮我用 perl 按 `\n` 模式改文件＝工作树 CRLF 使改动静默失配、负控假绿，换成按子串改＋先证锚点唯一后才拿到真结果。最终门：`test:batch-row-contract` rc=0、`test:trust-chain` rc=0（29 个 passed，比基线多 1＝新守卫在链内）、`test:receipt-honesty` rc=0、`npx tsc --noEmit` rc=0、`npm run lint` rc=0（0 errors／2 warnings，点名我改的文件 0 命中）。补丁重出＝353 行 8 路径（`git apply -R --check` rc=0），numstat：`receipts.js 39/5`、`smoke-receipt-privacy 46/0`、`smoke-v15-runner 42/0`、`smoke-receipt-honesty 54/0(新)`、`package.json 2/1`、`batch-error-policy 19/0`、`local-assistant-client 4/0`、`execute-step 16/2`。**仍 NOT RUN**：真机 12 语、浏览器目视新文案。
+
+
+
+## 门禁假绿整类：`--only` 匹配 0 项也报绿 ＋ `mount-audit` 假闸定案（W1＋W2，火力清单夜间总动员）【2026-09-23 23:1x｜刑部槽 533c9856，自建干净分离树 `worktrees/w1-w2-gate-20260924` @ `c0a5f17`，开工 porcelain=0，未写 develop】
+
+- 现场：共享 `worktrees/develop` 已推进到 `c0a5f17` 且有 3 行别人在飞改动 ⇒ **我没有在共享树里取任何门禁数**，另建 detached 树跑；该树无 `node_modules`，故 `tsc/lint/row-contract/contracts/trust-chain` 一律 **NOT RUN**（跑了就是环境红冒充门禁红），只有 `identity / repo-policy / package-candidate 相关函数 / mount-audit-report` 这类无依赖项可实测。
+- **W1（P0，整类）**：`release-gate.cjs` 的过滤分支用 `only.includes('mount')` 匹配行标签 `mount-audit` ⇒ 键名不同名。改前实测 `--only=mount-audit` **rc=0/items=0**、`--only=nosuchkey` **rc=0/items=0**、`--only=repo-policy,mount-audit` **rc=0/items=1**（要两项只跑一项还报绿）。修法：可用键从 `GATES`＋报表项**推导**（不手抄清单，清单会像那三条字面断言一样腐烂）；**键名必须等于输出行标签**（只留 `archive→package-candidate` 一个别名，因为它对应入参名）；未知键／空清单／匹配 0 项 ⇒ **跑之前**就 rc=1 并打印可用键；跑完再核 `requested` 与实出行数，不等即 usage 红。改后同三条全部 **rc=1**，真键路径 rc=0 不变。
+- **W2 定案＝改名归位，不造阈值**：`mount-audit` → `mount-audit-report`，输出移进 `---- 报表页 ----` 分区，政策四个数（`smokeZeroMount=27`／`scriptsNoChain=110` 等）仍不计 `gateRed`（阈值是 Owner 的数，我在 #108 已写明"等 Owner 给数才写死"；现值下任何阈值都会让门常红 ⇒ 结局是有人绕过整条门，比假绿更贵）。但**报表不许永远绿**：新增"扫描健康度"——挂载面输入缺失／`deploy/*.sh` 读不到／smoke 扫到 0／scripts 扫到 0 ⇒ `EXIT=1` 并逐条点名。真实文件面开火：残缺盒（删 `security-ci.yml`）**rc=1**、补回 **rc=0**，且红时四个数照打全（满足"红路径仍能报数"）。
+- self-test 从 6 格扩到 **19 格**（归档夹具 6/6 ＋ 过滤器与报表 13/13），其中**两条端到端**用 `spawnSync` 真拉 CLI 传假键/真键 —— 上一包我刚栽过"纯函数绿但 CLI 红不起来"。
+- 代价与破坏性：`--only=mount`、`--only=mount-audit` 从此必红（旧写法不再静默兼容）。全仓 grep 证实除该脚本自身外无任何 `package.json`/workflow/`deploy/*.sh`/其它脚本引用这两个键或旧标签 ⇒ 无内部调用方被打断；已作为通知写进回包 ⑥ 给合流手。numstat `161/24`，24 行删除逐行核过：全是注释/旧解析/旧 `rc: 0` 硬编码/旧汇总打印，**未删任何断言**，归档夹具 6 格原样保留并仍在同一退出码里计。
+- 顺手带出一条同源隐患（已改）：`mountAudit` 旧版对 `deploy/`、`scripts/` 用裸 `readdirSync`，读不到就抛 ⇒ 无顶层 try/catch 时退出码 1 看着像"门红"其实不是任何判据。现在折进 `sanityErrors` 点名。
+- 交付：`总控/回收_20260923/GATE-ONLY-KEY_回包.md` ＋ `总控/补丁草案_GATE-ONLY-KEY_20260923.patch`（17939 B，基线 `c0a5f17`；盒内实测 `--check rc=0`/`apply rc=0`/产物逐字节相同），交合流手 `dddd104d`。登记 **#113**，并在 **#112** 追加处置更新。
+- 未跑／未核实：全量端到端 `requested=9` 未实测（本树无依赖）；`package-candidate` 项未跑；`lint`/`tsc` 未跑（只有 `node --check` rc=0）；`deploy/*.sh` 全为空文件这一形状未真机验；若 `remote-verification.yml` 被有意删除，本闸会红并要求显式处理（设计取向，非事实判断）。
+
+## 合流第二阶段：定佤三条新规矩落地 ＋ 补令合入 ZUO-QUIET-R3（出包挡子解除），收工 `c0a5f17`【2026-09-23 22:2x｜ZUO-MERGE，工作面 `worktrees/develop`＋两棵干净分离树】
+
+- 触发：值守 21:3x 点出 D-4（我两笔 commit 的复验依据指错件）⇒ Owner 22:0x 定佤：**保留两笔、补一次定向复验、不回退不 amend 不改写历史**，并给合流手三条新规矩。
+- 新笔：**第 7 笔 `c0a5f17`＝合入 ZUO-QUIET-R3（将作）**，16 files +477/−146（逐字等于补丁 `--stat`）。锚点按新规矩 1 写成全称：`总控/回收_20260923/御史复验_第9轮_20260923.md:10` ⓪-2「件一 ZUO-QUIET-R3＝通过（三个关键点我全复现）」。
+- 🔴 **状态变化（开窗口径）**：`8daabcd`（FG-GATE-ONE）与 `ae21bcc`（FG-GATE-BASELINE-RED）**标为「待重验」**，定向补验通过前**不计入 3.7.3 开窗依据**。⇒ 当前主干 = `c0a5f17`（7 笔，累计 36 files +2102/−203），但**开窗基线未成立**，等补验。
+- ✅ **出包挡子解除**：`test:fold-no-report-loss` 由 `FAIL (13)` 转 **rc=0**「`ok｜折叠点=16 组件文件=105 校对行=11191 R1=0 R2=0 R3=0 夹具=ok`」⇒ `release:preflight` 第 6 门不再挡打包。**未采"降档判据/摘门"，走的是刑部自己倾向的 (i) 补齐标注**。
+- 整链重跑（新干净分离树 @`c0a5f17`，porcelain 0；R3 改了 `src/**` ⇒ 必须重取）：tsc **0** 126.6 s／lint **0** 59.5 s／`test:batch-row-contract` **0** 4.3 s／`test:trust-chain` **0** 203.7 s／`repo:check` **0** 7.3 s；另取 `test:batch-failure-settlement` **0** 18.2 s、**`test:contracts` 0 116 s**（R3 大改 `src/components/**` ⇒ 这条 25 段界面烟测链必须重取）、`release-gate --only=archive` **1**（`missing=2`／`members=0`＝还没出包的正常态）。**五门不退。**
+- 规矩 3 的回溯执行（我对**全部七笔**逐条 grep 出裁决原文看对象名，不是看轮次号）：**五笔本就正确，两笔错**（`8daabcd`/`ae21bcc` 抄了认证件 ZUO-GATE-VERIFY 的格子）。核对表在回包 ⑬。
+- 一条方法沉淀（新规矩 3 的正面做法）：R3 变更表里有一句改了**步 4 费用标题**的对外措辞，而第 9 轮 ⓪-2 的"三个关键点"**不含这一句**。我没有因为它没被覆盖就不合，也没有因为总控点名要合就不查——拿实现面把两半各自钉住：`src/lib/server/execution-batch.ts:1982` `computeActualCredits`、`:1987` `releasedCredits = quotedCredits − actualCredits`、`:1992` `actualCredits <= 0 ⇒ RELEASED`，＋ `test:batch-failure-settlement` rc=0；并把**不适用边界**写进 commit 与台账：单作业路径 `src/lib/server/photoshop-billing.ts:633` 扣的是报价全额，**这句话不得搬到单作业界面**（与 MK-2/LEGAL-1"对外措辞失真"同族，预防性登记）。
+- 未合清单（照 Owner 令）：`FG-LEARN-WIRE`（户部，两件_20260923b ⓪-3 通过）与 `W-OUT`（`官制.md:34` 复验通过／分支载体）**本轮未点名 ⇒ 未动**；**兵部 FG-SNAP-FK（P1）未复验 ⇒ 不合**（记为硬约束）。
+- 下游一条撞面警告（重复实测）：`总控/补丁草案_FG-GATE-FOUR-RED_附B_package-json合并件_20260923.patch` 已被 `ae21bcc`＋`47bc868` 覆盖，打在现主干上 `git apply --check` rc=**1** ⇒ **请勿再施加**。
+- 现场：`porcelain=3` 全是他人未提交件（`cleanup-learning-evidence.mjs`＋一条在飞的**回执**线两件），我未 add、未回退；共享树未提交足迹 0 行。我留了三棵 detached worktree（`base-f82b339`／`final-9ceb678`／`final-c0a5f17`，均在 gitignore 的 `tmp/` 内）等定去留。
+- 交付：`总控/回收_20260923/ZUO-MERGE_回包.md` 已改到七笔口径（横幅标 2 笔待重验、②b 新链表、⑥-C 解除、⑥-D 状态、⑨ 结论改口、⑬ 新规矩执行记录＋回溯核对表）。
+
+## 合流：五件已复验补丁按序进 develop ＋ 补一条门禁防空转（ZUO-MERGE，收工 `9ceb678`）【2026-09-23 21:5x｜工作面 `worktrees/develop`（基线 `f82b339`）＋一棵干净分离树跑门禁】
+
+- 目标：把"御史已复验通过但没人合"的补丁合进主干并证明门禁不退。**未 push、未打包、未部署、未碰生产站、未碰发布身份与版本号、未动 `round.lock`。**
+- 六笔（一笔一个来源）：`9e73e5b` FG-CLEANUP-TIMER（兵部，9 files +428/−4）／`8b01c1d` D3-HOP-ASSISTANT（兵部，1 file +99/−18）／`8daabcd` FG-GATE-ONE（刑部，3 files +749/−5）／`ae21bcc` FG-GATE-BASELINE-RED（刑部，2 files +27/−7）／`47bc868` FG-GATE-PHASE0-B（刑部，6 files +305/−22）／`9ceb678` 补 `check-learning-safety.mjs` 扫空必红（1 file +17/−1）。累计 **20 files +1625/−57**。
+- 完整链（干净分离树 @`9ceb678`，porcelain 0；负载＝并行有活，起跑 18 个 node 进程）：`npx tsc --noEmit` **0**／`npm run lint` **0**／`test:batch-row-contract` **0**／`test:trust-chain` **0**（238.7 s，比将作独跑 75.7 s 慢 3.2 倍，只作参考）／`repo:check` **0**；另补跑出包六门之一 `test:contracts` **0**。
+- 关键状态变化：**`repo:check` 在基线 `f82b339` 就是红的**（实测 rc=1，三条指向 `deploy-test-release.sh` 的字面断言）。自 `8e5cb00`（09-09 波次台账泛化）起永久假红 **14 天**＝这两周这条门等于没有闸；GATE-ONE 改成"解析台账＋自检算术＋6 条新断言"后转绿，且有 `smoke-repo-policy-fire` 15/15 正向对照证明守卫会响（不是删断言凑绿）。
+- 合同面：五件逐笔自查＋与御史口径互校，行排除/计费/回执/冻结**语义零触碰**（D3 唯一命中是一行"不碰摘要"的注释；GATE-ONE 命中全在保护表名单，属加严）。未触发四层同步与 fixture 变更。
+- 撞面处置：`package.json` :144 被 BASELINE-RED↔PHASE0-B 抢同一插入点（两向 `--check` 都 rc=1）。走 `--exclude=package.json` ＋手工插一行，**逐字节比对补丁要求==提交实际＝true，两行都在位，`test:*` 终态 120 条**。与刑部 TASK_LOG 顶条独立算到同一个数。**警告下游：附B（`…附B_package-json合并件…patch`）已被覆盖，打在 `9ceb678` 上 `--check` rc=1，请勿再施加。**
+- 🔴 两条待拍（未自决）：① `fold-no-report-loss` 挂进 `release:preflight` 第 6 门后当场挡打包（实测 rc=1 `FAIL (13)`）；解法已有复验通过件 **ZUO-QUIET-R3**（御史第 9 轮 ⓪-2 实测 13→0，2 文件/+2 行），不在我的授权清单 ⇒ 未合，请点名。② `8daabcd`/`ae21bcc` 两笔 commit message 把"ZUO-GATE-VERIFY 的裁决"写成了"这两件本身的裁决"（实为两件_20260923b ⓪-1 部分通过、第 5 轮 ⓪-3 不封驳）。禁 amend ⇒ 未改历史，请定"补定向复验"还是"revert 重走"。
+- 新登记 #112（`scripts/release-gate.cjs:352-354`）：`mount-audit` 只 push 报表行，`gateRed` 仅在 :337/:349 增计 ⇒ **它报红也拦不住任何东西**。要升成真闸请拍（升闸＝加判据，可能当场红）。
+- 顺手查实一条 harness 缺陷（未修，等拍）：`scripts/smoke-learning-phase2.mjs:450-458` 的 check 23 用 `spawnSync` **不覆写 env** ⇒ 子进程按继承的 `DATABASE_URL` 跑，测的是环境库不是它自建的隔离库。这是我这轮 `FAIL (7)` 与刑部自述 `FAIL (6)` 差 1 条的全部原因（等价条件复跑＝逐字 `FAIL (6)`）。
+- 出包判语：**不能**交兵部出包。差两件——上面 ①（13 处屏显红线）＋助手成对窗（`8b01c1d` 改了 `download/local-assistant/server.js`，发布身份/manifest/安装包一笔未动；`check-release-identity.cjs:15-36` 只互校 manifest↔identity↔安装包字节、不读源码 ⇒ 它**不会替你红**，实测 rc=0 仍报 3.7.2）。
+- 现场：收工 develop `porcelain=3`，**全是别人的**（工部未跟踪探针 1 ＋兵部/他人在飞未提交 2，其中 `download/local-assistant/receipts.js` 属**回执语义**，已按合同面告警上报）。我在共享树的未提交足迹 0。
+- 交付：`总控/回收_20260923/ZUO-MERGE_回包.md`（含台账、逐项真实退出码与秒数、红因归类、弃置清单＝空、需仲裁 4 条、阻塞项、未核实、复跑方法与 R6 自检）。
+- 遗留：`tmp/zuomerge/` 下留了两棵 detached worktree（`base-f82b339`、`final-9ceb678`）与四个探针，等总控定去留。
+
+## 修法：门禁四条基线自带红逐条交修法与代价（FG-GATE-FOUR-RED，不翻转任何默认开关）【2026-09-23 深夜｜刑部槽 533c9856，工作面 `worktrees/fg-gate-one-20260923`（净基线 `f82b339` 起步，porcelain 0），未写 develop】
+
+- 目标：今晨开窗照样红的 4 条基线自带红，逐条给"命令原式＋改前真实码＋改后真实码"，改不了的写待拍板并**保留红**；附带给出合流池的可序化次序。
+- 四条结论：① `repo:check` — 修法已交，**但实测它是两处红不是一处**：GUARD2 只修 `check-repo-policy.cjs` 那 3 条腐烂字面断言，打上后 `repo:check` **仍 rc=1**（红点换成 `check-learning-safety.mjs` 判 `import type` 为运行期消费）⇒ **GUARD2＋PHASE0-B 必须同批**才转绿（实测 rc=0）。② `test:learning-phase0` — 三态取码：apply 0 → phase0 **rc=0（10 checks）** → `apply -R` 0 → 回净 **rc=1**；B 案够用，本包不再加工。③ `test:release-gate-selftest` — 定性并**纠正任务书一处**：该入口那行在 **FG-GATE-BASELINE-RED** 里，`FG-GATE-ONE` 根本不碰 `package.json`（实测两侧 `sha1(package.json)` 相同）。④ `test:refund-single-winner` — 两臂已建（未开通必 409 臂通过 ＋ 隔离库内注入假 flag），红点从 `:67` 推到 **`:143`**；`:143` 的"32 路全回 unknown"与实测（3/29、1/31、1/31，**DB 三次恒 1 行 1 号 unknown**）分歧 ⇒ 登记 **#109 待拍板，红保留**。
+- 新缺陷与修法：**#110** 台账"形似但守卫解析不出"的行被行数/钉入/算术三项检查整体跳过（同一注入在 GUARD2 原样下实测 **rc=0** 静默失聪）；附A 改成逐行解析并对形似行报行号，实测转 rc=1，11 类双向开火全符合（含"合法追加＋守卫同批钉入仍绿 `8/8`"）。
+- 合流次序（`--check`＋真 apply 取证，未合未入 develop）：**`package.json` 的 :144 撞是双向不可序化**（BASELINE-RED↔PHASE0-B 两个方向都 rc=1）⇒ 交附B 合并件，之后两份原件各带 `--exclude=package.json`（实测三步全 rc=0，终态 120 条 `test:*`、两入口都在、JSON 合法）；GUARD2 与 GATE-ONE 对该文件产物 **sha1 相同** ⇒ 弃置 GUARD2/GUARD；附A 只能跟在其后（净基线 rc=1、GATE-ONE 后 rc=0，`-R` 精确回原哈希）。
+- 交付三件：主件 `补丁草案_FG-GATE-FOUR-RED_20260923.patch`（补单前 22/0 单段，**补单后 3 段**见下条）、附A（21/4，基座 GUARD2）、附B（2/0）；回包 `总控/回收_20260923/FG-GATE-FOUR-RED_回包.md`。
+- 铁律自证：**支付 flag 默认值一字未改**，且新增断言反向钉住 `src/config/featureFlags.ts:25/31` 必须为 false；假 flag 只写进一次性隔离库（`createMigratedTestDb` 见继承 `DATABASE_URL` 即抛）。
+- 自爆共五处（回包③丙全列，此处记两处最重的）：① 取证脚本助手 `git(args, cwd = box)` 的第二形参被我传成 `{cwd: box}` 对象 ⇒ Node 抛错被 catch 折成 rc=1，**E5–E10 一批"FAIL"全是假的**，加前置断言才撞出来；② 我新加的断言把计数存成数字又 `.join()` ⇒ **只在红路径抛 TypeError、退出码仍 1 看着"能红"但 metrics 与发现全丢**，被 GUARD2 自带配套件从 15/15 打成 8/15 才暴露 ⇒ 结论：**新断言必须有一格专测"红路径仍能报数"**。另三处：改 metrics 格式打挂自己配套件；新守卫把"早退闸之后"限成同层（真绿文件被打红）；沙箱盒缺输入把"环境红"冒充"撞面"（同一包内第二次踩）。
+- 现场：交包时本树 `porcelain=3`（主件作者态三段：` M package.json`、` M scripts/smoke-refund-single-winner.mjs`、`?? scripts/check-cleanup-defaults.mjs`，未 `git add`）；**develop 在交包前被并行会话推进到 `9e73e5b`（合入 FG-CLEANUP-TIMER）porcelain=2**，本包全程未写；新尖上复测：净基线守卫仍报**同样 3 条**红，且 `f82b339..9e73e5b` 的 9 个文件与本包 4 个文件**零交集** ⇒ 次序表对新尖仍成立（但新尖改了本包守卫所读的 `cleanup-review-snapshots.mjs`，故对新尖单跑一遍仍 rc=1；他人五份池内件对新尖未复验）。
+- **任务书补单（同包追加件）**：新写静态闸 `scripts/check-cleanup-defaults.mjs`（209 行）——凡 `cleanup-*.mjs`/`*-cleanup.mjs` 的删除点（`deleteMany`/`DELETE FROM`/`purgeXxx(`/`unlink`/`TRUNCATE`…）必须落在"缺省不删"的闸之后，并单独识别 `dryRun = argv.includes('--dry-run')` 这种**选择加入**极性（安全性写在旗上而非缺省上）。**实测现状 rc=1：候选 4 文件、含删除点 3、未受闸 6 处** ⇒ 点名 `scripts/cleanup-review-snapshots.mjs:24,25`（整文件无开关，今晚那次提前删除的引信）＋ **第二根没拆的引信 `scripts/cleanup-user-profile.mjs:8-11`**（`$transaction` 四条无条件 `deleteMany`，由测试站 timer 驱动）；`cleanup-learning-evidence.mjs` 判为已受闸。三态：现状 **1** ／沙箱临时改缺省不删 **0** ／回净 **1**；另有扫空负控 rc=1（防"改个名就绿"）、分类器自测夹具 12/12。挂 `package.json:23` 入口，**按 Owner §3 不进门序**（`grep -c cleanup-defaults scripts/release-preflight.cjs` = 0，将来插点 `:102` 之后）。登记 **#111**。
+- 主件因此从 1 段变 **3 段**（refund 两臂 22/0 ＋ 新守卫 209/0 ＋ 入口行 1/0，**全纯新增 0 deletion**）；新尖 `9e73e5b` 单独跑过一遍仍 rc=1（它给 review-snapshots 加的 `dryRun` 是选择加入）。四步序列（主件→附B→BASELINE-RED/PHASE0-B 去 pkg）实测全 rc=0，终态 `test:* = 121`。
+- **交包期间基线二次刷新（已重测，回包⑧）**：develop 从 `9e73e5b` 又推进到 `9ceb678`，合进了 `GATE-ONE`／`BASELINE-RED`／`PHASE0-B`／`D3-HOP-ASSISTANT` 四件 ⇒ 实测：**附B 作废**（两条入口都已在尖上，`grep -c` 各=1）；**附A `--check`/apply 对新尖全 rc=0**（尖净态单跑 `check-repo-policy` rc=0，打附A 后仍 rc=0 并多报 `unparsableWaveLines=0`）；**主件对新尖 `--check`/apply rc=0**，终态三条入口俱在、`test:* = 121`；新守卫对已提交尖**仍 rc=1**（#111 未因合流而消）。整条 `repo:check` 在尖上的串联 rc **未实测**（只测了 policy 段）⇒ 待验。
+- 遗留：#109 待拍板；`:143` 之后的断言（本地失败臂、历史行、配额）本包仍未执行到；附A/附B 未被复验前不得进 develop。
+
+## 治理：晚间真机测试窗口预置（三问全过 ⇒ 今晚不部署；派兵部 FG-PREP-NEXTPAIR）【2026-09-23｜总控 4ffb89ca，只读取证 + 三份治理文件，业务码零改动】
+
+- 目标：Owner 每晚 **20:00–22:00** 才有时间做真机测试 ⇒ 在 19:50 前判"今晚能不能测"，能测就把操卡备好让他坐下就开工，不能测就夜里补缺口。
+- **三问实测结论（全过 ⇒ 可测，今晚部署动作 = 0 个）**：
+  1. 候选包 == 部署 SHA：`curl /api/runtime-provenance` 回 `webCommitSha f5b610cfde67…`、`expectedAssistantVersion 3.7.2`、`status BOUND`（http 200 / curl rc 0）；本地 `release/test/tygf-test-f5b610cfde67.zip` 收据 `commit` 与之**逐字符同值**，我实算归档 `sha256 0916E333…` **== 收据 `archiveSha256`** ⇒ 不存在"旧包代抵"。`git merge-base --is-ancestor f5b610c HEAD` rc=**0**；`git diff --name-only f5b610c..HEAD` **只有两行**（`.gitattributes`、`scripts/check-release-package-hygiene.cjs`）⇒ HEAD 比现网多的 3 笔是门禁/归档卫生，**客户端行为差 0**。
+  2. 六门逐项码有**独立复验**：`御史补验_现网SHA六门_20260923.md`（14:21–14:28，跑门树==部署树、porcelain 0/0）六门 **EXIT 全 0**，且明写"总控那句从此可当已复验事实记账"。**边界**：这只覆盖 `f5b610c`；`f82b339` 从未出包（刑部/兵部各见 `package-candidate missing=2`），故 HEAD **不是**今晚候选。
+  3. 本机助手与现网期望**相等**：只读 `curl 127.0.0.1:49152/ping`（http 200）= `3.7.2` / `source-boundaries-20260923-r1` / `queueLength=0` / 脚本分发 `ready` + `integrityOk true`；按 origin 分开问 ⇒ `test.tuyigf.com` 与 `tuyigf.com` 都 `activationRequired=false active`（无 Origin 那一路回的 `expired` 属默认 serverUrl 环境，不是他掉激活）。相等门不拦他。
+- 交付：`总控/操卡_晚间测试窗口_20260923.md`（包名+短 SHA、开跑前 90 秒顺序、测哪份稿**只写代号与语种数**、要量的三个数、约 30 分钟、两类已知撞车的读法）；`总控/任务书_FG-PREP-NEXTPAIR_部署前准备_20260923.md` → 派**兵部 `0ecb1d0a`**（`send_message` accepted，会话 `running`）：T1–T3 轻量只读限时 19:59 前、T4–T5 出包与逐 SHA 断言排 **22:05 后**，**不部署**；`总控/作战线_9月28日交付八条_20260923.md` 节奏节**只追加**"20:00–22:00 = 真机窗口，不得安排部署与长构建撞它"。
+- 未做/未碰：现网一行未改、未 push、未装任何东西、未动 Owner 本机 PS 与助手（`/ping` 只读 GET）、未 `rmdir 总控/.locks/round.lock`（实测锁 `owner` mtime 19:30，主线巡检链在跑）、**未写 `总控/日报_20260923.md`**（单写者协议：19:33 有活性写者，我另用独占命名文件）。
+- 遗留给 Owner 拍（不在我判断权内）：① 生产发布钟点；② 其他内测用户仍在 3.7.1、相等门双向拦 → 三选一处置（不回滚 / 下载页加提示 / 秒级回滚 `52bd0b0`）御史 14:2x 已上报仍未拍；③ YG-LEGAL 草案里运营主体名称与备案号（只有他能给）。
+- **未核实**：`f82b339` 上六门逐条码（未跑）；今晚真机窗口内实际是否跑出数（要他亲笔或我实读产物）；除 `f5b610c` 外任何一站的在飞批次面（本轮禁写面外未查）。
+
+## 盘点：门禁入面全量基线（FG-GATE-INVENTORY，只跑不改）【2026-09-23｜刑部槽 533c9856，工作面 `worktrees/fg-gate-one-20260923`（detached `f82b339`），未改一个字、未写 develop】
+
+- 目标：给总控一张"开窗前底牌"——一档点名项逐条真实退出码、二档挂载面全表、每条红三分类（基线自带／环境／真回归）、与他人既有数并列不合并。
+- 结果（一档 27 行）：**14 绿 13 红**；红里 **4 条本征**（`repo:check` 陈旧断言、`test:learning-phase0` 把纯类型导入当运行期消费、`test:refund-single-winner` 与代码默认开关冲突、`test:release-gate-selftest` 基线死入口）+ **8 条环境**（缺 `.env`、缺 `DATABASE_URL`、缺 `EXECUTION_TICKET_SECRET`/`INVITE_CODE_SECRET`、SQLite 并发写锁）+ 1 条复合（`test:release-qualification` 继承本征红）。**真回归 0 条，且这只是本包覆盖范围内的结论**（一档 27 行只覆盖基线 118 条 `test:*` 里的 **23** 条 ⇒ 二档 95 条未跑、真机面未跑 ⇒ 未核实）。
+- 新量化事实：`package.json` 118 条 `test:*` 中 **84 条零挂载（口径 A：npm 入口）**，与我上包 `smokeZeroMount=27`（口径 B：181/182 个 smoke 文件）分母不同、并列不合并；68 个 smoke"挂上了但所属入口不在任何链"⇒ 68+27=95 个文件实际永不执行。门禁耗时受负载影响 **≥5.2 倍**（`test:contracts` 三读数 723.8／306.7／139.0 秒）。
+- 根因取证（不采信首行断言，用只读探针复现前置序列）：`createCreditOrder` 实际回 `PAYMENT_METHOD_UNAVAILABLE`/409，闸口 `src/lib/server/credit-orders.ts:252-261`，默认值 `src/config/featureFlags.ts:25,31`，smoke 只覆盖两个 flag（`scripts/smoke-refund-single-winner.mjs:101`）；**同族 `scripts/smoke-refund-close.mjs:141,146` 已按正解写** ⇒ 判为"该 smoke 落后于兄弟件"而非产品回归。`active-attempt-db` 四次全红（`P1008` @ `src/lib/server/execution-batch.ts:753` ← `scripts/smoke-active-attempt-db.mjs:81` 十路并发）。
+- 现场纪律：开包态A 净 ⇒ 中途落 `FG-GATE-ONE`+`FG-GATE-PHASE0-B` 得态B（9 行）⇒ **交包前 `git apply -R` 两片还原（RC=0/0）**，本树 `porcelain=0 HEAD=f82b339`，`worktrees/develop` 同时刻 `porcelain=0`。持久产物仅 `总控/补丁草案_*.patch`。
+- 踩到并记录的陷阱：**反向应用"含新增文件"的补丁会把新增文件一并删掉**（`git restore` 单文件删不掉未跟踪新件，两个方向都不是完整的"恢复现场"动作）⇒ 还原前先 `cp` 到 gitignored 的 `tmp/parked-state-b/`。本机另两处缺口：无 `bc`（导致两条红项本轮未计时）、`node_modules` 是指向 `worktrees/develop/node_modules` 的符号链接（跨树依赖耦合，对本包所有结论的影响未量化）。
+- 新问题登记：**#106**（refund smoke 与发布安全态默认冲突）、**#107**（`active-attempt-db` 判据在 SQLite 承载下永不通过）、**#108**（84/118 入口零挂载 = 门禁入面覆盖缺口）。
+- 交付：`总控/回收_20260923/FG-GATE-INVENTORY_回包.md`（⓪底牌一句 →①一档码表 →②二档三列表＋两口径零挂载 →③红归因表 →④与兵部/御史既有数并列 →⑤未跑与未核实 12 条 →⑥R6）。R6 实测：`total12plus=0`、邮箱/私钥/密钥赋值/服务器路径/密钥关键字全 0、`gitShaLong=2`（均为本槽编号 `533c9856`，非提交号）；提交号一律 7 位。
+- 遗留：`test:trust-chain`/`test:contracts` 只在态B 各跑 1 次（态A 未复跑）；`release:check-partial-indexes` 未跑；#106 的修法方向（改 smoke 还是放开 `manualQrFallbackEnabled`）**待 Owner 拍**——后者撞"发布安全态必须 false"铁律，我不动。
+
+## 治理：本次「反探查/暴露面」工作拆为 4 个并行会话 + 文件归属分区 【2026-09-21｜主线本会话，纯记账，未改业务代码】
+
+- 触发：Owner「不是说要拆分出不同的对话处理不同的问题吗」→「帮我全部一起开始」。
+- 四份任务书（容器根，各自自带上下文）：`任务书_S1_防扫描收口与凭据治理`、`任务书_S2_闸门死锁与同原文豁免`、`任务书_S3_对外展示降噪与反抄重构`、`任务书_S4_排版质量收口`（均 `_20260921.md`）。
+- sessionId：S1 `835d3fba-03c2-4792-8624-f56dc9822c31` / S2 `73c6facc-82ab-4406-8d2a-b0f64a7efdca` / S3 `d3faade8-0d26-4ed2-8933-6d1d82552bc1` / S4 `10b70bef-00c8-43f6-98d5-bec602212cdd`（`list_chat_sessions` 实测四者 `runtimeState: running`）。
+- **防碰撞分区（写进四份提示词，均须遵守）**：`src/lib/trust-chain/binding-core.ts` **排他归 S2**；其它会话不得改 `report-renderer.js` / `overflow-estimator.ts` / `wrap-planner.ts` / `server.js` 日志段；**四个会话一律不得写 `AI_MEMORY/*` 顶部**（回包由主线统一并入）；**禁改 `config/release-identity.json`、`config/script-versions.json`、`package.json`、`package-lock.json`**；禁 push、禁部署、禁破坏性 git。
+- 任务书里的 file:line 是主线实测的，但四份提示词均要求**开工前逐条自己复验**，不直接采信（含本会话自己的历史结论）。
+- 各会话红线：S1 任何输出不得出现凭据明文或可逆片段，一律「变量名 + sha256 前 8~12 位」，且不得删除 `~/.ssh` 下 110 个历史脚本；S3 属 L2（隐藏能力需批准），除 #101 守卫外动码前先报；S4 只做测量与上报，不阻断、不改计费口径。
+- 主线仍独占：3.7.0 真机 8→0 验收、jsxbin 切换发版六步、四份回包的合并与 `AI_MEMORY` 记账、以及两项只有 Owner 能清的（生产 sshd 关 `PasswordAuthentication`、`INVITE_CODE_SECRET`/`ADMIN_PASSWORD`/腾讯 SES 密钥轮换）。
+- **同批把三方对照报告 `tmp/ps-clinical-20260921/报告_三方对照_PS改语言_20260921.html` 追平到最新事实**（Owner 贴回的是更早一版渲染，磁盘件已含两条 MUST FIX 撤回；本次补齐三处仍滞后的地方）：① 结论新增第 6 条——第 3 条"护城河也没被击穿"是**不该给的安慰**，实测匹配阶梯本身随分发包明文落到每个授权用户机（`findTranslation:718`/`requiresPreflightDecision:781`/`confusableSkeleton:786`/`matchModes:1246`，5/6 缓存件与仓库逐字相同）⇒ "不是你藏了他猜出来，是你寄过去的"，护城河只剩不在客户端的三条；② **S2 覆盖率阶梯撤回**（内部调试态 + 与 Owner"对外展示太多了"直接冲突，只留服务端日志）；③ 第五节由占位改为**攻方战果 12 条逐判表**（7 条推翻 / 3 条真金成立 / jsxbin 判"过头，收回一半"）+ 跨会话 5 条复核实录；④ 第六节拍板项按 M1=几何进合同、M2=PS2026 真机验 的新编号重写，补 jsxbin 发版窗口与两件仅 Owner 可清项。**核验方式：DOM 结构实测**（6 个 h2 齐全、第五节表 13 行、table/tr/td/h2/h3/p/div 开闭配平），像素级截图因内置浏览器 surface 隐藏未取到。
+
+## 实验：三方对照「AI 手搓 PS 改语言」真机实测 + 暴露产品执行链两处风险 【2026-09-21｜只读+隔离工作副本，未改业务代码，未部署】
+
+- 触发：Owner 报「另一个 AI 在公司电脑上用 PS 改语言完美成功」，要求我自己跑一版、找可结合点、并做对抗式审查。
+- 我这版（clean-room，`tmp/ps-clinical-20260921/`）：PowerShell COM + 自写 JSX，只动工作副本 `master_copy.psb`（母版 mtime 2026-09-16 21:53 复核未变）。端到端 31.5s；写入 32 层；**保存后重开回读 32/32 逐字一致，0 失配 0 丢层**；文件 286,180,865→285,725,487 字节。
+- 实测踩坑 4 条（有报错原文）：① ExtendScript 是 ES3，**无 `JSON` 对象**（`错误 2: JSON 未定义. 直线: 79`）；② **COM 默认 ProgID 静默绑到本机 PS 2021（22.0.0）而非 2024**，界面完全正常；③ PS 文本层用 `\r` 分行、Excel 单元格用 `\n`，致 14/39 漏匹配；④ `ExtensionType 未定义` 致 JPG 导出失败。
+- 匹配覆盖阶梯：朴素精确 25/39 → 换行归一化 32/39 → 允许「一层吃连续 2-6 表行」33/39，6 层彻底对不上；**静默漏改 7 层且日志 0 报错**（画板 6 整片留英文，靠事后逐层比对才发现）。
+- 独立复算产品编译器（`probe-binding.mjs` 加载 develop 的 `generated/binding-core.js` + 观测 `psn_90805cbb…`）：原表 52 行 ⇒ 11 语全部 绑定 31 / 未覆盖 8 / **阻断 8**；补译 8 行副本 60 行 ⇒ 11 语全部 绑定 39 / 未覆盖 0 / 阻断 0 ⇒ 复现 9/20 取证结论。
+- 与产品 9/17 `__ZH.psb` 逐层比对（`out/compare.json`）：24 同 / 7 我漏 / 8 它漏 / **0 措辞差异**；它漏的 8 处正是旧表缺的 8 行 ⇒ **差距全在「哪个对象被绑上」，不在译文质量**。
+- 对方产物已到手（`F:\0920 6877\`，公司机 **PS 2026 build 27.7**，6877 A+ 2.7GB / 375 层 / 86 文字层，英→日，58 行两列表）：读其 `完整执行档案.html`（17 节）、`执行复盘_对抗式审查.html`、`progress.txt`、`bounds_en/jp.tsv`。它做到了：五轮匹配（可替换 60→64→69→70 层，未命中 48→23）、**norm/normT 两级归一化分离**、5 处人工断点 + 「拼回必须逐字相同」硬校验、**改前后 86 层坐标两两相交 + 越界检测（0/0）+ 变宽≥20px 19 条清单**、重开回扫 change=0、读文件头 version 验 PSB、**附着前先查文档数=0**、破坏性动作申报、6 条公开撤回。
+- ~~暴露产品两处风险~~ **两条均在自查后撤回（原判定过头，保留撤回记录）**：
+  - ①「保存无兜底 ⇒ 静默降级」不成立。`TYGF_V15_Thin_Executor.jsx:137-142` 有顶层 catch，写 `EXECUTOR_FAILED` + 真实错误串并 `throw`，且 `:139` 以 `DONOTSAVECHANGES` 关闭 ⇒ 若 PS 2026 的 `doc.save()` 报 8800，产品是**明确失败（fail-closed，符合铁律）**，不是静默写坏。真实问题降级为**版本可用性矩阵缺口：PS 2026(27.7) 上助手可能整版跑不通，需真机验一次**。另对方那个「`saveAs + PhotoshopSaveOptions` 把 .psb 静默改名成 .psd」的坑**对产品不适用**——`:68` 开的是工作副本、`:102` 用 `save()` 保持原格式，`saveAs` 只用于 `:114` 的 JPG 预览。
+  - ②「docCount 只提示不阻断」是我**只看了诊断链路（`server.js:1307` → `local-assistant-client.ts:509,518`）、漏看扫描器**造成的误判。实际产品已有四道：`TYGF_V15_Preparation_Scanner.jsx:53-55` 按全路径匹配已开文档、`:298-306` 源文档已开且有未保存改动 ⇒ `ALREADY_OPEN_WITH_UNSAVED_CHANGES` 拒绝清单、`:310` `sourceOwnedByScanner` 所有权跟踪（不开自己没开的文档）、执行器 `:87` 逐条 `SOURCE_STALE` 漂移校验。**这一项产品比对方更严**（对方只做到附着前查文档数=0 + 记录名字与脏标记）。剩余可借鉴点降级为 NICE：诊断提示里把"检测到 N 个打开的文档"扩成逐文档「名字 + 是否脏」清单。
+  - 教训（写下来防再犯）：**"产品没有 X"这类否定式主张，必须把扫描器 / 执行器 / 编译器 / 客户端四层都搜过才能写**；我只搜了 server 侧就下结论，直接导致报告里出现两条 MUST FIX 级的错误建议。
+- 待确认（不得当已证实使用）：`8800` 在本机 PS 2021/2024 **无法复现**（我这版 `doc.save()` 成功），M1 严重度取决于是否安排 PS 2026 真机验证。
+- 交付：`tmp/ps-clinical-20260921/报告_三方对照_PS改语言_20260921.html`（4 张渲染件 + CSS 裁切对照 + M1-M3 / S1-S4 / N1-N2 结合点清单）；`执行方案_20260921_反探查收口与吸收项.md`（容器根）。
+- **追加（同日晚，Owner「来吧」→ 执行批次一）**：反探查实证三层暴露面并登记三条新 ISSUE（容器根 `AI_MEMORY/ISSUES.md`，纯增量 44/0，已核与 develop 最大 #91、reconcile-gate 树 #92-94 **无撞号**）：
+  - **#95 🟠 major**——云端分发的 `.jsx` 引擎脚本在用户机**明文落地**。逐文件比对 6 个缓存件：**5 个"换行不同、内容逐字相同"**（`distribute/route.ts:51` 按 LF 归一算 sha，故"分发件 sha ≠ 仓库 sha"只是换行假象）⇒ **外流范围 = 仓库源码全量，含中文注释与任务号**；缓存内容寻址不清理，`Reopen_Verifier` 同时存 `335984fa`(3.6.60) 与 `b12fcdd4`(今日 14:58) ⇒ 漏的是带版本序列的演进。分发接口本身有鉴权（`route.ts:93-96` 403 + 限流 + 脱敏审计）⇒ 威胁模型是"每个持激活码的用户跑一次即得全部引擎源码"，不是路人可下载。**"直接复用 jsxbin" 已排除**：官方 jsxbin 是编码不是加密，公开已有 Jsxer 等反编译工具链。
+  - **#96 🟡 minor**——"exe 零明文"口径未经实测：node 字节扫描 38MB 引擎 exe，`function normalizeText` 命中 4 次（binding-core 函数名 ⇒ 客户端留有裁决算法可读痕迹），对照组 `DoJavaScriptFile`/`LayerKind.TEXT` 0 命中（jsx 确实不在包里）。**踩坑留痕：本机无 `strings` 命令，第一次探测得到的"全 0"是假阴性，差点被写成"exe 干净"**。
+  - **#97 🟠 major（待确认）**——PS 会把文字层名同步成内容，而 `ledgerEntryId = 组路径 name@兄弟序号`（`Preparation_Scanner.jsx:206-209`）⇒ 用户把交付件再当母版提交时全台账身份随内容漂移，**零测试覆盖**。建议先写复现测试，实测前不改身份算法（它是台账与账务的锚）。
+  - **顺带核出的结构问题（登记未处置）**：`#92/#93/#94` 不在发布线 `worktrees/develop/AI_MEMORY/ISSUES.md`（最大 #91），而在 `worktrees/reconcile-gate-20260920/AI_MEMORY/ISSUES.md` ⇒ **同一套编号分散三处**，"AI_MEMORY 实为 4 份且没有一份完整"9-12 已记过至今未合。
+  - **未做（等 Owner）**：1.1 明文密钥挪出仓库 + 轮换（涉及其云账号与口令，且轮换会使引用旧密钥的脚本失效，故只给了可逆命令未执行）；2.x 服务端化；3.x 发版项。
+- **追加二（同日晚，Owner「全量执行」→ 批次一 1.1 第一步 + 2.1 可行性与构建门禁）**：
+  - **1.1 第一步已做**：`key/`、`staging-site-access.txt`、`test-site-access.txt` 三项**移出仓库**至 `E:\tygf-secrets-offrepo-20260921\`（**未删除、可逆**；仓库侧已确认不存在）。**轮换云凭据未做**——需 Owner 在腾讯云控制台操作，且轮换会使引用旧密钥的脚本失效。
+  - **2.1 可行性真机实证（本机 PS 22.0/2021）**：① ASCII 探针编译成 jsxbin（产物头 `@JSXBIN@ES@2.0@`，零明文注释）后经 `DoJavaScriptFile` 执行 ⇒ **跑通**；② 五个可分发脚本全量编译通过（103,571→110,593 等）；③ **对照组**：同一份构造测试分别以明文 jsx 与 jsxbin 各跑一次并 diff ⇒ **逐项完全一致**（连我探针里两个写错的用例都同样报错）⇒ 本机无语义差异；④ `server.js:1161` 是裸语句调用 `ps.DoJavaScriptFile`，结果一律走文件 ⇒ jsxbin 下返回值为 `undefined` 不影响协议。
+  - **已落地（发布线已跟踪文件零改动，`git diff --name-only` = 0）**：新增 `worktrees/develop/scripts/build-jsxbin-assets.mjs`（编译到**新目录** `download/local-assistant/scripts-compiled/` + `compiled-manifest.json` 记 源件 lfSha256↔产物 sha256；构建期工具走 `JSXBIN_COMMAND`/仓库外解析，**刻意不进 package.json**，避 #81/`4bb6936` 的 lock 地雷）+ 新增产物目录。
+  - **门禁三次自攻（证明不是假绿，#74 教训）**：篡改 manifest 的 `sourceLfSha256` ⇒ 报「源件已改动但产物未重编」；从编译清单删一个脚本 ⇒ 报「分发端有 … 未纳入编译 ⇒ 会以明文分发」（与 `route.ts` 的 `DISTRIBUTABLE_SCRIPTS` 双向断言，解析为空也按失败处理）；还原 ⇒ OK 5/5。**单独验过真实退出码 1/1/0**（第一次用管道 tail 看到的 EXIT=0 是 tail 的码，不是 node 的——已记为方法教训）。
+  - **刻意未做（有证据）**：切换 `resolveScriptSourceDir()` 优先读编译目录。原因：`script-fetcher.js:108` 按下载字节算 sha256 校验、`smoke-photoshop-script.mjs:14-22` 直接断言 `.jsx` **源文件文本**里的 `SCRIPT_VERSION` 等字面量 ⇒ 不同步升 `release-identity.json` + `script-versions.json` + 助手构建 + 安装包就是**助手拒收 ⇒ 批次 fail-closed**（#74 同族）。切换须与发版同批，六步清单已写进执行方案 2.1「下一步」。⇒ **#95 敞口目前仍在（分发的仍是明文）**，状态改为 🟡 部分处置。
+  - **现场核验**：`worktrees/develop` HEAD `a2cc60e` 干净、`worktrees/reconcile-gate-20260920` HEAD `bb4d285` 干净（本轮开工前实测，未与并行会话抢改同一文件）。
+  - **第三轮对抗审查回包（12 条逐判）**：我方清单 **5-6 条被推翻**——`docCount 硬闸门`（产品走隔离工作副本+按路径打开，做了反伤用户）、`覆盖率阶梯`（内部调试态泄漏给用户）、`ISSUES 四列表`（现体裁更全）、`全 ASCII 断言`（sidecar 传参已消解）、`跨批次通病→规则库`（**已有** `LearningCandidateRule` + observing→candidate→shadow→approved 状态机，恒 false 是铁律不是缺陷）、`自动判款号不翻`（违反 Drift Guard 第 8 条，产品当前"分组建议+用户决定"才是对的）。真金三条：save 兜底、改后全量误伤检测、禁则补「・」U+30FB。
+- **追加三（同日晚，另一会话转述 5 条跨会话复核 → 本会话逐条实测）**：转述不采信，全部自验 file:line（main `cf926b8` / develop `a2cc60e` 两树均核）。**5 条全部证实，无需反驳**，仅一处笔误（清扫正则漏开头 `_`，实为 `^_(?:v15|w|r|l)_[0-9a-f]+\.(?:jsx|vbs|log)$`，`server.js:354`）。
+  - **R1 最重**：整条匹配/对齐求解器在**客户端明文 jsx**——`MultiLangStudio_Replacer_v2.9-beta.jsx:718 findTranslation`（strict/whitespace/format/linebreak/substring/ambiguous 全梯 :736/:741/:766/:774）、`:781-783 requiresPreflightDecision`、`:786-793 confusableSkeleton`、`:795 singleSubstitutionOnly`、`:807 findSuggestionCandidate`、`:1246 matchModes`；全仓 grep `findTranslation`/`matchMode` 在 `src/` 与 `contracts/` **零命中** ⇒ **"核心资产未下发"这一说法不成立**，#95 已加"范围修正"，2.3 从"binding-core 服务端化"扩为"匹配梯 + 裁决一起搬，否则敞口基本不变"。
+  - **R2**：`diagnostics/Fix-Photoshop-COM.ps1:12-13` 已把"LocalServer32 指向的 exe 与运行中的不一致（多版本并存）"列为故障 B 并有修复与回读校验 ⇒ **批次三 3.1 降级**：先让公司机跑该脚本再判 8800 是否复现，别为它单独升助手版本。**本会话另有旁证**：本机就是故障 B 活体——`Photoshop.Application` 与 `CurVer→Photoshop.Application.150` 的 LocalServer32 **全部指向 PS 2021**，PS 2024 装了但**完全未注册 COM** ⇒ PS 2024 真机验证本机做不到。
+  - **R3**：cmap 字形覆盖检查**已有实现** `scripts/typography-census.mjs:137-146 coverageOf`（fontkit `hasGlyphForCodePoint`，:2 自声明只读不进交付链，fontkit 全仓仅此文件命中）⇒ B1 从"新建"降为"接线"。并守既有口径 `overflow-estimator.ts:83-4 FALLBACK_FONT_LANGUAGES=Set(['KO','TH'])`（Owner 2026-09-17 决定）⇒ **日语是否纳入属 Owner 产品决定，不得顺手扩**。
+  - **R4**：`:781-783` 已把 `user_candidate` 列入需人工预检 ⇒ confusable 候选本就不自动写入，扩 TR39 字符表收益≈0 ⇒ **B3 拒**。
+  - **R5**：`server.js:352-360 sweepTempScripts`（T-0117 E3）确有启动清扫，缺口只是 pattern 未覆盖诊断脚本产物 ⇒ A4 缩为"加一条 pattern"，不需 fail-closed 重构。
+  - **附带核清**：密封格式真实为 `v3.${iv}.${authTag}.${cipher}${tagSuffix}`（`server.js:249`，AAD `tygf-session-v3:${guid}` :243，密钥 SHA256(MachineGuid) :224-232 硬失败），对方写的 `v3.TumeUV-` 全仓零命中（是随机 IV 片段被误当产品代号）⇒ **2.2 定性"挡二次分发"保持，不得改称"防扫描"**（本机任意进程可读 MachineGuid 复现密钥）。journal 明文除对方所列外**还有** `preparation-cache.js:50/65` 与 `v15-runner.js:913`；但既然钥匙在旁边，加密增益≈0 ⇒ 口径改为**字段脱敏/最小化**。
+  - 本轮新增：无代码改动；仅更新 `执行方案_20260921_反探查收口与吸收项.md`（新增第 5 节 + 修正未执行清单）与 `AI_MEMORY/ISSUES.md` #95。
+- 验证：本轮**未改任何已跟踪的业务代码**（`git diff --name-only` = 0）⇒ tsc / lint / 合同测试不适用（NOT RUN）。已执行并留证的验证：`node --check scripts/build-jsxbin-assets.mjs` ✅；`build-jsxbin-assets.mjs --check` 干净态退出码 0 ✅；两次自攻退出码均 1 ✅；PS 2021 真机 jsxbin 执行 + 明文/jsxbin 对照组 diff 为空 ✅；PS 真机回读 32/32 ✅；母版 mtime 复核 ✅；产品编译器独立复算 39/39 ✅；报告渲染与图片加载核验（4/4，裁切误差 <1.3px）✅。**未执行**：PS 2024/2026 真机 jsxbin 验证、`release:preflight` 全链、助手重新构建与部署。
+- 遗留：① 两轮对抗审查结论待回填报告第五节；② S1 已核并**结论反转**（产品 normalizeText 单级、looseKey 明确不参与自动绑定 ⇒ 不该照抄对方 normT 进自动绑定，应接进已有近似检测通道；另 looseKey 未折 ∅ U+2205）；③ 智能对象内文案三家同缺，未验证；④ 仅 1 语言 1 稿，拉丁字体原稿的豆腐块风险未证伪；⑤ 对方旧错误产物 `…_131638987__JP\`（2.6GB）同时是「唯一带原始智能对象的基线」，Owner 源文件已光栅化，删前须确认。
+
+## 执行：对账闸门合同包收尾（P1.3 单一来源 / 合同场景 8 / D5 留痕 / Product Change 文） 【2026-09-20 深夜｜分支 `codex/reconcile-gate-20260920`，未 push 未部署】
+
+- 触发：Owner「先用 AI 补一补。还有，我今天不是跟你商量了很多要执行的吗？」⇒ 先出补译件，再把当日议定但未完成的四件做掉。
+- 交付 1（AI 补译，立即可用）：`…__20260920_210544/补译8行_AI草稿_粘贴到原表末尾.xlsx`（表头与原表一致 English+11 语；8 行原文逐字、格内换行保留；11 语译文行数与原稿逐行对齐）。生成器 `tmp/reconcile-probe-20260920/make-fill-ai.mjs`。**用已发布 3.6.60 的编译器实测**：原表 31 绑定/8 未覆盖 ⇒ 粘上这 8 行后 **39/39 绑定、未覆盖 0、阻断 0、复核 0（11 语全一致）**。性质是 AI 草稿，措辞需人校（`Fluorescent Strip`、`Wrenches for gear…` 两处按字面译，语义存疑已标）。
+- 交付 2 四笔提交：
+  - `11ba3b7` **P1.3 单一来源**：新增 `src/lib/trust-chain/check-item-kinds.ts` 作权威集合（`missing/unmatched/excluded`＝可保持原样），浏览器 `groupBlockingItems` 改调 `isActionableBlocking`；助手 `prepare-batch-core.ts` 由"正向白名单"改 **fail-closed**（除这三类一律计入需决策）⇒ 未来新增 kind 不会再被旧助手静默放行。新门禁 `scripts/smoke-blocking-kind-single-source.mjs`（静态比三份清单 + 运行时喂"未来 kind"证明不静默），接入 `test:trust-chain`。首版门禁 5 个场景因夹具字段错（`target` 误写 `targetText`）被 `catch` 静默跳过 ⇒ 假绿，已改为"跳过即失败"并复核 5/5 真跑。
+  - `ec85d96` **合同场景 8**：`smoke-batch-row-contract` 加 8a 跳行锚定（计费行集＝被消费行集、digest 稳定）、8b 超限真因码 + `combinedRowLimit`、8c #83 回归（forced 与自动 `fragmentRowIds`/单位数/`bindingPlanDigest` 全等）。断言形状全部来自实测（`tmp/…/probe19-contract-shape.mjs`），并对照 3.6.60 产物验证 8c 在旧编译器上**必红**（旧版 forced `fragmentRowIds=[[]]`＝0 计费）。
+  - `11ca97d` **D5 留痕**：编译器在 `V15_BOUND_COMBINED` 与人工确认的 bound 条目携带 `combinedSourceRows`（check-only 载荷、单行确认不给）；`prepare-check-summary` 新增 `autoClosedComposites`；第 3 步界面默认展开前 8 条（其余指向「导出对账结果」）；对账单加计数与逐条"图层 ← 译文表第 a、b 行"；p2 门禁第 8 场景钉三处一致。实测发现调用方缺 `rowIndex` 时编译器会补 1 基号 ⇒ 断言按事实写，未加不存在的防御。
+  - `181b7d9` **Product Change 文**：`worktrees/reconcile-gate-20260920/docs/records/20260920_对账闸门判据变更_ProductChange.md`（新旧对照、为什么、真件实测、四层同步清单、三条价格副作用、未含轨道）；`docs/HANDOFF.md` 顶部接棒块 + 偏差登记两行（标注【合同变更】）。
+- 验证（分支 HEAD）：`npx tsc --noEmit` 0 错；`npm run lint` 0 error / 2 既有警告；`test:contracts` EXIT=0；`test:trust-chain` EXIT=0；`test:batch-row-contract` EXIT=0。
+- 遗留：①9 笔提交未 push、未部署、未合流，发版窗口待 Owner（建议与 #74/#75/#79 + 真机 8→0 同批进 3.7.0，Web 与助手必须同批）；②对象轴第二片需单独合同窗口；③#87 待排；④AI 草稿译文待人校。
+- 自查（写下来防再犯）：编辑 `AI_MEMORY/TASK_LOG.md` 与 `docs/HANDOFF.md` 时用"整行替换"两次险些吞掉相邻条目标题（HANDOFF 这次真吞了 T-3 标题行，靠 `git diff --numstat` 发现 10/0 才补回）⇒ **改这类置顶日志必须用插入锚点并在改后跑 numstat 确认零删除**。
+
+## 取证：21:05 那批"8 个对象没替换"归因完成——是表格缺原文行，不是闸门/匹配问题 【2026-09-20｜只读取证，未改业务代码】
+
+- Owner 反驳"表格里译文都是齐全的"。四份只读探针（容器根 `tmp/reconcile-probe-20260920/probe14…18`，用 develop 即 **3.6.60 已发布**的 `generated/binding-core.js`）实测结论：
+  1. **表格确实没有空格子**：`11国语言 5294主图+A+改语言-金娜.xlsx`（mtime 2026-09-16T13:53:31Z，Sheet1，52 数据行 × 11 语言列）⇒ 译文全满 52 行、有空格 0 行。**但原文列只有 52 条**，最长 66 字符、**含换行的原文格 0 个**。
+  2. **今晚那次扫描（观测 `psn_90805cbb6103e7eaf1ef1b5c846ad418`）逐字编译**：39 个可写对象 ⇒ 绑定 31、未覆盖 8、表格未命中 3、**闸门阻断 0**；11 语计数完全一致。与交付件比对（母版 39 层 vs `__DE.psb` 39 层）得到"与母版逐字相同"9 层 ⇒ 其中 `ID: 5294` 表里第 61 行有、且 11 语译文都与原文相同（写入是恒等），**所以真实未替换=8，与报告的"未覆盖对象 8"完全对齐**。
+  3. **这 8 段的英文原文在整本表里 0 命中**：全表 636 个非空单元格扫关键词（Emergency/Fluorescent/Wrenches/Dimensions/Weight/jumble/Wireless Monitor）⇒ 均 0 命中；逐层最小编辑距离 7～113（远大于措辞差异级别），排除"表里有但换了一种写法"。缺的是：9 行的 `Product Dimensions …`（134 字）、7 行的 `Product Weight …`（66 字）、6 个短层（含 2 行层 3 个）。
+  4. **立刻可用已验证**：把未覆盖对象按"一对象一行、格内保留换行"补进表尾后，**3.6.60 编译器** 11 语全部 39/39 绑定、未覆盖 0、阻断 0（probe18）⇒ 今晚这批不需要等发版。已交付粘贴件 `…__20260920_210544/补译8行_粘贴到原表末尾.xlsx`（表头与原表一致 English+11 语，8 行原文逐字、格内真换行；生成器 `tmp/reconcile-probe-20260920/make-fill-xlsx.mjs`，回读校验 9 行×12 列、含换行 5 行，单独作为译文表编译 ⇒ 绑定 8/阻断 0）。早先的 `补译表_一对象一行_11语言.csv` 多含恒等的 ID 行，以 xlsx 为准。
+- 口径澄清（写进后续沟通）：本分支 `227a090`+ 修的是**闸门过严**（"表格过不去下一步"），不生产缺失的原文行；两者不能混为一谈。发版与否都不影响今晚这 8 个对象的补法。
+- 顺带发现（未修，仅记录）：表内 `Regular Pliers/Wire Cutters/Knife/…` 在第 13-22 行与第 33-42 行**成对重复**＝Owner 说的"PC 端/M 端重复也要计费"的真实形态，39 对象吃掉 49 表行说明重复行确实被消费；计费侧口径见 [[project-billing-axis-and-price-oracle]]。
+- 仍未定案：Owner 最初"死活过不去下一步"的具体阻断项（本机 21:05 这次离线重跑是 0 阻断）——还需他的截图或「导出对账结果」。
+
+## 紧急诊断：两账号激活状态显示错误（永久资格客户端短路）+ 修复已部署测试站 【2026-09-20｜已部署测试站 a462fc4，生产待授权】
+
+- 现场：Owner 报生产站（tuyigf.com）两账号异常——`<内测账号>` 另一台电脑显"未激活到期"（后台实为永久激活）；`yeivan_@outlook.com` 显"不可用"。
+- 取证（生产库只读 `sudo -n sqlite3 mode=ro` + nginx access.log 轮转）：
+  - <内测账号>：资格 PERMANENT（accessExpiresAt=NULL）、唯一设备激活行到 2099-12-31（未到期、未撤销、有 token）、当日 08:14 还有活登录会话。**服务端解析链路本来就是好的**；nginx 当日生产域**零** `/api/invite/session` 请求 ⇒ 客户端根本没问服务器。
+  - yeivan_：资格 `accessExpiresAt=2026-09-18 09:18` **已过期两天**（邀请码 TYGF-DEMO 09-08 已过期，全部设备行到期）。显示"不可用"是 fail-closed 正确行为，**不是 bug**；恢复须后台延长资格（Owner 运营决定，本轮未动数据）。
+- 根因（<内测账号>，已修）：`activation-gate.tsx` 的 `isExpired(act)` 本地短路——localStorage 旧快照一过期直接渲染"内测激活已过期"，**不再向服务端复核**。Account-First 设计里服务端资格才是唯一权威，后台续期后旧快照永不自愈。
+- 修复两笔（`8c96845`，develop）：
+  1. 客户端：过期标记先经 `/api/invite/session` 复核，200 则零输码自愈重写快照；服务端确认拒绝才显示"已过期"；网络不可达维持旧行为。
+  2. 服务端（防御纵深）：`resolveBySessionFallback` 对 null 资格用户在全部设备行到期时回退采纳最近历史激活行作台账锚点、合成一年期到期；有限资格不享受放宽（fail-closed 保持）。
+- 契约测试补强（`442a99e`）：`smoke-qualification-expiry` 原 6 项均不触新分支 ⇒ 补第 7/8 项（永久+全到期→合成放行；有限+全到期→仍拒），8/8 绿（隔离库实测）。
+- 部署插曲：首候选 `8c96845` 在服务器 `npm ci` 被拦（pre-switch 止损，现网无损）。根因 `9ecb5cc` 普查提交用本机 npm 11.6.2 再生成 lock，裁掉服务器 npm 10.9.8 校验必需的 `@emnapi/core|runtime@1.11.3`、`@swc/helpers@0.5.23` 可选平台条目——**与 `4bb6936` 修过的是同一个坑（第二次复发）**，登记 ISSUES #81。以 `npx npm@10.9.8 install --package-lock-only` 重建（`a462fc4`）。
+- 验证结果：四道门禁全绿（release-identity/batch-row-contract/contracts 142s/trust-chain 53→71s）；tsc 0 错；lint 0 error/2 既有警告；identity-account-gate、identity-golden-journey 过。测试站已上线 `a462fc4`：`.deploy-commit` 一致、3001=200、provenance BOUND、PM2 三 online、备份 `deploy-20260920_180527-a462fc4c3ab9`、归档 SHA `4CBE5CFB…A736` 服务器回读一致。部署前在飞对账：held=0、10 分钟内心跳活跃 attempt=0（53 非终态批次为测试库历史残留）。
+- 遗留/待 Owner：
+  1. **生产部署待拍板**——问题在生产；但 develop HEAD 相对生产 `eeb994c` 还带着 #74/#75/#79（Owner 原定"真机 8→0 再发"）。要么整线发（连带那批），要么从 `eeb994c` 拉 hotfix 分支只带这三笔激活修复。
+  2. `yeivan_@outlook.com` 要不要后台延长 `accessExpiresAt`（运营决定）。
+  3. 另一台电脑验证：需**先登录** <内测账号> 账号再刷新工作台（Account-First 要求登录会话；未登录则仍显示要输码，且原码已 `activation_limit_reached`）。
+  4. L2 预览工件挪至容器根 `tmp/typography-preview-20260920/`（预检堵脏树，未跟踪件不入仓）。
+
+- **追加执行记录（同日晚，Owner 拍板"按你的来 + 内测账号全部转永久"）**：
+  - **资格转永久已实施（生产）**：备份 `/var/www/tygf/db-backup/pre-perpetual-<TS>.db`（`.backup` 在线快照 + integrity_check ok）→ 单事务三条 UPDATE：非删除 BetaUser `accessExpiresAt=NULL`（54 个有限资格清零，63 在册全永久）；其名下激活行/助手码投影 2099 哨兵（33 行上修）——口径与 `backfill-qualification-expiry.mjs` 一致，但用受控 SQL 避免该脚本连已删除账号资格也上修的越界。复核：两账号 PERMANENT + live 设备行（<内测账号> 1、yeivan_ 4）。
+  - **该数据变更在现网旧代码下即已生效**：旧 `resolveBySessionFallback` 只要求"一条未到期+有 token+未撤销"的设备行 ⇒ 两账号服务端解析已通，生产代码部署不再是救急前提。
+  - **hotfix B 线尝试后判定不可行**：`worktrees/hotfix-activation-perm` 分支 `hotfix/activation-permanent-20260920`（`eeb994c` + cherry-pick `8c96845` = `fcdef8a`，tsc 绿），但 `release:package production` 被预检硬门拦停：**expected branch main**——而 main 与 develop 同点在 `cf926b8`（已含 #74/#75/#79），"只带激活修复上生产"必须回退 main 或拆门，两者皆违铁律 ⇒ 登记 ISSUES **#82**（发布线缺 hotfix 通道）。生产部署并入 Owner 的 8→0 验收窗口整线发。
+  - **测试方/浏览器侧口径**：旧 bundle 的本地过期快照仍会短路显示"已过期"——在那台电脑 F12 → Application → Local Storage → 删 `tygf.activation` 后刷新（保持登录），旧代码即可零输码恢复；新 bundle（发版后）会自动复核自愈，无需删。
+
+## L2 排版预览页：实测渲染 + 碰撞检测修复 【2026-09-20｜零合同变更，纯只读取证工具】
+
+- 交付：`worktrees/develop/typography-preview.html`（451 KB，自包含 HTML）+ 生成脚本 `scripts/typography-preview.mjs`
+- 功能：对每个"需要 +1 行"的文字对象，展示"若允许 +1 行会长这样"的实测渲染预览
+  - 左侧：当前 N 行 DP 结果（不可行时显示"原稿 N 行放不下"）
+  - 右侧：N+1 行 DP 结果（显示实际折行 + 每行宽度）
+  - 碰撞检测：仅检测**文字层之间**的碰撞（与背景/图片层重叠是预期行为，不算碰撞）
+- 修复的 Bug：
+  1. **左右侧内容相同**：原先左侧用 greedy fontkit、右侧用 DP em，算法不同导致不可比。改为统一用 DP（左侧 dpFixedN(N)、右侧 dpFixedN(N+1)），同一算法同一度量，只变行数上限。
+  2. **tierBadge 始终显示 `—`**：`greedyLines` 返回的对象没有 `tier` 属性。改为直接从 `wrapData.tier` 读取状态。
+  3. **100% 碰撞率（208/208）**：碰撞检测检查全部 149 个层（含背景/图片层），而大型背景层（如"渐变填充 18"覆盖 0-3300 全高）必然与任何扩展区重叠。修复：只检测 `isText=true` 的文字层之间的碰撞。修复后碰撞率降至 **24/208（11.5%）**，符合密集排版的预期。
+- 技术细节：
+  - 预算宽 = 母版该层自己落盘的最宽行实测宽（fontkit advanceWidth）
+  - DP 算法：O(N·n²) segmented DP，禁则 + 寡妇惩罚 + break rank，全部整数运算（1/1000 em）
+  - 碰撞检测：矩形相交判定，扩展区 = [currentBottom, expandedBottom]，其中 currentBottom = boxTop + N*lineHeight
+- 统计：39 文字层 × 11 语言 = 369 对象×语言；153 个 N 行可容纳、208 个需 +1 行、8 个 +1 行也不可行；24 个扩展后碰撞
+- 下一步：Owner 审查预览页，确认碰撞检测逻辑是否符合预期；如通过则进入 L3（合同包，3.7.0）
+
+## 操作演示片 W2 换道交付：真实组件树客户端挂载 + 边界契约应答 【2026-09-19｜产品代码零改动，真助手零接触】
+
+- 现场实况复探（只读）：`Photoshop.exe`(PID 20612) + `图译工坊本地助手` + `图译工坊引擎.exe` 仍在运行，`E:/软件/图译工坊本地助手/logs/engine.log` 近 90 分钟内仍有写入 → **真机现场仍被并行会话占用，第 3/4 步继续不拍**。`worktrees/develop` 已被该会话提交干净（HEAD `1342a25` 2026-09-19），但**仍不启它的 dev 服务**：起服务要抢 `.next`，且第 2 步真实「智能检测」会打 DeepSeek 真接口花积分——未经批准不做。
+- 决策：把"真实操作演示"改由 **harness 路线**达成，而不是等现场。做法符合 skill 自己的第 3 条路径（`component-pipeline.md`：依赖复杂时解决 alias/资源/CSS/客户端挂载/**网络与 IPC stub**，不因一次困难就手写复刻）：
+  - `video/intro-20260919/harness/`：esbuild 把产品**真实组件树**（`AppShell` → `SiteHeader` + `WorkbenchView` + 四步全部真组件）打成浏览器模块；只垫 `next/link|navigation|dynamic|image` 四个 shim + 一个空 `window.process`。样式仍是产品自己的 Tailwind（`src/product.css`，187KB 编译产物）。
+  - `harness/mock.mjs`：**只替换系统边界**（`/api/**` 与本机助手端口），界面与状态机全跑产品真源码。三条硬护栏写进代码：① 助手端口 49152 只由 mock 应答，真助手进程零接触；② 非 localhost 域名一律 abort（含产品 CSS 里那条 jsdelivr 思源 CDN，成片不依赖外网）；③ 未登记 `/api/**` 返回 501 并计数，不允许静默糊过。
+  - **执行类端点显式回绝** `HARNESS_EXECUTE_REFUSED`：这条流水线在物理上不可能"用假应答演一遍执行成功"，也不可能误驱动 PS。
+- 契约对齐实测（结论都有 file:line）：`AssistantPingSnapshot`（`local-assistant-client.ts#L215-L250`）、`BrowserPreparationSummary`（`preparation-contract.ts#L305-L319`）、`PrepareBatchResult/LanguageResult/Summary`（`local-assistant-client.ts#L1211-L1335`）。两处非显而易见的坑：
+  - `requestRevision` 必须**原样回显**，否则 `workbench-view.tsx:1321` 整包丢弃并在界面显示"检查响应与本次请求不匹配"——第一次跑就撞上，改完消失。
+  - `selectDesignFileDirect` **无视 DIRECT 开关**始终直连 `BASE/ping`+`/v1.5/select-file`（`local-assistant-client.ts#L735-L760`），所以助手端口必须被应答，否则第 1 步的"选择文件"永远进不去。
+  - 预扫描进度改成**按挂钟时间**推进（0/3/6/9/13s 五段），不按轮询次数——否则进度条忽快忽慢，画面不可复现。13s 这个长度是量出来的：从按下到进度走完之间要先扣掉光标滑行与停拍（约 15s 采集时间），设太短会在点击那一刻就已经扫完。
+- 交付：`renders/demo-app-16x9-v1.mp4`（1920x1080 / 60fps / **17.30s** / h264+aac，7.6MB）
+  - 513 采集项 → 1038 输出帧；真实鼠标点击 3 次；`未登记端点 0 个、控制台报错 0 条、画面无红字告警`（采集脚本自带这三项计数）。
+  - 声音：`demo-app/plan.json` 由采集时间线自动推导（3 段 / 17 卡点 / 关键动作 8 个），走 skill 的 `mix_audio.py`（含 ducking + sha256 证据）；实测综合响度 **-16.1 LUFS**、LRA 1.9 LU。`check_delivery.py` → **`ok: true`**（仅剩两条需要人耳的 warning）。
+  - 证据：`evidence/component-usage-demo.json`（逐镜头 reuseMode/exceptions + 诚实声明）、`demo-app/evidence/audio-mix.json`、`evidence/demo-verify/final-sheet.png`、`harness/evidence/check-demo.json`。
+- 修掉的工具链问题：`demo/render.mjs` 原先硬依赖 PATH 里的 ffmpeg——**Git Bash 的 PATH 是会话启动时继承的，装完 ffmpeg 不重启就拿不到**，改为 `FFMPEG_PATH` → winget `Links/ffmpeg.exe` → PATH 三级兜底；`stage.html` 支持 `?cap=` 选批次并对缺帧直接抛错；`score.py` 加 `--duration`（介绍片 45s 与演示片 18.4s 共用 104 BPM，BARS 由时长推导）。
+- 如实标注：本片是「真实界面 + 真实交互 + 契约化后端」，**不是真机跑批录像**；对外措辞用"界面演示"。第 3/4 步（设计稿校对 / 生成交付）仍待 PS 与助手空出后另开真机拍摄任务。
+- 竖版实测不合格（已量化，别当成"能发"）：`renders/demo-app-9x16-v1.mp4` 1080×1920 / 17.3s 编码与音轨齐全，但按屏占比测：开场 1s 处 UI 只占屏 **30%**（宽 94% / 高 33%，上下大条渐变空档），7s 与 15s 处窗口横向溢出被裁（宽 100%，头部按钮被切边）。根因是竖版仍沿用横版取景值。修法：给每个镜头补 `camPortrait`（竖版基准缩放 + 竖版专用 focus 点），改完只需重跑合成，不用重拍。
+- 下一步：介绍片 `renders/intro-16x9-v1.mp4` 与本片是否合成一条（演示段 + 卖点段）待 Owner 定；第 3/4 步等 PS 与助手空出后另开真机拍摄任务。
+
+## 操作演示片 W0/W1：现场勘查 + 逐帧采集合成链路跑通 【2026-09-19｜未碰产品仓库与真机现场】
+
+- 按 `执行方案_20260919_操作演示片_真实逐帧采集与合成器运镜.md` 推进；Owner 说"继续"，但**只做不碰共享资产的部分**。
+- W0 现场勘查（全部只读）：
+  - Photoshop 2024 与 Photoshop (Beta) 均已安装；**`Photoshop.exe` 正在运行**（PID 20612，约 3.8GB）。
+  - **`图译工坊本地助手` + `图译工坊引擎.exe` 正在运行**；助手 `logs/engine.log` 与 `.tygf_v15_journals/receipts-pending/` 的 mtime 均为 13:27（勘查当时）→ **有真机任务在飞**。
+  - 助手 `release-identity.json` → `3.6.59 / typo-wrap-space-fix-20260918-r1`，属自动换行那条线，**不是本会话资产，一律不碰**。
+  - `worktrees/develop/.tygf-worktree.json` → 隔离端口 3645（当前空闲）、DB 为隔离副本 `db/custom.db`；但 develop 树里有**别的会话未提交改动**（`AI_MEMORY/TASK_LOG.md`、`docs/HANDOFF.md`、未跟踪的自动换行执行方案）→ 本轮**不启动 develop 的 dev 服务**，避免与并行会话抢 `.next`。
+  - 结论：第 3/4 步（需 PS + 助手）**现在不能拍**；第 1/2 步要真 app 也需先定"用哪个隔离环境 + 演示账号"。
+- W1 已交付（不依赖共享资产）：`video/intro-20260919/demo/` 最小合成链路，用自包含夹具 `fixture.html`（标注非产品界面、不进成片）验证：
+  - `capture.mjs`：Playwright **逐帧推进真实交互**（`page.mouse.click` 真事件，不替页面改状态），区分 `still`（一图代表 N 帧）与 `live`（连拍，动画段必需），长等待密采 + `speed` 压缩；128 采集项 → 200 输出帧。
+  - `stage.html`：虚拟相机（EMA 0.11/0.13，借上游实测值）+ 矢量光标 + 点击脉冲 + 圆角窗口与渐变底；相机参数落在 `capture/meta.json`，**改运镜=重跑合成不重拍**。
+  - `render.mjs`：静态服务喂 stage → 逐帧截图 → ffmpeg 60fps；同一批采集帧出 `demo-16x9.mp4` 与 `demo-9x16.mp4`。
+- W1 期间修掉四个真问题：采集只截图没真点击（状态根本不推进）；HTTP 先写头后读文件导致重复写头；渲染器清空整个 `out` 把另一画幅成片删了（改为只清中间帧）；相机缺 pan 钳制导致放大时窗口滑出画面（补钳制 + 竖版按宽度取景）。
+- 已知不足（如实）：夹具不是产品界面；竖版只是按宽度铺满、上下留白过大，需竖版专用 focus 预设；采集用 JPEG q90，放大后见压缩噪点，正式版改 PNG；键帽与字幕层未做。
+- 下一步（需 Owner 或空闲现场）：给一个可消耗演示账号 + 指定用哪个隔离 worktree 起 dev，再把 `capture.mjs` 目标从夹具换成真实工作台第 1–2 步；第 3/4 步等 PS 与助手空出再拍。
+
+## 操作演示片 W2 预备：真实工作台采集脚本已就位（待现场） 【2026-09-19｜产品代码零改动】
+
+- 关键发现：产品源码**已有稳定锚点**，真实采集不需要加 testid——`#stage-preparation` / `#stage-review` / `#stage-adaptation` / `#stage-delivery`（`workbench-view.tsx:1883,2053,2283,2564`）、`nav[aria-label="任务阶段"]`（`stage-rail.tsx:32`）、`#board-evidence`、`#project-output-name`。
+- 新增 `demo/lib.mjs`：把采集动作语义（`still` / `live` / `glide` / `press` 真鼠标 / `until` 真等待 / `camOn` 元素取景）抽成共用库；`capture.mjs`（夹具）与 `scenario-workbench.mjs`（真实 app）同用一套。默认采集格式改 PNG，消除放大后的 JPEG 噪点。
+- 新增 `demo/scenario-workbench.mjs`：真实工作台第 1–2 步采集脚本，含 `--check` 模式（只解析选择器不点击，用来先验脚本与界面对不对得上）。**三道安全闸写进代码并实测有效**：① `--url` 只接受 localhost/127.0.0.1，给生产域名直接拒绝；② `--to >= 3` 直接拒绝（第 3/4 步会驱动 PS 与本地助手，需 Owner 另行放行）；③ 录制前注入 CSS 隐去账号菜单与积分徽标；登录态走 `--state` storageState 文件，脚本内不含账号/密码/激活码。连不上服务时明确报错并 exit 3（已实测，不再抛未捕获异常）。
+- `demo/NOTICE.md`：登记四个 MIT 上游（demo-video-skill / silky-recorder / supercut / playwright-recorder-plus）与归藏 skill 的借用边界——本项目按方法与参数自研，未复制其源码文件。
+- 夹具链路复测通过：128 采集项 → 200 输出帧，`demo/out/demo-16x9.mp4` 与 `demo-9x16.mp4` 同时存在（此前"清空 out 目录"的 bug 已修）；竖版新增 `camPortrait` 覆盖机制（竖屏与横屏要看的区域不同）。
+- 仍阻塞：`worktrees/develop` 有并行会话未提交改动、Photoshop 与本地助手仍在跑真机任务（助手日志最后写入 14:32）。**W2 开拍的先决条件**：Owner 给一个可消耗演示账号 + 指定用哪个隔离 worktree 起 dev（或等现场空闲）。
+
+## 介绍片前期：skill 安装 + 本机渲染链路实测 + 策划方案入库 【2026-09-19｜未开工制作】
+
+- 目标：为「图译工坊产品介绍片」做前期调研与方案；不改业务代码、不跑 dev server。
+- 机器级环境变更（供并行会话知悉，避免重复探测）：
+  - 安装 `guizang-product-video-skill` → `C:\Users\ivan\.agents\skills\`（commit `c45aab4`，内容与审查用 tarball 逐字节一致）；
+  - `winget install Gyan.FFmpeg` → 9.0.1 full_build，`libx264`/`aac` 与 `volume/adelay/amix/loudnorm/afade/aresample/asetnsamples` 七滤镜实测齐全；
+  - 为起步工程补装 `chromium_headless_shell-1208`（Playwright 1.58.1 要求；与产品自有 1243 不通用）。
+- 实测结果：skill 回归 `py -m unittest` **12/12 OK**；`check_environment.py` **ready:true** 且浏览器真实 launch 成功；技术样片导出 `technical-demo.mp4` = h264/1920×1080/30fps/10.000s。注意 `python`/`python3` 是商店占位（exit 49），脚本一律 `py` 调用。
+- 交付：`策划方案_20260919_图译工坊介绍片.md`（容器根）。定位与红线**不新造**，全部对齐 Owner 已批准的 `worktrees/develop/docs/宣传方案.md` v2.0；素材基准取 `worktrees/develop`（`dd7f08a`，09-18），`v1.5-trust-chain` 滞后 8 天不作源。
+- **P0 已开工（同日）**：Owner 批准后新建隔离视频工程 `video/intro-20260919/`（`--style repo --repo worktrees/develop`，产品代码零改动，node_modules 已被根 `.gitignore` 覆盖）。已接通并上镜的真实业务组件：`stage-rail.tsx`、`readiness-board.tsx`，阶段名直取站内文案单一来源 `src/config/siteContent.ts:421-425`；Tailwind v4 样式链经 `src/product.input.css` 导入产品 `globals.css` + `@source` 双扫描，编译 187KB 真实 CSS；`npm run build` 通过（`demo:false` 的占位守卫未触发，说明屏上无样片占位）。
+- P0 静帧自检（真实渲染，非静态判断）：5 帧 + 联系表 `evidence/contact-sheet.png`。看图发现并修掉三处：`WorkbenchFrame` 漏传 `doneUpTo` 导致已完成步骤不出绿色对勾；外层白卡在面板下方留空壳（去掉）；UI 放大用 `transform` 会溢出压到文案，改用 Chromium `zoom`（参与重排）。
+- P0 遗留（如实）：下半留白仍偏多，待 P1 调竖向节奏；字体未冻结（临时 Georgia + 系统 YaHei）；第 1/2/4 步组件未接——`review-step.tsx` 依赖 effects/fetch/localStorage，SSR 只出初始态，需客户端挂载或改接内层展示组件；镜 8 真机实拍待 Owner 给机器与脱敏 PSD。
+- 待 Owner 拍板 8 项（见方案 §9）：横竖版顺序 / 语言轨 / **隐私口径内部冲突**（`宣传方案.md:18-21` 禁提数据去向 vs `:31,:140` 允许"保存在本机"）/ 时长 / 换行是否作卖点 / 上线门状态 / 真机镜头配合 / 视频工程落位路径。
+- 追加（同日）：Owner 要求先看多种风格再选。新增 `src/style-presets.js`（10 套：冷静说明书/大字压屏/左右对照/深色工作台/极简单点/流程主角/数字压轴/第一人称独白/特写蒙太奇/发布会开场，各含色板·字体分配·版式·镜头·节奏·转场·配乐 BPM 与 ducking·音效策略·文案调性）、`board-plan.js` + `make-boards.mjs`（逐套 build→渲染 3 帧→拼带说明的样片板）、`probe-boards.mjs`（版式几何体检）。产物：`video/intro-20260919/evidence/boards/*-board.png` 与合集页 `all-styles.html`。
+- 体检结果：30 镜全过，仅 s02 第 2 镜报"界面出框"——那是满屏风格刻意让界面出血到画框外，非缺陷。所有上屏文案仍守 `宣传方案.md` §7 红线（不提数据去向、不提全自动/100%/一键翻译、不提换行档位、无价格与支付）。
+- 选定风格：Owner 定 **S08 第一人称独白为骨 + S02 大字压屏开场**；并指定**中文一律用思源字体**。
+- 思源落地：本机系统字体名不可依赖——从 `AppData\Local\Microsoft\Windows\Fonts\NotoSansHans-{Regular,Medium,Bold}.otf` 拷入 `video/intro-20260919/assets/fonts/`（OFL，附 `LICENSE-NOTICE.md`），`src/layout.css` 顶部 `@font-face` 冻结为家族名 `Source Han Sans SC`，900 字重由 Bold 顶上避免合成假粗。npm 上的 `@fontsource/noto-sans-sc` 本机只下到半截（无 woff2、CSS 指向不存在的文件），已弃用。
+- 字体实测方法（重要）：**中文字符在任何中文字体里都是 1em 宽，量宽度无法判断用字**。`probe-fonts.mjs` 改为同一串字分别按思源与雅黑截图做逐像素比对 + `document.fonts` 字重状态，结果 PASS（两者像素不同、400/700 均真实加载）。
+- 组件接通进展：第 1 步 `csv-step.tsx`、第 2 步 `review-step.tsx` 已静态渲染成功（12 语言卡状态、四格结果、"译文为空"行、底部操作条全出）；第 3 步沿用 `readiness-board` + `stage-rail`；第 4 步 `execute-step.tsx` 入参面最大，待接。fixture 为 12 语种 × 8 行合成译表（虚构文本，故意留一格空译文以演示真实拦截）。
+- 关键坑（复用价值高）：产品组件用 **framer-motion**，`renderToStaticMarkup` 下元素会停在 `initial` 的 `opacity:0`，画面看着全空。解法是在视频工程加 `src/framer-motion-stub.jsx` 透明替身（`motion.div`→`div` 并剥动画属性，镜头运动交给影片时间线），经 `integration.config.mjs` 的 alias 生效；产品仓库零改动。
+- 另一坑：整页级组件（第 1/2 步）比卡片密得多，沿用 1.35× 放大直接出框。改为支持**按镜头**设 `shot.uiScale`（整页级约 0.72），`film.jsx` 注入到 `.visual` 的 `--ui-scale`。
+- 验证帧：`video/intro-20260919/evidence/connected-step1.png`、`connected-step2.png`。
+- **第一版带声成片已产出（同日）**：`video/intro-20260919/renders/intro-16x9-v1.mp4`（45.000 秒、h264 + aac 立体声、1920×1080/30fps）。10 镜由 `final-plan.mjs` 生成（S02 压屏开场 2 镜 + S08 主体 7 镜 + 落版），每镜带 `source` 证据。修掉开场两镜黑底未生效的缺陷（`--canvas/--fg` 必须落在 `.shot` 而不是 `#film`，否则镜头级色板覆盖只有字号生效）。
+- 声音：`score.py` 代码原创配乐（45 秒 / 104 BPM / 48 kHz / 种子 20260919 / Fmaj9–Dm9–B♭maj7–Cadd9，段落按分镜编排：开场鼓、主体退成刷鼓、回读段撤鼓、落版给完整终止音）；`add-audio.mjs` 写 10 个音效 cue（whoosh 等用 ffprobe 实测时长换算 `syncOffset`，不假设文件开头即落点）；`mix_audio.py` 混音 → `assets/master.wav` + `sfx-stem.wav` + `music-ducked.wav`，`evidence/audio-mix.json` 卡点误差最大 0.0000 秒、无 warnings。`check_delivery.py` 结果 **ok: true**。
+- 音效来源如实记录：Pixabay 403、Freesound 502、Mixkit 页面 200 且能取到 preview 直链但素材标题/作者为脚本渲染无法核实署名与许可 → 本批 10 个 cue 全部使用 skill 内置原创 WAV（`method: bundled-original`），尝试过程与回退理由写入 `evidence/audio-selection.json`。**AI 无听觉，音色是否合适需 Owner 试听判定。**
+- 待办：竖版 9:16 重排（换画幅要重排不是裁切）、镜 8 真机实拍（现有真机产物全是真实商业项目，按 §9 禁对外）、3:4 封面、第 4 步界面的"预计费用 20 积分"与"在你的电脑上生成"两处措辞待 Owner 裁定、上线门状态确认。
+
 ## P0 事故修复：批量证据放行 / 失败隔离 / 回收器 / 沙箱【2026-09-13 深夜｜已部署 09f7122】
 
 - 事故与根因：批量第二语种起 409（快照 targetLanguage=主语言 vs languages=全集）→ 整批停摆；4 批 RUNNING + 1 批 RESERVED 悬挂。
@@ -499,7 +870,7 @@
 - **P0-A 修复（已部署测试站 314df9d，含 348de03）**：
   1. `348de03`：`src/app/api/local-assistant/attempt/route.ts` create 校验前置区分——digest **缺失**（旧助手协议）→ 400 `ATTEMPT_EVIDENCE_REQUIRED`；digest 非法 → 原 `ATTEMPT_CREATE_INVALID`。客户端 `local-assistant-client.ts` V15_ERROR_CODE_ZH + PREPARE_CODE_ZH 增映射："本地助手版本过旧，缺少执行所需的冻结证据摘要……请到下载页更新本地助手"。
   2. 部署后活体验证：编译产物含 `if(!s||!r)return json({code:'ATTEMPT_EVIDENCE_REQUIRED'},400)`；浏览器 bundle 3 个 chunk 含该码；PM2 双 online；provenance 200。（假 token 活体探测只能到 403 授权层，新分支无法用假凭据触达——以编译产物+bundle 为证。）
-- **68 积分守恒（CREDITS_68_REFUND_CONSERVATION=PASS，只读取证）**：principal `cms1o40un`（freedesignyes 钱包）今日：15:52 grant +88（beta_exclusive_bonus，800→888 基线）+ 4×（reserve −68 → release +68 user_cancelled）＝15:57:16→:23、16:02:51→:58、17:49:23→:30、17:49:55→17:50:02（后两次为 Owner 部署前重试，nginx 同 400/55B 同根因）。4 个 CreditReservation 全部 `released`、actualUnits 空、无 committed 流水、非终态=0、net=+88。**无双扣、无双退、单赢家 release。**
+- **68 积分守恒（CREDITS_68_REFUND_CONSERVATION=PASS，只读取证）**：principal `cms1o40un`（<内测账号> 钱包）今日：15:52 grant +88（beta_exclusive_bonus，800→888 基线）+ 4×（reserve −68 → release +68 user_cancelled）＝15:57:16→:23、16:02:51→:58、17:49:23→:30、17:49:55→17:50:02（后两次为 Owner 部署前重试，nginx 同 400/55B 同根因）。4 个 CreditReservation 全部 `released`、actualUnits 空、无 committed 流水、非终态=0、net=+88。**无双扣、无双退、单赢家 release。**
 - **P0-B（定位+止血，已部署 314df9d）**：服务端本有 60s 批次超时（deepseek-align.ts REVIEW_BATCH_TIMEOUT_MS）且日志无 ai-review 失败 → 服务端从未超时，499=客户端断开。`314df9d`：① `AbortSignal.any` 把 req.signal 传入 DeepSeek fetch（断开即取消、不白烧 token；重试循环遇 abort 立即抛）；② review-step 检测中显示"约需 1 分钟，请勿关闭或刷新页面"。
 - **验证**：tsc ✅、lint 0 error ✅、test:trust-chain ✅、test:batch-row-contract ✅、test:review-filters ✅；两次部署（备份 deploy-20260906_175528-c549f896114f / deploy-20260906_181349-314df9dbbb7b）后 PM2 online + provenance 200。
 - **提交**：`348de03` / `c549f89` / `314df9d`（develop 分支本地，未 push——push 需 Owner 授权）。

@@ -1,8 +1,249 @@
 ﻿# ISSUES.md — 问题登记（Bug / 技术债 / 已知风险）
 
-> 最后更新：2026-09-06
+> **2026-09-26 18:2x 状态更新（ZCode 主线会话，详见 TASK_LOG 顶部）**：#111 引信**已拆一半**——`cleanup-review-snapshots.mjs` 已随 develop `9418cac` 改为缺省只数＋`--apply` 才删（拆前实测服务器零调度引用该脚本＝无停摆风险），同族 learning 脚本极性本就安全（其 develop 未提交改造属他人现场未验）；#118 账号标识已**向前脱敏**（develop 台账 5 处＋容器根 7 处占位替换，历史提交未改写；原登记的未提交人名串现检 0 命中）。两件均已 push 并部署测试站 `d24d2b0`，**待复验**（队列件名 `FUSE-111-DESENS-118`）。#114 状态跟进：修已随 3.7.3 出厂（`f056a8d`），装机验收四数仍未取。
+>
+> 最后更新：2026-09-24 23:0x（新增 #119–#120：**测试站中国方向经 Cloudflare 回源大面积失败、部署结束后 ≥33 分钟仍复现＝明早 08:00 开测靶的前置风险 🔴**、**可用性取证三处失明：access.log 无 `$host`/无 `$request_time`、客户端中断仍记 200、`pm2 restarts=0` 不代表没停机 🟠**；上一条 17:4x：#114–#118：**回执摘要在浮点度量值上抛＝本机做完云端零交付，修零提交且不在 3.7.2 里、补投四道门全拦 🔴**、诊断归属整体错位一条（第二批复现）🟠、**台账工作树里有一条客户文件名＋人名明文（未提交＝可脱敏窗口）🟠**、"回执生成失败"被界面显示成"语言未完成"🟡、`collision_policy=FAIL_IF_EXISTS` 无消费者待核实 🟡；上一条 09-23 深夜 23:1x：#109–#113 退款并发口径分歧、波次台账"形似行"失聪（修在飞）、**两个清理脚本仍缺省即删＝引信未拆 🔴**、**`release-gate` 的 `mount-audit` 红了也不拦＝假闸 🟠**、**`--only` 匹配 0 项静默 EXIT=0＝任何一道门都能被一个拼错的键名跳过 🟠**）
 > 每条带编号、严重度（🔴 blocker / 🟠 major / 🟡 minor）、位置、影响、建议、状态。
 > 修复后更新状态，不删除条目。
+
+## #120　可用性取证三处结构性失明：access.log 无 `$host`/无 `$request_time`、客户端中断仍记 **200**、`pm2` 的 `restarts=0` 不代表没停机　🟠 major（判据面，直接决定"谁发的这个码"能不能定案）
+
+- 实测（2026-09-24 22:36–23:00 只读取证，交付件 `总控/回收_20260924/NGFLAP_拖动定案_20260924.md`）：① `/etc/nginx/nginx.conf:40` 只有一行 `access_log …;`（**无自定义 `log_format`**），`grep -rn access_log /etc/nginx/sites-enabled/` **0 命中** ⇒ 五份 server 块共用一份日志且**无 `$host`** ⇒ 状态码不能按站归属（09-24 第 19 条坑仍在）；格式里也**没有 `$request_time`** ⇒ 逐请求耗时不可测。② 全天 `499` **0 行**，却存在两条 `/downloads/…exe 200 137967`（整包 `Content-Length` 是 `12395703`）⇒ **客户端在响应头之后放弃时 nginx 仍记 200**，"源站全 200"不是"客户端拿到了件"。③ `pm2 describe` 的 `restarts 0`／`unstable restarts 0` 在 `stop→start` 路径下会被重设（`created at` 同步改），而 `~/.pm2/pm2.log` 才是停机权威（本轮 22:16:08 Stopping→22:18:46 starting＝158 s）。④ 站点归属唯一可用的路是 `error.log`：它每行自带 `server:`＋`host:`（本轮全天 2 行，两条 502 均 `test.tuyigf.com`）。
+- 另一条同族新坑（此前未记）：access.log 第 1 列是**最终用户地址**而非代理地址——本机走公网域名（curl 自报 TLS 对端 = CF 段）时 nginx 记的是本机前缀，源站本机重做同一请求则记源站出口；`set_real_ip_from` 在生效配置里 **0 命中**（只在 `sites-available/tygf.bak_20260728_121621`）⇒ **"peer 是不是 CF 段"不能判这一跳有没有过 CF**。
+- 建议（属"改 nginx/改判据"，需 Owner 拍板，本会话未动）：① 加一条含 `$host $request_time $body_bytes_sent` 的 `log_format`（一次 reload，风险低但确是写操作）；② 把"下载健康"定义成 **`http==200 且 size_download==manifest.size`** 两条件（与 [[project-release-line-policy]] 第 18 条"合入≠出厂"同族，这条是"记 200≠拿到件"）；③ 值守脚本判停机只读 `pm2.log`＋`created at`，不读 `↺`；④ 多会话探针加唯一标记（`?c=<会话>-<序号>`）否则 ±15 s 内无法逐条配对。
+- 状态：OPEN（刑部 `NGFLAP` 会话登记；未改任何配置）。
+
+## #119　测试站**中国方向经 Cloudflare 回源大面积失败，且与部署窗口无关（交包时仍在发生）** ⇒ 明早 08:00 开测靶可能"站点看着坏了"　🔴 blocker（对外可用性 / 明早开测前置）
+
+- 实测（本机＝客户侧同网络，只读 GET；同时用源站本机/直连 nginx/直连 3001 三路对照）：`22:51–22:56` 与 `23:00:39` 期间 `https://test.tuyigf.com/api/runtime-provenance` **连续 10/10 超时（rc=28，8 s 上限）**，`favicon.ico`、`/downloads/local-assistant-release.json`（446 B）同形；`/downloads/…-3.7.3.exe` 当场拿到 **`http=522`、body 16 B、`t_first=20.28 s`**。而**同一分钟源站侧**：`http://127.0.0.1:3001/…` ⇒ `200 t=0.0025 s`；`https://127.0.0.1/…` 带 Host ⇒ `200 t=0.0637 s`；**源站本机走公网域名** ⇒ `200 t=0.0665 s`（22:53:37，nginx 有该行）；`ping` 0% 丢包 RTT 489–530 ms；`iptables` 无限速规则、`ufw inactive`、内核无 conntrack/SYN 告警、`load 0.00`。⇒ **失败发生在"CF 中国方向 PoP → 新加坡源站"这一跳，应用层零责任**。
+- 与既有立案的关系：`总控/日报_20260924.md` 22:3x 段的立案名 `TESTSITE-DEPLOY-WINDOW-FLAP` **名字要改**——部署窗口内源站只贡献了 2 条 502（一次计划内 `pm2 stop→start`，158 s，收敛 22:18:46），其余（522/520/多枚 000 与 1.1↔8.4 s 跳变）**源站全天零行**，且本条证明它在部署结束后 ≥33 分钟仍复现 ⇒ **"源站反复重启或负载抖"这个候选被推翻**。
+- **23:0x 复验补一条（不改判，改"全天只有一次停机"的说法）**：`~/.pm2/pm2.log` 显示今天有**两轮** `stop→start`——第二轮 **`23:02:46 Stopping`（三进程同批）→ `23:03:40 starting`＝54 s**，而 `.deploy-commit`/`.deploy-receipt.json` mtime 仍是 22:16:36、`tygf-test-backups` 无新目录 ⇒ **那次不是部署，是有人直接重启了测试站三个进程**（`pm2` 不留操作者，归属**未核实**，需总控问一句哪一地在做）。该 54 s 窗口**零请求到达**（nginx 23:0x 段 8×200／1×403／1×**408**、`error.log` 23:00 后 0 行）⇒ 不产生 5xx、不改 (a)/(b) 归属；但**明早若再出现这种"无部署的重启"，客户侧看到的就是 502**，与链路抖动混在一个形状里。
+- 为什么严重：Owner 明早 08:00 的真机开测与助手侧云端交互都走这一条链路；抖动会被读成"产品坏了"，且助手 `serverUrl` 走同一域名的 `/api/*` ⇒ 可能与 [[project-stalled-batch-side-attribution]] 的"灰区 10 批"同因（**待核，本轮未做历史批次的链路回溯**）。
+- 建议（只读结论，处置需 Owner）：① 开测前先按 `NGFLAP` ⑨ 第 2 条分诊（源站本机 `curl 127.0.0.1:3001` 一命令定"源站 vs 链路"）；② 若 08:00 仍复现，**唯一不影响客户的止血**是给测试站换一条不依赖 CF 中国 PoP 的入口（或临时把开测机 `--resolve` 直连 80/443——注意本轮实测**443 从国内直连 `time_connect=0` 不通、80 直连 `200`**，直连方案要先解决证书/端口，属新决定）；③ 生产站是否同链路 **未核实**（本单禁访问生产，一次请求都没发）。
+- 状态：OPEN（刑部 `NGFLAP` 会话登记；未 restart/reload 任何服务，服务器全程只读）。
+
+
+## #118　`AI_MEMORY/TASK_LOG.md` 工作树里有一条**客户素材文件名＋真实人名**明文（未提交＝未推送，处置窗口还在）　🟠 major（外泄面，需一次性脱敏）
+
+- 实测（只报计数与位置，本条不复述该串）：`AI_MEMORY/TASK_LOG.md:168`（属 09-20 那条"8 个对象没替换"取证记录，标题在 `:165`）含一个"表格文件名＋人名"组合串；`grep -c` 工作树 **1** / `git show HEAD:AI_MEMORY/TASK_LOG.md` **0** ⇒ **只在未提交工作树里，尚未进任何提交、未被推送**（同文件 worktree 1502 行 vs HEAD 1211 行，说明近几日大量台账本就未提交）。
+- 为什么现在报：与既案 [[project-client-material-in-repo]] 同族但**方向相反**——那次的素材已在已推送历史里、只能记账；这次还在工作树，**下次任何人 `git add AI_MEMORY/` 就会把它固化进历史**。台账文件是多会话共写的，谁都可能顺手提交。
+- 建议（属数据动作，需 Owner 给钟点；本会话不自行改）：① 由总控或值守会话把 `:168` 的文件名与人名替换为 `<客户稿表格>`／`<联系人>` 占位并保留行号与语义；② 顺手在同一次提交里给 `AI_MEMORY/` 的台账脱敏立一条最小规则（引用素材只用"行数/语种/尺寸/attempt 前 7 位"）；③ 若要长期防呆，可把脱敏探针（7 类＋阳性对照）挂进提交前检查——**注意探针脚本必须外置，命中只报计数**（R6 前科）。
+- 状态：OPEN（兵部 `FG-RECEIPT-STALE` 会话登记；未动该行内容）。
+
+## #117　清单声明 `output.collision_policy='FAIL_IF_EXISTS'` 在助手 JS 里**没有第二个消费者** ⇒ 重跑同名交付文件的实际行为未核实　🟡 minor（待核实，影响复发批的重跑验收）
+
+- 实测：`grep -rn collision_policy download/local-assistant/` 只回 `execution-manifest.js`（`:131` 字段清单、`:147` 值必须等于 FAIL_IF_EXISTS、`:245` 常量写出），无任何存在性检查；`grep -rn "FAIL_IF_EXISTS\|exists.*finalPath" scripts/*.jsx download/local-assistant/scripts/` 本轮无命中（**不等于没有**——分发进 PS 的脚本以云端构建件为准，未逐一展开）。
+- 为什么要登记：#114 的修装机后必然要"重跑那 12 语"，若已存在的交付文件按策略该失败，用户会看到一个新的错；若静默覆盖，则要确认不产生双份产物。两种都还没证据。
+- 建议：出包验收单里补一条"同 attempt 语言重跑 → 观察最终文件名与数量"，或直接把落地检查写进 publish 前（属合同面，需总控批准）。
+
+## #116　助手把"回执生成抛出"显示成"语言 X 未完成"并丢弃 finalPath＝对用户撒谎的那一面　🟡 minor（文案/归类）
+
+- 事实链：`download/local-assistant/server.js:6032-6041` 的 catch 把异常消息磨成 errorCode、`success:false`、`finalPath:null`；前端 `src/components/workbench/execute-step.tsx:1188-1190` **只对 `RECEIPT_NOT_DELIVERED`** 使用双句式"已完成（本机已产出设计文件，云端回执同步中）"，其余码落到 `:1193` 显示"语言 X 未完成：原因码 <磨平滑串>，其余语言继续执行"。⇒ Owner 看到的"明明改成功了却显示失败"是这一格，不是结算层。
+- 建议（另单，不进 FG-RECEIPT-STALE 补丁）：把"回执载荷未建／摘要不可复算"一族归入与 `RECEIPT_NOT_DELIVERED` 同等的如实呈现，并将可读码补进 `V15_ERROR_CODE_ZH`；**禁止**顺手做成"默认按成功计"——`server.js:6015-6016` 注释写明 `success` 仍要求 `receiptAccepted` 是防 finish 提前结算的安全闸。
+- 状态：**已修（并入 FG-RECEIPT-STALE 补丁，待合入）**——分类见 `batch-error-policy.ts` 的 `RECEIPT_MISSING_ERROR_CODES`，逐码文案见 `local-assistant-client.ts` 的 `V15_ERROR_CODE_ZH`，两个渲染点见 `execute-step.tsx`（执行中与恢复后），守卫＝`scripts/smoke-receipt-honesty.mjs`。未动 `success` 真值与结算面。
+
+## #115　`ExecutionAttemptDiagnostic` 的 attempt 归属整体错位一条 ⇒ "按 attempt 聚合的诊断计数"只能当上限　🟠 major（09-23 立案，09-24 第二批原样复现）
+
+- 09-24 实测（测试站只读）：本批 12 条 `__OBJECTS_0__RENDEREDLEADING_CANONICAL_NUMBER_INVALID` 里，11 条挂在**后继** attempt 名下（每行 `languageCode` 串名一位），本批 ES 名下第一条的 `at=2026-09-23 10:46:42`＋`languageCode=VI` ＝**上一批 VI 的溢出**，本批 VI 自身的终态码继续溢出到下一批。全窗口 seq 无空洞。
+- 后果：任何"某语种另有原因／某 attempt 没推"的推断都不成立（09-23 曾用"每人恰好 1 条"否证串名假设，那条否证本身是错的）。用它推归属＝假结论。
+- 建议：诊断入库按 payload 内的 attemptId 归属（不是"下一次写入"），或补 `sourceAttemptId` 列并回填校验；在此之前，凡引诊断计数处必须写明"上限、非归属"。
+- 状态：OPEN。
+
+## #114　回执摘要在非整数度量值上抛 ⇒ 本机做完、云端零交付、5 分钟后判 STALE（修已成形但零提交且未出厂）　🔴 blocker
+
+- 事实链（2026-09-24 09:22 测试站 12 语批 `cmueuk0e…`，报价 240）：12 attempt 全 `ATTEMPT_ABANDONED_STALE`、`completedAssignmentCount=20/20` 而 `verifiedAssignmentCount=0`、`localReceiptDigest=NULL`、240 行 `RECEIPT_NOT_RECEIVED`（服务端合成诊断行，非助手报的失败）、积分未扣（reservation `released`）。nginx 该批窗口 `heartbeat`39＋`manifest`12＋`accept`12 全 200、`attempt/report` **0 条**、零 409 ⇒ 断在**生成**环节，命中"载荷根本没建出来"的指纹。
+- 位置与因果：`download/local-assistant/canonical-json.js:21` 只接受安全整数 ← `receipts.js:53` 对整个 receipt（`:37` 含 `objects`）求摘要 ← `v15-runner.js:104/:107` 的 `finiteOrNull` 只判 isFinite ← 小数源 `scripts/TYGF_V15_Reopen_Verifier.jsx:131`（行距两位定点）与 `:80`（分辨率未取整）。`buildReceipts` 三调用点（`v15-runner.js:231/290/350`）无 try/catch 且抛在 `attachCloudReceipt`（`:1023`）与落盘 `atomicJson`（`:958`）之前 ⇒ 本件 `.json` 与 `.cloud.json` 同时不写。判决侧本身无错：`src/lib/server/execution-batch.ts:941` 的 5 分钟阈值＋`reconcileStaleAttempts`（`:1552`）与观测三波终态吻合。
+- 修的状态（重要）：`receipts.js +32/−5` 与 `scripts/smoke-receipt-privacy.mjs +46/−0` **只存在于共享 `worktrees/develop` 的未提交改动**；`git log --all --since=2026-09-20 -- download/local-assistant/receipts.js` 无输出（rc=0，最后触该文件＝`746569e`），HEAD blob 仍是改前 `b7f553f` ⇒ **零 ref 兜底**，一次 `git checkout --`／`git apply -R` 即不可恢复。本机安装包 exe 探针：`toCanonicalReceiptNumbers`、`RECEIPT_METRIC_NUMBER_NOT_CANONICAL` **各 0 命中**、`CANONICAL_NUMBER_INVALID` 1 命中 ⇒ **3.7.2 不含此修**，装了 3.7.2 的机器每次遇到小数行距都会继续零交付（无静默自动更新，须 bump 才有解）。
+- 建议：合 `总控/补丁草案_FG-RECEIPT-STALE_20260924.patch`（现覆盖 7 个路径：助手 `receipts.js`、三条测试（`smoke-receipt-privacy` 双 fixture／**新增** `smoke-v15-runner` 端到端小数跑／**新增** `smoke-receipt-honesty` 文案守卫）、`package.json` 两个入口、界面三处 `batch-error-policy.ts`＋`local-assistant-client.ts`＋`execute-step.tsx`）→ 走助手 bump 与出包（3.7.2→3.7.3）→ 装机验收四数：`localReceiptDigest` 非空、`verifiedAssignmentCount>0`、`receipts/<attemptId>.json` **与** `.cloud.json` 同目录都在、该批 `RECEIPT_NOT_RECEIVED` 行数＝0。
+- 复验证据：`总控/功能普查/FG-RECEIPT-STALE_回执断链定位_20260924.md` ③④⑤（改前 rc=1 两条／改后 rc=0／`test:batch-row-contract` rc=0／`test:trust-chain` rc=0／eslint rc=0）。
+- 补投的技术原判（**评估卡已按 Owner 指示撤销、未落库；四条结论仍有效**，故留此备查）：四道独立 fail-closed 门全拦——① 源件从未生成（抛在 `atomicJson` 落盘前；本机 `receipts/`、`receipts-pending/`、`report-data/` 该批 0 命中）；② 批 `STALLED` → `execution-batch.ts:1285` `BATCH_TERMINATED`；③ attempt 终态 → `:1298-1302` `ATTEMPT_ALREADY_TERMINAL`；④ 即便投进也不结算（`finishExecutionBatch :1801` 把 STALLED 视为已结算）＋无票据重放路径绑宿主（`…/receipt/route.ts:148`）。**恢复只有"出厂＋新建批次重跑"**，而 `createLanguageAttempt :600` 只放行 `RESERVED/RUNNING` ⇒ 界面原地重试会是 `BATCH_NOT_RUNNABLE`（未真机点击）；重跑将**再冻结并在成功时真扣 240**（本笔未扣）＝账务决策，需 Owner 拍（含是否 grant/adjust 补偿）。验收判据已做成可复跑命令并三向实测（坏批 rc=1／已知好批 rc=0／查无此批 rc=1）。
+- **Owner 拍板（09-24 17:5x）**：**这批的账不救**——不补投、不追补、让它停在失败态；积分已整笔退回、用户未被扣（代码依据＝`execution-batch.ts:2139-2150`，`actualCredits>0` 才 `commitReservation`，否则 `releaseReservation`）。补投评估卡按指示撤销、未落库。
+- **界面这条已并入本补丁（Owner 第 3 项交付）**：新增分类 `RECEIPT_MISSING_ERROR_CODES`＋`isReceiptMissingErrorCode()`（`src/lib/workbench/batch-error-policy.ts`）、四条码的两句式文案（`src/lib/workbench/local-assistant-client.ts` 的 `V15_ERROR_CODE_ZH`）、`execute-step.tsx` 两个渲染点改为按分类出话（**`success` 真值与结算面一律不动**），并加守卫 `scripts/smoke-receipt-honesty.mjs`（挂进 `test:trust-chain`＋独立入口 `test:receipt-honesty`）。账务句只认助手回传的 `settlement.finalStatus==='released'`，不替云端承诺未发生的退款。
+- 状态：READY FOR MERGE（补丁草案已交御史复验路径，未自行合入）。
+
+## #113　`release-gate.cjs` 的 `--only` 过滤器：键名与行标签不同名时**匹配 0 项仍 `EXIT=0`** ⇒ 任何一道门都能被一个拼错的键名静默跳过（修在飞）　🟠 major（P0 类，修法已交）
+
+- 事实链（刑部 `533c9856` 在 `worktrees/w1-w2-gate-20260924` @ `c0a5f17` 实测）：过滤分支用 `only.includes('mount')` 去匹配行标签 `mount-audit` ⇒ 键名不同名。改前真实码：`--only=mount-audit` **rc=0 / items=0**、`--only=nosuchkey` **rc=0 / items=0**、**`--only=repo-policy,mount-audit` rc=0 / items=1**（要 2 项只跑 1 项还报绿——最危险的一格）。
+- 为什么这是"整类"而不是"一个键"：门禁汇总器的**唯一职责**就是"我确实跑了这 N 项"。一旦"请求数"与"实跑数"可以不相等而不报错，那么**改名、删项、拼错、键与标签漂移**四种事故都会伪装成通过；这与今天全天打的"守卫写了没挂链／扫空打 ok"同一族，只是发生在**汇总器**这一层，杀伤面更大。
+- 修法（补丁 `总控/补丁草案_GATE-ONLY-KEY_20260923.patch`，基线 `c0a5f17`，`161/24`，唯一写入面 `scripts/release-gate.cjs`）：① 可用键一律由 `GATES` ＋ 报表项**推导**（`AVAILABLE_KEYS`），不手抄清单；② 键名**必须等于输出行标签**（只保留 `archive → package-candidate` 一个别名，因为它是入参名）；③ 未知键／空清单／匹配 0 项 ⇒ **跑之前**就 `EXIT=1` 并打印可用键；④ 跑完再核 `requested` 与实出行数，不等即 usage 红；⑤ self-test 从 6 格扩到 **19 格**，含两条**真起进程**的端到端负控（纯函数绿不等于 CLI 红得起来）。改后真实码：上述三条全 **rc=1**；真键 `--only=repo-policy` 仍 rc=0；`--only=identity,repo-policy,mount-audit-report` ⇒ `items=3;requested=3` rc=0。
+- 破坏性影响（已核）：`--only=mount` 与 `--only=mount-audit` 现在都会红。全仓 grep 除该脚本自身外**无任何** `package.json`／workflow／`deploy/*.sh`／其它脚本引用这两个键或旧行标签 ⇒ 无内部调用方被打断，但人手敲过的口径要改。
+- 关联：#112（同文件的"假闸"半边——本包一并定案：改名 `mount-audit-report` ＋ 报表页分区 ＋ **扫描健康度红**；政策四个数仍不拦，因阈值是 Owner 的数，见 #108 那条"等 Owner 给数"）。
+- 状态：**修在飞、未进主干**（r1 补丁值守 22:52 实测未送达，今晚不在发布包 ⇒ **排 3.7.4**）。`_r2` 件已在自建干净树重验：主干仍 `c0a5f17`＝r1 基线**未漂移**，`git apply --check` rc=0、真 apply rc=0、`node --check` rc=0；`--only=nosuchkey` **rc=1**＋打印可用键、`--only=repo-policy,mount-audit` **rc=1**、`--self-test` **rc=0/19 格**（含两格真起进程的端到端负控）。全量端到端 `requested=9` 仍**未实测**（新 worktree 无 `node_modules`，跑满会混入环境红）⇒ 见回包 ⑦。
+
+## #112　`release-gate` 的 `mount-audit` 项**红了也不会拦**：只 push 报表行，不计入 `gateRed` ⇒ "挂进门"与"能挡"是两件事　🟠 major（开放，Owner 拍是否升闸）
+
+- 位置（`worktrees/develop` @ `9ceb678`，我实读）：`scripts/release-gate.cjs:352-354` —— `if (!only || only.includes('mount')) { const res = mountAudit(); rows.push(\`mount-audit | EXIT=${res.rc} | ... \`) }`。全文件 `gateRed` 只在 **`:337`**（npm 段）与 **`:349`**（package-candidate 段）增计，`:445` 用 `process.exit(gateRed ? 1 : 0)` 收口 ⇒ **`mount-audit` 的 rc 被丢弃**。
+- 影响：这一项报"多少 smoke 没挂链"（将作实测 `smokeTotal=181; smokeZeroMount=27; smokeMountedButNoScript=…`），是**报表**。写进 `release:gate` 九项里会让人以为它是闸——这正是 #111／刑部"守卫零调用方＝等于没有"的同一个病根，只是这次发生在**治这个病的那件工具自己身上**。
+- 出处不假：这不是我的推断。将作在 `ZUO-GATE-VERIFY_回包.md` §④ 自陈"该项 rc 恒 0：只报数不拦"；御史在 `御史复验_两件_20260923b.md` ⓪-1 据此把 FG-GATE-ONE 判为**部分通过**。我在 `9ceb678` 上第三次独立复核成立。
+- 两个方向（**均未执行**）：**(A)** 让 `mount-audit` 计入 `gateRed`——这是**加判据**，会立刻改变九项门的红绿，必须先按"扫空必红"的口径定阈值（零挂载数 ≤ 多少算红），我不擅自定；**(B)** 明示它是报表（改名 `mount-report`，并从九项计数里剔除），避免下游把它当闸。
+- 关联：#110（同族"台账形似行被跳过＝守卫失聪"）、#111（同族"缺省即删的引信没拆"）。
+- 状态：开放，待拍板。登记：ZUO-MERGE（合流手，2026-09-23，随 FG-GATE-ONE 合入 `8daabcd` 后被此面暴露）。
+- 处置更新（2026-09-23 23:1x，刑部 `533c9856`，W2 定案）：**不升政策闸、改名归位**。补丁 `总控/补丁草案_GATE-ONLY-KEY_20260923.patch` 把它变成 `mount-audit-report`——输出进"报表页"分区、政策四个数仍不计 `gateRed`（阈值归 Owner，见 #108），但**扫描健康度会计红**（挂载面输入缺失／smoke 或 scripts 扫到 0 ⇒ `EXIT=1` 并点名；残缺盒实测 rc=1、补回 rc=0）。⇒ 本条从"假闸"变成"明确的报表＋仪表健康度闸"，中间态消除；若将来 Owner 给阈值，改点已在代码里注明的唯一位置。
+
+## #109　`test:refund-single-winner:143` 要求"32 路并发退款全回 `unknown`"，实测只有 1～3 次回 `unknown`（其余回 `requested`）⇒ 契约口径待拍板，该判据今日仍红　🟠 major（开放，Owner 拍）
+
+- 现象：FOUR-RED 把建单闸打开后（只在隔离库注入 `alipayPaymentsEnabled: true`），红点从 `scripts/smoke-refund-single-winner.mjs:67`（连单都建不了）推进到 **`:143`** `assert.ok(results.every(r => r.ok && r.status === 'unknown'))`。
+- 实测（只读探针跑 3 次，`Promise.allSettled` 32 路）：返回分布 `3 unknown / 29 requested`、`1 unknown / 31 requested`、`1 unknown / 31 requested`；**三次库内不变量都成立：paymentRefund 恰 1 行、`outRequestNo` 唯一数 1、状态 `unknown`**（探针件在 `tmp/`，未入库）。
+- 判据边界：这条 smoke **从写下那天起从未被执行到**（它一直死在 #106 的建单闸上），所以 `:143` 是**未经实战的期望**，不是回归证据。真正要守的"单胜者"在 DB 层，而 DB 层三次全对。
+- 两个方向（**均未执行**）：**(A)** 改 smoke——断"32 路全 `ok` ＋ 恰 1 行 1 号 ＋ `unknown` 计数与越界次数一致"，把竞态浮动写进注释；**(B)** 改实现——"看见在途请求"也回 `unknown`，属**用户可见语义**变化，需产品理由。我倾向 A，但按红线不代拍。
+- 关联：#106（同一 smoke 的建单闸，修法已交）、#107（同族"并发判据撞上 SQLite 承载"）。
+- 状态：开放，待拍板；今日开窗该条会红（本包如实保留红）。登记：FG-GATE-FOUR-RED（刑部 `533c9856`，2026-09-23）。
+
+## #111　两个清理脚本仍是"缺省即删"（引信未拆完）：`cleanup-review-snapshots.mjs` 整文件无开关、`cleanup-user-profile.mjs` 事务里四条 `deleteMany` 无条件执行，且都由测试站 timer 驱动　🔴 blocker（守卫已交且必红；脚本面待兵部拆）
+
+- 背景：今晚测试站发生过一次**提前删除**——第一版把"安全性"表达成给 `scripts/cleanup-review-snapshots.mjs` 传 `--dry-run`，而**该脚本不认这个旗，缺省即真删**（御史第 8 轮 §④，兵部自报未隐瞒）。现版把安全性改成 `ExecStart` 不带 `--apply` ＋ `cleanup-learning-evidence.mjs` 缺省 dry-run，但**引信本身没拆**。
+- 实测（本包新守卫 `scripts/check-cleanup-defaults.mjs`，`npm run test:cleanup-defaults`）：`f82b339` **rc=1，候选文件=4 含删除点文件=3 未受闸删除点=6** ⇒ 点名 `scripts/cleanup-review-snapshots.mjs:24,25`（无任何开关，直接 `purgeExpiredReviewSnapshots()` / `purgeExpiredSmartReviewRequests()`）与 `scripts/cleanup-user-profile.mjs:8-11`（`$transaction` 四条 `deleteMany`，无条件）。`cleanup-learning-evidence.mjs` 判为**已受闸**（`--apply` 型缺省不删）。
+- 新尖仍不合格：`9e73e5b` 给 `cleanup-review-snapshots.mjs` 加了 `dryRun`，但极性是 **`dryRun = argv.includes('--dry-run')`＝选择加入**（不给旗照删）⇒ 守卫对该 SHA 单独跑一次仍 rc=1，原因栏指名"安全性写在旗上而不是缺省上"。
+- 影响：这两支都由 systemd timer 驱动（90 天／7 天那两条线）。**"要不要删"的决定权在缺省里，不在调用方** ⇒ 任何一次 unit 重写、`ExecStart` 漏写开关、或有人手动跑脚本，都会立刻真删；这正是今晚事故的重演路径。
+- 挂载状态（按 Owner §3 口径）：**只挂 `package.json:23` 入口，不进门序**（`grep -c cleanup-defaults scripts/release-preflight.cjs` = 0）；将来插入点＝`scripts/release-preflight.cjs:102` 之后。⇒ 现状"有守卫但无人调"，属已知取舍，不是完成态。
+- 建议（脚本面归兵部，本包不抢）：两支都改成**缺省不删**（`const apply = argv.includes('--apply')` ＋ 早退），拆完引信后复验 rc=0 再把 `gateFor('cleanup-defaults','test:cleanup-defaults')` 入门序。判据自身边界（跨函数的闸不识别、`deleteRaw`/级联删不在词表、其它命名的删除脚本不在扫描面）见回包 §⑥-10。
+- 状态：开放（守卫已交且必红；引信待拆）。登记：FG-GATE-FOUR-RED（刑部 `533c9856`，2026-09-23）。
+
+## #110　迁移波次台账里"形似但守卫解析不出"的行会被三项检查整体跳过 ⇒ 守卫打绿而部署闸已改；已改为逐行解析并对形似行报行号　🟠 major（修在飞，附A 待合）
+
+- 事实链：`scripts/check-repo-policy.cjs` 的台账判据（FG-GUARD2 引入）用一次 `matchAll(/^(\d{14}_[a-z0-9_]+) ([0-9a-f]{64}) (\S+) (\d+)$/gm)` 取行 ⇒ **凡正则不咬的行，行数/钉入/算术三项检查一起跳过**。而部署脚本侧是 `while read -r migration_name expected_sha object_specs expected_total` 的**位置读取**，一行对象列表里带空格（`tbl_a, tbl_b 2`）守卫看不见、shell 照消费。
+- 实测：同一条注入（波次行对象列表内带空格）在 GUARD2 原样下 **rc=0（静默失聪已复现）**；打本包附A 后 **rc=1** 并点名 `deploy/deploy-test-release.sh:283`。附A 的 11 类双向开火全符合，含"合法追加＋守卫同批钉入应仍绿"那一格（`legacyWaveRows=8/8`）。
+- 连带自曝（同族第 10 格）：我第一版附A 把 `unparsableWaveLines` 存成数字又对它 `.join()` ⇒ **只在红路径抛 `TypeError`，退出码仍是 1、看起来"能红"，但 metrics 与实际发现全部丢失**；是 GUARD2 自带的配套件 `scripts/smoke-repo-policy-fire.mjs` 把它从 15/15 打成 8/15 才暴露。⇒ 结论入案：**新断言必须同时被"红路径仍能报数"这一格覆盖**，只测"能变红"不够。
+- 位置：`scripts/check-repo-policy.cjs`（附A `补丁草案_FG-GATE-FOUR-RED_附A_ledger防空转_基座GUARD2_20260923.patch`，21/4，**基座必须是 GUARD2/GATE-ONE**，净基线上 `--check` 实测 rc=1）。
+- 状态：修在飞（附A 未合）。登记：FG-GATE-FOUR-RED（刑部 `533c9856`，2026-09-23）。
+
+## #106　`test:refund-single-winner` 与"发布安全态开关默认 false"冲突 ⇒ 该退款单赢家判据永不通过　🟠 major（修法已交，残留见 #109）
+
+- 现象：`npm run test:refund-single-winner` 在 `f82b339` 净树 rc=1，断在 `scripts/smoke-refund-single-winner.mjs:67`（`assert.equal(created.ok, true)`，`false !== true`）。态A/态B 各跑 1 次，两次全红。
+- 真实根因（只读探针复现前置序列取到返回码）：`createCreditOrder` 回 `PAYMENT_METHOD_UNAVAILABLE`/409。闸口 `src/lib/server/credit-orders.ts:252-261`——`alipayPaymentsEnabled` 为 false 时支付方式默认 `manual_qr`，而 `manualQrFallbackEnabled` 为 false 就拒绝。默认值：`src/config/featureFlags.ts:25`（`alipayPaymentsEnabled: false`）、`:31`（`manualQrFallbackEnabled: false`，注释明写"内测宣传版安全态要求 false"）。该 smoke 只覆盖两个 flag（`:101` 的 `{creditPacksEnabled, alipayRefundEnabled}`）。
+- 影响：① 这条守卫"单订单只允许一个退款在场"的核心判据**实际从未被执行到**（第 116 行之后的断言一条都没跑）；② 该入口挂在 `ci2` 面上 ⇒ 第二份工作流若真触发就会红；③ `test:release-qualification` 串行第 2 段即断，其后面 7 段永不执行。
+- 判据依据（为何不算产品回归）：同族 `scripts/smoke-refund-close.mjs:141,146` 已按正解写——补 `alipayPaymentsEnabled: true` 并显式传 `paymentMethod: 'alipay_page_pay'` ⇒ 是这条 smoke 落后于兄弟件。
+- 建议（**不自行执行**，因涉安全态）：改 smoke（照兄弟件补两个 flag）为正解；**不得**为了让 smoke 绿而放开 `manualQrFallbackEnabled`——那撞发布安全态铁律与 PROJECT_CONTEXT 红线。
+- 状态：**修法已交**（FG-GATE-FOUR-RED 主件：两臂——未开通必 409 ＋ 隔离库内注入假 flag 让主路径真跑；支付 flag 默认值一字未改，并加断言反向钉住）。**残留**：路径跑通后暴露的 `:143` 契约分歧 → 见 **#109**。登记：FG-GATE-INVENTORY（刑部 `533c9856`，2026-09-23）；修法：FG-GATE-FOUR-RED（同日）。
+
+## #107　`test:active-attempt-db` 的十路并发在 SQLite 隔离库上必然 `P1008` 超时 ⇒ "活跃 attempt 单赢家"这条判据不可验证　🟠 major（开放）
+
+- 现象：`npm run test:active-attempt-db` rc=1 **四次全红**（态B 3 次 + 态A 1 次 ⇒ 非 flaky）：`PrismaClientKnownRequestError: Socket timeout`，`code: 'P1008'`，抛出点 `src/lib/server/execution-batch.ts:753` 的 `$transaction`，调用形 `scripts/smoke-active-attempt-db.mjs:81` 的十路 `Promise.all`。
+- 影响：与 #106 同型——**被测的正是"并发下只有一个赢家"，而承载体在并发下先崩**，所以这条判据当前既不能证真也不能证伪；它在 `ci2` 面上，CI 若真跑同样拿不到结论。
+- 归因边界：本包只归到"环境（SQLite 单写者 + 十路并发）"，**是否同时含产品侧长事务问题：未核实**（未逐条复算持锁时长与事务边界）。
+- 建议方向（择一，未执行）：把并发数降到 SQLite 可承载并显式测"降级为串行 ⇒ 判据失效"、或该判据改跑在真 Postgres/MySQL 承载上、或给 harness 配 `busy_timeout`＋重试并明确它测的是"锁语义"还是"单赢家语义"。
+- 状态：开放。登记：FG-GATE-INVENTORY（刑部 `533c9856`，2026-09-23）。
+
+## #108　测试入口大面积零挂载：`package.json` 118 条 `test:*` 里 84 条不在任何挂载面 ⇒ 门禁"全量绿"是 34/118 的绿　🟠 major（开放，需 Owner 给门槛数）
+
+- 实测：口径 A（npm 入口）——118 条 `test:*` 中 **84 条**在四处挂载面（`RELEASE_GATES`、`security-ci.yml`、第二份工作流、qualification 串行段）里 0 次出现；分布 `ci2` 28 / `ci1` 1 / `preflight+ci2` 2 / `preflight+ci1` 1 / `ci1+ci2` 2 / 无链 84。
+- 另一口径 B（smoke 文件）：`smokeTotal=181`（态A）/`182`（态B）、`smokeZeroMount=27`、`smokeMountedButNoChain=68` ⇒ **68+27=95 个 smoke 文件实际永不执行**。两口径分母不同，**并列不合并、不换标**。
+- 交叉验证：本包一档实跑里 `test:assistant-script-distribution`、`test:batch-receipt-outbox-replay`、`test:learning-phase0..4` 等**全部属于那 84 条**——即"红着也没人知道"的那一批；反之已入链的 34 条本轮无一条新红。
+- 关联事实：`scripts/release-gate.cjs` 的 `mount-audit` 项当前**只报数不拦**（rc 恒 0），因门槛值未定；本条要给的就是这个数。
+- 建议：Owner 定一个可执行门槛（例："零挂载入口 84 → ≤40"或"95 个永不执行的 smoke → ≤30"）后把 `mount-audit` 改成 fail-closed；否则门禁绿只覆盖 34/118。
+- 状态：开放，等门槛数。登记：FG-GATE-INVENTORY（刑部 `533c9856`，2026-09-23）。
+
+## #102　过期审查快照因引用面漏查 `ReadinessEvidenceSnapshot` 而整事务回滚 ⇒ 同事务的脱敏一并失效，含正文的过期行永远删不到　🟠 major（修在飞）
+
+- **事实链（2026-09-23 夜，`worktrees/develop` HEAD `f82b339`，逐行独立核实）**：`src/lib/server/review-snapshot-retention.ts:110` 起在**同一事务**里做三件事——数引用（`:117-122` 只查 `billingQuote` 与 `photoshopJob`）、删决策事件、再按 `:130-141` 决定"整行删除"或"仅脱敏 `tableJson`"。但 schema 里还有第三个引用方：`prisma/schema.prisma:980` 的 `ReadinessEvidenceSnapshot`（模型起于 `:959`）对 `reviewSnapshot` 是 **`onDelete: Restrict`** ⇒ 该分支选"整行删除"时外键直接拒，**整个事务回滚，连本可以成功的脱敏一起失败**。
+- **放大机制（队头饥饿）**：候选查询 `:85-88` 用 `expiresAt asc` + `take: boundedLimit(limit)`，被拒的行走不掉 ⇒ 下一轮同一批仍在队头，游标不推进。测试站实测：179 行快照中 **144 行已到期**，其中 **74 已脱敏 / 70 仍含正文 / 83 被引用**（口径与计数来源 `总控/回收_20260923/FG-CLEANUP-TIMER_回包.md` §⓪）。
+- **影响**：隐私政策承诺的"审查快照 7 天"在**含正文的那 70 行上未兑现**，且该清理任务已在每 10 分钟跑却**零进展**（每轮 failed 计数不降）。属**对外承诺与运行事实不一致**，LEGAL-1 F-3 的加重项。
+- **建议（不在本轮自行改）**：引用面补齐为"三张引用表任一存在即不得整删，只能脱敏"，或把 `Restrict` 改成与业务一致的语义并在删除前先清子表——**属合同/数据语义变更，须与法务口径同批审**。
+- **状态**：🔧 **修在飞**，执行人＝兵部，单 `FG-SNAP-FK`。登记人：吏部（本活由户部转交；户部会话 `waiting-user` 未醒，不留天窗）。
+
+## #103　测试站 `tygf-test-user-profile-cleanup.service` 的 `WorkingDirectory` 指向已消失目录 ⇒ 常红，隐私政策"90 天"在测试站实际未在跑　🟠 major
+
+- **现象（2026-09-23 实测，只读取 `systemctl show` 退出码与状态字段）**：`status=200/CHDIR`，工作目录不存在 ⇒ 单元每次触发都失败，长期常红。
+- **为什么不是"无到期所以 0"**：`scripts/cleanup-user-profile.mjs:8-11` 覆盖的四类（漏斗事件 / 反馈 / AI 用量 / run 摘要）按 `retentionExpiresAt < now` 删除；测试站常红 ⇒ **根本没执行**。生产侧该单元 `Result=success` 但 `deleted` 全 0，属"确无到期"还是"没在删"**待查**（未核实）。
+- **影响**：隐私政策承诺的"使用与事件指标 90 天"在测试站不成立 ⇒ 修正 LEGAL-1 F-3 的旧结论（原记"90 天与 30 天是兑现的"）。
+- **建议**：改 `WorkingDirectory` 为当前发布目录并在部署脚本里加一条"timer 单元存在且能 chdir"的自检；顺带把 `EnvironmentFile` 后列不覆写前列这个坑记进部署检查（本项目踩过）。
+- **状态**：⏸ 待执行，执行人＝兵部，单 `FG-TIMER-CHDIR`。
+
+## #104　排版学习图层 365 天承诺**全仓无按保留期的删除路径**（缺执行体，非缺调度）　🟠 major（缺口，修在飞）
+
+- **实测（`f82b339`）**：`LearningTypographyLayer` 486 行、**0 行到期**（最老到期日 2027-09-07），且两个清理脚本都不碰这张表——`scripts/cleanup-learning-evidence.mjs` 全文只操作 `learningEvidenceSignal`（`:25` 取、`:47` 删）与 `learningAuditLog`（`:48` 记账），typography 字样出现 **0** 次；`scripts/cleanup-user-profile.mjs:8-11` 也不含它。
+- **影响**：隐私政策 365 天承诺属**结构性未实现**（与 #102、#103 不同：那两条是"有代码但跑不通/没人调"，这条是"根本没有删除语句"）。
+- **建议**：**T1 先交三态表**——全仓每条 `retentionExpiresAt` 承诺 × 执行体 × 调度各一列，逐项标"有/缺"。可能再冒出 N 张同样裸奔的表（未核实，待 T1 出数）。补执行体时按"缺省安全"写（见 #105 规则）。
+- **状态**：⏸ 缺口待建执行体，执行人＝兵部，单 `FG-TYPO-DELETE`。
+
+## #105【事故登记 · 已发生】向未打补丁的部署副本传 `--dry-run`，该副本不认此开关 ⇒ 静默真删　🟠 major（已发生，规则已定）
+
+- **事实（2026-09-23 夜，测试站）**：为验证"只数不删"，对一个**尚未包含该开关解析逻辑**的部署副本传了 `--dry-run`。旧副本把它当未知参数忽略 ⇒ **实际执行了删除**：提前删掉 1 条已过期审查请求 + 13 条往日预算锁。**无生产写入、无用户素材受影响**（计数与范围来源 `总控/回收_20260923/FG-CLEANUP-TIMER_回包.md`）。
+- **结论入规则（后续所有清理/迁移类单的硬门槛）**：**安全性必须用"缺省行为"表达，不得依赖"传一个开关才安全"**——即：未带明确确认参数时**默认不写不删**，要真删须显式传 `--apply`（或等价确认）。本轮之前我们反过来（默认删、传 `--dry-run` 才不删），所以一个版本差就把事故概率放大成必然。
+- **连带纪律**：对**部署副本**（不是候选树）跑任何数据面命令前，先核对该副本的 HEAD 是否含所依赖的参数解析；不确定就在候选树里跑，或先只读探一次。
+- **状态**：📌 已登记并转规则；受影响范围已量化如上，是否补数据/是否告知内测用户属 Owner 决定（未处理）。
+
+## #100　用户按界面提示完成"选择归属"反而把自己锁死：`V15_FRAGMENT_ROW_CONFLICT` 抛出后唯一出口是"重新扫描"　🟠 major（真机现场复现）
+
+- **现场（2026-09-21，Owner 在测试站 `a2cc60e` + 助手 3.7.0，母版 `6877-亚马逊A+详情页.psb`，日语）**：第 3 步出现 10 项「必须处理·相邻译文行被多个对象争夺」，界面文案明确要求"选择译文确认后…其余对象按同一组译文自动完成"。Owner 对两条**同原文**的层各点一次「选择归属」后，界面抛：`译文行 "source:wb-d51beb0d:1" 被多个确认绑定同时消费（M-7@1|*Compatible…@1 与 M-7@1|*Compatible…@3）`，**唯一按钮是"重新扫描"**。
+- **根因链（已核 file:line）**：`src/lib/trust-chain/binding-core.ts:1000-1006` 判争夺只比较 `globalCompositeOwners.get(rowId)` 的 owner 是否为**不同图层**，**不比较这些图层原文是否相同**；而 A+ 详情页天生有手机端与 PC 端两套画板、同一句文案各一个层（现场配对：`M-8/组211`↔`PC 8/组211` 的 `SmallRig CO-F1 Clip-On VND Filter for iPhone 18 Pro…`；`M-7`×2↔`PC-7` 的 `*Compatible with bumpers…`）⇒ 原文逐字相同、写入结果必然唯一，却被判"真歧义"要求人工。用户照提示点两次 ⇒ 两个 forced 绑定消费同一行 ⇒ `:830-836` 直接 `throw BindingCompileError`。
+- **佐证"必须点"而非"已自动闭合"**：点之前"后台已替你闭合 2 个"，点击过程中变 5，**重新扫描后又掉回 2** ⇒ 那 3 项闭合依赖人工点击，与 `:1040-1042` 注释声明的"其余争夺图层自动闭合"不一致。
+- **待确认（不得当已证实）**：① 该 throw 在**生产调用方有无 catch**——全仓仅 `scripts/smoke-binding-compiler.mjs`、`scripts/smoke-reconcile-gate-p2.mjs` 两处测试捕获点，未找到生产 catch ⇒ 实际是语言级失败/整批失败/500 未定；② `:1040-1042` 声明的 execute 自动闭合**未验证代码路径**（若真不闭合，则问题从"多余点击"升级为"execute 漏写争夺层"）。
+- **建议**：与"同原文层不判争夺"豁免**合并为一个合同变更**（同一处代码链）：豁免生效后用户不再点第二次，死锁自然消失；同时给 forced 冲突加可撤销出口（取消某条确认），不能只给"重新扫描"。**先例依据**：`AI_MEMORY/CHANGELOG.md:333` 已做过镜像的一半（多候选拼接写入结果一致时自动绑定），那次没治"多个等价层面对同一个候选"。
+- **状态**：🆕 登记，已派发给 S2 会话（任务书 `任务书_S2_闸门死锁与同原文豁免_20260921.md`）。
+
+## #101　版式例外把"译文与原文逐字相同"的层报成需人工处理（现场 3 条，含 1486% 荒谬值）　🟡 minor（纯降噪）
+
+- **现场（同上，2026-09-21 截图）**：32 条"译前版式例外·仍需人工处理"里，头两条与第七条的原文与译文**完全相同**却各带一个"保留原文（不替换）"按钮：`VS → VS` 报**最宽行约 1486% 原宽**、`VS → VS` 报 **975%**、`ID 6877 → ID 6877` 报 **190%**。
+- **根因（已核）**：`src/lib/workbench/overflow-estimator.ts:155-156` 的 `widthRatio = widestLineEm(target) * fontSizePt / width` —— **分子是估算、分母是原稿实测墨迹宽，两者不同源不可比**；且**没有 `target === source` 的短路**（grep `target === source|targetText === sourceText` 零命中）。显示侧 `src/components/workbench/layout-exception-list.tsx:113` 直接把它乘 100 输出。
+- **建议**：加一条守卫——归一化后 `normalizeText(target) === normalizeText(source)` 的层**不产出版式例外**。纯降噪，不改任何裁决与计费。
+- **两条禁止顺手做**：① 不要重新引入朴素溢出公式——Owner 已于 2026-09-17 主动删除 `linesFitFrame`（`lineCount×leading×1.333` vs ink height 不可靠）；② 不要把 `FALLBACK_FONT_LANGUAGES`（`overflow-estimator.ts:83-84`，现 `Set(['KO','TH'])`）扩到日语——注释明写那是 Owner 决定"接受 PS 兜底，只做信息性提示"，扩语言属产品决定。
+- **状态**：🆕 登记，已派发给 S3 会话（任务书 `任务书_S3_对外展示降噪与反抄重构_20260921.md` 第 2 块）。
+
+## #98　生产服务器 SSH 口令以明文内嵌在 `~/.ssh` 下 101 个临时脚本里，其中 36 个会 dump 生产 `.env`、54 个疑似对生产做写操作　🔴 blocker
+
+- **实测（2026-09-21，`tmp/ps-clinical-20260921/audit-ssh-creds.mjs`，只统计不打印明文）**：`~/.ssh` 共 110 个历史脚本，**101 个内嵌同一个明文口令**（sha256 前 8 位 `09e0b521`），目标主机 `43.134.175.26` / 用户 `ubuntu`。
+  - **36 个**会把 `.env` 或环境变量读出来（`check_env.py` 第一条命令即 `cat /var/www/tygf/.env`）；另有 `decrypt_prod_token.py`（142 行）、`debug_password.py`、`fix_password*.py`、`restore_password.py`。
+  - **54 个**含疑似生产写操作（`systemctl`、`pm2 restart/delete`、`sed -i`、`passwd/chpasswd`、`iptables/ufw`、`tee /etc`、`rm /var`），例：`deploy_prod.py`、`fix_nginx*.py`、`secure_admin_v1..v4.py`、`correct_fix.py`、`final_fix_v1..v3.py`。
+- **违反本项目铁律**：AGENTS.md「密钥纪律——密钥只放环境变量或受控凭据存储，禁止明文进文档/提交」；且这 54 个脚本意味着**生产被一次性脚本改过 nginx/pm2/sshd/口令，无审计、无回滚、无发布身份**，与「生产处置必须取得明确授权」「助手变更走版本纪律」直接冲突。
+- **已扩大的暴露**：本轮为定位问题 `head` 过 `check_env.py`，**该口令已进入本次会话记录** ⇒ 无论文件如何处理，**口令本身必须作废**。
+- **建议顺序（先换钥匙再关门，避免 101 个脚本同时打断部署）**：① 生成密钥对并装公钥（`~/.ssh/setup_ssh_key.py`、`upload_key.py` 可复用其做法）；② 验证密钥登录可用、把仍在用的部署路径改走密钥；③ 才在 `sshd_config` 关 `PasswordAuthentication`；④ 届时 101 处明文自动失效。**切勿先改口令**——会让所有历史脚本当场失效且下次部署卡住。
+- **另需处置**：生产 `.env` 里有 `ADMIN_PASSWORD`（长度 8，明文口令）⇒ 后台口令以明文存 env 且仅 8 位，建议改哈希存储 + 强口令。**本条原记有该口令的 sha256 前缀，已删除**：长度 8 的低熵秘密，48 位前缀就是一个离线验证器（猜一次中不中微秒可判），记前缀≈记口令本身。纪律：**低熵口令只记"已更换 + 日期"，不记任何哈希**；≥32 位随机秘密才可用 12 位前缀做等值核对。另：该值与另两把应用层秘密同存于一个本地归档，详见 `总控/外泄清点_20260921.md`（未入 git、本仓无远端）。
+- **状态**：🟡 **部分处置（2026-09-21 本轮）**——① 已完成：生成 ed25519 部署密钥（私钥仅留本机 `~/.ssh/tygf-deploy-20260921`），公钥**追加**进服务器 `authorized_keys`（3 行 → 4 行，未改动既有条目，幂等检查过），并用**纯密钥（禁口令、禁 agent）重连验证通过**。⇒ **顺带查出：那 3 行里本就有历史公钥，密钥通道早就建好了，只是从没人关掉口令登录——缺的不是方案，是收尾。** ② 已完成（本轮全部远程取证均走新密钥）。③ **未做**：关 `PasswordAuthentication` 属生产 sshd 写操作，配错需控制台救，等 Owner 明确授权。④ 未做。**未删任何文件**：原计划归档 `~/.ssh` 下 110 个脚本已取消——并行会话今日仍要用它们做 8→0 验收，且 ③ 一旦完成这 101 处明文自动失效，无需删除。本轮在生产上的写操作**仅限 authorized_keys 追加一行**。
+
+## #99　生产站 `EXECUTION_TICKET_SECRET` 与 `INVITE_CODE_SECRET` 是同一个值（测试站不同）⇒ 跨安全域密钥复用 + 环境配置漂移　🟠 major
+
+- **实测（2026-09-21，服务器侧全量扫描 `sweep-secret-reuse.py`，只有 哈希+变量名 回传、值不出服务器）**：生产 `tygf` 14 个敏感变量中**恰有 1 组**同值复用——`EXECUTION_TICKET_SECRET == INVITE_CODE_SECRET`（sha256 前 12 位 `9237454222a7`）；测试 `tygf-test` 16 个敏感变量**零复用**。⇒ **不是系统性混乱，就是这一对被复制粘贴了**，修复面很小。
+- **复发防护已落地**：新增 `worktrees/develop/scripts/check-env-secret-uniqueness.mjs`（只输出变量名与哈希分组，绝不输出值）。自测通过：三条同值正确归一组、干净样例零误报（端口 465 / region / DATABASE_URL 未被误判为密钥）；已验证门禁会红（dup 样例退出码 1）。**待接线**：尚未接入 `release:preflight`（本轮未碰发布前置四道门）。
+- **为什么值钱**：这两把钥匙守的是不同安全域——执行票据门（Photoshop 执行 + 积分冻结的授权凭据）与邀请码/激活域。同一 HMAC 密钥跨域使用，意味着**任一域被泄露或存在可构造消息格式的碰撞时，另一域的签名也可被伪造**；且测试站配置与生产不同 ⇒ 现有测试**永远覆盖不到生产这个组合**。
+- **待确认（不得当已证实利用）**：两处验签的输入格式是否允许跨域重放，需要读 `verifyTicket` 与邀请码签发/校验的实现后判定；本条只证明"密钥相同"这一事实。
+- **建议**：① 生产单独重生 `INVITE_CODE_SECRET`（或 ticket，择一），走配置变更 + 重启，**先确认没有存量未过期票据依赖它**（有则需先让旧票据自然过期或做双钥过渡）；② 加一条部署前门禁：对 `.env` 内所有 `*_SECRET` 做**值去重检查**，重复即拒绝上线（成本极低，可复用本轮脚本逻辑）；③ 把测试站与生产的密钥集合差异纳入发布前 checklist。
+- **状态**：🔴 未处置（改生产密钥属生产处置，需 Owner 明确授权）。
+
+## #95　云端分发的 .jsx 引擎脚本在用户机明文落地（含中文注释与历史版本）　🟠 major
+
+- **实测（2026-09-21，本机 `E:\软件\图译工坊本地助手\.tygf_script_cache`）**：助手成功跑过一次后，分发件以**明文**落盘，`head` 直读即见源码与中文注释（例：`TYGF_V15_Reopen_Verifier.jsx` 头部 "// T-0114：抑制打开期间的对话框（缺字体/链接/新版等），避免静默阻塞"）。
+- **泄露范围 = 仓库源码全量**：逐文件比对（node 计算，缓存件 vs `worktrees/develop/download/local-assistant/scripts/`）——`MultiLangStudio_Replacer_v2.9-beta.jsx`、`TYGF_V15_Readiness_Scanner.jsx`、`TYGF_V15_Preparation_Scanner.jsx`、`TYGF_V15_Thin_Executor.jsx`、`Reopen_Verifier(b12fcdd4)` **共 5 个"换行不同、内容逐字相同"**；差异仅为 `distribute/route.ts:51` 按 LF 归一后算 sha。
+- **还漏历史版本**：缓存目录内容寻址且不清理，同一脚本多版并存（实测 `TYGF_V15_Reopen_Verifier.jsx` 同时存在 `335984fa`(3.6.60 代) 与 `b12fcdd4`(今日 14:58)）⇒ 外流的是**带版本序列的实现演进**。
+- **威胁模型**：分发接口本身有鉴权（`route.ts:93-96` 要 `assistantToken`=machineId+运行码，无效 403；另有按 installId 限流与脱敏审计），所以风险**不是**"路人可下载"，而是 **每一个持激活码的用户在自己机器上跑一次即得全部引擎源码**（客户即对手）；任何在用户机上运行的 agent 读这些文件零成本。
+- **为何现有加固挡不住**：exe 侧的 pkg/bytecode + `generated/MANIFEST.json` 内容哈希 + 启动自校验，保护的是**打进 exe 的部分**；jsx 走"云端分发+落盘缓存"这条通道，**恰好绕过全部加固**。
+- **jsxbin 的定位（已查证，修正初稿）**：Adobe 官方支持把 ExtendScript 编译成 `.jsxbin`（AE Scripting Guide 原文：可用 ExtendScript Toolkit 导出二进制版，扩展名 `.jsxbin`，同时警告"may not be usable with all of the scripting integration features"）。**有可直接进 CI 的无头编译器**：npm `jsxbin`（runegan，v2.3.0，MIT），自带从 Adobe VS Code ExtendScript Debugger 抽出的原生模块 `esdcorelibinterface.node`，不依赖已停更的 ESTK GUI，`npx jsxbin -i <file> -o dist/`，支持 glob 与 `#include`。⇒ **本条建议① 不必手写剥离器，jsxbin 顺带就剥注释**。但它**不是加密**：`AngeloD2022/jsxer`（C++，AGPL-3.0，324★，最后 push 2026-09-10，正重写为 Rust）一条命令即可 jsxbin→可读 JS，另有十余个反编译 fork/移植；Adobe 曾对原版仓库发 DMCA 而 fork 仍存活。⇒ **定性：成本抬高器（挡住直读与右键看源码），不是防线**。V8 字节码/bytenode 对 ExtendScript（ES3 引擎，无 V8）不适用；`javascript-obfuscator` 的 `--target` 只有 browser/node，无 ES3 目标，输出含 ES5+ 构造跑不动。
+- **建议（成本由低到高，均可独立停手）**：① 分发前 **jsxbin 化 + 前置 ES3-safe 压缩**（Terser `ecma:5`、保留 `#target`/`#include` 行）——0.5~1 天，**性价比最高**，直接堵住"装了助手就读到中文注释与任务号"；② 分发内容按 `installId` 派生密钥静态加密 + 短 TTL（拿到也过期/换机解不开），**保留落盘**（见下条硬约束）；③ **裁决算法（`binding-core`）服务端化**，助手只提交扫描观测、接收裁决——唯一能真正改变"跑一次就读走核心逻辑"的路径；④ 价格表/行数上限/禁则集/字号映射等**可反推规则的常量**改服务端下发（业界共识里唯一真正保护商业机密的一档）。
+- **硬约束（勿提"不落盘"）**：`server.js:976-977` 已明文记录"绝对不用 `DoJavaScript`（COM BSTR 传大脚本会卡死 PS）"，且 `server.js:945-962` 的 wrapper 本身就是 `File.open → read → eval(_code)` ⇒ **执行通道要求必须有磁盘文件**。真要不落盘只能改 RAM 盘或换通道，风险远大于收益。项目现有 `script-fetcher.js:132-137`、`server.js:1411-1416` 已是"落盘+用完删"形态，**只差内容不再是明文**。
+- **范围修正（2026-09-21 跨会话复核并入，详见执行方案第 5 节 R1）**：明文里**不止业务规则，整条匹配/对齐求解器也在客户端**——`MultiLangStudio_Replacer_v2.9-beta.jsx:718 findTranslation`（strict/whitespace/format/linebreak/substring/ambiguous 全梯）、`:781-783 requiresPreflightDecision`、`:786-793 confusableSkeleton`、`:795 singleSubstitutionOnly`、`:807 findSuggestionCandidate`；全仓 grep `findTranslation`/`matchMode` 在 `src/` 与 `contracts/` **零命中**。⇒ 建议③"裁决服务端化"**若不连匹配梯一起搬，敞口基本不变**；"核心资产未下发"这一说法**不成立**，不得对 Owner 这样表述。
+- **状态**：🟡 **部分处置（2026-09-21 本轮）**——可行性已真机实证（PS 22.0 执行 jsxbin 通过；同一构造测试明文版与 jsxbin 版**逐项一致**；五个可分发脚本全部编译通过、零注释残留）；构建步与门禁已落地为两个**新增未跟踪文件** `scripts/build-jsxbin-assets.mjs`（含 `--check` 门禁，已三次自攻验出真实退出码 1/1/0）与 `download/local-assistant/scripts-compiled/`（产物+清单），**发布线已跟踪文件零改动**。**未切换分发端**——因 `script-fetcher.js:108` 按下载字节算 sha 校验、`smoke-photoshop-script.mjs:14-22` 断言 `.jsx` 源文本字面量，不同步升发布身份与助手构建会导致批次 fail-closed（#74 同族）⇒ 切换须与发版同批。敞口本身**仍然存在**（分发的还是明文）。
+
+## #96　"exe 零明文"这一说法未经实测，且实测能扫出可读 JS 片段　🟡 minor（待测后定级）
+
+- **实测（2026-09-21，node 字节扫描 `图译工坊引擎.exe` 38,364,416 字节）**：`function normalizeText` 命中 **4 次**、`SCRIPT_DISTRIBUTE`/`tygf_script_cache`/`TYGF_PS_HANDSHAKE_V1`/`app.displayDialogs` 各 1 次、`MultiLangStudio_Replacer` 3 次、`createScript` 8 次、`Photoshop.Application` 17 次。对照组：`DoJavaScriptFile` 与 `LayerKind.TEXT` **0 命中** ⇒ 核心 jsx 内容确实不在包里（与 #95 的"走分发通道"一致）。
+- **影响**：项目内多处把"exe 零明文"当已成立结论引用。实测表明**至少存在可读 JS 片段与字符串常量**（`normalizeText` 是 `binding-core` 的函数名，说明裁决算法在客户端侧有可读痕迹）。"能还原到什么程度"未测 ⇒ 不能继续当结论用，也不能当作已破。
+- **踩坑留痕**：第一次探测用了 `strings`，本机**该工具不存在**（`command not found`），得到的"全 0"是假阴性、差点被写成"exe 干净"。⇒ 二进制取证一律用 node 显式读字节，或在方案里固化 `--check` 类可复核工具。
+- **建议**：① 做一次真实还原尝试（pkg/bytecode 反编译成本评估），据结果定级；② 把"零明文"口径改写为可证伪的表述（"不分发 .jsx 明文进包"/"不含用户素材"）；③ 与 #95 建议③ 合并评估——若裁决算法本就服务端化，此条自动降级。
+- **状态**：🆕 登记（未测、未处置）。
+
+## #97　PS 会把文字层名同步成内容 ⇒ 交付件再当母版提交时台账身份漂移，零测试覆盖　🟠 major（待确认）
+
+- **缘起**：对方（公司机手工改语言的 AI）档案记录——按图层名配对全部失配，因为 Photoshop 会把文字层名改成层内容。
+- **我方对应机制**：`download/local-assistant/scripts/TYGF_V15_Preparation_Scanner.jsx:206-209` 的 `ledgerEntryId = 组路径 name@兄弟序号`（`server.js` 注释亦说明图层名可含中文/空格/任意符号，故只约束非空与长度，见 `binding-core.js:172-178` 的 `assertLedgerEntryId`）。
+- **风险路径（推断，未实测）**：替换后交付件的层名即**译文** ⇒ 用户把交付件当新母版提交（二次换语言、返修、A→B→C 链式换语）时，全台账身份随内容漂移 ⇒ 历史排除/人工确认决定与 `templateFingerprint` 是否仍能接上，**我没有找到任何测试覆盖这个场景**。
+- **建议**：先写复现测试（同一稿 A→B 交付件再作为母版扫描，比对 `ledgerEntryId` 集合与已确认/已排除项的承接率），据结果决定是否需要内容无关的稳定层身份（如持久化图层 ID + 首次扫描指纹双锚）。**不要在实测前改身份算法**——它是台账与账务的锚。
+- **状态**：🆕 登记（待确认，不得据此改代码）。
+
+## #82　生产发布线无 hotfix 通道：预检硬门 branch==main，但 main 与 develop 同点　🟡 minor
+
+- **位置**：`scripts/release-preflight.cjs`（eeb994c 版）"expected branch main" 门 × D0 合流后 main==develop 同点。
+- **影响**：2026-09-20 试走"从生产点 `eeb994c` 拉 hotfix 只带激活修复上生产"（分支 `hotfix/activation-permanent-20260920`，`fcdef8a`），打包被门拦停。main 已含未验收的 #74/#75/#79 ⇒ 生产只能整线发或回退 main（违铁律）。当晚靠数据侧转永久绕过了紧急性。
+- **建议**：为 hotfix 定义合规通道——① `release-preflight` 支持 `--allow-branch <name>` 并要求 Owner 明示授权（带审计留痕），或 ② 约定 main 上打生产点 tag，hotfix 从 tag 拉分支且预检接受"tag 祖先 + cherry-pick 清单核对"。择一实现后补 smoke。
+- **状态**：🆕 登记（候选 `fcdef8a` 保留在 `worktrees/hotfix-activation-perm`；生产部署并入 8→0 验收窗口整线发）。
+
+## #81　package-lock 被本机 npm 11 再生成后裁掉服务器 npm 10 必需条目（第二次复发）　🟠 major → ✅（待防呆）
+
+- **位置**：`package-lock.json`（本机 npm 11.6.2 再生成）× 服务器 `deploy-test-release.sh` 的 `npm ci`（npm 10.9.8）。
+- **影响**：`9ecb5cc`（L0 普查，加 ag-psd/fontkit devDeps）把 `@emnapi/core|runtime@1.11.3`、`@swc/helpers@0.5.23` 等可选平台条目裁出 lock，候选 `8c96845` 部署在 npm ci 阶段被拦（pre-switch 止损，现网无损）。**同一坑 `4bb6936`（09-16）已修过一次**——凡本机跑过任何 `npm install` 类命令就可能复发。
+- **修复**：2026-09-20 以 `npx npm@10.9.8 install --package-lock-only` 重建（`a462fc4`），测试站部署恢复。
+- **建议（防呆，未实施）**：① 在 `release-preflight` 加静态门：lock 内必须含 `@emnapi/runtime`/`@swc/helpers` 嵌套条目（或比对 lock 生成器版本）；② `.npmrc` 固定 `lockfile-version`/团队 npm 版本；③ 提交含 `package-lock.json` 变更时，打包前跑一次 `npx npm@10.9.8 ci --dry-run`。
+- **状态**：✅ 已修复（a462fc4）；防呆门待排期。
+
 ## #39　smoke-prepare-check-closure 正则误报（HEAD 已存在，非 trust-chain 链）　🟡 minor → ✅
 
 - **位置**：`scripts/smoke-prepare-check-closure.mjs:53`（`/masterFileStat[\s\S]{0,200}?browserPreparationSummary/`）。
