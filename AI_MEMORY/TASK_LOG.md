@@ -1605,3 +1605,10 @@
 - **🔴 新立案一：单语言执行无停滞收口**。实测：`PhotoshopJob a645ace2`（16:06）running 已 2.5h+，其 reserved 预留 50 悬挂不释放；这解释 Owner 下午「取消返回积分没反应」的完整闭环＝job 永远 running→取消 API 正确拒绝→积分永远拿不回。批次路径有 15min reaper，单语言 job **没有**任何停滞收口。修法方向：单语言 job 纳入停滞收口（挂死的 job→终态＋预留释放＋界面如实）——涉及单语言结算语义，待 Owner 拍后实施。
 - **🔴 新立案二：18:29 单语言 job `9d3d44f8` running 15min+ 未收口**（可能正常跑大件，可能同族挂死）——观察中；本轮部署因此主动推迟（红线实战）。
 - **本轮未部署**：develop HEAD `8b1eb63` 已 push（含批次结果面板），测试站仍跑 `d24d2b0`；待 Owner 确认 18:29 那单收口后部署（红线会自动放行）。部署待办命令链同 0926 流程（detached 树→preflight→package→scp LF 脚本→ssh）。
+
+## 测试站已上 `8b1eb63`（批次结果面板）；两单挂死执行与 100 积分解冻待 Owner 授权【2026-09-26 19:3x｜ZCode 主线会话】
+
+- 18:29 单语言 job `9d3d44f8` 亦挂死（40+ 分钟无终态，与 16:06 `a645ace2` 同形状）⇒ 无在飞可被打断，执行部署：detached 树→preflight 六门 PASS→出包（tygf-test-8b1eb63b2943.zip，SHA C59C6BBD…）→scp(LF 脚本)+ssh 部署 rc=0；公网 provenance **BOUND/8b1eb63**、latest 200。备份 deploy-20260926_19xxxx-8b1eb63b2943（见 /var/www/tygf-test-backups）。
+- **待 Owner 授权的账务动作**：两个挂死 job（16:06/18:29 各冻结 50 积分）的云端终态化＋预留释放（合计退 100），带审计留痕；或等「单语言停滞收口」机制上线后自动收口（修法待拍）。Owner 本机侧：检查 Photoshop 卡住的进度/对话框，必要时结束 PS 与托盘助手后重开。
+- 遗留：`worktrees/8b1e-deploy` 目录删除遇 Windows 占用（junction 已摘、git 注册 prunable、主树 node_modules 完好），待占用释放后 `git worktree prune`＋删目录，无害。
+- 本会话累计：develop 7 笔（8f1a0bb…8b1eb63）全部 push；测试站 d24d2b0→8b1eb63 两次部署；三个新立案（#115 族诊断 code 不可信复核、单语言无停滞收口 🔴、outbox REPLAY_RETRY 1704 续涨）。
