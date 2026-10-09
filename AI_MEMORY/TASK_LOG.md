@@ -1,3 +1,11 @@
+## 续执行（15:0x–15:3x）：W5-03 #111 引信拆除＋D14 甲＋三件侦察【2026-10-09｜同上执行手】
+
+- **新增提交（develop，含在 37 笔领先 origin 中）**：`55eacc0` W5-03/#111（`scripts/cleanup-user-profile.mjs` 缺省只数不删＋`--apply` 才删；`scripts/smoke-user-profile-lifecycle.mjs` 加"缺省不得删"负控并传 `--apply` 正控）；`a30bfdb` D14 甲（`scripts/release-gate.cjs` 归档成员断言"不得含 scripts/smoke-*.mjs"＋自测正控；`scripts/release-preflight.cjs` 源码树前置断言"0 个 smoke ⇒ 发布包直接拒跑"，早于 git 调用）。
+- **验证（真实 rc）**：`node --check` 双件=0；`release-gate --self-test` 20/20（归档夹具 7/7）；`test:user-profile-lifecycle` PASS；`test:release-consistency` 39 checks PASS；全量 `test:contracts` rc=0（150.8s）＋`lint` rc=0（2 既有 warning）。
+- **侦察三件（只读）**：① #114 经核**修复早已在 develop 出厂**（merge `349ba19`、3.7.3 `f056a8d`）；仅根册 `AI_MEMORY/ISSUES.md:62` 状态行与页眉不一致＋装机验收四数未取（本手未写根册）；② F03（本地保留期②）**暂缓**：设计在 `总控/回收_20261007/ASSIST-LOCAL-DATA-1_回包.md:66-70`，但"receipts-pending 未结算判据未取证"（现存件≈未 ACK）＋"盐=attemptId"无现成实现（`createHmac` 0 命中）；③ W4 K0 四层矩阵已成（位点/传导/两个范围问题卡：Q-a `structuralTargetText` 纳/排、Q-b 负控挂 `smoke-reconcile-gate-p2`＋`smoke-binding-compiler`）。
+- **W5-07**：`npm audit` 实测 rc=1，23 项（5 moderate/17 high/1 critical，undici/urllib 族），按既定口径只出报告、不自动升级。
+- **未做**：A0/部署（Q4 另开窗口）、F03（缺口未决）、W4 本体（待 Owner 拍 Q-a/Q-b）、W6 清理（待逐目标授权）、#98/#119（无服务器访问）、D15（需 admin 权限手）、根册 #114 状态行回写。
+
 ## 全量执行（S0+D0→I0-I4→F01/F02→W3→develop 快进）：集成线 `cef85a2` 落地＋6 只读代理并行取证【2026-10-09｜opencode 执行手（deepseek-v4.1-flash）；用户指令"使用对抗式审查全量执行"】
 
 - **授权**：Owner 本会话逐项签发——D01 集成基线=78acaf3e／D02 三单回放／D03 SEO 合并／D04 门禁=33∪2=35 枚／D06 根册权威+#121→#128 让号／D08 一票阀例外／D16 配对维持严格不顶替；并行九项（D05 先清单、D07 五行全追认发版另择时、D09 属主分工、D10 NGLOG 转正+F062 派、D11 开只读单、D12 不轮换先修 NGLOG、D13 只读核实、D14 台账+甲、D15 授权解绑+L2）；Q1 F01+F02／Q2 W3 全部／Q3 develop FF／Q4 A0 另开窗口。
