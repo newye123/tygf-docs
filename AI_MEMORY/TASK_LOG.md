@@ -1,3 +1,315 @@
+## 全量执行（S0+D0→I0-I4→F01/F02→W3→develop 快进）：集成线 `cef85a2` 落地＋6 只读代理并行取证【2026-10-09｜opencode 执行手（deepseek-v4.1-flash）；用户指令"使用对抗式审查全量执行"】
+
+- **授权**：Owner 本会话逐项签发——D01 集成基线=78acaf3e／D02 三单回放／D03 SEO 合并／D04 门禁=33∪2=35 枚／D06 根册权威+#121→#128 让号／D08 一票阀例外／D16 配对维持严格不顶替；并行九项（D05 先清单、D07 五行全追认发版另择时、D09 属主分工、D10 NGLOG 转正+F062 派、D11 开只读单、D12 不轮换先修 NGLOG、D13 只读核实、D14 台账+甲、D15 授权解绑+L2）；Q1 F01+F02／Q2 W3 全部／Q3 develop FF／Q4 A0 另开窗口。
+- **现场（S0，零漂移）**：develop@394241e/16 脏/0-0/28-0/84 文件；测试站 78acaf3e/3.7.11/scan-timeout-20261008-r1；生产 eeb994c/3.6.60；三账 539,052/511,009/460,758 B；contracts 26/28/33。
+- **产出**：① 容器根提交 `de22e07`（四件审查文档逐文件入册）。② 集成线 `codex/integrate-20261009-v1`（worktree `worktrees/integrate-20261009-v1`，基于 78acaf3e）7 提交：`32b88b9` TESTSITE-GATE-1、`c3e54ab` ASSIST-LOCAL-DATA-1 ①③④、`bfad6e1` SEO 合并、`381a45f` 记忆并账（#121→#128）、`4fa0134` F01 CSV 全文+负控、`818b0b9` F02 渲染行数告警、`cef85a2` W3（偏差表全追认+三单补记）。③ develop 快进 `394241e→cef85a2`（rc=0，100 文件 +6882/−994）；WIP 备份 `stash@{0}` 保留；领先 origin 35 笔未推。
+- **I1-01 处置**：EXECUTE-TIMEOUT-1 经核对**已在 78acaf3e 以 V2 改编版落地**（scan 60s／reportRetry 330s／分类守卫已在 33 段内），未做覆盖式回放（避免回退 V2-W1 适配）；守卫 rc=0。
+- **验证（真实 rc）**：集成线 tsc=0／lint=0（2 既有 warning）／build=0（85.7s；解除旧 W1-04 BLOCKED 需三件事：Turbopack 拒 Junction→真 `npm ci`、`prisma generate`、补 `.env`）／test:contracts=0（234.7s，35 段）／test:trust-chain=0（67.2s）／test:batch-row-contract=0／新守卫全绿（timeout-split、testsite-gate、denominator-honesty 4/4、assist-local-data 8/8、pair-machine-limit、auth-barrier、v15-runner）；seo-consistency 活站 22 PASS/9 FAIL/1 SKIP（FAIL 均为本地环境口径：sitemap 绝对域名+首页无 DB 500，留 R 层复跑）。develop 落地后复验 tsc/brc/四守卫全绿。
+- **只读代理产出（6 并行）**：D13 六条老🔴（#33/#29/#19/#14 判关闭、#28/#6 仍开放）；D05 batch12ls=**100% 已被 a03b8d0 覆盖（作废）**+2 docs=重复件；D11 `BATCH_MANIFEST_BINDING_FAILED` 定性（助手本机字面码+云端细码族；与 `smoke-v3-batch-flow.mjs:33` 语言级断言相冲；修建议三层）；D14 台账（test:*=125、发布闸直接调用 7、无引用 smoke=27、contracts=35 名单）；W6 脏树 37 棵表+release 25.306GB（test/ 25.193，151 zip=20.6GB）+回收方案件未跟踪；根卫生 0 字节 4 个／未跟踪 56 项／敏感目录 7+3。
+- **未做/遗留**：A0 助手发行（含 F01/F02 与 ASSIST-LOCAL-DATA 改动）与测试站部署＝另开窗口；W4 合同波（#100 压行根修）未开；W5 阻断（#114/#111/#119/#98/#128、学习验收）未开；W6 清理未授权；D15 解绑需 admin 权限手；D14 甲实现（release-gate 断言"包内不跑 contracts"）未做；旧表 `docs/HANDOFF.md:815`「与方案的偏差登记（待用户追认）」标题留 1 处；`CURRENT_STATUS.md` 未写（单写者=总控长槽，需属主回写）。
+- **红线遵守**：无 reset/checkout/clean/restore/force push；无 `git add -A`；未 push、未部署、未碰生产、未连库；密钥零入报。
+
+## 全量执行交接 v1.0：对抗审查修订 Git 合流、授权分层与发布闭环【2026-10-09｜Codex】
+
+- **目标**：按用户要求，把 10-09 全项目方案经对抗式审查后整理为可执行的全量交接文档和可直接复制给执行 AI 的文本。
+- **方案**：保留旧主件 P-01～P-39 作为证据索引；新编排改为 `S0→D0→I0/I1/I2/I3/I4→F0/A0/E0→K0/K1` 门控 DAG，从测试站已验证基线建立隔离集成线后逐笔回放，避免“先在 develop 提交后仍可快进”的错误前提；拆分决策、治理写账、代码、发行、外部动作和生产六层授权。
+- **修改文件**：新增 `全量执行交接文档_v1.0_20261009_对抗审查修订版.md`；新增 `直接复制给执行AI_全量执行交接_v1.0_20261009.txt`；本条置顶追加。
+- **关键修正**：补齐 W1 对 ISSUES 权威选择和配对语义的漏门；admin 解绑与真实批次改为独立外部动作授权；助手变化必须完成版本、生成物、安装包、SHA、latest/provenance、收据与回滚闭环；合同变更先做四层影响矩阵；验证改为逐命令 fail-closed。
+- **验证**：文档静态检查 PASS——两文件存在、Unicode replacement character 0；必需控制项均命中；旧“先提交后快进”“零风险”“16 项一次签清”和串联命令只报末项 rc 等危险表述未残留；PowerShell 外部命令用 `$LASTEXITCODE`，`Invoke-WebRequest` 改用 `try/catch + StatusCode`。业务测试 **NOT RUN**（纯治理文档任务）。
+- **未做**：未改业务码、`CURRENT_STATUS.md`、`docs/HANDOFF.md` 或总控三账；未提交、push、部署、连库、解绑、执行真实批次或改变积分/生产状态。
+
+## 全项目只读审查两轮＋交付四件文档（执行文档→对抗式审查→全量执行方案→10-09 交接件）；零改码零提交【2026-10-09｜opencode 只读审查手（`mimo-v2.6-flash-free`，未入总控名册）；用户指令"你不要做任何执行先，你的任务就是遍历整个项目去找出问题…使用对抗式审查后给我一个详细的建议文档"，后追加"继续深入探查"】
+
+- **目标**：全项目遍历找问题（含此前"叫做没做的"一切），对抗式审查后交建议文档；本轮**不执行**任何改动。
+- **产出四件（容器根，前两件后两件为新写）**：
+  1. `执行文档_20261009_全项目对账_要调整与未兑现清单.md`——初稿，**已被对抗式审查推翻 7 条（E1–E7），加勘误横幅降级为历史草稿，禁止引用**。
+  2. `建议文档_20261009_全项目对抗式审查_问题清单与处置建议.md`——现行证据层，§0–§11（§11 深挖：换行引入笔、CSV 实证、37 棵脏树、单写者被破、跨树重复施工、contracts 三版、#108 现值、偏差登记 8 行）。
+  3. `全量执行文档方案_20261009_图译工坊问题清单与六波执行计划.md`——**主件**：现场基线 §1、问题总账 30 条 §2、六波任务卡 §3–§10、待拍 14 项 §11、验证命令 §12、红线 14 条 §13、未核实 12 项 §14。
+  4. `AI_MEMORY/HANDOFF-全项目_20261009.md`——套用 10-07 验证过的 8 节结构。
+- **主要修正（相对 10-07/10-08 旧读数）**：测试站＝**`78acaf3e`/3.7.11**（旧值 `b6912e2`/3.7.9 过期）；两线 `78acaf3e…develop`=**28/0** 且 `develop ^78acaf3e`=**0** ⇒ **测试站是 develop 超集**（原判"落后"方向反了）；`EXECUTE-TIMEOUT-1`/`TESTSITE-GATE-1` **非"未开工"而是回包已交、卡在合流**；脏树 **37 棵/412 行**（初写 38/470+ 已在建议文档 §11.3 勘正）。
+- **新发现（均带 `file:line`）**：① 换行根因钉到引入笔 **`9e00cec`**（09-21）+ 位点 `binding-core.ts:1044-1047`，组合路径 `:475` 不过 `structuralTargetText`，守卫自陈"只提示不阻断/已证交付缺陷"（`overflow-estimator.ts:1/:4`、`smoke-reconcile-gate-p2.mjs:309-311`），**挂 HANDOFF 偏差登记 #100 待追认 18 天**，双线 rc=0 ⇒ 已被 3.7.1→3.7.11 十一个版本出厂；② **CSV 40 字截断实证**（解码 5857 报告 data URI：原文列 40 字符 vs 图层列 81 字符含前 60 字），断裂链 `server.js:2175 → v15-runner.js:622 → report-renderer.js:447/:653`；③ 断链交付机制（签发→隔离树→回包→无人合流→HANDOFF 0 命中）四例同族；④ ISSUES 双册分叉 + **`#121` 撞号两义**；⑤ `CURRENT_STATUS` 6 树 / `HANDOFF` 7 树 / `ISSUES` 7 树多树同改 ⇒ 撞号是结构性必然；⑥ `test:contracts` **26/28/33 三版并存无定义**；⑦ `.gitattributes` `export-ignore`×contracts ⇒ git archive 包必失败；`test:*` 122 条中发布闸仅直接调用 4 条。
+- **修改文件**：仅新建 4 件 md + 对 `建议文档_20261009_…md` §11.3 做数字勘正（38→37、470+→412）+ 本条置顶追加。**未写 `AI_MEMORY/CURRENT_STATUS.md`（单写者＝总控长槽，本轮无状态变化且属主不归本手）；未写 `docs/HANDOFF.md`（偏差登记表需 Owner 签字，不代动）。**
+- **测试结果**：**NOT RUN**——本轮为只读审查，未跑 `npx tsc --noEmit`、`npm run lint`、任何 `test:*`、`npm run build`；未 push、未提交、未碰两站写操作、未连库、未动 `总控/`。两站读数均为只读 `GET /api/runtime-provenance`（均 200）。
+- **遗留问题**：① **16 项待 Owner 拍板**（主件 §11，第 7 项"偏差登记 #100 追认"性价比最高，一个签字解锁 4 条）；② 四件文档全部 `??` 未跟踪，换机/他树读不到，需 Owner 决定提交或明确绝对路径；③ `docs/HANDOFF.md` 对三张单仍 0 命中、根 `CURRENT_STATUS` 停 10-07、树 `CURRENT_STATUS` 停 09-20、根 `CHANGELOG` 停 09-13——按状态文件优先级应补记，但均属单写者/属主件，**未动**；④ 未核实项 17 条见主件 §14。
+- **补记（同日 · 并入另一只手的配对取证）**：用户要求"把另外一个对话的内容也一起整理过来"，粘贴了另一只手的**配对 409 `PAIR_MACHINE_LIMIT`** 只读取证。本手做了对抗式复核后并入，**不照单全收**：
+  - **新增 2 条**：`P-38`（两套绑定不对齐：`revoke/route.ts:62,67` 只置 `revokedAt`/清 `accessTokenHash`/递减 `activatedCount`，**不删 redemption 不减 `boundCount`**；用户侧 `git grep boundCount` 在 `auth`/`components` **0 命中**）＋ `P-39`（配对语义两线分叉且整包未回流）。总账 **P-01…P-39 连续 39 条**（原标"30 条"本就不准，已订正）。
+  - **复核订正三处**：① 移交件给的 admin 行号 `:166`/`:630` → 本手实测 **`admin/installs/[id]/route.ts:167`、`admin/users/[id]/route.ts:632`**；② **踩到并规避了三点 diff 陷阱**——`git diff 78acaf3e...develop` 因 `develop ⊆ 78acaf3e` **恒空**，合并面必须用**两点** `git diff 78acaf3e develop`＝**84 文件**；③ 移交件说的"78acaf3 改成严格不顶替"**属实**（`claimNewAssistantMachineSlot`，注释 `A new device must never evict an existing machine implicitly.`），develop 侧则是 `pair/route.ts:140-157` **自动删最旧 redemption 顶替**，两点 diff **79 行**。
+  - **本手新提（移交件未提）**：配对包 **6 文件全在差异面、develop 全无**——新模块 `src/lib/server/pair-machine-limit.ts`（develop 索引 rc=128 不存在）、守卫 `smoke-assistant-pair-machine-limit.mjs`、`pair-completion.cjs`＋其守卫、`pair/route.ts`、`invite/execution-ticket.ts`，引入笔 `4a373ad`(10-08)；`activationId` 字段差异仓内 **0 消费方**；本批 409 **非本机所打**（日志无 `/pair` 失败）；`08:35:29` 那次 200 打的是**生产站独立库**，非同环境解药。
+  - **同步改动**：主件新增 `§2.6`、`W0-15`（止血解绑＋L2 登记，**只签不执行**）、`W0-16`（顶替语义二选一，**直接决定 W1-06**）、`§11` 扩为 **16 项**、`§14` 未核实扩为 **17 条**、`W1-06` 重写机制说明（**快进零冲突，卡的是 develop 未提交改动与 84 文件重叠 ⇒ 必须先提 A/B/C 三批**）；交接件补 `§3F`、`§4` 表扩 10 行、`§5` 补配对"没干"。
+  - 本轮**仍只改了这四件 md**，业务码零改动、零测试、零提交。
+
+
+
+## 测试站访问方式更正：key 门禁取代 IP 白名单（2026-10-08）
+
+- **用户更正**：测试站应使用 key 进入，不设 IP 白名单。已从活动 `tygf-test` vhost 移除 `allow/deny`，在 server 层对所有路径统一要求 key 或已签发的 gate cookie；有效 `?key=` 仅作首次换票并重定向到干净 HTTPS URL。
+- **安全细节**：Cookie 为 HttpOnly/Secure/SameSite=Lax，7 天有效；错误 key 与未授权响应不下发 Cookie；含 `key` 参数的请求不写入 access.log。key 仅存于服务器 root-only 配置 `/etc/nginx/conf.d/tygf-test-gate.conf`（mode 600），未写入仓库；旧 gate token 不再有效。生产 vhost 未改。
+- **回滚点**：变更前 vhost 备份于服务器 `/var/backups/tygf-test-key-20261008/tygf-test.conf`。
+- **验证**：`nginx -t` 成功并 reload，服务 active；公网域名首访为 302 到 HTTPS 干净地址；无 key 的首页、静态资源、下载和 API 均 403；key cookie 下首页/下载/API 为 200、静态路径不再被门禁拦；未授权 403 无 Set-Cookie，key 查询未落 access.log。首版 64 hex key 的配置因 map 哈希桶限制未通过 `nginx -t`，未 reload；改用新随机 key 后验证通过。
+
+## 测试站访问面收口：仅当前测试出口可访问（2026-10-07）
+
+- **目标与处置**：按用户要求限制 `test.tuyigf.com`，只改测试站 Nginx vhost。将来源 IP allowlist 提升到整个 server 块，覆盖首页、静态资源、下载与 API；移除旧 query-cookie gate 及其 403 时仍下发的 `tygf_gate` cookie。生产 vhost 未改。
+
+- **目标与处置**：按用户要求限制 `test.tuyigf.com`，只改测试站 Nginx vhost。将来源 IP allowlist 提升到整个 server 块，覆盖首页、静态资源、下载与 API；移除旧 query-cookie gate 及其 403 时仍下发的 `tygf_gate` cookie。生产 vhost 未改。
+- **回滚点**：原配置备份于服务器 `/var/backups/tygf-test-access-20261007T130258Z/nginx-test.conf`。
+- **验证**：`nginx -t` 成功并 reload；当前测试来源无 cookie 请求首页、下载清单和 runtime API 均为 200；非 allowlist 来源三路均为 403；响应不再下发旧 gate cookie。
+- **遗留**：测试网络/公网出口 IP 变化时需更新 allowlist；精确来源地址未写入仓库。
+
+## 学习信号上传断链接通（394241e）：归属补批次分支＋flush 补 manifestDigest＋4xx 拒绝留痕；消费闸未动【2026-10-07 14:x｜ZCode 主线会话；Owner 转向"验证模式"后第一优先级"修学习断链"】
+
+- **背景**：Owner 拍板从"继续开发"切换"验证是否值得重投入"，排序＝修学习断链→建 Benchmark→真实付费试点；本笔只做第一件。断链三处实测（develop@491808b）：execute-step 两处 flush 均未传 `manifestDigest`（`:1255` 只传 bindingPlanDigest、`:1569` 只传 runId）；`signal-validator.ts` 归属两支都查 `executionAttempt` 而批次 V3 链路不建该模型 ⇒ 批次信号结构性必 400；`learning-signal-client.ts:188` 把 4xx 与成功同等丢弃 ⇒ 断链两端无声。
+- **修法（3 文件 +77/−12）**：① `src/lib/learning/signal-validator.ts` 增 `ownedByBatch` 分支＝`ExecutionBatch` 按 `runId`/`bindingPlanDigest`＋`principalId` 认领（批次字段链实测：`prisma/schema.prisma:1353,1356,1364`）；② `execute-step.tsx:1255` 补 `manifestDigest: v3Plan.bindingPlanDigest`、`:1569` 补 `manifestDigest: submitted.executionManifestDigest`（`V15ExecutionSubmission.executionManifestDigest` 在 `local-assistant-client.ts:871` 非可选；authorize 落库点 `api/local-assistant/attempt/route.ts:137-139`，命中后 attestation 升 `manifest_bound`）；③ `learning-signal-client.ts` 4xx 分态——401/408/429/5xx/网络失败保留重试，其余 4xx 丢弃但累计留痕（localStorage `tygf:learning:flush-rejections:v1`＋console.warn 摘要），返回值加 `rejected`。
+- **红线遵守**：规则消费零改动——`feature-flags` 恒 false 原样，`check-learning-safety` 实测 ok（auto-apply disabled/no runtime consumer/contracts frozen）＝Owner 要的 Shadow Mode 前提（只记录、不自动影响生产）。
+- **验证**：`npx tsc --noEmit` rc=0；eslint(3 文件) rc=0；`test:learning-phase0` ok(10)／`phase1` ok(11)；`test:learning-phase2` FAIL(7)/24 经 stash A/B 实证为**预存环境失败**（基线 491808b 同 7 项逐条一致：13/14/15/16/19/20/23，均落库类），非本笔引入。
+- **遗留**：①批次归属分支与 attestation 升级的**运行态验证待部署测试站**（当前测试站=2a5b980，见下条合流窗记录；push+部署按惯例等 Owner 一句）；②单语言路径归属走 manifestDigest 分支——助手 attempt create 未转发 scanId（`server.js` grep 仅扫描上下文），若将来想让 `attempt.scanId` 真带值需动助手侧（本轮禁动）；③学习信号真正开始落库后，Benchmark（映射准确率/误替换率口径）才有数据源。
+
+
+
+## 5857 方案 A 执行：12 语言 [14]/[42] 定向补替换——100% 收口（重探针零未译残留）【2026-10-07 13:3x｜ZCode 主线会话；Owner"来吧"】
+
+- **做法**：`tmp/recon-probe/gen-patch-jsx.mjs` 从 probe-clean.json 取每语言 [42]（已译拷贝）文本 + ` / 2.8oz`（Owner 英制保留拍板；12 语言 [42] 第三行原本全丢英制＝表格源头瑕疵，本次顺带修正）⇒ 全 ASCII `\uXXXX` JSX（精确等值判别 old14/old42/幂等 SKIP_DONE；坑复用：**DisplayDialogs 枚举在 COM 注入态不可用**，SaveOptions/LayerKind 可用）⇒ VBS DoJavaScript 对 12 个 PSB：改 [14]+[42] → doc.save() → saveAs JPG（quality 12，2187×5545）→ close。改前 12 PSB 备份于 `tmp/recon-probe/backup-20261007/`（各 ~95MB）。
+- **读数**：首轮 12/12 `14:SET|42:SET|JPG_OK`（ES 首验单独跑过）；幂等复检 12/12 `SKIP_DONE`（内容精确等值）；**全量重探针 715 层 errs=0，未译残留热点＝零**（探针口径：564/564 应译单元全部落位）。12 JPG 时间戳 13:33—13:35 全新。
+- **遗留**：①交付 PSB 内 [14]/[42] 译文断行形态沿用 [42] 已交付形态（JP「、」行首/TH 组合字符断行系表格译文原样，未改写）；②specs 区数字行（如 ES `Dimensiones\rdel producto` 层只有标签无数字）待 JPG 目检定案——文本层探针无法判断数字是否在背景素材里；③gen-patch/gen-batch 两生成器的转义塌缩 bug 未修（一次性工具，探针工具链已可用 analyze-final 的容错解析器兜底）。
+
+## 5857 批量探针定案：715 层全量对账——唯一真残留=每语言 1 层（腕带句换行变体缺行）【2026-10-07 13:x｜ZCode 主线会话；Owner"好来吧/确认/全部开始"链】
+
+- **做法**：Photoshop ExtendScript 批量探针（VBS+DoJavaScript 跑 13 个文件＝源稿 PSB+12 语言交付 PSB，各枚举全部文本层 index/layerName/contents/bounds）→ 单文件 JSON 124,553 字符。生成器 `tmp/recon-probe/gen-batch-jsx.mjs:65` 模板漏 contents 闭合引号（`E(contents)+',"bounds":"'`）＋ jsonEscape 引号分支塌缩（`'\"'`→裸引号）⇒ JSON 非法；用结构感知容错解析器（`tmp/recon-probe/analyze-final.mjs`，闭合判据=引号后跟当前解析态期待符）＋仅修 bounds 交界 715 处后全量解析成功，干净件落 `tmp/recon-probe/probe-clean.json`。
+- **读数（13 文件×55 层=715，探针 errors=0）**：①12 语言与源稿**顺序 1:1 全对齐**（同名 10+改名 45，图层名随译文被改属预期）；②**唯一真未译残留＝每语言 1 层**：index[14] 主图 A 画板腕带句，12/12 语言同模式；③同位文字未变其余 6 层＝合法英文保留（"ID 5857"×4、"ID:6795"×2）；④源稿与交付件画布布局不同（横排 vs 竖排）⇒ 名字/位置匹配全失真，必须顺序对齐。
+- **根因（铁证）**：该句在 PSD 有两份**换行不同**的拷贝——[14]=`everyday shooting\rOnly 80.0g`、[42]=`everyday\rshooting Only 80.0g`；JP 表 4 行 wrist 相关（Sheet1 r17/r50/r87/r90）原文形态全是`...security, with a lightweight`（带逗号截断形），与两个 PSD 变体都不相等；按行消费的匹配让 [42] 先命中，[14] 无行可命中→保持英文。与此前漏斗诊断（决策漏斗忽略行+会丢内容照写）同族。
+- **100% 定案**：12×55=660 文本层中 564 应译（扣 6 ID 层+1 引号层+1 空白层×12），563 落位＝**99.82%**；差距=12 单元（1 层×12 语言）。表格译文本身有一处瑕疵：ES[42] 译文`Solo 80,0 g`丢了`/ 2.8oz`（Owner 英制保留拍板）——表格内容质量问题，替换链忠实。
+- **修复路径（待 Owner 拍板）**：A（推荐）＝定向补替换：12 语言 [14] 层用表格已有译文（修正英制保留）一次 ExtendScript 跑完，不动表格不重跑批次；B＝每语言表补 [14] 变体行重跑。工具链沉淀在 `tmp/recon-probe/`（analyze-final/analyze-order/probe-clean.json 可复用为交付验收探针）。
+- **遗留**：①未验证面：译文语言质量（母语级校对）、JPG 导出面、几何版式（布局差属模板预期但未逐画板目检）；②生成器两处转义 bug 未修（本任务只读诊断+一次性工具）；③TASK_LOG 属只读诊断追记，CURRENT_STATUS 未动（单写者纪律）。
+
+## 合流窗 2a5b980：P0 判废时钟分态＋礼部对外文本两笔入主干，全链绿并部署测试站；顺带定案"12 语的墙是出口吞吐"【2026-10-07 10:4x｜总控 4ffb89ca；Owner"行动吧…一起处理然后打包上传到测试站部署"＋"跑一次 12 语真机旁证"】
+
+- **进主干四笔**：`4ddfa59`（礼部 LG-OUTWARD-TEXT-2 R2，门下省 09:31 放行）、`a03b8d0`（兵部 P0 v3：未接走 attempt 改按"批次年龄＋语言数×3 分钟"预算处置，已接走的 5 分钟钟一字未动，新终态码 `ATTEMPT_ABANDONED_NEVER_DISPATCHED`，门下省 09:27 放行）、`60205cf`＋`2a5b980`＝**本手自加、未过复验**（.gitignore 补 3.7.6 可跟踪例外＋把 3.7.6 安装包提交进 git），按「已合入未复验」记账，已投 `149d2185` 补验。
+- **为什么必须自加这两笔**：`c9b0903`（10-06 20:44 的 3.7.6 bump）只补了 `.gitattributes`（另见 `daf5f83`）漏了 `.gitignore` ⇒ `repo:check` 自那拍恒红；而 `repo:check` **不在本地出包链**（只在 `.github/workflows/security-ci.yml:36`／`remote-verification.yml:393`），`release-preflight.cjs:131` 六门里没有它 ⇒ 这条红结构上挡不住出包。补了例外行后安装包变"未跟踪"，而 `check-release-identity.cjs:28` 要文件在场且与 manifest 同哈希、`release-preflight.cjs:105` 要 porcelain 空 ⇒ 唯一同时满足的形＝提交该文件（与 3.7.3 同形，仓内已跟踪 55 枚安装器）。
+- **门禁读数**（干净树 `worktrees/win-gate-2a5b980-20261007`，porcelain 0）：`repo:check` rc=0（policyAssertions=36 未变＝指纹未动）、`release-preflight --target test --allow-detached-head 2a5b980…` **rc=0／190 秒**（六门 0/0/110/26/53/0 秒）、`test:batch-stale-attempt-reaper` rc=0、`npx tsc --noEmit` rc=0、`npm run lint` rc=0（2 既有 warning）、`package-release.cjs test` rc=0（出包后 porcelain 仍 0＝`.gitattributes` 未被改写）。
+- **包与部署**：`tygf-test-2a5b980ce623.zip` 26,572,933 B／SHA-256 4E75AE6D…A322／1,032 条目，**归档里首次带当前安装包**（3.7.3+3.7.6 两枚）。10:18:38 首跑被在飞闸拦（RUNNING_BATCH=1 RESERVED=1，**未设 TYGF_ALLOW_INFLIGHT_DEPLOY=1**）；10:45:30 现读归零后重跑，10:48:21 落定，备份 `deploy-20261007_104603-2a5b980ce623`，未跑库变更。部署后公网 provenance＝BOUND／webCommit `2a5b980…`／expectedAssistantVersion 3.7.6；`/download` 匿名 403 是测试站口令门既有形（生产同页 200）。
+- **顺带定案的第三刀（这才是 12 语真正的墙）**：同拍三组只读测量 ⇒ 站点应用本身 2.6 毫秒（VPS 内 curl 五发）而公网路径 0.76—3.94 秒；按 range 抽同一枚安装包：16 KB＝1.31 秒、**64 KB＝17.44 秒（≈3.8 KB/s）**、256 KB＝1.11 秒、1 MB＝45 秒只回 360 KB、**2 MB＝60 秒 0 字节**；并发六路时 `eth0` 出口实测 781 KB/s 封顶。助手 `assistant-events.log` 今天自陈同族：`[ticket] verify slow hop elapsedMs=22863`、`server request timeout (10s)` 重试、`POST /v1.5/batch/evidence -> 500`＋`server request timeout (60s)`（这些路由是助手自己 serve 的：`download/local-assistant/server.js:4441`/`:5326`，慢 hop 在助手→站点取票路 `:2074`）。⇒ 链＝带宽/吞吐崩 → 助手调用 10—60 秒超时 → attempt 从未接走 → 固定 5 分钟钟开死亡证。**本批只修最后一环的误杀与命名**，前两环一行未改。
+- **改前样本（不可记到新代码头上）**：Owner 10:13:45 起的那批 `cmuxh4gq`＝12 job，10:45:30 收口读数 **1 成 11 败**（JP VERIFIED_COMPLETE，自报助手 3.7.6 ⇒ 他本机已升级；DE FR ES IT PT SV RU TH VI ID MS 全 FAILED_RETRYABLE）。DE 两枚 attempt 的 heartbeat/accepted 全空，分别判 `ATTEMPT_ABANDONED_USER`／`ATTEMPT_ABANDONED_STALE`。该批跑在**没有 P0 修复的旧部 `6fa6bb9`** 上。
+- **新发现一格待修（不归本批）**：provenance 的 `expectedAssistantBuildId` 仍是 `reconcile-loop-20261004-r1`（3.7.4 的构建号），3.7.5/3.7.6 两次 bump 没动 buildId ⇒ attempt 表的 `assistantBuildId` 对这两版不可归因；修法须随下一次真建 exe 一起 bump。
+- **投出**：`总控/待投递指令.md` 三行（总控长记账／兵部把新守卫接进 `test:contracts`＋负控／门下省补验两笔自加件），已改标 `[已投 10:28:18]`，投递窗 10:26:14—10:28:18。读数件＝`总控/回收_20261007/合流窗_2a5b980_门禁出包部署读数_20261007.md`。
+- **11:2x 补两笔账**：①\`491808b\` 已合＝把 \`smoke-batch-stale-attempt-reaper\` 接进 \`test:contracts\`（兵部补丁 sha1 前 7 \`a981311\`、门下省 10:55—11:01 放行；本手实测干净树 detached @ \`491808b\`、porcelain 0、**26 段 rc=0／76 秒（暖）**，末段回显 \`all invariants passed\`）⇒ **本窗合流＝五笔**，上面"四笔"那句自此过期；负控那一拍仍只兵部自报。②按总控长 11:1x 两问补了「号轴」（报告面 \`cmuxiaw…\`＝\`ReviewSnapshot.id\`，不是批次号）与「三轴」（624 层／480 行／492 计费单位互不通分，**132 非漏计**，公式 \`src/lib/billing/batch-v3.ts:55-82\`；逐行单位明细盘上取不到＝未核实），判定落在 \`总控/回收_20261007/12语改前改后对照_20261007.md\` ⑥⑦节。③**当场更正我自己那句"算不出"**（总控长指出后现读复证）：`computeBatchLanguageBilling`（`src/lib/billing/batch-v3.ts:85`，字段 `:40`—`:42`）**本来就返回每行每语的表**，报价路径原样回给调用方（`src/lib/server/execution-batch.ts:254-255`／`:279-280`，浏览器另有两处自算 `execute-step.tsx:611`、`v3-batch-flow.ts:169`），库里只留 `quotePayloadHash` ⇒ "哪一行得 2 单位"是**没落盘**、不是算不出，取证单动作＝把已有 breakdown 落一份（属合同变更纪律面＝四层同步＋fixture），成本从"一天"降到"一笔小改＋fixture"；更正已回写进对照表⑦节与《合流窗》⑪节。
+- **推送状态（12:44:25 更新，覆盖本节初稿的"未做 push"）**：`git push origin develop` **已做**＝纯快进 `6fa6bb9..491808b`、**PUSH_RC=0**、推后 `ahead=0`、porcelain 仍 1（只剩受保护现场），并经 `git ls-remote origin refs/heads/develop`＝`491808ba1560…` 独立证实远端到位。**授权链**＝Owner 先对总控长会话说「先试着把那 5 笔提交推上去」→ 转述到本手时**不采信**，回本会话向 Owner 求到一句「推（那句是你说的，我认）」才动手；`main` 未碰、不发生产、不重部（测试站已跑 `2a5b980`＋接线笔的运行态）。仍未做：发生产、强部、`--apply` 类删除、动 `总控/.locks/`、enable cron、代动 Owner 本机 PS 与助手（只读了他的日志与库）。
+- **遗留**：①**改后样本已出＝12 成 0 败**（批 `cmuxib7rg0` 10:47:00 建、11:11:23 `SETTLED`，40 行／492 单位全扣，逐语 85—105 秒，本机落 12 枚 `.psb`＋12 枚 `.jpg`＋1 份报告 HTML；详表 `总控/回收_20261007/12语改前改后对照_20261007.md`；三条边界必带＝两批语种集合不同、新批首枚 TH attempt 死在我 10:48 的 pm2 重启上、全库 `NEVER_DISPATCHED` 0 命中＝新钟未被真用过）；②旧批 `cmuxh4gq` 由 reconcile 于 11:05:03 收为 `STALLED`，冻结 468⇒实扣 39＝按实交付；③新守卫仍未入任何链（已派兵部）；④出口吞吐那一刀挂起待 Owner 拍（这次没咬人≠已修，读数在《合流窗》件⑦节）。
+
+## 助手 3.7.6＋Web `6fa6bb9` 部署：派发链路云端调用重试＋批次运行期清扫让路——治本两件上线【2026-10-06 20:5x｜ZCode 主线会话；Owner"继续"】
+
+- **10-05 深夜批 `cmuuz1xvw0` 复盘**：6/12 交付（ES/ID/IT/MS/NL/TL，41 单位=完整表增量绑定生效 ✓），6 语言（FR/JP/PL/RU/TH/VI）败于**云端调用间歇超时族**（batch/execute 未授权 ×2、READINESS_SCAN_FAILED 120s、清单绑定未完成、证据超时）——T5 v2 的 abandon→:r2 痕迹在（RU/TH 双 attempt）但慢窗口贯穿整批。
+- **助手 3.7.6**：证据拉取 3 次重试（2s/4s 退避，网络/超时/5xx 重试、4xx 确定性拒绝不重试）——票据验证已有预算内重试不动。版本全位同步 3.7.6。
+- **Web 减载**：批次运行期（创建后 30 分钟内）in-app 清扫与 batch reconcile 路由让路（`db.executionBatch.count(RUNNING<30min)>0 → skip`）——1 核服务器批处理期间饱和的重要减载项。
+- 部署：`6fa6bb9` 六门 PASS → 包 SHA 4B4A506C…931C → rc=0，备份 `deploy-20261006_205917-6fa6bb9f5f3a`，provenance BOUND/6fa6bb9…、expectedAssistantVersion **3.7.6**、/downloads/tygf-engine-setup-3.7.6.exe=200；push GitHub（c9b0903 白名单/版本、6fa6bb9 规范形…全量）。
+- **协同事故两起（告知口径）**：①`git add -A` 又裹入礼部/并行会话 WIP（c9b0903 的 16 文件含 download layout/site config/privacy 页/第三方清单文档——tsc/lint 已过、无损但流程违规，已自记过）；②WORKTREE 意外 cherry-pick 7b5355e 已 abort，.gitattributes 工作树噪音单文件 restore。
+- Owner：托盘升级助手 3.7.6 → 重置工作台 → 完整表重跑 6 个失败语言 → 对账单。
+
+## 交接文档交付：`AI_MEMORY\HANDOFF-5857-100pct-20261005.md`（给下一个 AI）【2026-10-05 2x:x｜ZCode 主线会话；Owner"给我一个交接文档"】
+
+- 内容：目标与验收五条、已完成清单（Web/助手/工具链/10-05 实战）、下一步操作序列（Owner 与 AI 分工）、立案五条、关键路径速查、十条坑与纪律、历史结论存档（防翻案）。
+- 下一个 AI 的首动作：Owner 重传 75 行表并重跑 → 对最新批次出《逐层对账单》验证归零 → 残留≠0 时按对账单逐层出口循环。
+
+## "缺一个译文"定案：composeResidual 缺 speclines 分支＋DRAFT_NEW 缺 JP 条目——修复重出（75 行全表零空译文）【2026-10-05 2x:x｜ZCode 主线会话；Owner"缺一个译文，现在无法运行"】
+
+- Owner 换表后无法运行=巨型规格层（Product/Package Dimensions+Weight+Material 五行合并层）译文为空——**gen-tables-final 的 composeResidual 缺 'speclines' 分支**（该 kind 落到 `return ''`）；另有 DRAFT_NEW 缺 Reliable/Aluminum/Multiple 的 **JP 条目**（Aluminum 的 JP 我误记已加，grep 实证 0 处）。
+- 修复：①composeResidual 补 speclines 分支（逐行 Label: values → 标签查表+数值原样）；②DRAFT_NEW 补 JP 三条（信頼性と耐久性/アルミニウム合金…/複数の取り付け方法）；③Aluminum JP 补入。
+- 重出 12 表（75 行/表）+ 全表空译文复扫=**0** ✓（此前的验证盲区：只查原文覆盖未查译文空值——已补）。
+- Owner：重新上传 `完整表-20261003\` 12 份表 → 重跑。预期：12/12 VERIFIED、40+13 层落位、残留=’垃圾层（PS 删）。
+
+## 12 份完整表 v2 重出（75 行=URL+空行+67 数据行）并通过产品解析链终验【2026-10-05 2x:x｜ZCode 主线会话；Owner"全部开始"续】
+
+- **追加执行**：`append-final.mjs` 把 13 追加行/语言 并入 `完整表-20261003\` 的 12 份表（幂等去重，+13/表）。
+- **首次产品解析链全量验证暴露二层问题并修复**：①我此前验证用"首行键"，多行层源文本（整段含 \r 与逗号）实际缺失未被发现——验证键必须用**逐字全文**；②生成器曾把 43 原行映射成空单元格（数组/对象混用）——`gen-tables-final.mjs` 干净重写修复。
+- **终验（12/12）**：产品解析链（dense+sheet_to_csv+parseCsv）每表 rows=67 数据行、主表 46 行覆盖缺失=0、13 残留层覆盖缺失=0。**残留层键含撇号变体需撇号容差比对**（it s vs it's）——对账时已用。
+- 工具沉淀：`drafts-5857.mjs`（19 行草稿模块化）、`gen-tables-final.mjs`（最终生成器）、`compose-append-v3.mjs`（拼合器）、`diag-labels.mjs`。
+- Owner：从 `完整表-20261003\` 重新上传 12 份表（**新的 75 行版**，评审核对 67 数据行）→ 重跑 → 我出最终对账单（预期残留=0）。
+
+## 13 层×12 语言补表行全部生成（156 行零空译文）→ `F:\改语言\测试\追加行-最终\`【2026-10-05 2x:x｜ZCode 主线会话；Owner"确认"】
+
+- **拼合器 v3**（`tmp/recon-probe/compose-append-v3.mjs`）：营销句=主表连续行译文按序拼合（JP=主表行 JP 译文；其他=语言表行→DRAFTS 草稿逐级兜底）+按层内断行比例切分（词边界）；规格行=标签查各语言表已有译文+数值/英制原样；'垃圾层不在补表（Owner 拍板 PS 删层）。
+- **验证**：156 行（13×12）零空译文 ✓；JP 全 13 行拼合正确（製品寸法/パッケージ重量/信頼性と耐久性/アルミニウム合金… 全部落位）。
+- **Owner 操作**：`追加行-<语言>.xlsx` 各 13 行（A 列=设计稿逐字原文，B 列=拼合译文）追加进对应语言的完整表 → 重跑该语言 → 我出最终对账单（预期可见区英文残留=0，仅剩 ’垃圾层若未删）。
+- 注意：①追加行的 B 列部分断行为比例切分（日语文本无词边界，个别断点建议母语顺一眼）；②英制数值按拍板保留原样。
+
+## 10-05 批 `cmuunbx010` 最终对账：12/12 全 VERIFIED、40/40 期望全落位零错绑；残留 13 层=表行粒度与设计稿合并层不一致（补表行已给出）【2026-10-05 1x:x｜ZCode 主线会话；Owner"我的运行完了"】
+
+- **首个完整表全量批次**：12 语言全 VERIFIED_COMPLETE、每语言 28 单位（旧表 20→28=完整表增量绑定生效）、批次 SETTLED 零失败、零崩溃（助手 3.7.5 稳定）。
+- **JP 最终对账**（探针 55 文字层 × 期望 40）：替换 34＋按原文 6＝**40/40 全部落位零错绑**（31→40=补的 19 行里 9 行新命中）。期望未落位=0。
+- **残留 13 层**（全部是设计稿"合并层"：标签+数值+英制并排、断行变体、多句合一——其源文本与语言表行集不同形）：Package/Product Dimensions+Weight 含英制 4、Capture Moments/From city walks/Adjustable wrist strap 断行变体 3、Reliable & Durable、Aluminum alloy、Multiple Mounting Options 3、'垃圾层 2（建议删层）。
+- **收尾方案（13 行补表，译文可从现有行机械拼出）**：每行 source=设计稿层文本逐字（探针已抓全文）、target=该语言既有行译文按层内断行拼合＋英制保留。Owner 确认后我生成 12 语言补表行（或并入完整表 v2 重出）。
+- 立案不变：云端饱和（清扫暂停/VPS）、重投路径 serverUrl 陈旧值、对账器产品化进助手。
+
+## 完整表生成器 bug 定案（我的）＋12 份修复版重出并通过产品解析链验证【2026-10-05 1x:x｜ZCode 主线会话；Owner"还是只有18行，用的是你重置后的表格"】
+
+- Owner 用我生成的完整表跑批，评审仍只有 18 行——**产品解析链复现实锤**：`sheet_to_csv` 对我生成的 xlsx 只出 19 行（追加块），原 35 行全丢。两级根因：①生成器把 base 数组（43 个数组行）与追加对象行混用，`wsData` 映射时原 43 行变成 `[undefined,undefined]` → 空单元格（文件 !ref 声称 62 行，实际只有追加 19 行有内容）；②`parseCsv` 无条件把第一行当表头吃掉——原表首行是 URL（无害），我的文件首行是真实数据（Street Photography Cage Kit 被吃）。
+- **修复**（`gen-complete-tables.mjs` 干净重写 v2）：base 统一对象形态；输出=[原表全部行原样保留（URL 行当无害表头＋35 数据行＋空行）]＋[19 追加行]＝62 行。
+- **产品解析链验证（dense+sheet_to_csv+parseCsv 全链，12/12）**：每表 rows=54（URL 行被当表头吃掉属设计内）、语言列识别正确（fallbackLanguage）、**主表 46 行覆盖缺失=0**。ALL-12-VERIFIED。
+- 教训：生成物必须用**产品自己的解析链**验证，不能用生成器同源的 SheetJS 读回（读写同源会互相掩盖）。
+- Owner：重新从 `完整表-20261003\` 上传（文件已就地重生成，文件名不变）→ 评审表核对 54 行 → 重跑 → 对账单。
+
+## 10-04 深夜 12 语言批 `cmutz5n280` 定案：用错表——拿 18 行补表清单当完整表用；云端慢响应仍损 7 语言【2026-10-05 0x:x｜ZCode 主线会话；Owner"还是不行"】
+
+- **冻结快照实锤**（ReviewSnapshot 216 行=12 语言×18 行，rowIndex 1-18）：批次用的表=**补表清单的 19 行**（且首行 Street Photography Cage Kit 在 Owner 复制时丢失）——原 35 行不在表里！于是：之前正常绑定的 25 层全部"未覆盖（不在译文表）"（Cage × 1、ID 5857、Multi-functional Operation 等核心行全残留），而之前被排除的复合句层反而绑上了（决策已清+composite 正常）——**绑定引擎双向验证再次通过，问题 100% 在表格数据**。
+- 交付 5 语言（ES/FR/ID/JP/TL 各 11 单位）＋7 语言 FAILED_RETRYABLE：失败码=**batch/execute 未授权 ×2、READINESS_SCAN_FAILED 120s、REVIEW_EVIDENCE_UNREACHABLE**——云端慢响应族（1 核服务器批处理期间饱和：心跳+回执+证据+票据验证+10 分钟清扫并发）。T5 v2 实战：MS 的 abandon→:r2 重试痕迹在，但云端慢响应仍击穿。
+- **Owner 修复路径（零工程）**：改用 `F:\改语言\测试\完整表-20261003\` 文件夹的 12 份完整表（54 行=原 35+补 19，已合并），上传后核对评审表行数=54 再跑。18 行的补表不是完整表。
+- **立案（系统性）**：①批次运行期间暂停 10 分钟清扫/对账 sweep（给云端减载）；②VPS 升配评估（1 核在批处理期间饱和：票据验证慢跳 5s、证据 120s 超时频发）；③助手 evidence/readiness 拉取加 retry（随下次发版）。
+- Owner 疑问"之前都不会"的答案：之前的表 35 行虽缺 19 行但覆盖了主要层（所以"看起来行"）；现在换了 18 行表把主要层也丢了——两头都没用过"合并后的 54 行完整表"。
+
+## 主副图 JP 首次全量对账：28/28 落位零错绑；残留 6 层=4 英制数值+2 表稿微差句（补表行已给出）【2026-10-04 2x:x｜ZCode 主线会话；Owner"好了你去看看吧"】
+
+- Owner 用完整表跑了**主副图**设计的 JP 单语言（V1.5 路径，Web=ec65bdb 最新部署 ✓，产出 `F:\改语言\ 5857\(B级)Amazon-5857-主副图-8-祝叶子__20261004_231815999\`）。
+- **对账**（探针 37 文字层 × 期望 28）：替换 22＋按原文 6＝**28/28 全部落位，零错绑零丢失**（绑定引擎在完整表下工作正常——对账闭环验证通过）。
+- 残留 6 层：①英制数值并排 4 层（4.8oz/2.8oz/5.7in/2.5in——表只给公制，内容取舍待 Owner）；②营销句 2 层（From city walks…／Adjustable wrist strap…）——**日文译文在主表里都有**，但设计稿层文本与主表行集三重不一致：断行位置不同（层 2 行 vs 表 3 行）、撇号缺失（层"it s" vs 表"it's"）、多行合并+逗号（层把 Only 80.0g 并入）。composite 逐行拼接要求逐字相等故未命中。
+- **解法（对账闭环的标准出口）**：补表行=设计稿逐字原文（整行，含 \r）+整句译文——1:1 必命中，无需放宽匹配（0921 纪律：低置信不自动写）。已给出 JP 两条补表行；A+ 图同款两句同理。
+
+## 3.7.4 崩溃循环定案（我的 bug）＋3.7.5 修复版发版＋本机静默安装【2026-10-04 20:3x｜ZCode 主线会话；Owner"本地助手未运行"】
+
+- **崩溃根因=我的 bug**：回执重投改基址时把 `cloudBase` 声明放在 try 内，而 catch 的“疑似本机地址”判定引用了它——**投递失败时 catch 自身 ReferenceError 掀翻引擎进程**，托盘不断重启＝Owner 所见“本地助手未运行”。修复=声明提升到 for 循环体 try 外（行级 splice 一次切错已还原重做）。
+- **3.7.5 发版全链**：build → ISCC → release:assistant（SHA 529F15AC…447C）→ Web 部署 `ec65bdb`（BOUND/ec65bdb…，expectedAssistantVersion **3.7.5**，/downloads/tygf-engine-setup-3.7.5.exe=200）。3.7.4 安装包撤下。
+- **本机**：3.7.5 静默安装完成，引擎（PID 41684）稳定存活两次采样一致、无 ReferenceError。
+- **发版链新坑**：①release:assistant 拒绝同名不同 SHA 覆盖（完整性保护）→ 升版本号走 3.7.5；②packager 自动重写 .gitattributes 白名单为“上一版+当前版”规范形并要求提交；③服务端 identity 检查在候选目录找安装包，zip 不含 exe——deploy 脚本已补 staging 行（从现网 downloads 复制）。
+- **新发现（立案不阻塞）**：回执重投用 `serverBase(cfg)`=配置文件 serverUrl，本机配置疑似 localhost:3000 陈旧值（ECONNREFUSED ::1:3000 实锤）——主链路用请求级 cloudBase 不受影响；重投积压 11 条的清理与配置修正另案。 Owner 流程：硬刷新 → 重置工作台 → 完整表 → 预扫描 → 跑日语 → 对账单。
+
+## 助手 3.7.4 发版＋Web 部署完成：忙锁自动释放/provenance 重试/回执重投/报告判词全部上线【2026-10-04 17:0x｜ZCode 主线会话；Owner"好继续吧"】
+
+- **助手 3.7.4**（server.js 三修＋版本全位同步）：①安全锁停滞超 10 分钟自动释放（preparation_scan 除外；stalledSinceMs 状态机，setBusy 双向复位）——忙锁三次人工重启兜底成历史；②fetchWebRuntimeProvenance 3 次尝试（2s/4s 退避）；③积压回执的遗留回环 cloudBase 改用当前 serverBase 重投（192 条积压可出队）；④VERSION 3.7.3→3.7.4。
+- **发版链**：build-engine.bat（pkg+托盘+自检全过）→ ISCC（用户目录 Inno Setup 6）→ release:assistant --allow-unsigned-beta（SHA 27A4FD52…D59F）→ scp 到 /var/www/tygf-test/public/downloads/。
+- **Web 部署 `93be57b`**：provenance BOUND/93be57b…，expectedAssistantVersion **3.7.4**，health 200，/downloads/tygf-engine-setup-3.7.4.exe=200。push GitHub（develop tip 93be57b）。
+- **发版链踩坑留痕**（下次直接照抄）：①安装包 exe 被 .gitattributes export-ignore——packager 会自动重写白名单为"上一版+当前版"规范形并要求提交；②服务端 identity 检查在候选目录（tygf-test-next）找安装包，而 zip 不含 exe——deploy 脚本已补 staging 行（从现网 downloads 复制）；③preflight 的"HEAD 必须是 develop tip 后代"规则=并行会话推进后须用最新 tip 部署；④gitattributes 工作树噪音用单文件 restore（我自己的操作噪音，非用户工作）。
+- **并行会话协同**：`git add -A` 意外把礼部 cleanup-learning-evidence.mjs 的 WIP 提交进 5656f94（无损失，反而已版本化）——已告知口径：同 worktree 双会话提交必须逐文件 add。
+- Owner 侧：①托盘检查助手自动更新到 3.7.4（或从 /downloads/ 重装）；②重置工作台→完整表→预扫描→重跑日语→对账单。
+
+## 10-04 批 `cmutdiv8h0` 取证＋流程死亡 bug 修复：createAttempt 纳入 try → `f1bff4c` 已部署【2026-10-04 16:0x｜ZCode 主线会话；Owner"继续"】
+
+- 批次（10-04 13:21，同一设计稿）异常：**只有 TH 一个 attempt**（VERIFIED 但仅 10 对象/11 单位——完整表应为 ~50），其余 11 语言 PENDING，13:23:07 `ATTEMPT_REQUEST_CONFLICT`（"请重新发起一次明确重试"）后**整个流程死亡**：不走 finish、不走 T5、不结算，烂到 reaper 收口。
+- **流程 bug 坐实并修复**（`f1bff4c`）：主循环 `createAttempt` 在 try 之外——第二个语言的 createAttempt 撞跨批文档语言互斥（13:23 时点持有者证据已随结算释放 NULL，无法回溯是谁；立案：冲突时记 winner 指针进日志/funnel）即 `throw` 掀翻全流程。修复：纳入 try——语言级失败记 failed 继续（T5 pass abandon 后重建），系统性失败 break 收口。
+- **另一个关键判断**：TH 只有 10 对象说明**该批用的是旧绑定计划**——换表后预扫描一直失败（忙锁三次卡死），绑定计划从未用完整表重建。用户的完整表大概率没真正进过绑定。
+- 部署：`f1bff4c` 六门 PASS → 包 → rc=0，备份 `deploy-20261004_160114-f1bff4ce3b81`，provenance BOUND/f1bff4ce…，health 200；push GitHub。连同此前 `7b5355e`（重置工作台命名+收尾释放陈旧授权）与 `08d0cb1`/`0112c49` 均已上线。
+- Owner 操作序列（重要：换表后必须重扫成功才有新绑定计划）：硬刷新 → 「重置工作台」（两击确认，现在任何状态可见且不被陈旧授权拦截）→ 上传 `完整表-20261003\` 的表 → **预扫描（这次能启动）** → 重新对账绑定 → 跑日语 → 我出对账单。
+- 待办不变：助手发版（provenance 重试+T2 判词+忙锁自动释放）；冲突 winner 指针日志立案。
+
+## 工作台减法第一片 C1：删 39 个死文案键＋去两套重复渲染（L2 已建单，本地提交未 push）【2026-10-03 23:5x｜礼部 `c8e3fb1d`，总控长派工 WB-REDUCE-C1】
+
+- **目标**：按业务仓 Product Drift Guard 走 L2，落地"清爽工作台"C 案删除清单的零风险第一片——删 workbench 段死文案键、去掉卡头步骤数字徽章（4 处）与步内「上一步」（2 处）两套重复渲染。**一个用户能力都没删**：导轨与底部操作条各保留一套，被删的两枚按钮与底部条动作逐字等价（同一 `goToStage` 目标）。
+- **方案与文件**：`src/config/siteContent.ts`（−39 键）、`workbench-view.tsx`（−40 行：4 枚徽章 + 2 处 `onPrev` 传参）、`review-step.tsx`／`photoshop-step.tsx`（各 −7 行：按钮块 + `onPrev` 接口/解构 + 孤儿 `ArrowLeft` 导入；卡尾 `justify-between`→`justify-end` 保住余下动作右对齐）、`execute-step.tsx`（提交态硬编码串改回引用 `copy.execSubmittedWaiting`／`copy.execSubmittingGeneric`，字面不变）；新建 `changes/active/20261003-workbench-reduction.md`；`product-specs/workbench-flow.md` 追加 WF-010（纯增量 +9/−0）。
+- **原因**：双套指示/双套导航是常驻层噪声里最便宜的一片；同一句话在 `siteContent.ts`、`workbench-terms.ts`、组件硬编码三处并存是"改了不生效"的根因（屏幕值 `site-copy.ts:43` 由库里 override 决定）。
+- **判据前置（重要）**：0.1 只查到 `siteContent.ts` 的**文件内容**断言（`smoke-beta-application-contract.mjs:30-36`、`smoke-execute-step-reset.mjs:16`、`smoke-workbench-ui-contract.mjs:10`），**没有** DB↔文件等值比较或 bootstrap 迁移 ⇒ 未触发停手；39 个键逐个 `git grep -rw` 探针确认 src 侧 0 引用（改后 workbench 段 263→224 键、0 引用键数＝0）。
+- **未做（判据 4.3 给不出等价证据，逐条进变更单 §6）**：`photoshop-step.tsx` 的「下一步」（步内启用条件 `ready && psdReady` 比主按钮跳 delivery 的条件宽，存在"步内可点而导轨锁 delivery"的状态）；`execute-step.tsx` 的「上一步」（`disabled={running}`＝执行中禁止离开，底部条无此防护）；`csv-step.tsx:749` 前进钮（第 1 步 `prevStage` 为 null，8 态覆盖证不齐）。
+- **测试结果（真实 rc）**：`npx tsc --noEmit` rc=0；`npm run lint` rc=0（2 warnings，0 errors）；`test:workbench-ui-contract`／`test:execute-step-reset`／`test:workbench-flow`／`test:smart-review-cost-guard`／`test:content-studio-v1`／`test:batch-row-contract`／`smoke-beta-application-contract.mjs`（直跑文件，npm 无该名）全 rc=0；`git diff --check` rc=0，改后 5 文件 loneLF=0（CRLF 保持）。
+- **遗留**：① `scripts/smoke-execute-step-reset.mjs:16` 只核文件默认值、不核 DB override ⇒ `7b5355e` 那次改名实际未上屏，改它归 WB-TAP-GATE；② 判据 4.3 未覆盖"步内按钮带防护而底部条没有"的反向情形（建议补文）；③ 未 push、未部署 ⇒ 屏幕未见变化；④ `AI_MEMORY/CHANGELOG.md` 两份（根 09-13／develop 09-21）均长期未更新，本片非架构级故未写；`CURRENT_STATUS.md` 属主＝总控长，代写区规则限"部署门禁级紧急"而三账禁碰 ⇒ 本手不写，入账由总控长自定。
+
+## "没有重置按钮"死格修复：idle+lastBatchId 也显示清空按钮 → `13fdb50` 已部署【2026-10-03 19:5x｜ZCode 主线会话；Owner"没有一个重制的按钮"】
+
+- 死格坐实：批次 STALLED 收口后重载恢复到 idle，上一批记录（BatchResultPanel）留屏，但底部「清空现场」与「重新配置」都只在 completed/failed 渲染——**该状态零重置出口**（违反"每格必须有可见出口"判据）。
+- 修复（`235dc70`）：footer 清空按钮条件扩为 `(completed || failed || lastBatchId)`；handleFullReset 自带两击确认与未结算拦截（语义不变）。
+- **流程教训**：`smoke-execute-step-reset.mjs` 是重置按钮的源码契约件，改渲染条件必须同步契约（正则断言 `/{(completed \|\| failed) && \(/` → 加 `|| lastBatchId`）；首跑 preflight 即被该契约拦下——**契约件起了作用**。部署树 preflight 必须在 detached 干净树跑（develop 树有并行会话未提交件会被"working tree must be clean"拦）。
+- 部署：`13fdb50` 六门 PASS → 包 SHA EF4E41AB…16B0 → rc=0，备份 `deploy-20261003_195702-13fdb50bcfa9`，provenance BOUND/13fdb50…，health 200；push GitHub（08d0cb1..13fdb50）。
+- Owner 操作：**硬刷新工作台**（拿新 bundle）→ 执行阶段底部出现「清空现场」→ 两击确认 → 全工作台复位 → 用完整表重跑。注意：跑完/失败后的"重新配置"照旧；"清空现场"现在任何有历史批次的时刻都可用。
+
+## 预扫描启动失败=助手忙锁第三次卡死：清场重启解锁；忙锁无自动释放立案【2026-10-03 19:4x｜ZCode 主线会话；Owner"预扫描启动失败了"】
+
+- 实测：`/v1.5/preparation/scan → 409 ASSISTANT_BUSY` 连续四次（18:40-18:44）；engine.log `[busy] 进度心跳超时，安全锁保持` 每 5s 刷屏——**执行引擎的安全锁因心跳超时被保留且无自动释放**。诱因=当日批 JP/MS/RU 派发失败后引擎在飞状态未闭合。本机同时存在 4 个 Photoshop 实例（含此前"HasExited"实为挂起的对象）加剧 COM 混乱。
+- 处置（9/26 同款 playbook）：杀 4×PS＋助手＋引擎（全部 KILLED）→ 重启助手（引擎自动拉起新 PS 单实例）→ 重启后 busy 告警归零（新实例启动对账：192 条历史回执 journal 不可重建保持未知，由结算闸/裁决处置）。
+- **新立案**：①助手忙锁心跳超时后无自动释放（应 N 次超时→释放锁＋attempt 判败，对齐云端 reaper 语义）——随助手发版捎上；②回执重放 worker 打 `::1:3000`（ECONNREFUSED，cloudBase 配置错误或 IPv6 回环解析错）——192 条回执积压与此相关（#71 族续涨）；③引擎应复用/回收空闲 PS 实例（每批残留实例累积）。
+- Owner 即时：重试预扫描（锁已清）。
+
+## 修正：完整表文件名破坏语言缩写识别——改回原文件名＋全行保留重生成【2026-10-03 19:x｜ZCode 主线会话；Owner"表没有译文国家缩写读取不到"】
+
+- Owner 实测首版完整表读取不到语言——根因：**产品的语言识别依赖文件名开头的缩写**（"ES 西班牙-5857.xlsx"），我生成的"完整-ES …"破坏了该模式；且原始表本无文件内表头（JP 主表的 EN/JP 表头是特例），加表头反而会被解析成数据行。
+- 修复（`gen-complete-tables.mjs` 重生成）：输出文件名=**原文件名**（放 `完整表-20261003\` 文件夹区分）；`parseRows` 全行保留（URL 行/空行原样）；追加 19 行到表尾。每份 62 行（43+19）。URL 行在 XLSX 往返中丢失——产品解析本将其作缺列行跳过，无功能影响。
+- 首版"完整-*.xlsx"已删除。README 已更新（认准文件夹+文件名说明）。
+
+## 12 份完整翻译表生成交付（35+19=54 行/表，AI 起草 11 语言新译文）【2026-10-03 18:x｜ZCode 主线会话；Owner"你先帮我整理一份新的完整翻译表格"】
+
+- 产出：`F:\改语言\测试\完整表-20261003\完整-<语言>-5857.xlsx` ×12（每份 54 行=原 35+新增 19）＋README.txt。JP 新增行译文自动抄主表；其余 11 语言 19 句新译文由 AI 起草（西/法/意/荷/俄/印尼/波兰高置信；泰/菲/马来/越南建议母语复核）。
+- 生成器：`tmp/recon-probe/gen-complete-tables.mjs`（SheetJS；翻译字典 DRAFTS 可迭代修订后重跑）。
+- 使用路径：换表上传 → 琥珀条清旧决策 → 重跑 → 对账器出逐层对账单验证归零。
+- 注意：新增 19 行译文为 AI 草稿，正式出图前建议母语复核；' 垃圾层与英制并排规格层本轮对账仍会列为覆盖外（需按设计稿实际断行补行或删层，对账单会逐层点名）。
+
+## 行集覆盖校验器落地：12 语言表共同缺 19 行——"译文有没有"问题全量定案＋补表清单交付【2026-10-03 17:x｜ZCode 主线会话；Owner"好来吧"】
+
+- **覆盖矩阵**（`tmp/recon-probe/coverage.mjs`，SheetJS 解析，looseKey 归一）：主表 46 行 vs 12 语言表各 35 行——**12 表共同缺失完全相同的 19 行内容**（+1 行"EN"表头伪差异）：全部是**多行句子行**（Street Photography Cage Kit 2 行、Ergonomic Grip 2 行、Carry Light 2 行、Adjustable wrist strap 3 行、The built-in 1/4"-20 3 行、Capture Moments 2 行、From city walks 3 行）＋In the Box＋Specifications。12 表出自同一 35 行模板，主表新增的这些行从未同步。
+- **与残留 24 层完全对上**：A 类（表有整行被排除）+ C 类（主表有语言表漏）+ D 类结构变体（主表拆行行）全部落在缺的 19 行里；另有各语言表 10 行主表没有的行（Package Includes 等措辞差异，不阻塞）；identity 行 6-9/表正常。
+- **补表清单已交付**：`F:\改语言\ 5857\补表清单_20261003.md`（19 行原文逐字照抄＋主表日语译文参考；JP 表可直接抄，其余 11 语言需补该语言译文——翻译工作量=19 句×11 语言）。
+- **100% 路径收口**：①补 19 行×12 表 → ②琥珀条清旧排除决策 → ③重跑（T5 v2 已部署自动重试）→ ④对账器核对残留归零（composite 绑定自动处理多行拼接层）。产品化待办不变：对账器+表覆盖校验进助手/扫描阶段（P1，随助手发版）。
+
+## 残留 24 层"译文有没有"终极分类（级联对账：语言表→主表，全文比对）【2026-10-03 16:x｜ZCode 主线会话】
+
+- 方法：探针枚举交付件（今日 ES，55 文字层）→ 级联匹配——①绑定目标 ②语言表(ES)单行 ③语言表 composite 拼接 ④主表(5857a+，46 行)单行 ⑤主表拼接 → 分类 A~E。分类器=`tmp/recon-probe/classify-residuals.mjs`（修正过两处：内联字符串 xlsx 无 sharedStrings；比对必须全文、预览截断会造假 C3）。
+- **ES 55 层终判**：写入成功 25＋按原文 6（零错绑）；残留 24 = A 语言表有整行译文但被旧决策排除 **2**（Ergonomic Grip ×2）＋ C 主表有行而语言表漏行 **7**（In the Box ×2、Specifications ×2、Street Photography Cage Kit 拼接 ×2、Carry Light Hold Secure 拼接）＋ D 主表也没有·需新增行 **15**（Product/Package Dimensions/Weight 标签+数值+英制并排 4、Capture Moments/From city walks/Adjustable wrist strap 断行或标点变体 6、Reliable & Durable、Aluminum alloy、Multiple Mounting Options 3、' 垃圾层 2）。
+- **根因定案**：12 个语言表各自维护、行集不一致（ES 表 35 行 vs 主表 46 行）——"译文有没有"的答案按语言而异；残留主体＝**表侧缺口**（语言表漏行＋行粒度与稿不一致＋真缺行），非替换引擎缺陷。
+- **解决路径**：①行集覆盖校验器（主表 vs 12 语言表 diff 矩阵，一次性脚本可出全部缺口）；②补表（C 类从主表同步行、D 类新增行+新译文）；③琥珀条清旧排除决策；④重跑→对账归零。产品化：表覆盖校验应前移到扫描阶段（不要等执行完才发现）。
+
+## 10-03 批 `cmurx5skn0` 取证＋T5 v2 落地部署 `08d0cb1`：身份校验间歇超时为新失败码；互斥锁挡重试根因坐实并修复【2026-10-03 15:0x｜ZCode 主线会话；Owner"再帮我看一下"】
+
+- 新批次 12 语言：9 成功（**TL/VI 首次交付**），JP/MS/RU 败于**新失败码**——"无法确认当前 Web 部署身份"＝助手每次派发向云端拉 provenance（`server.js:5090` fetchWebRuntimeProvenance）间歇超时 503，fail-closed 正确但随机损失语言；Web 侧同款校验 5s 超时（`local-assistant-client.ts:482`）。
+- **T5 未生效根因坐实**：失败 attempt 在 reaper 判弃（约 10 分钟）前仍非终态 → 单赢家互斥索引挡住全部 `:r2` 创建（10-02 批 MS 被挡同款；本批三个全被挡）。pass 静默跳过＝"绿了但没重试"。
+- **T5 v2 修复**（`08d0cb1`，Web 侧）：①主循环登记失败 attemptId；②pass 对非终态失败 attempt 先调既有 abandon 端点（T-0113 语义，停滞≥3 分钟，未到等 60s 重试一次）释放互斥再 `:r2` 重建；③pass 内系统性错误等 30s 逐语言跳过不整段 break（缺口Ⓑ）。门禁 tsc/row-contract/lint 全 0；已部署（在飞 0 → 六门 PASS → 包 SHA 0D5C0BA5…C6E5 → rc=0，备份 `deploy-20261003_150115-08d0cb11c39d`，provenance BOUND/08d0cb11…）＋push GitHub（c5bdb55..08d0cb1）。
+- **文件盘点（Owner 视角）**：MS 是唯一从未交付的语言（JP/RU 已由 10-02 批交付）；TL/VI 今日已交付。补跑只需勾 MS（或 MS/JP/RU 三个若要求同批）。
+- **待办**：①助手发版（provenance 拉取加重试＋T2 判词，一次两件）；②服务端 provenance/evidence 路由加耗时日志定位间歇慢；③对账失败闭环样本待补跑后跑；④补表清单（表格缺口类残留）交 Owner。
+
+## 对账闭环 P0 落地：交付件全文对账原型跑通（ES/JP 双基线 31/31 落位 + 24 层英文残留逐一点名）【2026-10-03｜ZCode 主线会话；Owner 授权"全量开始"】
+
+- **前置勘查三答**：①扫描器按 PS 运行时 layerId 选层——**层 ID 跨开合不稳定**，交付件对账必须按"内容+遍历序"配对（0921 同款结论）；②thin executor 确认整层 `textItem.contents` 赋值——**多样式运行坍缩实锤**（ExtendScript 已知行为，样式审计需离线读取器 psd-tools 路线，DOM 做不到）；③逐层期望可达=`report-data/<batch>_<design>.json`（.tygf_v15_journals 下，明文逐层 source/target/layerId/verified）。
+- **探针链路**（`tmp/recon-probe/`，全程只读不保存）：PowerShell COM DOM 走不通（嵌套集合无类型库）→ 改 0921 同款 **VBS+cscript DoJavaScript**（JSX 全 ASCII、路径 \uXXXX 转义、JSX 自写 UTF-8 结果文件、DisplayDialogs 枚举在注入态不可用须删行）。ES/JP 各枚举 55 文字层。
+- **对账器**（`reconcile.mjs`）：looseKey 归一 + 多重集合配对，判定矩阵 REPLACED_OK/IDENTITY_OK/KEPT_BY_DESIGN/NOT_REPLACED/RESIDUAL_OR_EXTRA/EMPTY + 期望未落位反查。**ES/JP 双基线：31/31 全部落位（25 替换+6 按原文）、零张冠李戴、零丢失；24 层英文残留逐一点名且与报告"跳过（未翻译）"排除集精确吻合**——残留=冻结决策排除层（表里有行的）+表格缺口（Multiple Mounting Options/Reliable & Durable/Aluminum alloy 等表里没有的）。
+- **验证了三件事**：①10-02 批次写入管线无错绑（0921 报告承认的最大残留风险就此对该批次排除）；②英文残留从观感变成测量清单；③"会丢内容"的客观化（bounds 已捕获，几何分析留 P1）。
+- **遗留**：失败闭环样本待 Owner 补跑 MS/TL/VI 后对账；样式运行审计待 psd-tools PSB 实测；P1 产品化（对账器进助手+判词接线）待 Owner 令。
+
+## 10-02 批次 `cmuqj1awc0` 取证：9/12 交付（T5 挽回 4 语言）；MS/TL/VI 败于证据接口间歇超时——两缺口立案【2026-10-03｜ZCode 主线会话；Owner 问"有几个没改成功"】
+
+- 批次 10-02 13:32（5857 A+，产物在 `F:\改语言\ 5857\…20261002_133231`——**目录名带前导空格**）。9 语言 VERIFIED_COMPLETE；MS/TL=FAILED_RETRYABLE（ATTEMPT_ABANDONED_STALE）、VI=PENDING 未派发；批次 STALLED 收口退了 3 语言积分。
+- **根因=REVIEW_EVIDENCE_UNREACHABLE（云端冻结证据读取超时，助手侧拉取失败上报）**：13:38:43 打掉 MS、13:43:37 打掉 TL；其间 NL/PL/RU/TH 正常——**间歇性**慢，非数据/表格问题。
+- **T5 重试实战首胜＋两缺口**：主循环在 MS 系统性停止后，收口前重试 pass 对未完成语言 `:r2` 重建——**NL/PL/RU/TH 四语言经 ：r2 全部 VERIFIED**（没有它这批只剩 5 语言）。缺口Ⓐ：MS 的 ：r2 被单赢家互斥索引挡（原始 attempt 尚非终态，5 分钟后才被 reaper 判弃）→ pass 内不再有第二次机会；缺口Ⓑ：pass 遇系统性错误整段 break（TL 再超时）→ VI 未轮到。
+- **修复立案**：①T5 v2=pass 内系统性错误改为逐语言跳过＋约 6 分钟后对互斥受困语言补一轮短 pass；②助手侧证据拉取加超时重试（**随助手发版捎上 T2 判词**）；③服务端证据路由加耗时日志（1 核机批处理+清扫并发下间歇 >75s，定位慢点）。
+- Owner 即时处置：重新配置→只勾马来语/菲律宾语/越南语重跑（原积分已退，重跑重新计费 ~60）。
+
+## 登录会话放宽：用户 30 天滑动（90 天绝对上限）＋管理员 7 天 → `c5bdb55` 已部署测试站【2026-09-28 20:4x｜ZCode 主线会话；Owner 拍板"方案 A＋管理员 7 天"】
+
+- 市面对标（Owner 问"市面都多久"）：GitHub 长期/sudo 12h、Google 数月、Adobe web≈24h、Shopify 后台≈24h、SaaS 惯例 30 天滑动——原 12h 绝对过期是同类最严档。
+- **用户侧**（`src/lib/auth/session.ts`）：`SESSION_TTL_MS`=30d 滑动窗口（readSession 复用既有 5 分钟节流写把 expiresAt 一并顺延，零写放大，30 天不活动才失效）＋`SESSION_ABSOLUTE_TTL_MS`=90d（cookie/签名负载绝对上限——浏览器旧 cookie 无法被服务端续期必须封顶）。**管理员侧**（`src/lib/admin/session.ts`）：4 小时→7 天固定（stateless cookie 无滑动）。吊销/多设备/强制下线不变；旧注释"与 admin 一致"早已失真（admin 实为 4h）。
+- **门禁真实 rc**：tsc 0、test:auth 79 项 0、lint 0。`c5bdb55` 已 push GitHub + 部署测试站（在飞 0 → detached 树 0112-deploy 切 `c5bdb55` → 六门 PASS → 包 SHA 6416D416…464B6 → 部署 rc=0，备份 `deploy-20260928_203716-c5bdb55f2c69`，provenance BOUND/c5bdb55f2c69…，health 200）。部署重启**不掉线**（会话在 DB+Cookie）。
+- 注意：存量会话仍按旧 12h expiresAt 过期——每人再登录一次后才进入 30 天滑动。
+
+## Web 部署 `0112c49` 上测试站（判词链 T1/T5 即刻生效；T2 需助手发版）＋push GitHub 全量【2026-09-27 23:0x｜ZCode 主线会话；Owner 授权"推上去吧"】
+
+- **在飞检查绿灯**：最新批次 `cmujijwrh0` 已 STALLED（15:44 建批自愈收口），30 分钟窗无 RUNNING/预留。
+- **流程实录**（develop 仓 detached 树 `worktrees/0112-deploy` @ `0112c49`，porcelain=0）：npm ci 8m → **prisma generate 必须手跑**（新树 postinstall 不含，preflight 报 "@prisma/client did not initialize"）→ preflight 六门 PASS（**`--allow-detached-head` 必须带提交号参数**，无值即 fail 是 `4a4cf69` 设计）→ `release:package:test -- --allow-detached-head <sha>`（同样要带参）→ 包 `tygf-test-0112c49d8b66.zip` SHA 7BF33036…B3B5 → scp 到 **/home/ubuntu/**（/root 无权限）→ `sed -i 's/\r$//'` + `bash deploy-test-release.sh <zip>` rc=0。
+- **验证**：备份 `deploy-20260927_230320-0112c49d8b66`；pm2 三进程 online；health 200；provenance **BOUND/webCommitSha `0112c49d…`/buildId tygf-test-0112c49d8b66.zip**、expectedAssistantVersion 3.7.3（助手未动=符合计划）。脚本内 curl:3001 瞬时失败是 pm2 0 秒启动窗口，事后独立复核通过。
+- **push**：`a53dacb..0112c49 → origin/develop`（GitHub 全量同步）。
+- **生效矩阵**：T1 历史决策琥珀条＋一键清空=**即刻生效**（Web）；T5 失败语言 :r2 二次机会=**即刻生效**（Web）；T2 报告判词/缺口清单=**未生效**（report-renderer.js 属助手分发件，测试站助手仍 3.7.3 旧渲染器，需助手发版）；T0 探针（清旧排除→重跑 JP）现在可做，但**探针报告的判词仍是旧版**——以"未纳入替换"计数下降为准。
+- 部署树 `worktrees/0112-deploy` 留置（回滚参照：备份目录同上）。
+
+## 替换不成功四堵墙开工：判词一元化＋历史决策显式化＋失败语言二次机会 → develop `0112c49`（未部署）【2026-09-27 1x:x｜ZCode 主线会话；Owner 授权"全部开工"】
+
+- 背景：Owner 定 100% 落位口径（表行×扫描层全替换）。对抗式审查定案四堵墙：①陈旧排除静默重放（复核界面"冻结决策 0 条"但溯源有 16+ 忽略事件=9/23-25 旧点击被草稿恢复重放）②会丢内容照写（12 处 3行→1行）③表稿措辞不一致（"Package Includes"实测不在表内，只能补表）④派发失败（首语言稳定 FAILED_RETRYABLE）。本轮拆①②④，③=流程闭环另案。
+- **T2 判词一元化**（`download/local-assistant/report-renderer.js:477-506`）：`deliveryReady` 加 `overflowStructureLossCount===0`；判词分支"需复查（N 处会丢内容）"；新增顶层「交付缺口」清单（五类计数同屏）；逐语言 pill"完整"→"写入完整"；nextStep 给零代码保形修法（译文表单元格内按原稿行数换行拆分后重跑）。
+- **T1 历史决策显式化**（`workbench-view.tsx`）：草稿恢复忽略/排除时设 `restoredDecisionsNotice`，顶部琥珀条告知后果＋「清空并重新检查」一键出口（复用 handleEvidenceRecoveryRecheck）。
+- **T5 失败语言二次机会**（`v3-batch-flow.ts` 循环尾）：未完成语言等 15s 后统一重试一次（attempt 幂等键 `:r2` 后缀；服务端 RETRYABLE 过滤允许重建；同批次预留计费不变；系统性中止 break 保收口）。
+- **T3-lite**：版式节指引补"按原稿行数拆分译文"修法。层类型/绑定路径字段的全量管道（estimator→reportContext→runner→renderer）留待 T0 探针后评估（estimator 输入现无层类型元数据）。
+- **smoke**：smoke-report-coverage-honesty 新增用例 9（会丢内容阻塞完整判词+缺口清单+保形修法）/9b（宽度类不阻塞+写入完整 pill）。**门禁真实 rc**：tsc 0、lint 0（2 既有 warning）、test:trust-chain 0（全链含判词 smoke）、test:batch-row-contract 0。
+- **部署注意**：report-renderer.js 属**助手分发件**——T2 判词生效需助手随版本发布（现 3.7.3）；T1/T5 随 Web 部署生效。两笔（`b72df7e`+`0112c49`）均未部署，待在飞批次清空＋Owner 令。
+- Owner 侧待办（T0 探针）：工作台琥珀条出现后点「清空并重新检查」清掉 9/23-25 旧排除决策，重跑 JP 单语言看"未纳入替换 36→?"；按报告新指引给 12 处会丢内容的译文表行加换行拆分。
+
+## AGENTS.md 第 4 条去掉写死的能力清单文件名（单行改，不跑业务测试）【2026-09-27 11:3x｜总控长 `bffb0b95`】
+
+- **目标**：让每次会话开场读到的是**最新**那份能力全景，而不是被写死的旧册。**方案**：`AGENTS.md:29` 删"当前为 \`产品功能全景_20260923.md\`"半句，改成"每次现取文件名日期最大的那一份"，并在行内记明由谁依何裁定改的。
+- **授权出处**：门下省块 33 问③ 裁决（`总控/回收_20260927/门下复验_块33_章程草案五问.md` **10,761 B／mtime 08:59:40**）明写"改法＝删'当前为 X'半句、留'现取日期最大那份'，授权面＝Owner／总控长"。本手＝总控长，未扩权。
+- **修改文件**：仅 `AGENTS.md` 一行（纯治理文档，按本文件自定规矩**不触发业务测试**）。
+- **原因**：盘上实有两枚全景册（11:35:45 现数 `总控/产品功能全景_*.md`＝**2**：`_20260923`／`_20260925`），写死值＝永久过期指针，与 F-020（把易变事实硬编进自动化指令）同族；后果是每只手开场都读到旧清单、把已有能力当待新建。
+- **自证（落笔同拍实测）**：旧串 `当前为 \`产品功能全景` 现数 **0／rc=1**；新串"每次现取文件名日期最大的那一份"现数 **1**；`git diff --numstat AGENTS.md`＝**16/11 保持不变**——该行本就在这批未提交的**新增行**里，改其内容不动增删计数（若整档重写，此数会跳到全档，故可作"未整档覆盖"的证据）。
+- **遗留**：① `CLAUDE.md` 同串现数 **0**＝无同病，无需动（且红线＝不改 `CLAUDE.md`）；② 最新那册 `_20260925.md` 自身页眉基线＝`f056a8d`，而盘上 HEAD 已是 `b72df7e`（11:35:45 现读）⇒ **"取最新一册"≠"取到最新事实"**，真要刷新需另签一件盘点单——本周三账配额 OVER、新签冻结中，暂挂，等出包窗或 Owner 一票。
+
+## 修复批次①②③落地：单语言停滞收口＋恢复锁回查＋锁文案如实化 → develop `b72df7e`（未部署，批次在飞）【2026-09-26 23:3x｜ZCode 主线会话；Owner 授权"来吧"】
+
+- **①单语言停滞收口**（photoshop-billing.ts）：`reconcileStalledRunningPhotoshopJobs`——running 且服务端最后信号（最新 ExecutionAttempt.updatedAt / startedAt）停滞>15min → 提前进 manual_review，复用既有 CAS 事务＋冻结窗延长（manualReviewDeadline）；**安全性依据=report 白名单含 manual_review（:574），迟到回执仍被接受，误判可自愈**；无回执走既有 7 天宽限释放；报告窗已过期件跳过留给既有 reconcile。已接入 10 分钟进程内定时清扫。
+- **②恢复锁回查**：新增 `GET /api/billing/photoshop/jobs/[id]/status`（只读、requireAuthenticatedActiveInstallation＋principal 归属校验、不接执行闸）；execute-step 恢复分支（jobId 无 attemptId）回查终态，released/settled → clearExecutionRecovery＋解锁 idle；回查失败维持 fail-closed 锁定。**消灭"即使服务端已退分、浏览器仍永久锁死"的死局格。**
+- **③锁文案如实化**：resetExecution 锁定提示按 lastBatchId 分流（批次保留 15 分钟承诺；单语言改"核对完成后自动退回"）；失败横幅移除"请先完成积分退回"的循环指引（该按钮对 running 必 409）。④执行中显式出口归 UIUX V2 执行页（并行会话地盘，避碰）。
+- **⑤立案撤销**：22:42:39 的批次停滞收口触发方查清=**服务器 systemd 三定时器**（tygf-test-batch-reconcile/tygf-batch-reconcile/tygf-photoshop-reconcile，10 分钟节拍）在调两个 reconcile 路由；此前"无 cron"结论是只查了 crontab 未查 systemctl，本会话 22:47/22:52 的手动路由调用因此全 0。
+- **门禁（真实 rc）**：tsc 0、lint 0、test:batch-row-contract 0、test:trust-chain 0。**test:photoshop-cancel-refund 无法运行=既有断链**（`src/lib/auth/session.ts` 已被 8bc2cdd 移走，smoke-auth-contract/billing-golden-journey/identity-golden-journey/cancel-refund 四个 smoke 仍引用；import 图零触碰可证与本批无关）——另立案待修。
+- **提交卫生**：并行会话同窗口活跃（`d9bbcc7`/`a53dacb`＋ISSUES.md/cleanup 脚本未提交改动），本批只 add 自己三个文件，未触碰他人 WIP。**部署待令**：Owner 重跑批次 `cmuiiddup0`（22:52 起）在飞中，按红线不部署；待批次终态+Owner 令后走 detached 树→preflight→package→scp(LF)→ssh 流程。
+- **新观察（另立案候选）**：重跑批次 ES 又是 FAILED_RETRYABLE——与首单完全同形状＝**批次首个派发稳定失败**（首单 22:12:02 `batch/execute 未授权`＋本单同形）；另 Owner 本单勾了全部 12 语言，FR/ID 已交付语言被重复执行（将重复计费 40）——面板提示"只勾未完成语言"未被注意，提示位置/强提醒可入 UIUX V2。
+
 ## 22:11 十二语言批次"失败"定案：助手忙锁停派发；停滞收口自主生效（40 commit＋200 release）【2026-09-26 22:5x｜ZCode 主线会话；Owner 授权"你继续吧"】
 
 - 现场：批次 `cmuigxan40`（22:11:38，12 语言，预留 240）。FR/ID VERIFIED_COMPLETE（20+20 单位，成品已落盘 22:13/22:14）；ES/IT/JP 三单分派从未被助手接受 → attempt reaper 判 `ATTEMPT_ABANDONED_STALE`（FAILED_RETRYABLE）；其余 7 语言 PENDING。客户端 22:12:02 `batch/execute 未授权`（一次性）→ 22:19:39 `本地助手正在执行其他任务` → 22:19:41 **`ASSISTANT_BUSY_PERSISTENT` 停止派发**＝Owner 所见"失败"。真因＝老根因族"PS 挂起＋助手内存态"：本机 PS(12:29 启) 挂死 12.4GB 无窗口 + 9/23 僵尸 PS 残留。
