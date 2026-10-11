@@ -582,3 +582,14 @@
 
 - 2026-08-10：0810 五语言匹配 bug **逻辑级修复**（a83cb2b），真机 E2E 未做 → 转 #9
 - 2026-07-18：DeepSeek/PaddleOCR 明文密钥泄露**发现并整改**（吊销重生成）→ 转 #7 待确认
+
+## #121　测试站匿名访问面超出预期：子路径绕过 gate 且 403 下发 gate cookie　🟠 major → ✅ 已收口（2026-10-07）
+
+- **实测与影响**：`/etc/nginx/sites-available/tygf-test` 原 gate 只在 `/` 检查；静态资源、下载、API 等独立 location 未受保护，且 gate cookie 在 403 响应中也会下发，导致测试站访问边界不符合“仅内部测试”的预期。
+- **处置**：整个测试站 server 块改为来源 IP allowlist，覆盖所有路径；移除旧 query-cookie gate。配置备份：服务器 `/var/backups/tygf-test-access-20261007T130258Z/nginx-test.conf`；生产站未改。
+- **验证**：`nginx -t` 成功并 reload；当前测试来源首页、下载清单、API 均 200，非 allowlist 来源对应路径均 403；不再下发旧 gate cookie。测试来源地址变化时需更新 allowlist。
+- **状态**：RESOLVED。
+
+### #121 follow-up（2026-10-08）
+
+- 用户更正要求“不限 IP、按之前方式加 key”。已移除活动 vhost 的 IP ACL，换成全路径 query-key→安全 cookie 门禁；此实现取代本条 2026-10-07 的 IP allowlist 处置。公网实测见 `AI_MEMORY/TASK_LOG.md` 顶部 2026-10-08 记录；当前无 IP ACL，原站点配置备份仍保留。
