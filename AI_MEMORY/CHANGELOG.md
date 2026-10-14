@@ -1,7 +1,29 @@
+﻿## 2026-10-14　O1 生产链全链执行：对账合并 + #149 前置修复 + 预检全绿 + 打包部署 + IndexNow + 真站复验 ✅
+
+- **变化**：Owner 批准「O1 全链执行（推荐）」后，完成 develop→main 对账合并（21 笔、a593f1b）、#149 前置小 PR（eb855ff，deploy-release.sh 6 处 sqlite3 加 timeout + 三处守卫同步）、detached 临时树预检 14 门全绿、打包 `tygf-production-eb855fff8e16.zip` (40.8 MB, SHA-256 9F3FC4B8...)、scp+sudo 生产部署（tygf-server, 43.134.175.26）、IndexNow 推送 6 URL（HTTP 202）、真站 SEO smoke 复验（1 FAIL/0 F/3 SKIP，唯一 FAIL = 预期 #130 族 DB 内容漂移，无新回归）、GSC sitemap 6 条已收录、tygf-smart-review 重启、tygf-smart-review 手动重启（不在 rebuild 清单）。本地 main 领先 origin/main 1（对账合并 + #149 fix），推送待单独授权。3 个他人 WIP 文件零接触。
+- **关键技术点**：
+  - #149 兑现 Owner 10-13 定「下次生产部署之前」：deploy/deploy-release.sh 6 处裸 sqlite3 全加 `-cmd '.timeout 20000'`（T-0166 探针实证：带 timeout 0/300 失败、裸调用 4/300 失败，journal_mode=delete 活库 worker 2s/30s 轮询）；check-partial-index-guard.mjs 标记不钉值 + timeout 在场断言（preflight 门内锁死）；check-repo-policy.cjs requireMatch（正则接受任意毫秒值）。
+  - 对账合并：AI_MEMORY 三账冲突按双侧条目并集解决，ISSUES #149/#150/#151 与 TASK_LOG T-0166 撞号双条保留并就地注记、不重编号。
+  - 预检全门：acceptance-record (3.7.15 真机验收记录在库)、release-identity、batch-row-contract、test:contracts、test:v3-batch-flow、test:trust-chain、5×assistant、partial-index-guard、fold-no-report-loss、content-studio-v1、content-studio-draft 全 PASS。
+  - 脱离脏树打包：临时 detached worktree `pkg-eb855fff8e16` + junction node_modules，规避 3 个既有 WIP 文件的 clean 门。
+- **真站复验**：SEO smoke（`SEO_TARGET=https://tuyigf.com/`）assertion failures=1 / fetch failures=0 / skip=3（网络超时）。唯一 FAIL = `FAQ discloses layer-text and translation handling`（预期的 #130 族 DB 内容漂移，DB 未触碰）。余 robots/AI 爬虫组、sitemap 6 条、hreflang 双语互指、og:url、canonical、JSON-LD、FAQ 可见性、EN FAQ 披露层文字/译文/OCR、CJK 余量、llms.txt 全 PASS。无新回归。
+- **IndexNow / sitemap**：6 URL 推送 ACCEPTED (HTTP 202)。GSC sitemap 6 条已在库（上次读取 2026/10/6），Bing sitemap 受阻（MS 登录 AUTHENTICATION_REQUIRED、公网探针 CAPTCHA）待 Owner 自浏览器提交/记录。
+- **遗留/风险**：支付 flag/历史账务/nginx/测试站未动；本地 main 推送待授权；#132 解绑按钮修复未部署；#130 族 DB 内容漂移待 Owner 授权清洗；#134 测试站 nginx 白名单需 Owner 授权脱敏审计；本地 main 领先 origin/main 1（推送需授权）。
+- **红线遵守**：零 reset/checkout/clean/force push；WIP 文件零接触；密钥零打印；无 `--accept-data-loss`；工作树脏文件仅既有 3 处。
+
 # CHANGELOG.md — 重要变化记录（架构/功能/技术决策，新条目置顶）
 
-> 最后更新：2026-08-30
+> 最后更新：2026-10-14
 > 只记重要的：架构变化、功能变化、技术决策（附理由）。修复细节见 TASK_LOG。
+
+## 2026-10-14　飞书通知通道唯一化：执行方案通知/文件只走 Owner 新指定机器人，旧通道停用
+- **变化**：根 `AGENTS.md:52` 工作规则由「交付报告自动发飞书群」改写为「执行方案通知与文件一律发飞书」——今后一切执行方案通知、方案/报告文件只走 Owner 2026-10-14 指定的那一个飞书机器人通道，旧通道（旧 webhook、旧群入口）禁发；本机 Windows User 级 `FEISHU_BOT_WEBHOOK` 已切换为新通道（回读比对通过）。详录见 `AI_MEMORY/TASK_LOG.md:1`。
+- **理由**：Owner 2026-10-14 令「通知全部对话…以后全部执行方案通知和文件都要走这个通道…之前的通道不用发了」；通道唯一化防多入口漏发。webhook 按既有密钥纪律只存环境变量，不进文档、不进提交。
+
+## 2026-10-13　推翻 AR-18/AR-47：英文站 SEO/GEO 立项施工
+- **变化**：SEO v2 对抗审查曾两笔在案驳回英文站方向（AR-18「不做独立英文站」、AR-47 相关，见 `worktrees/develop/docs/records/20261010_SEO_GEO_v2_对抗审查100轮与调整方案.md:74,112`）；Owner 2026-10-13 推翻并批「可以按你的来」＝批准实施方案全部推荐决策点（`/en` 前缀同站、x-default→中文根、P1=营销两页、llms.txt 单文件双语、英文内容 git 单源不经 DB、条款/隐私英页不建页等）。施工基线 `worktrees/develop` `b9d6903`，立项件 `changes/active/20261013-english-seo-geo.md`；`docs/records/` 存档不动。
+- **理由**：准备推英文市场；中文 SEO/GEO 收官后英文面为零（9 项摸底全 0 命中）。Owner 决策优先于旧驳回记录。
+- **安全边界**：不改中文可见文案与行为；不动 `src/app/api/**`、支付、工作台；条款/隐私英页等定稿；不 commit（未获明示）。
 
 ## 2026-08-30　助手安装绑定、3.6.17 发布身份、失败报告与结算合同收口
 - **变化**：
@@ -136,3 +158,4 @@
 ## 2026-07-06　v0.1 三层架构奠基（初始）
 - **变化**：官网（Canvas A）/ 本地工作台（Canvas B）/ 内测运营台（Canvas C）+ RG-001~008 红线（CSV 不上传、报告路径脱敏、无支付/积分/公开注册等）
 - **理由**：内测定位的边界约束；后续红线随产品演进逐步放开
+
