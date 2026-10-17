@@ -1,3 +1,14 @@
+## UI 换肤：编辑层改用官网设计令牌（600741e 未 push）——50 处蓝灰 Tailwind 色换成 home-v17 的墨绿/近黑/细线，portal 浮层显式挂思源黑体【2026-10-17 23:2x–23:4x（实测 date）｜Qoder/砚｜Owner「UX可以，UI还是要我们官网的风格的」】
+
+- **性质**：纯样式改动（产品 1 个 CSS ＋ 交付件模拟台外壳）。**未 push、未部署、未碰生产内容、未改任何文案与结构。**
+- **UX 已过、UI 打回**：前几轮把交互模型（一段话一个框、Enter 换行、逐行量宽）立住了，Owner 认可；但编辑层外观是通用灰蓝（Tailwind 的 `#2563eb`/`#111827`/`#d1d5db`/`#f9fafb`/`#dc2626`/`#f59e0b`），浮在官网首页上像第三方插件。
+- **产品侧改了什么**（`src/components/site/inline-edit/inline-edit.css`，+68/−56）：50 处色值机械映射到 `home-v17.css` 的令牌——ink `#111311`、muted `#6f746f`、muted-2 `#8b918c`、line `#e0e3e0`、line-strong `#d2d7d3`、surface-2 `#fafbfa`、**accent 蓝→官网墨绿 `#2d7356`**、accent-soft `#eef6f1`、red `#c24b4b`、amber `#9a6505`；阴影 `rgba(17,24,39,*)`→`rgba(17,19,17,*)`、描边 `rgba(37,99,235,*)`→`rgba(45,115,86,*)`；圆角对齐原语（面板 10→16px、按钮/输入 6→10px、胶囊保持 999px）。
+- **一条容易漏的机制**：编辑层浮层是 `createPortal` 到 `document.body` 的，**拿不到 `.home-v17` 上定义的字体族与 CSS 变量**（原来写 `font-family: inherit` 等于吃浏览器默认字体）⇒ 在 `.sc-edit-popover/.sc-edit-badge/.sc-edit-panel/.sc-edit-hover/.sc-edit-outline` 上显式挂官网字体栈（`"Tuyigf Source Han Sans", …`）＋ `letter-spacing:-.012em`。**别改回 inherit。**
+- **模拟台同步换肤**：工具条由深色面板改成官网 nav 那套（`rgba(255,255,255,.92)` ＋ `backdrop-filter:blur(16px) saturate(130%)` ＋ 1px 细线），按钮改胶囊、选中态用官网主按钮的近黑 `#121412`；徽标/日志改白底卡片（`border:1px #d2d7d3` ＋ `border-radius:18px` ＋ `box-shadow:0 26px 72px rgba(30,45,36,.11)`＝app-card 原语）；**批注虚线框**（`rgba(27,91,208,.45)`）也换成墨绿——它上一轮被"只扫十六进制"的映射漏掉，靠肉眼截图才发现。
+- **测试结果**：产品 CSS 残留外来色 `grep` 为空、花括号 **51/51 配平**、规则数 51；模拟台残留蓝灰（含 rgba 式）计数 **0**；浏览器实测计算样式回读 `barBg=rgba(255,255,255,0.92)`、`popRadius=18px`、`popFont="Tuyigf Source Han Sans"…`，截图两张（首屏段落编辑器 ＋ 02 区块标题编辑器）确认像官网自己的部件。**NOT RUN**：真 owner 会话下的产品编辑层截图（缺 `ADMIN_EMAIL`/`ADMIN_PASSWORD`）⇒ 产品侧视觉只有代码级证据，没有渲染证据。CSS-only 改动不触 tsc/lint/业务 smoke（未跑，非 FAIL）。
+- **交接件已同步**：`交付档案/交接/交接_20261017_官网文案刀一至刀四_测试站上线交待.md` 加第五笔 `600741e`、HEAD 改 `600741e`、领先 origin 改 **15**、§7 补「产品编辑层真机视觉 NOT RUN」，已重发飞书。
+- **遗留**：照旧——五笔全在本地未 push；上线前三件（§3 合流、§4 旧键计数 #173、§5 全量预检）未做；全站批注面扩档等拍。
+
 ## 刀四·一段话＝一个键（3316292 未 push）：43 个碎片键并成 16，中文页可见文本逐字未变；顺带修掉英文页 <wbr/> 不补空格的词粘连 #178【2026-10-17 22:0x–22:5x（实测 date）｜Qoder/砚｜Owner 指截图「这些分得也太散了吧…现在这些都没有在同一个文本里面，我指的是这个只是例子」】
 
 - **性质**：对抗式审查＋方案＋执行＋实跑验证。**未 push、未部署、不翻生产锁、不碰计费／回执／行排除四层。**
