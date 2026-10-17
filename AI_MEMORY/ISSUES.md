@@ -609,3 +609,19 @@
   命中 **>0 ⇒ 先把这些值按新形状（行数组）搬进一次草稿并单独发布，再部署改形代码**；命中 0 ⇒ 改形可直接部署。**禁止**用「看起来文字一样」代替这条计数。
 - **本条不覆盖**：`override 失配` 的其他族（区块整体改名、数组元素形状变更）——`sanitizeAgainst` 对数组用 `defaults[0]` 当元素模板逐元素 sanitize，元素从字符串变成对象时旧元素会被 `filter(undefined)` 清成空数组，那是更响的一种坏法（空数组渲染会没字），本轮没有这种改形，故只登记不夸大。
 - **关联**：[[project-landing-copy-render-path]]、刀二执行报告 §还欠的两件事第 2 条、`8bec41e` 裹挟事故（`AI_MEMORY/ISSUES.md:880-892`）。
+
+## #178　英文首页区块标题按 `<wbr/>` 拼接却不补空格 ⇒ 渲染出「languagefrom」「seewhere」这类粘连词（3/7 个 h2 实测命中；未上线，生产跑的是旧构建）　🟠 major（对外可见文本正确性；2026-10-17 22:2x 本地渲染实测）
+
+- **发现方式**：刀四把碎片键归并成一个文本时，需要逐字比对合并前后的可见文本，顺手把英文页渲染出来取文本，才看见粘连。
+- **实测**：`npm run dev` → `curl http://localhost:3000/en`（200／45,247 B），剥标签取 7 个 `<h2 class="section-title">` 的可见文本，**3 个含「小写字母直接接大写字母」的粘连**（判据：`/[a-z][A-Z]/`）：
+  - `One language is not the hard partThe hard part is doing every languagefrom scratch`
+  - `After the swap,it is easier to seewhere to look next`
+  - `Do not let finished versions keepoccupying the timeof your next design`
+  - 另 4 个也粘连，只是恰好接在逗号后（`…no workIt means…`、`…automationSettled…`、`…the thingseasiest…`、`…set— never one languageafter another,…`），按 `[a-z][A-Z]` 探针数不到 ⇒ **实际是 7/7 全部粘连**，3 只是探针下界。
+- **根因（读码）**：`src/components/site/home-view-en.tsx:203/248/275/332/…` 形如
+  `<span class="title-line">{t.cost.titleL2a}<wbr /><span class="phrase">{t.cost.titleL2b}</span></span>`
+  ——`<wbr/>` 只是"可选断点"，**不产生空格**。中文没有词间空格，所以同一套写法在 `home-view.tsx` 上是对的；英文照搬就把两个词焊在一起。
+- **影响面**：只影响**尚未部署**的英文页。生产当前构建 `curl https://tuyigf.com/en` 200／70,319 B，其 h1 是旧文案（`Hand the tedious parts to the tool. …`）、`h2.section-title` 数 **0** ⇒ 生产跑的不是这棵树，线上用户暂未看到粘连。
+- **修法（与刀四同一笔，不单独绕）**：碎片键归并成一个字符串时**显式补回空格**（`'The hard part is doing every language from scratch'`），渲染端只按 `\n` 断行、不再靠 `<wbr/>` 拼词。因此刀四的"合并前后逐字相同"判据在英文侧要**改成**：差集只允许出现"补进去的空格"，其余一字不动。
+- **别用错的修法**：给 `.phrase` 加 `margin-right` 或 CSS `word-spacing` 糊过去 ⇒ 中文页会多出空隙，且文本层仍是粘连的（复制/搜索引擎抓到的还是 `languagefrom`）。**必须修在文本层**。
+- **关联**：`AI_MEMORY/TASK_LOG.md` 2026-10-17 刀四段、`交付档案/执行方案/执行方案_20261017_官网文案刀四_一段话一个文本.md`、[[project-landing-copy-render-path]]。
