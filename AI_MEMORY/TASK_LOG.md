@@ -1,3 +1,19 @@
+## 官网文案刀二·枚举咽喉下沉＋行数组结构写回（30ca65c 未 push）：自造的一次判据事故被隔离库挡下【2026-10-17 20:2x–21:0x（实测 date）｜Qoder/砚｜Owner 第五次「使用对抗式审查后给个执行方案，然后按方案执行」】
+
+- **性质**：对抗式审查＋执行＋实跑验证。**未 push、未部署、不翻生产锁、不碰计费／回执／行排除合同四层。**
+- **审查先砍到自己**：`b89c4ea` 提交说明写「字典视图能写任意字符串叶子 ⇒ 白名单必须在服务端」，实际只在 `draft/route.ts` 加了校验，整树 POST（`src/app/api/admin/site-content/route.ts:58`）直连 `createSiteContentDraft` 无人判 ⇒ 运营台当天就能落 `role:"bold-ish"` 进草稿。**说明与代码不符＝缺陷不是遗漏**，本笔补平。
+- **执行中我自己造的第二起事故（测试挡下）**：咽喉判据初版按字段名写（路径末尾 `.role` 就判枚举），隔离库一跑 `FAILED: 「homeV17.value.cards.0.role」只能取 plain / accent 之一，收到「设计师」` RC=1 —— 内容树里另有语义无关的 `role` 字段。改法＝**按形状判**：只有每项恰好 `{text, role}` 才认行数组（`site-content-paths.ts:32` `isCopyLineArray`），并加反向钉「出厂内容树本身必须过咽喉」（否则整树写门被我改成永久红门）。
+- **做了四件**：① 枚举判据下沉进 `createSiteContentDraft`（`site-settings.ts:588`），两扇写门共用；PATCH 里那条只留作回精确键名。② 新增 `PATCH /api/admin/site-content/lines`（`lines/route.ts:38`，146 行）整组替换行数组＝加行/删行/排序/换角色一次提交，落草稿仍走 `createSiteContentDraft`（digest 乐观锁、draftKey 幂等、审计 `site-content.lines.replace`、回滚全复用，**不新造发布链**）。③ 编辑层行数组弹层（`inline-edit-client.tsx:458` 分派 / `:589` 提交 / `:1030` 角色取自 `COPY_LINE_ROLES`）：逐行输入框＋↑↓删＋加一行（封顶 6）＋角色，`measureFit` 逐行量、任一行放不下整次不提交，结构提交后清空撤销栈（旧下标会写进现占该位置的行）。④ 模拟台删掉那句「↑↓ 与加行/删行目前产品里还做不到」（现在做得到了，留着＝对外否认已有能力），换成真端点形状＋服务端同判据回显。
+- **两处工程取舍**：逐行判据一开始写在路由里 ⇒ 路由要 owner 会话才进得去，「测的」与「跑的」不是同一件事，遂沉成纯函数 `normalizeCopyLines`（`:188`）供路由与测试共用；交回字段与模板不符时**拒（`CONTENT_LINES_SHAPE_UNSUPPORTED`，`lines/route.ts:92`）而不悄悄补齐**——悄悄补＝「保存成功但原文少了一块」，最难查那类。
+- **主动撤下方案第四段**：`homeV17.cost` 的 `titleL1/titleL2a/titleL2b` + `<wbr/>` 不迁。cost 现用「短语＋软断点」，宽屏两短语渲染成一行，硬换行数组会把桌面端两行变三行＝**没人下令的外观改动**；且短语级不折行本就在 OUT OF SCOPE，拿它当「可复制配方」等于提前用掉下一刀的形状。
+- **测试结果（全实跑）**：`npx tsc --noEmit` RC=0；`npm run lint` 0 errors／38 warnings（既有基线，inline-edit 目录 0 命中）；`npm run test:content-studio-draft` PASS（45 断言，计数法 `grep -c 'assert\.(equal|ok|rejects)'`）；`node scripts/smoke-content-studio-v1.mjs` PASS（155 断言，计数法 `grep -c '^assert'`）；本刀新增断言 28 条（`git diff HEAD~1 HEAD | grep -c '^+.*assert'`＝14＋14）。真渲染 `npm run dev` Ready 6.5s、`curl /` 200／91,814 B、`<h1>` 出两个 `.hero-title-line`（plain→`<span>`、accent→`<strong>`）；未鉴权 `PATCH /lines` 403 vs `/draft` 403 vs `/nope` 404；模拟台 Chrome DevTools 实测 0 console error：点首行开行弹层 2 行、加行封顶 6 且 disabled、空行回显 `CONTENT_LINES_EMPTY_ROW` 且禁保存、撑到 32 字回显「超出 2458px 保存被拦」、↑＋换角色提交→DOM 三行／角标 3 处未发布、丢弃→回补两行／角标归零。dev 按 PID 43296 停、端口 3000 已释放。
+- **一处未归因读数如实记**：第一次 `el.click()` 探针读到「1 行／内容为『变轻松』」，同页重复同动作后稳定读到 2 行，其后所有读数可复跑一致。这枚一次性读数未归因，不拿来当任何结论依据。
+- **未跑到的（不记为绿）**：owner 会话里的真点击链（点行→加行→发布）没跑 —— 本机 `ADMIN_EMAIL`／`ADMIN_PASSWORD` 均未设置（`node -e` 只打印布尔，未取值），脚本已不内置凭据。
+- **push 状态实测**：`git merge-base --is-ancestor {b89c4ea,fa8c93b,30ca65c} origin/develop` **三笔全部 rc=1（不在）**；`rev-list --left-right --count develop...origin/develop` ＝ **11 与 4** ⇒ 本地压着别手 11 笔，不推本地 tip（推法照同日 GEO 第九轮那枚 detached worktree ＋ 单笔 cherry-pick 配方，该由合流窗口做，不在本会话顺手做）。
+- **并发**：暂存只列显式 8 路径、提交后 `git diff --cached --name-only`＝0 行（不吃别人现场）；别手 20:3x 那轮 TASK_LOG 已独立记录「develop 有 inline-edit-client／inline-edit.css／site-content-paths／site-settings ＋ 未跟踪 lines/ 五现场，故不执行 merge main」＝同一片地两人都做了避让。
+- **产出**：`交付档案/执行方案/执行方案_20261017_官网文案刀二_枚举咽喉与行数组结构写回.{md}`（方案，已发飞书）、`交付档案/执行报告/执行报告_20261017_官网文案刀二_枚举咽喉与行数组结构写回.{md,html}`（两次发飞书，第二次是 push 读数补发）、`交付档案/执行方案/模拟_20261017_官网文案就地编辑_真实页面复刻.html`（升级）。ledger 追加 `SITE-COPY-ADMIN` 待复验一行。
+- **遗留（等 Owner）**：① owner 会话真点击链要不要我复跑（给测试站管理员登录或本机设两个环境变量）；② 三笔未 push ＋ 部署窗口 ＋ 生产写锁放行粒度照旧待令；③ **部署前必须**用真库快照比旧 override（`titleLine1/2`、`cost.titleL2a` 这类旧键会被 `sanitizeAgainst` 丢弃回落模板，文字不变但未实测）；④ cost 区块迁移要不要（前提是先接受桌面端两行变三行的外观改动）。
+
 ## 续执行（15:0x–15:3x）：W5-03 #111 引信拆除＋D14 甲＋三件侦察【2026-10-09｜同上执行手】
 
 - **新增提交（develop，含在 37 笔领先 origin 中）**：`55eacc0` W5-03/#111（`scripts/cleanup-user-profile.mjs` 缺省只数不删＋`--apply` 才删；`scripts/smoke-user-profile-lifecycle.mjs` 加"缺省不得删"负控并传 `--apply` 正控）；`a30bfdb` D14 甲（`scripts/release-gate.cjs` 归档成员断言"不得含 scripts/smoke-*.mjs"＋自测正控；`scripts/release-preflight.cjs` 源码树前置断言"0 个 smoke ⇒ 发布包直接拒跑"，早于 git 调用）。

@@ -593,3 +593,19 @@
 ### #121 follow-up（2026-10-08）
 
 - 用户更正要求“不限 IP、按之前方式加 key”。已移除活动 vhost 的 IP ACL，换成全路径 query-key→安全 cookie 门禁；此实现取代本条 2026-10-07 的 IP allowlist 处置。公网实测见 `AI_MEMORY/TASK_LOG.md` 顶部 2026-10-08 记录；当前无 IP ACL，原站点配置备份仍保留。
+
+## #173　行数组改形后，库里存着旧碎片键的文案会在部署时**静默回落成模板默认**＝人改过的值丢失（非「文字不变」）　🟠 mid（内容写回链；2026-10-17 21:0x 实测，两站库内容未查）
+
+- **形状来源**：刀二（`develop@30ca65c`）与刀一第一段（`b89c4ea`、裹挟笔 `8bec41e`）把首屏大标题从 `homeV17.hero.titleLine1 / titleLine2` 两个碎片键改成 `homeV17.hero.titleLines[]` 行数组。同族未迁但仍可能以旧键存在库里的写法，实测当前模板里还有 **22 处**（`grep -cE "titleL[12][abc]?:|titleLine[12]:" src/config/siteContent.ts` ＝ 22），分布在 `cost / easy / workflow / status / value / faqIntro / try` 七个区块的 `titleL1 / titleL2a / titleL2b / titleL2c`。
+- **机制（读码不是推断）**：`src/lib/server/site-settings.ts:221` 的 `sanitizeAgainst` 只遍历**模板的键**——`:243` 那句 `for (const [key, defaultValue] of Object.entries(defaults))`，非模板键根本不进结果；`deepMerge` 在 `:257` `if (override === undefined) return base`。所以旧键被整条丢弃后，新键 `titleLines` 在 override 里不存在 ⇒ 落回模板默认值。**这条路径全程不报错、不回拒、不进审计。**
+- **默认值这一侧是安全的（实测）**：`git show 8bec41e~1:src/config/siteContent.ts` 的 `:688 titleLine1: '让设计师改语言'`／`:689 titleLine2: '变轻松'` 与现在 `:692-693` 数组里的两句**逐字相同** ⇒ 没人改过的键，部署后文字不变。
+- **不安全的那一侧才是本条**：只要库里存过**人改过的**旧键值（例如运营台把 `titleLine2` 改成别的），改形后那处会显示模板默认，**改动静默消失**。生产侧本轮造不出这种值（`assertContentStudioMutationAllowed` 在生产直接把建草稿拒掉），测试侧未实测——测试站 Content Studio 写门是开的，历史上是否存过 hero 相关 override，我没有查（无库连接授权）。
+- **部署前必做的一条（判据可复跑）**：对目标环境读 ACTIVE revision 的 `contentJson`，数旧碎片键命中：
+  ```
+  node -e "…db.siteContentPublication.findFirst({where:{environment:'test',retiredAt:null},include:{revision:true}})
+    → 取 revision.contentJson → Object 递归收集点分路径
+    → /titleLine[12]$|\.titleL[12][abc]?$/.test(path) 计数"
+  ```
+  命中 **>0 ⇒ 先把这些值按新形状（行数组）搬进一次草稿并单独发布，再部署改形代码**；命中 0 ⇒ 改形可直接部署。**禁止**用「看起来文字一样」代替这条计数。
+- **本条不覆盖**：`override 失配` 的其他族（区块整体改名、数组元素形状变更）——`sanitizeAgainst` 对数组用 `defaults[0]` 当元素模板逐元素 sanitize，元素从字符串变成对象时旧元素会被 `filter(undefined)` 清成空数组，那是更响的一种坏法（空数组渲染会没字），本轮没有这种改形，故只登记不夸大。
+- **关联**：[[project-landing-copy-render-path]]、刀二执行报告 §还欠的两件事第 2 条、`8bec41e` 裹挟事故（`AI_MEMORY/ISSUES.md:880-892`）。
