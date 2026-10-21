@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全项目体检 · 开源对标 · 进阶执行方案（2026-10-21）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f2f2ef;--ink:#141614;--ink2:#3b433d;--muted:#6b746d;--faint:#9aa19b;
+  --line:#e5e5e0;--line2:#d4d4ce;--teal:#0f766e;--teal-soft:#e3f2f0;--emerald:#047857;--emerald-soft:#e4f4ec;
+  --amber:#92610a;--amber-soft:#fff5e2;--rose:#b3261e;--rose-soft:#fcecea;--violet:#5b3a8e;--violet-soft:#efe9f7;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#14161a;--surface:#1b1e23;--sunk:#22262c;--ink:#e8e9e6;--ink2:#c3c7cb;--muted:#98a0a6;--faint:#7a828a;
+    --line:#2c3138;--line2:#3a4048;--teal:#5eead4;--teal-soft:#123330;--emerald:#6ee7b7;--emerald-soft:#12332a;
+    --amber:#fcd34d;--amber-soft:#33280d;--rose:#fca5a5;--rose-soft:#361a18;--violet:#c4b5fd;--violet-soft:#241b33}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15.5px;line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:34px 22px 90px}
+h1{margin:0;font-size:25px;font-weight:700;letter-spacing:-.015em;line-height:1.3}
+.standfirst{margin:10px 0 0;font-size:14.5px;color:var(--ink2);max-width:88ch}
+.meta{margin:14px 0 0;padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:8px;background:var(--surface);font-size:12.8px;color:var(--muted)}
+h2{margin:34px 0 4px;font-size:17.5px;font-weight:700;letter-spacing:-.01em}
+h3{margin:20px 0 2px;font-size:14.6px;font-weight:700}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+code,.mono{font-family:var(--mono);font-size:.9em}
+code{background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 5px;word-break:break-all}
+a{color:var(--teal)}
+.verdict{margin:18px 0 0;border:1px solid var(--line2);border-radius:12px;background:var(--surface);overflow:hidden}
+.verdict>.h{padding:12px 16px;background:var(--teal-soft);border-bottom:1px solid var(--line);font-weight:700;font-size:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.verdict>.b{padding:14px 16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:14px 0 0}
+.stat{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--surface)}
+.stat .n{font-family:var(--mono);font-size:23px;font-weight:500;line-height:1.2;letter-spacing:-.02em}
+.stat .l{font-size:12.2px;color:var(--muted);margin-top:2px}
+.bad .n{color:var(--rose)}.warn .n{color:var(--amber)}.ok .n{color:var(--emerald)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin:14px 0 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--surface)}
+.card h4{margin:0 0 4px;font-size:13.6px;font-weight:700}
+.card p{margin:4px 0;font-size:13px;color:var(--ink2)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.2px;table-layout:fixed}
+th{text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line2);padding:7px 9px;font-size:12.4px;background:var(--sunk);word-break:break-word}
+td{border-bottom:1px solid var(--line);padding:8px 9px;vertical-align:top;word-break:break-word;overflow-wrap:anywhere}
+.callout{margin:14px 0 0;border-radius:10px;padding:12px 14px;font-size:13.6px;border:1px solid}
+.callout.rose{background:var(--rose-soft);border-color:#eec3bf;color:var(--rose)}
+.callout.amber{background:var(--amber-soft);border-color:#ecd6a6;color:var(--amber)}
+.callout.teal{background:var(--teal-soft);border-color:#b9dcd8;color:var(--teal)}
+.callout.green{background:var(--emerald-soft);border-color:#bfe3cd;color:var(--emerald)}
+.gates{margin:12px 0 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.gate{display:flex;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line);font-size:13.2px;background:var(--surface)}
+.gate:last-child{border-bottom:0}
+.gate .k{font-family:var(--mono);font-size:11.6px;font-weight:500;color:var(--muted);min-width:74px;flex:none}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:500;border-radius:999px;padding:1px 8px;border:1px solid var(--line2);background:var(--sunk);color:var(--muted);white-space:nowrap}
+.tag.bad{background:var(--rose-soft);border-color:#eec3bf;color:var(--rose)}
+.tag.ok{background:var(--emerald-soft);border-color:#bfe3cd;color:var(--emerald)}
+.tag.warn{background:var(--amber-soft);border-color:#ecd6a6;color:var(--amber)}
+.tag.d{background:var(--violet-soft);border-color:#d5c8e8;color:var(--violet)}
+pre{font-family:var(--mono);font-size:12px;line-height:1.55;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:11px 13px;overflow:auto;margin:12px 0}
+.del{color:var(--rose)}.add{color:var(--emerald)}
+.notes{font-size:12.8px;color:var(--muted);margin-top:8px}
+.footer{margin:38px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:12.4px;color:var(--muted)}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>全项目体检 · 开源对标 · 进阶执行方案</h1>
+<p class="standfirst">图译工坊（PSD 设计稿多语言批量改字）· 2026-10-21。四条线各自做到哪、哪里还能补、别人怎么做这件事、以及我建议的下一步。</p>
+
+<div class="meta">
+  取数时刻 <b class="mono">2026-10-21 08:45–09:4x</b>（Owner 本机）｜ 本轮<b>零改动</b>：未改产品代码、未出包、未部署、未碰两站与生产、未 push ｜
+  配套可点模拟件 <a href="模拟_20261021_全项目体检进阶_三档可点.html"><code>模拟_20261021_全项目体检进阶_三档可点.html</code></a>（本机 Chrome 实测，console 0 条）｜ 本件每条结论均经一轮独立证伪，被推翻的三条就地更正见 §3
+</div>
+
+<div class="verdict">
+  <div class="h">结论 <span class="tag ok">把握度：高</span><span class="tag d">唯一 D 级推断已标注</span></div>
+  <div class="b">
+    <p>产品<b>不缺功能清单</b>，缺的是三件"已经查清但没人动手"的事：</p>
+    <ol>
+      <li><b>免 PS 写回这条线，过去 4 天判的"引擎不可用"，很可能有一部分是我们自己 10-14 给引擎动的那一刀造成的</b>；而上游<b>今早 08:44 已把同类缺陷修进 main</b>（不在任何 release 里）。</li>
+      <li><b>项目的"事实层＋控制面"（任务台账、每日体检脚本、投影脚本、发飞书脚本）完全没有版本控制，也没有任何远端</b>——唯一副本在一块盘上；这事 10-15 就立过案，挂了 5.6 天。</li>
+      <li><b>中性引擎安装包已经造出来了，但它自己的构建清单承认"自编产物的依赖许可核验没重跑、也没有可复跑的脚本"</b>——而这句话在问题台账里 0 命中，等于没有任何一只手的队列里认它。</li>
+    </ol>
+    <p class="notes">另一件不是"发现"而是"数字"：台账 130 个任务里 <b>55 条状态＝等您定</b>、32 条待复验，在办只有 2 条。当前第一瓶颈是决策与复验，不是写代码。</p>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat bad"><div class="n">294</div><div class="l">引擎树与上游 v0.7.0 的文件差（含 Txt2 本体改动）</div></div>
+  <div class="stat warn"><div class="n">08:44</div><div class="l">今早上游关闭 #6968 并合入修复的时刻</div></div>
+  <div class="stat bad"><div class="n">+766 KB</div><div class="l">TASK_LOG 工作树比入库版本多出的未提交量</div></div>
+  <div class="stat"><div class="n">0</div><div class="l">根仓库配置的远端数量</div></div>
+  <div class="stat warn"><div class="n">55</div><div class="l">等您定（最老约 6 天，按最后触碰戳）</div></div>
+  <div class="stat bad"><div class="n">28 / 10</div><div class="l">生产／测试站落后本机 develop 的笔数</div></div>
+  <div class="stat"><div class="n">26</div><div class="l">develop 未推 origin 的笔数</div></div>
+  <div class="stat ok"><div class="n">2/2</div><div class="l">在办数（上限 2，合规）</div></div>
+</div>
+
+<h2>1 · 现在到底做到哪了（四条线，全部实测）</h2>
+
+<h3>线 1 · 交付主线：批量改语言工作台</h3>
+<p>方案已迭代到 v12 并出定稿（"目录即绑定"），<b>状态＝等您定，代码一行未进</b>（阶段 0 的快照断言闸还没开工）。今天实测的现状：</p>
+<table>
+  <tr><th>现状</th><th>证据（本会话实读）</th></tr>
+  <tr><td>主按钮按下只有防双击锁</td><td class="mono">src/components/workbench/execute-step.tsx:1946-1958</td></tr>
+  <tr><td>全站唯一"取消/退回"只在失败后出现</td><td class="mono">同文件 :2834（条件 failed &amp;&amp; lastJobId）</td></tr>
+  <tr><td>批量链不产生单语言 jobId ⇒ 该按钮在批量下不出现；退积分靠系统约 15 分钟自动核对</td><td class="mono">同文件 :1903-1909、:1905</td></tr>
+  <tr><td>服务端取消只到 jobId 级，无批次级 cancel</td><td class="mono">src/app/api/billing/photoshop/cancel/route.ts:1-4</td></tr>
+  <tr><td>对外"最多 12 语种"与代码已对齐（旧遗留已闭）</td><td class="mono">src/lib/workbench/batch-limits.ts:6</td></tr>
+</table>
+
+<h3>线 2 · 引擎线（免 PS）：判决要改写</h3>
+<p>出厂引擎 <code>tygf-engine.exe</code>（43,252,336 B，sha256 <code>3cb06ed1…</code>），来历写在 <code>worktrees/develop/download/local-assistant/build/vendor/photocraft/BUILD-MANIFEST.txt</code>。本轮实测：</p>
+<table>
+  <tr><th>事实</th><th>怎么测的</th></tr>
+  <tr><td>BUILD-MANIFEST 称钉值来自"<b>上游 commit</b> <span class="mono">f0e8d40</span>（我们 fork 的 main）"</td><td>该文件【来源】段原文</td></tr>
+  <tr><td>该提交作者是 <b><span class="mono">newye123</span>（您本人账号）</b>，时刻 <b>10-14 08:47:47 +0800</b>，标题 <b><span class="mono">text: compact write_bare (single-space Txt2) + keep file runs on fallback</span></b></td><td><code>git cat-file -p f0e8d40</code></td></tr>
+  <tr><td>与上游 <span class="mono">v0.7.0</span> 标签树级差 <b>294 文件 / +26,424 / −2,384</b></td><td><code>git diff --stat v0.7.0 f0e8d40</code></td></tr>
+  <tr><td>差异里就有 Txt2 本体：<span class="mono">engine_data.rs</span> 把序列化从"换行＋缩进"改成<b>全空格单行</b>；<span class="mono">psd.rs</span> 删掉"文本一致才复用原对象"，新增 <span class="mono">respan_first_run</span>（多 run 压成一个覆盖全文）</td><td><code>git diff v0.7.0 f0e8d40 -- crates/text/src/{engine_data,psd}.rs</code></td></tr>
+  <tr><td>上游 main 今天的 <span class="mono">write_bare</span> <b>仍是换行＋缩进原形</b> ⇒ 单行写法只存在于我们那份</td><td><code>git show upstream-probe/main:crates/text/src/engine_data.rs</code></td></tr>
+  <tr><td>上游 <b>#6968 今早 08:44 关闭</b>，PR #7220 同刻合入 main；做法与我们那刀<b>相反</b>（保留原对象、按新文本 UTF-16 长度逐 run 裁剪/延长），源码注释原文「a bare stub crashed Photoshop」</td><td>GitHub API <span class="mono">state=closed / closed_at / merged=true</span>；<span class="mono">main:crates/text/src/psd.rs:1092</span></td></tr>
+  <tr><td>修复<b>不在任何 release</b>（<span class="mono">git tag --contains 204c76ce</span> 回空）；<b>#6971、#6129 此刻仍 open</b></td><td>API HTTP 200 ＋ 本地 tag 查询</td></tr>
+  <tr><td>三键真身：<span class="mono">pcExecutorEnabled:false</span>／<span class="mono">pcExePath:''</span>／<span class="mono">pcExeSha256:''</span>；排版另有独立常量 <span class="mono">TYPOGRAPHY_APPLY_READY=false</span></td><td><span class="mono">download/local-assistant/server.js:723-728、:1426</span></td></tr>
+  <tr><td>写回还被一枚<b>负向门</b>冻着（禁 <span class="mono">require ./pc-executor</span>，理由正是那三个 P0）</td><td><span class="mono">scripts/smoke-pc-wiring-freeze.mjs:57-67</span></td></tr>
+  <tr><td><b>#158 已被代码推翻</b>：面板侧其实已改到脸名级（存 <span class="mono">face</span>＝PostScript 名＋字符集校验＋按 postscriptName 选脸）；台账"仍存显示名"是 10-17 的话</td><td><span class="mono">typography-persistence.ts:22,61,90,155</span>；<span class="mono">typography-panel.tsx:397,404</span></td></tr>
+</table>
+<pre><span class="del">- let kept = prev_objects.get(at).filter(|o| o.get("0")… == Some(text.as_str()));</span>   <span class="notes">↑ 上游原形：文本一致才复用</span>
+<span class="add">+ let kept = prev_objects.get(at);</span>                                                  <span class="notes">↑ 我们改成：按下标无条件复用</span>
+<span class="add">+ let runs = file_runs.unwrap_or_else(|| respan_first_run(kept, &amp;modes).unwrap_or_else(|| { … }));</span>  <span class="notes">↑ 多个 run 压成一个</span></pre>
+<div class="callout rose"><b>D 级推断（必须标注）</b>：「我们那刀导致 PS 打不开」尚未经真机复跑定案。但它可证伪、验证成本半天（见 §5 P0-1）。</div>
+<div class="callout amber"><b>与版本无关的另一颗钉子</b>：<span class="mono">#159</span> 跨引擎层号歧义（可能"回执全绿的静默漏翻译"）根因在<b>我们自己的执行清单缺扫描来源锚</b>（<span class="mono">execution-manifest.js:29-34</span> 键集实测无来源锚；<span class="mono">pc-channel.js:96-111</span> 已落三个 <span class="mono">PC_SCAN_PROVENANCE_*</span> 拒码）——<b>换任何引擎版本都碰不到它</b>。</div>
+
+<h3>线 3 · 发布线</h3>
+<p>现读（09:23:19，HEAD <code>670f7cb</code>，这棵树此刻仍被别的会话写）：测试站绑 <code>c3e3247</code>＝落后 <b>10 笔</b>；生产绑 <code>6ff5c3c</code>＝落后 <b>28 笔</b>（比测试站还差 18 笔）；<code>origin/develop..HEAD</code>＝<b>26 笔未推</b>。两站 <span class="mono">expectedAssistantVersion</span> 都是 <b>3.7.15</b>（10-11 定版），而 10-17／10-19／10-20／10-21 四天的能力已入库 ⇒ 真机拿不到（#193 的 404）。公网回读：测试站 200／415 B、生产 200／427 B，均 <span class="mono">BOUND</span>。</p>
+
+<h3>线 4 · 运营与收款：不是没数据，是没人拍</h3>
+<p>台账 <code>AI_MEMORY/ledger.jsonl</code>（285 非空行 → 按 taskId 去重取最后一条 = <b>130 任务</b>）：已交付 39／<b>等您定 55</b>／待复验 32／进行中 1／已搁置 3；due 已过期 5；在办 2/2（合规）。"等您定"按 <span class="mono">updatedAt</span> 分布：10-15 ▸8、10-16 ▸6、10-17 ▸22、10-18 ▸5、10-19 ▸1、10-20 ▸10、10-21 ▸3。</p>
+<div class="callout teal"><b>口径提醒</b>：<span class="mono">updatedAt</span> 是"最后被触碰"戳，<b>不等于"等了您多久"</b>——10-15 那天有 16 条被集中重写过戳。要判真实等待，台账缺一个"进入等您定的时刻"字段（P1-4 补）。</div>
+
+<h2>2 · 本轮体检新查出的三件事</h2>
+<div class="cards">
+  <div class="card"><h4>① 引擎自带一个上游没有的 Txt2 补丁 <span class="tag bad">判决要改写</span></h4><p>见线 2 全表。最便宜的下一步不是等发版，是<b>先用"不带我们那刀的引擎"重跑同一套三夹具</b>；若那下真是病根，连 A 档"剥 Txt2"清洗工具都能撤掉——它现在在生产链里是一个额外失败面。</p></div>
+  <div class="card"><h4>② 自编产物的许可核验没重跑 <span class="tag warn">台账 0 命中</span></h4><p><span class="mono">BUILD-MANIFEST.txt:64</span> 自己写着"10-17 那次 345/345 是对上游产物跑的，本自编产物<b>没有重跑</b>，且仓库内没有可复跑的扫描脚本"。复跑确认：<span class="mono">scripts/</span> 里 license 类脚本 <b>0 个</b>，核验用的 <span class="mono">tmp/pc-closure.mjs</span> 在 tmp（无版本控制、随时可失）；<span class="mono">grep -c 345/345 ISSUES.md</span> = <b>0</b>。</p></div>
+  <div class="card"><h4>③ 事实层与控制面是"一块盘上的唯一副本" <span class="tag bad">挂 5.6 天</span></h4><p><span class="mono">ledger.jsonl</span>（203,122 B）、根 <span class="mono">scripts/</span> 9 文件（体检／投影／发飞书／对账夹具）、<span class="mono">meta-field-permissions.json</span>、<span class="mono">readback/</span>、4 份 HANDOFF —— 全部<b>未跟踪且未被忽略</b>；根仓库 <span class="mono">git remote -v</span> = <b>0 行</b>；TASK_LOG 比入库版本多 <b>+766,451 B</b>、ISSUES 多 <b>+197,392 B</b> 未提交。另：仓库根躺着 6 枚飞书投影的 <span class="mono">*.manifest.json</span>（生成物，未跟踪未忽略）。</p></div>
+  <div class="card"><h4>附带：两份随包文件互相打脸 <span class="tag">10 分钟可修</span></h4><p><span class="mono">BUILD-MANIFEST.txt:56-62</span> 实测"带 <span class="mono">CRAFT_FONTS_DIR</span> 强制重建后 exe 字节<b>完全相同</b>（仍是 3cb06ed1…）⇒ CLI 引用图不引 CRAFT_FONTS"；同目录 <span class="mono">README.txt:13-14</span> 却说"不指它就缺日文字体回退"。会误导下一次会话白跑 13 分钟重建。</p></div>
+</div>
+
+<h2>3 · 对抗式审查（第一对象＝我自己这份方案）</h2>
+<pre>VERDICT: 有条件放行（方案可走，三处措辞已就地改掉）
+范围: 本会话的体检结论与执行方案（非代码 diff）｜Round 1/3
+改动: 交付件 3 份（md + HTML + 模拟 HTML）｜风险档 Low（零产品代码改动）
+已证实: 5 条 ｜ 证伪: 3 条 ｜ 越界: 1 条 ｜ 降级: 2 条 ｜ 未能判定: 1 条
+覆盖缺口: 未跑任何构建/测试门；未连服务器与数据库；GitHub API 仅匿名读；上游 fork 关系未用 unshallow 证实</pre>
+<table>
+  <tr><th>判定</th><th>内容</th><th>处置</th></tr>
+  <tr><td><span class="tag bad">证伪-1</span></td><td>我早先算的"落后上游 <b>3053</b> 个提交"是假数：那份 clone 是 <b>shallow</b>（<span class="mono">.git/shallow</span> 里就是 f0e8d40），3053 实为<b>已抓到的上游全史条数</b>；真实落后量本机测不出</td><td>全部撤下，改用与深度无关的<b>树级差异</b>（294 文件）＋函数原文对照</td></tr>
+  <tr><td><span class="tag bad">证伪-2</span></td><td>我说"三键＝免 PS 扫描/写回/排版"不对：三键是 <span class="mono">pcExecutorEnabled/pcExePath/pcExeSha256</span>，排版是另一只硬常量，扫描与写回共用同一把判定</td><td>按 <span class="mono">server.js:723-728、:1426</span> 原文改写</td></tr>
+  <tr><td><span class="tag bad">证伪-3</span></td><td>我照抄台账说"#158 面板仍存显示名"——代码已改到脸名级，是<b>台账状态行落后于实现</b></td><td>改写，并把"台账状态行会过期"本身列为纪律问题</td></tr>
+  <tr><td><span class="tag warn">越界</span></td><td>"升级引擎能解除写回阻塞"过头：只针对"打开即崩"那一类；#6971/#6129 仍 open，#159 与版本无关</td><td>限定为「重造不带那刀的引擎＋重跑 Gate 1」，并明写<b>不解决什么</b></td></tr>
+  <tr><td><span class="tag warn">降级</span></td><td>Adobe「数据驱动图形」官方页直读 <b>HTTP 403</b>（两 URL＋WebFetch 同码），只剩搜索引擎二手片段；Crowdin 官方原句是「recognized as assets」，<b>没写</b>"只能离线改"</td><td>两条降为<b>待复核</b>；对外文案在换出口复核前不得引用其限制条款</td></tr>
+  <tr><td><span class="tag ok">成立</span></td><td>无版本控制＋无远端（6 路径 <span class="mono">ls-files</span> 全 NO、<span class="mono">check-ignore</span> 全 NO、<span class="mono">remote -v</span> 0 行、+766,451 B）；许可核验缺口（ISSUES 0 命中、脚本 0 个）；Creem 官方确写「Individual recipient: Alipay」「up to 50,000 CNY per payout」＋3.9%+$0.40</td><td>保留为结论</td></tr>
+  <tr><td><span class="tag d">驳回子代理</span></td><td>有子代理判"Learning Machines LLC 出处错了、须更正"。复跑：<b>上游 main 的 <span class="mono">apps/photocraft-cli/build.rs:30</span> 确实</b> <span class="mono">.set("CompanyName","Learning Machines LLC")</span> ⇒ 项目 ISSUES #198 勘误四成立</td><td>丢弃该条，不写进方案（<b>不需要更正</b>）</td></tr>
+</table>
+
+<h2>4 · 外部对标：能抄的、要回避的、是护城河证据的</h2>
+<table>
+  <tr><th>参照物</th><th>实测到什么</th><th>怎么用</th></tr>
+  <tr><td><b>上游引擎本体</b><br><span class="mono">storytold/photocraft</span>（Rust，69,670★，push 今早）</td><td>CLI 有 <span class="mono">convert / info / run --cmd / batch / commands / mcp</span>；<span class="mono">convert</span> 支持 .jpg/.png/.webp；另有 JSON 控制协议、MCP、offscreen 快照渲染、真实 PSD 语料库（把 psd-tools／ag-psd 当 oracle，按 commit＋sha256 钉值拉取）</td><td><b>一座没开采的矿</b>：jpg 交付件渲染、预检、回归语料三件事都在它视野内。<b>但先实测再承诺</b>（P2-1 带 A/B 负控）</td></tr>
+  <tr><td><b>字体匹配</b><br>parley／icu_segmenter／上游 <span class="mono">fonts.rs</span></td><td>上游走"PostScript 名精确解析＋回退候选＋CJK 按 locale 排字形偏好"；开源 CNN 字体识别只有 27★、2023 停更的复现件；WhatFontIs 本站 HTTP 500</td><td><b>别自研、别上 CNN</b>。#158 的脸名级方向与上游同源，是对的</td></tr>
+  <tr><td><b>同类工具</b><br>AE Sheets／LingoFlip／Get Localization</td><td>表格管理文本层＋AI 翻译＋<b>字体映射表</b>＋一次出多语言；Get Localization 用 <b>XLIFF 往返</b>（活可交任意译员），社区实证翻车点＝多语言同名文件互相覆盖只剩一份</td><td>批量台 v13 交互现成参照；XLIFF 值得当中间契约；<b>文件名必须带语言码</b></td></tr>
+  <tr><td><b>护城河书面证据</b><br>Crowdin／psd-tools／ag-psd</td><td>Crowdin 官方把 .psd/.png/.jpeg/.ai 划在"不支持文本翻译"（认作 assets）；psd-tools 官方明列 Not supported「Editing of texts in type layers」；ag-psd 自报文字层不完整、竖排写出打不开的文件</td><td><b>写进对外对比页</b>：证明"免 PS 无损写回文字层"是行业级难点，不是我们慢</td></tr>
+  <tr><td><b>出海收款（无主体）</b><br>Creem／Paddle／Polar／Lemon Squeezy</td><td>Creem 官方文档：支持大陆<b>个人</b>支付宝打款，单笔 ≤50,000 CNY，3.9%+$0.40；Paddle 对大陆个人"不在禁用清单、仅软件、需审核"（二手）；Polar 国家表<b>不含大陆</b>；Lemon Squeezy 官方正把用户迁往 Stripe Managed Payments</td><td>MoR 是"它替您卖、替您开票缴 VAT"，<b>不必等主体与 ICP</b>；别把新收银台建在被整合的那栋楼上</td></tr>
+  <tr><td><b>可观测性</b><br>Sentry／PostHog／GlitchTip／WER</td><td>Sentry 自托管官方门槛 4 核/16GB＋Docker＋Linux（Windows 不支持）；PostHog hobby 要 Kafka+ClickHouse；GlitchTip＝MIT、兼容 Sentry SDK、换 DSN 即用；Windows 自带 <b>WER LocalDumps</b> 可把崩溃转储落可控目录（默认 <span class="mono">%LOCALAPPDATA%\CrashDumps</span>）</td><td><b>最便宜的是零基建那条</b>：LocalDumps＋把 support bundle 从 <span class="mono">os.tmpdir()</span> 挪进助手数据目录，直接治"重启即丢＋上传静默失败"</td></tr>
+  <tr><td><b>自动更新</b><br>Inno Setup 官方／NetSparkle</td><td>官方流程＝自查新版→下载新 Setup→<span class="mono">/silent</span> 拉起、自身退出，Setup 自带文件占用重试；防"静默换 URL"的现成协议范式＝<b>签名 appcast＋哈希校验</b></td><td>不用发明：把红线（不得静默替换下载 URL）做进协议，而不是靠人盯</td></tr>
+  <tr><td><b>治理层</b><br>ADR/MADR／changesets／auto-memory／Plane·Huly</td><td>Plane/Huly/Leantime <b>都没有字段级写隔离</b>（我们的"机器列/人列分离＋投影前对账闸"是对的，不缺工具）；ADR＝一决策一文件、编号即文件名、<span class="mono">superseded by</span> 双向链；changesets＝碎片→消费→清空</td><td>三个最小动作：① 台账改"碎片—消费—清空"；② 不可逆决策转 ADR 式（治"行号漂移"与"两案同号"）；③ 开场必读改"索引＋按需展开"（≤200 行）</td></tr>
+</table>
+
+<h2>5 · 执行方案</h2>
+
+<h3>P0 · 今天就能做，不碰红线（各半天内）</h3>
+<div class="gates">
+  <div class="gate"><span class="k">P0-1</span><div><b>引擎"去我们那刀"重造 ＋ 三夹具 Gate 1 复跑</b>（最高杠杆）。以 v0.11.1 为底（或上游 main 某 commit），<b>不带</b> <span class="mono">write_bare</span> 单行化与 <span class="mono">respan_first_run</span>，重造 <span class="mono">tygf-engine.exe</span>；跑既有三夹具（137／11／1 层）＋纯往返夹具，您用 <b>PS 2021（22.0 验收基线）</b>开一次真实稿。<br><b>判据</b>：①开档不崩 ②逐层读回新文本 ③触碰重排后仍新 ④样式逐项比对 ⑤非拉丁一例。任一不过⇒照实写、不放开、不降级。<b>门禁</b>：三键出厂仍关；<span class="mono">smoke-pc-wiring-freeze</span> 的负向断言只在复验通过后改写且必须附本轮证据。<b>回滚</b>：一键关三键、保留 PS 通道。<b>代价</b>：首建约 20 分钟＋您开档 5 分钟。</div></div>
+  <div class="gate"><span class="k">P0-2</span><div><b>把事实层与控制面纳入版本控制</b>。根仓库 <span class="mono">git add</span>：ledger.jsonl／meta-field-permissions.json／readback/／scripts/／4 份 HANDOFF，并提交 TASK_LOG（+766 KB）与 ISSUES（+197 KB）现境；配一个私有远端。生成物（根 6 枚 <span class="mono">*.manifest.json</span>）改落 <span class="mono">tmp/</span> 并加 <span class="mono">.gitignore</span>。<b>判据</b>：<span class="mono">git ls-files</span> 命中由 0 变非 0；<span class="mono">git status --porcelain -- AI_MEMORY scripts</span> 空；<span class="mono">git remote -v</span> 非空。<b>门禁</b>：push 需您一句。</div></div>
+  <div class="gate"><span class="k">P0-3</span><div><b>许可核验敞口立案＋脚本入库</b>。ISSUES 追加一条 🟠；把 <span class="mono">tmp/pc-closure.mjs</span> 挪进 <span class="mono">scripts/</span> 加 npm 入口，挂到出包门前置。<b>判据</b>：<span class="mono">grep -c "345/345" AI_MEMORY/ISSUES.md</span> 由 0 变 ≥1；新入口出逐包清单且 rc=0。约 1 小时，纯工具。</div></div>
+  <div class="gate"><span class="k">P0-4</span><div><b>修文档自相矛盾</b>：<span class="mono">vendor/photocraft/README.txt</span> 的 craft-fonts 半句按 BUILD-MANIFEST 实测改写（10 分钟）。</div></div>
+</div>
+
+<h3>P1 · 需要您一句话（各一条就够）</h3>
+<ol>
+  <li><b>推 26 笔到 <span class="mono">origin/develop</span></b>（当前唯一"别人拿不到我们最新代码"的口子）。</li>
+  <li><b>部署测试站</b>到含 10-21 六处修复的那笔（部署后须公网回读 provenance 才算数）。</li>
+  <li><b>批次级取消/停止单独立项</b>：D1 前置确认（纯前端）随阶段 2.5 落地；C1 停止／C2 取消并退回<b>必须</b>新增服务端批次级 cancel ⇒ 触发状态机门禁＋合同变更门（四层同步＋<span class="mono">test:batch-row-contract</span>＋<span class="mono">test:trust-chain</span>，未跑不得上测试站）。C3"撤销已写入"<b>不做</b>（无源文件备份，不能承诺还原）。</li>
+  <li><b>台账加两字段</b>：<span class="mono">enteredWaitAt</span>（进入等您定的真实时刻）与 <span class="mono">verifiableBy</span>（该条结论的可复跑命令）——后者同时治"旧结论被当现状引用"。</li>
+  <li><b>失败现场落盘改到可控目录</b>：<span class="mono">os.tmpdir()</span> → 助手数据目录（治"重启即丢＋上传静默失败"），零新依赖。</li>
+</ol>
+
+<h3>P2 · 立项级（不夹带）</h3>
+<ol>
+  <li><b>交付件渲染解绑 PS</b>：先用夹具做 A/B（PS 出的 jpg vs 引擎 <span class="mono">convert</span> 出的 jpg），比字体回退与像素保真；<b>只有 A/B 通过才谈接线</b>。已知风险：CLI 实测不内嵌 craft-fonts，字体依赖系统。</li>
+  <li><b>回归语料升级</b>：4 份夹具 → "按 commit＋sha256 钉值拉取的真实稿语料库"（上游 corpus 范式），治"每次实测都要现找稿"。</li>
+  <li><b>出海收款 PoC</b>：MoR 二选一（Creem／Paddle）走一笔真单验证到账与开票链路，不接生产收银台。</li>
+  <li><b>治理压实</b>：TASK_LOG 分册＋索引化（≤200 行开场注入）；不可逆决策转 ADR 式一决策一文件。</li>
+</ol>
+
+<h3>明确不做（本轮判定）</h3>
+<div class="callout green">
+不做"AI 字体识别"（开源无生产级件）· 不上 Sentry／PostHog 全家桶自托管（门槛与体量不符）· 不把台账迁去 Plane/Huly（无字段级写隔离，等于重做）· 不在批量台加第五步（<span class="mono">product-specs/workbench-flow.md</span> 仍是四步）· 不恢复两个并列入口 · 不动生产内容面 · 不翻任何支付 flag · 不改 <span class="mono">BATCH_EXECUTION_READY</span>
+</div>
+
+<h2>6 · 未核实清单（不猜）</h2>
+<ol>
+  <li><span class="mono">f0e8d40</span> 到底是"官方 fork 上的自写补丁"还是浅克隆边界造成的错觉——本机测不出（需 unshallow 或带 token 的 API 对照）。<b>不影响 P0-1</b>。</li>
+  <li>#7220 何时进 release；该修复是否同时覆盖仍 open 的 #6971。</li>
+  <li>Adobe 数据驱动图形的官方限制条款（直读 403，仅二手片段）。</li>
+  <li>GlitchTip 对原生崩溃 minidump 的接收能力；Paddle 对大陆个人的官方原文。</li>
+  <li>三账本周净增字节是否触 ≤30 KB/周闸门（本轮未统计）。</li>
+  <li>"未推 26 笔"里是否含需要合同变更门的层（本轮未逐笔分类）。</li>
+</ol>
+
+<h2>7 · 模拟件实测记录（真实回显，非声称）</h2>
+<p><a href="模拟_20261021_全项目体检进阶_三档可点.html"><code>模拟_20261021_全项目体检进阶_三档可点.html</code></a>：三档（工作台进阶／运行健康台·真读数／待拍板队列·55 条），本机 Chrome 1280 视口驱动，<b>console 消息 0 条</b>。</p>
+<ul>
+  <li>选文件夹 → 组卡 6 张、范围条「这一批：12 个设计稿 · 已扫描 9 · 3 个要处理」；点「用父目录这张表」→ SKU-2204 由「配不上」变「就绪」，日志明写"产品没有自动替您绑"。</li>
+  <li><b>路径 A</b>（一个文件都没写）：<span class="mono">gs=cancelled</span>，账单「已全额退回 174 积分，一个文件都没写」。</li>
+  <li><b>路径 B</b>（写到第 6 份）：<span class="mono">gp=6</span>（4319 ms 实测节拍 ≈715 ms/份），按钮「停止这一批（已完成 6 / 12）」→ <span class="mono">stopping</span> → <span class="mono">stopped</span>，账单「已写入 6 份 · 未执行 6 份 · 已结算 87 分 · 未扣费 87 分」＋"已写入不会自动还原"上屏。</li>
+  <li><b>路径 C</b>（跑完）：<span class="mono">gs=finished</span>、自动进第 4 步、「已交付 12 份 · 已结算 174 分 · 未扣费 0 分」。</li>
+  <li>单稿档：范围条切「这份稿：SKU-2203 儿童杯 · 33 层 · 18 行需处理」，主按钮与 <span class="mono">total</span> 同步变 1。待拍板档：批准→再挂 7 天为末值生效，<span class="mono">localStorage</span> 落 <span class="mono">{"PAY-OPEN":"再挂 7 天"}</span>，导出按钮变「已复制，直接粘给我（1 条）」，清空回 0。批注开关关闭时 <span class="mono">.note</span> 计算样式 <span class="mono">display:none</span>。</li>
+</ul>
+<div class="callout amber"><b>实测逼出来的两个真 bug（已修）</b>：① 决策卡事件绑定用了错误的循环写法，<span class="mono">el.querySelectorAll is not a function</span> 让整段脚本崩；② <b>上一轮遗留的定时器在重跑后"复活"，两份稿并跑</b>（4.3 秒跑到 gp=12）——加"代数令牌"（<span class="mono">RUN</span> 计数器）后同场景实测 <span class="mono">gp=6</span> 与预期一致。<b>②与真跑批里"取消后旧任务继续派发"是同一类病，实现时必须一并防。</b></div>
+
+<div class="footer">
+  本报告与模拟件均为本会话产出，<b>未改产品代码、未出包、未部署、未碰两站与生产、未 push</b>。台账与 TASK_LOG 的记账按 <span class="mono">AGENTS.md</span>「任务结束必做」执行。<br>
+  证据等级：A＝本会话自己跑出的命令输出或读到的 file:line；B＝官方文档/规范原文；C＝厂商自报或二手转述；D＝推断（正文已逐条标注，全文仅 1 处）。
+</div>
+</div>
+</body>
+</html>

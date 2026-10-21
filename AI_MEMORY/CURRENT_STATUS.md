@@ -1,3 +1,18 @@
+## 2026-10-20 10:2x 现场校正：测试站 `6a268fe`／生产 `6ff5c3c`／develop `f98818f`（未推 6 笔）／`origin/main` 差 8 笔【接手会话追加，只追加不改旧条目】
+
+- **校正 09:4x 指针四处**：①测试站已从 `6ff5c3c` 推进到 `6a268fe`（ASSISTANT_DEVICE_INVALID 修复已部署）；②生产已回到 `6ff5c3c`（回退事故闭环，`4fa9d4f` 作废）；③develop 不是 `6ff5c3c` 且不干净——本轮 6 笔提交后为 `f98818f`；④`origin/main..HEAD` 是 **8 笔**，不是 70 笔。
+- **本轮新增提交**：`73639e0` Txt2 清洗 fail-open 加固（未知签名/段尾非零一律拒绝）；`1d15964` 抽屉焦点按来源归还；`0c1ae9a` 真机复验脚本入库；`c96bc25` 补回 `/en` contactPoint＋中英双语守卫。
+- **真实测试**：`test:pc-txt2` 15/15、`test:pc-executor` 17/17、`test:pc-wiring-freeze` 9/9、`test:typography-picker` 197 断言＋7 vitest、`tsc --noEmit` rc=0；生产 SEO 复跑 **0 FAIL**（TASK_LOG 的「30 FAIL」属 `4fa9d4f` 中间态，已消）。
+- **台账**：WIP 重排为 **2/2**（`BATCH-CHAIN-V4`、`TESTSITE-DEVICE-INVALID`），到期未交 **0**；投影 `create=0 update=13 held=2`（`ZHIHU-COPY` 为 Owner 手改、`PC-NOPS-EXEC` 为飞书旧值冲突）。读回闸仍有 20 项（含 4 组重复行），去重待 Owner 决定。
+- **下一步**：v7 每稿一表 L1→L4 → 测试站部署 → 生产另行授权；写回解冻仍等 Owner 用 PS 2021 打开真实稿验收。
+
+## 2026-10-20 09:4x 指针：测试站 BOUND `6ff5c3c`／生产 BOUND `4fa9d4f`；免 PS 写回根因＝引擎自写 `Txt2`（已独立复现），**本机 PS 实为 22.0，10-19/10-20 两份报告误写 2026 27.10**；写回仍未接线、三键仍关【opencode 追加（单写者令：只追加 pointer，不改旧条目；根仓库无 `总控/待投递指令.md` 可投）】
+
+- **现场（10-20 实测）**：测试站 `6ff5c3c`（provenance BOUND／助手 3.7.15）；生产 `4fa9d4f`（未动）；`develop`/`main` 均 `6ff5c3c` 且干净，`origin/main` 落后 70 笔未推。
+- **本轮**：4 夹具（含纯往返）复现「引擎直出打不开 `0x80042260` → 摘全局 `Txt2` 后可开、137 文字层、改过的层显示新文」；补「PS 另存后重开仍新文」。工具 `scripts/psd-sanitize-txt2.mjs`＋离线自测 **8/8**（拒绝 PSB/坏结构、改后自校验）。版本勘误登记 `ISSUES #186`。**A 档已落地**：`worktrees/develop` commit `14f0211`（`psd-sanitize.js` + `pc-executor` 保存后清洗 + `test:pc-txt2`），未推未部署；测试 `12/17/9` 全绿。**Owner 10-20 定：PS 2021（22.0）为验收基线**，2024/2026 降为兼容性观察。
+- **下一步（等 Owner）**：① 用 PS 2021 打开一份**真实稿**验收（通过前不放开写回）②批准后再谈解冻/灰度/对外口径（G4 需明文批准）③ PSB / 多语种 / `#6129` 按复核件 §十二 清单推进；在此之前写回不接线、三键不开、对外不称「免 PS 写回可用」。
+- **本文件状态**：最新条目自 10-07 起断层；10-08～10-19 事实以 `TASK_LOG.md` 顶部与 `ledger.jsonl` 为准。
+
 ## 2026-10-07 10:1x 指针：主干 `2a5b980`（对 `origin/develop` **未推＝4**）／测试站仍 `6fa6bb9`（合入未部署）／生产 `eeb994c`；本批范围按兵部取证收窄【总控长 `bffb0b95`】
 
 - **做到哪里**（10:11:34 现读）：develop HEAD `2a5b980`、分支 develop、`origin/develop..HEAD`＝**4**（未推）、`git status --porcelain`＝**1**（只剩受保护现场 `AI_MEMORY/ISSUES.md`）。今日已合四笔：`4ddfa59` 09:53 礼部对外文本 R2、`a03b8d0` 09:54 P0（未接走 attempt 改按批次年龄＋规模预算，新终态码 `NEVER_DISPATCHED`，固定 5 分钟钟一字未删）、`60205cf` 10:04 与 `2a5b980` 10:06（3.7.6 安装器的 `.gitignore` 例外＋安装包进跟踪）。
