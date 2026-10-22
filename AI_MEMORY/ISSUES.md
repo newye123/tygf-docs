@@ -1,3 +1,77 @@
+## #257　`tuyi@tuyigf.com` 处于「信有人发、没人管」的状态：MX 指向 Cloudflare，但路由与目标地址我读不到也建不了（令牌只有读权限）　🔴 P0（客户来信可能直接退信；2026-10-22 20:2x 实测）
+
+- **人话**：对外公布的联系邮箱是 `tuyi@tuyigf.com`，这个域名的收信被 Cloudflare 接管了。这种收信方式下，"哪封信转进哪个信箱"完全由后台的**目标地址 + 路由规则**决定；一条规则都没有时，来信不会被任何人收到，而且**不会有人知道**——飞书不报错、站内也没有记录。这次拿到的 Cloudflare 令牌只能读不能写，所以我既看不到现状、也建不了规则。
+- **证据（本会话实测，2026-10-22 20:0x—20:2x）**：① 域名 MX 指向 `route1/2/3.mx.cloudflare.net`、SPF 为 `v=spf1 include:_spf.mx.cloudflare.net ~all` ⇒ 收信确实是 Cloudflare Email Routing 在处理；② `GET /accounts/5c60acb98ca519b17b7e8a10f9d5b591/email/routing/addresses` → **403 Authentication error**，`.../rules` → **403 Authentication error**（同一令牌访问 Workers 列表却 200，且换成假账号 ID 后 Workers 变 403 ⇒ 账号 ID 正确，是权限没给）；③ `PUT /accounts/<id>/workers/scripts/tygf-probe-perm` → **403 `No access to the specified resource`** ⇒ Worker 也传不上去；④ 因此**目标地址是否已验证、路由规则是否存在，当前无法核实**（不写"没有"，只写"未核实"）。
+- **为什么它比"一个提醒没做出来"严重**：提醒只是锦上添花，"来信进不进信箱"是业务入口。英文站那个"申请试点"按钮就是 `mailto:tuyi@tuyigf.com`（`src/components/site/home-view-en.tsx:16`），点了发信的人如果收到退信，等于把试点申请直接丢掉。
+- **建议动作（不改产品口径）**：a) Owner 在那枚令牌上补三项**账号级 Edit** 权限（Workers Scripts / Email Routing Addresses / Email Routing Rules），我这边一条命令建完地址与规则；或 b) Owner 在 Cloudflare 后台手点（目标地址 + 路由规则），我负责 Worker 与飞书那一半；c) 配好后加一道**沉默失败守卫**：每周自动发一封测试邮件并断言飞书提醒到达，断了就报警（这条链路横跨 Cloudflare→Worker→飞书，任何一段坏掉都是无声失败）。
+- **关联**：`AI_MEMORY/TASK_LOG.md` 2026-10-22 20:26 条；交付件 `交付档案/执行方案/执行方案_20261022_收信转发与邮件飞书提醒_对抗式审查与执行.md`（第二版）；退路（把站上 10 处对外邮箱改成 QQ 信箱）见该文件 §7。
+
+## #253　本机 Photoshop 是"以管理员身份"跑的 ⇒ 非提权程序一律挂不上它（429），面板却仍显示"就绪"　🟠 中高（存量，本轮实测）
+
+- **人话**：这台机器上 Photoshop 用了管理员权限。Windows 不允许权限低的程序去操作权限高的程序，所以任何非提权的调用方去连 PS，都会立刻被拒（错误码 429）。我们的产品助手恰好也是管理员权限，所以它连得上；开发会话（我这边的命令行）权限低，连不上——这不是 PS 坏了，也不是产品坏了，但**用户那边一旦权限错配就永远"检测不到 Photoshop"**，而且界面上看不到任何指向这个原因的提示。
+- **证据（全部本会话实测，2026-10-22 15:4x—16:1x）**：同一条 cscript 探针里 `CreateObject("Scripting.FileSystemObject")` 成功、`CreateObject("Word.Application")` 成功（回 `16.0`，随后 `Quit` 关闭，未留进程），而 `GetObject(,"Photoshop.Application")`／`GetObject(,"Photoshop.Application.150")`／两者各自 `CreateObject` 四种组合**全部 429**；`Photoshop.Application` 的 `CurVer` 与 `CLSID\ProgID` 都指向 `Photoshop.Application.150`，`LocalServer32` 指向 `E:\Adobe\Adobe Photoshop 2021\Photoshop.exe /Automation` 且该文件存在 ⇒ 注册没坏。任务计划程序起的一次性任务（默认非交互档，日志回 `session=[]`）同样四种全 429。对照：`POST /diagnostic` 0.28 秒回 `CONNECTED: 22.0.0`（`_d_*.vbs` 时间戳 16:02:59 与回显同拍）⇒ 助手令牌能连、我的不能。权限判据：`Get-Process` 读 `Path` 时 36636（有窗口那个）与助手 21440 均为空、24088 可读——**读不到路径＝该进程提权**。`net session` 回 `Access is denied` ⇒ 本会话非管理员，无法自提权（不弹 UAC 就提不了，Owner 当时不在电脑前）。
+- **两处放大器（同一轮实测）**：① `GET /ping` 的 `photoshopAutomationStatus:"ready"／photoshopHandshake:true` 带 `photoshopLastCheckedAt` ＝ 08:37 的**缓存读数**，不反映当下；② 429 这个形状在全仓没有专指错误码与话术（用户只会看到"未检测到 Photoshop／请启动后重试"），而真原因是权限错配，动作是"别用管理员身份开 PS，或用管理员身份开助手"。
+- **建议动作（未拍不改）**：a) 助手启动时把自身完整性级别与 PS 进程完整性级别各读一次，不一致就在 `/ping` 出一个专指码（`PS_ELEVATION_MISMATCH`）并给一句人话；b) 帮助文档与安装向导写死"Photoshop 与助手请用同一权限方式启动"；c) `automationStatus` 超过 N 分钟未刷新就不再说"就绪"，改说"上次确认于 HH:mm"。
+- **本轮影响**：排版探针 P-1／P-2／P-3／P-4 因此拿不到读数（见 `交付档案/执行方案/执行方案_20261022_只选字族不改字重.md` §16）；已改从 PSD 二进制直读补出 P-5 与行距占比，见 `worktrees/develop/docs/records/20261022_真稿字重与行距_普查实测.json`。
+
+## #254　字体清单永远走目录源、没拿到过 Photoshop 权威清单（PS 明明连得上，0.23 秒就回落）　🟠 中高（本轮实测，机理未核实）
+
+- **人话**：排版面板里"能选哪些字体"有两个来源：本机字体文件夹（数出来 1293 张脸）和 Photoshop 自己的清单（本机实测它认 1587 张）。**PS 那份比文件夹多 352 张**（Adobe Fonts 与可变字体实例），少了这 352 张就会出现"PS 里能用的脸，我们面板里没有"。今天实测：PS 是连得上的，但字体清单那一趟在 0.23 秒就退回用文件夹那份——等于**面板从来没拿到过 PS 的清单**。
+- **证据**：`curl http://127.0.0.1:49152/v1.5/fonts?refresh=1` 两次分别 234 ms / 253 ms，回 `source:"directory-fallback" cache:"miss" fonts:1293`（`psVersion`／`rowsRaw` 字段根本不存在）；同一时段 `POST /diagnostic` 0.28 秒 `CONNECTED 22.0.0` 并跑完一段 JSX ⇒ 不是 PS 连不上。探针的 vbs 确实生成过（`%TEMP%\multilang-studio\_fp_*.vbs` 在调用当刻出现、随后被删）⇒ 起了那一趟但瞬间失败。352／1293／1587 这组数出自 `worktrees/develop/download/local-assistant/server.js:1365-1367` 的既有实测记录，本轮未重新复现。
+- **机理未核实，两个候选**（下一个接手的人请先分辨，别当已定案）：① `runFontsProbe` 用 `execFile('wscript.exe', …)`（`server.js:1513`），在**出厂 exe** 那种提权宿主里可能起进程失败（失败即毫秒返回、`payload=null` ⇒ 正好是 `server.js:1538-1546` 的目录回落分支）；② 在跑的 3.7.19（`assistantBuildId:"transport-hardening-20261011-r1"`）与本树脏代码不同版，分支条件不一样。分辨法：在助手日志里找 `[fonts] outcome=` 那一行看它写的是 `probe_failed` 还是 `probe_malformed`（`server.js:1543`／`1550`）。
+- **补证（16:4x，找到在跑助手的真日志：`E:\软件\图译工坊本地助手\logs\`）**：`assistant-events.log` 里 `/v1.5/fonts` 一共 22 条——**404×19**（10-20 08:47 为止的构建根本没有这条路由）、**500×3**（10-21 00:14—00:15，`code=FONTS_INTERNAL`＝回调里抛异常，落 `server.js:1523` 那条 catch）。今天两次是 200 所以没进日志：**`json()` 只在 `code>=400` 时记事件**（`server.js:3390`）。
+- **因此本条含一层可观测性缺口**：成功不写日志 ⇒ **这台机器上"字体清单到底有没有一次拿到过 PS 权威源"无历史证据可查**，只能现场复现（本轮复现＝两次都回落目录源）。若要修，先把 200 也记一行（只记 `source`／`rowsRaw`／耗时，不记清单内容）。
+- **不得据此说成**："日志里 200 命中 0"＝"从来没成功过"。那是一次数对了、对象错了的读法（`grep -ac -- ' -> 200' assistant-events.log` 对**所有路由**都得 0，因为成功压根不落账）。
+- **为什么值得先修**：这是"只选字族不改字重"整套方案的地基——按层保字重要在目标字族里挑同档的脸，挑的依据就是 PS 权威清单；清单只有 1293 那张时，**目标字族里明明有 Bold 却被判成"没有"**，就会退化成"不动并点名"。
+
+## #255　被超时杀掉的 PS 探针趟会在临时目录留下明文 .vbs（正常趟会删干净）　🟡 中（存量，本轮实测）
+
+- **人话**：助手每次驱动 Photoshop 都会临时写一个 .vbs 脚本（里面有 PS 与脚本文件的绝对路径），按"无痕删除"承诺跑完就抹掉。实测：**正常跑完的确实抹掉了**，但被超时杀掉的那几趟会把脚本原样留在临时目录里，7 周攒了 571＋22 枚。
+- **证据**：`C:\Users\ivan\AppData\Local\Temp\multilang-studio` 里 `_d_*.vbs` 571 枚（最早 2026-08-31 03:27，最晚 2026-10-22 08:02）、`_fp_*.vbs` 22 枚（最晚 10-22 08:04），合计 5,745,986 字节，目录条目共 4220 个；而我 16:02:59 那次 `/diagnostic` 与 16:04—16:06 两次 `/v1.5/fonts?refresh=1` 的 vbs 当场生成、事后不见 ⇒ 删除只在走完全流程时生效。对照 `server.js:1511-1513`（注释明写：超时后 execFile 杀掉 wscript，回调仍会走）与 `server.js:1526`（`secureDelete` 在回调里）——超时被杀与回调删除并不互斥，所以留下的那批更可能来自**进程被强杀／断电**那类没走到回调的趟。
+- **待确认**：留底的具体是哪一种死法（超时被杀 vs 进程级强杀）本机无只读手段可分辨；以及这些 .vbs 是否含密钥类内容（读到的两枚只含路径，不含密钥；抽样有限，不作全量结论）。
+- **建议动作（未拍不改）**：把"起 wscript 前先把上一趟残留按前缀扫一遍删掉"加进 `runFontsProbe`/诊断入口，并在 `/ping` 里给一个 `tempLeftovers:N` 计数，让它可见。
+
+## #251　生产页面积分包入口开着、服务端必拒（`creditPacksEnabled=true` ＋ `alipayPaymentsEnabled` 走缺省 false ＋ 生产 .env 无任何 `ALIPAY_*` 键）　🟠 中高（存量，本轮实测）
+
+- **状态改判（15:4x，Owner 明示）**：个人营业执照（个体工商户）没下来 ⇒ 支付宝商家收款本来就不能申请，这不是代码问题。本条改判为**等主体、暂缓**：不动任何 flag、不配密钥。留一句提醒：生产那个买包入口现在能点、点下去必失败，等你一句话再收拾（两档都不用写代码——把 <code>creditPacksEnabled</code> 关回去，或把文案改成"充值通道待开放"）。
+
+- **现象**：Owner 2026-10-22 定"用户自己充值"。实测生产：入口开关 `creditPacksEnabled=true`（DB 覆盖），但 `alipayPaymentsEnabled` 不在 DB 覆盖里 ⇒ 走缺省 `false`；且 `/var/www/tygf/.env` 里 `ALIPAY_*` 键名命中 **0** 个。⇒ 用户在看得到、点得动的套餐页点"支付"，必然 409 `CREDIT_PACKS_DISABLED`「积分包购买入口暂未开放」。
+- **证据**：`worktrees/billing-scope-20261022/src/app/api/workbench/credit-orders/[id]/pay/route.ts:26-29`（两闸都要真才放行）；`src/config/featureFlags.ts:26,29`（两个缺省都 false）；生产库现读 `SiteSetting.featureFlagsV1`＝`creditPacksEnabled=true / alipayPaymentsEnabled=undefined`；生产 `.env` 只匹配到 `PAYMENT_REFERENCE_SECRET` 一个键。
+- **配套实测（同轮）**：生产 `CreditPurchaseOrder` 14 单＝`created` 9 ＋ `cancelled` 5，**credited 0 单**；`CreditLedger` 中 `entryType IN (purchase/recharge/topup)`＝**0 行** ⇒ 这条充值链**从来没有真正走完过一次**。已买的积分规则本身是对的：`credit-orders.ts:421` 落 `expiresAt: null`＝**付费积分不过期**。
+- **在售面额（生产与测试同表）**：尝鲜包 1000 积分／9.9 元、进阶包 4200／39.9、专业包 12000／99.9（`CreditPackageVersion.status='active'`）。⇒ 一趟 12×12＝4,464–9,792 积分，**进阶包不够、专业包够**。
+- **待 Owner 拍**：① 翻 `alipayPaymentsEnabled`（红线项，明令才翻）；② 生产 .env 配支付宝五件套（APP_ID／私钥／公钥／卖家号／回调 URL，值不进对话不进提交）；③ 回调公网可达与验签实测；④ 在没配齐之前，把生产入口的 `creditPacksEnabled` 关回去，避免对外假入口。**未拍前不改任何 flag、不配任何密钥。**
+
+## #252　生产每日平台熔断"没配数"＝按部署版缺省 10000 生效，一趟 12×12 的第二天必撞 503　🟠 中高（本轮实测，测试站已处置）
+
+- **现象**：Owner 令撤限额。测试站那行 `platformDailyCreditCap=100000` 已按"让它不拦人"处置（见下）；但**生产根本没有这行**，而线上跑的是旧构建 ⇒ 旧构建的取值式是"配置 > 0 才用，否则吃缺省 10000"。
+- **证据**：生产库 `SELECT key,value FROM ApiCredential WHERE key IN ('platformDailyCreditCap','creditsEnforced')` 返回**空**；生产运行构建 `319bc138`（`/api/runtime-provenance` 现读 `environment:"production"`），其 `src/lib/server/credits.ts:40` `DEFAULT_PLATFORM_DAILY_CAP = 10000`、`:120-123` `configuredPlatformCap > 0 ? configuredPlatformCap : DEFAULT_PLATFORM_DAILY_CAP`；测试站运行构建 `ad38603f` 同形（同两处）。
+- **推论（重要，防误操作）**：**在生产上"删这行"或"写 0"都会让它变成 10000，不是关闸。** 关闸只有两条路：① 按旧构建的语义写一个够不到的大数；② 部署 `codex/billing-scope-20261022`（缺省已改 0＝关）之后再删行。
+- **本轮已做**：测试站 `platformDailyCreditCap` `100000 → 1000000000`（同一条命令内回读确认），当日 `PlatformCreditCounter` 现值 2026-10-22 committed=68、reserved=0 ⇒ 远未接近。**回退**＝`UPDATE ApiCredential SET value='100000' WHERE key='platformDailyCreditCap';`
+- **状态更新（20:0x，测试站已解决／生产仍在）**：测试站已随 `557fe767` 部署解决——新构建缺省 0＝关闸，且 `platformDailyCreditCap` 那行配置**已真删**（删前 1000000000，删后残留 0 行）。**生产仍是本条原状**：既无配置行（旧构建缺省生效 10000），又还跑着 `>1500` 抛错的那版 ⇒ **12×12 在生产还下不了单**，要等同一笔提交按三段轨上生产（Owner 未点头，不动）。
+- **仍待 Owner 一句话（生产）**：生产那台既没有配置行、又还跑着旧构建 ⇒ 有效日熔断 10000 且 `>1500` 抛错还在。两条路：把 `557fe767` 按三段轨推生产（推完这道闸自动变"关"），或先在生产写一个大数当临时止血。本条不自行处置。
+## #248　撤掉整单 1500 上限后，服务端对"一单多少钱"零算术校验　🟠 中高（本次引入，方案 P1 修）
+
+- **现象**：旧实现 `photoshopExecutionCredits` 在 >1500 单位时抛 `BILLING_STANDARD_ROWS_EXCEEDED`，撤掉之后报价路径没有任何金额级校验；而助手送来的"受信证据单位"还绕过每行 ≤15 封顶。
+- **证据**：`src/lib/billing/rules.ts:151-155`（撤后实现）、`src/lib/billing/batch-v3.ts:61-63`（`return trusted` 不过 `Math.min`）、`:81`（仅兜底路径封顶）、`src/lib/server/billing-challenge.ts:176,180`（单行/单语言单位只校验 ≤1,000,000）、`src/lib/server/credits.ts:1015-1030`（ps_execute 冻结不参与惰性释放，按资源类型排除，每轮 `take:20`）。
+- **失效场景**：助手或证据链一个 bug ⇒ 天文冻结额；ps_execute 只能靠结算或批次对账回收，用户余额冻到小时级以上。
+- **修法（方案 C1/P1）**：新增 `MAX_STANDARD_UNITS_PER_QUOTE`（拟 400,000＝2000 行×12 语×15 单位 的合法上界加余量），v2 与 v3 两个报价入口同笔校验，错误码 `BILLING_QUOTE_ABSURD`，话术不写"限额"。**执行前先跑 30 分钟定案实验**用 `BillingQuote.standardRowCount` 真实分布复核这个数。属【合同变更】纪律范围（改报价拒绝条件）。负责人＝计费线会话；工时≤1 天；触发条件＝放量前必做；回滚＝删常量即回到"没有上限"。
+
+## #249　AI 侧的钱根本没走积分闸：定价全 0 ＋ 每日 token 限额缺省不校验　🟠 中高（存量，本轮定性）
+
+- **现象**：`/api/workbench/agent-review`、OCR、对齐这几条会花真金（DeepSeek/PaddleOCR）的路径，冻结单位是 0，每日 token 限额缺省即"不校验"，只剩每分钟 10 次挡着。
+- **证据**：`src/lib/server/credits.ts:28-34`（`DEFAULT_PRICES` 五项全 0）、`src/lib/server/ai-ops.ts:68`（`dailyTokenLimitPerUser: '0'`）、`src/lib/server/ai-guard.ts:87-99`（`limit > 0` 才查用量）、`:78-85`（10/分）、`src/app/api/workbench/agent-review/route.ts:30`（160 KB 体上限）。
+- **为什么本轮才定性**：Owner 撤的是"限用户花积分"的闸；按外部对标共识（Stripe：要卡驱动成本的那个量），**该管的是 token，不是用户余额**——这两件事过去被"限额"一个词混在一起。
+- **影响**：真实成本敞口与用户额度无关，`platformDailyCreditCap` 从来管不到它。最坏成本**未实测**（不编数）。
+- **建议**：方案 P3 二选一——① 由实测定一个 token 日限、先走影子模式只告警（抄 nginx `limit_req_dry_run`）；② 明确不治理并先量出最坏成本。**属经营决定，待 Owner 拍，未派工。**
+
+## #250　413 话术写"4 MB"、常量是 16 MB ⇒ 让人以为还有一道更小的闸　🟢 低（未修，P0 一行）
+
+- **现象**：快照保存超体积时返回「确认数据超过 4 MB 限制」，但实际边界是 16 MB。
+- **证据**：`worktrees/billing-scope-20261022/src/app/api/workbench/review-snapshot/route.ts:48,63` 文案 vs `src/lib/workbench/review-snapshot-limits.ts:9` `REVIEW_SNAPSHOT_MAX_BODY_BYTES = 16 * 1024 * 1024`。
+- **影响**：Owner 2026-10-22 定"不需要限额"之后，这类数字不一致会被读成"其实还留着限额"，直接干扰对外口径。
+- **修法**：文案改 16 MB 并去掉硬编码（由常量拼）；`smoke-snapshot-quota` 加断言。负责人＝计费线会话；工时＝10 分钟；触发条件＝下一次动这条路由即顺手改。
+
+
 ## #244　确认表快照上限把"过期后删不掉的空壳行"计入 ⇒ 变成每台设备一辈子 100 次　🟡 中（已修在隔离分支，未部署）
 
 - **现象**：12 稿 × 12 语＝144 次确认必撞 429 `SNAPSHOT_LIMIT_REACHED`「已保存的确认记录达到上限，请联系作者清理后再试」。Owner 2026-10-22 追问"为什么不放"。
@@ -1492,7 +1566,7 @@
 - **状态**：🟠 开放（脚本与台账已处置并验证；轮换与否、全仓扫描两项待做）。
 - **补记（同轮，只追加不改上文）**：外移后仍有一处**回显**漏口——`sync-task-ledger.sh` 的收尾摘要行会把 `base=<token>` 原样打到 stdout（实测 10:2x 那次投影输出即如此），因此每次投影都会在终端与任何被保存的输出里留下明文。建议把摘要行改成 `base=<已配置>`（只报有无、不报值），并纳入"提交前凭据形状复扫"同一把尺。本轮未改该摘要行（属另一只手的编排脚本行为面，且改了要重跑投影验证）。
 
-## #216　后台运营备注（`BetaUser.name`）被当作用户显示名、随 `/api/auth/me` 明文下发到浏览器；且登录后官网首页导航仍显示"登录"（登录态没有一份统一事实）　🔴 critical（隐私泄漏 + 登录态断裂；2026-10-21 10:43 只读对抗式审查发现，**未修**）
+## #216　后台运营备注（`BetaUser.name`）被当作用户显示名、随 `/api/auth/me` 明文下发到浏览器；且登录后官网首页导航仍显示"登录"（登录态没有一份统一事实）　🔴 critical（隐私泄漏 + 登录态断裂；2026-10-21 10:43 只读对抗式审查发现；**拆写者一笔已落 develop `26e84c4`+`67032ea`**，未部署两站 ⇒ 线上仍泄漏，站内问题按 develop 代码算已修、按运行态算未修）
 
 - 证据（基线 develop `670f7cb`，本轮实测行号）：`worktrees/develop/src/components/workbench/user-account-menu.tsx:77-81`（`displayName` 优先取 `me.name`；同文件 `:4` 注释自称"展示当前登录邮箱"，与实现矛盾）｜`src/app/api/auth/me/route.ts:21,23,26`（响应回 `betaUserId/name/sessionId`）｜`src/app/api/auth/login/route.ts:118`（登录响应也带 `name`）｜`src/lib/server/beta-users.ts:73`（`name` ＝ 申请表单姓名 or 邀请码归属，**非用户自有字段**）｜`src/components/admin/installs-credits-panel.tsx:452,457`（后台自标"姓名 / 运营备注名"、"用于运营识别"）｜`src/components/site/home-view.tsx:135`（首页无条件渲染"登录"）｜`src/components/site/app-shell.tsx:37-39`（首页分支无会话注入）｜`src/app/(zh)/page.tsx:10`（`force-dynamic`，服务端可读会话）｜生产实测首页 `Cache-Control: private, no-cache, no-store`（SSR 注入不会串号）｜`npm run test:identity-account-gate` rc=0（`A6 account gate contract PASS`）｜全仓 grep `auth/me` 仅 4 个消费者，`betaUserId/sessionId` 客户端**零消费**。
 - 影响：运营在后台填的内部备注（如"王先生 / 已付尾款"）会直接出现在该用户的工作台账号菜单里，且登录用户可在浏览器 Network 面板读到原始值——**不需要任何越权**；同时用户登录后回到官网，导航仍写"登录"，界面上完全看不出已登录（首页导航是静态渲染，与 `/api/auth/me` 无关）。
@@ -1555,7 +1629,7 @@
 - **用户可见后果**：渲染期抛错 ⇒ React 树中断 ⇒ 路由级 `src/app/(zh)/error.tsx:13-40` 接管 ⇒ 页面显示"页面没有正常加载"＋"重试"；**"重试"会再次触发同一抛错**，用户已导入的译文表、扫描结果、编辑过的译表状态全部丢失，且没有任何"这批太大、请分批"的可执行提示。
 - **影响面**：多稿与单稿两条路径共用该预览（多稿分支的提前 return 在 `execute-step.tsx:2311`，在 useMemo 之后），两个入口都会踩；典型 126 行以上的营销稿（主图＋副图＋详情页合成）正好在触发区。
 - **建议修法**：① 预估改用不抛错的变体（超限返回 null/上限值）；② 超限时显示"这批超出单批上限（1500 标准单位 ＝ 行×语种），请分批或减少语种"，给出可执行动作；③ 补一条 smoke：1512 单位输入不得导致渲染异常；④ 修完后同步 `pack/page.tsx:591` 的量纲（见 #223）。
-- **状态**：🟡 部分修（2026-10-22 全项目审查轮，develop 提交）：建议 **① 已落地**——`estimatedCredits` 的 `useMemo` 包 try/catch 降级为 `null`，五个渲染点（`:2648/:2658/:2698/:2794/:2812`）改用**已在校内既有**的一句「按受理时报价并冻结（此处无预估）」，因此不再白屏、不丢已导入的译表与扫描结果；验证 `tsc` 该文件 0 错、`lint` 0 error、`test:contracts` 内含 `build-zh-font-subset.mjs --check`。**② 未做**：「这批超出单批上限（1500 标准单位＝行×语种），请分批或减少语种」这类可执行提示是**新文案**，会撞中文字体子集门（见 #166 的同一课），口径留待 Owner 定。**③ 未做**：1512 单位输入的渲染级 smoke（vitest 组件门）没补。**④ 未动**：`pack/page.tsx:591` 量纲（属 #223）。**未部署、未上站。** 关联 #223、#24
+- **状态**：🟡 大部分修（两条提交：`0f93b932` 不崩页 ＋ `985f53b4` 可执行提示与量纲对外口径；2026-10-22 13:5x）。**① 已落地**——`estimatedCredits` 的 `useMemo` 包 try/catch 降级为 `null`，五个渲染点不再白屏、不丢已导入的译表与扫描结果。**② 已落地（本轮）**：新增统一口径 `src/lib/billing/billing-error-copy.ts` ⇒ 接口返回 **409 ＋ 带数值 ＋ 动作建议**（减少语种／分两批），批量与单语两条报价路由共用（此前 v3 落 500「请重试」、v2 落 422，同一错误两种语义——并违反 `docs/图译工坊_内测积分增长与批量计费_v3_开发方案_20260818.md:141` 原文"不能默认为 500"）；界面侧两个执行入口都加 `unitCapBlocked`，报不出价就不让点（原 FA-3 半成品已补）。新文案实测未触发字体子集缺字（`[zh-font] OK 1197 码位全覆盖`，扫描范围含 `src/components`），故**未重生成子集**。**③ 仍未做**：1512 单位输入的**渲染级** smoke（vitest 组件门）没有——本轮补的是源码形状断言（对 HEAD 复跑证明有牙），不等价于渲染断言。**④ 已落地（本轮）**：`pack/page.tsx:591`「上限 1500 行」→「1500 标准单位」并给换算例子。**未部署、未上站：①②④ 的运行态（按钮禁用后的实际路径、409 实际呈现）均未在浏览器/真机验证。** 关联 #223、#237、#240
 
 ## #223　定价页计费细则的量纲与上限口径与代码不符（"1500 行"实为 1500 标准单位；单行封顶 15 积分未公示；仓库里 1500 有三种量纲）　🟠 major（对外口径／可解释性；2026-10-21 20:4x 实测立案，未修）
 
@@ -1563,7 +1637,7 @@
 - **未公示的第三条规则**：单行单语种最多 15 单位（`rules.ts:6` MAX_STANDARD_ROWS_PER_ITEM=15；`batch-v3.ts:80-81` 封顶计价，超长行不送量也不阻塞），页面只写了"每满 200 字符 1 积分、向上取整"，客户会按字数线性预估费用。
 - **影响**：客户按"1500 行"理解自己的可跑量 ⇒ 高估 12 倍；真超限时的失败形态是 #222 的整页崩溃，不是可读的提示。
 - **建议**：定价页细则改成"整批上限 1500 **标准单位（行 × 语种）**"，并补"单行单语种最多 15 积分（超长按封顶计）"；同时把仓库里 1500 的三种量纲在代码注释里互指（避免下一个接手 AI 再读错）。
-- **状态**：🆕 OPEN。关联 #222
+- **状态**：🟡 部分修（`985f53b4`，2026-10-22 13:5x）。**已修**：① 定价页 `pack/page.tsx:591`「整批合计上限 1500 **行**」→「1500 **标准单位**」并补换算例子（12 语 125 行刚好到顶，文字更长则更少）；② 两个「1500」拆成两份**命名且互不覆盖**的事实源——计价侧 `rules.BATCH_MAX_STANDARD_UNITS`（新增，值仍 1500）与服务端条数侧 `batch-limits.BATCH_MAX_SERVER_ROWS`，`batch-limits.ts` 里另写标准单位上限被断言禁止（`smoke-batch-limits`），`rules.ts` 内 `1_500` 字面量只许出现一次（就是常量定义，`smoke-billing-rules` 断言）；③ 第三份硬编码（`attempts/route.ts:62` 的字面量 1500）**未合并**——它与 `BATCH_MAX_SERVER_ROWS` 同量纲但独立写死，留作下一步。**仍未修**：`changes/active/20260901-batch-availability-and-limits.md:5,11,30` 还写"10 语言""1500 行""第 1501 行拒绝"（历史已批准变更文档，按纪律不回改，此处登记为准）；帮助 FAQ 与 `product-specs` 全文仍无单批上限说明（`grep 1500` 在三份 spec 命中 0）。**未部署**：①的对外可见效果要上站后才成立。关联 #222、#240
 
 ## #224　生产站至今没有发生过一次积分到账（14 笔订单 0 credited、无 paid_credits 账户），而付费入口与人工收款/人工确认三个开关在生产运行值均为 true　🟠 major（收入闭环未验证；2026-10-21 20:3x 两站生产库只读取证，未修）
 
@@ -1657,6 +1731,10 @@
 - **可复跑判据**：`/usr/bin/node -v` ⇒ `v20.20.2`；`grep -l "/usr/bin/node" /etc/systemd/system/tygf*.service` ⇒ 1 行；`grep "Runtime Binary" ~/.pm2/pm2.log | tail -1` ⇒ `/usr/bin/node`。
 - **两条修法（待 Owner 拍，均不在本轮授权范围）**：**A（最小）**把那枚 unit 的 `ExecStart` 改成 `/opt/tygf-node-v22/bin/node`，与其余 12 枚对齐——但**要先和 #236 那条 403 分开看**，别把"换运行时"和"它本来就红"混成一件事；**B（收口）**把测试站两枚常驻应用从 PM2 迁到 systemd，彻底不要 PM2，系统 Node 就可以只作为包管理器依赖存在或干脆移除。
 - **关联**：#236（那枚单元的另一半问题）、TASK_LOG 2026-10-22 12:22 安全线条目。
+- **状态更新（2026-10-22 13:25 实测 ⇒ 本条已收口）**：走 **NodeSource 同厂**把系统 Node 升到 **v22.23.4**（包 `22.23.4-1nodesource1`），与业务运行时**同版本、同 ABI 127** ⇒ 本条两个消费者一起离开 EOL：PM2 守护进程（pid 41446，13:24:59 起，`exe=/usr/bin/node` 这个路径现在就是 22.23.4）＋那枚写死它的对账单元（升级后 13:30:01 报的仍是同一句 `403 INVALID_RESPONSE` ⇒ **失效形状未变**，那条归 #236，不在本条账上）。
+  - **为什么选"升系统 Node"而不是"改 unit 指向我们的运行时"**：三条实测理由——`/usr/lib/node_modules` 里**原生模块 0 个**（`find … -name '*.node'` 计数 0）⇒ 换解释器不用重装依赖；官方源里就有 22.23.4；**一行 unit 配置都不用改**（改别人的配置反而多一处漂移面）。
+  - **本条不结案的那一半（新风险，别再另立号）**：机器上现在有**两个 Node 安装通道**——apt 的 NodeSource 包 ＋ 我们自己的 tarball 目录。版本此刻一致，**通道不一致＝以后只升一个就会重新漂移**。二选一待 Owner 拍：① 业务也收到 apt 通道（少一个目录，但要接受厂商推送节奏）；② 把那枚单元与 PM2 都指到 tarball（一个受控目录，但要改别人的 unit 与部署脚本）。本轮未做（又一次生产改动，且方向该人认）。
+  - **回滚件与证据**：`/var/backups/tygf-security-20261022/nodesource.sources.bak` ＋ `node22-upgrade-132448.log`（PASS 那一轮）。**回滚链今天被真实跑通两次**——都是我自己那两跤误触发的（写日志被拒 ⇒ 还原；健康门返回值极性写反 ⇒ 五项全绿仍判失败并降级）。**教训入记忆：健康门的"通过"必须是 0，写门之后要先在"已知坏"的状态上跑一次，看它会不会红。**
 
 ## #236　测试站 Photoshop 对账定时任务长期红：每 10 分钟一次 `403 INVALID_RESPONSE` ⇒ `systemctl --failed` 失去新异常探测能力　🟠 major（测试站账务对账停摆／噪声免疫；2026-10-22 实测登记，**非本次引入**，未修）
 
@@ -1746,3 +1824,57 @@
 - **根因**：把"位置"当"身份"。台账是多写者的追加型文件，任何"读上一行再改"的写法在这里必然错——上一行可能刚被别人写过。
 - **判据（下次别再踩，可复跑）**：① 追加前先按 `taskId` 在文件里查**自己的**最后一条并打印它，禁止 `lines.pop()` 当祖先；② 派生只允许 `{...rows.find(r=>r.taskId===MY_ID)}`；③ 追加后立刻回读校验"目标 taskId 的 effective 值 == 预期"，不符当场补正；④ 投影后再跑一次投影，`update=0` 才算闭环。
 - **状态**：✅ 已自纠（本节即留痕）。缺的一项（未做，不假装）：`sync-task-ledger.sh` 侧没有"同一 taskId 的 owner 在两次追加间被换掉"这种异常的告警——要加就得连着夹具 `scripts/test-sync-reconcile.sh` 一起改，另开单。
+
+## #243　台账投影的"快照提升"时有时无 ⇒ 已写进飞书的行下一轮被判 conflict、从此分叉（未定案，改脚本前须先复现）　🟠 major（治理工具自锁风险）
+
+- **观察到的读数（本机，同一条 `TYPO-FAMILY-WEIGHT-KEEP`）**：
+  - 12:29 那轮投影 `create=1 update=1 errors=[] heldCount=2`，随后 `tmp/readback/last-projected.ndjson` 的 mtime 变 **13:04:57**（＝提升过）。
+  - 13:18 那轮同样 `create=1 update=1 errors=[] heldCount=2`，但 final 仍是 **13:04:57**，只留下 `.pending`（mtime **13:17:23**）⇒ **同样读数形状，一次提升、一次没提升**，我没找到差别在哪。
+  - 后果实测：13:19 改台账后再投影 → `update=0`、`heldCount` 由 2 变 **3**，该行被标 `状态=conflict（台账=待复验｜飞书=进行中｜上投影=等您定）`；13:36 再跑仍旧 `update=0 heldCount=3`。也就是说：**已成功写进飞书的行，因为快照没提升，下一轮起被当成"人手改过"拦下，台账与飞书长期分叉。**
+- **本轮的规避（已做）**：投影后立刻回读同一行，比对"台账值 vs 飞书值 vs 快照值"三者并把分歧写在汇报里；没有用 `--force`——强推会连带盖掉 `ZHIHU-COPY`／`PC-NOPS-EXEC` 两行**Owner 在飞书手改过**的内容。
+- **要查什么（给下一位，别靠猜改）**：① `.sh` 的提升条件是 `grep -c '^\[fail\]'` 为 0（`scripts/sync-task-ledger.sh:135-144`），而 held 不产 `[fail]` ⇒ 单靠 held 解释不通。② **我的第一猜想已被自己证伪**：以为是 13:19 那两次 `--dry-run` 覆盖了 `.pending`——但 `ls --time-style` 显示 `.pending` 停在 **13:17:23**，dry-run 没重写它。③ 剩下最像的候选：**13:18 那轮有某一条列命令 `[fail]`（我只 `grep -o` 了汇总计数，把 `[fail]` 行过滤掉了＝我自己的观测缺口）**，于是"部分列写成功＋快照不提升"，下一轮就把**自己上次写进去的那一格**读成"人手改过"→ conflict → 从此拦死。这条**尚未证实**，证实方法：同一行连投两次、中间不清 `EXEC_LOG`，看是否复现"第一次部分失败、第二次 self-conflict"。④ 修的时候必须连着夹具 `scripts/test-sync-reconcile.sh`（29 断言）一起改，不许只动 `.sh` 的提升判断。
+- **状态**：⏳ **未定案**。影响面＝所有会话的台账↔飞书一致性判读，凡"飞书落后一格"都可能是本因而非人工改动；在查清前，任何会话引用飞书台账作结论都要**现读**、不信快照。
+
+## #245　12 语种批次基本跑不完：测试站 12 语批次中止率 66%（47/71），成功只有 17 个　🟠 major（交付成功率／直接决定"能不能卖 12 语种"；2026-10-22 13:5x 测试站只读 SQL 实测立案，未修）
+
+- **交叉统计（测试站 ExecutionBatch，只读，含分母）**：12 语种批次共 **71** 个 ⇒ `STALLED 47 / SETTLED 17 / EXPIRED 7` ⇒ 中止率 **66%**、成功率 **24%**；平均规模 334–372 单位。对照组：11 语 2 个中止；6 语 6 成功／3 中止；**5 语 4 个全部成功**；2 语 2 个全部成功。
+- **另一条切法（规模分桶，同一库）**：`≤60` 单位 0 中止；`61–120` 单位 **0 中止**；`121–300` 单位中止 27/47＝57%；`>300` 单位中止 25/45＝56%。⇒ 中止与规模强相关，与"上限 1500"无关（**历史最大批次只有 528 单位，从来没有一批撞到 1500**）。
+- **attempt 终止原因分布（属于 STALLED 批次的那些 attempt）**：`ATTEMPT_ABANDONED_STALE` 118、`terminalReason` 为空（回执自报 FAILED，走幂等重放）111、`ATTEMPT_ABANDONED_NEVER_DISPATCHED` **41**、`ATTEMPT_ABANDONED_USER` 29。
+- **头号疑点（待证，不是结论）**：判废与派发窗口只按**语种数**缩放——`src/lib/server/execution-batch.ts:949-974` 的 `dispatchWindowMs = max(5min, 语种数 × 3min)`，**完全不看行数**。12 语固定 36 分钟，一批 1200 行与一批 120 行拿同样窗口；而助手是逐语串行执行。这与 `NEVER_DISPATCHED 41`、`STALE 118` 的构成方向一致。
+- **需要什么证据才能定案**：① 逐批 attempt 时间线（`acceptedAt`／`heartbeatAt`／`finishedAt` 与窗口比对）；② 真机每行执行耗时（现只有注释级"1—2 分钟／语"，非本轮实测）；③ 两档对照：250 行 ×3 语 vs 250 行 ×12 语。
+- **为什么要紧**：12 语种是产品对外主打能力（`src/config/siteContent.ts:670/726`「内测期一次性支持最多改 12 种语种」「同一套 PSD，12 个语言一起处理」）。按现数据，**12 语一批的成功率只有 24%**——这比"单批上限太小"重要得多，也是"先放开上限"必须否决的直接理由。
+- **关联**：#238（同库规模分桶与"钱没有悬着"的更正）、#237（回执被拒是成因之一，接受面已修、未部署）、#224（0 笔已付）。
+- **号界**：本条原拟 #240，落笔前 `grep ^## #240` 发现 #240–#244 已被其他会话占用（其中 #241 正是"台账追加盖掉别人条目"），故顺延为 #245。
+
+## #246　重试路径要客户端重传整串行令牌，请求体 32 KB ⇒ 约 457 行必然 413；而服务端已存同一份冻结行集　🟠 major（存量潜伏，接 retry 那天必炸；2026-10-22 13:5x 实测序列化立案，未修）
+
+- **事实**：`src/app/api/workbench/execution-batches/[id]/languages/[code]/attempts/route.ts:32` 与同目录 `retry/route.ts:47-58` 用 `readJsonBody(req, 32 * 1024)`；请求体里带 `expectedRowTokens`（每个令牌序列化为 `"rt_<64hex>",` ≈ 70 字节）。
+- **实测序列化体积**：125 行 8,751 B／300 行 **21,001 B**／1500 行 **105,001 B**。⇒ 超过约 **457 行**就打满 32 KB，得到 413 `BATCH_ATTEMPT_BAD_REQUEST`；而 `attempts/route.ts:62` 那道 `> 1500` 的上界**在它之前物理上不可达**（同一路由内还有第三份硬编码 1500，见 #223）。
+- **为什么今天没炸**：界面上的重试按钮自陈"只读展示，不发起任何重试"（`src/components/workbench/batch-result-panel.tsx:4`，注释明写要"先精确重建服务端冻结的 expectedRowTokens 行集"）。所以这是**接线那天必炸**的雷，不是现行故障。
+- **正解（属合同变更，单独一笔）**：重试与建 attempt 都改为**服务端自取已冻结的 `expectedRowTokensJson`**，客户端不再重传整串令牌——一份事实源，顺带把体积闸与条数闸的矛盾消掉。改动触及回执/派发语义，须同步 fixture 与 `test:batch-row-contract`、`test:trust-chain`，故**不与 2026-10-22 阶段一混做**，等 Owner 批。
+- **关联**：#223、#245、#238。
+- **号界**：本条原拟 #241（已被占），顺延为 #246。
+
+## #247　一条带终态码的回执就能让助手回执排水**永久停摆**：catch 引用 try 内 `const` ⇒ ReferenceError、写盘不执行、异常被 `void` 吞、全仓零测试触达　🔴 blocker（回执／结算可见性；2026-10-22 14:4x 本会话实测复现，未修）
+
+- **行号基线**：develop HEAD `3323f27e`；`download/local-assistant/server.js` 工作树另有他会话 29 行未提交插入（106 与 7424-7451 两处 hunk），我引的 4463–4503 段落在"106–7423"偏移区内 ⇒ **对 HEAD 号需 −1**。`report-outbox.js` 工作树干净＝HEAD 号。
+- **缺陷本体（本会话逐行读实）**：`retryPendingExecutionReports()`（`server.js:4463`）在 try 块内声明 `const authorization = item.authorization || {}`（:4469），而 catch 块 :4497 直接引用 `authorization.jobId` ⇒ JS 块级作用域下 **catch 看不见 try 内的 const**。outbox 里只要有一条回执命中 `isTerminalReportCode(e.code)`（4 枚终态码之一），那一轮排水当场抛 `ReferenceError` ⇒ 末尾 `writePendingExecutionReports(remaining)`（:4503）**永不执行**，for 循环同时中断 ⇒ 其后所有待发回执本轮全部不处理。
+- **为什么长期没人看见**：两个调用点 `:8084`／`:8096` 都写成 `void retryPendingExecutionReports()`，而 server.js 里 `unhandledRejection` 与 `uncaughtException` 钩子**各 0 处**（`grep -c` 实测）⇒ 异常被静默吞掉，界面与 engine.log 都不显示；`grep -rl retryPendingExecutionReports scripts/ tests/` ⇒ **0 命中**，全仓没有任何测试触达这条排水函数。
+- **复现（本会话实跑，同形最小脚本，非推测）**：`UNCAUGHT FROM DRAIN: ReferenceError | authorization is not defined` ＋ `写盘执行了吗=false`。
+- **与上游 F-6 的关系**：不是重复，是**加重**——报告只说"终态码被丢弃、无留痕"，实测是"丢弃路径本身会崩掉整轮排水"。同文件另四处同源丢账本会话逐行证实：① `retryFailure`（`report-outbox.js:82-92`）只自增 `attemptCount`、**从不判上限**，退避封顶 1 小时；② `retryableItems()`（:94-101）按 `createdAt < cutoff` 过滤，**不归档不计数**，且 `createdAt` 缺失/非法时 `new Date(undefined).getTime()`＝NaN ⇒ `NaN >= cutoff` 恒 false ⇒ **当场被当作超窗抹掉**；③ `save()` 的 `write(remaining.slice(-maxItems))`（:79，`maxItems` 缺省 100、`server.js:348` 未传参）**静默丢最旧**；④ 排水末尾"整体替换"写盘 ⇒ 退避未到点／`deferred:true`／超窗／读写间隙新增 这四类条目在该次写入中一并消失，且 `remaining` 为空时 `write([])` 直接 **unlink 整个文件**（一条投递成功即可删掉其他所有待发回执）；⑤ `activateDeferredV15` **只在测试里被调用**（server.js 无调用点）⇒ `deferred` 哨兵写进去就没人取回。
+- **一处更正（报告说重了）**：`server.js:196-207` 会把 console.warn/error 镜像进 `logs/engine.log`（>2MB 轮转仅留 `.1` 一份）⇒ 报告"丢弃**无**持久留痕"**不精确**：终态丢弃那行有日志；但上面 ②③④ 三类静默抹除**一行都不产生**。
+- **修法（T-5，在隔离树做）**：catch 内改用 `item.authorization`；`SETTLEMENT_FAILED`（服务端 `photoshop-billing.ts:598/630` 已把 job 推到 `manual_review` ⇒ 重试永远回不来，却又不在终态集合＝无限重放到超窗）与 `JOB_MACHINE_MISMATCH`（换机/重绑后旧回执就此人间蒸发）两族**分类要分开重定**；加重试上限＋`abandoned` 落盘留痕；写盘改"读—改—合并"且空表不 unlink；`deferred` 要么接上激活路径要么删概念；补负控守卫（构造终态码／超上限／超窗／空列表四态，断言排水不崩、留痕存在、文件不被清空）。
+- **纪律**：本条动"回执／结算"语义 ⇒ **合同变更四层**（浏览器投影／助手 evidence／服务端报价／结算闸）＋ `smoke-batch-row-contract` fixture ＋ HANDOFF 标【合同变更】；**未跑 `test:batch-row-contract` 与 `test:trust-chain` 不得部署测试站**。且修复在**助手侧** ⇒ 真正生效要抬助手版本并真出安装包（只重打 zip＝出无修复的包）。
+- **关联**：F-6（上游报告条目）、#237（同族"回执被服务端拒"）、#245（12 语批次中止率 66%，排水停摆会与之互相放大）。
+- **号界**：#241–#246 均已被他会话占用，本条顺延为 **#247**（落笔前 `grep -c "^## #247"`＝0）。
+
+## #256　`updatedAt` 写成未实测的占位分钟（`15:2x`）⇒ 飞书 datetime 列拒收 ⇒ **整条任务从未出现在 Owner 的台账里**，还把整轮投影拖成 exit 1　🟠 major（治理工具吞任务／Owner 唯一视图失真；2026-10-22 16:4x 本会话实测复现并解掉一条，**根因未修**）
+
+- **现象**：`scripts/sync-task-ledger.sh` 回显只有 `⛔ 写入执行有 1 条失败（快照未提升，下次重试）：[fail] create USAGE-LIMIT-TRIAGE`——**没有原因**。把手生成的那条 `lark-cli base +record-upsert … --json …` 单独跑一遍才拿到真错：`code 800010403 invalid_request`。
+- **根因（一行数据）**：该行的 `updatedAt` 是 `"2026-10-22 15:2x"`。`更新时间` 列在脚本里声明为 `time` 型（`scripts/sync-task-ledger.mjs:59`），飞书按 datetime 解析 ⇒ **占位符 `x` 直接把整条 create 判死**。后果有两层：① 这条任务（用量闸门三类＝正等 Owner 拍"12×12 额度怎么给"那件）**从来没进过他的台账**，而台账是他唯一视图；② 有 `[fail]` ⇒ 快照不提升 ⇒ 同轮其他行下次被判 conflict（与 #243 的"自我分叉"同族后果）。
+- **可复跑判据（扫全表，别再靠人眼）**：`node -e` 读 `AI_MEMORY/ledger.jsonl`，按 taskId 取最后一条有效行，数 `Number.isFinite(Date.parse(r.updatedAt))` 为 false 的条数。本轮实测：**164 个有效任务里 1 条**（就是 `USAGE-LIMIT-TRIAGE`）；`到期日` 不可解析 **0 条**。
+- **本会话已做的处置（不动别手原值）**：读该 taskId 的有效行，**只替换 `updatedAt` 为实测钟点**，其余七字段（`title/status/owner/next/source/due/wip`）逐字保留并由脚本断言 `其他字段逐字未改=true`；按 append-only 追加新行（不编辑旧行）。重跑投影 ⇒ `create=1`；再按原式全量拉取（169 行）独立确认该行**现在在飞书里**。
+- **根因未修的部分（下一条该做的）**：① `sync-task-ledger.mjs` 应在**生成计划之前**校验 `更新时间`／`到期日` 可解析，红就点名 `taskId＋字段＋原值`，并把该行**从本轮计划里剔除**（而不是让 API 报错、连带整轮不提升快照）；② `.sh` 的 `[fail]` 行应带 API 的 `message/code`（现在只有任务名，等于让人再手跑一遍才知道原因）。**修法必须连着夹具 `scripts/test-sync-reconcile.sh`（29 断言）一起改**——依 #243 的告诫"没复现别改脚本"，本条已复现，但夹具联动与 #243 的快照提升问题是同一处代码，**两案宜并成一轮改**，别各改一半。
+- **我自己的复犯（诚实记）**：第一次补正时我写的 `16:40` 同样不是实测值（真值 16:44）——**正在诊断的毛病我下一分钟就犯了**。第二次改成"由脚本自己在写入那一刻取钟"（`new Date().toLocaleString('sv-SE',{timeZone:'Asia/Shanghai'})`），落值 `16:45` 与 `MEASURED_NOW` 同源。⇒ 这条与既有记忆同源：**正文里每个钟点只能从本条命令的回显复制**；写进机读字段的未实测分钟，代价从"台账难看"升级为"任务直接消失"。
+- **关联**：#243（快照提升时有时无，同处代码）、#241（台账并发追加把位置当身份）、`AGENTS.md` 第 6 条写入口纪律、记忆 `feedback-verifiable-review-rules` 第 79 条。
+- **号界**：`#247–#255` 已被他会话占用（落笔前实测 `grep -c "^## #248"`＝1、最大号＝255），本条取 **#256**（`grep -c "^## #256"` 落笔前＝0）。

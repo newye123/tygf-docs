@@ -1,3 +1,83 @@
+## 2026-10-22　技术决策：邮件提醒**不经过站点**——Cloudflare Worker 直推飞书（带 HMAC 签名），站内入口降为可选路径
+
+- **背景**：Owner 要「收到邮件就飞书提醒我，跟收到用户申请那个提醒同一个位置」。原设计是 Worker → 站内 `/api/mail-notifications` → 飞书（好处：站内去重/限流/应用日志）。实测这条路的代价被低估了：生产 `tygf.service` 的 `ExecStart` 实指 `/var/www/tygf-releases/319bc13…`（该提交在 `main` 上），`main` 树里没有该入口；而 `main..origin/develop` = **78 笔**，其中含未进部署脚本批准名单的结构迁移 `20261022120000_quote_billing_scope` ⇒ 要让提醒生效必须先推 78 笔上生产。**为一个邮件提醒承担跨 78 笔的发版风险，判断为不成比例。**
+- **决策一（投递方式二选一，互斥）**：Worker 首选**直推飞书**（绑定 `FEISHU_WEBHOOK_URL` ＋ 可选 `FEISHU_WEBHOOK_SECRET`）；只有在**没有**飞书配置、且同时绑了 `SITE_BASE` ＋ `MAIL_HOOK_SECRET` 时才走站内接口。两条路径互斥 ⇒ 同一条邮件路由规则不会发出两条提醒。站内入口与 `src/lib/server/notifications/mail-notify.ts` **保留**：将来站点上了该路由，去掉 `FEISHU_WEBHOOK_URL` 即可切回，同一份文案、同一个通道。
+- **决策二（签名不是可选项）**：站上通道 `ADMIN_NOTIFY_WEBHOOK_SECRET` 实测已启用（21 字符）⇒ Worker 必须按同一算法签名（`HMAC-SHA256(key=\`${ts}\n${secret}\`, data=空串) → Base64`），否则飞书拒收。`crypto.subtle` 在 Worker 里是异步的，实现用 Web Crypto 而非 Node `crypto`。
+- **决策三（文案只允许有一份事实源）**：Worker 的 `buildMailNotifyText` 与站内 TS 版**必须逐字相同**，由 `scripts/smoke-mail-notify.mjs` 的 [C2] 段断言：两边各导入真实实现、同一输入比对整段文本，改坏任一侧立即变红（门禁 32 → 43 条断言）。这是防止"两个实现慢慢漂开"的唯一可靠手段。
+- **决策四（时间与运行时区解耦）**：原 `fmtTime` 用运行时区取时分；服务器是 `Asia/Shanghai` 而 Worker 跑在 UTC 边缘节点 ⇒ 同一条提醒会差 8 小时。统一改为固定 `+08:00` 渲染（两端同口径，可跨机器复现）。
+- **验证（真实读数）**：`npm run test:mail-notify` 43 断言 passed；eslint 四文件 rc=0；`tsc --noEmit` 涉及文件 0 错；用**生产真实 webhook ＋ 签名密钥**跑 Worker 同一段代码发样例提醒 → `{"ok":true}`（真消息已进「新的内测申请」同一会话）。
+- **边界**：本决策只改投递路径，不改任何用户可见行为、不碰计费/回执/执行合同、不新建数据库表（邮件档案＝邮箱本身，飞书那条是提醒不是台账），因此不触发高风险状态机门禁。
+
+## 2026-10-22　技术决策：单批上限的**数值一个不改**，但"拒绝"必须成为可执行规则——确定性业务错误从此走 409 共享口径
+
+- **背景**：Owner 问"为什么超 1500 积分就故障？不应该给用户设限"。对抗式审查（`交付档案/审查报告/审查报告_20261022_1500上限完全解决_对抗式审查.md`）给出反直觉实测：测试站 112 批按规模分桶，**52 个中止全落在 121 单位以上，而历史最大批次只有 528 单位——从来没有一批撞到 1500**；12 语种批次的成功率只有 24%（`ISSUES #245`）。所以"先放开上限"顺序错误，本轮只把"故障"变成"规则"。
+- **决策一（409 共享口径）**：新增 `src/lib/billing/billing-error-copy.ts`，把"单批超上限"从通用 500「批次报价失败，请重试」改成 **409 ＋ 带数值 ＋ 动作建议**，批量与单语两条报价路由共用（此前同一错误 v3 报 500、v2 报 422）。这是执行 2026-08-18 计费方案原文那句"不能默认为 500"。
+- **决策二（两个 1500 拆成两份命名事实源）**：计价侧新增 `rules.BATCH_MAX_STANDARD_UNITS`（值仍 1500），与服务端条数侧 `batch-limits.BATCH_MAX_SERVER_ROWS` 明确分离，并用断言禁止在 `batch-limits` 再定义标准单位上限、禁止 `rules.ts` 内出现第二个 `1_500` 字面量。**代价与踩坑**：上限本来该住 `batch-limits.ts`，但实测放不进去——`smoke-billing-rules` 不经 ts loader 直接 import `rules.ts`，一旦 `rules.ts` 引入跨模块相对路径就 `ERR_MODULE_NOT_FOUND`（rc=127，两次复现）⇒ 于是把"`rules.ts` 必须零 import"也写成断言。
+- **决策三（报不出价＝不提交）**：界面两个执行入口都加 `unitCapBlocked`（#222 上一笔只降级数字、按钮仍可点的半成品已补）。
+- **决策四（不在数据之前放开上限）**：上限该定多少，由阶段二真机实测（250 行 ×3 语／×12 语两档）决定；或长期走"自动切分"。任何改数都是**计费口径**，须 Owner 明令。
+- **验证（真实退出码）**：`test:contracts` RC=0（含 `[zh-font] OK 1197 码位全覆盖`、`[en-font] OK`、对外文案守卫、计价预览一致性；该轮在改 `schema.prisma` 注释前跑完）；改注后补跑 `prisma validate`／`smoke-billing-rules`／`test:batch-limits`／`test:batch-row-contract` 各 RC=0；`lint` RC=0。新断言的灵敏度对 HEAD 复跑证明：旧码上 `unitCapBlocked` 命中 0、两路由引用共享口径 false、`rules.ts` 里 `1_500` 字面量 2。**未部署、未上站、未动历史账务。**
+
+## 2026-10-22　技术决策：跨层枚举**不许各写一份**；"扩大回执接受面"不等于"改计费口径"；学习终选码**宁缺毋造**
+
+- **背景**：全项目上帝视角审查（`交付档案/审查报告/审查报告_20261022_全项目上帝视角_对抗式审查.md`）把六条链连起来看，查出两处"每个点都有代码、连起来不通"的结构性断点，本轮按"对抗式审查 → 方案 → 执行 → 运行验证"闭环修掉。
+- **决策一（收敛到单一权威源， develop `872f532b`）**：批次回执的验证等级白名单 `execution-batch.ts:2327` 曾自己写了一份四元素集合，而权威阶梯在 `src/lib/trust-chain/attempt-state.ts:15-22`——两份已经漂移：集合里的 `PARTIAL/FAILED` 不是阶梯成员，阶梯里的 `WRITE_CONFIRMED/TEXT_READBACK_VERIFIED/SAVE_SUCCEEDED/DISK_OUTPUT_VERIFIED` 又全被拒，于是助手"部分完成"的真实回执被服务端 400 拒收（实测测试站 37 条语言尝试／811 个指派）。**修法不是"补一个枚举值"，而是消费方一律 import 权威阶梯**；`PARTIAL/FAILED` 作为批次汇总值显式保留并写进注释，避免下一轮被当成冗余删掉。
+- **决策二（钱口径与接受面分开讲）**：收费门 `execution-batch.ts:1384-1398` 只认 `REOPEN_VERIFIED` 且带对象证据摘要，其余等级的 `VERIFIED` 行一律降级 `FAILED` 并挂 `EVIDENCE_LEVEL_NOT_TRUSTED`。所以**扩大接受面不会让任何一行变得可计费**，改的是"证据能否落库、批次能否终态"。这条澄清必须写在提交信息里，否则下一个读的人会以为动了计费。
+- **决策三（终选码宁缺毋造， develop `0f93b932`）**：原建议"五个采集点都补 `finalCode`"经逐点读码被砍成"只补 `source_binding` 一个点"。其余四点的 `actionCode` 本身就是 `excluded/ignored/accepted`，不存在"系统提案 vs 用户终选"的分歧，填进去只会让聚合产出同义反复的候选规则并喂进管理端队列与 Shadow 评估——那是造数据。新增的 `bindingFinalCode` 只返回决策码（`candidate_rank_N`/`combined_rank_N`/`conflict_rank_N`/`manual_entry`），**不含任何正文**。
+- **决策四（不新增对外文案）**：#222 的降级提示复用校内既有的一句「按受理时报价并冻结（此处无预估）」，没有写"请分批/减语种"的新句子——10-22 上午刚踩过中文字体子集门（#166：正确处置是重新生成子集，不是改文案绕过），而这次不值得为一句新文案再重生成 394 KB 资产。**代价**：用户看不到"该拆分批次"这个可执行动作，已作为"部分修"记在 #222，口径等 Owner 定。
+- **验证（真实退出码，混合树：同棵树含别手在飞的助手内存保护改动）**：`test:batch-row-contract`／`test:trust-chain`／`test:contracts`（含中英字体子集两门 OK、`smoke-execute-step-reset` PASS）／`test:batch-billing-routes`／`test:batch-billing-v3`／`test:learning-signal-client`／`test:learning-phase0-4`＋`typography` 全部 RC=0；`lint` RC=0（0 error）；`tsc --noEmit` 本两轮文件 0 错（全仓仅剩 4 错，全在别手未跟踪文件）。端到端另用隔离库证明：`finalCode` 全空时 `--apply` 写 0 条候选，补值后同一条 `--apply` 写出 1 条 `personal/candidate`。**未部署、未上站、未动两站数据与历史账务。**
+- **仍然没接上的（不在本决策范围）**：停摆批次扫尾无调度（#238）、聚合 `--apply` 无调度且无下游消费方（#239）、学习同意面 92/106 无记录且用户无自助撤回（#239③）、生产 0 笔已付而三个支付开关为 true（#224）、测试站对账 timer 已红 15 天（#236）。
+
+## 2026-10-22　技术决策：**元素边界上的空格**也是产品事实——「粗体粘在前文上」要靠真浏览器门钉，不靠读源码
+
+- **背景**：英文首页两处粗体与前文之间没有空格（`…over to a tool.**It is about…**` ⇒ 「tool.It」；`<div class="try-contact">Email<b>tuyi@tuyigf.com</b></div>` ⇒ 「Emailtuyi@tuyigf.com」）。HTML 结构是**对的**（`<span>…</span><b>…</b>`），缺的是**元素边界上那个空格** ⇒ 读源码看不出来，只有把真实渲染结果拿出来才现形。
+- **决策一（判据只判拉丁文）**：中文标签与值之间、中文句号后本来就不加空格 ⇒ 一刀切会把中文侧也判红。判据必须是「紧邻的前一个字符是拉丁字母/拉丁标点时才要求空格」。
+- **决策二（门要跨元素往前找）**：粗体前面常常是 `<span>` 而不是文本节点；只看 `previousSibling` 是文本节点会漏掉一半。门里必须写一个「往前跨过元素取紧邻文字」的辅助函数。
+- **决策三（页面内测量脚本的注释里不能有反引号）**：本轮在 MEASURE（外层是模板字符串）里写了含反引号的注释 ⇒ 模板提前结束 ⇒ 页面脚本语法错误 ⇒ 门报「重叠 undefinedpx」这种**假象**而不是真问题。⇒ 模板字符串里的注释一律不用反引号，并留注记。
+- **验证（对照实验，不是推断）**：对当前已上站站点跑那道真浏览器门 ⇒ **rc=1**，实得 **2 处**（hero ＋ 联系块），两处都点名；修完再上站，同一道门转绿。
+
+## 2026-10-22　技术决策：对抗式审查的输入可以是**线上**——用真浏览器对已上站站点巡检，查出「字体晚发现」并补两道门
+
+- **背景**：前几轮的对抗式审查都审**代码**（v13 审分组口径、v15 审归属与门缺口）。本轮改审**已上站的测试站**（真浏览器 ＋ SSH 隧道绕开 Cloudflare 与令牌门），结果查出一个代码审不出来、也没人审的**真实用户可见缺陷**。
+- **发现**：英文站**一个 font preload 都没有** ⇒ 浏览器要等 CSS 下载并解析完才发现 @font-face 才去取字体。实测请求时间线（/en）：document@0ms → stylesheet@1393ms → script@1394ms → **font@3380ms** ⇒ 字体是**最后一个关键资源**，H1（LCP 元素）先以回退字体绘制再换字（可见 FOUT）。中文站对照：预加载了 4 个分片，没有这个问题 ⇒ 两站不对称。
+- **决策一（把「预加载」当成一等不变量）**：英文站在 **layout**（不是首页）加 `<link rel="preload" as="font">` —— 因为字体规则是 `html[lang="en"] body`，**全部 /en 页面**都渲染英文正文；这与中文站「只首页预加载」（其余路由不渲染中文正文）不同。
+- **决策二（门钉「原因」而不是钉「毫秒」）**：① 真浏览器门（`smoke-en-layout.mjs`，跑已上站站点）加「英文页必须预加载自己的字体」＋「中文页必须预加载 4 个分片」；② 出包门（`build-en-font-subset.mjs --check`，**在 `test:contracts` 链尾**）加结构性断言「声明该字体的 layout 必须预加载它」。**只钉「preload 标签在」这个确定性事实** —— 毫秒数随网络抖，钉毫秒就是假门；「晚发现 2 秒」是**为什么要修**的量化证据，门负责钉**原因**。
+- **决策三（生成物过期时，重新生成，不是改文案）**：3.7.21 入库带来新字「搬」⇒ 出包门拦下。另一会话的处置是**把发布说明里的一个字换掉来避开这道门**（提交 `31bed477`）—— 那是反过来的：子集是生成物、文案是产品事实。正确处置是**按已提交状态重新生成**（`478bae42`），并把守卫的失败提示补全为「不要改文案绕过」＋「在已提交状态下生成」（`cad83e4f`）。
+- **决策四（巡检里「差点误报」的东西必须查清再写）**：我一度以为「已提交的助手源码 require 了未提交的文件 ⇒ 干净检出下助手加载不了」—— **实测证伪**：`git grep` 搜的是**工作树**（含别人在飞的改动），看**提交版本**（`git show HEAD:…`）就没有那个 require。已提交树是自洽的。这类事只有查清才能写进任何文档。
+- **验证（对照实验，不是推断）**：真浏览器门对**当前已上站**站点 ⇒ **rc=1**，`FAIL 桌面1920 英文页必须预加载自己的字体子集（实得 preload []）` ⇒ 门能抓住这个线上缺陷；出包门删掉 preload ⇒ **rc=1**，还原 ⇒ **rc=0**。
+
+## 2026-10-22 中文字体瘦身：全量思源 VF（13.47 MiB）⇒ 按字集分片（4 片 385 KiB）；生成式 CSS 与守卫同批入库
+
+- **移除**：`public/fonts/SourceHanSansSC-VF.woff2`（14,129,688 B）从仓库删除；中文首页预加载改为 4 个分片（`/fonts/shsc/zh-subset-0..3.woff2`，合计 394,372 B）。中文首页字体下载量 **13.47 MiB → 385.1 KiB（缩小 35.8 倍，−97.1%）**，仓库少 13.4 MiB。
+- **新增事实一**：中文字体改用 Google 版 Noto Sans SC 的按字集子集（OFL 1.1，自托管）。与原 Adobe 版 Source Han Sans SC VF **视觉不变**，已用浏览器逐像素对照证明：字宽逐字相同（2176 = 2176）、墨量差 0.05%、差异像素仅占墨量 2~4% 且最大通道差 72（抗锯齿级）。字重轴由 250–900 变 100–900，而全站无一处真的用到 250 以下字重 ⇒ 无可见变化。
+- **新增事实二**：Google CSS2 的 `text=` 参数**有长度上限**（URL 超约 4.7 KB 被静默忽略并退回整站分片 CSS）⇒ 中文子集必须**分片请求**（本轮 4 片 × ≤420 字）。**且同族 @font-face 的 unicode-range 必须互不重叠**——实测重叠时浏览器只拉宽范围那一份（两种声明顺序均如此）。
+- **新增事实三**：`scripts/build-zh-font-subset.mjs`（生成器 + `--check` 守卫，按字体自己的 cmap 核对覆盖率）与其产物 `src/components/site/fonts-zh.generated.css`（@font-face，range 由各片 cmap 唯一归属算出）、`src/config/zhFontPreload.ts`（预加载清单）、`public/fonts/shsc/manifest.json`（sha256 + 码位）。族名仍是 "Tuyigf Source Han Sans"，组件侧零改动；生成 CSS **只由中文首页引入**，英文页不会白拉中文分片 CSS。
+- **新增事实四**：`npm run test:zh-font`（覆盖率，已挂进 `test:contracts` 链尾）、`npm run build:zh-font`（重新生成）；`smoke-en-layout.mjs` 的中文站断言改为"不得再拉全量 VF / 必须加载分片 / 合计 ≤1 MiB"。
+- **新增事实五**：生僻字（子集外）落系统 CJK 字体（PingFang SC / Microsoft YaHei），**不出豆腐块**但那个字不是思源黑体；文案新增字符由 `test:zh-font` 报红、`build:zh-font` 重生成解决。
+
+## 2026-10-21 英文站字体与版式：新增"思源黑体英文按字集子集"管线与 `.home-v17--en` 作用域（Wave 0）
+
+- **新增事实一**：英文站正文改用思源黑体（Source Han Sans 家族）的**按字集子集** `public/fonts/SourceHanSansSC-EN-VF.woff2`（33,976 B / 231 码位 / wght 100–900），自托管入 git；生成器 `scripts/build-en-font-subset.mjs`（字符集由 7 个英文文案源文件实测推导 + 安全集，
++ 清单含 sha256 与码位表），守卫 `scripts/smoke-en-layout.mjs` 以**字体文件自己的 cmap** 复核覆盖率。
+- **新增事实二**：中文站那份 13.47 MiB 全量 VF **不动**；英文站不引它（引它＝每首次访客下 13.5 MB）。英文站新增独立字体族 `Tuyigf Source Han Sans EN`，经 `html[lang="en"] body` 作用于 /en 整棵子树 ⇒ 中文站（`html lang="zh-CN"`）零影响。
+- **新增事实三**：英文首页根节点加 `home-v17--en` 作用域，承载英文专属版式参数（标题 `clamp(38px,4.1vw,52px)` / `letter-spacing:-.03em` / 允许换行、分区标题 `clamp(32px,3.3vw,46px)`、按钮可换行、面板头不全大写、卡片加高 + 装饰大字下移、≤560px 撤下导航"中文版"）。全部规则带 `--en` 作用域 ⇒ **中文站一行不改**。
+- **新增事实四**：英文 hero 标题被右侧产品卡盖住的根因是 `white-space:nowrap` ＋ 照中文字长定的字号档（重叠 171px@1440 / 278px@1081），不是图片盖字。**任何按元素盒子量的溢出检查在 `nowrap` 下都会失明**（盒子宽仍是栏宽，只有画出来的字越界）⇒ 必须用 `Range.selectNodeContents()` 量真实绘制宽度。
+- **新增门禁**：`npm run test:en-layout`（真浏览器 6 视口：标题不被盖、不横向溢出、字体 ≤256 KB 且不引全量 VF、字体族正确、字号区间、中文站仍引全量 VF）；`npm run test:en-font`（字体覆盖率，已挂进 `test:contracts` 链尾）；`npm run build:en-font`（重新生成子集）。
+- **未改但已登记**：仓库全量 VF 的字重轴 250–900 与 CSS 声明 100–900 不符（ISSUES #223）；3000 端口 dev server 服务的是 tmp-e2e-v7 而非 develop（ISSUES #224）；英文子集的"源文件清单"是手写的第二份声明，W2 i18n 接缝须收敛（ISSUES #222）。
+
+## 2026-10-21　首页登录态统一：服务端注入会话摘要，导航三态（登录／头像／骨架）＋跨标签同步
+
+- **变化**：① 新增 `src/lib/auth/session-summary.ts`——把当前用户压成可下发的最小摘要 `{state:anonymous|authenticated|blocked,email,emailVerified}`（不下发 `name/billingPrincipalId/sessionId`；blocked 判定与 `/api/auth/me` 的 403 同口径）；`src/app/(zh)/page.tsx` 读 cookie 算摘要并作为 props 下发（首页仍 `force-dynamic`）。② 新增 `src/components/site/auth-session-context.tsx`（会话 Provider，显示层单一真相）：首帧用服务端注入、**挂载时不请求**、网络不可达保留上次已知状态（P-17）、BroadcastChannel＋storage 跨标签同步且只广播事件不带数据。③ 新增 `src/components/site/home-account-menu.tsx`（home-v17 风格，不引 radix/shadcn；Esc/点外部关闭；停用态只留退出登录；登出留原地并提示）。④ `home-view.tsx` 导航三态：未知→34px 骨架、已登录（含 blocked）→头像菜单、未登录→原"登录"链接（位置与文案不变）。⑤ `workbench/user-account-menu.tsx` 改读 Provider，不再自取 `/api/auth/me`。⑥ `auth/login/page.tsx`"已在登录状态"卡默认落 `/#workbench`（尊重显式 `?next=`）。
+- **理由**：登录态此前只活在工作台组件里，官网导航是静态渲染——登录后首页仍写"登录"，用户看不出自己已登录；且首屏靠客户端请求才知道登录态，必然先闪一下"登录"。本次按 Owner 令以对抗式审查先行（10 条攻击），并据审查**改掉方案三处**：账号门不接共享状态（授权路径不吃乐观状态）、"登出后留原地"只限首页（工作台内容是敏感面）、驳回给 `SiteHeader` 加账号入口（会造成两个账号入口）。
+- **边界**：不动 AccountGate 的鉴权语义与 fail-closed 口径；不做用户自设昵称（L2，Owner 定调暂不做）；不动首页"申请试跑"（L2 未获批）；不动英文站（`/en` 导航无登录入口，审查报告原"同用 nav-login"为误读，已修正）；不改计费/回执/冻结语义。
+- **状态**：develop `e65b572`，**未推远端、未部署两站**。验证：`npx tsc --noEmit` rc=0、eslint 8 文件 0 problems、新 smoke `scripts/smoke-home-session-ui.mjs` 39 项 rc=0、`test:identity-account-gate`／`test:identity-logout-device-semantics`／`test:user-profile-privacy` 全 rc=0；**端到端真跑**（本地 dev server＋隔离库＋真登录）未登录/已登录/停用三态全对、备注不外泄、me 形状仍最小集；**真浏览器** console 0 错 0 警、水合告警 0、菜单可开可 Esc 关、头像与 CTA 不重叠。见 `AI_MEMORY/ISSUES.md` #216、`交付档案/执行报告/执行报告_20261021_首页登录态统一_落地.md`。
+
+## 2026-10-21　登录态拆写者：身份接口只回用户自有身份，运营备注走独立通道（#216）
+
+- **变化**：① `GET /api/auth/me` 响应收窄为 `{ok,email,emailVerified,accountStatus}`（原含 `name/betaUserId/sessionId`），并在 §7.4 注释旁写明"`name` 属运营字段不得下发"；② `/api/auth/login` 响应与 `loginUser` **服务层结果**同去 `name`（结构上防复发）；③ 工作台账号菜单显示名改用邮箱本地部分，不再读 `me.name`；设备与会话页不再携带 `name`；④ 运营侧 `update_profile` **不再写 `name`**，带不同姓名回 409 `ADMIN_USER_NAME_READONLY`（不静默忽略），校验改为"联系方式不能为空"；⑤ **新增** `GET|PATCH /api/admin/users/[id]/operator-note`——运营备注（`BetaUser.adminNote`）的独立通道，owner 限定、审计 `user.update_operator_note`、唯一写者；两个后台界面拆成「用户姓名（只读）」＋「运营备注（仅后台可见）」；⑥ 新增两支 smoke（26 项源码契约＋12 项运行时真调路由）并补登 `smoke-admin-security` 的三处清单。
+- **理由**：`BetaUser.name` 是"用户自报姓名"与"运营内部备注"两个语义合流在同一格——运营要写备注，是因为所有后台用户资料载荷都过 `assertSafeUserProfile` 隐私守卫、而守卫把 `adminNote` 列为禁键（`user-profile-contract.ts:14`），运营手里没有"备注"这一格可用，只好拿 `name` 顶替，结果内部备注直接出现在用户界面并随接口下发。**本次不动那条守卫，而是给它补一个合规位置。**
+- **边界**：不新增用户可见能力（Owner 定调"先只拆写者"），用户昵称与首页登录态（问题 B）均未做；不改用户资料载荷口径（仍不带 `adminNote`）；不碰计费/回执/冻结语义；`BetaUser.name` 的历史脏数据未清（需点名，不可自动区分）。
+- **状态**：develop `26e84c4`＋`67032ea`，**未推远端、未部署两站**。验证：`npx tsc --noEmit` rc=0、eslint 10 文件 0 problems、新 smoke 26＋12 项 rc=0、`test:auth` 79/79、`test:identity-account-gate`／`test:identity-logout-device-semantics`／`test:user-profile-privacy`／`test:admin-security` 全 rc=0。见 `AI_MEMORY/ISSUES.md` #216、`交付档案/执行报告/执行报告_20261021_登录态拆写者_运营备注隔离落地.md`。
+
 ## 2026-10-21　工作台两档可见性（②范围条 / ③状态带按档切语义 / ⑥主按钮带范围）＋执行前范围确认 D1
 
 - **变化**：① `workbench-view.tsx` 切换器右侧新增常驻范围条（`data-testid="workbench-scope-chip"`）：单稿 `这份稿：<文件名>` / 多稿 `这一批：N 个设计稿 · 已扫描 X · Y 个待扫描`；② 顶部状态带改写成 `batchMode ? 集合语义 : 原样`，多稿给「N 个设计稿 / 已扫描 / 待扫描 / 去扫描（还有 N 个）→ materials」，单稿分支零改动；③ 多稿主按钮改 `开始执行（本批 N 份 · 逐份）`，单稿按钮文案不动（其 N 是语言数）；④ 新增 `execution-scope-dialog.tsx`，单稿与多稿两个执行入口都先弹范围确认（`取消，先不开始` / `确认并开始`），确认前不冻结不写盘，框内明写「开始之后不能撤销 / 没有 PSD 备份」，并以范围指纹（列表 / 语言格数 / 覆盖率放行态）拦 TOCTOU；⑤ 多稿档「N 项待处理」加「本稿 」前缀（该数取自 `batchResult.summary.decisionCount`，是当前稿的）。

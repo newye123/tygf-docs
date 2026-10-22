@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行方案 · 收信转发与邮件飞书提醒（第二版） · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+.gates{display:flex;flex-direction:column;gap:8px}
+.gate{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:.92rem;color:var(--ink-2)}
+.gate .mark{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);white-space:nowrap;padding-top:2px}
+pre.flow{font-family:var(--font-mono);font-size:.82rem;line-height:1.6;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;margin:0}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>2026-10-22 20:2x +0800</span><span class="sep">/</span><span>第二版（实测后改架构）</span><span class="sep">/</span><span>v15 收信转发</span></div>
+  <h1>飞书提醒已经真的通了，转发卡在一个勾选框上</h1>
+  <p class="standfirst">原方案让提醒经站点发飞书，实测发现那等于要求一次跨 <strong>78 笔提交</strong>的生产发版（其中含别人未获批的结构迁移）。改成一个邮件 Worker 直推飞书之后，提醒这半今天就通了；剩下的一半只缺 Cloudflare 令牌的三项写权限。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：一半已交付 ｜ 一半等 Owner 补权限（约 1 分钟）</span>
+  <p><strong>可判定目标句：</strong>从任意邮箱发一封信到 <span class="mono">tuyi@tuyigf.com</span> 后，三件事同时成立才算完成——① <span class="mono">353099912@qq.com</span> 收到；②「新的内测申请」同一个飞书会话出现「【图译工坊】收到新邮件」；③ Cloudflare 后台规则 enabled、目标地址 verified。目前第 ② 条的通道已经实测通过（<span class="mono">ok:true</span>），第 ①③ 条被令牌权限挡住。</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span>这半小时实测到的五个硬事实</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>事实</th><th>证据（真跑读数）</th></tr></thead>
+    <tbody>
+      <tr><td><strong>账号 ID 不用你给</strong></td><td>服务器 <span class="mono">/etc/cloudflared/token</span> 是隧道令牌（base64 JSON），里面 <span class="mono">AccountTag</span> = <span class="mono">5c60acb98ca519b17b7e8a10f9d5b591</span>。反向确认：真 ID 访问 Workers 列表 200，假 ID（全 0）403</td></tr>
+      <tr><td><strong>令牌只有读权限</strong></td><td><span class="mono">PUT /workers/scripts/…</span> → <strong>403 No access to the specified resource</strong>；<span class="mono">GET /email/routing/addresses</span> 与 <span class="mono">/rules</span> → <strong>403 Authentication error</strong>（真号假号同样 403 ⇒ 不是账号 ID 问题）</td></tr>
+      <tr><td><strong>飞书通道实测通了</strong></td><td>用生产 <span class="mono">.env</span> 里真实的 webhook ＋ 21 位签名密钥，跑 Worker 同一段代码发样例提醒 → <span class="mono">{"ok":true}</span>，真消息已出现在会话里</td></tr>
+      <tr><td><strong>站点发版那条路这段时间走不通</strong></td><td>生产 <span class="mono">tygf.service</span> 指向 <span class="mono">/var/www/tygf-releases/319bc13…</span>（在 <span class="mono">main</span> 上）；<span class="mono">main</span> 树里没有邮件入口；<span class="mono">main..origin/develop</span> = 78 笔，含未获批的结构迁移 <span class="mono">20261022120000_quote_billing_scope</span></td></tr>
+      <tr><td><strong>时间口径已与运行时区解耦</strong></td><td>服务器 <span class="mono">Asia/Shanghai (+0800)</span>，Worker 跑在 UTC 边缘 ⇒ 两处统一按固定 +08:00 渲染</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>改后的链路：一条规则、两个动作、提醒直推</h2>
+<pre class="flow">访客/用户发信到 tuyi@tuyigf.com
+        ↓
+Cloudflare Email Routing（一条规则，两个动作）
+        ├── 动作① 转发到 353099912@qq.com     ⇒ 信箱收到（A 方案要的）
+        └── 动作② 触发 Worker tygf-mail-notify
+                        ↓  直接 POST 飞书 webhook（带 HMAC 签名）
+              飞书提醒 ⇒ 与「新的内测申请」同一个机器人、同一个会话</pre>
+  <div class="callout ok"><strong>为什么去掉「站内接口」这一跳：</strong>它换来站内去重/限流/日志，代价是必须先上生产（事实 4）。一个「收到邮件就告诉我」的提醒不该被一次 78 笔提交的发版卡住。站内入口与 <span class="mono">mail-notify.ts</span> 全部保留——将来站点上了这个入口，去掉 <span class="mono">FEISHU_WEBHOOK_URL</span>、绑 <span class="mono">SITE_BASE</span> ＋ <span class="mono">MAIL_HOOK_SECRET</span> 即可切回，文案与通道都不变。</div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>我做完了什么</h2>
+  <div class="cards">
+    <div class="card"><div class="head"><span class="title">workers/mail-notify-worker.js</span><span class="tag ok">已提交</span></div><p>取线索（发件人/主题/正文前 300 字）→ 直推飞书（HMAC 签名）；没有飞书配置时退回站内接口；两条路径互斥，不会发两条。</p></div>
+    <div class="card"><div class="head"><span class="title">scripts/configure-mail-routing.mjs</span><span class="tag ok">已提交</span></div><p>先传 Worker 绑密钥，再建目标地址与路由规则；路由这步因权限失败时打印两条后路并 <span class="mono">exit 2</span>，不再抛栈。</p></div>
+    <div class="card"><div class="head"><span class="title">scripts/smoke-mail-notify.mjs</span><span class="tag info">门禁 32 → 43 条</span></div><p>新增「Worker 与站内同输入必须逐字同文案」的防漂移断言：两边都导入真实实现比对，改坏任一侧立即红。</p></div>
+    <div class="card"><div class="head"><span class="title">mail-notify.ts / 站内入口</span><span class="tag info">保留</span></div><p>时间改固定 +08:00；入口仍带共享密钥、定时安全比较、限流、16 KB 上限、fail-closed。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>还差什么（都在你这边，二选一）</h2>
+  <div class="callout warn"><strong>首选（约 1 分钟，令牌值不用换）：</strong>Cloudflare 后台 → 头像 → API Tokens → 找到那枚 <span class="mono">cfut_…</span> → Edit → 加三项，<strong>全部选 Account 级、权限选 Edit</strong>：<br>① Account → Workers Scripts → Edit（传 Worker）<br>② Account → Email Routing Addresses → Edit（建收信地址）<br>③ Account → Email Routing Rules → Edit（建转发规则）<br>建议再加两条只读：Account Settings → Read、Zone → Zone → Read（以后我自己排查）。</div>
+  <div class="callout"><strong>或者你在后台手点（约 3 分钟，不用改令牌）：</strong>tuyigf.com → Email → Email Routing → ① Destination addresses 加 <span class="mono">353099912@qq.com</span> 并去 QQ 邮箱点验证信；② Routing rules 新建 <span class="mono">tuyi@tuyigf.com</span> → 转发到该地址。做完这两步「信箱收到」就已经生效；飞书那一半仍需 Workers Edit 权限。</div>
+  <div class="callout bad"><strong>还有一次验证点击（Cloudflare 强制）：</strong>验证信会发到 <span class="mono">353099912@qq.com</span>，<strong>很可能在垃圾箱</strong>；不点，转发不生效。</div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>拿到权限后我怎么收尾（不用你再操作）</h2>
+  <ol class="plan">
+    <li><strong>重跑配置脚本</strong>（幂等）：建目标地址 → 上传 Worker → 绑 webhook 与签名密钥 → 建「转发 ＋ 触发 Worker」规则。</li>
+    <li><strong>发一封真邮件</strong>：用生产站腾讯 SES（<span class="mono">MAIL_FROM=tuyigf@mail.tuyigf.com</span>，发信能力已实测在册）发到 <span class="mono">tuyi@tuyigf.com</span>。</li>
+    <li><strong>三条验收同时成立</strong>：QQ 收到 / 飞书出现新邮件提醒 / 后台规则 enabled 且地址 verified。</li>
+    <li><strong>落账</strong>：写 TASK_LOG ＋ 台账，并发飞书回执。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">06</span>验证记录（本轮真跑读数）</h2>
+  <div class="gates">
+    <div class="gate"><span class="mark">PASS</span><span>门禁 <span class="mono">npm run test:mail-notify</span> → <strong>43 assertions passed</strong></span></div>
+    <div class="gate"><span class="mark">PASS</span><span>lint 四个文件 → rc=0，0 error / 0 warning</span></div>
+    <div class="gate"><span class="mark">PASS</span><span>类型 <span class="mono">npx tsc --noEmit</span>：我改的文件 0 错（仓内仅剩别人在飞的 4 处既存错误）</span></div>
+    <div class="gate"><span class="mark">PASS</span><span>飞书真通道发样例提醒 → <span class="mono">{"ok":true}</span></span></div>
+    <div class="gate"><span class="mark">BLOCKED</span><span>Worker 上传 → 403 No access（令牌缺 Workers Scripts: Edit）</span></div>
+    <div class="gate"><span class="mark">BLOCKED</span><span>邮件路由地址/规则 → 403 Authentication error（令牌缺 Email Routing 两项）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">07</span>风险与退路</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>风险</th><th>处置</th></tr></thead>
+    <tbody>
+      <tr><td>补权限后仍 403</td><td>多半是令牌还带「账号资源范围」或「客户端 IP 过滤」限制，我会打出原始错误码定位（不打凭据）</td></tr>
+      <tr><td>验证信始终收不到</td><td>走方案 B：把站上 10 处对外邮箱改成 <span class="mono">353099912@qq.com</span>（首页 2 处运营台改，其余 8 处改代码）</td></tr>
+      <tr><td>不想给 Cloudflare 权限</td><td>改「服务器定时收 QQ 信箱 → 调同一个站内接口 → 飞书提醒」，需要 QQ IMAP 授权码</td></tr>
+      <tr><td>重复刷屏</td><td>Worker 只发一条；切回站内后还有 message-id 进程内去重</td></tr>
+      <tr><td>正文隐私</td><td>提醒只带发件人/主题/前 300 字，正文全文不出邮箱</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>本轮明确不做</h2>
+  <ul class="plain">
+    <li><strong>不新建数据库表</strong>：邮件的档案就是邮箱本身，飞书那条是提醒不是台账。</li>
+    <li><strong>不推生产站</strong>：<span class="mono">main</span> 上压着 78 笔未发版提交与一个未获批的结构迁移，不为一个邮件提醒冒这个风险。</li>
+    <li><strong>不动支付 flag、不动账务、不碰 main</strong>。</li>
+    <li><strong>不改对外邮箱口径</strong>：A 方案就是不改口径、只加转发。</li>
+  </ul>
+</section>
+
+<div class="footer">
+  <span>图译工坊 · 执行方案（v15 收信转发 · 第二版） · 2026-10-22 20:2x +0800</span>
+  <span>代码：<span class="mono">5459f143</span>、<span class="mono">1eadd512</span>（均在 <span class="mono">origin/develop</span>） · 门禁：43 断言 · 飞书通道：实测 <span class="mono">ok:true</span></span>
+  <span>本文件与同名 <span class="mono">.md</span> 同目录；HTML 仅供本地查看（在线打开会丢样式）。</span>
+</div>
+
+</div>
+</body>
+</html>
