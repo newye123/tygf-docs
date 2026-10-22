@@ -1443,3 +1443,13 @@
 - **教训（比坑本身更重要）**：**部署成功不该靠脚本自报的退出码判定。** 本轮改用**五项独立实测**给出成功判据：① 部署标记文件（`.deploy-commit`）＝ 目标 sha；② 收据的 `target/branch/commit` 三项全对；③ `curl 127.0.0.1:3001/` ⇒ 200；④ `/api/runtime-provenance` ⇒ `status=BOUND` 且 `webCommitSha` 对得上；⑤ **构建产物里搜得到新功能文案**（本轮 7 串全命中）。这五项任何一项不绿都当失败处理。
 - **另固化一条出包纪律**：出包必须从**干净 detached 树**（`HEAD` 逐位＝目标提交、`git status` 0 项、只有 `.env.example`、`node_modules` 用 junction 指 develop），用 `--allow-detached-head <sha>`——该参数**只放宽「detached 时 branch 字段取什么」**，不放宽任何判据。
 - **状态**：已绕过（2026-10-22 的 v13 部署实测走通：17 门全 PASS、`PACKAGE_RC=0`、上站成功）。**根因未修**：WSL 磁盘损坏、`file(1)` 缺失属机器级操作，未授权不动。
+
+## #165　生成物守卫只在**作者机器**上绿：CRLF 检出让 `--check` 恒红（出包门当场拦下一整包）　🟡 中（已修 `8d81d877`，机制性风险仍在）
+
+- **现象（2026-10-22 实测）**：合并英文站那批出包时，**出包门当场把整包拦下**：`[zh-font] FAIL src/components/site/fonts-zh.generated.css 与当前分片不一致（range 过期），请重跑生成`。但同一个文件在作者工作树里是**绿的**（`npm run test:zh-font` rc=0）。
+- **根因（不是内容不符，是换行）**：守卫把各分片 cmap 算出的 unicode-range 用 `'\n'` 拼成 `expected`，再 `includes()` 读进来的 CSS。而本机 `core.autocrlf=true` ⇒ **干净检出时 LF 被转成 CRLF**（实测：干净检出树里该文件 9 行**全是 CRLF**，提交 blob 里 **0 个 CR**）⇒ `includes` 必然失配。
+  ⇒ **这道门在「刚生成完、还没过 git」的工作树里绿，在「干净检出」里红** ⇒ 任何新克隆、任何出包树都会红 —— 是一道**只在作者机器上绿的门**，与「静态断言只认某个文件的字面量」是同一族病。
+- **修法（两层，提交 `8d81d877`）**：① 守卫**归一换行再比**（`css.replace(/\r\n/g,'\n')`）⇒ 与检出方式无关；② `.gitattributes` 把四个生成物钉 `text eol=lf`（生成 CSS、预加载清单、两份字体清单）⇒ 检出结果与平台无关，且保证 `git archive`（`core.autocrlf=false`）产出的字节与工作树一致。
+- **顺手补的真实缺口**：守卫原来**不校验预加载清单**（`src/config/zhFontPreload.ts`）⇒ 分片变了而 preload 指向不存在的文件 ⇒ 首页 404 且门不报。补上「清单必须逐片列出」。
+- **验证（对照实验，不是推断）**：同一台机器、同一份内容，干净检出树 `7a880258` ⇒ **rc=1（红）**；修复后 `8d81d877` ⇒ **rc=0（绿）**。
+- **机制性风险仍在（未修）**：**凡是「生成物 ＋ 按字节比对生成物」的门，都必须做换行归一或钉 eol=lf**。本仓目前只有这一处生成物 CSS，但 `public/downloads/local-assistant-release.json`、各 manifest 这类**同型**文件将来都可能踩。⇒ 建议：新增「生成物」时，提交里同时带「生成脚本 ＋ `--check` 守卫 ＋ `.gitattributes` 的 eol 规则」三件，缺一不做。
