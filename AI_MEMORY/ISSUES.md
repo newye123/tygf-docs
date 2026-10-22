@@ -1,3 +1,45 @@
+## #240　单语（v2）执行链按确认快照全表报价：设计稿里没有对应对象的行照旧收钱　🔴 高（已修在隔离分支，未部署）
+
+- **现场**：2026-10-22 那笔「B级 8 图」67 行、36 行在 PSD 里没有对应对象、29/29 对象执行成功，账上扣 68 积分，按"真发生替换的行"应扣 31 ⇒ **多收 37**。
+- **机制（三条都要，缺一条就不扣错）**：① 报价把整张 `ReviewSnapshot.tableJson` 喂给 `estimateBilling`，报价 API 没有"哪些行不该计费"的入参；② 结算 `successfulStandardRows = resultUsable ? quote.standardRowCount : 0` 是整单成败；③ `settlement-adapter.ts` 把 `skippedLayers` 写死 0、产物一发布就 `deliveryStatus=complete` ⇒ 旧的"有未匹配/跳过就不算完整"分支恒不可达。批量链 v3 按 `INCLUDED` 行报价，所以同一张表两条链算出 68 与 31。
+- **不是回归**：v2 全表口径自 2026-07-18/07-29 就是现在这样；`git diff 9b0d566f..HEAD` 对 `photoshop-billing.ts`／`rules.ts`／`execute-step.tsx`／`local-assistant-client.ts`／`v15-execution-orchestrator.ts` 输出为空（rc=0）。回退只会把别的退坏。
+- **处置**：本条只登记"已修未部署"。修复在 `codex/billing-scope-20261022@1316bf34`（报价作用域＋服务端对冻结快照复核＋同一份清单下发助手＋预估与埋点同数＋两个可空列纯加法迁移），守卫 `scripts/smoke-v2-billing-scope.mjs` 已串进 `test:contracts`。合入 develop 与上测试站待 Owner 点头。
+- **仍未封的口子（P2）**：助手在**执行时**新发现的未覆盖行，浏览器事先不知道 ⇒ 仍进报价、仍会扣。要封需要行级覆盖证据（回执带 expected/verified 行集摘要＋结算闸改"覆盖集==报价集"），必须改助手并按发布线 bump 出包。
+- **关联账**：10-22 那 37 积分待 Owner 单拍（一次 `adjust`、不改历史单）；10-21 那笔 110 积分**无法判定**——执行报告不在本机、服务端只存摘要不存正文，没证据不退也不写成"正常"。
+
+## #229　仓库那份全量思源 VF 的字重轴（250–900）与 CSS 声明（100–900）对不上　🟢 低（**已随 2026-10-22 换包消解**）
+
+- **原现象**：`src/components/site/home-v17.css:7-12` 的 `@font-face` 声明 `font-weight:100 900`，而 `public/fonts/SourceHanSansSC-VF.woff2` 实测 wght 轴是 **250–900**（默认实例 ExtraLight 250）⇒ 100~249 这段字重实际被钳到 250。
+- **现状**：中文站已改用按字集分片（`public/fonts/shsc/zh-subset-*.woff2`，4 片共 385 KiB，wght **100–900**），全站 CSS 里**没有任何一处真的用到 250 以下字重**（唯一的 `font-weight:100` 是 @font-face 声明本身）⇒ 声明与实际字重轴已对齐，**本条消解**。
+- **回退注意**：若将来回退到全量 VF，`git cat-file blob HEAD:public/fonts/SourceHanSansSC-VF.woff2` 取回的是 14,129,688 B、wght 250–900 的 Adobe 版 ⇒ 那时本条会重新成立，须同步把声明改回 `250 900`。
+
+## #231　字体子集的"文案来源清单"是手写的第二份声明，守卫会看不见新增文案　🟡 中（机制性，两处子集都有）
+
+- **现象**：英文子集（`scripts/build-en-font-subset.mjs`）与中文子集（`scripts/build-zh-font-subset.mjs`）都各自维护一份"哪些文件算文案来源"的清单（EN：7 个文件；ZH：`src/` 全目录 + 2 个助手文件）。守卫按这份清单核对覆盖率。
+- **风险**：① 有人把新文案写到清单外的文件里 ⇒ 守卫看不见 ⇒ 该字符静默缺字（英文站落系统字体、中文站落系统 CJK 字体，不会出豆腐块，但字形不是思源黑体）；② 英文工作台（Wave 3+）新增的英文文案若不并入清单，同样漏检。
+- **处置**：W2 的 i18n 接缝落地时，把"文案来源"收敛为**唯一声明处**（建议由 i18n 字典模块反向声明），并让两个子集脚本都按该声明遍历，而不是各维护一份手写清单。
+
+## #228　英文站字体子集是"构建期生成物"，英文文案新增字符会缺字　🟡 中（已修并加门禁，机制性风险仍在）
+
+- **现象**：英文站正文用思源黑体的按字集子集 `public/fonts/SourceHanSansSC-EN-VF.woff2`（33,976 B / 231 码位，2026-10-21 Wave 0 落地）。子集只含"生成那一刻用到的字符"；此后英文文案新增一个字符（如 `→`、`✓`、`ä`），若不重跑生成脚本，该字符**不在字体里**。
+- **为什么不会被静默**：① 生成脚本 `scripts/build-en-font-subset.mjs` 在生成时断言"文案真正用到的字符必须真的在字体自己的 cmap 里"，缺一个即失败且**不覆盖旧文件**；② `--check` 模式（`npm run test:en-font`，已挂进 `test:contracts` 链尾）按**字体文件自己的 cmap** 复核，不看清单自说自话；③ 守卫报红时的提示直接给出"跑 npm run build:en-font 重新生成"。
+- **残留风险**：① 守卫是**静态**的，只认 `scripts/build-en-font-subset.mjs` 里那份 `EN_COPY_SOURCES` 清单（7 个文件）——**若有人把英文文案写到清单外的文件里，守卫看不见**；② 英文工作台（Wave 3+）新增的英文文案若不并入该清单，同样漏检。⇒ W2/W3 必须把"英文文案源文件清单"与 i18n 字典挂上同一份来源声明，否则守卫会失明。
+- **处置**：W2 的 i18n 接缝落地时，把"英文文案来源"收敛为**唯一声明处**（建议由字典模块反向声明），并让守卫按该声明遍历，而不是维护第二份手写清单。
+
+## #229　仓库那份全量思源 VF 的字重轴（250–900）与 CSS 声明（100–900）对不上　🟢 低（未修）
+
+- **现象**：`src/components/site/home-v17.css:7-12` 的 `@font-face` 声明 `font-weight:100 900`，而 `public/fonts/SourceHanSansSC-VF.woff2` 实测 wght 轴是 **250–900**（默认实例 ExtraLight 250）⇒ 100~249 这段字重实际被钳到 250。
+- **现状影响**：中文站当前没用到 250 以下字重，看不出问题；编辑层探针（`smoke-content-studio-v1`）也未因此变红 ⇒ 不是回归。
+- **为什么本轮不修**：改字重声明属"另一件事"，且 `home-v17.css` 是中文 mock 作用域化产物，声明口径变更可能牵动在用的编辑层探针与"中文首页逐字节一致"的合同。
+- **要做什么**：单独一案，实测中文站实际用到的字重集合（`.home-v17` 里所有 `font-weight` 值）后，把声明改成真实轴区间，并加一条"声明区间 ⊆ 字体轴区间"的守卫。
+
+## #230　3000 端口的 dev server 不是 develop 树，拿它当本树证据会得出错结论　🟡 中（流程性，登记）
+
+- **现象**：本会话初判"3000 端口的英文首页是旧代码"，实测其父进程为 `node worktrees/tmp-e2e-v7/node_modules/.bin/next dev --webpack -p 3000` ⇒ **它服务的是 `worktrees/tmp-e2e-v7`，不是 `worktrees/develop`**。用它量"改前基线"会量到另一棵树。
+- **影响**：① 任何"3000 上看到的是旧版"的结论都可能是树错，不是没重编译；② 更危险的是反向误用：把 3000 的读数当 develop 的证据。
+- **本轮怎么做的**：本轮自起 develop 树的 dev server（**3117 端口**，隔离 `DATABASE_URL` 指临时库，验证完已停），并把 3000 当**对照组**跑同一道门禁（`smoke-seo-consistency`：两树同样 59 FAIL、FAIL 集合逐条相同）⇒ 证明那些 FAIL 是环境性的、与本次改动无关。
+- **建议**：后续会话在本树做任何前端实测前，先取父进程命令行确认服务的是哪棵树；不要凭端口号认树。
+
 ﻿# ISSUES.md — 问题登记（Bug / 技术债 / 已知风险）
 
 > **2026-10-14 opencode 状态更新四（详见 TASK_LOG 顶部「七道门执行方案对抗审查＋执行段」）**：执行轮四件——① **#133/#134/#136 已修**（develop `756978c` 已推 origin/develop：EN 披露断言＋deploy 注入 set_env_key＋og:url/alternateLocale＋smoke og:url 门；本地全量 `test:seo-consistency` 0 FAIL、tsc/lint/bash -n 全过；真站复验挂 O1 部署窗）；② **GSC 四件实拍**：覆盖报告 **已编入索引 3／未编入 4**（重定向 3＋已发现未编入 1）、sitemap 成功 4 URL（读取 10-6）、首页网址检查「**网址已收录到 Google**」、效果 5 次点击——**#138「覆盖报告从未打开」半边已闭**；③ **Bing/百度双阻塞于登录**：Bing Webmaster 至 MS 登录表单无会话、`site:` 搜索撞 CAPTCHA，tabbit 与 chrome-debug-profile 两浏览器均无百度会话（站点管理页回「因您未登录」）⇒ **#131 隔时重试卡在登录前**、#138 剩余；④ 知乎顺查：文仍在线**仍含「平均 3 分钟」**（#130 站外源待 Owner）。对抗审查报告 A1–A6 已发新群；O1 生产链按铁律待单点授权。
@@ -1434,6 +1476,134 @@
 - **状态**：🟠 开放（脚本与台账已处置并验证；轮换与否、全仓扫描两项待做）。
 - **补记（同轮，只追加不改上文）**：外移后仍有一处**回显**漏口——`sync-task-ledger.sh` 的收尾摘要行会把 `base=<token>` 原样打到 stdout（实测 10:2x 那次投影输出即如此），因此每次投影都会在终端与任何被保存的输出里留下明文。建议把摘要行改成 `base=<已配置>`（只报有无、不报值），并纳入"提交前凭据形状复扫"同一把尺。本轮未改该摘要行（属另一只手的编排脚本行为面，且改了要重跑投影验证）。
 
+## #216　后台运营备注（`BetaUser.name`）被当作用户显示名、随 `/api/auth/me` 明文下发到浏览器；且登录后官网首页导航仍显示"登录"（登录态没有一份统一事实）　🔴 critical（隐私泄漏 + 登录态断裂；2026-10-21 10:43 只读对抗式审查发现，**未修**）
+
+- 证据（基线 develop `670f7cb`，本轮实测行号）：`worktrees/develop/src/components/workbench/user-account-menu.tsx:77-81`（`displayName` 优先取 `me.name`；同文件 `:4` 注释自称"展示当前登录邮箱"，与实现矛盾）｜`src/app/api/auth/me/route.ts:21,23,26`（响应回 `betaUserId/name/sessionId`）｜`src/app/api/auth/login/route.ts:118`（登录响应也带 `name`）｜`src/lib/server/beta-users.ts:73`（`name` ＝ 申请表单姓名 or 邀请码归属，**非用户自有字段**）｜`src/components/admin/installs-credits-panel.tsx:452,457`（后台自标"姓名 / 运营备注名"、"用于运营识别"）｜`src/components/site/home-view.tsx:135`（首页无条件渲染"登录"）｜`src/components/site/app-shell.tsx:37-39`（首页分支无会话注入）｜`src/app/(zh)/page.tsx:10`（`force-dynamic`，服务端可读会话）｜生产实测首页 `Cache-Control: private, no-cache, no-store`（SSR 注入不会串号）｜`npm run test:identity-account-gate` rc=0（`A6 account gate contract PASS`）｜全仓 grep `auth/me` 仅 4 个消费者，`betaUserId/sessionId` 客户端**零消费**。
+- 影响：运营在后台填的内部备注（如"王先生 / 已付尾款"）会直接出现在该用户的工作台账号菜单里，且登录用户可在浏览器 Network 面板读到原始值——**不需要任何越权**；同时用户登录后回到官网，导航仍写"登录"，界面上完全看不出已登录（首页导航是静态渲染，与 `/api/auth/me` 无关）。
+- 建议（按交付报告 P0/P1/P2 执行，顺序别换）：① `/api/auth/me` 只回 `email/emailVerified/accountStatus`（去掉 `name/betaUserId/sessionId`），登录响应去 `name`，前端类型同步收窄，并在 §7.4 注释旁注明"`name` 属运营字段不得下发"；② 账号菜单改显示邮箱（本地部分），头像首字母同源；③ 首页服务端注入会话摘要，登录用头像**替换**"登录"、停用渲染琥珀点 + 原因说明、菜单组件按需动态加载；④ 统一会话 Provider（消 4 处重复请求）＋ 34px 圆形骨架（零布局跳动）＋ 跨标签页同步（BroadcastChannel）＋ 停用/不可达分型；⑤ **须新增 `scripts/smoke-auth-session-shape.mjs`**——现在 `scripts/` 下无任何断言守着"me 接口不泄漏运营字段"（A-8），不改就会复发。
+- 同族（本次一并查出、建议单独立项）：`/api/auth/me` 被 4 处各自请求（account-gate:29 / user-account-menu:37 / auth/sessions:170 / auth/login:77）；登录页"前往工作台"实际落营销首页 `/`（auth/login/page.tsx:55,195，工作台是 hash 路由 `#workbench`，view-context.tsx:19-24）；退出登录一律跳登录页丢上下文；`SiteHeader` 无账号入口（site-header.tsx:88-101）；英文站 `home-view-en.tsx:124-125` 同用 `nav-login` 样式（首页方案需一并考虑，否则只修一半）；根子问题是 `BetaUser.name` 一个字段同时承担"用户姓名"与"运营备注"两种语义——正解是拆 `name` + `adminNote`（属数据库变更，需单独评审）。
+- 状态：**已交付（A、B 两条缺陷均已修）**（2026-10-21，develop `26e84c4`＋`67032ea`＝拆写者、`e65b572`＝首页登录态问题 B，均**未推未部署**）。**A（备注泄漏）已修**：身份接口只回 `email/emailVerified/accountStatus`，登录响应与服务层结果同去 `name`；工作台显示名改邮箱本地部分；运营侧拆写者（用户姓名改只读＋运营备注走 `adminNote` 独立通道 `/api/admin/users/[id]/operator-note`，owner 限定、单独审计、唯一写者；360° 详情与装机列表载荷继续不带 `adminNote`，隐私守卫未绕）。新增 2 支 smoke（26 项源码契约＋12 项运行时真调路由）并补登 admin-security 清单。**B（登录后首页仍显示"登录"）已于 `e65b572` 闭合**——服务端注入会话摘要、导航三态（登录／头像／34px 骨架）、跨标签同步、登录页"已在登录状态"卡落到 `/#workbench`；端到端与真浏览器实测通过（console 0 错 0 警、水合告警 0）。**用户可自设昵称按 Owner 定调暂不做**（若做建议新增 `displayName`，且认人锚点必须是邮箱＋id＋申请单姓名，不得锚在用户可写内容上）。**首页隐藏"申请试跑"仍待批（L2）**。**存量脏数据未清**（库里若干行 `name` 存着运营备注，无法自动区分真名/备注，需点名清理，本轮未连生产库）。
+- 出处：`交付档案/审查报告/审查报告_20261021_登录态UI一致性_对抗式审查与执行方案.md:1`（同名 `.html`）｜模拟件 `交付档案/执行方案/模拟_20261021_登录态UI_修复前后.html:1`｜飞书已发（`SENT chunks=1` rc=0，正文无表格、讲人话）。
+
+## #217　出包会话擅自改 assistantBuildId ⇒ 交付的三个安装包装上即被工作台硬拦（合同门要求全等，版本只是下限）　🔴 critical（发布身份／可用性；2026-10-21 对抗式审查 Round 2 发现并当场收口）
+
+- **现象**：装 r1/r2/r3 任一版后，工作台每一次本地助手操作都返回 `ASSISTANT_CONTRACT_MISMATCH`「本地助手报告组件版本与当前工作台不一致」。
+- **根因**：`src/lib/workbench/assistant-compatibility.ts:38-47` 对 buildId/reportSchemaVersion/reportRendererVersion 要求**逐字相等**，版本号为下限；站点两侧（main／origin/main）`config/release-identity.json` 均要 `transport-hardening-20261011-r1`，而我出包时在临时建树里把 buildId 换成了自造的 `bundled-engine-20261020-r1`，且该值从未入库 ⇒ 出厂件与站点合同不可能相等。
+- **证据**：差分实跑 `tmp/probe-contract-buildid.mjs`（A＝r1 真实 /ping 读数 ⇒ MISMATCH；B＝未改 buildId ⇒ null；C＝只改版本 ⇒ null；D＝版本低于门 ⇒ UPDATE_REQUIRED，四格 rc 均取真值）。
+- **处置**：`741fc04`＋`c570c9b` 把六处身份面统一前进 3.7.16 且 **buildId 一字未动**，出厂件与发布清单同笔入库；`npm run repo:check` rc=0；四只旧交付目录加作废抬头并重算和值（mismatches=0）。
+- **防再犯**：门侧新增 [E]（内置引擎门必须在 npm 入口与 test:trust-chain 内）；建议后续把"出厂件 buildId 必须等于站点入库 buildId"做成一条独立断言（本轮未建，缺一个稳定的取站点值的入口）。
+- **状态**：🟢 已修（代码与出厂件＝r4），⏳ 待 Owner 实机复验。号界探针：本条落笔前 `grep -c '^## #217' ISSUES.md` ＝ 0。
+
+## #218　后台面板门控改成导航派生后，隐私契约冒烟仍按旧 `{owner && (` 形态断言 ⇒ `test:contracts` 必红、整条发布门卡死（已修 319bc13）　🟠 major（发布门失效／契约不同步；2026-10-21 双站发布时实测拦下）
+
+- **现象**：`npm run test:contracts` 在 `scripts/smoke-user-profile-privacy.mjs:144` 抛 `AssertionError`，任何出包都在测试门阶段停下；测试站与生产站因此都发不出去。
+- **根因**：`8412d4a` 把后台 9 处手写 `{owner && (` 撤成 `visibleAdminNav(role)` 派生后，`admin-dashboard.tsx` 的 FeedbackPanel 不再带 `owner` 字面量；但隐私冒烟仍按旧形态找门控，**断言的是实现形状而不是隐私意图**。
+- **证据**：`worktrees/develop/src/components/admin/admin-sidebar-data.ts` 的 `{ key: 'feedback' … ownerOnly: true }` 与 `visibleAdminNav` 过滤；`admin-dashboard.tsx` 的 `allowedAdminKeys`／`adminPanel('feedback', <FeedbackPanel />)`；实跑 `test:contracts` 第三次出包在 79s 处 AssertionError。
+- **处置**（`319bc13`）：按原隐私意图重钉两头——① 导航项 `feedback` 必须 `ownerOnly: true`（真正的门）；② dashboard 仍须经 `adminPanel('feedback', <FeedbackPanel />)` 渲染（不得绕过导航私接面板）；同时保留 `allowedAdminKeys.has(key)` 的单源断言。改后 `test:contracts` PASS（测试包 142s／生产包 294s）。
+- **防再犯建议（未建）**：门控形态类改动应与契约冒烟同笔同步（本次是只改实现未改断言）；"改 A 文件必须动 B 文件"的硬绑不可靠，未实施。
+- **状态**：🟢 已修并随两站上线（`319bc13`）；本条为发布过程记录，不是新缺陷。
+
+## #219　"生产禁止无签名助手"这条判据从未在发布路径上执行过：生产实际以无签名包＋开关=1 在跑，Round 3 据此写下的"签名矛盾挡生产"被自己证伪　🟠 major（判据空转／制度失真；2026-10-21 13:00 复核发现，本次为更正登记）
+
+- **现象**：`scripts/check-environment-isolation.cjs:116-119` 写着 production 不允许 `LOCAL_ASSISTANT_ALLOW_UNSIGNED_BETA=1`，但该分支在现实路径上永远走不到；生产站此刻返回的助手版本正是 `UnsignedBeta` 且 `available:true`。据此得出的"生产被两道门互相抵消、发不出去"是**错误结论**（原结论见 Round 3 报告 RR3-05，本会话已撤回）。
+- **根因（三条，逐条读原文）**：① 生产部署只跑 `deploy/deploy-release.sh:111` → `check-production-env.cjs`，后者 `:116-122` 对 `UnsignedBeta` 是**放行**（只要开关=1）；② 隔离检查的唯一带 env-file 调用者是 `deploy/deploy-test-release.sh:406`（测试站）；本机预检 `scripts/release-preflight.cjs:65` 调用时既无 `--target` 也无 `--env-file`；③ 而 `check-environment-isolation.cjs:72-76` 规定两参数必须同时给 ⇒ 无参数调用走不到 production 分支。合起来：那句禁令没有任何执行者。
+- **运行时反证**（比读 env 文件硬）：`src/lib/server/local-assistant-release.ts:55-58` 只在 `LOCAL_ASSISTANT_ALLOW_UNSIGNED_BETA==='1'` 时放行 UnsignedBeta；2026-10-21 13:00 生产 `/api/local-assistant/latest` 返回 `available:true`／`signatureStatus:"UnsignedBeta"` ⇒ 生产进程里开关确实是 1。未读服务器 `.env`（无 ssh 通道），故只以运行时行为为准。
+- **处置**：未改任何代码、未动任何环境变量。更正与两选一（A：白名单无签名＋写死到期日，我推荐且 30 分钟可落；B：Authenticode 签名，需公司主体与证书，正式对外售卖前必办）已落 `交付档案/执行方案/执行方案_20261021_无签名生产口径_更正与两选一.md`（同名 `.html` 同目录，13:01 已发飞书，send rc=0），等 Owner 一句话。
+- **待办（选了 A 之后）**：把这条判据并到真正会跑的位置（生产环境检查），加到期日与审计；届时以"跑得到该分支"为判据（新增一条把参数喂全的负控，红侧必须真出现），不接受"删掉禁令"这种凑绿改法。
+- **状态**：OPEN · 等 Owner 定口径；本轮发布不受此条阻塞（真正挡住生产的是 3.7.16 真机验收记录，见 #216 段与 Round 3 报告步 6）。
+
+## #220　用户可见面在讲后台实现：账号菜单脚注、排版面板能力位黄条、配对失败内部原因　🟠 major（体验／信息泄露；2026-10-21 Owner 截图点名，已立案未修）
+
+- **Owner 原话**：「这个没有必要写上去啊，写到记忆里面，以后这些后台的内容不需要在用户和前端展示」。他对排版面板的判断词是「无法使用」——后台术语没解释清楚问题，反而读成功能坏了。治理口径已落 `AI_MEMORY/PROJECT_CONTEXT.md`（治理规则第 6 条）与记忆 `project-user-visible-no-internals.md`。
+- **实例一（账号菜单）**：`worktrees/develop/src/components/site/home-account-menu.tsx:134` ——「只显示你的登录邮箱，不显示后台运营备注。」由 `e65b572` 引入；`src` 内无测试钉住，删掉即闭合。
+- **实例二（排版面板，功能恒不可用）**：`worktrees/develop/src/components/workbench/typography-panel.tsx:372-381` 的 `writeBackHint()` ＋ `:583-590` 黄条正文，泄露「执行器／能力位／写回未开放／随升级解锁」四层内部概念。**根因不是文案**：助手 `worktrees/develop/download/local-assistant/server.js:1426` 把 `TYPOGRAPHY_APPLY_READY` 硬编码为 `false`（注释写明翻 true 需执行器 ≥1.2.0 且真机跑整批），而入口只按 `featureAccess.typographyCustomization` 显示（`workbench-view.tsx:2933` 卡头按钮／`:3268` 面板挂载／`:3280` 悬浮球），三处都不查能力位 ⇒ 任何用户点开都只能看到这段解释。改文案须同步 `scripts/smoke-typography-wiring.mjs:169`（断言了原句），改入口须同步 `scripts/smoke-typography-customization.mjs:190-205`。
+- **实例三（扫描失败）**：`worktrees/develop/download/local-assistant/pair-completion.cjs:105`／`:122` ——回读失败与内容不一致共用「云端已绑定本机，但本机授权回读未通过。请刷新后重试；不要解绑或重复输入授权码。」；用户只该看到「未连上本机助手，请确认助手在运行后重试」一类可执行句，内部子因（`LOCAL_AUTHORIZATION_READBACK_FAILED` / `_MISMATCH`）留在日志与客服短码里。
+- **同源风险**：`src/lib/server/assistant-execution-contract.ts:69-90` 的合同/构建不匹配消息已被改写成用户语言（可作正面样板）；#216 已记录 `/api/auth/me` 曾下发运营字段（`name`）——两条同族，都是「内部结构漏到界面」。
+- **处置（2026-10-21 已落代码，未提交未部署）**：①账号菜单页脚已删；②排版入口改成 `typographyEntryVisible = 灰度开关 ∧ 助手能力位`（`workbench-view.tsx:346`，卡头/面板/悬浮球三处同门），能力位未开时**不展示**；面板内部黄条只剩「排版定制暂不可用：当前助手版本不支持写回。」；③新增 `resolvePairBoundMessage`（`src/lib/workbench/error-messages.ts`），单稿/多稿两条扫描失败路径与批量就绪提示改用用户语言，原始码仍进排障位；④`assistant-setup-banner.tsx` 与 `design-file-card.tsx` 的恢复提示同批去术语；⑤新增 `scripts/smoke-user-visible-copy.mjs`（25 断言，含阳性/阴性对照），已接入 `test:contracts`。验证：`test:contracts` rc=0、`vitest run` 26/26、ESLint 0 error、`tsc --noEmit` src 0 error（仅 `.next/dev/types/validator.ts` 生成件 3 条环境噪声）。**未提交**（develop 树另有他人 12 个未提交文件，提交会混账；打包需等树干净）。
+- **状态**：🟡 代码已改待提交/待部署（2026-10-21）。关联 #217
+- **状态更新（2026-10-21 20:13，本会话）**：上面"未提交未部署"已过时。排版入口按能力位显示、去术语文案与用户语言错误码映射均已随 develop `4247496` 提交并部署测试站；助手侧 `TYPOGRAPHY_APPLY_READY` 已翻为 `true`（现 `server.js:1427`），随字体清单回传网页。**真机写回效果仍未核实**（要 Owner 装 3.7.18 后跑一稿）。（当前装的助手 buildId 已被作废，r4 待 Owner 实机安装）。
+
+## #221　本机 `tsc --noEmit` 没报出服务器构建报的 TS2304，导致一次测试站部署失败　🟠 major（发版自证失真；2026-10-21 20:13 本轮实测立案）
+
+- **事实（两条读数同一棵树）**：2026-10-21 18:35 `deploy-test-release.sh`（包 `tygf-test-290f5aa8502b.zip`）在 next build 的 TypeScript 阶段失败——`src/components/workbench/workbench-view.tsx(1862,21): error TS2304: Cannot find name 'pairDesignsWithTables'`。而 18:1x 在 `worktrees/develop` 跑 `npx tsc --noEmit`，输出只有 3 条 `.next/dev/types/validator.ts` 语法错（`grep -c "error TS"` = 3，全部指向该生成件），**没有**这条 TS2304。
+- **成因已确认的部分**：源码里只写了 `import { type TablePairingResult } from '@/lib/workbench/table-pairing'`，类型导入不带值，函数本体未入模块作用域。
+- **成因未定案的部分（诚实登记）**：本机 tsc 为何静默，有两种候选且本轮未分辨——① `.next/dev/types/validator.ts` 的语法错让检查在语义阶段前退出；② 我把输出按改动文件过滤时看漏（过滤器只匹配文件名，TS2304 那条本应落进 `workbench-view` 关键字，所以这条候选可能性低但没有复跑取证）。**在分辨之前，"本机 tsc 干净"不得写成发版依据。**
+- **处置（已做）**：补值导入（develop `4247496`）；干净发布工作树 `npx tsc --noEmit` rc=0 复现"无错"；重出包 `tygf-test-4247496e994f.zip` 部署成功（health 200、latest=3.7.18、安装包 HTTP 200）。
+- **待办（未做，须 Owner 或复验手拍）**：① 把 `next build`（或等价干净树构建）列为本机发版前必跑项，代价＝每次出包前多 8–12 分钟；② 或在 `repo:check` 类门里加一条"检测到 `.next/dev/types/**` 存在陈旧语法错即报警"，代价＝要先把生成件排除在提交面之外。本轮两者都未落地。
+- **关联**：#220（排版能力位与用户可见面，状态已随 3.7.18 更新）；#215 的"审查完≠修完"同一族——本条是"本机绿≠构建绿"。
+
+## #222　批次超过 1500 标准单位时，前端报价预估在渲染期抛错 ⇒ 整页"页面没有正常加载"，已导入译表与扫描结果全丢（重试再崩）　🔴 blocker（可用性／违反铁律"未完成能力必须明确报错"；2026-10-21 20:4x 定价审查实测立案，未修）
+
+- **事实（代码 + 真实执行双证）**：`worktrees/develop/src/components/workbench/execute-step.tsx:784-793` 的 `estimatedCredits` 在 `useMemo` 内直接调用 `quoteCreditsForBatch(batchBillingPreview.totalStandardUnits)`，**无 try/catch**；而 `src/lib/billing/rules.ts:153` 对 `totalStandardRows > 1500` 直接 `throw new Error('BILLING_STANDARD_ROWS_EXCEEDED')`。
+- **真实执行（node 直调 `src/lib/billing/*`）**：126 行 × 12 语 = **1512 单位 ⇒ 抛错**；125 行 × 12 语 = 1500 ⇒ 正常报价 1500 分。单行封顶 15 单位，12 语下一稿最多 125 行。
+- **用户可见后果**：渲染期抛错 ⇒ React 树中断 ⇒ 路由级 `src/app/(zh)/error.tsx:13-40` 接管 ⇒ 页面显示"页面没有正常加载"＋"重试"；**"重试"会再次触发同一抛错**，用户已导入的译文表、扫描结果、编辑过的译表状态全部丢失，且没有任何"这批太大、请分批"的可执行提示。
+- **影响面**：多稿与单稿两条路径共用该预览（多稿分支的提前 return 在 `execute-step.tsx:2311`，在 useMemo 之后），两个入口都会踩；典型 126 行以上的营销稿（主图＋副图＋详情页合成）正好在触发区。
+- **建议修法**：① 预估改用不抛错的变体（超限返回 null/上限值）；② 超限时显示"这批超出单批上限（1500 标准单位 ＝ 行×语种），请分批或减少语种"，给出可执行动作；③ 补一条 smoke：1512 单位输入不得导致渲染异常；④ 修完后同步 `pack/page.tsx:591` 的量纲（见 #223）。
+- **状态**：🟡 部分修（2026-10-22 全项目审查轮，develop 提交）：建议 **① 已落地**——`estimatedCredits` 的 `useMemo` 包 try/catch 降级为 `null`，五个渲染点（`:2648/:2658/:2698/:2794/:2812`）改用**已在校内既有**的一句「按受理时报价并冻结（此处无预估）」，因此不再白屏、不丢已导入的译表与扫描结果；验证 `tsc` 该文件 0 错、`lint` 0 error、`test:contracts` 内含 `build-zh-font-subset.mjs --check`。**② 未做**：「这批超出单批上限（1500 标准单位＝行×语种），请分批或减少语种」这类可执行提示是**新文案**，会撞中文字体子集门（见 #166 的同一课），口径留待 Owner 定。**③ 未做**：1512 单位输入的渲染级 smoke（vitest 组件门）没补。**④ 未动**：`pack/page.tsx:591` 量纲（属 #223）。**未部署、未上站。** 关联 #223、#24
+
+## #223　定价页计费细则的量纲与上限口径与代码不符（"1500 行"实为 1500 标准单位；单行封顶 15 积分未公示；仓库里 1500 有三种量纲）　🟠 major（对外口径／可解释性；2026-10-21 20:4x 实测立案，未修）
+
+- **事实**：`src/app/(zh)/pack/page.tsx:591` 写"整批合计上限 **1500 行**"；代码里 1500 是**标准单位**（行 × 语种，`rules.ts:5` STANDARD_ROW_CHARACTERS=200、`rules.ts:153`），12 语种下真实上限只有 **125 行**。同仓库另两个 1500：`src/lib/workbench/batch-limits.ts:15` BATCH_MAX_SERVER_ROWS=1500（**行**）、`rules.ts:148`（reviewUnlockCredits 的标准单位上限）。
+- **未公示的第三条规则**：单行单语种最多 15 单位（`rules.ts:6` MAX_STANDARD_ROWS_PER_ITEM=15；`batch-v3.ts:80-81` 封顶计价，超长行不送量也不阻塞），页面只写了"每满 200 字符 1 积分、向上取整"，客户会按字数线性预估费用。
+- **影响**：客户按"1500 行"理解自己的可跑量 ⇒ 高估 12 倍；真超限时的失败形态是 #222 的整页崩溃，不是可读的提示。
+- **建议**：定价页细则改成"整批上限 1500 **标准单位（行 × 语种）**"，并补"单行单语种最多 15 积分（超长按封顶计）"；同时把仓库里 1500 的三种量纲在代码注释里互指（避免下一个接手 AI 再读错）。
+- **状态**：🆕 OPEN。关联 #222
+
+## #224　生产站至今没有发生过一次积分到账（14 笔订单 0 credited、无 paid_credits 账户），而付费入口与人工收款/人工确认三个开关在生产运行值均为 true　🟠 major（收入闭环未验证；2026-10-21 20:3x 两站生产库只读取证，未修）
+
+- **证据（生产库 `/var/www/tygf/db/custom.db` 只读，2026-10-21 20:3x）**：`CreditPurchaseOrder` 共 14 笔＝created 9 / cancelled 5 / **credited 0**，`paymentMethod` 全部 `manual_qr`，去重 **2 个主体**，金额快照合计 ¥498.60（意向非收入）；`CreditAccount` 按 `creditType` 聚合**不存在 `paid_credits`** ⇒ 生产从未到账过一次。测试站：29 笔订单中 credited **3 笔 / ¥149.70**，且 `paid_credits` 账户 granted 17200 = 1000+4200+12000 ⇒ **三个档各买一次的自测**。
+- **运行值侧**：生产 `SiteSetting.featureFlagsV1` 实读＝`creditPacksEnabled=true`、`manualQrFallbackEnabled=true`、`manualPaymentConfirmationEnabled=true`、`alipayPaymentsEnabled` 未覆盖（默认 false，`featureFlags.ts:29`）⇒ **只有人工收款码一条路，需要人工确认到账**；测试站 `alipayPaymentsEnabled=false`、`batchWorkbenchEnabled=true`。
+- **另一条相关口径纠正**：`showPricing` / `showPayment` 两个键**没有任何产品代码读取**（全仓 grep 仅 `featureFlags.ts:42-43` 定义与 `admin/settings-panel.tsx:255-256` 标签两处），**不是有效的关闭闸门** ⇒ 生产定价页与下单入口实际可用（与 14 笔订单的建单记录一致）。
+- **影响**：所有定价讨论（8 月按语言计费、今日 18:44 多稿分档、今日 19:29 正式版分档）都缺"真实成交样本"这一维；"用户没付费"目前**无法区分**是"没人想要"、"流程走不完"还是"页面没露出"。
+- **建议**：① 只读取证那 2 个主体是谁、14 笔停在哪个环节（建单后未扫码？扫码未付？付了没人确认？）；② 人工确认 1 笔真实到账（属账务动作，需 Owner 授权）；③ 把"每周付费主体数"设为北极星指标，替代当前以自测为主的批次量。
+- **状态**：🆕 OPEN。关联 #24（定价决策未被显式追认）、#225
+
+## #225　计价单位与人工替代价倒挂：一稿 40 行 × 12 语 = ¥4.76/张，而"只落版"人工锚点是 4 元/张；且 `originalPriceMinor`（"正式版参考价"）是现价 2 折倒推的 5 倍价，按它定价 = 锚点 6 倍　🟠 major（定价决策类；2026-10-21 20:4x 实测立案，未修，定价归 Owner 拍）
+
+- **事实**：每积分单价实算 ¥0.0099 / ¥0.0095 / ¥0.008325（尝鲜/进阶/专业，`credit-orders.ts:17-21`）；40 行 × 12 语 = 480 单位 = **¥4.76/张**，人工替代锚点 4 元/张（`outputs/海外评估-v2-20261010`，10-10 实证）；按 `originalPriceMinor` 口径则 **¥23.76/张** ＝ 锚点 6 倍、竞品单语单图（≈¥3.4/图）7 倍。`schema.prisma:1578` 把该字段注释为"正式版参考价" ⇒ **语义陷阱**（今日 19:29 版方案按字段语义推"GA 该用原价"，会把产品定价出局）。
+- **配套事实一**：白送 888 分（注册 100 + 内测 788，`credits.ts:36-45`、30 天到期，`pack/page.tsx:600`）vs 最小包 1000 分 ¥9.9 ⇒ **买最小包只比白拿多 12.6%**，"尝鲜包"档结构上近乎无意义。
+- **配套事实二**：成本地板远低于售价——两站全部 AI 调用按 DeepSeek V4-Flash 官方价折算约 **¥8.8–13**（生产 109 次：输入 250,249 / 输出 275,134 tokens；测试 290 次：输入 578,773+63,483 / 输出 774,088+165,330），对应实扣 16,421 积分 ⇒ **每积分成本约 ¥0.0006，毛利率约 94%** ⇒ 定价受需求约束、不受成本约束。（OCR/PaddleOCR 调用记录不在 `AiTokenUsage` 表内，未计入。）
+- **影响**：在"按张/套"售卖或"多语种打包不乘价"落地之前，任何档位表都会让客户算不清单张成本、且贴着人工替代价 ⇒ 缺购买理由。
+- **建议（择一，带代价）**：① 售卖单位改"张/套"（计量仍保留行×语种，单张封顶）＝ **L2 产品合同变更**（须 `changes/active/*` + Product Convergence Review，结算售卖层连带改）；② 保留积分但多语种打包不乘价；③ 砍掉中间档只留两档并给真阶梯。**具体定价由 Owner 拍**（先例 #24）。
+- **状态**：🆕 OPEN（本次只出审查与选项，未改 SKU、未改价格、未开 flag）。关联 #24、#226
+
+## #226　生产站的 AI 智能检测近乎未被使用：`SmartReviewEvent` 仅 9 条、`SmartReviewRequest` 仅 1 条（最后 2026-09-21 13:11），而生产批次一直跑到 10-20 17:37　🟡 minor（差异化能力未被使用／待确认口径；2026-10-21 20:4x 实测登记）
+
+- **事实（生产库只读）**：`SmartReviewEvent` 9 条、`SmartReviewRequest` 1 条，最后时间 2026-09-21 13:11；`AiTokenUsage` 同样止于 2026-09-21 13:11（模型 deepseek-v4-flash）。而 `ExecutionBatch` 最新四笔为 10-20 17:37（SETTLED 60 分）、10-19、10-16（SETTLED 160 分）、10-14（SETTLED 240 分）⇒ **10 月的生产批次没有对应的 AI 调用记录**。
+- **两种候选未分辨**：① 那些批次确实没走 AI 检测路径；② 走了但该路径不写这两张表（`AiTokenUsage` 只记 DeepSeek）。**未确认前不得写成"用户不用 AI 检测"。**
+- **影响（若为 ①）**：客户实际买到的只是"批量替换文字"，与"4 元/张的人工落版"无本质差别 ⇒ #225 的定价困境会被进一步放大（差异化叙事不成立）。
+- **建议**：查这四批的 reviewSnapshotId / 关联记录，确认 AI 检测是否执行；把它作为定价叙事的先决条件。
+- **状态**：🟡 OPEN（待确认）。关联 #224、#225
+
+## #227　发布包里的 .sh 全是 0644：安装器直接执行 .sh ⇒ Permission denied、fail-closed 中止，"装采集"这一步直接死掉　🟠 major（部署面；2026-10-21 20:54 本轮实测立案，已改码 develop `2e55efa`）
+
+- **事实**：`deploy/install-timers.sh:151` 写的是 `"$SCRIPT_DIR/check-unit-paths.sh" "${rendered[@]}"`（直接执行）。发布包由 `scripts/package-release.cjs:169` 的 `git archive --format=zip` 出，**git 不记录可执行位**（`git ls-files -s deploy/*.sh` 全是 100644）⇒ 线上 `/var/www/tygf-test/deploy/*.sh` 实测全 0644。2026-10-21 在测试站实跑 `sudo -n bash deploy/install-timers.sh tygf-test-site-traffic`，当场死在 `/var/www/tygf-test/deploy/check-unit-paths.sh: Permission denied`（脚本 fail-closed 中止，未排程任何单元）。
+- **为什么值得单立案**：这是"看起来该装的都装了、面板却一直空态"的机械原因，而且**下一次发布会把它带回来**（发布包每次重出、.sh 每次 0644）——现场 chmod +x 只是临时补丁，下一次部署就复发。凡"发布包里直接执行 .sh"的地方都可能有同一坑。
+- **处置（已做）**：改用 `bash "$SCRIPT_DIR/check-unit-paths.sh"`（与全仓一律 `bash xxx.sh` 的调用方式一致，不依赖文件模式）；`scripts/smoke-site-traffic-timer.sh` 补两条回归断言（不许直接执行 .sh／必须 bash 调用）。红绿实测（服务器真 Linux）：修好的版本 ALL PASS rc=0，发布包原样版本被新断言判红 rc=1。提交 develop `2e55efa`（未 push）。
+- **待办（未做）**：① 全仓扫一遍还有没有"直接执行 .sh"的地方（与本条同族：`deploy/deploy-test-release.sh`、`deploy/deploy-release.sh` 里的同级调用），逐个改成 `bash xxx.sh`，或把可执行位真正纳入 git（`git update-index --chmod=+x`）；② 或者把"发布包里 .sh 必须带可执行位"写成出包门的一条断言（与 `scripts/check-release-package-hygiene.cjs` 同族），免得每次靠人踩。
+- **顺带登记一个本轮自踩的陷阱**：`grep -E` 里未转义的 `$` 是行尾锚点 ⇒ 断言模式 `'^[[:space:]]*"$SCRIPT_DIR/…'` 永远匹配不到，会写出"永远绿"的假回归断言。写断言时模式里的 `$` 必须写 `\$`。
+- **状态更新（2026-10-21 21:25）**：本条不只是测试站——生产站同挂时同一坑照样在（生产发布目录里 `deploy/check-unit-paths.sh` 实测 640 root:tygf，同样无可执行位），已 `sudo chmod +x` 变 751 并装成；根因仍在（每次发布包重出、.sh 每次无 exec 位），故本条**保持 OPEN**，根治＝develop `2e55efa` 进生产包，或按本条待办①把全仓"直接执行 .sh"的地方统一改成 `bash xxx.sh`。生产与测试站两处现场 chmod 都只是临时补丁。
+
+## #231　排版入口被字体清单的 202 折成"助手不支持"，功能可写回却永久不露出　🟠 major（2026-10-21 23:42 本机实测立案，已修并随助手 3.7.19 出厂）
+
+- **现象**：Owner 在测试站报「排版无法使用」。助手 `/ping` 显示 `version:3.7.18`、`photoshopHandshake:false`、`photoshopAutomationStatus:"unknown"`，`/v1.5/fonts` 在 20 秒内不回。
+- **根因（两层，缺一不可）**：① 本机有 4 个 2.6–9.9MB 无窗口的 Photoshop 僵尸进程（另有真实例 PID 48720／304MB），字体探针经 wscript 绑到僵尸上拿不到清单；② **设计缺陷**——排版入口的可见性挂在 `fetchLocalFontList()` 的响应上（`workbench-view.tsx` 旧第 358 行），而客户端 `fetchLocalFontList` 只把 404/非 ok 当失败，助手回 202 `FONTS_PROBE_RUNNING` 时 HTTP 是 ok、体里没有 `fonts` 数组 ⇒ 被 `isUsableFontList` 折成 `unsupported` ⇒ 能力位判 false ⇒ 入口整体隐藏。**清单探测慢/卡与"这台机器不能写回"是两件事，被一个响应混成了一件。**
+- **同机对照（修复有效性的直接证据）**：用同一台机器、同一批僵尸 PS，跑新构建的 `build/dist/图译工坊引擎.exe`（TYGF_ASSISTANT_PORT=49153，只读冒烟，测后按 PID 关闭）——`/v1.5/fonts` **2 秒**返回 `success:true, source:"directory-fallback", count:1293`；`/ping` 的 `capabilities.typographyApplyReady:true` 秒回。装着的 3.7.18 同一端点 20 秒不回。
+- **修法（develop `dd6d96d`→`9b0d566`，助手 3.7.19）**：能力位改由 `/ping` 下发（不碰 PS）；网页入口与面板"可写回"只看它；客户端把 202 单独成 `probing` 态；探针 `execFile` 加 `stdio:'ignore'`（孙进程握管会让 timeout 形同不存在）＋ `FONTS_PROBE_STALE_MS` 过期自愈，卡死的那趟不再把后续请求全挡成 202；清单读不到时界面给「重试读取字体清单」一个动作，并允许手填脸名继续写回。
+- **守卫**：`smoke-fonts-catalog` 25→36 条（含 stdio、过期自愈、202 分类、入口来源）；`smoke-typography-wiring` 的旧判据"清单读到才算可用"改为"能力位来源可核"三条；vitest 加一条真 DOM 回归。链 `npm run test:feature-flag-whitelist` rc=0。
+- **仍未解决（不是本轮范围）**：PS 自动化握手为 false 的**根因本身**——僵尸进程怎么来的、执行链为何仍能跑通（Owner 说单稿可跑，说明 execute 路径与 fonts 探针绑到的不是同一个入口）。**排版写回的真机效果仍未核实**，要 Owner 装 3.7.19 后跑一稿。
+- **关联**：#220（用户可见面去后台化——本轮把"暂不可用"式解释换成了一个按钮）、#221（本机 tsc 静默 ⇒ 发版以干净树构建为准；本轮 9b0d566 又一次由服务器构建抓住本地未报的 TS2322）。
+
+## #232　流量线对抗式审核查出的 5 个缺口（补救指令给错站／自测门本身是坏的／陈旧不可见／两站同源副本漂移／发布包 .sh 无可执行位无人管）　🟠 major（数据线可信度；2026-10-22 本轮审核立案，代码已改并提交 **develop f800028**，**待发版**）
+
+- **背景**：Owner「使用对抗式审核后给个方案，然后按方案执行」。把 2026-10-21 刚交付的站点流量每日采集线当被审对象（不是审别人，是审我自己昨天那版），逐条列缺口、逐条改、逐条验。
+- **五个缺口（逐条带证据）**：① 面板空态的补救指令是测试站专用（`src/app/api/admin/traffic/route.ts:43-44`），生产站照抄会装错；"手工补一次跑 npm run ops:site-traffic"在服务器上不成立（令牌在 0600 root-only 文件里）。② `scripts/smoke-site-traffic-timer.sh` 两条断言依赖"服务器上没有令牌文件"，而它现在就在 ⇒ 昨天在测试站服务器实跑红两条（门不能当门用）。③ 面板只有 windowFrom→windowTo，采集静默停掉时旧数字照样像"最近就是这样"（`traffic-panel.tsx:138-140`）。④ 两站采同一 zone 同一组主机名却各存一份台账 ⇒ CF 事后修订会让同一天两块板显示不同数。⑤ 全仓 9 个 .sh 是 100644（`git ls-files -s`），发布包由 `git archive` 出 ⇒ 线上 .sh 无 exec 位（昨天 Permission denied 的根因），而出包门不查这一项。
+- **处置（代码已改已提交 develop `f800028`）**：① route 新增 `trafficRemedy()` 按环境分站＋单次补跑改 systemctl；② 安装器新增 `TYGF_TRAFFIC_TOKEN_FILE` 覆盖，自测门改沙箱路径并补两条真断言；③ 读侧新增 `lastFetchedAt`／`staleDays`，面板显示最后抓取时刻且 `staleDays≥2` 报警；④ 新增 `scripts/check-traffic-ledger-drift.mjs` 两站逐值比对（按各自排程区分"还没轮到"与"真漏采"）；⑤ 9 个 .sh 索引模式改 100755 ＋ 出包卫生门加两道 exec 位断言。
+- **验证**：`test:admin-traffic` 54 条全绿；出包卫生门 rc=0；**服务器真机自测门 19 条全绿**（昨天此处红两条）；漂移巡检 rc=0；归档里 8 个 .sh 全部 0755。
+- **硬证据（自主运行）**：2026-10-22 08:22:29（测试站）与 08:26:48（生产）两枚 timer 自动触发，各追加 3 行，两站台账各 15 行（10-17..10-21），巡检逐值一致。
+- **待办（本条保持 OPEN 的理由）**：**代码已提交但未发版**——`release:package:test` 被 clean-tree 门挡住（develop 树有另一窗口在飞改动，他中途还提交了 v13 `16ed125`），发版会把他半途的工作一起送上共享测试站；等该窗口收工或 Owner 点头后再发测试站，生产另按红线。
+- **关联**：#227（发布包 .sh 可执行位，本条第⑤项是其根治与加闸）。
+
 ## #233　出包/部署链的三个环境坑与一条「退出码不可信」教训（本机固化）　🟢 低（已绕过，坑位固化）
 
 - **现象（2026-10-22 实测，多稿工作台 v13 上测试站时全部踩到）**：
@@ -1444,6 +1614,44 @@
 - **另固化一条出包纪律**：出包必须从**干净 detached 树**（`HEAD` 逐位＝目标提交、`git status` 0 项、只有 `.env.example`、`node_modules` 用 junction 指 develop），用 `--allow-detached-head <sha>`——该参数**只放宽「detached 时 branch 字段取什么」**，不放宽任何判据。
 - **状态**：已绕过（2026-10-22 的 v13 部署实测走通：17 门全 PASS、`PACKAGE_RC=0`、上站成功）。**根因未修**：WSL 磁盘损坏、`file(1)` 缺失属机器级操作，未授权不动。
 
+## #234　执行期技术目录留在客户素材树内：扫描把中间态当设计稿＋空壳无人收　🟠 major（2026-10-22 09:44 Owner 点名，两条已修随助手 3.7.20 出厂；第三条待 Owner 拍落点方案）
+
+- **状态更新（2026-10-22 12:24，助手 3.7.22 已上测试站，commit `ad38603f`）**：F4 已按方案 A 落地（3.7.21），但**对抗式复查发现自己引入两条新问题，本轮一起修掉**：① 盘根那个 `.tygf-runtime` 在 Windows 下**是可见的**——实测 `Get-Item -Force C:\.tygf-runtime` 属性只回 `Directory`（对照 `C:\$Recycle.Bin` 回 `Hidden, System`），Windows 认隐藏属性不认点前缀，等于把"多一个文件夹"从素材目录挪到磁盘根。现落点定在新位置时对共享根打一次 `attrib +h`（`runtime-paths.js` 的 `markHidden`，打不上不影响执行）。② 副本移出素材目录后**没人会去翻它**，而失败隔离件是母版级的、只有成功才清 ⇒ 静默占盘。现开工前按龄回收（`pruneStaleAttempts`：超 72 小时收走，三日内每格只留最新三份，本次 attempt／非 64 位哈希名／老布局一律不碰）。③ 另记一笔本门自己的失手：上一版卫生闸 A 组用**真 io** 跑解析，一夜在 `C:\.tygf-runtime` 底下留了 21 个格子（2 枚内含 1 字节夹具文件，逐枚按形状验属主后清干净）——守卫自己成了污染源；A/D 段 io 已改纯内存，收尾 X0 核对"盘根本门新增必须为 0"。守卫 12→**35 断言**，四道负控（不打隐藏位／敢动本次 attempt／不按哈希筛／老布局也回收）各自变红、还原哈希一致（`ffbadcb1`）。真机链路已验：默认 io 解析后属性回 `Hidden, Directory`，回收删掉超龄兄弟格、留住本次格、素材目录 0 项。F3 改口径：**不再做"告诉用户路径"**（Owner 明令后台内容不上前端），改由"隐藏＋三日内自动回收＋云端已有诊断包"三者承担。
+
+- **Owner 原话**：「`<客户素材根>\.tygf-v1.5-runtime` 还有现在改换语言后会在这里多一个文件夹 使用对抗式审查继续看看」。盘上实测：该目录存在、**子项 0、大小 0**（纯空壳）。
+- **这个目录是什么**：执行期技术目录。助手不在母版上直接改，先做工作副本、验证通过后改名成交付件；失败则挪进 `quarantine/` 留证据。落点见 `download/local-assistant/server.js:6256` 与 `:7462`——`<交付目录父目录>/.tygf-v1.5-runtime/<sha256(attemptId)>`；**必须在同一磁盘分区**（跨卷改名会退化成整份拷贝，几 GB 母版要拷两遍）。
+- **F1（已修）扫描误列**：`FOLDER_SCAN_IGNORED_DIRS`（`server.js:885`）里没有该目录，而 `working-copy.js:96-102` 会往里写 `<稿>.__<attemptId>__<语言>` 的 PSD/PSB 副本与隔离件 ⇒ 选文件夹时中间态被当设计稿列出，选中就是拿半成品跑一整稿并照扣积分。证据形态：取 server.js 里**那段真** `listFolderRecursive` 就地求值跑夹具——修前列出 3 个（含 2 个中间态，探针 rc=1），修后列出 1 个真稿件并显式记 `IGNORED_DIR`。
+- **F2（已修）空壳残留**：`v15-runner.js:991` `cleanupOutputRoot` 只删自己的 attempt 目录，父级从没人收 ⇒ 每次执行/每次换语言多一个文件夹。现改为 attempt 删完若父级已空则 `rmdir`；**非空绝不动**；路径不含该标记一律拒删（防误删客户素材）。该函数转为可导出，守卫直接调用真函数。
+- **F3（按设计保留，待补告知）**：清理只挂在成功分支（`v15-runner.js:318`），失败/中断的 attempt 与隔离件永久留——那是排查证据，不该自动删。但界面从未告诉用户它在哪，下一步补"告知"而不是删除。
+- **F4（待 Owner 拍）**：技术目录在素材目录**内部**。若该目录被 OneDrive/坚果云同步，执行期那份**母版整份副本**会被同步出去 ⇒ 与对外主张「设计文件不出本机」冲突。方案 A（推荐）＝同卷但搬到素材目录外（按任务根哈希分格，代价＝要处理盘根不可写的回退）；方案 B＝只写进隐私说明（不消除风险）。同步前提未实测。
+- **守卫**：新增 `scripts/smoke-runtime-dir-hygiene.mjs`（12 断言：A 组调真 `cleanupOutputRoot` 三态、B 组真源码求值，含"普通子文件夹仍须扫到"的正控与两条防误删负控），已接入 `test:contracts`。负控实测：基线绿 → 撤黑名单红 → 关空壳回收红 → 按备份还原**哈希一致且复绿**。
+- **提交与出厂**：develop `1623932`（修复＋版本八处 3.7.19→3.7.20）→ `d6e9d42`（安装包入库）→ `3dc3285`（守卫链修正）；助手 3.7.20，包 25,505,407 B／SHA `7B9A5C1A…84A7BF25`，构建自证 `{"ok":true,"version":"3.7.20"}`；测试站已部署（health 200、`latest`=3.7.20、3.7.19 仍可下载）。
+- **本轮我自己的失手（同行夹带）**：为改 `package.json` 里 `test:contracts` 一行用了"HEAD 整行＋工作树整行"替换，把工作树同一行上别手加的、**尚未入库**的 `build-en-font-subset`/`build-zh-font-subset` 两枚脚本一起提交 ⇒ 包门红「链里有取不到的脚本」，`3dc3285` 摘回。**教训：同一行上的别手改动无法靠 hunk 分离，整行替换前必须先比对行内差异。**
+- **未核实**：没在真机跑一次完整执行验证清理（要占 Owner 的 PS 与积分）；该机器上历史失败残留有多少未查（查它要遍历客户素材）；F4 的同步盘前提未实测；装好的助手 `POST /v1.5/preparation/list-folder` 需扫描票据，实测返回 403 ⇒ 扫描证据只到"真源码求值"一级。
+- **状态更新（2026-10-22 11:18，方案 A 已实施并出厂）**：新增 `download/local-assistant/runtime-paths.js` 统一选落点，三条硬约束写进代码：同卷（跨卷 rename 会退化成整份拷贝）、不落进交付目录树、拿不到可写位置不许让执行失败（卷根 → 卷根 Temp → 系统临时目录（须同卷）→ 老位置逐级回退）。布局 `<卷根>\.tygf-runtime\<任务格 sha256 前 16\><attempt sha256`；选到新位置时顺手回收老位置**空壳**（非空绝不动）。`cleanupOutputRoot` 判据收紧为"64 位哈希格 + 路径含技术目录段"，两代目录名都进扫描黑名单。守卫 12→25 断言，负控三处分别改坏必须红、还原哈希一致。发版：`f049969`（实现）→`c9581ef`（安装包入库）→`31bed47`（发布说明避开字体子集缺字「搬」）；助手 3.7.21（25,503,937 B／`46F289B3…C6EDA6D5`）已部署测试站，health 200、`latest`=3.7.21、3.7.20 仍可下载。**F3（失败隔离件无告知）仍未做**；F4 的同步盘风险随落点搬出而消除，但**真机首次执行尚未跑过**——新目录要等 Owner 装 3.7.21 后第一次执行才会创建。
+- **关联**：#231（排版入口被字体 202 藏起来，同族"一个响应混两种语义"）、#220（用户可见面只写现象＋动作）。
+
+## #235　系统 Node 20（已停维）**不是"摆着没用"，它还在被执行**：PM2 守护进程＋测试站对账单元各一枚 ⇒ 软链接式运行时切换切不到它们　🟠 major（安全／运维面；2026-10-22 Node 安全升级轮实测登记，未修）
+
+- **事实（本轮实测，非推断）**：系统 `/usr/bin/node` ＝ **v20.20.2**（NodeSource 装的）。Node 20 的官方维护期已于 **2026-04 结束**（来源：Node.js 官方发布日程，证据等级 B）⇒ 这台机器上有一个**停止接收安全补丁的运行时仍在执行仓库里的脚本**。
+- **谁在用它（两枚，都有落点）**：
+  - **① PM2 守护进程与 CLI**——`/usr/bin/pm2` 首行 `#!/usr/bin/env node`；`~/.pm2/pm2.log` 自陈 `Runtime Binary : /usr/bin/node`。业务进程不受影响（它们的 script path 写死 `/opt/tygf-node-v22/bin/node`），但**管理进程**活在 EOL 运行时上。
+  - **② 测试站对账定时任务**——`/etc/systemd/system/tygf-test-photoshop-reconcile.service` 的 `ExecStart=/usr/bin/node /var/www/tygf-test/scripts/reconcile-photoshop-jobs.mjs`。**实测计数：13 个 `tygf*.service` 里只有这 1 个不引用我们的运行时目录**（`grep -l "/usr/bin/node" /etc/systemd/system/tygf*.service` 回 1 行）。
+- **为什么要紧（不是"版本不好看"）**：本轮把 12 枚单元切到新运行时靠的是**软链接**（不改 unit 文件）。这一枚写死 ⇒ **同一台机器现在同时跑 v22.23.4（已补 3 个高危）与 v20.20.2（不再收安全补丁）**，而且后者**每 10 分钟被唤醒一次**去请求外部接口。"我们已经把运行时升到安全版本了"这句话**对 12/13 成立、对这一枚不成立**——报告初稿把它写成"13 个一起切"就是错的（已改准，见本轮 TASK_LOG）。
+- **可复跑判据**：`/usr/bin/node -v` ⇒ `v20.20.2`；`grep -l "/usr/bin/node" /etc/systemd/system/tygf*.service` ⇒ 1 行；`grep "Runtime Binary" ~/.pm2/pm2.log | tail -1` ⇒ `/usr/bin/node`。
+- **两条修法（待 Owner 拍，均不在本轮授权范围）**：**A（最小）**把那枚 unit 的 `ExecStart` 改成 `/opt/tygf-node-v22/bin/node`，与其余 12 枚对齐——但**要先和 #236 那条 403 分开看**，别把"换运行时"和"它本来就红"混成一件事；**B（收口）**把测试站两枚常驻应用从 PM2 迁到 systemd，彻底不要 PM2，系统 Node 就可以只作为包管理器依赖存在或干脆移除。
+- **关联**：#236（那枚单元的另一半问题）、TASK_LOG 2026-10-22 12:22 安全线条目。
+
+## #236　测试站 Photoshop 对账定时任务长期红：每 10 分钟一次 `403 INVALID_RESPONSE` ⇒ `systemctl --failed` 失去新异常探测能力　🟠 major（测试站账务对账停摆／噪声免疫；2026-10-22 实测登记，**非本次引入**，未修）
+
+- **现象（journal 三条同形，实测）**：`11:35:00`、`11:38:30`、`11:49:00` 各一次 `[photoshop-reconcile] request failed { status: 403, code: 'INVALID_RESPONSE' }` → 单元 `Main process exited, code=exited, status=1/FAILURE`。
+- **不是本次升级造成的（有存证）**：`/var/backups/tygf-security-20261022/failed-before.txt`（**11:23 拍，早于运行时切换**）里就已经是它。重启后仍红 ⇒ **存量**。生产同名单元 `tygf-photoshop-reconcile` **不红**（12:09 正常跑过、不在 `--failed` 列表）。
+- **差异候选（未核实，别当结论用）**：① 运行时不同——测试那枚用系统 Node 20（见 #235），生产那枚用 `/opt` 运行时；② 测试站缺/过期凭证或令牌；③ 它请求的端点在测试环境返回 403。**403 具体是哪一层拒的（nginx？应用？票据？）本轮未查**——不在授权范围内，且它不影响生产账务。
+- **为什么要紧（两件事，第二件更容易被忽略）**：① 测试站的 Photoshop 作业对账**实际处于停摆**，测试环境里"对账能跑通"这件事**不成立**，拿测试站验证结算类改动会得到假结论；② **长期挂红会让 `systemctl --failed` 变成"永远有 1 个"，从此没人再看**——本轮验收之所以能识别"重启后仍只有那 1 枚"，全靠执行前拍了 `failed-before.txt`。**没有基线，红单元清单是零信息量的。**
+- **可复跑判据**：`systemctl --failed --no-legend` ⇒ 期望只回这一枚；`journalctl -u tygf-test-photoshop-reconcile --since today | tail` ⇒ 每 10 分钟一组同形 403；对照 `systemctl status tygf-photoshop-reconcile --no-pager -n 3` ⇒ 生产绿。
+- **本轮沉淀的做法（下次照做）**：**任何要重启生产/测试服务器的操作，动手前先把 `systemctl --failed` 存成文件**，否则"存量红"与"本次搞红"分不开，验收会当场失真。
+- **关联**：#235（同一枚单元）、TASK_LOG 2026-10-22 12:22 安全线条目。
+
 ## #165　生成物守卫只在**作者机器**上绿：CRLF 检出让 `--check` 恒红（出包门当场拦下一整包）　🟡 中（已修 `8d81d877`，机制性风险仍在）
 
 - **现象（2026-10-22 实测）**：合并英文站那批出包时，**出包门当场把整包拦下**：`[zh-font] FAIL src/components/site/fonts-zh.generated.css 与当前分片不一致（range 过期），请重跑生成`。但同一个文件在作者工作树里是**绿的**（`npm run test:zh-font` rc=0）。
@@ -1453,3 +1661,56 @@
 - **顺手补的真实缺口**：守卫原来**不校验预加载清单**（`src/config/zhFontPreload.ts`）⇒ 分片变了而 preload 指向不存在的文件 ⇒ 首页 404 且门不报。补上「清单必须逐片列出」。
 - **验证（对照实验，不是推断）**：同一台机器、同一份内容，干净检出树 `7a880258` ⇒ **rc=1（红）**；修复后 `8d81d877` ⇒ **rc=0（绿）**。
 - **机制性风险仍在（未修）**：**凡是「生成物 ＋ 按字节比对生成物」的门，都必须做换行归一或钉 eol=lf**。本仓目前只有这一处生成物 CSS，但 `public/downloads/local-assistant-release.json`、各 manifest 这类**同型**文件将来都可能踩。⇒ 建议：新增「生成物」时，提交里同时带「生成脚本 ＋ `--check` 守卫 ＋ `.gitattributes` 的 eol 规则」三件，缺一不做。
+
+## #166　生成物过期时，**正确处置是重新生成，不是改文案绕过**；且必须在「已提交状态」下生成　🟡 中（已修 `478bae42`＋`cad83e4f`，机制性风险仍在）
+
+- **现象（2026-10-22 实测）**：内存闸会话那笔 3.7.21 入库后，中文文案多了一个「搬」字（`download/local-assistant/server.js:890`「同卷但搬出客户素材树」、`execution-journal.js:128`「已被隔离或发布搬走」）⇒ **出包门当场拦下一整包**：`[zh-font] FAIL 中文文案用了子集里没有的字符 1 个：搬(U+642C)`。
+  - **那一会话的处置是「把发布说明里的一个字换掉，避开这道门」**（提交 `31bed477`）。
+  - **那是反过来的处置**：子集是**生成物**，文案是**产品事实**；为了让构建产物过关去改产品文案，等于让产品事实迁就构建产物，而且改完那行字对用户毫无意义（用户看不到「搬」在不在子集里）。
+  - **正确处置**：按**已提交状态**重新生成子集（本轮已做，提交 `478bae42`：4 片 394,880 B ＝ 385.6 KiB、字符集 1454 码位、门绿）。
+- **第二层坑：生成必须在「已提交状态」下做，不能在开发工作树里做。** 本机工作树里那个会话有在飞改动（`server.js` / `v15-runner.js` 的注释被改过，注释里没有「搬」了）⇒ 在工作树里生成会得到「按工作树算」的子集，**与包里那份（按已提交源）不一致** ⇒ 门会红而包不对。
+  ⇒ **在干净 detached 树（HEAD 逐位等于目标提交）里跑生成脚本，再把产物拷回工作树入库**。这条与 #165 的 CRLF 教训同族：**「生成物」这件事的每一步都必须锚在提交上，而不是工作树上。**
+- **已做的改进**：守卫的失败提示原本只写「跑 node scripts/build-zh-font-subset.mjs 重新生成」，**没说清「不要改文案绕过」** ⇒ 另一会话选了错的那条路。提交 `cad83e4f` 把提示补全：写明正确处置、写出那次实测的反例、并要求在已提交状态下生成。
+- **机制性风险仍在**：只要「生成物」与「源」在同一棵树里各改各的，这类过期就会反复发生。本仓现有两类生成物：① 字体子集（`public/fonts/shsc/` ＋ `fonts-zh.generated.css` ＋ `zhFontPreload.ts`）；② 助手安装包与发布声明（`public/downloads/`）。② 那一类有 `release:check-identity` 管，① 这一类靠 `build-{en,zh}-font-subset.mjs --check` 管 —— **两类的共同纪律是：生成物入库前必须在已提交状态下生成，且门要在出包链里。**
+
+## #167　英文站**粗体段落与前文粘在一起** ⇒ 线上「tool.It」「Emailtuyi@tuyigf.com」；且真浏览器门自身也有两个坑　🟡 中（已修 `2c32c5ee`，机制性风险仍在）
+
+- **现象（2026-10-22 真浏览器巡检抓到）**：英文首页两处粗体与前文之间**没有空格**：
+  - hero：源文 `…over to a tool.**It is about never rebuilding…**` ⇒ 渲染成「…over to a tool.It is about never rebuilding…」（`splitBold` 切出来的第一段**不自带空格** ⇒ 粗体标记前必须留一个）；
+  - 联系块：`<div class="try-contact">Email<b>tuyi@tuyigf.com</b></div>` ⇒ 渲染成「Emailtuyi@tuyigf.com」。
+  - **中文那边同样的写法是对的**（中文标签与值之间本来就不加空格，中文句号后也不加）⇒ 只改英文。
+- **为什么只有真浏览器能看见**：HTML 里其实是 `<span>…tool.</span><b>It is about…</b>`，**结构没问题**；缺的是**元素边界上的那个空格**。读源码（`siteContentEn.ts` / `home-view-en.tsx`）看不出来，静态字面量扫描也会漏（要跨过元素边界判断），只有把真实渲染结果拿出来看才现形。
+- **门的两个坑（本轮自己踩的，记下来）**：
+  ① **只判拉丁文**：中文句号后本来就不加空格，一刀切会把中文那侧也判红 ⇒ 判据必须是「前一个字符是拉丁字母/拉丁标点才要求空格」。
+  ② **要跨过元素往前找紧邻文字**：粗体前面常常是 `<span>` 而不是文本节点，只看 `previousSibling` 是文本节点会漏掉一半（本轮 hero 那处就是这么漏的，直到对照实验报「实得 1 处」才发现只抓到联系块那处）。
+  ③ **模板字符串里不能出现反引号**：本轮在 MEASURE（页面内测量脚本，外层是模板字符串）的注释里写了含反引号的说明 ⇒ 模板被提前结束 ⇒ 页面脚本语法错误 ⇒ 门报「重叠 undefinedpx」这种**假象**，而不是报真问题。已去掉并留注记。
+- **门（真浏览器，scripts/smoke-en-layout.mjs，跑已上站站点）**：新增「粗体段落与前文之间必须有空格」。**对照实验**：对当前线上跑 ⇒ **rc=1**，实得 **2 处**（hero ＋ 联系块），两处都点名。
+- **机制性风险仍在**：这类「元素边界少一个空格」的缺陷，**源码审不出来、静态扫描容易漏、只有渲染结果能看见**。本轮把它做成了真浏览器门的一道断言（每次对已上站站点跑），但**别的站点/别的富文本标记（`renderRichLines` 的行结构、斜体、下划线等）还没有同等的门**。
+
+## #237　同一份"验证等级"枚举在两个地方各写一遍并已经漂移 ⇒ 助手"部分完成"的回执被服务端 400 拒收　🟠 major（执行链终态率／批次停摆成因之一；2026-10-22 全项目上帝视角审查实测，**已修 develop**，机制性风险仍在）
+
+- **事实（file:line）**：权威阶梯在 `src/lib/trust-chain/attempt-state.ts:15-22`（`NONE/WRITE_CONFIRMED/TEXT_READBACK_VERIFIED/SAVE_SUCCEEDED/DISK_OUTPUT_VERIFIED/REOPEN_VERIFIED`）。批次回执侧另写了一份 4 元素集合 `src/lib/server/execution-batch.ts:2327`，里面 `PARTIAL`/`FAILED` **不是阶梯成员**，而阶梯里的四个等级全被判非法 ⇒ `parseBatchReceipt`（`:2363`）返回 null ⇒ 回执路由 400（`src/app/api/local-assistant/execution-attempts/[id]/receipt/route.ts:56-58`）。助手上报的正是 `TEXT_READBACK_VERIFIED`（`download/local-assistant/v15-runner.js:229/243/249/258`，经 `receipts.js:66`、`:1115-1135` 进云端载荷）。
+- **实测运行面**：测试站 37 条语言尝试处于 `FAILED` 且 `completedAssignmentCount > 0`（合计 811 个指派），生产 0 条——这就是"助手说完成了、云端说没收到"那一批。
+- **修法（已落地）**：`execution-batch.ts` 的联合类型与白名单 Set 一律**从 `attempt-state` 导入**，`PARTIAL`/`FAILED` 作为批次汇总值显式保留（既有客户端与 6 个 smoke 在用，不悄悄撤）；`prisma/schema.prisma` 那行取值域注释同步。
+- **钱口径不变（这是本案的关键澄清）**：收费门 `execution-batch.ts:1384-1398` 只认 `REOPEN_VERIFIED` **且**带对象证据摘要，其余等级的 `VERIFIED` 行一律降级 `FAILED` 并挂 `EVIDENCE_LEVEL_NOT_TRUSTED`。扩大接受面**不会让任何行变得可计费**。
+- **门（已补，可复跑）**：`npm run test:batch-billing-routes` 新增「阶梯每一个等级都必须可解析」逐等级断言 ＋ `PARTIAL/FAILED` 兼容断言 ＋ 原有 `BOGUS`/正文字段拒绝；`npm run test:batch-billing-v3` 新增 B5b 块，用 `TEXT_READBACK_VERIFIED` 断言 `verifiedStandardUnits=0`、行结果 `reasonCode=EVIDENCE_LEVEL_NOT_TRUSTED`、结算 `committedCredits=0 / releasedCredits=100`（此前 `EVIDENCE_LEVEL_NOT_TRUSTED` 在全仓 **0 条断言**，实测 grep 只有定义处 `:1395`）。
+- **机制性风险仍在**：同类"第二份枚举"在仓库里还有（`execution-batch.ts:906-913` 的 `ATTEMPT_STATE_ORDER` 是另一条轴，合法）。凡新增跨层枚举，必须指明权威源并让消费方**导入**它，不许复制字面量。
+- **仍未解**：那 37 条已经晚了——被 reaper 终态化的 attempt 走 `ATTEMPT_ALREADY_TERMINAL` 围栏（`:1341-1350`，T-0113，本身正确），**迟到回执救不回来**；历史批次如何处置属"历史账务"，红线，等 Owner 单独授权。
+
+## #238　测试站 46% 的批次以 STALLED（中止）收口——收口链本身是通的，要紧的是"跑不完"　🟠 major（执行成功率；2026-10-22 全项目审查实测，未修）
+
+> **本案先更正本会话自己上一轮的说法**：我在 `审查报告_20261022_全项目上帝视角_对抗式审查.md` 里写的"63 个批次停在半路、停摆批次名下报价量 16,727／1,847（资金敞口）"**是错的**——我把 `STALLED`/`EXPIRED`（都是**已终态且已结算**）当成了"卡住"。下方实测为证。错误来源：只按 `SETTLED/(全部)` 算"终态率"，没先读收口函数与调度单元。**新结论：不存在"停摆无人扫"，真问题是"跑不完就中止"。**
+
+- **收口链确实在跑（file:line ＋ 服务器实测）**：`reconcileStalledBatches`（`src/lib/server/execution-batch.ts:1754`，判据取 batch 与全部 attempt 活动时间的最大值，避开"正常长批次被误收口"的竞态）与 `reconcileBatchReservations`（`:1691-1709`，过期预占 → `finalStatusOverride='EXPIRED'`）都被两条入口调用：`scripts/reconcile-batch-jobs.mjs:13` 与路由 `src/app/api/billing/batch/reconcile/route.ts:51`。部署机 `systemctl list-timers` 实测（2026-10-22 12:49）：`tygf-batch-reconcile.timer` 与 `tygf-test-batch-reconcile.timer` **每 10 分钟正常触发**（上次 12:40，下次 12:50）。
+- **库内实测（测试站只读，12:5x）**：`STALLED` 52 批**全部有结算行**（committed 2,898／released 13,829）；`EXPIRED` 20 批（292／3,188）；`QUOTED` 9 批 0／0（用户没确认，本就没有预占）。`CreditReservation` 状态分布只有 `committed` 141／`expired` 4／`released` 128——**没有任何一条停在 `reserved`**。⇒ 钱没有悬着，用户的额度都按门径退回了。
+- **所以真正要紧的数字**：测试站创建的 112 个批次里，52 个（46.4%）以"中止"收口、20 个（17.9%）过期、31 个（27.7%）成功结算；生产 27 个里 11 个中止（40.7%）。**"这工具能不能把一批跑完"才是问题**，不是"账有没有结"。
+- **中止的成因至少两类，已知一类**：① 已知＝#237（助手"部分完成"回执被 400 拒收，测试站 37 条语言尝试／811 个指派卡在这个形状，本轮已修接受面，未部署）；② 未知＝其余中止批次没有逐批读 attempt／heartbeat／`terminalReason` 时间线，**本轮不宣称归因完成**（缺：逐批只读对账）。
+- **剩一条小缺口（别当钱卡住读）**：`settleExpiredExecutionBatches`（`:2288`）全仓只有两个 smoke 调用者（`scripts/smoke-batch-billing-recovery.mjs`、`scripts/smoke-batch-failure-settlement.mjs`），职责与调度在跑的 `reconcileBatchReservations` 重叠 ⇒ 属**冗余/漂移隐患**（同名两套过期扫尾、只有一套活），修法是把死的那条删掉或合并，不是给它挂 timer。
+- **关联**：#237（本案成因①）、#236（测试站另一条 photoshop-reconcile 单元已红 15 天——注意它与本案的 batch-reconcile 是**两个不同单元**，别混为一谈）。
+
+## #239　学习链：四个采集点里只有一个真的存在"提案 vs 终选"的分歧；`--apply` 没有任何调度；也没有下游　🟠 major（产品承诺与法律语义；2026-10-22 全项目审查实测，**部分修 develop**）
+
+- **本案把上一轮的建议证伪了一半**：原说"五个采集点都补 `finalCode`"。实测 `src/components/workbench/workbench-view.tsx:1356/1385/1413/3705` 四点的 `actionCode` 已经是 `excluded/ignored/accepted` 本身，**没有系统提案可对照**——把 `actionCode` 抄进 `finalCode` 只会让聚合产出同义反复的候选规则（并喂进管理端候选队列与 Shadow 评估）＝造数据。另 `candidate-aggregator.ts:206` 的 eligible 只计 `accepted/modified/rejected`，排除/忽略类本就不进分母。
+- **已落地（有真实分歧的那一个点）**：新增纯函数 `bindingFinalCode`（`src/lib/workbench/inspector-decisions.ts`），只在 `source_binding` 采集点（`workbench-view.tsx:2768`）记终选码：`candidate_rank_N`／`combined_rank_N`／`conflict_rank_N`／`manual_entry`，**全部是码，不含正文**；`test:learning-signal-client` 新增第七节断言（含"正文字符串不得出现在信封里"的隐私断言，以及排除类采集点必须保持 `null` 的反伪造断言）。
+- **端到端证据（隔离库，`db/test-<uuid>.db`，不碰两站）**：复刻两站现状（`finalCode` 全空）跑 `aggregate-learning-candidates.mjs --apply` ⇒ 候选规则 **0 条**；补上 `candidate_rank_0` 再跑同一条 `--apply` ⇒ 写出 **1 条** `personal/candidate`，建议里带着终选码。**断点确实在这个字段，不在聚合器。**
+- **仍未修（三点，都需要 Owner 决定而不是代码决定）**：① `--apply` 至今**没有任何调度或手动入口**（`package.json:146` 那条把 `--dry-run` 写死）；② 下游消费仍空——`rule-resolver.ts:19-20` 恒返回空建议，`LearningRuleDeployment` 非管理端 0 引用，`rule-pack/status` 前端 0 调用者 ⇒ 用户看不到任何学习成果；③ 同意面：两站 106 账号仅 14 条同意记录，注册即自动授予（`src/app/api/auth/register/route.ts:45-70`）、用户侧无自助撤回（`src/app/api/workbench/learning/consent/route.ts:5`）——这是**法律语义**，与隐私页文案绑定，改动须 Owner 明令并同步文案（关联 #224 的对外口径纪律）。

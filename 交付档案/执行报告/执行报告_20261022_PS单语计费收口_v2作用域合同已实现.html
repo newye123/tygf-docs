@@ -1,0 +1,267 @@
+<title>执行报告 · PS 单语计费收口 v2（作用域合同已实现，未部署）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:50ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)} .panel.no h3{color:var(--bad)} .panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.callout .hd{font-weight:700;font-size:.94rem;color:var(--warn)}
+.callout p{font-size:.9rem;color:var(--ink-2);max-width:none}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.92rem}
+.note p{font-size:.89rem;color:var(--ink-2)}
+.footer{color:var(--muted);font-size:.82rem;font-family:var(--font-mono);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px;color:var(--ink-2);font-size:.93rem}
+ul.plain li::marker{color:var(--line-strong)}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>执行报告</span><span class="sep">·</span><span>PS 单语计费收口 v2</span><span class="sep">·</span><span>已实现·未部署</span></div>
+  <h1>单语执行不再按全表收钱：36 行没有对应文字，就少收 37 积分</h1>
+  <p class="standfirst">10-22 那笔「B级 8 图」扣了 68 积分，实际发生替换的只有 31 行。根因是两条执行链口径不一致——批量链按可执行行报价，单语链按确认表全行报价、整单成败结算。本轮把单语链补上"可执行行作用域"这一步，并用合同测试把 31 这个数钉死。</p>
+  <div class="meta">
+    <span>落笔 2026-10-22 12:5x（实测 date 12:48 后）</span>
+    <span>分支 codex/billing-scope-20261022</span>
+    <span>基线 develop@2c32c5ee</span>
+    <span>生产未动 · main 未动 · 远端未推 · 历史账未改</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>放行到"本地已验证"。合入 develop 与上测试站要 Owner 点头；历史那 37 积分单独拍。</p>
+    <div class="stats">
+      <div class="stat ok"><span class="n">68→31</span><span class="k">同一张表的报价（实测）</span></div>
+      <div class="stat ok"><span class="n">rc=0</span><span class="k">test:trust-chain 全链</span></div>
+      <div class="stat ok"><span class="n">0 错</span><span class="k">tsc --noEmit ＋ lint</span></div>
+      <div class="stat warn"><span class="n">1</span><span class="k">仍未封的口子（需助手侧）</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>这笔账现在怎么走</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="hd">快照仍是全表</span>
+      <p>67 行原样冻结，证据一条不少。收敛只发生在报价与结算，不发生在证据。</p>
+    </div>
+    <div class="card">
+      <span class="hd">报价带"本次不替换的行"</span>
+      <p>用户忽略的行 ＋ 准备台判定"表里多出的行"。清单只有行号和原因码，没有原文、译文、图层名或路径。</p>
+    </div>
+    <div class="card">
+      <span class="hd">服务端对着快照复核</span>
+      <p>语言不符、行号越界、行号重复、原因码不认识、版本不认识——一律拒绝报价，一分不冻结。浏览器自报的不算数。</p>
+    </div>
+    <div class="card">
+      <span class="hd">同一份清单下发给助手</span>
+      <p>不计费和不执行是同一件事。助手本来也绑不上这些行，现在显式跳过，两侧不再分叉。</p>
+    </div>
+    <div class="card">
+      <span class="hd">结算只按报价扣</span>
+      <p>整单成功扣 31，不成功退回 31。全表被排除 ⇒ <code>BILLING_SCOPE_EMPTY</code>，账上一字不动。</p>
+    </div>
+    <div class="card">
+      <span class="hd">界面同步</span>
+      <p>按钮旁"预计花 N 积分"不再是全表价，下面多一行：其中 X 行在设计稿里找不到对应文字，或已被你忽略，不替换也不计费。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>改了哪些地方</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>层</th><th>落点</th><th>做了什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="tag warn">新增</span></td>
+          <td class="mono">src/lib/billing/billing-scope.ts</td>
+          <td>作用域的形状校验、规范序列化、跳过清单合并、唯一一份中文文案。浏览器与服务端共用同一判据，不再各写一套。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">服务端</span></td>
+          <td class="mono">src/lib/server/photoshop-billing.ts</td>
+          <td>报价前对着冻结快照复核作用域；<code>rawRowCount</code> 仍是全表行数，<code>standardRowCount</code> 变成可计费单位数。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">接口</span></td>
+          <td class="mono">src/app/api/billing/photoshop/quote/route.ts</td>
+          <td>收作用域并把其摘要并入报价幂等哈希（同请求号＋同范围＝同一份报价，范围变了另出一份）；请求体上限 32KB→512KB。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">两条执行链</span></td>
+          <td class="mono">local-assistant-client.ts · v15-execution-orchestrator.ts</td>
+          <td>直连与服务端代理都带上作用域，并把未匹配行并入下发助手的跳过清单；写死的 <code>unmatchedCount: 0</code> 换成真实条数。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">界面</span></td>
+          <td class="mono">src/components/workbench/execute-step.tsx</td>
+          <td>单语预估按同一作用域收敛（这是"界面显示 68、账上扣 31"分叉的源头）；单语提交组出作用域；批量链两处写死的 0 也换成真实数。</td>
+        </tr>
+        <tr>
+          <td><span class="tag bad">迁移</span></td>
+          <td class="mono">prisma/migrations/20261022120000_quote_billing_scope</td>
+          <td>报价表加两个可空列（作用域正文、作用域摘要）。历史报价列为空＝旧口径，不回填、不改写；回滚 Web 代码不影响历史账。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="hd">四层同笔（合同变更纪律）</span>
+    <p>浏览器投影 · 助手跳过清单 · 服务端权威报价 · 结算闸，四道在同一笔改动里对齐；守卫 <code>test:batch-row-contract</code> 与 <code>test:trust-chain</code> 都跑过。助手本体这轮没动，所以下发用的是它早已支持的 <code>ignoredTranslationRowIds</code> 通道。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>证据（本会话实测，一次性隔离库）</h2>
+  <p class="lede">合同测试 <code>scripts/smoke-v2-billing-scope.mjs</code> 用 10-22 那张表的形状造夹具：67 行，只有第 55 行超 200 字符（原文 239／译文 258 ⇒ 2 单位），36 行标为无对应对象。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>断言</th><th>读数</th></tr></thead>
+      <tbody>
+        <tr><td>不带作用域＝旧口径</td><td class="mono">68 单位 / 68 积分，作用域列为 NULL</td></tr>
+        <tr><td>带作用域</td><td class="mono">31 单位 / 31 积分，rawRowCount 仍 67，排除条目 36</td></tr>
+        <tr><td>同输入走批量链 v3</td><td class="mono">totalStandardUnits = 31（两链同数）</td></tr>
+        <tr><td>冻结→结算</td><td class="mono">committedCredits=31 · releasedCredits=0 · used=31 · reserved=0</td></tr>
+        <tr><td>五种拒绝</td><td class="mono">LANGUAGE_MISMATCH · ROW_NOT_FOUND · DUPLICATE_ROW · REASON_INVALID · VERSION_INVALID</td></tr>
+        <tr><td>全表排除</td><td class="mono">BILLING_SCOPE_EMPTY，账户 reserved／used 一字未动</td></tr>
+        <tr><td>幂等</td><td class="mono">同请求号同范围复用同一份报价；范围变小另出 66 单位那份</td></tr>
+        <tr><td>行为变化（已写进断言）</td><td class="mono">不执行的行不再把整单挡死；带作用域 1 单位、不带仍 BILLING_ROWS_BLOCKED</td></tr>
+        <tr><td>最低 20 积分仍在</td><td class="mono">1 单位的报价 estimateCredits=20（封顶口径没动）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="hd">命令与退出码</span><p><code>npm run test:v2-billing-scope</code> → <code>v2 计费作用域合同 smoke 通过（67 行 / 36 行未覆盖 → 31 单位，结算扣 31）</code>，rc=0。<code>test:batch-row-contract</code>／<code>test:v3-batch-flow</code>／<code>test:credit-activity</code>／<code>test:batch-billing-v3</code>／<code>test:workbench-scope</code>（52 断言）／<code>test:delivery-coverage</code>／<code>test:photoshop-cancel-refund</code> 全 rc=0；<code>test:trust-chain</code> TRUST_RC=0；<code>tsc --noEmit</code> rc=0；<code>lint</code> 0 error（36 条既有告警）。</p></div>
+    <div class="note"><span class="hd">一条环境差异（不是这轮改出来的）</span><p><code>smoke-photoshop-cancel-refund</code> 在新 isolated 树首跑报 <code>INVITE_CODE_SECRET 未配置</code>，develop 树同文件同哈希跑得绿——是这棵新树缺本机环境变量，补 <code>INVITE_CODE_SECRET=local-test-only-secret</code> 后 rc=0。没有为了过测试改任何代码或把密钥写进文件。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>还没封的那一个口子</h2>
+  <p class="lede">本轮挡住的是"准备台已经知道没有对应对象"的行。如果助手在<strong>执行时新发现</strong>某行绑不上（浏览器那一侧事先不知道），这行仍然在报价里、仍然会被扣。</p>
+  <p>彻底封需要行级覆盖证据（方案里的 P2）：助手回执要带 expected/verified 行集摘要，服务端结算闸改成"覆盖行集合 == 报价行集合"。那必须改 <code>download/local-assistant/server.js</code> 与 <code>v15-runner.js</code>——这两个文件此刻正被另一路会话改（11:41／11:47 有落盘，3.7.22 刚出包），同树硬写会把别人的现场盖掉。所以这轮只把能独立成立的部分做完，助手侧留作下一笔。</p>
+  <div class="callout">
+    <span class="hd">为什么不退回之前的版本</span>
+    <p>单语链"按全表行收钱"从 7 月就是这样：<code>git diff 9b0d566f..HEAD</code> 对五个计费文件输出为空、rc=0。退回 10-20 或 10-21 的包，同样 67 行仍然扣 68——回退只会把别的东西退坏，不会修多收。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>需要 Owner 拍的三件事（本轮都没做）</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="hd">1 · 10-22 那笔补 37？</span>
+      <p>证据链已齐：本机报告、测试站快照查询、账本 reserve/commit/release 三行。建议一次 <code>adjust</code> 入账、不改历史单。<strong>未执行。</strong></p>
+    </div>
+    <div class="card">
+      <span class="hd">2 · 合入 develop 并上测试站？</span>
+      <p>上测试站要跑 <code>prisma migrate deploy</code>；迁移是纯加法、两个可空列。生产、支付开关一律不碰。</p>
+    </div>
+    <div class="card">
+      <span class="hd">3 · P2 行级证据何时排？</span>
+      <p>必须改助手、按发布线 bump 出包。做完才能把"未覆盖不计费"这句话在报告里写成真话。</p>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="hd">10-21 那笔 110 积分仍无法判定</span><p>账本算术自洽（112 行 → 110 单位 → 扣 110），但那台机器的执行报告不在这台机器上，服务端也不存报告正文。没有证据就不退，也不把它写成"正常"。</p></div>
+    <div class="note"><span class="hd">脱敏自检</span><p>本报告不含客户素材、原文/译文正文、绝对客户路径、账号、密钥、IP 或激活码。出现的数字只有行数、单位数、积分差与提交号短 SHA。</p></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <span>交付件：交付档案/执行报告/执行报告_20261022_PS单语计费收口_v2作用域合同已实现.md（同目录同名 .html）</span>
+  <span>codex/billing-scope-20261022 @ 基线 2c32c5ee · 未推送 · 未部署 · 历史账未改</span>
+</footer>
+
+</div>
