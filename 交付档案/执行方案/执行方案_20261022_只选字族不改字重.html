@@ -331,7 +331,31 @@ ol.plan li strong,ul.plain li strong{color:var(--ink)}
   <p class="mono">留底件已按新样本重生成、数字全部从数据现取（旧版把 "449/1217" 硬写在文案里，换样本就成了假数），内含 supersedes 行：worktrees/develop/docs/records/20261022_真稿字重与行距_普查实测.json · 测试门 38→41 断言 rc=0（真稿脸 12→15 张）· 提交 develop a65977f9（前一枚 ce56b112）</p>
   <div class="callout"><strong>试过了、此路不通</strong>：想用 PS 自带的 <span class="mono">E:\Adobe\Adobe Photoshop 2021\TypeLibrary.tlb</span> 绕过提权边界答 P-1／P-2 —— 那份类型库只有 11 个类型（<span class="mono">PhotoshopApplication</span>／<span class="mono">IActionDescriptor</span> 那套自动化壳），<b>没有 Font、也没有 TextItem</b>。PS 的 DOM 属 ExtendScript 侧对象模型，不在 COM 类型库里。脚本留 <span class="mono">scripts/psprobe/tlb_members.py</span>，README 已写"别再当捷径"。</div>
   <div class="callout warn"><strong>也不做的一件事（写明理由）</strong>：从我这条未提权令牌直接再开一个 Photoshop 实例来跑探针。助手诊断口现读 <span class="mono">memAvail:102400</span>（约 100 MB 可用），PS 起来吃 1—2 GB，而 Owner 不在键盘前 ⇒ 可能把他在跑的 PS／助手一起拖垮。影响面超出本会话、且我这一侧回不了滚的动作，等他回来定。</div>
-  <div class="callout"><strong>S6（报告接排版改写）现在的准确堵点</strong>：执行器把 <span class="mono">typographyRequested</span>／<span class="mono">typographyIssues</span> 写进结果（<span class="mono">TYGF_V15_Thin_Executor.jsx:183/258/259</span>），全仓 grep 只有 3 处命中——产出 1、注释 1（<span class="mono">server.js:1429</span>）、测试 1（<span class="mono">smoke-typography-wiring.mjs:144</span>），<b>消费面 0</b>。接上它要改 <span class="mono">v15-runner.js</span>（别会话未提交现场）。不做半条链：只加渲染而不喂数据，等于再造一节永远空着的假承诺。</div>
+  <div class="callout"><strong>S6（报告接排版改写）现在的准确堵点</strong>：执行器把 <span class="mono">typographyRequested</span>／<span class="mono">typographyIssues</span> 写进结果（<span class="mono">TYGF_V15_Thin_Executor.jsx:183/258/259</span>），develop 树内 grep 只有 3 处命中——产出 1、注释 1（<span class="mono">server.js:1429</span>）、测试 1（<span class="mono">smoke-typography-wiring.mjs:144</span>），<b>消费面 0</b>（production 树另有同款 2 处，未计入）。接上它要改 <span class="mono">v15-runner.js</span>（别会话未提交现场）。不做半条链：只加渲染而不喂数据，等于再造一节永远空着的假承诺。</div>
+</section>
+
+<section>
+  <h2><span class="num">十八</span>对抗式审查证实四处缺陷＋母版按 md5 去重，三数再修一版（2026-10-22 晚，Owner 令「使用对抗式审查继续看看」）</h2>
+  <p class="muted">审自己刚交的这轮，证实 4 处、当轮全部修复并复测：</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>缺陷</th><th>证据（本轮实测）</th><th>处置</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>打分器 unknownFaces 只在脸首次出现时 +1，seen 恒为 1</td><td>Hudzaifah 实为 2 段，留底件写 1（grep census 原始件）</td><td>修 <span class="mono">weight_census_score.mjs</span> 并重算</td></tr>
+      <tr><td>2</td><td>faux 文案写反："多数段记为否"</td><td>实际多数段<b>根本没记</b>（FauxBold 没记 1,728 段 vs 记否 1,506 段）</td><td>留底件改为数据现取</td></tr>
+      <tr><td>3</td><td>母版样本双计：46 个文件里 4 对 md5 字节全等</td><td>md5 实测 IDENTICAL=true；其中两对的对照表行因写入撕裂丢失</td><td>去重后真样本 <b>42 份不同母版</b>；<span class="mono">weight_census.py</span> 对照表改全量一次写，撕裂 2 行按同目录同字节副本补回</td></tr>
+      <tr><td>4</td><td>文档没跟数据：README 与 §16 指针仍挂 14 份版旧数（100%／1.5%）</td><td><span class="mono">README.md:28</span> 实测原文</td><td>已改为去重后现值＋版本链说明</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>数</th><th>§17（46 份含双计）</th><th>§18 现值（42 份去重）</th><th>这意味着</th></tr></thead>
+    <tbody>
+      <tr><td>层内混字重</td><td>3.7%（106 层）</td><td><b>2.6%（66 层）</b></td><td>被双计的 4 份恰是混字重大户（占 40 层）。误伤面比 §17 说的小，但远不是零。</td></tr>
+      <tr><td>字重判得出档</td><td>98.1%（2,814/2,869）</td><td><b>97.8%（2,471/2,526）</b></td><td>判不出的仍是那两张脸（HarmonyOS_Sans_SC 54 段、Hudzaifah 2 段）。</td></tr>
+      <tr><td>假粗假斜</td><td>0.1%（4 层）</td><td><b>0.2%（4 层）</b></td><td>假斜 4 段真开、假粗 0 段真开不变；分母变小。</td></tr>
+      <tr><td>行距没记</td><td>32.0%（917 层）</td><td><b>31.6%（799 层；按段 1,095/3,234＝33.9%）</b></td><td><b>决策不变：S4a 仍是 S7 的硬前置。</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="mono">测试门 41→45 断言 rc=0：补"判不出档的脸逐张钉住"（旧版 Hudzaifah 零覆盖）。负控加基线前置后复跑：基线绿 → 注入 Bold=900 → 门红且回显带 900 → 字节全等还原。tlb_members.py 修掉三处跑不起来的代码后实跑 rc=0，独立复现 11 类型无 Font/TextItem。留底件 supersedes 链：14 份版 → 46 份版（mtime 20:02:31）→ 本版。</p>
 </section>
 
 <footer class="footer">
