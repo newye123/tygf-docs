@@ -1433,3 +1433,13 @@
 - **仍未闭（别把本条读成"泄露已消除"）**：① 这枚 token 在本机已以明文存在于脚本与台账若干天，**是否需要在飞书后台轮换**＝待 Owner（轮换只影响投影链，不影响生产与用户数据；轮换后改 `scripts/secrets.local.*` 即可）；② 同类"缺省值即凭据"的写法是否还散在别处——本轮只扫了容器根 `scripts/` 与 `AI_MEMORY/*.md`，**未扫 `worktrees/*`**（未核实）；③ 建议把"提交前对暂存内容做凭据形状复扫"固化为提交前一步（现为本会话手工动作，无脚本承载）。
 - **状态**：🟠 开放（脚本与台账已处置并验证；轮换与否、全仓扫描两项待做）。
 - **补记（同轮，只追加不改上文）**：外移后仍有一处**回显**漏口——`sync-task-ledger.sh` 的收尾摘要行会把 `base=<token>` 原样打到 stdout（实测 10:2x 那次投影输出即如此），因此每次投影都会在终端与任何被保存的输出里留下明文。建议把摘要行改成 `base=<已配置>`（只报有无、不报值），并纳入"提交前凭据形状复扫"同一把尺。本轮未改该摘要行（属另一只手的编排脚本行为面，且改了要重跑投影验证）。
+
+## #233　出包/部署链的三个环境坑与一条「退出码不可信」教训（本机固化）　🟢 低（已绕过，坑位固化）
+
+- **现象（2026-10-22 实测，多稿工作台 v13 上测试站时全部踩到）**：
+  - **① 本机 `bash` 是坏的** —— `C:\WINDOWS\system32\bash.exe` 是 **WSL 的**，且 WSL 虚拟磁盘已损坏（`ext4.vhdx ERROR_FILE_NOT_FOUND`）⇒ 任何 `bash scripts/*.sh` 编排脚本在这台机器上跑不起来（`sync-task-ledger.sh` 就是这么发现的）。**绕过**：改走 **Git Bash** `C:\Program Files\Git\bin\bash.exe`（`cygpath` 在，脚本里的 `to_win` 转换正常）。
+  - **② 出包三件套缺一不可** —— PortableGit 不带 `file(1)` ⇒ `astextplain` 报 command not found ⇒ `git log -G` 退 128 ⇒ **hygiene 门 fail-closed**（表现为「像代码缺陷其实不是」）；node 管道 `spawnSync` 一律 EBUSY ⇒ 必须 `--require` 一个把「管道换临时文件描述符」的 shim；`CODEBUDDY_SAFE_DELETE_BULK_THRESHOLD` 默认 50 ⇒ `test:contracts` 第 9 段起删不掉临时库。三个都在本机可用的路径上：`C:\tools\geo-retest\bin\file`（纯 sh 脚本，靠 git 的 shell 执行）、`C:\tools\geo-retest\spawnsync-fd-shim.cjs`（源在容器根 `tmp/geo-retest/`，**不属于仓库**、不进提交）。
+  - **③ 部署脚本的退出码在 PowerShell 里会被吃掉** —— `ssh host "sudo bash ...; echo DEPLOY_EXIT=\$?"` 这行被 **PowerShell 先插值**，打印成 `DEPLOY_EXIT=True`，**不是真实退出码**（bash 里的 `$?` 到不了远端）。
+- **教训（比坑本身更重要）**：**部署成功不该靠脚本自报的退出码判定。** 本轮改用**五项独立实测**给出成功判据：① 部署标记文件（`.deploy-commit`）＝ 目标 sha；② 收据的 `target/branch/commit` 三项全对；③ `curl 127.0.0.1:3001/` ⇒ 200；④ `/api/runtime-provenance` ⇒ `status=BOUND` 且 `webCommitSha` 对得上；⑤ **构建产物里搜得到新功能文案**（本轮 7 串全命中）。这五项任何一项不绿都当失败处理。
+- **另固化一条出包纪律**：出包必须从**干净 detached 树**（`HEAD` 逐位＝目标提交、`git status` 0 项、只有 `.env.example`、`node_modules` 用 junction 指 develop），用 `--allow-detached-head <sha>`——该参数**只放宽「detached 时 branch 字段取什么」**，不放宽任何判据。
+- **状态**：已绕过（2026-10-22 的 v13 部署实测走通：17 门全 PASS、`PACKAGE_RC=0`、上站成功）。**根因未修**：WSL 磁盘损坏、`file(1)` 缺失属机器级操作，未授权不动。
