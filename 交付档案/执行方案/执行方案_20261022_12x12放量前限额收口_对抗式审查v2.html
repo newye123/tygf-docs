@@ -1,0 +1,212 @@
+<title>执行方案 v2 · 12×12 放量前限额收口（对抗式审查）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:50ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)} .panel.no h3{color:var(--bad)} .panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.callout .hd{font-weight:700;font-size:.94rem;color:var(--warn)}
+.callout p{font-size:.9rem;color:var(--ink-2);max-width:none}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.92rem}
+.note p{font-size:.89rem;color:var(--ink-2)}
+.footer{color:var(--muted);font-size:.82rem;font-family:var(--font-mono);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px;color:var(--ink-2);font-size:.93rem}
+ul.plain li::marker{color:var(--line-strong)}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>执行方案 v2</span><span class="sep">·</span><span>12×12 放量前限额收口</span><span class="sep">·</span><span>对抗式审查</span></div>
+  <h1>真正在"限用户花积分"的，是生产站那条没配的每日熔断</h1>
+  <p class="standfirst">你说"没必要限用户的使用积分"。审查结果：确实有两道这种东西。一道我已经拆了（快照份数配额）；另一道在生产上正生效、而且没人配过——它默认 10000 积分/日，而一趟 12×12 就要花 4.5k–9.8k，**跑一趟见底、第二趟全部吃 503**，用户余额再多也没用。</p>
+  <div class="meta">
+    <span>落笔 2026-10-22 13:5x</span>
+    <span>基线 develop@2c32c5ee ＋ 分支 codex/billing-scope-20261022（五笔）</span>
+    <span>生产未动 · 配置未改 · 历史账未改</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>有条件放行：12×12 放量前必须先补生产那条配置，否则第一趟就可能把当日平台预算见底，而报错的话术会让人以为是自己的积分问题。</p>
+    <div class="stats">
+      <div class="stat ok"><span class="n">100000</span><span class="k">测试站日预算（已配）</span></div>
+      <div class="stat bad"><span class="n">10000</span><span class="k">生产日预算（没配，走默认）</span></div>
+      <div class="stat warn"><span class="n">4464–9792</span><span class="k">一趟 12×12 的积分量级</span></div>
+      <div class="stat ok"><span class="n">12</span><span class="k">一轮快照份数（不是 144）</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>证据：两站配置漂移，且这条闸关不掉</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>站点</th><th>配置行 platformDailyCreditCap</th><th>当日生效值（实测计数行）</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr><td>测试站</td><td class="mono">1 行 = 100000</td><td class="mono">100000 / 已用 68</td><td>从没挡过真实使用</td></tr>
+        <tr><td>生产站</td><td class="mono">0 行（没人配）</td><td class="mono">10000 / 已用 60</td><td><span class="tag bad">Important</span> 走代码默认，一趟 12×12 就见底</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="hd">量级怎么算的（不含猜测）</span><p>单语言单位 = Σ max(1, ceil(max(原文,译文)/200))；实测两张表 67 行→68 单位、扣除未覆盖后→31。两条链都用 <code>max(20, 单位数)</code>。⇒ 31×12×12 = <strong>4,464</strong>；若整表可计费 68×12×12 = <strong>9,792</strong>，对着 10,000 的默认日预算就是"一趟见底"。</p></div>
+    <div class="note"><span class="hd">两个坑：设 0 关不掉、报错误导人</span><p>① <code>getCreditConfig()</code> 里配置值 ≤0 会回落到默认 10000 ⇒ <strong>设 0 等于没关，反而更小</strong>。② 触发时用户看到的是 503「平台今日处理量已达上限，请稍后再试。」——把"我们设的预算"说成像"用户的问题"，且不说他余额未受影响。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>审查推翻了我自己的两条说法</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="hd">推翻 ① 一轮不是 144 份快照，是 12 份</span>
+      <p>唯一调用点 <code>execute-step.tsx:968</code>；批量链把 12 个语言打包进同一份表。<strong>144 是执行次数，不是快照份数。</strong>代码注释已改正。</p>
+    </div>
+    <div class="card">
+      <span class="hd">撤回 ② "把限流抬到 60/分"的建议</span>
+      <p>每稿一次快照、且与真机执行交错（串行链已追到行号）⇒ 12 份/轮撞不到 10 次/分（要 11 稿在 60 秒内跑完才行，不现实）。不改。</p>
+    </div>
+    <div class="card">
+      <span class="hd">证伪 ① 多实例放大限流</span>
+      <p>pm2 <code>instances: 1</code>／fork，生产是单个 systemd 进程 ⇒ 有效值就是 10/分。副作用一条：部署重启会清空计数桶。</p></div>
+    <div class="card">
+      <span class="hd">证伪 ② 历史快照留正文</span>
+      <p>曾疑 <code>expiresAt IS NULL</code> 的行既不清理也不计数；retention 谓词含 <code>{ expiresAt: null }</code>，且测试站实测 NULL 行 = 0。</p>
+    </div>
+    <div class="card">
+      <span class="hd">新发现 ③ 429 的原因被丢掉</span>
+      <p>服务端说了"保存过于频繁"，客户端只 <code>console.warn</code> 就丢，用户看到「无法保存本次确认快照…本次任务已停止」——看不出是限流、也不知道钱没扣。</p>
+    </div>
+    <div class="card">
+      <span class="hd">自曝 ④ 我上一笔写坏的两处（已修）</span>
+      <p>容量闸把 SQLite 的<strong>字符数</strong>当字节数（中文少算约 3 倍 ⇒ 等于没闸）；份数兜底文案让人"报执行号"，而那一刻还没有执行号。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行方案</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>阶段</th><th>做什么</th><th>判据（可复跑）</th><th>代价</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">P0 已完成</td><td>报价作用域／结算只按可计费行／核算凭据与证据分级／快照配额改"只数未过期＋份数兜底 5000＋正文 64 MB 真字节"</td><td>tsc rc=0、CONTRACTS_RC=0、TRUST_RC=0、QUOTA_RC=0</td><td>未部署</td></tr>
+        <tr><td class="mono">P1 配置</td><td>生产 <code>ApiCredential</code> 写 <code>platformDailyCreditCap=100000</code>（与测试站对齐），写前写后各读一次当日计数留证</td><td>下一笔冻结后 <code>hardLimit=100000</code>；一趟 12×12（≤9,792）不触闸</td><td><span class="tag bad">改生产配置，要点头</span></td></tr>
+        <tr><td class="mono">P2 告知</td><td>熔断文案改两句：平台当日预算已到顶 ＋ <strong>你的余额未受影响</strong>；批量链同码同文案；触发时打结构化 warn（已用/上限/本次单位数）</td><td>文案原文进断言集合；两处路由同一份文案源</td><td>Web 半天</td></tr>
+        <tr><td class="mono">P3 告知</td><td>快照保存失败透传原因；限流与配额各有各的人话；重试复用同一 <code>requestId</code>（现在每次新 UUID，只吃限流预算不吃幂等）</td><td>429 场景可见文案必须含"稍等/稍后"、不得出现终态句；requestId 复用可静态断言</td><td>Web 小改</td></tr>
+        <tr><td class="mono">P4 治理</td><td>把 8 项限额收进单表 <code>src/config/usage-limits.ts</code>；凡计数型配额必须"只数未过期/仍持有正文"，禁止数全表；两站配置差异用对账脚本现查点名</td><td>新增 <code>test:usage-limits</code> 并进 test:contracts</td><td>1 天</td></tr>
+        <tr><td class="mono">P5 压测</td><td>fixture 跑 12×12，量快照增长（真字节）／保存失败次数分桶／单稿耗时内存</td><td>0 次配额类 429／0 次熔断；行级覆盖==报价行数在助手 P2 前记 BLOCKED，不得用对象数代替</td><td>要窗口</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>等你点的五件事（每条给了我的默认建议）</h2>
+  <ul class="plain">
+    <li><strong>P1 生产补配置</strong>：建议<strong>是</strong>。不补就等于 12×12 在生产上随时见底。</li>
+    <li><strong>P2 熔断文案</strong>：建议<strong>是</strong>。不改就是把我们的预算问题说成用户的问题。</li>
+    <li><strong>限流／语言上限</strong>：限流<strong>不动</strong>（已证伪会咬）；语言上限先留 12，要做 12×13 再谈。</li>
+    <li><strong>单笔 1500 单位天花板</strong>：12 语 × 约 125 行才撞。要放得先有更高区间的价格表 —— 那要你先定价，我不拍。</li>
+    <li><strong>这五笔要不要合 develop 上测试站</strong>：要跑 <code>prisma migrate deploy</code>（纯加法两可空列）。历史那 37 积分仍未动。</li>
+  </ul>
+  <div class="callout">
+    <span class="hd">一句话</span>
+    <p>隐形配额我已经拆成兜底；真还在限你花积分的是<strong>生产站那条没人配过的每日熔断</strong>——补上配置、把话说清楚，再把所有限额收进一张能查的表里管起来。</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <span>交付件：交付档案/执行方案/执行方案_20261022_12x12放量前限额收口_对抗式审查v2.md（同目录同名 .html）</span>
+  <span>分支 codex/billing-scope-20261022 · 五笔 · 未合入 · 未部署 · 生产配置未改 · 历史账未改</span>
+</footer>
+
+</div>
