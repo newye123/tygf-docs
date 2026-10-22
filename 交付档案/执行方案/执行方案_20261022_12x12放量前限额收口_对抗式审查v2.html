@@ -170,6 +170,10 @@ ul.plain li::marker{color:var(--line-strong)}
       <p>容量闸把 SQLite 的<strong>字符数</strong>当字节数（中文少算约 3 倍 ⇒ 等于没闸）；份数兜底文案让人"报执行号"，而那一刻还没有执行号。</p>
     </div>
   </div>
+
+  <div class="notes">
+    <div class="note"><span class="hd">同类隐形闸全仓清单（第二路探查已回，逐条自己复验）</span><p><strong>同族待咬人（立案，尚未发生）</strong>：自助注销只做 <code>inviteCodeActivation.deleteMany</code>（<code>account/delete/route.ts:59-61</code>），<strong>不减</strong> <code>InviteCode.activatedCount</code>；带减计数的是管理端/撤销通道（<code>activation-revocation.ts:176</code>，调用方不含自助注销）⇒ 该码会被 <code>effectiveStatus()</code> 永久标成 <code>activation_limit_reached</code>，和快照那道一模一样的"数了回不来的东西"。生产现状实测：<code>codes_at_limit=21</code>、<code>phantom_slots=0</code>，属定时炸弹，进 P4 一起修。</p><p><strong>只咬测试站</strong>：<code>getClientIp</code> 在 <code>TRUST_CLOUDFLARE_PROXY</code> 未设时返回 <code>unknown</code> ⇒ 未识别客户端共用同一个限流桶（含登录锁定 5 次）。实测<strong>生产已设 1、测试站 .env 没设</strong>——测试站"莫名被锁"的形状由此而来。</p><p><strong>当天自愈不立案</strong>：智能检测日预算把 <code>UNKNOWN</code> 行计入且永不删除（<code>smart-review-gateway.ts:391-396</code>），但按 <code>budgetDay</code> 换日解套。<strong>负结果</strong>：13 条 <code>onDelete: Restrict</code> 关系里除快照外无第二处按全表行数设配额。</p></div>
+  </div>
 </section>
 
 <section>

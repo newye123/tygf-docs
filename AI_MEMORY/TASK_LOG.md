@@ -1,3 +1,10 @@
+## 2026-10-22 14:19 更正（同轮）｜上一条记的"第二路探查未回"已回，逐条自己复验后的三条结果
+
+- **立案（同族待咬人）**：自助注销 [account/delete/route.ts:59-61](worktrees/billing-scope-20261022/src/app/api/auth/account/delete/route.ts) 只 `deleteMany` 激活行、**不减** `InviteCode.activatedCount`，带减的是管理端/撤销通道（`activation-revocation.ts:176`，调用方清单里不含自助注销）⇒ `status.ts:18` 会把这个邀请码永久标成 `activation_limit_reached`。与快照那道同形：**数了回不来的东西**。生产实测 `codes_at_limit=21`、`phantom_slots=0` ⇒ 尚未发生，进方案 P4 一起修。
+- **立案（只咬测试站）**：`getClientIp` 在 `TRUST_CLOUDFLARE_PROXY` 未设时返回 `unknown` ⇒ 未识别客户端共用同一限流桶（含登录锁定 5 次）。实测**生产 .env 设了 1、测试站没设**——测试站"莫名被锁"的形状有了因由（配置漏项，非代码缺陷）。
+- **证伪不立案**：智能检测日预算把永不删除的 `UNKNOWN` 行计入（`smart-review-gateway.ts:391-396`）看着像同族，但按 `budgetDay` 换日解套 ⇒ 当天自愈；另 13 条 `onDelete: Restrict` 关系中除快照外**无**第二处按全表行数设配额（`MAX_*_PER_INSTALL/DEVICE` grep 0 命中）。
+- 上一条尾句"清单未回记待补"以本条为准；方案 md／html 的 §三 已补进这四条，飞书补发一次（rc=0）。
+
 ## 2026-10-22 14:16 限额线｜12×12 放量前对抗式审查＋执行方案 v2（生产那条每日熔断是真墙）
 
 - **一句话**：Owner 说"没必要限用户的使用积分"。审下来对：确实有两道这种东西——快照份数配额（我已拆成兜底）与**每日平台熔断**，后者在生产**没人配**，走代码默认 10000/日，而一趟 12×12 花 4.5k–9.8k ⇒ 一趟见底、第二趟全吃 503。
