@@ -1,5 +1,127 @@
-## 2026-10-22 20:26 邮件线｜收信转发＋收到邮件飞书提醒：**飞书那半实测打通**（真通道 `ok:true`），转发卡在 Cloudflare 令牌只有读权限
+## 2026-10-23 01:3x 今晚收口｜全仓盘点 → 接起手活 → 推 GitHub → 助手 3.7.23 出厂 → 测试站部署（Owner 22:1x 直令＋对抗式审查）　【本会话｜Owner「你现在遍历现在整个文件夹看看都在做什么，还有哪些没有做的你接起手来，最后一起更新到github然后部署到测试版我明早起来测试使用对抗式审查」】
 
+- **一句话**：真正卡住明早测试的不是功能没写，而是**写完了没提交／没出厂**——最要命的是助手 3.7.22 安装包是 11:56 造的，下午 13:14／15:24 与晚上 21:18 三处改动都在 exe 的 require 链上。今晚重出 **3.7.23** 成对出厂并把测试站换到 `1ff266f0`。
+- **接手前先把现场认清楚（这一步救了两回）**：
+  - 本会话 21:57 启动即撞上"当日额度用尽"，22:19 才活过来；期间 22:15/22:22 develop 有提交与写入。判活＝`find -newermt '-15 minutes'` 只咬住两个 UI 文件＋写它的进程 PID 10896/19532/45744 实测已不在 ⇒ 那棵树 22:22 后没人写，我才敢动发布面。
+  - 分叉方向我**讲反了**并已更正：真值＝本地独有 7 笔、远端独有 14 笔（`git rev-list --count HEAD..origin/develop`＝14）。
+- **接起来的四件**：
+  1. `5e10f65f` 收编 10-21 起就躺在工作树的 `tests/unit/workbench-scope-runtime.test.tsx`——它让 `npx tsc --noEmit` 报 4 错、**任何出包第一步就挡死**。被测属性其实都在（`execute-step.tsx:183-187`），只是测试自身缺显式 props 类型。修后 vitest 4 用例 rc=0。
+  2. `7d20b050` 补失败提示的第二条漏口：`local-assistant-client.ts:1592/:1616/:2077` 三处兜底把助手原文排在中文码表**之前**，"码未登记＋原文带 `TYGF_V15_Thin_Executor.jsx`"照样直出。新增 `isRawAssistantMessageDisplayable`；守卫 `smoke-error-message-contract.mjs` 加 (g)5 条含负控＋(h)接线面静态核。**负控实跑**：拆一道闸 ⇒ rc=1「引用数应为 4，实测 3」，还原后 sha256 `c6491314af48` 与改前同，rc=0。
+  3. `8296384f` 收编 llms 索引两行（先证教程页已在线：`git cat-file -e 557fe767:'src/app/(zh)/guide/ps-batch-replace-text/page.tsx'` rc=0）。
+  4. `567cf3da` 合流（`git merge-tree --write-tree` 预演 rc=0 才真合；邮件两笔"同补丁不同 SHA"合并后三方 diff 全空）⇒ 合完 tsc 又红：远端新增 `billingScopeJson/Digest` 需 `npx prisma generate`（rc=2→generate 后 rc=0）。**只信预演就会在出包处撞死。**
+- **发布面（按仓库 runbook 次序，不自己发明）**：改声明 14 处／8 文件 → 门禁 → `build-engine.bat` → ISCC → `release:assistant --allow-unsigned-beta` → 提交 → `release:preflight:test`（23:00:02 全门 PASS）→ `release:package:test`（rc=0，23:07:04，53,842,958 B，SHA `3C564E29…584FC3`）→ scp → `deploy-test-release.sh`（**rc=0**，01:27:39）。
+  - 打包机自证（exe 自己打印）：`{"ok":true,"version":"3.7.23","assistantBuildId":"detail-hygiene-20261022-r1","frozenEvidenceContract":true}`＋assets/distribution(5)/errors/frozen-evidence 四项自检过。
+  - 中途真卡点：`build/vendor/photocraft/tygf-engine.exe` 不在位（该件按规矩不入库）⇒ 首跑 BUILD_RC=1。从 `tmp/engine-artifact/tygf-engine.exe` 取留底，**哈希逐位相同**（`3cb06ed1…`，43,252,736 B）才放回，没有手写钉值。
+  - 核验：`.deploy-commit=1ff266f0a8b4…`；loopback 3001 三次 200（0.034/0.029/0.036 s）；公网与**助手隧道**取到的 provenance 同一枚＝BOUND／expectedAssistantVersion 3.7.23；PM2 三进程 online、restarts 0；站上两枚安装包都在（3.7.22／3.7.23），latest 回 3.7.23＋SHA 一致。库结构零差异（`git diff 557fe767 HEAD -- prisma/` 空、schema md5 `f18b35db…` 两侧同），脚本自报 `skipping database mutation`；Nginx 未动。
+- **故意没做的（都写进交付件，不是漏）**：
+  - **内存保护闸 9 文件整条不装**（`max(2048 MB,10%)` 以下会 503 拒执行；Owner 10-20 定"先测后建闸"、判据未成立，且明早他要亲手跑批量）。存档带补丁＋哈希：`总控/在飞存档_20261022_内存保护线/`。**存档过程我自己踩坑**：`cp --parents` 因目标目录不存在而失败、后面的 `git restore` 照样执行 ⇒ 4 个已跟踪文件当场只剩补丁；随后 `git apply --check` rc=0＋一次"应用→回退"闭环证可完整装回，5 个未跟踪件 sha256 与存档前逐一相同。
+  - **对抗式审查查出四条，只修了一条**（F-2 已修）：F-1（未结算态排版只读、措辞与顶部提示打脸、且界面无出路——`execute-step.tsx:3019` 退回按钮只在失败态渲染）→ 登记 **#267** 等一句批准；F-3（入口与面板各自独立探 /ping）；F-4（只读态焦点闭环漏 `fieldset` 禁用控件）；F-5＝存量 #253/#261（429 文案与自身诊断相反，改它要再出一版 exe）。
+  - **#263 未修**：出包门不核"HEAD 是否含进远端全部"。今晚我用手工合流补掉（部署后 `ahead=0 behind=0`），补那道反向判据属发布脚本改动，按规矩要你点。
+- **顺手查明一件**：4 张积压 41 天回执（`/ping` `count=4`／`HTTP_403`／`oldestAgeSeconds=3561058`）① 界面**不消费** `pendingReceipts`（src/ 三种写法 0 命中）⇒ 明早看不到那句吓人的 hint；② 新包把 `HTTP_403` 判 retryable（`report-outbox.js:11-16` 终态集合只有 4 枚业务码），24 次后落 `.abandoned` 留痕 ⇒ 预测会自己出队。逐张 attempt 身份仍未核实（outbox 是机器绑定密文）。
+- **交付**：`交付档案/执行报告/执行报告_20261022_今晚收口_全仓盘点与3.7.23出厂.{md,html}`＋`飞书_20261022_今晚收口_助手3.7.23出厂.md`（飞书已发）＋`交付档案/检查单/检查单_20261023_明早实测_助手3.7.23.md`（11 条，★6 条约 25 分钟，含"已知没修别当新 bug"与三问）。脱敏：阳性对照 9/9 后才报数，两份 TOTAL_REAL=0。复验挂号＝《待复验队列》`REL-3723-TESTSITE`（基线 `1ff266f0`）。
+- **遗留**：① 明早装 3.7.23 后才能验三条助手改动；② 多稿工作台 P0 待三问拍板；③ 传输教训入账（断流别删整块、逐块核字节＋哈希才拼）；④ 生产仍是 `319bc1384a36`，这批全没进生产。
+
+## 2026-10-22 22:42 GEO 测量线｜日基线第三修：把"线上换过一次构建"和"对外文案变了"拆成两件事（构建号成轴＋内容轴三态）＋离线负控 33/33＋今晚整线读数　【本会话｜Owner「现在 seogeo 怎样了」】
+
+- **一句话答案**：**结构面稳、检索面一半通、回答面不能用**。① 机读体检分连续 3 个日历日 87.4（FAIL 集合逐 id 一致，不是巧合）；② Bing 已收录，品牌词／自家原句／产品词三组我们排第 1–2，但"PSD 批量替换文字"这类**需求词排不进去**；③ 百度侧 SERP 0 条在场（与 10-17 两次采样一致）；④ 豆包回答面被我自己连问 5 天污染，提名率**不可对外引用**。
+- **本轮真正做的事＝尺子第三修**（因为昨天那句"内容轴＝有变化"是错的，今天才发现）：
+  - 取证（本会话原式，起跑 `date`＝22:42:27）：home 字节两日一字不差 96,429，CF 邮箱混淆归一后**仍不等**；全文只剩 1 处不同＝偏移 31974 的 Next 构建号 `1Q43fW-wotZl1slZ2l1vs`→`kajh6gOqApI-0WS5rJFru`；CSS 产物 `31hz5o0vqo-3u.css`→`183qv3fke54s-.css`，旧名现 `http=404 bytes=9`、新名 `http=200 bytes=9445`。download 同形。**只有 `/en` 是真变化**（JSON-LD 多出 `contactPoint`，+288 字节）。
+  - 改了什么：`交付档案/GEO测量/geo-audit-lib.mjs:21-40` 新增 `BUILD_PATTERNS`／`buildNorm`／`buildNormSha`／`chunkNames`／`buildFp`／`buildIdOf`；`geo-audit-fetch.mjs:86-91` 与 `geo-audit-self.mjs:188-192` 逐件补 `sha256_build_norm`／`build_fp`／`build_id`；`geo-audit-daily.mjs:64-118` 内容轴**三态化**（文案有变／仅构建产物名不同／归一后相等但原始 sha 变＝CF 噪声）＋新增**构建号轴**单独成行。
+  - 效果（同一天 `--force` 重录的前后对照，均为脚本回显）：修前 `内容轴＝有变化：home(…) download(…) en(…)` ⇒ 修后 `内容轴＝文案有变：en(9996e1609be7cd67→a849f8ddedf1d6da)`，home/download 不再误报；`GEO_DAILY 2026-10-22 normalized=87.4 fails=7｜上一行 2026-10-21=87.4（日历相邻=true）｜连续同分(按日历)=3 天`，rc=0。
+- **顺手修掉两处自家闸的洞**（都是"闸永远红/永远绿"这一类）：① `guide` 资产在形态闸里没有 case ⇒ 抓到了 33,441 字节真页面却永远判"未知资产键"不合格，现并入 HTML 页一组；② 离线负控的夹具时间戳写成 `a.fetched_at || now` ⇒ **隔一天再跑，正例 T6a 被自家"核心件必须今天真抓到过"这道闸拒录 rc=3**（今天实测复现），改成强制本轮时间戳，夹具源目录也不再写死日期。
+- **验证**：`node 交付档案/GEO测量/geo-audit-self-test.mjs` ⇒ **负控全绿 33/33，rc=0**（原 20 条＋T7a–T7i＋T8a–T8d，含两条"不许过度归一"反例：改标题文案、给 JSON-LD 加 contactPoint 都必须仍判文案变化；实盘两日 home 去构建噪声后相等而构建号不等）。五个脚本 `node --check` 均 rc=0。日基线 `geo-audit-daily.jsonl` 现 **6 行**（node 现数：2026-10-20×1／10-21×3／10-22×2，同日多行＝勘误重录，取最后一行，旧行不回改）。
+- **立案**：`AI_MEMORY/ISSUES.md` #210 追加 10-22 夜续记（第二颗噪声）；新开 **#266**——生产今天换过一次构建，但 `/api/runtime-provenance` 仍报 `webCommitSha=319bc1384a36…` 一字未动（`environment=production`／`expectedAssistantVersion=3.7.15` 为同刻实测）；"同码重新构建"与"发了新码没更新 marker"**两种解释本机都排除不了**，须服务器侧 `cat .next/BUILD_ID` 与部署时刻才能定，未做即写未核实。ISSUES 纯增量 `git diff --numstat`＝**80 插入 / 0 删除**。
+- **表述更正两条（发飞书时一并讲）**：① 昨天写的"内容轴证明线上内容未变"只在**同日两拍之间**成立，跨构建日会给出假"有变化"，从今天起按三态说；② 早前 S4 写成"百度站长 token 一到我就接 submit-baidu"——**卡口不是 token**：账号已登录且站点在册，`快速抓取` 明写"当前站点暂无快速抓取权限"、`普通收录` 页没有推送/API 区块 ⇒ 是**站点没有递交权益**；手动递交可走，但 12 条 URL 里真正缺的是主体身份那一条（#211）。
+- **未做／NOT RUN**：10-23 的豆包复测未跑（且该通道已被自问污染，复测须报 `personalizedRate`＋账号自测天数）；`ai.txt`／RSS／站外引用这三条红没动（要内容页与外部阵地，不是站内能补的）；未提交、未 push、未部署、未在百度后台点过任何递交按钮、百度凭据未落任何文件（当前盘上不存在 token，实测：`tmp/` 下只有取 token 的探针脚本）。
+- **等 Owner 的两句话没变**：#211（外部主体页走组织型甲案还是承认个人账号乙案）、#212（「多个设计稿」要不要列为已获准对外主张并回写写法定则）；另：您在百度后台若换了账号或看到推送区块，回一句"好了"我就只读取页、token 只写进本机 User 级环境变量 `BAIDU_ZY_TOKEN`，不进任何文件与提交。
+## 2026-10-22 22:22 工作台 UI｜「图六」悬浮球三层成因一次修掉（宽度／步骤／能力）＋第 4 步执行中改只读　【本会话｜Owner「图六 → 悬浮球：三层成因，一次修掉」】
+
+- **一句话**：入口不是坏在一个地方，是坏在三处叠着——≥1280 才渲染、只在第 1 步渲染、助手没报能力就整块不渲染。三处一起改，并照 Owner 的话把口径定死：**「功能可以不可用，但不能装作不存在」**。
+- **改了什么**（develop `4a5f68ef`，8 文件 ＋558/−80，**未 push**）：
+  ① **宽度**：悬浮球 `hidden … xl:block` → `lg:block`（≥1024）；<1024 不再空档，顶栏新加常驻「排版」图标接手（`data-typography-trigger="topbar"`，`lg:hidden`），两边互补不重复。
+  ② **步骤**：去掉 `activeStage === 'materials'` 门，四步常驻；球从阶段一 `<section hidden>`（`workbench-view.tsx:3291`）**内部挪到外部**——fixed 子节点照样会被带 `hidden` 的祖先藏掉，这是"四步常驻"能不能真的成立的关键；抽屉 `open` 也不再绑步骤（面板本体 portal 到 body）。
+  ③ **能力**：`typographyEntryVisible = 灰度 ∧ 能力位` 退役，改 `typographyEnabled = 灰度开关`；能力位只决定"能不能写回"。不可用时三处入口全部**置灰保留**（`aria-disabled`、虚线边、琥珀角标），点开抽屉给一句话原因（带助手版本）＋「重新检测」＋「下载最新助手」（保留 `?key=` 测试令牌）。文案单源 `src/lib/workbench/typography-entry.ts`，`fetchTypographyCapability` 增返 `version` 供"哪个版本没回报"使用。
+  ④ **第 4 步执行中＝只读查看**：批量执行中、或本次执行已授权未结算时，抽屉顶部一句话说明 ＋ `fieldset[disabled]` 一把冻住所有控件（不逐字段挂 `disabled`，少一个漏一个）。
+- **两处实现坑（写完实测才发现的）**：① 焦点归还原来用 `offsetParent !== null` 判可见——**固定定位元素的 offsetParent 恒为 null**，球会被永远当成不可见；改 `getClientRects().length > 0`，并按"从哪个入口打开"三路选择器依次取第一个可见节点。② 探测中（null）只置淡、不挂琥珀告警，否则首帧闪一下，看着像出错。
+- **口径变更（留痕）**：2026-10-21 ISSUES #220「能力位没开就不露出按钮/悬浮球」被 Owner 2026-10-22 明确推翻；旧变量同批从源码和两条 smoke 清掉，并加"旧变量不得复活"断言。
+- **验证（真跑，非静态判断）**：`vitest` **20 passed**（`typography-entry.test.ts` 6／`typography-entry-render.test.tsx` 6／`typography-picker.test.tsx` 8）；`smoke-typography-customization` **75 断言**、`smoke-user-visible-copy` **44 断言**；`smoke-typography-wiring`／`-profile`／`-faces` 均 **rc=0**；负控 `tmp/negcontrol-typography-ball-placement.mjs` **rc=0**（阶段一区间内 `<section` 出现 **0** 次 ⇒ `indexOf('</section>')` 取到的确实是阶段一收口，不是假绿；反事实把球搬回 section 内时该断言变红）；`tsc --noEmit` 只剩他会话未跟踪文件 `tests/unit/workbench-scope-runtime.test.tsx` 的 4 条既有错；`eslint` **0 error**（5 条既有 warning）。
+- **没做到（如实记）**：真机浏览器分宽度实拍 **NOT RUN**——本地 3000 端口被 ssh 转发占用，未另起 dev 服务。这条要在测试站或本机 dev 上补一次 1024／1280 两档肉眼确认后才算收尾。
+- **自身踩的坑**：用 PowerShell `Set-Content -Encoding utf8` 整文件改 `workbench-view.tsx`，**加了 UTF-8 BOM**（首字节 `EF BB BF`）。BOM 落在 `'use client'` 前面对 Next 客户端组件首行指令的识别有风险（**未实测判定是否真的失效，按零风险处置**），已剥回并复验首字节 `27 75 73`。**源码文件一律用 edit 工具，不用 PowerShell 整文件重写。**
+- **红线自查**：未 push、未部署任何站、未碰支付 flag；develop 树里另两会话 5 笔未提交改动与 1 个未跟踪测试文件**一行未碰**（`git status` 仍在）。
+
+## 2026-10-22 21:5x 多稿工作台｜第 1 步「准备素材」改成左清单＋右详情（Owner 问"要不要像步骤 2"）；顺带修掉截图暴露的重复稿标签缺陷　【本会话｜Owner「准备素材这里的布局要不要也做成类似步骤2种好些？」＋截图】
+
+- **一句话**：要改，但不照搬——两栏共用骨架（左＝清单，右＝选中那件），第 1 步右栏放"证据＋二选一"、定完自动跳下一件；矩阵留整宽（12 列塞进 620px 右栏只能横拖）。**另一个收获：Owner 截图里的第 2 步队列有两个 5857 完全同名，那不是排版难看，是两组不同的稿在界面上无法区分。**
+- **改了什么**（`交付档案/执行方案/模拟_20261022_多稿工作台_完美版.html`，单文件原位更新）：① 第 1 步拆成 `renderStep1B`（左清单＋右详情，默认）与 `renderStep1A`（原整页纵向，保留对照），标题右侧加"左右两栏／整页纵向"开关；② 左栏三段＝`待你拍板`(3 件，未定带 !)／`按 SKU 看`(6 组，直接标 表套待定·已归位·有稿没表)／`别漏掉`(有表无稿 9)；③ 右栏三态＝冲突（证据表：两套表 sheet/行数·两份文件 MD5·跨渠道位置差 ＋ 二选一，选完自动跳下一件）／SKU（这组稿逐行 ＋ 该 SKU 自己的 12 列小矩阵 ＋ 凭什么）／有表无稿（18 个表文件 ＋ 不会丢也不会乱配）；④ 选中项失效回落 `curSel1()`（定完一件、该件已不在列表时退回第一个未定项），这条是 P1 落地必须照搬的规则；⑤ 整批矩阵保留整宽并加 `id=matrixFull`，右栏有"看整批矩阵 ↓"跳转。
+- **顺手修的缺陷（Owner 截图直接暴露）**：第 2 步队列里 `5857 · A+图`／`5857 · 主副图` 各出现两次且四行字完全相同（＝C2 选"两份都做"的状态）。改成同 SKU＋同交付物出现多份时标签必带来源：`5857 · A+图 · 根目录` / `5857 · A+图 · 5857 文件夹`（`draftLabel`／`dupOf`）；第 3 步进度条标"第 1 份／第 2 份"（`dupIndex`，并新增 `shortTable` 避免"5857 文件夹 5857 文件夹那 12 张"叠字）；第 4 步执行表与确认弹窗把目录跟在文件名后。**实测队列 11 项、11 个标签全不重复。**
+- **实测读数（Playwright headless，`file://` 直开，二跑）**：默认 `layout1=b`、左栏 10 项（3＋6＋1）、右栏首件为 C1；点第一个选项 → `sel=conf:C2` 自动跳件、`queueDone=1`；C2 选 A → 11 稿 65 格、`pendCells` 归 0；C3 定完 → `pending=0`、下一步转 primary、矩阵 `.c-full`=65；点 5857 组 → 右栏 4 行稿＋13 列表头（12 语言＋行标题）；点有表无稿 → 9 个文件；切整页纵向 → `.gcard`=6（旧版未坏）；断点 760/1000 球 `display:none`＋顶栏 T `grid`、1024/1280 球 `grid`，四档 `scrollWidth<=innerWidth`；console/pageerror **0 条**。
+- **自测中修掉的自身缺陷**：小矩阵列宽溢出、证据表标签列 92px 导致"完整表-20261003 这套"折成两行（改 108px，并把该行标签改名"合并版那套"、目录名写进值里，彻底不折）、SKU 队列项在"两份都做"后 kind 重复拼接（改 `new Set`）、右栏头部补"N 组同名稿"标、统计卡在 `pendingCells=0` 时改说"全部已归位"。
+- **方案同步**：`执行方案_20261022_多稿工作台_对抗式审查与整体执行方案.md` 追加 §13（约 1.7 KB）、同名 `.html` 追加 09 节（section 10/10、div 52/52 配平，未重写报告）；两份都写明"为什么统一骨架／为什么不照搬（三条硬理由）／修了什么／实测读数／代价＝多一层选中态"。
+- **台账投影（实跑）**：新增一行 `MULTIDRAFT-WORKBENCH-PLAN`（`updatedAt` 21:56 实测钟）。整轮 `sync-task-ledger.sh` 仍 `rc=1`：**他会话** `USAGE-LIMIT-TRIAGE` 行 `updatedAt:"20:1x"` 占位被飞书拒收 ⇒ 快照不提升 ⇒ 本行被判 `no-snapshot` 拦下（对账闸新后果，与 21:1x 条目同因）。处置＝**只对本行定向 upsert**：先用 `lark-cli base +record-list --filter-json` 取回本行 `record_id=reczz28QTRSAZFgE`，`--dry-run` 先看 PATCH 目标与字段（payload 只含 7 个机器列，**不含 Owner 批注**），再实写；回读确认 `标题` 已带"第 1 步已改左清单＋右详情"、`更新时间`＝`2026-10-22T21:56`。**未动他会话的行**。
+- **红线自查**：仍只改模拟与方案，**未改任何业务代码、未动 develop/main、未部署任何站、未碰支付 flag**；develop 树里另两会话的未提交改动一行未碰；未提交任何 commit。
+- **飞书**：`飞书_20261022_多稿工作台_准备素材改两栏.md` 已发送（`SENT chunks=1`，rc=0）。
+
+## 2026-10-22 21:30 多稿工作台｜八个"bug"同一个病根：归属模型从「一个文件＝一份稿」改成 SKU×交付物类型×语言 三轴；交付对抗式审查＋整体执行方案＋可直接点的模拟界面　【本会话｜Owner「怎么现在多个设计稿还是现在这个UI？」「图七这个选文件夹能不能换成图八这种」「图五表格应该自动找到自己的归属」「图六怎么没有悬浮球？？」「给我一个完美的多稿工作台」】
+
+- **一句话**：八张图不是八个 bug，是一个模型错误的八种表现——**现在的代码把"一个文件"当成"一份稿"，而真实素材文件夹是"一个 SKU 一套，每个语言一张表"**。模型换了，其中五张图自动消失；剩下三张是真代码缺陷（悬浮球断点、原生选目录弹窗、单 sheet 静默丢内容）。
+- **真实文件夹实测**（`F:\工具开发\自动改语言\批量改语言测试`，只读）：12 个设计文件、53 个表文件（其中 2 个是 `run_summary_*` 运行日志，不是表）、35 个文件夹；按字节去重后约 40 张真表；**9 个 SKU 有表没设计**（5366/5472/5478/5566/5596/5623/5633/5660/5661，共 18 个表文件）——现在的界面把这些表直接吞掉，用户看不到"我少做了哪几个"。
+- **三种表形状都真的存在**（决定归属内核必须是纯函数、三种都能吃）：① 一语言一文件、按交付物分 sheet —— `5857\ES 西班牙-5857.xlsx`＝`主图` 36 行 ＋ `A+` 46 行；② 一表 12 语言列 —— `11国语言 5294主图+A+改语言-金娜.xlsx`（Sheet1，12 列表头，53 行）；③ CSV —— `JP 日本-5477.csv` 113 行。
+- **md5 判决（直接决定"要不要问用户"）**：`6896` 的 PSD 对与表对**字节全等**（`A1EF1A1A…`／`BC2FBEA9…`）⇒ 静默合并，不打扰；`5857` 两个同名 PSD **内容不同**（`AD4A0B9C…` vs `A01B7C0C…`）⇒ 真两份稿，必须问；`测试2\`、`批量的\` 里的表与根目录同名件字节一致 ⇒ 跨目录重复不算新稿。**规则落定：同内容静默合并；不同内容一律问，禁止按修改时间/排序自动挑一个。**
+- **代码取证（每条都对得上行号）**：`worktrees/develop/src/lib/workbench/draft-groups.ts:55-56` 分稿键只取"直接父目录名"⇒ 根目录散件全挤成一组；`src/lib/workbench/table-file.ts:36` 只读 `SheetNames[0]` ⇒ 多 sheet 表静默丢 A+（不报错、不留痕）；`src/lib/workbench/table-pairing.ts:163/181/183/185` 四条"请手动选择"分支 ⇒ 表配不上就甩给用户；`src/components/workbench/design-file-card.tsx:891/897` 原生选目录、`:1055` 写着"同名或同目录先帮你配上"这句**当前代码做不到的承诺**；`src/components/workbench/workbench-view.tsx:3582` 悬浮球 `hidden … xl:block` ⇒ 1280 以下整颗消失（图六）；`src/components/workbench/execute-step.tsx:2294/2329/2407` 计数按"未选语言"算 ⇒ 执行面板计数与实际格数对不上。
+- **交付三件（都在 `交付档案/执行方案/`）**：`执行方案_20261022_多稿工作台_对抗式审查与整体执行方案.md`（12 节，含 §12 证据附录）＋同名 `.html`；`模拟_20261022_多稿工作台_完美版.html`（单文件、真实文件名、可点，把三份参考稿合成为一套四步流程）。
+- **模拟界面实测读数**（Playwright headless 逐项跑，非口头断言）：首屏 **9 份稿／41 格／3 组待定**；点 C1「并成一份」→ 41 格全有归属、待定 0；点 C2 选 A → 11 份稿 65 格，选 B → 仍 9 份稿 41 格且 2 份标排除；确认流程 8/8 通过；第 3 步在未确认前按钮置灰（不许越过待定）；第 4 步 9 行汇总"9 稿 · 41 格"；点任一格抽屉给出 `文件 + sheet + 列 + 行`（例 `5857\ES 西班牙-5857.xlsx` / sheet `A+`）；断点实测 760/1000 宽悬浮球收起、顶栏出 T 图标，1024/1180/1280/1440 出球且不压正文；无 console/page error、无横向溢出。
+- **验证过程中修掉的自身缺陷**：漏定义 `S.folder`、C2 暂停逻辑写反、右栏 `.t/.s` 叠行、队列文字截断、写死"24 格"改 `pendingCells()` 现算、网页提示洪泛封顶 2 条、≥1024 时球压正文（`padding-right:76px`）。
+- **执行顺序（方案定的，不是随手排）**：P0 归属内核（纯函数＋真实文件夹夹具，先红后绿）→ P1 第 1 步重画 → P4 悬浮球＋文案说真话 → P2 第 2/3 步批量 → P3 应用内选目录（助手 3.7.22→3.7.23）。**P0 先行是因为后面四步全挂在归属结果上**；文案"同名先帮你配上"必须与代码同批改，否则是继续骗用户。
+- **三个必须 Owner 拍的**（方案里给了默认建议，未擅自定）：① `5857` 同名不同内容算两份还是一份（建议两份）；② 一个 SKU 两套表默认用哪套（建议不默认，按套二选一且记住选择）；③ `6897 独立站主图.psb` 是否借 Amazon `JP 日本-6897.xlsx`（建议默认不借，跨渠道借表会出错图）。
+- **未验证风险 R1（必须先测再上线）**：`5857` 两稿共用同一套表，按稿批量执行**可能把同一张表计费两次**——本轮是代码读出来的推断，没有实跑计费，已在方案里标"上线前必测"。
+- **台账投影（实跑）**：`ledger.jsonl` 追加 `MULTIDRAFT-WORKBENCH-PLAN`（`等您定`／`wip:false`／`updatedAt` 取实测钟 21:31，不用占位分钟）；`bash scripts/sync-task-ledger.sh` **create 1 成功**（随后 `--dry-run` 该行已不在 create/update 计划里 ⇒ 飞书已有该记录）。整轮仍 `rc=1`，卡在**他会话** `USAGE-LIMIT-TRIAGE` 行 `updatedAt:"20:1x"` 占位（`ledger.jsonl:367`）被飞书拒收 ⇒ 快照不提升，另 3 行（ZHIHU-COPY／PC-NOPS-EXEC／TYPO-FAMILY-WEIGHT-KEEP）被对账闸 HELD。**未动他会话的行**，与本会话早前 21:1x 条目同一已知后果。
+- **红线自查**：本轮只出方案＋模拟 HTML，**未改任何业务代码、未动 develop/main、未部署任何站、未碰支付 flag、未改台账 Owner 批注列**；`worktrees/develop` 树里有另两会话未提交的改动，一行未碰；本会话未提交任何 commit。
+
+## 2026-10-22 21:1x 文案线｜执行失败提示不再把脚本名/摘要讲给用户（Owner 实拍复现）：分发模块改结构化字段 ＋ 网页侧内部标识闸　【本会话｜Owner「这个是怎么回事，怎么现在连脚本叫什么也跟用户讲了？」】
+
+- **现场（Owner 截图）**：失败提示正文＝「无法确认脚本版本是否为当前发布件（云端不可达且本地分发清单已过期）：TYGF_V15_Thin_Executor.jsx。请检查网络后重试。本次尚未启动，已自动退回 65 积分。」——裸脚本名出现在用户界面。
+- **根因链（逐段实测）**：文案原文出自 `worktrees/develop/download/local-assistant/script-distribution.cjs:349`（`812b6b12`／#74 根治时写入，行内插值 `${name}`）→ 三处执行入口把 `error.message` 原样当 `error` 字段回给浏览器（`server.js:6225-6227` 单语 V15、`:7459-7461` 批量、`:7791-7793` 经典 `/replace`）→ `local-assistant-client.ts:1592-1599` 见正文是中文就直出 → `execute-step.tsx:2113` `setErrorMsg(message)` 原样上屏。**不是"今天才变坏"**：这段文案 9 月就存在，只是"云端不可达＋清单超 TTL"这条 503 分支直到今天才被真实网络条件触发。
+- **处置（两侧同时改，任一侧单独放都还会漏）**：
+  - **助手侧** `script-distribution.cjs:305/315/347/357/371`：四条用户可见文案改成"哪一步没成＋做什么"，组件名、缓存/声明 sha、分发内部码一律移进 `error` 字段（`component`/`components`/`cacheSha`/`expectedSha`/`syncError`/`detail`），供支持包与日志消费。
+  - **网页侧** `src/lib/workbench/error-messages.ts:321`（`containsInternalOperationDetail`）＋ `:330`（`resolveUserFacingAssistantMessage`）：原文含脚本名/摘要/内部码/本机路径且该原因码已登记时，改用登记的用户文案；`local-assistant-client.ts:1576/1600/1675/2055` 四个边界（授权、单语执行、代理、批量）先过这道闸，原文只进控制台诊断。**这一步让已装的 3.7.22 助手也不再漏**（不必等新助手包）。
+  - 文案同时改人话：`SCRIPT_COMPONENT_STALE`＝「本机助手需要更新执行组件」、`SCRIPT_COMPONENT_UNAVAILABLE`＝「这次执行缺少必要组件」（`error-messages.ts:75-88`），不再出现"分发清单/发布件"这类内部说法。
+- **验证（真实读数）**：`npx vitest run tests/unit/error-messages.test.ts` **10 passed**（含 Owner 原文逐字用例）；`npm run test:error-message-contract` **all invariants passed**（新增 (f) 段三条）；`node scripts/smoke-assistant-script-distribution-module.mjs` **A1–A26 全 PASS**（A18/A19 改为核结构化字段＋断言文案不含 `.jsx`/摘要，新增 A26 覆盖两条 `SCRIPT_COMPONENT_UNAVAILABLE`）；`scripts/smoke-local-assistant-errors.mjs` passed（新增"四个边界都要过闸"源码合同）；`smoke-batch-error-zh-mapping` passed；`smoke-user-visible-copy` 41 断言 passed；`smoke-release-consistency` 46 checks passed；eslint 七文件 rc=0；`tsc --noEmit` 我的文件 0 错（全量 4 条仍在另一会话未跟踪的 `tests/unit/workbench-scope-runtime.test.tsx`，非本轮改动）。
+- **追加一处（同轮补漏，批量路径）**：助手批量入口的组件类 503 只回 `error` 字段、不回 `message`，而 `executeBatchLanguageDirect` 只读 `message` ⇒ 会退化成「批次语言执行被拒绝（SCRIPT_COMPONENT_STALE）」**裸编号**。已在 `local-assistant-client.ts` 批量解析处补 `data.error` 兜底（`smoke-batch-error-zh-mapping.mjs` 新增 (c) 两断言锁形状）；**负控实跑** `tmp/negcontrol-batch-error-fallback.mjs` 证明该断言对旧写法敏感（旧写法 → 兜底检测 false／旧形状检测 true，rc=0），不是恒真断言。
+- **效果对照（同一段原文实跑）**：改前「无法确认脚本版本是否为当前发布件（…）：TYGF_V15_Thin_Executor.jsx。…」→ 改后「本机助手需要更新执行组件。这台电脑上的执行组件和当前发布版本对不上，或者现在连不上云端、无法确认版本。请先检查网络后重试；仍然失败就重启一次本地助手。 本次尚未启动，已自动退回 65 积分。」（退回积分那句原样保留）。
+- **提交**：develop `1da79114`（8 文件，245 增 24 删；未 push；上一版 `a8d07038` 已 amend 并入，含批量兜底与 (c) 断言）。**助手侧文案要等下一版助手包才到用户机上**——本会话没 bump 版本（`ISSUES #262` 已登记"源码改了没 bump"的坑，另两会话正同写这棵树），网页侧闸是当下可用的补救。
+- **台账投影（实跑）**：`ledger.jsonl` 追加新行（`updatedAt` 由脚本取实测钟 21:19，不用占位分钟——#256 的坑）。整轮 `sync-task-ledger.sh` 仍 `rc=1`：卡在**他会话** `USAGE-LIMIT-TRIAGE` 行的占位时间 `"20:1x"`（`ledger.jsonl:367`），飞书拒收 ⇒ 快照不提升 ⇒ 我方行被判 `no-snapshot` 拦下（#256 已补记复发与这条新后果）。处置＝对**本行**定向 upsert（`--record-id reczz28QT8ETXB86`，`--dry-run` 先看过 PATCH 目标与字段，确认 `Owner 批注` 不在写入字段里），写后回读：`出处` 含 `1da79114`、`更新时间`＝`2026-10-22T21:19`，与表内一致；二跑 dry-run 该行已掉出 HELD（`heldCount 4→3`、`skip 162→163`）。**未动他会话的行**。
+- **发布（三段轨第一段，实跑）**：本机 develop 与 `origin/develop` 已分叉（`git rev-list --left-right --count HEAD...origin/develop` ⇒ `6 14`），非 fast-forward、禁止 force push，而 develop 工作树里有另两会话在飞改动（clean-tree 门会逼着替他们提交）。折中做法＝**不改任何人分支，只把本笔搬到 GitHub 上的旁支**：临时 worktree 检出 `origin/develop`（`dcd843b1`）→ `git cherry-pick 1da79114` 干净落地（唯一需三方合并的是 `local-assistant-client.ts`，因远端该文件已有别人的改动；合并结果逐段核对＝我四处边界与批量兜底都在）→ 在该树挂 `node_modules` junction 复跑门槛：`vitest tests/unit/error-messages.test.ts` **10 passed**、`error-message-contract`／`batch-error-zh`／`local-assistant-errors`／`assistant-script-distribution-module` **四条 rc=0** → 推到 `origin/fix/ui-error-internal-detail`＝`4b5395f7`，`git ls-remote` 回读确认（rc=0）。临时 worktree 与 junction 已清理，`git worktree list` 无残留。**develop 上的 6 笔本地提交仍未 push**，其中 5 笔属另两会话，合流时机不由本会话定。
+- **红线自查**：未部署任何一站、未动 `main`／生产／数据库／助手安装包／支付 flag；develop 树里另两会话的未提交改动（`download/local-assistant/server.js`、`v15-runner.js`、`memory-*.cjs`、`public/llms*.txt`、`scripts/smoke-v3-batch-flow.mjs`、`tests/unit/workbench-scope-runtime.test.tsx`）**一行未碰**，只按文件名暂存了本任务 8 个文件。
+- **边界**：未部署任何一站（develop 树有另两会话在飞改动，出包 clean-tree 门会逼着把别人的半成品一起提交）；未动 `main`／生产／数据库／助手安装包；未改任何执行、拒绝或计费判定，只改"怎么说"。
+
+## 2026-10-22 20:5x 排版线｜对抗式审查证实四处缺陷＋母版 md5 去重（46 份文件→42 份真样本），三数第三修、门 41→45　【落笔 2026-10-22 20:58（实测 date）｜本会话｜Owner「使用对抗式审查继续看看」】
+
+- **一句话**：按 adversarial-review 流程审自己刚交的普查轮，三路只读取证镜头＋主审逐条证伪，证实 4 处缺陷、当轮全修复并复测；其中最重的一处改变样本口径——**46 个母版文件里 4 对 md5 字节全等，真样本是 42 份不同母版**，三个对外数第三次修正。
+- **四处缺陷与处置**：① 打分器 unknownFaces 只在首次出现时 +1（`worktrees/develop/scripts/psprobe/weight_census_score.mjs` 旧 :59-63），Hudzaifah 实为 2 段记 1，已修重算；② 留底件 faux 句"多数段记为否"与实测相反（FauxBold 没记 1,728 段 vs 记否 1,506 段），改数据现取；③ 样本双计＋`weight_census.py` 对照表逐行 append 撕裂丢 2 行，改为全量攒齐一次写、撕裂行按同目录同字节副本补回（对账表现 46 行与 census 编号 0 差）；④ README:28 与方案 §16 指针仍挂 14 份版"100%／1.5%"旧数，已改。
+- **去重后最终三数**（42 份／2,526 层／3,234 段，留底件 `docs/records/20261022_真稿字重与行距_普查实测.json` 内含 supersedes 全链）：混字重 **2.6%（66 层）**（被双计 4 份是混字重大户，占原 106 层里 40 层）；可判 **97.8%**（2,471/2,526，判不出仍是 HarmonyOS_Sans_SC 54 段／Hudzaifah 2 段）；假粗假斜 **0.2%**（4 层；假斜 4 段真开假粗 0）；行距没记 **31.6%**（799 层；按段 1,095/3,234）。**决策不变：S4a 仍是 S7 硬前置。**
+- **门与负控**：`scripts/smoke-typography-family.mjs` 补"判不出档的脸逐张钉住"（旧版 Hudzaifah 零覆盖），38→45 断言 rc=0（实测）；负控 `tmp/negative_control_census.cjs` 加基线前置（注入前门必须绿，堵"门本来就红 ⇒ 负控误报合格"的假阳性通道），复跑：基线绿→注入 Bold=900→门红带 900→字节全等还原（实测）。
+- **tlb_members.py 复活**：修掉三处跑不起来的代码（`import win32com.client.tlbi` 本机无此模块＝ModuleNotFoundError 实测、PyITypeLib 无 GetName、PyTYPEATTR 无 guid）后**实跑 rc=0**，独立复现"TypeLibrary.tlb 11 个类型、无 Font/TextItem"（此前只有口头主张无盘上复现路径）。
+- **修改文件**：上列 4 个 psprobe 件＋README＋`weight_census_record.mjs`（泄漏自检改到写盘之前、豁免名单加盘符变体）＋`smoke-typography-family.mjs`＋留底件；根仓方案 §17"全仓"措辞修正＋新增 §18（md＋HTML，标签 19/19 section、66/66 div 配平）。
+- **遗留**：P-1／P-2／P-3／P-4 仍缺（要 Owner 在键盘前的 30 秒或普通权限 PS）；行距"缺键＝PS 默认自动"的语义未判定（两种语义下 S4a 硬前置都成立，烂的只是"自动是常态不成立"这句叙事，留 S4a 探针一并取证）；同目录曾有 3 份同字节副本的归属未逐份点名（对账表只记其一）；本轮 develop 提交前 HEAD 已被别的会话推进到 a3e7ce6d，我的改动按文件名单独提交。
+
+
+
+## 2026-10-22 20:46 今晚测试前对抗式审查｜只读取证：三处"测了也不算数"＋四条会被误判的门　【落笔 2026-10-22 20:46（实测 Get-Date）｜本会话｜Owner「看看现在整个项目我晚上可以回去做测试了…还有什么要调整html」】
+
+- **一句话**：今晚能测六项，但 ① 助手连的是"本机 3000＝一条 11:36 起的 SSH 隧道"（断了像产品坏），② 测试站仍是 12:20 那一版（落后 origin/develop **27 笔**：撤限额、计费收口、邮件提醒、学习同意假话更正都没上站），③「只选字族不改字重」的归一模块**没接进执行链**（require 命中 0）——今晚字重变了是已知未完成，不是新 bug。
+- **助手版本两个时刻都记**：18:5x 现读 3.7.19；19:4x 现读 3.7.22（中间被装上）。同刻 scriptDistributionStatus.phase=ready、5 件脚本 integrityOk=true ⇒ "版本低于站点发布版就 403 领不到脚本"这条硬闸（src/app/api/local-assistant/scripts/distribute/route.ts:100-101）已被现场动作解除。capabilities.typographyApplyReady=true、activationStatus=active（2026-11-03 到期）、pendingReceipts count=4 lastError=HTTP_403 oldestAge≈41 天。
+- **新立三条（根账 ISSUES.md）**：**#258** 429 界面文案与 server.js:1648 自己的判断相反，且 runningPsExe() 用进程 Path 判"PS 在不在"（:485-500→:5276-5289）⇒ 提权实例被判"没开"，而 COM-Fix 只改注册表还要提权（Run-Photoshop-COM-Fix.bat:13-20、Fix-Photoshop-COM.ps1:126/136-138）——引导方向是反的；**#259** 助手源码 13:14／15:24 两笔已改但**版本号没动、没重出包**（安装包 mtime 11:56 vs 三处版本仍 3.7.22、grep 3.7.23 ⇒ 0 命中 rc=1），身份门核"三处一致"不核"构建时刻≥源码时刻"，建议补这道反向核；**#260** 新加的"未推 GitHub 不许出包"门只核单向祖先（release-preflight.cjs:108／:125），一棵落后远端 10 笔的树照样绿——「禁止从落后的树打包」目前无人守。
+- **部署侧一条重要更正（我初稿写错判据）**：我先把"测试库缺两列"写成"上站后报价与明细会炸"；复跑 deploy-test-release.sh:569-572 后更正——候选改了 schema.prisma 而没开 TYGF_ALLOW_COMMITTED_MIGRATIONS=1 时脚本 **ABORT: prisma schema drift detected**，是拦停不是坏站。且**台账行已备好**（:499＝迁移目录名＋sha＋两列名＋计数），服务器现役脚本也已含该行（grep -c quote_billing_scope ⇒ 1）⇒ 走 B 档不必再传脚本。库现状仍实测：pragma_table_info 查 BillingQuote 两列＝0、无 _prisma_migrations 表。
+- **取证纪律（两路子代理的回报我只收了一半）**：采信＝我自己复读到的 file:line（429 分支、COM-Fix 提权、版本下限 403、typography-family 零 require、写回属性集合、台账行）；**改判两条**＝它们报"localhost:3000 投不到云端"（我 netstat＋Get-Process 12672 复跑，实为 ssh -N -L 3000:127.0.0.1:3001 tygf-server 的转发，隧道活着经它 latest 回 3.7.22／health 200）与"助手是 3.7.19"（19:4x 已被现场推翻）；**不采信、写进未决**＝"判 PS 未运行"的完整早退链（只读前段，未逐行核到返回码）、README 与留底件哪个普查数对（我没复跑普查）。代理回报里 HEAD 也已漂到 c6766ffc（18:14 时 ce56b112）⇒ 结论级读数落笔前重取一次。
+- **今晚 A 档测试序（报告正文有"看哪儿算过"）**：1 素材目录不长技术目录 1 分｜2 运行目录藏盘根不显示 1 分｜3 多稿一次接多张表 5 分｜4 排版写回只验脸名与静默换脸 10 分｜5 失败件按龄回收 3 分｜6 计费限额按 12:20 旧口径判 5 分。**前置两分钟**：浏览器开 127.0.0.1:3000 证明隧道在；PS 只留一个实例且普通权限。**别测**：字重沿用（未接线）、撤限额与学习同意文案（未上站）、邮件提醒（未上站）。
+- **B 档（要我做需一句授权）**：3.7.23 上站＝等排版树空出来 → 本地对齐 origin/develop → 三处 bump＋**真重出 exe** → git push origin develop → 出包 17 门 → 带 TYGF_ALLOW_COMMITTED_MIGRATIONS=1 部署 → 现读核验＋drift 门红绿各留证。约 45–60 分钟。省时间两条：不必再 scp 脚本；git archive 确定性 ⇒ 只补收据不必重传 53.8 MB。
+- **控制面读数**：bash scripts/control-plane.sh ⇒ ALARM ⛔ 33 项（台账↔飞书机器列漂移＋5 组重复 taskId），ledger_exit=1 readback_exit=1；台账非"已交付"123 条（等您定 67／待复验 50／进行中 3／已搁置 3）。⇒ 今晚排优先级不依据飞书看板。
+- **红线自查（动作面）**：只读取证；未改源码、未出包、未部署、未碰生产与两站数据（服务器侧只跑 curl／grep／pragma 只读）、未动 Owner 进程（Get-Process、netstat 只读，没有 taskkill 类命令）；交付件三件套齐（md＋HTML＋飞书版）并已发送（SENT chunks=1）；脱敏探针 desens-check.mjs 阳性对照 9/9 后，服务器绝对路径与库路径换代称，剩余两类命中为提交短 SHA 与 Owner 本机进程路径，已点名解释。
+- **覆盖缺口（诚实写）**：① 没跑构建与测试（另一会话在飞，porcelain 12 行，避免污染）；② 生产站只读 provenance 没查库；③ U-2「429 绑到哪个实例」与"handshake=true 却字体探针 429"这对矛盾未解，缺 P-1..P-4；④ U-3 那 4 张 41 天回执的账务状态未翻 outbox。
+- **第二处自己的失手（同一轮）**：写 ISSUES 三条的 runner 被我连跑两次（第一次输出被 tail 截走、以为没成），于是同一批内容追加了两遍、且表头漏了 `#`（`## 261　` 而非 `## #261　`）。修法＝按"起始串第二次出现的位置"切掉第二批（切之前先断言该块里没有别手的 `## #` 表头），再给剩余三条补上 `#`；复验＝`#261/#262/#263` 各 1 次、无 `#` 表头残留 0、尺寸 472,528→467,196（减一批）、别手 #258/#259/#260 三条均在。教训＝**跑过的写盘命令不许"再看一眼输出"式重跑**，要看只读文件；这条与记忆册第 14 形态（守卫没读到回显就重跑⇒同节写两遍）同族，这次发生在台账上。
+- **我自己的失手（当场抓到并恢复）**：置顶追加时我用 `entry + log.slice(indexOf("\n")+1)`，把上一节那行 `## ` 标题一起切掉了——**计数检查（应 +1 却 +0）抓到**。恢复法＝从 Git 索引 `git show :AI_MEMORY/TASK_LOG.md` 取该行**原样**插回别手正文首行之前（不是重写、不是补近似文本）；复验＝标题计数回到 +1、该行全文出现 1 次、别手正文一行未动。这是记忆册里"第七形态＝插入时拿上一行尾部当锚、new_string 不带原行 ⇒ 整行必需行消失"的又一例，且这次是我自己写的脚本而不是 Edit 触发的。
+
+## 2026-10-22 20:26 邮件线｜收信转发＋收到邮件飞书提醒：**飞书那半实测打通**（真通道 `ok:true`），转发卡在 Cloudflare 令牌只有读权限
 - **Owner 令**：「A 353099912@qq.com 转到这个邮箱」＋「你直接帮我做，还有加上一个收到邮箱发到飞书提醒我，跟收到用户申请那个提醒同一个位置」；并于 20:0x 直接给了 Cloudflare API 令牌。
 - **一句话**：提醒链路从「Worker → 站内 API → 飞书」改成「**Worker 直推飞书（带 HMAC 签名）**」；用生产真实 webhook ＋ 签名密钥发样例提醒返回 `ok:true`（真消息已进「新的内测申请」同一会话）。转发规则仍未建：令牌能读不能写。
 - **为什么改架构（不是图省事）**：生产 `tygf.service` 的 `ExecStart` 实指 `/var/www/tygf-releases/319bc13…/.next/standalone/server.js`（该提交在 `main` 上，`merge-base --is-ancestor` rc=0），而 `main` 树里**没有**邮件入口（`git ls-tree -r main -- src/app/api/mail-notifications` 为空）；`main..origin/develop` = **78 笔**，含未进部署脚本批准名单的 `20261022120000_quote_billing_scope` ⇒ 为一个邮件提醒推 78 笔上生产，风险不成比例。直推不经过站点，分钟级生效。
@@ -22,6 +144,7 @@
 - **部署后证据（现读）**：`runtime-provenance`＝`environment:test`／`status:BOUND`／`webCommitSha 557fe7670371…`；现役库 `pragma_table_info(BillingQuote)` 出现 `billingScopeJson`＋`billingScopeDigest`；三进程 online、`restarts=0`；备份 `deploy-20261022_200455-557fe7670371`；受保护表行数 `BillingQuote 119｜CreditLedger 620｜ExecutionBatch 112｜ExecutionAttempt 72`，日志明写 `approved additive migration verified (2 objects)`＋`protected row counts unchanged`。
 - **撤闸收尾**：测试站 `platformDailyCreditCap` 那行**已真删**（删前 1000000000 → 删后残留 0 行）；现役代码 `DEFAULT_PLATFORM_DAILY_CAP = 0` 且判定式读实时配置（`hardLimit` 列只是观察值）⇒ 这道每日熔断在测试站从此不存在。我的失败残留 `/var/www/tygf-test-next.stale-1912b` 已清，现役与备份未动。
 - **未做／待 Owner**：① 测试站**真实批次端到端**与**真浏览器**验证仍未做（本轮全部是代码级＋组件契约级，不等于线上生效证据，更不等于界面渲染过）；② 生产站未动一字（三段轨第三段需你点头）；③ 10-22 多扣 **37 积分**未退；④ 生产那条每日熔断仍无配置行＝现役旧构建缺省 10000，且生产仍跑着带 `>1500` 抛错的构建 ⇒ **12×12 在生产还下不了单**，要等同一笔提交上生产；⑤ 充值按你话挂起（等个体户执照）。
+- **飞书台账投影仍失败（登记不阻塞）**：`sync-task-ledger.sh` 对 USAGE-LIMIT-TRIAGE 报 `[fail] update`，配 `create:0 update:1 heldCount:3 errors:[]`；`feishu-readback.mjs` 仍报「表 0 行／台账 164 任务」⇒ 读写两头取不到表，形态与 15:3x 那次一致（疑似 lark 授权/接口一侧，本机无只读手段定案）。本地真相层 `ledger.jsonl` 367 行完好、我的状态行已在盘；面向 Owner 的交付走机器人 webhook，已 SENT。
 
 ## 2026-10-22 16:24 发布线｜Owner 定「先推 GitHub → 从 GitHub 拿代码上测试站 → 通过后再从 GitHub 拿代码上生产」→ 推平 94＋33 笔，并把这句话落成会拦人的闸　【2026-10-22 16:24（实测 `date`）｜本会话｜Owner「推远端，以后上传步骤都是先推github然后在github上拿代码更新到测试站做测试，最后测试通过再在github拿代码推到生产站」】
 
@@ -5135,3 +5258,9 @@
 - **收口动作**：交付档案 md/html 增补 §十（含 3 缺陷总账 + 质量门 + 诚实边界 + 证据索引 2 行）；探针/桩/种子四件存档至 交付档案/执行方案/真机验证件_20261017_批量工作台/；工作树 tmp-* 临时件已清理；隔离 .env 已还原为 develop 标准配置（去绝对路径隔离库、去执行锁 0、去桩端口 49153）；隔离库 custom.db（含种子数据）已删除。
 - **下一步**：上线前建议在测试站用真实安装版助手重跑 P1–P2（约 2 分钟，覆盖桩边界：真实 PS 图层读取 + 真助手来源白名单）；执行链实测等 TYGF_EXECUTION_ENABLED=1 环境。待 Owner 定 D4/D5/D8/D9/D10/D11/D12/D14/D15。
 - **产出**：交付档案/执行方案/执行方案_20261016_批量工作台_对抗式复审与最优路径.{md,html}（已更新至七轮）；真机验证件存档目录。
+
+## 2026-10-22 21:0x｜积分明细撤下审计分级文案（Owner 截图质询 · #220 令）
+- 目标：回应 Owner「现在这些也写上面给用户看了？」——credits-badge 渲染的三行（旧口径…本机报告知道／本次报价只含…都在账上…行级覆盖仍需助手证据／替换 x/y（对象级，不代表每行都换了））属后台对账用语，违反 #220「现象＋一个动作」。
+- 修改：worktrees/billing-scope-20261022@codex/billing-scope-20261022 dcd843b1——credits-badge.tsx 不再渲染 evidenceNote、撤下对象级括注（载荷保留供对账审计）；smoke-user-visible-copy.mjs 把 credits-badge 纳入禁词扫描（旧口径/本机报告/都在账上/行级覆盖/对象级/助手证据）＋不渲染定点断言，45 断言全绿；tsc rc=0；smoke-v2-billing-scope rc=0。
+- 已推 origin/develop（0c9c1271→dcd843b1）。测试站重部署被 release-preflight 拦：HEAD 在 origin/develop 但不是本地 develop 后代——本地 develop 有另一会话在飞工作（9e363604 21:00:26 刚提交＋11 脏文件），按规矩不动它；等该线推送后随下一发出包部署。
+- 遗留：测试站此刻仍显示旧文案；生产仍在旧构建。

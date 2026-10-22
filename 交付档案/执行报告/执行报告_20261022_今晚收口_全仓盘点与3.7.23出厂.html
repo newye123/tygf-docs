@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>今晚收口 · 全仓盘点与助手 3.7.23 出厂（2026-10-22）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:50ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)} .panel.no h3{color:var(--bad)} .panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.callout .hd{font-weight:700;font-size:.94rem;color:var(--warn)}
+.callout p{font-size:.9rem;color:var(--ink-2);max-width:none}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.92rem}
+.note p{font-size:.89rem;color:var(--ink-2)}
+.footer{color:var(--muted);font-size:.82rem;font-family:var(--font-mono);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px;color:var(--ink-2);font-size:.93rem}
+ul.plain li::marker{color:var(--line-strong)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>今晚收口</span><span class="sep">·</span><span>全仓盘点 → 接手 → 推 GitHub → 部测试站</span><span class="sep">·</span><span>对抗式审查先审我自己</span></div>
+  <h1>真正卡住明早测试的只有一件事：助手里的改动没出厂</h1>
+  <p class="standfirst">我把整个仓扫了一遍。今天下午到晚上六条线并行推进，代码都在，但<strong>你装的那个 3.7.22 助手包是 11:56 造的</strong>，下午 13:14、15:24 和晚上 21:18 改的三处都在助手程序里面——不重出包，这三条你测了也不算数。今晚把它做成 <strong>3.7.23</strong> 出了厂，顺带修掉一个"测试件写完没提交、害类型检查长期红"的坑，补上一处"失败提示照样把脚本名讲给你"的兜底漏口，并把 develop 与 GitHub 的分叉合流推平。</p>
+  <div class="meta">
+    <span>22:1x—23:4x（实测 date 逐段留钟）</span>
+    <span>业务树 worktrees/develop</span>
+    <span>部署前 557fe767 → 部署后 1ff266f0</span>
+    <span>origin/develop 已推平（dcd843b1..561f6d88..1ff266f0）</span>
+    <span>生产 319bc1384a36 零操作</span>
+    <span>风险档 High（安装器／发布脚本／合流）</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict · 有条件放行</span>
+    <p>明早能测，但<strong>必须先装 3.7.23</strong>（本机文件，不走网站下载）。另有四条我查出来但今晚没修的缺陷，撞上了别当新 bug 报。</p>
+    <div class="stats">
+      <div class="stat ok"><span class="n">3.7.23</span><span class="k">安装包自证版本（exe 自己打印，非声明）</span></div>
+      <div class="stat ok"><span class="n">0</span><span class="k">合流后 tsc／eslint／发版预检的失败数</span></div>
+      <div class="stat warn"><span class="n">4</span><span class="k">查出未修的缺陷（Important 2／Medium 1／Nit 1）</span></div>
+      <div class="stat bad"><span class="n">9</span><span class="k">故意没装进包的内存闸文件（已存档留哈希）</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>扫盘看到什么</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>线</th><th>今晚在做什么</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>排版</td><td>真稿字重普查（14→46 份母版）、探针权限边界查清、字重门 45 断言</td><td><span class="tag ok">已提交</span></td></tr>
+        <tr><td>计费</td><td>单语按可执行行报价<strong>【合同变更】</strong>、撤三处额度闸、快照配额改量真实字节</td><td><span class="tag ok">已在站上</span></td></tr>
+        <tr><td>文案</td><td>用户面去后台化：不再把脚本名／摘要讲给用户</td><td><span class="tag warn">只修了一半，今晚补齐</span></td></tr>
+        <tr><td>邮件</td><td>Worker 直推飞书提醒（带 HMAC）＋ 配置脚本两条后路</td><td><span class="tag info">今晚随本批进站</span></td></tr>
+        <tr><td>工作台</td><td>多稿三轴归属方案（SKU×交付物×语言）＋ 悬浮球三层成因＋第 1 步改两栏</td><td><span class="tag ok">UI 已提交</span> <span class="tag warn">P0 内核未动</span></td></tr>
+        <tr><td>发布</td><td>"未推 GitHub 不许出包"落成会拦人的闸</td><td><span class="tag ok">本趟真被它核过</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="hd">12 个文件写完没提交，分三堆，性质完全不同</span><p>① <code>tests/unit/workbench-scope-runtime.test.tsx</code>（10-21）是"执行前确认"的真 DOM 运行时测试——它让类型检查报 4 个错，<strong>任何出包第一步就被挡死</strong>。② 助手内存保护线 9 个文件（10-20 起），见第 03 节，今晚故意不装。③ llms 索引两行（10-21）。</p></div>
+    <div class="note"><span class="hd">分叉方向我先前讲反了</span><p>真值是本地独有 <strong>7</strong> 笔、远端独有 <strong>14</strong> 笔（<code>git rev-list --count HEAD..origin/develop</code>＝14、<code>origin/develop..HEAD</code>＝7）。我在对话里说过"领先 14 落后 7"，那句作废。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>接起来做掉的四件</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="tag ok">5e10f65f</span><h3>收编孤儿运行时测试，类型检查由红转绿</h3></div><p>毛病只在写法：<code>baseProps()</code> 让 TS 把 <code>psdSelection</code> 推成 <code>null</code>，推不出 <code>batchMode</code>／<code>multiPsdSelection</code>／<code>multiDraftLanguageColumns</code>——而这三个在 <code>execute-step.tsx:183-187</code> 都是真声明过的 props，<strong>不是没实现的功能</strong>。只加一处显式类型，被测代码一行没动。实测该文件 vitest 4 用例全绿（14.42 秒）。</p></div>
+    <div class="card"><div class="top"><span class="tag ok">7d20b050</span><h3>失败提示的第二条漏口补上闸</h3></div><p>21:18 那笔只修了"原因码已登记"的支路。三处兜底把助手原文排在中文码表<strong>之前</strong>（<code>local-assistant-client.ts:1592</code>／<code>:1616</code>／<code>:2077</code>），所以"码没登记＋原文带 <code>TYGF_V15_Thin_Executor.jsx</code>"照样把脚本名显示给你。新增 <code>isRawAssistantMessageDisplayable</code>：原文带文件名／摘要／本机路径／内部编号时不许直出。</p></div>
+    <div class="card"><div class="top"><span class="tag info">8296384f</span><h3>llms 教程链接收编（先证链接不空头）</h3></div><p><code>git cat-file -e 557fe767:'src/app/(zh)/guide/ps-batch-replace-text/page.tsx'</code> rc=0——教程页已随测试站现役基线在线，所以这一行不是对外假承诺。</p></div>
+    <div class="card"><div class="top"><span class="tag info">567cf3da</span><h3>合流：先预演再真合，真合后仍踩出一个红</h3></div><p>用 <code>git merge-tree --write-tree</code> 预演 rc=0，真合无冲突；"同一补丁两种 SHA"的邮件两笔合并后逐字节相同（三方 diff 全空）。<strong>但合完 tsc 又红了</strong>：远端新增的 <code>billingScopeJson</code>／<code>billingScopeDigest</code> 两列要 <code>npx prisma generate</code> 才认得（rc=2 → generate 后 rc=0）。只信预演就直接出包，门会在同一处挡下来。</p></div>
+  </div>
+  <div class="callout"><span class="hd">新守卫自带负控，我实测它会红</span><p><code>smoke-error-message-contract.mjs</code> 加了两组：(g) 五条含"干净中文原文仍可显示"的负控（防一刀切），(h) 接线面静态核（闸引用数必须＝1 import＋3 处兜底）。拆掉批次支路那道闸 ⇒ <strong>rc=1「(h) 闸的引用数应为 4，实测 3」</strong>；还原后文件 sha256 与改前同为 <code>c6491314af48</code>，rc=0。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>助手 3.7.23：为什么必须重出，以及内存闸为什么没装</h2>
+  <p class="lede">安装包 3.7.22 造于本日 11:56；<code>ca74bd64</code>（素材目录收口）13:14、<code>a624e8c6</code>（坏回执不再让投递停摆）15:24、<code>1da79114</code>（分发模块改结构化字段）21:18，<strong>三处都在 exe 的 require 链上</strong>（<code>server.js:235</code> 静态 require <code>script-distribution.cjs</code>）。版本号没动 ⇒ 界面、发布声明、身份门全都显示"一致"。这就是审查报告 F-104／问题 #262。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>证据</th><th>实测读数</th></tr></thead>
+      <tbody>
+        <tr><td>版本声明同步面</td><td class="mono">14 处／8 文件（照 check-release-identity.cjs:77-125 逐条要求）</td></tr>
+        <tr><td>打包机自证（exe 自己打印）</td><td class="mono">{"ok":true,"version":"3.7.23","assistantBuildId":"detail-hygiene-20261022-r1","frozenEvidenceContract":true}</td></tr>
+        <tr><td>同轮四项反破解自检</td><td class="mono">assets／distribution(5 脚本)／errors／frozen-evidence 全通过，BUILD_RC=0（22:52:22）</td></tr>
+        <tr><td>内置排版引擎钉值校验</td><td class="mono">tygf-engine.exe 43,252,736 B sha256=3cb06ed138a1273b…（取自仓库内离线留底，逐位核对后才放回）</td></tr>
+        <tr><td>安装包</td><td class="mono">ISCC 26.141 秒 rc=0 ⇒ 25,507,761 B（3.7.22 同量级 25,507,343 B）；SHA-256 8525FBAD…5E6088，UnsignedBeta</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="hd">中途真卡过一次：引擎二进制不在位</span><p><code>build/vendor/photocraft/tygf-engine.exe</code> 缺失（这按规矩不入库，几十 MB），首次构建 <code>BUILD_RC=1</code>。我没有现场手写钉值——从 <code>tmp/engine-artifact/tygf-engine.exe</code> 取回留底，<strong>先核哈希逐位相同</strong>再放回原位，重跑才过。</p></div>
+    <div class="note"><span class="hd">内存闸为什么故意不装</span><p>那条线会在可用内存低于 <code>max(2048 MB, 总内存 10%)</code> 时<strong>直接 503 拒绝执行</strong>。你 10-20 定的是"先测够再决定建不建"（同批 ≥20 稿、末 5 与首 5 中位耗时差 ≤10% 且失败率不升 ⇒ 不建），判据还没成立；而明早你要亲手跑批量——装了闸被拒，会被当成产品坏了。整条 9 个文件连补丁带哈希存档在 <code>总控/在飞存档_20261022_内存保护线/</code>，你说装我就装。</p></div>
+    <div class="note"><span class="hd">存档过程我自己踩了一个坑，如实记</span><p><code>cp --parents</code> 因目标目录不存在而报错，可后面的 <code>git restore</code> 照样执行了——4 个已跟踪文件的改动当场只剩补丁。随后用 <code>git apply --check</code> rc=0 ＋一次"应用→回退"闭环证明能从 <code>patch_tracked.diff</code> 完整装回；5 个未跟踪文件的 sha256 与存档前逐一相同。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>查出来、今晚<strong>没修</strong>的四条（按你明早撞上概率排序）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>档</th><th>落点</th><th>会怎么出错</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F-1</td><td><span class="tag bad">Important</span></td><td class="mono">workbench-view.tsx:3683<br>execute-step.tsx:1846-1847<br>:2284／:3019</td><td>批次<strong>已完成但积分结算还没确认</strong>时，排版悬浮球仍是只读，面板写"本次执行进行中…执行结束后再改"，而顶部已经弹了"全部 N 个设计稿已执行完成"——两句互相打脸。本应用确实把"未结算"算作"这单还没完"（<code>:2284</code> 同一定义），所以逻辑不是 bug；<strong>真缺口是出路</strong>：那个"立即退回积分"按钮只在失败态渲染（<code>:3019</code>），成功未结算时在界面上找不到任何可点的下一步。你本机有 4 张积压 41 天的回执，撞上这口的概率不低</td><td>明早第一件事修两件事：措辞改准＋给成功未结算态一个可见出口。<strong>不改执行、冻结与计费判定</strong></td></tr>
+        <tr><td class="mono">F-3</td><td><span class="tag warn">Medium</span></td><td class="mono">workbench-view.tsx:384<br>typography-panel.tsx:274</td><td>入口探一次并缓存、面板每次打开重探 ⇒ 两次判得不一致时，入口显示"可写回"、面板说"这版助手不支持写回"</td><td>共用一份探测结果（小改）</td></tr>
+        <tr><td class="mono">F-4</td><td><span class="tag">Nit</span></td><td class="mono">typography-panel.tsx:326-340,678</td><td>只读态用 <code>&lt;fieldset disabled&gt;</code> 禁控件，而焦点闭环只认 <code>[disabled]</code> 属性 ⇒ Tab 可能回卷不了（鼠标不受影响）</td><td>与 F-1 同批</td></tr>
+        <tr><td class="mono">F-5</td><td><span class="tag bad">Important（存量）</span></td><td class="mono">server.js:1640-1648<br>COM-Fix.bat:13-20</td><td>429 文案让你"以管理员身份跑 COM-Fix"，同文件 <code>:1648</code> 又说"别单独给其中一个用管理员"（问题 #253/#261）。改这句又要重出一版 exe</td><td>等你一句话：明早重出 3.7.24，还是先避开提权 PS</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>本趟发布（部署后现取，01:2x）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>实测</th></tr></thead>
+      <tbody>
+        <tr><td>发版预检</td><td class="mono">全门 PASS 23:00:02；自报"已核 HEAD 561f6d8869bc 已在 origin/develop 上"</td></tr>
+        <tr><td>出包</td><td class="mono">rc=0 23:07:04 ⇒ tygf-test-1ff266f0a8b4.zip 53,842,958 B，SHA 3C564E29…584FC3；归档内安装包恰两枚（3.7.22＋3.7.23）</td></tr>
+        <tr><td>上传</td><td class="mono">单流 ~20 KB/s、双流 ~29—35 KB/s（同机推 GitHub 是 25 MB/15 s ⇒ 瓶颈在这条路由）；逐块核字节＋逐块核 sha256 才拼接，整包再对收据</td></tr>
+        <tr><td>部署</td><td class="mono">deploy-test-release.sh rc=0 01:27:39；备份 deploy-20261023_012513-1ff266f0a8b4；库零变更（自报 skipping database mutation）；Nginx 一字节未动</td></tr>
+        <tr><td>站点身份</td><td class="mono">.deploy-commit=1ff266f0a8b4…｜loopback 3001 三次 200（0.034/0.029/0.036 s）｜公网 provenance BOUND／expectedAssistantVersion 3.7.23（410 B/5.3 s）｜经助手隧道 127.0.0.1:3000 同一枚</td></tr>
+        <tr><td>进程</td><td class="mono">PM2 三进程 online、restarts 0（158/118/136 MB）</td></tr>
+        <tr><td>安装包</td><td class="mono">站上两枚都在：3.7.22 25,507,343｜3.7.23 25,507,761；latest 回 version 3.7.23／available true／sha 8525FBAD…</td></tr>
+        <tr><td>你机器现状</td><td class="mono">/ping 现读 3.7.22／pendingReceipts=4 ⇒ 明早第一件事是装 3.7.23；装前领不到脚本属版本闸设计行为（403 SCRIPT_VERSION_TOO_OLD）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>未决（缺什么证据才敢定性）</h2>
+  <ul class="plain">
+    <li><strong>3.7.23 装得上、跑得起吗</strong>——缺"本机装一次＋<code>/ping</code> 回 3.7.23＋一次真稿执行"。我没装：安装包 <code>CloseApplications=yes</code> 会关掉你正在跑的引擎与托盘，那属于"动你机器上的进程"。</li>
+    <li><strong>4 张积压 41 天的回执是什么账</strong>——outbox 是机器绑定的 AES-256-GCM 密文（<code>server.js:259</code>），不经助手本人读不出逐张身份，"对应哪些 attempt"<strong>仍未核实</strong>。两条确定的：① 界面<strong>不消费</strong> <code>pendingReceipts</code>（src/ 全树三种写法 0 命中）⇒ 那条"请联系作者处理"的 hint 只在 <code>/ping</code> 里，明早你在界面上看不到；② 新包把 <code>HTTP_403</code> 归为 retryable（<code>report-outbox.js:11-16</code> 终态集合只有 4 枚业务码，不含它），退避封顶 1 小时、24 次后落 <code>.abandoned</code> 留痕 ⇒ 预测这 4 张会自己出队，不会永远挂着。现值：<code>count=4</code>／<code>suspectBase=0</code>／<code>oldestAgeSeconds=3561058</code>（23:39 读）。验证＝你实跑后我再现读 <code>count</code>。</li>
+    <li><strong>多稿工作台 P0（三轴归属内核）动不动</strong>——等你答方案 §11 三问。</li>
+    <li><strong>生产站</strong>——今晚零操作，仍是 <code>319bc1384a36</code>；这批（撤限额／按行报价／学习同意更正／邮件／3.7.23）都没进生产。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>覆盖缺口</h2>
+  <p class="lede">没跑真机 Photoshop 端到端；没装新安装包；没查生产库；没验站点 UI 包体（要等部署完）；内存闸的采样读数今晚不会开始积累（因为没装）。</p>
+</section>
+
+<footer class="footer">
+  <span>明早测试清单：<code>交付档案/检查单/检查单_20261023_明早实测_助手3.7.23.md</code></span>
+  <span>复验挂号：《待复验队列》件名 REL-3723-TESTSITE（基线 1ff266f0）</span>
+  <span>脱敏自检：不出现口令值、密钥、客户正文与素材文件名；保留两类刻意证据＝提交短号与本机安装包名</span>
+</footer>
+
+</div>
+
+</body>
+</html>

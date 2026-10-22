@@ -1502,6 +1502,30 @@
 - **影响**：① 此前所有日记行的 `inputs.sha256` 都是原始哈希 ⇒ 跨日比哈希必然不等，**别拿它当变更判据**（10-18 那次同分是靠分数与 FAIL 集合同，没做内容比对，未受影响）；② 同类风险存在于任何"抓公开页取哈希当尺"的脚本（含 `presence-snapshot.mjs` 的字节数尺——它比的是字节数，长度不变所以那条尺今天没被咬到，但同样不区分内容）。
 - **状态**：已修待复验（2026-10-21 08:3x）。首跑回显（同一条命令）：`S1_CRITERION_MET 连续两天同分 ⇒ 基线工具稳定` ＋ `内容轴＝线上未变（归一哈希逐枚相等；原始 sha 不同属 Cloudflare 邮箱混淆，不是内容变化）` ＋ `（其中 home,download,en,robots,sitemap,llms,llmsfull 的上一行哈希＝从 tmp/geo-assets-20261020 现算补出，非当日记录值）`；三行日基线（10-20／10-21 08:30／10-21 08:37 勘误重录）分数均 87.4，第三行起 `inputs.*.sha256_norm` 有值（home `d42856c325b6bf3b`）。复验判据＝明日起连续两行都带 `sha256_norm`，且内容轴能持续输出；分数有动过的日子须点名是哪件资产变。文件：`交付档案/GEO测量/geo-audit-daily.jsonl`（同日多行＝勘误重录，取最后一行为准，旧行不回改）。
 - **10-21 同轮勘误（对本条上一段一句）**：原文写「home 与 en 的原始 sha 差异来自 `data-cfemail` 与 `email-protection#` 两处」——**半对**。实数（本会话 `grep -c`）：`email-protection#` 在 home **0 次**、在 en **1 次** ⇒ home 的两日差异**只由 `data-cfemail` 造成**，两处正则对 en 都必要。其余结论（归一后两日逐枚相等、内容未变）不变。同轮把归一的**边界**写进 `交付档案/GEO测量/geo-audit-lib.mjs` 注释，并新增 `contact_email_sha` 专兜"对外邮箱本身被改却被归一抹平"（AR-7），配套离线负控 `geo-audit-self-test.mjs` **20/20 rc=0**。
+- **10-22 夜续记（第二颗噪声＝构建产物名＋构建号；上面那条"归一后逐枚相等"今天不再成立，必须分开讲）**：
+  - 实测（本会话 `date` 回显 22:42 起跑）：home 字节两日一字不差（96,429），**CF 归一后仍不等**；全文只剩 **1 处**不同（偏移 31974）＝RSC 载荷里的 Next buildId `1Q43fW-wotZl1slZ2l1vs`→`kajh6gOqApI-0WS5rJFru`（21 位随机串，长度不变）；同时 CSS 产物 `31hz5o0vqo-3u.css`→`183qv3fke54s-.css`，旧名现已 `http=404 bytes=9`、新名 `http=200 bytes=9445`（本会话 curl 原式）。download 同形（字节 27,852 不变、只有产物名变）。⇒ **昨天那条"内容轴＝有变化：home/download/en"里，home 与 download 是假变化，只有 en 是真变化**（`/en` 多出 JSON-LD `contactPoint`，288 字节）。
+  - 已改（不是只写注释）：`geo-audit-lib.mjs` 新增 `BUILD_PATTERNS`/`buildNorm`/`buildNormSha`/`chunkNames`/`buildFp`/`buildIdOf`；`geo-audit-fetch.mjs` 与 `geo-audit-self.mjs` 逐件补 `sha256_build_norm`/`build_fp`/`build_id`；`geo-audit-daily.mjs` 内容轴**三态化**（文案有变／仅构建产物名不同／两档归一后仍相等但原始 sha 变＝CF 噪声），并单列**构建号轴**——把"线上换过一次构建"和"对外文案变了"拆成两件事说。今晚 `--force` 重录后输出为 `内容轴＝文案有变：en(9996e1609be7cd67→a849f8ddedf1d6da)`（home/download 不再误报）。
+  - 顺带两处自家闸的缺陷（同轮修）：① `guide` 资产在 `shapeOk` 里**没有 case** ⇒ 抓到了 33,441 字节真页面却永远判"未知资产键"不合格，已并入 HTML 页一组；② 离线负控的夹具把时间戳写成 `a.fetched_at || now` ⇒ 隔一天再跑，正例 T6a 被自家"核心件必须今天真抓到过"这道闸拒录（rc=3），改成**强制本轮时间戳**，且夹具源目录不再写死日期（取 tmp 下最近两枚 `geo-assets-<日期>`）。
+  - 负控数：`geo-audit-self-test.mjs` **33/33 rc=0**（原 20 条＋T7a–T7i＋T8a–T8d）。含两条"不许过度归一"的反例：改标题文案、给 JSON-LD 加 `contactPoint` 都**必须仍判文案变化**；实盘两日 home 去构建噪声后相等、构建号不等；en 的 contactPoint 判为文案变化。
+  - 仍属未核实：**换构建＝发了新代码吗？** 本机答不了，见 #266。
+
+## #267　"批次跑完但积分结算还没确认"这种状态在界面上找不到任何可点的下一步，而且措辞自相矛盾　🟠 major（用户面诚实口径；2026-10-22 23:3x 本会话实测，非执行/计费缺陷）
+- **现象**：执行成功、结算还没确认时，第 4 步的排版悬浮球保持只读，面板写"本次执行进行中：排版设置只能查看…执行结束后再改"（`typography-panel.tsx:668`），而同一屏顶部已经弹了"全部 N 个设计稿已执行完成"（`workbench-view.tsx:2428`）。两句互相打脸。
+- **为什么只读本身不算 bug**：本应用一直把"未结算"算作"这一单还没完"——`execute-step.tsx:2284` 的 `executionInFlight = running || submitted || unsettledExecution` 是既有定义，排版面板只是沿用（`workbench-view.tsx:3683` 传 `readOnly={experimentRunning || executionAuthorized}`）。
+- **真缺口是出路**：那个"立即退回积分"按钮的渲染条件是 `failed && unsettledExecution`（`execute-step.tsx:3019`），**成功态拿不到**；解锁回调也只在结算确认时被调用（`:1846-1847`）。于是"成功但没结算"的用户既改不了排版，也找不到任何可点的下一步，只能等或刷新。
+- **会怎么伤人**：Owner 本机现有 4 张积压 41 天的回执（`/ping` 23:39 现读 `count=4`／`lastErrorCode=HTTP_403`／`oldestAgeSeconds=3561058`），撞上这口的概率不低；明早他大概率把这报成"排版打不开／程序卡住"。
+- **建议修法（不动执行、冻结与计费判定）**：① 措辞改成"这一单还没结算完成，改排版会影响报价口径"；② 成功未结算态给一个可见出口（"我已收到结果、继续结算"或"看这一单的结算状态"），复用 `:2036`／`:2207` 已有的判定；③ 与 F-3（入口与面板各自独立探 /ping，可能判得不一致）、F-4（只读态焦点闭环漏 `fieldset` 禁用控件：选择器 `typography-panel.tsx:197-198` 只认 `[disabled]` 属性，而 `:678` 用的是 `<fieldset disabled>`，用法在 `:328`）同批改。
+- **状态**：未修（今晚 23:0x 只做了发布面收口，深夜不再动 UI 语义）。登记＝本会话（Owner 2026-10-22 22:1x 直令"接起手来＋对抗式审查"），来源＝审查镜头 F-1 经主审复读到行后更正定性。
+
+## #266　生产站今天换过一次构建，但 `/api/runtime-provenance` 仍报同一枚 `webCommitSha` ⇒ 对外的"现役版本"不能只拿 provenance 报号　🟠 major（发布身份口径；2026-10-22 22:4x 本会话实测，非产品缺陷）
+
+- **读数（本会话原式）**：`curl https://tuyigf.com/api/runtime-provenance` ⇒ `environment=production`、`status=BOUND`、`webCommitSha=319bc1384a36b760e6c5d4c8ac4014675a6c19d0`、`webBuildId=tygf-production-319bc1384a36.zip`、`expectedAssistantVersion=3.7.15`。同一时刻线上 HTML 里的构建号 `1Q43fW-wotZl1slZ2l1vs`（10-21 抓）→ `kajh6gOqApI-0WS5rJFru`（10-22 抓），且 10-21 首页引用的 `/_next/static/chunks/31hz5o0vqo-3u.css` 现已 404。⇒ **线上跑的构建确实换了，provenance 那枚号一个字没动。**
+- **两种解释都还没被排除（不凑结论）**：① 同一提交重新构建并部署（`next build` 的 buildId 每次随机、产物名随之变，marker 取的是 git SHA ⇒ 二者本就会分叉）；② 发了新代码但没更新 marker／没挂号。旁证：`/en` 昨日无 `contactPoint`、今日有——该改动来自 `c96bc253`，`git branch -a --contains c96bc253` 含 `main`，而 `git merge-base --is-ancestor 319bc1384a36 c96bc253` **rc=1** ⇒ `c96bc253` 早于 `319bc13`、本就在 319bc13 里，所以这条只支持"昨日 `/en` 命中的是 CDN 旧缓存"，**不支持也不反对**换过代码。
+- **影响**：① 对外/对内报"生产现役 = 某 SHA"时，provenance 是**下限不是相等**（与 [[project-release-line-policy]] 第 18 条"身份门只核文本面"同一族失真）；② AGENTS.md「发布必须挂号」在"重新部署同一提交"这种动作上**不产生任何痕迹**，因为挂号核的是提交、不是构建；③ 我这条 GEO 测量线如果拿 provenance 当"内容没变"的证据，就会在真有变化那天漏报。
+- **本机不可核实项（如实留着）**：服务器侧 `cat <部署目录>/.next/BUILD_ID` 与部署时刻、以及那次部署是谁在什么授权下做的——需要登服务器，不属本会话授权面，未做（NOT RUN，不写成"没有"）。
+- **已做**：把构建号单独成轴（`build_id`／`构建号轴`）落进日基线，从此"换构建"与"文案变"分别记账；provenance 每日读数暂未并进基线。
+- **状态**：OPEN（等一次服务器侧核对；核对前，任何"生产现役 X"的外部表述须同时给 provenance 与构建号两枚读数，并说明它们可能不同）。
+- **号界**：265＋1（落笔前 `grep -n "^## #26"` 实测最大 265，266 无占用）。
 
 ## #215　运营台与流量数据线对抗式审查 Round 1 的**未修**清单（原记 #208，与别手同号已顺延）　🟠 部分处置（2026-10-21 10:13 方案执行后：B-4／B-6／N-1／D-01／D-02／D-03 标注面已修，剩 B-2 接受＋D-05／D-06 待拍）
 
@@ -1878,3 +1902,68 @@
 - **我自己的复犯（诚实记）**：第一次补正时我写的 `16:40` 同样不是实测值（真值 16:44）——**正在诊断的毛病我下一分钟就犯了**。第二次改成"由脚本自己在写入那一刻取钟"（`new Date().toLocaleString('sv-SE',{timeZone:'Asia/Shanghai'})`），落值 `16:45` 与 `MEASURED_NOW` 同源。⇒ 这条与既有记忆同源：**正文里每个钟点只能从本条命令的回显复制**；写进机读字段的未实测分钟，代价从"台账难看"升级为"任务直接消失"。
 - **关联**：#243（快照提升时有时无，同处代码）、#241（台账并发追加把位置当身份）、`AGENTS.md` 第 6 条写入口纪律、记忆 `feedback-verifiable-review-rules` 第 79 条。
 - **号界**：`#247–#255` 已被他会话占用（落笔前实测 `grep -c "^## #248"`＝1、最大号＝255），本条取 **#256**（`grep -c "^## #256"` 落笔前＝0）。
+- **复发（2026-10-22 21:2x 本会话实测，同一根因第二次发生）**：`AI_MEMORY/ledger.jsonl:367`（`USAGE-LIMIT-TRIAGE` 最新有效行）`updatedAt="2026-10-22 20:1x"` 仍是占位分钟 ⇒ 飞书 update 被拒（`code 800010403`，见 #256 现象段）⇒ 整轮 `rc=1`、**快照不提升**。**新增后果（本条上次没写）**：快照不提升 ⇒ 下一轮所有机器列有变化的行都被对账闸判 `no-snapshot` 拦下——我方 `UI-ERROR-INTERNAL-DETAIL` 行（21:13 已成功 create）就因为前一轮失败被拦，只能走定向 upsert 补正（`--record-id reczz28QT8ETXB86`，写入后回读 `1da79114`／`21:19` 与表内一致，二跑 dry-run 该行已掉出 HELD、`heldCount 4→3`）。可复跑判据（按 taskId 取最后一行）：**167 个任务里 1 条**不可解析（`node -e` 实跑，就是这条）；全文件层不可解析 6 行，其余 5 行均已被同 taskId 后行覆盖、无害。**本条仍未动他会话的数据**——占位值是他们在飞的工作，改成任何钟点都只能是猜；要根治还是 #256 列的"生成计划前校验可解析并剔除该行"。
+## #258　429 的界面文案与助手自己的判据互相打脸；且"PS 在不在"用进程 Path 判 ⇒ 提权实例被当成"没开"　🟠 major（2026-10-22 19:4x 本会话实测；#253 的处置面补条，不重复其结论）
+
+- **两条同根**：① `download/local-assistant/server.js:1640-1648` 的"权限级别不一致"分支只认 COM `70`／`-2147024891`，**429 不进这支**，于是 429 走另一套友好文案（`:3352`／`:3361`），叫用户"以管理员身份运行 `diagnostics\Run-Photoshop-COM-Fix.bat`"；而同一文件 `:1648` 自己写的处置是"PS 与助手都用普通方式运行，**不要单独给其中一个用管理员**"。② 助手判"PS 开没开"靠 `Get-Process` 取 `Path`（`:485-500`），Windows 下非提权进程读不到提权进程的 Path ⇒ 提权开着的 PS 被判成"没运行"，扫描侧随之 202 早退（`:5276-5289`）。
+- **为什么引导是反的**：`Run-Photoshop-COM-Fix.bat:13-20` 先 `net session` 检测、再 `Start-Process -Verb RunAs` 自提权；`Fix-Photoshop-COM.ps1:126` 写 `HKCR\Photoshop.Application`、`:136-138` 非管理员直接 `exit 2`。它修注册表，**不碰完整性级别边界**——照做完 429 大概率还在，还多造一次 `:1648` 警告的不对称。
+- **现场读数（同一非提权会话）**：PID 36636 有窗口「Adobe Photoshop 2021」但 `Path` 取不到（8:34:28 起）；PID 24088 `Path=E:\Adobe\Adobe Photoshop 2021\Photoshop.exe`、无窗口（8:07:50 起）。助手 `/ping` 同刻 `photoshopDetected=true`、`photoshopHandshake=true`、`photoshopVersionConflict=false`，而字体探针侧报 429——**"握手成功"与"挂得上"不是一回事，这对矛盾未解**（缺 PS 内读数 P-1..P-4，见 #254）。
+- **建议的最小修法（本会话未动，等 Owner 判）**：① 429 纳入权限分支，文案改成"关掉所有 PS，用普通方式只开一个"；② `runningPsExe()` 增一条"进程存在但 Path 读不到 ⇒ 明说可能是提权实例"，不许静默判成"没开"；③ COM-Fix 自述加一句"本脚本修注册表，不解决权限级别不一致"。靶＝`scripts/psprobe/README.md:22` 那条 429 真因读数。
+- **号界**：落笔前实测最大号＝257（257 由他会话 20:2x 占用），本条取 **258**；分配与落盘在同一脚本动作内完成。
+
+## #259　助手源码当日已改但版本号没动、也没重出安装包 ⇒ 装到的"最新版"不含修复，而所有身份门照绿　🟠 major（2026-10-22 19:4x 本会话实测）
+
+- **事实**：安装包 `public/downloads/tygf-engine-setup-3.7.22.exe` mtime＝11:56；当日 `ca74bd64`（13:14，改 `pc-scanner.js`＋新模块）与 `a624e8c6`（15:24，改 `report-outbox.js`＋`server.js`）都在 **exe 的 require 链**上（`server.js:29` require `./report-outbox`、`:95` require `./pc-scanner`；pkg 按 main 快照整条链打，助手 `package.json` 的 pkg.assets 仅 `generated/**`）。但 `origin/develop` 上 `config/release-identity.json:2`、助手 `package.json:3`、`server.js:145` 三处仍是 **3.7.22**，`git grep -l "3.7.23" origin/develop -- config download public` ⇒ 0 命中（rc=1）。
+- **门拦不住的原因**：`check-release-identity` 与发布声明核的是"三处版本一致＋包内容与该版本自述一致"，**不核"安装包构建时刻 ≥ 助手源码最后改动时刻"**。这是 `AGENTS.md`"不得用源码版本代替 runtime 身份"换了形状复发（旧形＝只重打 zip 冒充修好；新形＝改了源码不 bump，旧包继续顶新版本号被下载）。
+- **可复跑判据（建议补进发布门）**：`git log -1 --format=%ct -- download/local-assistant` 必须 ≤ 安装包 `fs.statSync().mtimeMs`；不成立即红并点名"助手源码已改未 bump／未重出包"。两侧取法本会话各自跑通过（差值＝安装包晚 1 小时 18 分，实测可读）。
+- **本会话没做的**：没替别手 bump 版本、没重出包（那棵树正被排版线同写，porcelain 12 行）。只登记事实与判据。
+- **号界**：258＋1，同一脚本内分配。
+
+## #260　「未推 GitHub 不许出包」门只核单向祖先 ⇒ 一棵落后远端的树照样出包、17 门全绿　🟡 minor（2026-10-22 19:4x 实测；治理规矩"禁止从落后的树打包"无人守）
+
+- **现场**：本地 `develop=c6766ffc`，`origin/develop=557fe767` 领先 **10 笔**（含迁移登记 `557fe767`、计费收口 `1316bf34`【合同变更】）。`scripts/release-preflight.cjs:108` 核"本地 `develop` 是 HEAD 的祖先"（走分支名放宽路径时），`:125` 核"HEAD 已在 `origin/develop` 上"。**两道都不核"HEAD 是否含进远端全部内容"**。
+- **实测**：`git merge-base --is-ancestor origin/develop HEAD` ⇒ **rc=1**（落后成立）；而 `:125` 那道反方向的 `--is-ancestor HEAD origin/develop` ⇒ rc=0 ⇒ 门绿。`AGENTS.md`「分支现实」明写禁止从落后的树打包（2026-09-11 审查 P0-1、#67 都为此付过学费），目前只靠人记。
+- **最小补闸**：在 `:125` 之后加一道 `merge-base --is-ancestor <remoteRef> HEAD`，不成立即红并给补救命令（`git merge origin/<branch>` 或换不落后的树）；远端引用取不到时按同族规矩**硬失败**，不许静默跳过。
+- **号界**：258＋2，同一脚本内分配。
+## #261　429 的界面文案与助手自己的判据互相打脸；且"PS 在不在"用进程 Path 判 ⇒ 提权实例被当成"没开"　🟠 major（2026-10-22 19:4x 本会话实测；#253 的处置面补条，不重复其结论）
+
+- **两条同根**：① `download/local-assistant/server.js:1640-1648` 的"权限级别不一致"分支只认 COM `70`／`-2147024891`，**429 不进这支**，于是 429 走另一套友好文案（`:3352`／`:3361`），叫用户"以管理员身份运行 `diagnostics\Run-Photoshop-COM-Fix.bat`"；而同一文件 `:1648` 自己写的处置是"PS 与助手都用普通方式运行，**不要单独给其中一个用管理员**"。② 助手判"PS 开没开"靠 `Get-Process` 取 `Path`（`:485-500`），Windows 下非提权进程读不到提权进程的 Path ⇒ 提权开着的 PS 被判成"没运行"，扫描侧随之 202 早退（`:5276-5289`）。
+- **为什么引导是反的**：`Run-Photoshop-COM-Fix.bat:13-20` 先 `net session` 检测、再 `Start-Process -Verb RunAs` 自提权；`Fix-Photoshop-COM.ps1:126` 写 `HKCR\Photoshop.Application`、`:136-138` 非管理员直接 `exit 2`。它修注册表，**不碰完整性级别边界**——照做完 429 大概率还在，还多造一次 `:1648` 警告的不对称。
+- **现场读数（同一非提权会话）**：PID 36636 有窗口「Adobe Photoshop 2021」但 `Path` 取不到（8:34:28 起）；PID 24088 `Path=E:\Adobe\Adobe Photoshop 2021\Photoshop.exe`、无窗口（8:07:50 起）。助手 `/ping` 同刻 `photoshopDetected=true`、`photoshopHandshake=true`、`photoshopVersionConflict=false`，而字体探针侧报 429——**"握手成功"与"挂得上"不是一回事，这对矛盾未解**（缺 PS 内读数 P-1..P-4，见 #254）。
+- **建议的最小修法（本会话未动，等 Owner 判）**：① 429 纳入权限分支，文案改成"关掉所有 PS，用普通方式只开一个"；② `runningPsExe()` 增一条"进程存在但 Path 读不到 ⇒ 明说可能是提权实例"，不许静默判成"没开"；③ COM-Fix 自述加一句"本脚本修注册表，不解决权限级别不一致"。靶＝`scripts/psprobe/README.md:22` 那条 429 真因读数。
+- **号界**：落笔前实测最大号＝260（260 由他会话 20:2x 占用），本条取 **261**；分配与落盘在同一脚本动作内完成。
+
+## #262　助手源码当日已改但版本号没动、也没重出安装包 ⇒ 装到的"最新版"不含修复，而所有身份门照绿　🟠 major（2026-10-22 19:4x 本会话实测）
+
+- **事实**：安装包 `public/downloads/tygf-engine-setup-3.7.22.exe` mtime＝11:56；当日 `ca74bd64`（13:14，改 `pc-scanner.js`＋新模块）与 `a624e8c6`（15:24，改 `report-outbox.js`＋`server.js`）都在 **exe 的 require 链**上（`server.js:29` require `./report-outbox`、`:95` require `./pc-scanner`；pkg 按 main 快照整条链打，助手 `package.json` 的 pkg.assets 仅 `generated/**`）。但 `origin/develop` 上 `config/release-identity.json:2`、助手 `package.json:3`、`server.js:145` 三处仍是 **3.7.22**，`git grep -l "3.7.23" origin/develop -- config download public` ⇒ 0 命中（rc=1）。
+- **门拦不住的原因**：`check-release-identity` 与发布声明核的是"三处版本一致＋包内容与该版本自述一致"，**不核"安装包构建时刻 ≥ 助手源码最后改动时刻"**。这是 `AGENTS.md`"不得用源码版本代替 runtime 身份"换了形状复发（旧形＝只重打 zip 冒充修好；新形＝改了源码不 bump，旧包继续顶新版本号被下载）。
+- **可复跑判据（建议补进发布门）**：`git log -1 --format=%ct -- download/local-assistant` 必须 ≤ 安装包 `fs.statSync().mtimeMs`；不成立即红并点名"助手源码已改未 bump／未重出包"。两侧取法本会话各自跑通过（差值＝安装包晚 1 小时 18 分，实测可读）。
+- **本会话没做的**：没替别手 bump 版本、没重出包（那棵树正被排版线同写，porcelain 12 行）。只登记事实与判据。
+- **号界**：261＋1，同一脚本内分配。
+- **状态更新 2026-10-23 01:3x（本会话，只追加不改原文）**：**已处置**。助手 3.7.22→3.7.23 成对出厂（`561f6d88` 版本声明 14 处／8 文件＋安装包；`1ff266f0` 归档豁免块），三处 exe 内改动（`ca74bd64`／`a624e8c6`／`1da79114`）这次真进包。运行证据＝打包机自证 `{"ok":true,"version":"3.7.23","assistantBuildId":"detail-hygiene-20261022-r1","frozenEvidenceContract":true}`＋ISCC 26.141 秒 rc=0（25,507,761 B，SHA `8525FBAD…5E6088`）＋`release:preflight:test` 全门 PASS＋部署 rc=0、站点 `expectedAssistantVersion=3.7.23`。**你建议的那道可复跑判据（`git log -1 --format=%ct -- download/local-assistant` ≤ 安装包 `fs.mtimeMs`）我没有实现**——它属发布脚本改动，按规矩要你点；今晚只用手工合流＋自证读数控住风险。登记 #263 仍 OPEN。装机验收（装完 `/ping` 回 3.7.23＋一次真稿执行）在 Owner 明早，未验前本条不记"已验收"。
+
+## #263　「未推 GitHub 不许出包」门只核单向祖先 ⇒ 一棵落后远端的树照样出包、17 门全绿　🟡 minor（2026-10-22 19:4x 实测；治理规矩"禁止从落后的树打包"无人守）
+
+- **现场**：本地 `develop=c6766ffc`，`origin/develop=557fe767` 领先 **10 笔**（含迁移登记 `557fe767`、计费收口 `1316bf34`【合同变更】）。`scripts/release-preflight.cjs:108` 核"本地 `develop` 是 HEAD 的祖先"（走分支名放宽路径时），`:125` 核"HEAD 已在 `origin/develop` 上"。**两道都不核"HEAD 是否含进远端全部内容"**。
+- **实测**：`git merge-base --is-ancestor origin/develop HEAD` ⇒ **rc=1**（落后成立）；而 `:125` 那道反方向的 `--is-ancestor HEAD origin/develop` ⇒ rc=0 ⇒ 门绿。`AGENTS.md`「分支现实」明写禁止从落后的树打包（2026-09-11 审查 P0-1、#67 都为此付过学费），目前只靠人记。
+- **最小补闸**：在 `:125` 之后加一道 `merge-base --is-ancestor <remoteRef> HEAD`，不成立即红并给补救命令（`git merge origin/<branch>` 或换不落后的树）；远端引用取不到时按同族规矩**硬失败**，不许静默跳过。
+- **号界**：261＋2，同一脚本内分配。
+
+## #264　执行失败提示把脚本文件名/内部摘要讲给用户（Owner 实拍）；根因是"助手原文中文就直出"　🟠 major（2026-10-22 21:1x 本会话实测并修复；助手侧文案待随下一版包发布）
+
+- **现场**：Owner 截图，失败提示正文＝「无法确认脚本版本是否为当前发布件（云端不可达且本地分发清单已过期）：**TYGF_V15_Thin_Executor.jsx**。请检查网络后重试。本次尚未启动，已自动退回 65 积分。」
+- **根因链**：`worktrees/develop/download/local-assistant/script-distribution.cjs:349`（`812b6b12`／#74 写入）在文案里插值 `${name}` → `server.js:6225-6227`／`:7459-7461`／`:7791-7793` 三处把 `error.message` 当 `error` 字段回浏览器 → `local-assistant-client.ts:1592-1599`"含中文即直出" → `execute-step.tsx:2113` `setErrorMsg` 上屏。文案 9 月就在，只是该 503 分支今天才被真实网络条件触发 ⇒ **不是新写的 bug，是旧债被触发**。
+- **处置（两侧都改）**：① 助手侧四条文案改为用户语言，组件名/摘要/内部码移进 `error` 字段（`component`/`components`/`cacheSha`/`expectedSha`/`syncError`/`detail`），`script-distribution.cjs:305/315/347/357/371`；② 网页侧新增内部标识闸 `error-messages.ts:321`＋`:330`，四个边界调用（`local-assistant-client.ts:1576/1600/1675/2055`）；③ `SCRIPT_COMPONENT_STALE`/`SCRIPT_COMPONENT_UNAVAILABLE` 文案改人话（`error-messages.ts:75-88`）。**网页侧闸让已装 3.7.22 也不再漏**，不必等新助手包。
+- **门（防复发）**：单测 10 passed（含 Owner 原文逐字用例）；`test:error-message-contract` (f) 段三条；分发模块 A18/A19 改为核结构化字段＋断言文案无 `.jsx`/摘要，新增 A26 覆盖两条 unavailable；`smoke-local-assistant-errors` 加"四边界都要过闸"源码合同；`smoke-user-visible-copy`／`smoke-batch-error-zh-mapping`／`smoke-release-consistency` 全绿。**另一条漏口同轮补上**：批量入口的组件类 503 只回 `error` 不回 `message`，原代码只读 `message` ⇒ 退化成「批次语言执行被拒绝（SCRIPT_COMPONENT_STALE）」裸编号；现已兜底读 `data.error`，并由 `smoke-batch-error-zh-mapping.mjs` (c) 两断言锁形状（负控 `tmp/negcontrol-batch-error-fallback.mjs` 实跑证明断言对旧写法敏感）。
+- **未做**：没 bump 助手版本、没重出助手包（同 #262 的坑；另两会话正同写该树）；未部署任何一站（develop 树有在飞改动）；只改"怎么说"，未改任何执行/拒绝/计费判定。
+- **号界**：261＋3，同一脚本内分配。
+
+## #265　排版入口「整块消失」的三层成因（宽度／步骤／能力）＋能力位口径反转　🟠 major（2026-10-22 22:2x 本会话实测并修复，develop `4a5f68ef`，未 push）
+
+- **现场**：Owner 连问三次「图六怎么没有悬浮球」。实测不是一个坏点，是三道独立的门叠在同一块入口上——① 宽度：`workbench-view.tsx:3582`（改前）`hidden … xl:block` ⇒ ≥1280 才渲染，小屏整颗消失；② 步骤：`:3579` `activeStage === 'materials'` ⇒ 进第 2/3/4 步即消失；③ 能力：`:370` `typographyEntryVisible = 灰度 ∧ typographyApplyReady === true` ⇒ 助手没回报能力位或探测失败就整块不渲染，**且没有任何提示**。三层任一不满足都看不见入口，用户无法区分"坏了"和"本来就没这功能"。
+- **修法（照 Owner 原话三条）**：宽度降到 `lg`（≥1024）＋ <1024 由顶栏常驻「排版」图标接手；四步常驻（第 4 步执行中＝只读查看）；能力位未开＝置灰保留 ＋ 一句话原因（含助手版本）＋「重新检测」「下载最新助手」。
+- **两条实现陷阱（已写进代码注释）**：① 悬浮球必须挂在阶段一 `<section hidden>`（`:3291`）**之外**——`position: fixed` 也逃不过祖先 `display:none`，搬进搬出直接决定"四步常驻"是真成立还是名义成立；② 焦点归还不能用 `offsetParent` 判可见（**fixed 元素 offsetParent 恒为 null**），改 `getClientRects().length > 0`。
+- **口径反转（重要）**：#220 的「能力位没开就不露出按钮/悬浮球」**作废**，由 Owner 2026-10-22「功能可以不可用，但不能装作不存在」取代。旧变量 `typographyEntryVisible` 已从源码与两条 smoke 清除，smoke 另加"旧变量不得复活"断言，防两套口径并存。
+- **门（防复发）**：`tests/unit/typography-entry.test.ts`（三态与文案纪律，6）、`tests/unit/typography-entry-render.test.tsx`（原因/重试/下载/只读 fieldset，6）、`smoke-typography-customization` 75 断言、`smoke-user-visible-copy` 44 断言、负控 `tmp/negcontrol-typography-ball-placement.mjs`（证明"在 section 外"这条断言对搬回内部敏感，不是恒真）。
+- **未做**：真机浏览器分宽度实拍 **NOT RUN**（本地 3000 被 ssh 转发占用）；测试站部署未做（develop 未 push，且树里有他会话 5 笔未提交改动）。
+- **号界**：264＋1。

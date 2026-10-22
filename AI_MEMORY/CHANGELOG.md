@@ -1,3 +1,29 @@
+## 2026-10-23 01:4x 助手 3.7.23 成对出厂＋测试站换到 `1ff266f0`；本机内存闸**明确不装**；孤儿运行时测试收编
+
+- **变了什么**：`worktrees/develop` 新增六笔——`5e10f65f`（收编 10-21 起未提交的 v12 执行前确认运行时测试，`tsc` 由红转绿）、`7d20b050`（未登记原因码的兜底次序补闸：助手原文带脚本名/摘要/本机路径时不再直出用户面）、`8296384f`（llms 索引两行收编，先证教程页已在线）、`567cf3da`（合流 origin/develop 14 笔）、`561f6d88`（3.7.22→3.7.23 版本声明 14 处／8 文件＋安装包）、`1ff266f0`（归档豁免块 3.7.22＋3.7.23）。测试站 BOUND 由 `557fe767` → `1ff266f0`，备份 `deploy-20261023_012513-1ff266f0a8b4`，库结构零差异、Nginx 未动。生产未碰（仍 `319bc1384a36`）。
+- **为什么必须重出包**：安装包是 11:56 造的，而 `ca74bd64`／`a624e8c6`／`1da79114` 三处改动都在 exe 的 require 链上（`server.js:235` 静态 require `script-distribution.cjs`），版本号没动 ⇒ 界面与身份门全都显示"一致"（对抗式审查 F-104／问题 #262）。**不重出，你明早测这三条就不算数。**
+- **为什么内存闸不装（决策级）**：那条线会在可用内存低于 `max(2048 MB, 总内存 10%)` 时 503 拒绝执行；Owner 10-20 定的是"先测够再决定建不建"（同批 ≥20 稿、末 5 与首 5 中位耗时差 ≤10% 且失败率不升 ⇒ 不建），判据未成立；且明早 Owner 要亲手跑批量，装了闸被拒会被误判成产品坏了。整条 9 文件连补丁带哈希存档于 `总控/在飞存档_20261022_内存保护线/`，装回可逐字节复现。
+- **新立问题**：**#267**（批次完成但未结算时排版面板只读且措辞与顶部"已全部完成"打脸，且成功未结算态在界面上找不到任何可点的下一步——退回按钮条件为 `failed && unsettledExecution`）。**#263 未修**（出包门不核 HEAD 是否含进远端全部；今晚靠手工合流补掉）。
+- **门禁与证据**：合流后 `npx tsc --noEmit` rc=0（前提＝`npx prisma generate`，否则认不出远端新增两列）、eslint rc=0（36 warning／0 error）、排版全链 75+63+86+214+47+36+45 断言、row-contract／v2-billing／snapshot-quota／billing-rules／user-visible-copy 44／workbench-scope 52／batch-groups／mail-notify／release-consistency 46 全绿；`release:preflight:test` 23:00:02 全门 PASS；打包机自证 `version 3.7.23／assistantBuildId detail-hygiene-20261022-r1／frozenEvidenceContract true`＋四项反破解自检；部署 rc=0，loopback 三次 200，公网与助手隧道取到的 provenance 同一枚。细节见 `交付档案/执行报告/执行报告_20261022_今晚收口_全仓盘点与3.7.23出厂.md`。
+
+## 2026-10-22　产品口径变更：入口存在性只由灰度开关决定，能力位只决定「能不能写回」——不可用＝置灰＋一句话原因，不得整块消失
+
+- **背景**：Owner 2026-10-22 亲判「图六」。同一块排版入口被三道门叠着藏起来（宽度 ≥1280／仅第 1 步／能力位未开），用户既看不到入口、也看不到原因，无法区分"坏了"和"没这功能"。同日 Owner 把口径定死：**功能可以不可用，但不能装作不存在**（ISSUES #265）。
+- **决策一（入口存在性单源）**：`typographyEnabled = featureAccess.typographyCustomization`（灰度）。助手能力位 `typographyApplyReady` 只决定"能不能写回"，不再决定"有没有入口"。旧变量 `typographyEntryVisible` 退役，源码与两条 smoke 同批清理，并加"不得复活"断言防两套口径并存。**这是对 2026-10-21 ISSUES #220 的明确反转**（旧令：能力位没开就不露出按钮/悬浮球）。
+- **决策二（不可用怎么说）**：三处入口（顶栏 <1024 图标／卡头按钮／≥1024 悬浮球）一律保留 ＋ 置灰（`aria-disabled`、虚线边、琥珀角标）；点开抽屉给"现象 ＋ 一个动作"：一句话原因（含助手版本号）＋「重新检测」＋「下载最新助手」。文案单源 `src/lib/workbench/typography-entry.ts` 的 `describeTypographyEntry`，界面只消费结果，不各自拼说法。
+- **决策三（步骤与执行态）**：入口四步常驻；第 4 步执行中（批量执行中，或本次执行已授权未结算）打开＝**只读查看**（顶部一句说明 ＋ `fieldset[disabled]` 冻住所有控件），确保用户不会以为现在改的会进正在执行的这一单。
+- **不变量**：不改任何执行／计费／回执判定；只读不改动已保存偏好；<1024 与 ≥1024 两个入口互斥可见（不会同时出现两颗）；能力位缺失只是"当前写不回"，字体清单与偏好照旧可读。
+- **验证**：见 TASK_LOG 2026-10-22 22:22 条与 ISSUES #265——vitest 20 passed、`smoke-typography-customization` 75 断言、`smoke-user-visible-copy` 44 断言、wiring/profile/faces rc=0、负控 rc=0、tsc 仅他会话既有错、eslint 0 error。develop `4a5f68ef`（未 push）；真机分宽度实拍 NOT RUN（3000 被 ssh 转发占用）。
+
+## 2026-10-22　技术决策：用户可见的错误正文**不得出现内部标识**——判定放在网页侧单一函数，助手侧的内部事实改走结构化字段
+
+- **背景**：Owner 实拍失败提示把脚本文件名讲给了用户（`TYGF_V15_Thin_Executor.jsx`，ISSUES #264）。病根是"助手回的中文原文直接上屏"：只要助手文案里写了文件名/摘要，界面就照着念。
+- **决策一（判定单源在网页）**：新增 `src/lib/workbench/error-messages.ts` 的 `containsInternalOperationDetail` ＋ `resolveUserFacingAssistantMessage`——原文含脚本/程序文件名、十六进制摘要、内部原因码、本机绝对路径，且该原因码已登记用户文案时，整段改用登记文案；**未登记码不改写**（不许凭空编理由），原始码仍进排障位（title／失败报告／支持包）。四个边界（授权、单语执行、代理、批量）各调用一次，原文只进控制台诊断。
+- **决策二（助手侧内部事实改为结构化字段）**：`download/local-assistant/script-distribution.cjs` 的四条文案不再插值组件名与 sha，改由 `error.component`／`components`／`cacheSha`／`expectedSha`／`syncError`／`detail` 承载。**排障能力不减**：支持包与日志读字段，用户正文只留"哪一步没成＋做什么"。
+- **为什么两侧都要改**：只改助手＝得等下一版助手包（现有 3.7.22 已装用户仍会看到文件名）；只改网页＝任何没登记的码、或将来新写的助手文案仍可能漏。两侧同改后：网页侧立刻生效，助手侧成为源头防线。
+- **不变量**：本决策只改"怎么说"，不改任何执行、拒绝、计费或回执判定；`SCRIPT_COMPONENT_STALE`／`SCRIPT_COMPONENT_UNAVAILABLE` 仍 fail-closed。
+- **验证**：单测 10 passed（含 Owner 原文逐字用例）、`test:error-message-contract`（新增 (f) 段）、分发模块 A18/A19/A26、`smoke-local-assistant-errors` 四边界源码合同、`smoke-user-visible-copy` 41 断言、`smoke-release-consistency` 46 checks，均实测通过；develop `1da79114`（`a8d07038` 已 amend 并入批量 `data.error` 兜底与 `smoke-batch-error-zh-mapping` (c) 断言）。
+
 ## 2026-10-22　技术决策：邮件提醒**不经过站点**——Cloudflare Worker 直推飞书（带 HMAC 签名），站内入口降为可选路径
 
 - **背景**：Owner 要「收到邮件就飞书提醒我，跟收到用户申请那个提醒同一个位置」。原设计是 Worker → 站内 `/api/mail-notifications` → 飞书（好处：站内去重/限流/应用日志）。实测这条路的代价被低估了：生产 `tygf.service` 的 `ExecStart` 实指 `/var/www/tygf-releases/319bc13…`（该提交在 `main` 上），`main` 树里没有该入口；而 `main..origin/develop` = **78 笔**，其中含未进部署脚本批准名单的结构迁移 `20261022120000_quote_billing_scope` ⇒ 要让提醒生效必须先推 78 笔上生产。**为一个邮件提醒承担跨 78 笔的发版风险，判断为不成比例。**
