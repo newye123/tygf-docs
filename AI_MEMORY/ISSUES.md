@@ -1714,3 +1714,11 @@
 - **已落地（有真实分歧的那一个点）**：新增纯函数 `bindingFinalCode`（`src/lib/workbench/inspector-decisions.ts`），只在 `source_binding` 采集点（`workbench-view.tsx:2768`）记终选码：`candidate_rank_N`／`combined_rank_N`／`conflict_rank_N`／`manual_entry`，**全部是码，不含正文**；`test:learning-signal-client` 新增第七节断言（含"正文字符串不得出现在信封里"的隐私断言，以及排除类采集点必须保持 `null` 的反伪造断言）。
 - **端到端证据（隔离库，`db/test-<uuid>.db`，不碰两站）**：复刻两站现状（`finalCode` 全空）跑 `aggregate-learning-candidates.mjs --apply` ⇒ 候选规则 **0 条**；补上 `candidate_rank_0` 再跑同一条 `--apply` ⇒ 写出 **1 条** `personal/candidate`，建议里带着终选码。**断点确实在这个字段，不在聚合器。**
 - **仍未修（三点，都需要 Owner 决定而不是代码决定）**：① `--apply` 至今**没有任何调度或手动入口**（`package.json:146` 那条把 `--dry-run` 写死）；② 下游消费仍空——`rule-resolver.ts:19-20` 恒返回空建议，`LearningRuleDeployment` 非管理端 0 引用，`rule-pack/status` 前端 0 调用者 ⇒ 用户看不到任何学习成果；③ 同意面：两站 106 账号仅 14 条同意记录，注册即自动授予（`src/app/api/auth/register/route.ts:45-70`）、用户侧无自助撤回（`src/app/api/workbench/learning/consent/route.ts:5`）——这是**法律语义**，与隐私页文案绑定，改动须 Owner 明令并同步文案（关联 #224 的对外口径纪律）。
+
+## #168　**门自己也要被审**——本轮那三道新门自己踩了三个坑（模板字符串反引号／只看紧邻文本节点／trimEnd 把空格 trim 掉）　🟡 中（本轮已全修，机制性风险仍在）
+
+- **坑一（报假象）**：页面内测量脚本（MEASURE）外层是**模板字符串**，注释里写了含**反引号**的说明 ⇒ 模板被提前结束 ⇒ 页面脚本语法错误 ⇒ 门报「重叠 undefinedpx」这种**与真问题无关的假象**，而不是报真问题。⇒ 模板字符串里的注释一律不用反引号，并留注记。
+- **坑二（漏一半）**：判「粗体与前文粘住」时只看 `previousSibling` 是**文本节点** ⇒ 粗体前面是 `<span>` 的那一半全漏（线上 hero 那处就是这么漏的，直到对照实验只报出 1 处才发现）。⇒ 门里要写「跨过元素往前取紧邻文字」的辅助函数。
+- **坑三（永远红）**：取紧邻文字的**最后一个字符**时写了 `before.trimEnd().slice(-1)` ⇒ **恰好把要检查的那个空格 trim 没了** ⇒ 文案修好后门仍然报红。⇒ 取**原始**最后一个字符。
+- **为什么值得单开一条**：本轮那三道新门是**用来抓缺陷的**，结果它们自己先出了三个 bug（其中两个是「永远绿/永远红」这类最坏的形态）。⇒ **凡新增断言，必须用对照实验验一次它的两端**：① 人为制造缺陷 ⇒ 门必须红；② 修好缺陷 ⇒ 门必须绿。两端都验过才算这道门立住。
+- **本轮三处都已修，并各留注记**（`scripts/smoke-en-layout.mjs`）。验证：修后线上 ⇒ 55 断言全绿；人为去掉空格 ⇒ 报 1 处；还原 ⇒ 0 处。
