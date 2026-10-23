@@ -1,3 +1,20 @@
+## 2026-10-23 08:0x 自动归属界面已上测试站｜`8a984d0c`：SKU×交付物矩阵＋冲突二选一＋有表无稿　【本会话｜Owner 选 A】
+
+- **结论**：Owner 选的 A 已落地并部署测试站 `8a984d0c141debdbbdf8e23b8256a1a625ff0752`；provenance `BOUND`／`webCommitSha` 同值／助手仍 3.7.23；health 200（0.032 s）；PM2 三条 online；归档 SHA-256 `72257CEB74EEA6E86B0A3EA644D46EBE777C5512622EABE7CA46D3E604164BA0`；备份 `deploy-20261023_080203-8a984d0c141d`；这次按 **ubuntu 身份**跑部署脚本，未重演 #165 的身份错位。
+- **落地的四件事**：① 归属计划内核 `buildAttributionPlan`（同 SKU＋同交付物才候选、独立站不借 Amazon 表、唯一才自动配、多候选与「多稿抢一张表」都台上、没被认领的表进「有表无稿」并逐张说原因）；② 确认框改归属面板（六个统计数字、SKU×交付物矩阵「稿数/表数」、逐稿徽章＋人话理由、冲突行候选排前）；③ 选表键由文件名改 `masterPath`（同名不同内容两份稿不再互相覆盖）；④ 读表复用归属身份的交付物，不再二次猜。
+- **门（真实读数）**：tsc 0 错；vitest 117 passed（内核新增 12 条，夹具全用真实文件名）；`test:contracts` PASS 119 s、`test:trust-chain` PASS 43 s；出包 17 道 gate 全 PASS；上站后构建产物核对六个新文案全部命中 `3qezt_fna08s3.js`。
+- **被门拦下两次（按真相改）**：旧合同断言仍在查 `parseDeliverable(basenameOf(...))` → 改成 `row.identity.deliverable` 并更新断言；「却」不在中文字体子集 → 换词后 zh-font check OK。
+- **遗留**：二选一记忆只在本次会话（未落存储）；矩阵只到 SKU×交付物（语言矩阵仍在第 3 步）；界面无登录态真浏览器实测；#165 部署脚本身份闸未加；服务器根盘用到 80%。
+
+## 2026-10-23 07:45 多稿工作台第一笔上测试站｜归属内核＋第 1 步左右两栏＋多工作表按交付物选 sheet＋文案说真话　【本会话｜Owner「就定现在这个吧，然后把全部对话内容都整合在一起部署」（截图不用理）】
+
+- **结论**：Owner 点头的「左队列＋右当前稿」两栏已落到真代码并部署测试站 `0e3be6f1`；站点自报 `webCommitSha=0e3be6f1…`、`status=BOUND`、`expectedAssistantVersion=3.7.23`；PM2 三条 online／restarts=0；本机健康 200；外网根路径 403＝访问门不是 502。
+- **落地的四件事**：① 新增纯函数归属内核 `src/lib/workbench/sku-attribution.ts`（SKU＝恰好 4 位独立数字段，排除 20251211／11.11／140289f40dbb；交付物＝A+／主图／主副图／独立站主图；sheet 名同规则）；② `table-file.ts` 按「这份稿要哪种交付物」选 sheet，没读进来的写进 warnings 并在批量导入弹窗显示（原来固定读第一个 sheet：`5857\ES 西班牙-5857.xlsx` 的 A+ 46 行整块丢，A+ 的稿还拿到主图的行）；③ 第 1 步两栏（宽屏 lg 起；单稿模式右栏占满两列）＋队列行「SKU · 交付物」标签、同 SKU 同交付物多份带来源目录；④ 文案说真话（删掉「同名或同目录先帮你配上」，写明只在候选唯一时自动配、不认 SKU/交付物/语言；四处「请手动选择」改人话）。
+- **门（真实读数）**：tsc 0 错；eslint 本轮 8 文件 0 error；vitest 5 文件 63 passed（新增 15 条内核单测，夹具全用 Owner 真实文件名）；`test:batch-row-contract` rc=0、`test:trust-chain` rc=0；出包 preflight 17 道 gate 全 PASS（contracts 173 s、trust-chain 51 s）；归档 `tygf-test-0e3be6f11a9c.zip` SHA-256 `7AB9EA06…885913`，上传后服务器侧 sha256sum 与本地逐位一致。
+- **部署事故（已修）**：第一轮以 root 身份跑部署脚本 ⇒ pm2 接到 root 守护进程、3001 旧进程继续服务，而 `.deploy-commit` 已推进（标记说谎）；随后 ubuntu 启动被 root 建的 logs 拒写（EACCES），测试站约 5 分钟无监听。修法：`chown -R ubuntu:ubuntu /var/www/tygf-test` ＋ ubuntu 身份 `pm2 delete all && pm2 start deploy/ecosystem.test.config.cjs && pm2 save`，复核健康 200／监听 PID 341796／provenance 对新提交。已登记业务仓 ISSUES #165（建议加身份闸＋切换后校验标记与 provenance 一致）。
+- **没做**：自动归属界面（矩阵／冲突二选一／有表无稿）只落内核；图七应用内选目录需助手新端点（3.7.23 已出包，加端点＝3.7.24）；工作台界面仍无登录态真浏览器实测。
+- **文件**：`worktrees/multidraft2`（基于 origin/develop，提交 `aa35e97d` 特性＋`37294f06` 合流＋`0e3be6f1` 单稿列宽修正，均已推 origin/develop）；出包 `release/test/tygf-test-0e3be6f11a9c.zip`。
+
 ## 2026-10-23 01:3x 今晚收口｜全仓盘点 → 接起手活 → 推 GitHub → 助手 3.7.23 出厂 → 测试站部署（Owner 22:1x 直令＋对抗式审查）　【本会话｜Owner「你现在遍历现在整个文件夹看看都在做什么，还有哪些没有做的你接起手来，最后一起更新到github然后部署到测试版我明早起来测试使用对抗式审查」】
 
 - **一句话**：真正卡住明早测试的不是功能没写，而是**写完了没提交／没出厂**——最要命的是助手 3.7.22 安装包是 11:56 造的，下午 13:14／15:24 与晚上 21:18 三处改动都在 exe 的 require 链上。今晚重出 **3.7.23** 成对出厂并把测试站换到 `1ff266f0`。
