@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>表格审查去阻塞与建议就地裁决 · 对抗式审查与执行方案（2026-10-23）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark; --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8; --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a; --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614; --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding-block:clamp(24px,4vw,48px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,5vw,48px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.24rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:.99rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+a{color:var(--accent)}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:clamp(16px,3.2vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--warn)}
+.verdict p{font-size:clamp(1.02rem,2.2vw,1.18rem);line-height:1.6;max-width:54ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.8rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.info{background:var(--accent-soft);color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+.callout{border-left:3px solid var(--bad);background:var(--bad-soft);border-radius:var(--radius);padding:14px 17px;display:flex;flex-direction:column;gap:7px}
+.callout .hd{font-weight:700;font-size:.94rem;color:var(--bad)}
+.callout p{font-size:.9rem;color:var(--ink-2);max-width:none}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 16px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.92rem}
+.note p{font-size:.89rem;color:var(--ink-2)}
+.footer{color:var(--muted);font-size:.8rem;font-family:var(--font-mono);border-top:1px solid var(--line);padding-top:15px;display:flex;flex-direction:column;gap:6px}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.93rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tabs button{font:inherit;font-size:.86rem;font-family:var(--font-mono);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:5px 14px;cursor:pointer;color:var(--ink-2)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(14px,3vw,22px);flex-direction:column;gap:16px}
+.panel[data-on="1"]{display:flex}
+/* 模拟件 */
+.simbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--font-mono);font-size:.74rem;color:var(--muted)}
+.simtoggle{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.simtoggle button{font:inherit;font-family:var(--font-mono);font-size:.74rem;padding:5px 12px;background:var(--sunk);border:0;cursor:pointer;color:var(--ink-2)}
+.simtoggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.statecard{border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;display:flex;flex-direction:column;gap:7px;background:var(--surface)}
+.statecard[data-tone="bad"]{border-left:3px solid var(--bad);background:var(--bad-soft)}
+.statecard[data-tone="warn"]{border-left:3px solid var(--warn);background:var(--warn-soft)}
+.statecard[data-tone="ok"]{border-left:3px solid var(--ok);background:var(--ok-soft)}
+.statecard .ttl{font-weight:700;font-size:.95rem}
+.statecard .sub{font-size:.86rem;color:var(--ink-2)}
+.simrow{display:grid;grid-template-columns:52px 1.05fr 1.15fr auto;gap:10px;align-items:start;padding:11px 0;border-bottom:1px solid var(--line)}
+.simrow:last-child{border-bottom:none}
+.simrow .idx{font-family:var(--font-mono);font-size:.76rem;color:var(--muted);padding-top:6px}
+.simrow .src{font-size:.9rem}
+.simrow textarea{width:100%;font:inherit;font-size:.88rem;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical;min-height:38px}
+.simrow textarea.missing{border-color:var(--bad);background:var(--bad-soft)}
+.simrow textarea.borrowed{border-color:var(--accent);background:var(--accent-soft)}
+.simrow .acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.mini{font:inherit;font-size:.76rem;padding:4px 10px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer;color:var(--ink-2);white-space:nowrap}
+.mini:hover{background:var(--sunk)}
+.mini.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.mini.primary[disabled]{opacity:.45;cursor:not-allowed}
+.mini.ghost{border-style:dashed}
+.badge{font-family:var(--font-mono);font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.badge.sug{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.badge.cand{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.badge.excl{background:var(--sunk);color:var(--muted)}
+.cands{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.candbtn{font:inherit;font-size:.78rem;padding:3px 9px;border-radius:6px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+.candbtn:hover{background:var(--accent-soft)}
+.thead{display:grid;grid-template-columns:52px 1.05fr 1.15fr auto;gap:10px;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-bottom:6px;border-bottom:1px solid var(--line)}
+.langcard{display:flex;flex-direction:column;gap:8px}
+.langline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.86rem;padding:7px 0;border-bottom:1px dashed var(--line)}
+.langline:last-child{border-bottom:none}
+.langline .lg{font-family:var(--font-mono);font-size:.8rem;min-width:38px}
+.diff{font-family:var(--font-mono);font-size:.78rem;display:flex;flex-direction:column;gap:3px}
+.diff .del{color:var(--bad);text-decoration:line-through}
+.diff .ins{color:var(--ok)}
+.report{font-family:var(--font-mono);font-size:.78rem;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink-2);display:none}
+.report[data-on="1"]{display:block}
+.tapgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.tapbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.tapbox .big{font-family:var(--font-mono);font-size:1.9rem;line-height:1}
+.tapbox.now .big{color:var(--bad)} .tapbox.next .big{color:var(--ok)}
+.tapbox ol{margin:0;padding-left:1.15em;font-size:.84rem;color:var(--ink-2);display:flex;flex-direction:column;gap:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>对抗式审查</span><span class="sep">·</span><span>表格审查与步骤合并</span><span class="sep">·</span><span>含可点模拟</span><span class="sep">·</span><span>本轮零代码改动</span></div>
+  <h1>你那两句抱怨是同一个病：问题清单在第 2 步，能点动的裁决在第 3 步</h1>
+  <p class="standfirst">而且只要你开始在那张表里补译文，检测就被打断、刚拿到的建议全部作废。所以我建议：<strong>先止谎（半天），再让"补译"不再打断检测，最后才谈四步并三步</strong>。顺序反了只会把病挪个地方。<br><br>关于"漏译给一条 AI 译文"——我一开始也这么以为，取证后<strong>改主意了</strong>：现在产品四处提示词硬禁模型翻译，而且有缺译时 AI 一次都没调用。这不是加个按钮的事，是产品口径的事，我不建议放开；该给的是"补／借／排"三条不需要翻译的出路。</p>
+  <div class="meta">
+    <span>取证基线 develop <code>05c3e775</code>（18:28，第 1 步那条线 18:41 仍在写，未碰）</span>
+    <span>测试站 <code>bfdd51ec</code>／本机助手 3.7.23（脚本 ready、队列 0）</span>
+    <span>外部对照＝Weblate／memoQ／Phrase／Trados／Crowdin／Docs／GitHub 官方文档</span>
+    <span>风险档 High（触及行排除与执行范围＝合同变更）</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict · 有条件放行</span>
+    <p>第 2 步的"检测完成"在表里有缺译行时是假的，这条必须先修；四步并三步可以做，前提是把可点的裁决搬回第 2 步。</p>
+    <div class="stats">
+      <div class="stat bad"><span class="n">0</span><span class="k">有缺译行时 AI 被调用的次数（直接走 fallback）</span></div>
+      <div class="stat warn"><span class="n">300</span><span class="k">一次语义核对的行数上限，超出部分界面不说</span></div>
+      <div class="stat warn"><span class="n">1</span><span class="k">敲一个字符就打断检测的次数阈值（真就是一下）</span></div>
+      <div class="stat ok"><span class="n">4</span><span class="k">缺陷全部有 file:line 且主审独立复现</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="plan" id="t1">方案正文</button>
+    <button role="tab" aria-selected="false" data-tab="mock" id="t2">可点模拟（新流程长什么样）</button>
+  </div>
+
+  <div class="panel" data-name="plan" data-on="1">
+
+    <h3>01 取证：四条，每条我自己复现过</h3>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>ID</th><th>落点</th><th>会发生什么</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">P0-1</td><td class="mono">bilingual-align.ts:275<br>deepseek-align.ts:761-784</td><td>表里<strong>只要有一行缺译，AI 语义核对一次都没跑</strong>（直接返回 <code>provider:'fallback'</code>、<code>complete:true</code>）。可界面照样显示"检测完成"（<code>review-step.tsx:1265-1267</code>），备注还写着"请人工确认后<strong>一键应用</strong>"（<code>deepseek-align.ts:778</code>），而按钮的渲染条件是"有可应用建议"（<code>:1078</code>）——空译行的建议 target 就是空串，被客户端当无操作丢掉（<code>:491-494</code>）。<strong>结果是：提示让你点一个不存在的按钮，同时掩盖了"没核对"这件事。</strong></td></tr>
+          <tr><td class="mono">P0-2</td><td class="mono">ai-review/route.ts:59<br>deepseek-align.ts:18<br>workbench-view.tsx:1287</td><td>一次语义核对最多 300 行（<code>slice(0, 300)</code>、<code>MAX_ROWS = 300</code>）。超出的行数以 <code>omitted</code> 记进状态，但全仓<strong>没有任何读取点</strong>。6,000 层量级的真稿会以为全审过了。<em>（修正：例外清单那处的截断是有说话的——<code>layout-exception-list.tsx:152</code>；缺的只有 AI 这一路。）</em></td></tr>
+          <tr><td class="mono">P0-3</td><td class="mono">review-step.tsx:232-249<br>review-repair-recovery.ts:91-100<br>review-step.tsx:441-443</td><td>检测的中断键是"整表译文快照"，<strong>你每敲一个字符它就先 abort()</strong>。采纳建议的闸门比的是"全表译文哈希"：建议显示后只要改过任意一格，点"采用"只得到一句「表格结构或修复计划已变化，旧建议没有被应用。请重新运行智能检测。」（<code>siteContent.ts:724</code>），而重跑的前端轮询上限是 15 分钟、12 语还是串行。<strong>"补译文"这个动作本身就是销毁建议的动作。</strong></td></tr>
+          <tr><td class="mono">P1-4</td><td class="mono">review-step.tsx:932-947<br>workbench-view.tsx:3813<br>workbench-machine.ts:116</td><td>冲突候选在第 2 步<strong>只是纯文本「候选：A / B」</strong>，同屏唯一按钮是"确认当前译文安排"（＝按现状走、不改内容）；真正的二选一/统一译文动作在第 3 步。<strong>这就是"第三步多余"的真相：它不是多余，它是唯一能点的地方。</strong>另：「全部确认知晓」的源码注释自己写着"N 个一模一样的点击是流程剧场"（<code>review-step.tsx:889-890</code>）。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>02 为什么不能简单地"给漏译行一条 AI 译文"</h3>
+    <div class="notes">
+      <div class="note"><span class="hd">三层原因，都不是 UI 问题</span><p>① <strong>产品合同禁译</strong>，四处写死：<code>deepseek-align.ts:222</code>「禁止翻译、润色、补写、扩写、改写，也禁止根据常识补全缺失内容」、<code>:218</code>「只能从这里抽取 target」、<code>:309</code>「不能自行翻译，不能补写」、<code>:319</code>「target 必须原样复制候选的 text 字段」。依据是 <code>agents.md</code> Product Drift Guard 第 8 条「概率/置信度不能替代权限」。<br>② <strong>有缺译时 AI 根本不跑</strong>（P0-1），谈建议是空的。<br>③ 空译行在确定性引擎里的产物是<strong>排除</strong>（<code>bilingual-align.ts:257 → :76-78</code>，文案"该行无译文，已排除出本次执行"），不是补译。</p></div>
+      <div class="note"><span class="hd">我的建议：不放开 AI 代译，改成三条不需要翻译的出路</span><p><strong>补</strong>＝一键聚焦到那格（就地输入框本来就有，<code>review-step.tsx:1186-1208</code>，缺的是"从提示跳到光标"）；<strong>借</strong>＝从同一张表的其他语言/其他行取现成译文候选（候选池已存在，只是不能点，纯搬运不违反禁译）；<strong>排</strong>＝这格本来就不该有译文（版权行、色块文字）→ 一键标"不翻译"。这正好也是你说"点进去"的实际意思。</p></div>
+    </div>
+
+    <h3>03 外部对照：顺手否证了仓里那句"这个领域没有"</h3>
+    <p class="lede">盘上 <code>总控/uiux_20261003/工作台减法_三套版式.html:508</code> 写着「GitHub 上有没有开源的可以直接抄？—— 结论：这个领域没有」。它按"PSD 批量翻译"搜（最好的一个 35 star、功能同题的 0 star），<strong>那句在它自己的搜索范围里成立，但搜错了问题</strong>。我们的问题是"逐行审阅＋建议＋不阻塞执行"，这条路有很成熟的工业先例：</p>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>机制</th><th>它怎么做到不卡人</th><th>我们能不能照搬</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://docs.weblate.org/en/latest/user/translating.html">Weblate 建议与快捷键</a></td><td><code>Ctrl+M</code> 开建议、<code>Ctrl+M+1..9</code> 采纳第 N 条；<strong>建议永不自动写入正文</strong>；批量补漏译只填空行、不覆盖已有译文，填完标 Needs editing</td><td>能。直接对应"借候选＋标待复核"</td></tr>
+          <tr><td><a href="https://docs.weblate.org/en/latest/user/translating.html">Weblate 状态机</a></td><td>Untranslated → Needs editing → Waiting for review → Approved，Approved 只由审核权限置——<strong>批准是权限，不是流程卡点</strong></td><td>能。把"确认当前语言并继续"改成"状态标注＋一次批量批准"</td></tr>
+          <tr><td><a href="https://www.bilibili.com/read/mobile?id=25815502">memoQ QA 分级</a></td><td>warning 可 Ignore 并置灰；<strong>只有 error 级（如标签不配对）不可忽略且导出会失败</strong></td><td>能，且是我们最该抄的分层——现在我们把"缺一行译文"也当闸用</td></tr>
+          <tr><td><a href="https://support.phrase.com/hc/en-us/articles/5709703799324-Quality-Assurance-QA-TMS">Phrase TMS 三档强制</a></td><td>①默认所有警告可跳过 ②PM 可按检查项关掉跳过 ③mandatory 拦的是"标 Completed"，<strong>不拦导出</strong>；风险进交付报告</td><td>能。最合我们"报价／执行"两段式</td></tr>
+          <tr><td><a href="https://docs.rws.com/en-US/sdl-trados-studio-784847/e7a1aee8aea4e7bfbbe8af91-352560">Trados 自动确认门限</a></td><td>只有 <strong>100% 精确匹配</strong>默认自动确认，fuzzy 必须人工——用门限决定自动与否，不是用拦截</td><td>能。照搬成"同源唯一候选才允许进批量"</td></tr>
+          <tr><td><a href="https://support.crowdin.com/pre-translation/">Crowdin 预翻译与 QA</a></td><td>批量走队列，完成出 <strong>added/skipped 报告</strong>；编辑器 QA 是保存时的警告条，可继续</td><td>能。我们的批量采纳要给同一张报告</td></tr>
+          <tr><td><a href="https://support.google.com/docs/answer/6033474?hl=zh-Hans">Google Docs Suggesting</a>／<a href="https://www.notion.com/zh-cn/help/suggested-edits">Notion Suggested edits</a></td><td>建议与正文<strong>分层存放</strong>，可"全部接受"，接受前有整篇预览</td><td>能。采纳前必须给"改前/改后"整表预览</td></tr>
+          <tr><td><a href="https://docs.github.com/zh/enterprise-cloud@latest/pull-requests/how-tos/review-pull-requests/incorporating-feedback-in-your-pull-request">GitHub PR 批量建议的安全阀</a></td><td>"Apply N suggestions" 只对可批量项开放；pending review／行已被改／建议过期 → <strong>一律踢出批量、强制逐条</strong></td><td>能，而且正好治我们"一格改动作废整批"这个粗暴闸门（P0-3）</td></tr>
+          <tr><td><a href="https://tabulator.info/docs/6.1/validate">Tabulator 校验三档</a></td><td><code>blocking / highlight / manual</code> 三种强度</td><td>能。建议直接借这三档做内部口径命名</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><span class="hd">必须一起抄的另一半：一键采纳会让人盲点</span><p>用了自动化建议的组，对错误建议的盲从比例高约 26%（<a href="https://tianpan.co/zh/blog/2026-05-14-ai-told-me-so-defense-code-review">综述转述</a>，经典实验 Skitka et al. 2000）；东北大学 2026 实验 107 名开发者用被植入恶意路径的 AI 代理，94% 最终合并、有人自述"已习惯直接点批准"（<a href="http://m.sohu.com/a/1085794245_120780361">报道转述，原始论文未核实</a>）。被证明有效的是<strong>认知强迫函数</strong>（批准前必须做一个动作），而"提醒你警惕"无效。MTPE 研究还发现：同一段文字，被告知"这是机器译文要译后编辑"与"这是人工译文要校对"，人的投入显著不同（<a href="https://m.zhangqiaokeyan.com/academic-conference-foreign_machine-translati-summit_thesis/020512708143.html">出处</a>）。<br>⇒ 三条硬约束：<strong>建议必须露出改前/改后；来源必须标注（确定性算子／同表候选），置信度只用于排序不用于替人签字；批量采纳必须附"动了什么/没动什么"报告＋被踢出的条目清单。</strong></p></div>
+
+    <h3>04 执行方案：四段，每段可独立上</h3>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>段</th><th>改什么</th><th>判据（可复跑）</th><th>风险</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">S1 止谎<br>0.5 天</td><td>"检测完成"改<strong>三态</strong>：AI 已核对 N 行／本轮没做语义核对（表里有 X 行缺译，补齐才会跑，点我去补第一处）／只看了前 300 行（还有 Y 行，继续）；<code>omitted</code> 上屏；缺译行给"补／借／排"三条出路；fallback 的备注删掉"一键应用"字样——没按钮就不许说</td><td>新增 <code>smoke-review-honest-state</code>：断言"检测完成"文案与 <code>provider==='ai'</code> 严格绑定（fallback 时必须不出现，负控必红）；<code>omitted&gt;0</code> 时界面必有对应行；现有 44 条用户文案断言不得放松</td><td>Low（只改展示与措辞；P0-1 根因本轮不修，只是不再骗人）</td></tr>
+          <tr><td class="mono">S2 补译不打断<br>2 天</td><td>检测幂等键从"整表译文"改成<strong>行集身份＋结构指纹</strong>；采纳闸门<strong>按行失效</strong>（只有受影响那条作废）；补完后只对该语言那几行增量重跑</td><td>新增 <code>smoke-review-no-abort</code>：补一行译文 ⇒ 检测不中断、其余建议仍可采纳；同表重跑次数从 N 降到 1；<code>test:trust-chain</code> 里 smart-review 合同段全绿</td><td>Medium：<code>payloadDigest</code>／<code>contractIdentity</code> 含提示词版本，改键要同笔处理在途请求</td></tr>
+          <tr><td class="mono">S3 就地裁决＋四步并三步<br>3–4 天</td><td>候选从纯文本变<strong>可点选项</strong>（点了才落地＝Docs 式建议态）；"表级二选一/统一译文"搬进第 2 步；第 3 步只留它独占的 PS 就绪/握手，改成<strong>后台自检＋异常才出现</strong>（今天 <code>workbench-view.tsx:1631</code> 的 PS 预热已是雏形），不可用时"禁用＋原因＋出路"、绝不消失；导轨四步改三步</td><td>阶段名断言从 4 改 3 且旧词界面 0 命中；<strong>合同变更四层同步</strong>＋<code>smoke-batch-row-contract</code> fixture 更新；新增 <code>smoke-workbench-tap-count</code> 顺利一遍 ≤5 次（这条 10-03 就建议过，<code>git ls-files | grep -ic 'tap-count'</code> 实测 0，从未落地）</td><td>High（触及行排除/执行范围语义＝合同变更）；且要排在第 1 步那条线落地之后</td></tr>
+          <tr><td class="mono">S4 一次批准跨语言<br>1.5 天</td><td>删「全部确认知晓」；N 次逐语言确认 → <strong>一张跨语言汇总卡</strong>（每语言一行：问题数／可自动放行／需你定），一次批准"除冲突外全部放行"，冲突项点名不自动；批量采纳加 added/skipped 报告＋改前预览；只有"执行必坏"才拦（零可执行行／报不出价／PS 不可用却点了执行），其余放行标红</td><td>断言"拦"的集合是<strong>封闭清单</strong>（只允许这 3 个码，出现第 4 个即红）；跨语言批准后逐语言 digest 仍须命中（<code>workbench-machine.ts:35-41</code> 不放松）；点击数守卫同 S3</td><td>Medium-High：放行粒度变了＝"用户签了多大范围"的语义变，须走偏差登记【合同变更】</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede">建议排期：<strong>S1 → S2 → S4 → S3</strong>。S1 先上（半天止掉"骗人"，你当天就能看出检测到底跑没跑）；S3 最后（最重，且要等第 1 步那条线落地）。</p>
+
+    <h3>05 红线</h3>
+    <ul class="plain">
+      <li><strong>合同变更纪律</strong>：改"行排除／计费口径／回执／冻结"语义＝同一提交内同步浏览器投影／助手 evidence／服务端报价／结算闸四层＋更新 fixture＋HANDOFF 标【合同变更】；<code>test:batch-row-contract</code> 与 <code>test:trust-chain</code> 未跑不得上测试站。S3 的"排"和 S4 的"放行范围"都落在这条里。</li>
+      <li><strong>三条铁律</strong>：不静默选择（同源多译必须问你）、不静默丢失（300 行截断与没配上的格都要点名）、不静默降级（PS 不可用＝禁用＋原因＋出路，不许把功能变没）。</li>
+      <li><strong>展示撤下 ≠ 证据撤下</strong>（你已定过的口径）：证据面板可以默认收起，不能删。</li>
+      <li><strong>置信度不替代权限</strong>：分档只用于排序与"能不能进批量"。</li>
+    </ul>
+  </div>
+
+  <div class="panel" data-name="mock">
+    <p class="lede">下面这块是<strong>新流程的模拟</strong>（数据是造的夹具，文案按我们自己的口径写）。右上角可切回"现在的样子"对比。可以点：借候选、标不翻译、一次批准、看采纳报告。</p>
+    <div class="simbar">
+      <span>对比视图</span>
+      <div class="simtoggle">
+        <button id="modeNext" aria-pressed="true">方案后（S1＋S2＋S4）</button>
+        <button id="modeNow" aria-pressed="false">现在的样子</button>
+      </div>
+      <span id="simHint" style="min-width:0"></span>
+    </div>
+
+    <div class="statecard" id="stateCard" data-tone="warn">
+      <span class="ttl" id="stateTtl">本轮没做语义核对：表里有 2 行缺译，补齐后才会跑</span>
+      <span class="sub" id="stateSub">确定性检查已经跑完（不消耗额度）。缺译补齐后我只对这两行增量核对，不用重跑整表。</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+        <button class="mini primary" id="gotoFirst">去补第一处</button>
+        <button class="mini ghost" id="borrowAll">能借的先借上</button>
+        <button class="mini ghost" id="showOmitted">本轮看了多少行？</button>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px 16px 14px">
+      <div class="thead" style="margin-top:8px"><span>行</span><span>设计稿原文</span><span>德语译文</span><span>可做的动作</span></div>
+      <div id="rows"></div>
+    </div>
+
+    <h3 style="margin-top:6px">跨语言汇总：一次批准，冲突单独点名</h3>
+    <div class="card">
+      <div class="langcard" id="langs"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+        <button class="mini primary" id="approveAll" disabled>一次批准：除 2 处冲突外全部放行</button>
+        <button class="mini" id="reportBtn" disabled>看采纳报告</button>
+      </div>
+      <div class="diff" id="preview" style="display:none"></div>
+      <div class="report" id="report" data-on="0"></div>
+    </div>
+
+    <h3 style="margin-top:8px">点击数：这是"顺不顺畅"的可量化口径</h3>
+    <div class="tapgrid">
+      <div class="tapbox now"><span class="big" id="tapNow">—</span><h3>现在（按代码必经路径推，未实测）</h3><ol id="listNow"></ol></div>
+      <div class="tapbox next"><span class="big" id="tapNext">—</span><h3>方案后（S1+S2+S4）</h3><ol id="listNext"></ol></div>
+    </div>
+    <div class="note"><span class="hd">这条数字怎么变成守卫</span><p>把"顺利一遍要点几下"写成一条能跑的断言（新增 <code>smoke-workbench-tap-count</code>，超阈值即红）。10-03 那份研究就提过这条，实测仓内从未落地；<strong>没有守卫，半年后又是四步十几次。</strong></p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>需要你拍三件</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="tag info">1</span><h3>AI 代译放不放开？</h3></div><p><strong>我的建议：不放开</strong>，改成"补／借／排"三条出路（模拟里就是这三条）。要放开的代价：产品口径变成"我们也能翻"，质量责任、对外说法、token 成本全变，且要改四处提示词铁律。若坚持放开，我建议只在"无品牌风险行"＋默认关＋界面明标"机器建议·未经人工确认"＋交付报告点名。</p></div>
+    <div class="card"><div class="top"><span class="tag info">2</span><h3>第 3 步怎么处理？</h3></div><p><strong>我的建议：并进第 2 步</strong>——冲突裁决在发现问题的那一屏做掉，PS 就绪/握手转后台自检、只在异常时出现（禁用＋原因＋出路）。次选：保留但折叠成一行"自检状态"。原样不动＝这种"多余感"会一直在，因为它其实是"唯一能点的地方"。</p></div>
+    <div class="card"><div class="top"><span class="tag info">3</span><h3>放行粒度？</h3></div><p><strong>我的建议：一张跨语言卡一次批准，冲突项点名不自动。</strong>若要"完全零确认"，得先把 P0-1/P0-2 修到真跑真全审，否则等于让 AI 没看过的行默认可执行——我不建议。</p></div>
+  </div>
+  <h3 style="margin-top:8px">不用等批准、今天就能自查的三件</h3>
+  <ul class="plain">
+    <li>现在这张表里<strong>有缺译行吗？</strong>有 ⇒ 今天所有"检测完成"都没跑过 AI。确认方法：看备注是不是写着「对齐修复计划（未调用 AI，不消耗 token）」。</li>
+    <li>表行数<strong>超过 300 吗？</strong>⇒ 只有前 300 行进语义核对，界面不会告诉你（P0-2）。</li>
+    <li>补译文时检测<strong>正在跑吗？</strong>⇒ 已被那一下敲击打断了，之后的"采用"不会生效，只会让你重跑（P0-3）。</li>
+  </ul>
+</section>
+
+<footer class="footer">
+  <span>正文版：<code>交付档案/执行方案/执行方案_20261023_表格审查去阻塞与建议就地裁决_对抗式审查.md</code>（同名 HTML 即本页，含可点模拟）</span>
+  <span>取证基线 <code>05c3e775</code>；本轮零代码改动；第 1 步在飞 6 文件未碰</span>
+  <span>覆盖缺口：点击数未按真机批次实测；Weblate/Crowdin 细节读的是官方文档未逐屏实操；Figma/Linear 与 translate5/Smartcat 是否拦导出＝未核实</span>
+</footer>
+</div>
+
+<script>
+const rowsData=[
+ {i:7,src:"送風口 200mm",de:"",tag:"缺译",cand:["Auslass 200 mm","Luftauslass 200 mm"],note:"同一张表的日语列有现成译文，可借"},
+ {i:12,src:"静音設計",de:"Flüsterleise",tag:"疑似超长",cand:[],note:"德语比原文宽 1.9 倍，写入可能压到相邻块"},
+ {i:18,src:"© 2026 Brand Inc.",de:"",tag:"不该翻",cand:[],note:"版权行，本来就不该有译文"},
+ {i:23,src:"3 年保証",de:"3 Jahre Garantie",tag:"已就绪",cand:[],note:""},
+ {i:31,src:"USB-C 対応",de:"USB-C-kompatibel",tag:"已就绪",cand:[],note:""}
+];
+const conflicts=[
+ {row:7,kind:"同源多译",detail:"表里有两行原文都是「送風口 200mm」，德语给了两个不同译文"},
+ {row:44,kind:"原文与设计稿不一致",detail:"表里写「送風口 200mm」，设计稿里是「送风口 200 mm」（全角空格差异）"}
+];
+const langs=[
+ {code:"JA",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"EN",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"DE",issues:1,auto:false,txt:"1 行缺译（需你定）"},
+ {code:"FR",issues:1,auto:false,txt:"1 处同源多译冲突"},
+ {code:"ES",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"IT",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"PT",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"NL",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"SV",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"PL",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"TH",issues:0,auto:true,txt:"没问题，自动放行"},
+ {code:"ID",issues:0,auto:true,txt:"没问题，自动放行"}
+];
+let mode="next";const state={borrowed:{},excluded:{},approved:false};
+const $=s=>document.querySelector(s);
+function renderRows(){
+  const box=$("#rows");box.innerHTML="";
+  rowsData.forEach(r=>{
+    const d=document.createElement("div");d.className="simrow";
+    const val=state.borrowed[r.i]||r.de||"";
+    const cls=state.borrowed[r.i]?"borrowed":(!r.de&&!state.excluded[r.i]?"missing":"");
+    d.innerHTML=`<div class="idx">行 ${r.i}</div>
+      <div class="src">${r.src}${r.note?`<div style="font-size:.76rem;color:var(--muted);margin-top:3px">${r.note}</div>`:""}</div>
+      <div>${state.excluded[r.i]?`<span class="badge excl">已标不翻译</span>`:`<textarea rows="1" class="${cls}" data-i="${r.i}">${val}</textarea>`}
+        ${(r.cand.length&&!state.borrowed[r.i]&&!state.excluded[r.i])?`<div class="cands">${r.cand.map((c,k)=>`<button class="candbtn" data-borrow="${r.i}" data-k="${k}">借日语列：${c}</button>`).join("")}</div>`:""}
+        ${state.borrowed[r.i]?`<span class="badge sug">同表候选·待复核</span>`:""}</div>
+      <div class="acts">${
+        mode==="now"
+        ? `<span class="badge">${r.tag}</span>`
+        : (state.excluded[r.i]
+            ? `<button class="mini ghost" data-exclude="${r.i}">改主意，撤销排除</button>`
+            : `${!r.de&&!state.borrowed[r.i]?`<button class="mini" data-focus="${r.i}">补</button>`:""}
+               ${r.tag==="不该翻"||r.de?`<button class="mini ghost" data-exclude="${r.i}">排（不翻译）</button>`:""}`)
+      }</div>`;
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-borrow]").forEach(b=>b.onclick=()=>{const i=+b.dataset.borrow,k=+b.dataset.k;state.borrowed[i]=rowsData.find(r=>r.i===i).cand[k];renderRows();refresh();});
+  box.querySelectorAll("[data-exclude]").forEach(b=>b.onclick=()=>{const i=+b.dataset.exclude;state.excluded[i]=state.excluded[i]?undefined:i;renderRows();refresh();});
+  box.querySelectorAll("[data-focus]").forEach(b=>b.onclick=()=>focusRow(+b.dataset.focus));
+  box.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{if(t.dataset.i)state.borrowed[t.dataset.i]=undefined;renderRows();refresh();});
+}
+function focusRow(i){const t=document.querySelector(`textarea[data-i="${i}"]`);if(t){t.focus();t.closest(".simrow").scrollIntoView({block:"center"});}}
+function missingCount(){return rowsData.filter(r=>!r.de&&!state.borrowed[r.i]&&!state.excluded[r.i]).length;}
+function refresh(){
+  const m=missingCount(),ex=Object.values(state.excluded).filter(Boolean).length,b=Object.values(state.borrowed).filter(Boolean).length;
+  const card=$("#stateCard"),ttl=$("#stateTtl"),sub=$("#stateSub");
+  if(mode==="now"){
+    card.dataset.tone="bad";ttl.textContent="检测完成";
+    sub.textContent= (m>0)
+      ? "但备注写「对齐修复计划（未调用 AI，不消耗 token）…请人工确认后一键应用」——此刻没有任何可一键应用的项，按钮也不会出现（P0-1）。界面也没有说：本轮只看了前 300 行。"
+      : "本轮 AI 已核对（此时才真是跑过的）。";
+    $("#gotoFirst").disabled=true;$("#borrowAll").disabled=true;$("#showOmitted").disabled=true;
+  }else{
+    if(m>0){card.dataset.tone="warn";ttl.textContent=`本轮没做语义核对：表里有 ${m} 行缺译，补齐后才会跑`;sub.textContent="确定性检查已经跑完（不消耗额度）。补齐后我只对这几行增量核对，不用重跑整表（S2）。";}
+    else{card.dataset.tone="ok";ttl.textContent=`AI 已核对 ${rowsData.length} 行${b?`（含 ${b} 处同表候选待你复核）`:""}`;sub.textContent="语义核对真的跑过了；被排除的行不参与写入，也不参与报价（合同四层同步）。";}
+    $("#gotoFirst").disabled=m===0;$("#borrowAll").disabled=!rowsData.some(r=>r.cand.length&&!state.borrowed[r.i]&&!state.excluded[r.i]);$("#showOmitted").disabled=false;
+  }
+  const need=langs.filter(l=>!l.auto).length,ok=langs.length-need;
+  $("#langs").innerHTML=langs.map(l=>`<div class="langline"><span class="lg">${l.code}</span><span class="tag ${l.auto?"ok":"warn"}">${l.auto?"自动":"需你定"}</span><span>${l.txt}</span></div>`).join("")
+    +`<div class="langline" style="border-top:1px solid var(--line);padding-top:9px"><span class="lg">${ok}/12</span><span class="tag ok">可自动放行</span><span>另 ${need} 处冲突不自动：${conflicts.map(c=>`行 ${c.row}（${c.kind}）`).join("、")}</span></div>`;
+  $("#approveAll").disabled=mode==="now"||state.approved||Object.values(state.borrowed).some(v=>v)&&false;
+  $("#approveAll").textContent=state.approved?"已批准（除 2 处冲突）":"一次批准：除 2 处冲突外全部放行";
+  $("#reportBtn").disabled=!state.approved;
+  $("#simHint").textContent=mode==="now"?"注意：切到这一栏时，按钮会变灰、措辞变回今天的口径":"所有状态都是按 S1/S2/S4 的规则实时算的";
+}
+$("#modeNow").onclick=()=>{mode="now";$("#modeNow").setAttribute("aria-pressed","true");$("#modeNext").setAttribute("aria-pressed","false");renderRows();refresh();renderTaps();};
+$("#modeNext").onclick=()=>{mode="next";$("#modeNext").setAttribute("aria-pressed","true");$("#modeNow").setAttribute("aria-pressed","false");state.approved=false;$("#report").dataset.on="0";renderRows();refresh();renderTaps();};
+$("#gotoFirst").onclick=()=>{const r=rowsData.find(x=>!x.de&&!state.borrowed[x.i]&&!state.excluded[x.i]);if(r)focusRow(r.i);};
+$("#borrowAll").onclick=()=>{rowsData.forEach(r=>{if(r.cand.length&&!r.de&&!state.excluded[r.i])state.borrowed[r.i]=r.cand[0];});renderRows();refresh();};
+$("#showOmitted").onclick=()=>{alert("本轮送入语义核对：300 行（上限）\n未送入：412 行\n点这里继续下一批 →\n\n这就是 P0-2：今天这个数字被记进状态（workbench-view.tsx:1287）却从不显示。");};
+$("#approveAll").onclick=()=>{state.approved=true;
+  const pv=$("#preview");pv.style.display="flex";
+  pv.innerHTML=`<div class="diff"><span class="hd" style="font-weight:700;color:var(--ink)">批准前先看改了什么（Docs 式预览）：</span>
+    <span class="ins">＋ 行 7 德语：借日语列「Auslass 200 mm」→ 已写入表格状态（未回写你的原文件）</span>
+    <span class="del">－ 行 18 德语：标为不翻译 → 该行落 EXCLUDED，不写入、不计入报价</span></div>`;
+  refresh();};
+$("#reportBtn").onclick=()=>{const r=$("#report");r.dataset.on="1";
+  r.innerHTML=`added = 1（行 7 借候选·待复核）｜skipped = 1（行 18 标不翻译）｜blocked = 0｜待你定 = 2（行 7 同源多译、行 44 原文差异）<br>报价口径：可执行行 ${rowsData.filter(x=>!state.excluded[x.i]).length} 行／排除 1 行——排除语义要同步：浏览器投影·助手 evidence·服务端报价·结算闸（合同变更纪律）`;};
+function renderTaps(){
+  const now=["选文件夹","扫描设计稿","导入译文表","<b>×12 切语言＋点「确认当前语言并继续」</b>","进第 3 步点「开始设计稿校对」","处理阻断项","PS 重新检测","下一步","点「开始执行」"],
+        next=["选文件夹（自动扫＋自动读表）","<b>一次批准：除冲突外全部放行</b>","处理被点名的 2 处冲突（就地借/选）","点「开始执行」"];
+  $("#listNow").innerHTML=now.map(x=>`<li>${x}</li>`).join("");
+  $("#listNext").innerHTML=next.map(x=>`<li>${x}</li>`).join("");
+  $("#tapNow").textContent=(now.length-1+12)+" 次以上";
+  $("#tapNext").textContent="5 次";
+  if(mode==="now"){$("#listNext").style.opacity=".55";$("#listNow").style.opacity="1";}else{$("#listNext").style.opacity="1";$("#listNow").style.opacity=".55";}
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  b.setAttribute("aria-selected","true");
+  document.querySelectorAll(".panel").forEach(p=>p.dataset.on=(p.dataset.name===b.dataset.tab)?"1":"0");
+});
+renderRows();refresh();renderTaps();
+</script>
+</body>
+</html>
