@@ -1,3 +1,18 @@
+## #271　工作台 i18n 用「片段级词典」兜拼接句，英文语序在个别位置会生硬　🟡 低（已知表达问题，不影响可用性）
+
+- **成因**：scripts/i18n-wrap-workbench.mjs 按 JSX 文本节点逐段包装，而工作台里有大量「已添加 」+ {n} + 「个 PSD · 已扫描 」+ {m} 这样的拼接句。词典按片段查，英文只能片段级翻译，语序无法重组。
+- **现状**：首屏路径已全译且读得通；生硬点集中在第 2~4 步的计数句（execute-step、coverage-matrix）。
+- **处置**：下一批翻译时把高频拼接句改成**整句插值**（t("已添加 {n} 个 PSD · 已扫描 {m}", {n, m})），并在 i18n-report.mjs 里标注哪些键是片段（以空白开头/结尾的键）。
+- **判据**：改完后英文页面里不应再出现 "files PSD"、"scanned  of" 这类词序错乱。
+
+## #270　英文站认证面只做了登录＋重置：注册／会话管理／邮箱验证落点仍是中文页，登录后英文首页也不会变账号菜单　🟡 中（已知缺口，有明确归口）
+
+- **现状（2026-10-22 实测）**：`src/app/en/auth/` 下只有 `layout.tsx`、`login/page.tsx`、`reset/page.tsx`。英文站没有 `register`、`sessions`、`verify` 三个路由；`/api/auth/register` 等接口本身语言无关、可直接用，但**没有英文界面**。
+- **刻意不挂死链**：英文登录页因此不挂"注册/会话管理"链接，改用一句 "Accounts are invite-only during the beta. Request a pilot…"（`src/app/en/auth/login/page.tsx` 的 CardFooter）。忘密码指向本批做的 `/en/auth/reset`。
+- **第二处缺口**：`AuthSessionProvider` / `SiteContentProvider` / `ViewProvider` 只在 `src/components/site/app-shell.tsx:79-88` 挂载，而 app-shell 只服务中文站 ⇒ 英文首页无法用 `HomeAccountMenu`，登录后导航**不会**变成账号菜单（只能再点 Log in 看到"已登录"卡片）。
+- **归口**：随英文工作台 Wave 4 一起做（先把 `AuthSessionProvider` 做成英文首页也能挂的形态，再接账号菜单/会话管理）；注册与邮箱验证落点属 Wave 1 剩余项。在那之前英文用户要注册只能走中文站。
+- **判据**：修复后 `smoke-en-layout.mjs` 的登录入口断言之外，应新增"登录后英文首页出现账号菜单"的真浏览器断言。
+
 ## #257　`tuyi@tuyigf.com` 处于「信有人发、没人管」的状态：MX 指向 Cloudflare，但路由与目标地址我读不到也建不了（令牌只有读权限）　🔴 P0（客户来信可能直接退信；2026-10-22 20:2x 实测）
 
 - **人话**：对外公布的联系邮箱是 `tuyi@tuyigf.com`，这个域名的收信被 Cloudflare 接管了。这种收信方式下，"哪封信转进哪个信箱"完全由后台的**目标地址 + 路由规则**决定；一条规则都没有时，来信不会被任何人收到，而且**不会有人知道**——飞书不报错、站内也没有记录。这次拿到的 Cloudflare 令牌只能读不能写，所以我既看不到现状、也建不了规则。
@@ -1525,6 +1540,7 @@
 - **本机不可核实项（如实留着）**：服务器侧 `cat <部署目录>/.next/BUILD_ID` 与部署时刻、以及那次部署是谁在什么授权下做的——需要登服务器，不属本会话授权面，未做（NOT RUN，不写成"没有"）。
 - **已做**：把构建号单独成轴（`build_id`／`构建号轴`）落进日基线，从此"换构建"与"文案变"分别记账；provenance 每日读数暂未并进基线。
 - **状态**：OPEN（等一次服务器侧核对；核对前，任何"生产现役 X"的外部表述须同时给 provenance 与构建号两枚读数，并说明它们可能不同）。
+- **10-23 上午补记（本条降级为"大概率已解释，但仍差一次服务器核对"）**：`git merge-base --is-ancestor c96bc253 319bc1384a36` ⇒ **rc=0**，即"/en 补 contactPoint"那笔**本就在生产现役提交里**；同刻现读 `/api/runtime-provenance` 仍是 `319bc1384a36`／`environment=production`，`/en` 页面构建号仍是昨晚那枚 `kajh6gOqApI-0WS5rJFru`（11 小时未再变）。⇒ 最省事的解释不是"又发了一次码"，而是**边缘缓存在不同 URL 上翻页时刻不同**：同一站点 `/` 回 `private, no-cache, no-store`，而 `/en`／`/download`／`/guide` 回 `s-maxage=31536000`（一年，六路径实测见 #269）。这也能解释我 10-21 抓到"旧构建的产物名"。**仍待核的是部署时刻本身**，本机答不了。
 - **号界**：265＋1（落笔前 `grep -n "^## #26"` 实测最大 265，266 无占用）。
 
 ## #215　运营台与流量数据线对抗式审查 Round 1 的**未修**清单（原记 #208，与别手同号已顺延）　🟠 部分处置（2026-10-21 10:13 方案执行后：B-4／B-6／N-1／D-01／D-02／D-03 标注面已修，剩 B-2 接受＋D-05／D-06 待拍）
@@ -1967,3 +1983,100 @@
 - **门（防复发）**：`tests/unit/typography-entry.test.ts`（三态与文案纪律，6）、`tests/unit/typography-entry-render.test.tsx`（原因/重试/下载/只读 fieldset，6）、`smoke-typography-customization` 75 断言、`smoke-user-visible-copy` 44 断言、负控 `tmp/negcontrol-typography-ball-placement.mjs`（证明"在 section 外"这条断言对搬回内部敏感，不是恒真）。
 - **未做**：真机浏览器分宽度实拍 **NOT RUN**（本地 3000 被 ssh 转发占用）；测试站部署未做（develop 未 push，且树里有他会话 5 笔未提交改动）。
 - **号界**：264＋1。
+
+
+## #268　检索面探针把"站外的我们"读成"百度 0 条在场"：匹配串只认 ASCII 域名、位次用解析下标、阳性对照一撞墙就整轮作废　🟠 major（度量面失真；2026-10-23 09:35–09:44 本会话四跑并表实测，非产品缺陷）
+
+- **现象（为什么这条要紧）**：10-21 报给 Owner 的是"百度侧 0 条在场、需求词排不进去"。今天上午用**同一个浏览器、同一批查询**重跑，并把分类器改成三轴后并表（`tmp/serp-merge.mjs`，读 `geo-serp_20261021_r2/r3.jsonl` ＋ `geo-serp_20261023.jsonl` ＋ `_r2.jsonl`，共 5 枚独立渲染页）：**我们那篇 CSDN 文在百度四组自有查询里稳定在场**——品牌词第 3/4/6、产品词第 5（四次同值）、需求词第 5/7/8、长句词第 1/1/3。也就是说"百度完全没有我们"是**读错了方向**：官网域名确实没在场，站外的我们一直在前排。
+- **三处判据缺陷（逐条给坐标）**：
+  1. **只认 ASCII**：10-21 版 `geo-serp-probe.mjs` 的 `ownInItems = items.findIndex(x => /tuyigf/i.test(x.host + ' ' + x.src + ' ' + x.title))`（该行原式抄录在本条内；**注意该目录未进 git，旧行已被本轮改写覆盖，无法再用 git 取回原文件复核**——`git status --porcelain` 现报 `?? 交付档案/GEO测量/`）。百度结果卡的 `src` 位放的是**中文站名**（"CSDN博客"），`host` 位取到的是 `/link?url=` 跳转壳（实测 r3 十条里九条 `host="www.baidu.com"`，`tmp/_serp_baidu.html` 内 `link?url=` 出现 54 次）⇒ 中文品牌名与我们自己的标题签名全都不匹配，`ownMentions=6`（正文里"图译工坊"出现 6 次）而 `ownInItems=-1`，**工具自己看不见页上有的东西**。
+  2. **位次不是页面位次**：旧版 `if (!a) continue` 会把没有标题锚点的块整块跳过，而 `ownInItems` 取的是**解析成功数组的下标**；且只落盘前 10 条、`findIndex` 却跑在全量数组上 ⇒ 报出来的"第 1/第 2"可能是"第 12 条被挤成第 10"。今天已改成取结果块原始序号 `pos`（`geo-serp-probe.mjs:54` `for (const [bi, b] of blocks.entries())`，`:62` 落 `pos: bi + 1`）。
+  3. **一撞墙就整轮作废**：旧 `negClean = !neg || (!neg.wall && …)`——10-23 上午百度 `brand/tut/negative` 三组撞安全验证墙，同轮 `prod/guide` 却拿到 18 条真页；旧规则把肯定读数一起清零（实测回显 `通道有效性＝INVALID…SERP_READING_NOT_USABLE`，白丢两组数据）。现拆成两把闸：`can_support_negative`（要阳性对照过关，防假 0）与 `can_support_positive`（只要阴性守卫＋该行渲染成功，防凭空塞），并把"这行没拿到页"标成 `thin`／`noindex_hint`（`:178`、`:72`）。
+- **附带两处小口子（同轮已修）**：① 阴性对照串 `zxqwvplkmtuyigf9937qq` **自带 `tuyigf`**，查询回显会命中"本站不得出现"这条守卫，把可用通道判死（r3 第 14 行 `ownMentions=2` 就是这么来的）⇒ 换成与本站无共同子串的 `qzpfvbkm9937qdxl`（`geo-serp-probe.mjs:34`）；② `nores` 词表不含百度对未收录 `site:` 给的话术「没有找到该URL…以下是网页中包含…」⇒ 这类页**不是空结果**，加 `noindex_hint` 单列。
+- **归因纪律（新落的规矩）**：站外归属**只认标题签名、不认平台名**（`geo-serp-classify.mjs:12-30` 两条签名各带 `source` 与 `proof`）；CSDN 首篇的在场性已用线上页面复算——`curl https://blog.csdn.net/qq_15947311/article/details/168246942` ⇒ `http=200`、`330,812 B`、`<title>` 与签名逐字一致、正文含 `tuyigf.com` 2 次（本会话实测，该 curl 夹在两次 date 回显 09:38:13 与 09:41:07 之间）。
+- **今天并表出来的真结论（可以对外/对内说的形状）**：必应侧三组词稳定第 1–2（品牌词第 1 ×3 跑、长句词第 1 ×3 跑、产品词第 2 ×3 跑），**需求词"PSD 批量替换文字"官网前十无 ×3 跑**；百度侧官网不在场是**弱证据**（百度的 URL 位不总显示域名，只能证"src 里没出现我们的域名"）；`site:` 查询在百度五枚页里全是 `items=0 / body≈370 / 结果块=0` 的薄页 ⇒ **只能说"没拿到可用结果页"，不能说"未收录"**；另 10-21 那句"Bing 只收了 2 页"今天两跑分别得 0 块与 GOTO 错 ⇒ 降级为未决。
+- **10-23 午补记（把分类器跑实之后，读数与品牌敞口都变重了）**：站外归属表从 1 条扩到 4 条（每条都是"标题真出现在已落盘结果行 ＋ 仓库里有对应稿"双证据，`geo-serp-classify.mjs:12-46`；负控 15 → **21/21 rc=0**）。五份 SERP 文件并表 42 条自有查询行的总数（`geo-serp-classify-test.mjs` C6f 实跑）：**官网域名在场 13 行、站外我们在场 23 行、别人用我们品牌名 4 行**。Bing 侧新增两条：① 品牌词行里有一个产品**直接叫「SCT图译工坊」**（来源 `123keye.wang`／`lingo.…`，10-21 那次落在第 4 位）——比"美译工坊"更严重，是同名占用不是近名；② 10-21 那次 `site:tuyigf.com` 返回过 2 条（中文首页＋英文首页），今天三连都是空壳页 ⇒ "Bing 收了几页"仍**未决**，但"中英首页至少被收过"有落盘证据。头条那条微头条也在 10-21 的长句词行第 3 位（发布证据 `交付档案/执行报告/执行报告_20261017_GEO内容第二批_知乎长文与微头条上线.md:14`）。⇒ 结论形状改了：**"官网在不在场"与"我们能不能被找到"是两件事**，后者目前主要靠站外三个资产撑着。
+- **新暴露的商机（不是判据缺陷，一并记）**：两只引擎的**品牌词页**都有同族名与同名产品在场（百度第 5–8、必应第 4–8：「美译工坊」`ios.lbgpmb.cn`，以及**「SCT图译工坊」**），src 位实测；这与 #212「要不要对外区分同名厂商」是同一件事，现已有实拍依据，且严重度高于原记（同名占用会直接吃走品牌词搜索的人）。
+- **验证**：`node 交付档案/GEO测量/geo-serp-classify-test.mjs` ⇒ **15/15 rc=0**（含"别人发的 CSDN 文不得算我们""别人提我们品牌名只算提及""抄我们标题的转载会被误认——已知边界，要消掉得加 URL 白名单"）；`node 交付档案/GEO测量/geo-audit-self-test.mjs` 仍 **33/33 rc=0**；探针 `--out geo-serp_20261023_r2.jsonl` 实跑 rc=0，回显 `肯定读数可用 6/7｜否定读数可用 6/7`。
+- **状态**：OPEN——工具已修并复跑，但**旧交付件（10-21 两份飞书与 10-22 夜那份）里的"百度零收录／需求词排不进去"表述必须就地勘误**；本轮已发更正卡并追加台账更正行。判据口径：以后报"某引擎没有我们"，只许在 `can_support_negative=true` 的行上说，且须同时报 `items/nBlocks/bodyChars` 三值证明页不是薄的。
+- **号界**：267＋1（落笔前 `grep -n "^## #26"` 实测：#267 已被"结算状态无可点下一步"案占用（`AI_MEMORY/ISSUES.md:1512`），#268 空）。
+
+
+## #269　同一站点两套 HTML 缓存策略：中文首页 `no-store`，而 /en／/download／教程页回 `s-maxage=31536000`（一年）⇒ 爬虫可能长期看到旧版，也让"跨日比指纹"这条尺子失效　🟠 major（对外主张新鲜度＋度量可比性；2026-10-23 09:52 六路径实测）
+
+- **读数（本会话原式，`node tmp/cache-headers.mjs`，起跑 `date`＝09:52:49；每路径最多 3 次尝试）**：
+  - `/` ⇒ `HTTP/1.1 200 OK`、`cache-control=private, no-cache, no-store, max-age=0, must-revalidate`、`cf-cache-status=DYNAMIC`、`server=cloudflare`
+  - `/en`、`/download`、`/guide/ps-batch-replace-text` ⇒ 三者一律 `cache-control=s-maxage=31536000`（**一年，且没有 max-age、没有 stale-while-revalidate**）、`cf-cache-status=DYNAMIC`
+  - `/llms.txt` ⇒ `public, max-age=0`＋`last-modified=Wed, 21 Oct 2026 03:18:53 GMT`＋`etag=W/"1126-…"`；`/sitemap.xml` ⇒ `public, max-age=0, must-revalidate`
+- **这行头也不是我们配置里给的（此处 10-23 午更正一次）**：`grep -rn "s-maxage|31536000"` 在 `src/`、`deploy/`、`scripts/` 只命中两处 **HSTS**（`deploy/Caddyfile.production:18`、`deploy/Caddyfile.staging:31`）。本条初稿写过"`next.config.*` 里也无 `Cache-Control` 赋值"——**半对且说法不准**：`next.config.ts:79-93` 确实有 `headers()`，但只给 `/api/:path*` 设 `private, no-store, max-age=0`，**没有任何一条命中 HTML 页面**。⇒ 排除我们显式配置后，来源只剩两种：**Next 对预渲染路由的框架缺省**（origin 侧）或 **Cloudflare 规则**。12:57 的三次连取（见下条更正）把嫌疑推向**框架缺省**，但仍是推理，定案要靠 #272 那三条检查。
+- **为什么算 major（两条独立危害）**：
+  1. **对外主张失真（10-23 午按实测降级：现网未成立，属敞口不是事故）**：`s-maxage=31536000` 字面含义是"共享缓存（CDN／上游代理，爬虫链路算这一类）可以存一年"。但同页三次连取实测 `cf-cache-status=DYNAMIC`×3、**无 `Age` 头** ⇒ **Cloudflare 当前并未缓存这些 HTML**，所以"用户与爬虫最长一年看旧版"在现网**没有发生**。留着的风险是：这行头是一张生效中的授权——一旦有人开启边缘缓存、或链路上多一层代理，中间层就会照它存一年，而我们的发布流程里**没有任何 purge 动作**。
+  2. **度量面不可比**：#210/#266/#268 三连案（"内容天天变"→"换过一次构建"→"百度读数反复"）到现在有了统一解释——**同一站上不同 URL 的缓存寿命不同，跨日抓回来的字节不是同一时刻的同一件事**。首页 `no-store` 每次现取，教程页/英文页可能被边缘供旧版，于是"归一哈希变了"既可能是真变化也可能是翻页时刻差。
+- **建议修法（分两层，都不动执行链）**：① **先定位来源**（Owner 或运维在 Cloudflare 后台看 Cache Rule / Page Rule 是否设了 Edge TTL＝1 年；若否，再查框架构建产物的缺省头）——这一步只读，不改；② **定策略**：HTML 走短 TTL＋`stale-while-revalidate`（例如 `public, max-age=60, s-maxage=300, stale-while-revalidate=86400`），并在每次部署后**主动 purge 一次**；`llms.txt`／`sitemap.xml` 保持 `max-age=0` 现状。策略改动属对外可见面，需要 Owner 点头后由发布线走三段轨（先推 GitHub 再测试站再生产）。
+- **测量线自保（不等授权，已做并实跑）**：抓取器逐件补记缓存证据——`geo-audit-lib.mjs:67-80` 新增 `CACHE_HDRS`／`readCacheHeaders`（多段响应头按"最后一枚生效"）／`smaxageOf`；`geo-audit-fetch.mjs:64-95` 加 `-D` 落每次的响应头并把选中那次的头写进 manifest（`cache`＋`smaxage`）；`geo-audit-self.mjs` 把这两枚透传进日行 `inputs.*`；`geo-audit-daily.mjs:105-137` 新增**缓存轴**。离线负控 `geo-audit-self-test.mjs` 由 33 条增至 **37/37 rc=0**（T9a–T9d：多段取末、大小写、未知头不入库、空/畸形头不抛）。实跑回显（`--force` 重录，起跑 `date`＝10:07:13）：`缓存轴＝共享缓存寿命 ≥1 天：download(365天),en(365天),guide(365天)｜no-store（每次现取）：home｜本轮由边缘命中供：robots[EXPIRED]｜头信息齐` ＋ `构建号轴＝未变（4 件同枚 kajh6gOqApI-0WS5rJFru：home,download,en,guide）` ＋ `内容轴＝文案与构建均未变`，rc=0。
+- **状态**：OPEN——①来源（CF 规则 vs 框架缺省）待服务器/后台核实；②策略改动（HTML 短 TTL＋SWR＋部署后 purge）待 Owner 点头后走三段轨；③测量线补头字段**已完成并实跑**（上面 37/37 与 10:07 回显）。
+- **号界**：268＋1（落笔前实测：ISSUES 里 267 在第 1512 行、268 在第 1973 行，269 零占用）。
+
+
+## #272　生产链路其实是「Cloudflare 反代 → Caddy → Next」，与 `deploy/Caddyfile.production:3` 自己写的「CF 必须设成仅 DNS（灰云）」矛盾；这条同时是 #269 那年缓存的首要嫌疑来源　🟠 major（运维口径与对外可读性；2026-10-23 12:31 本会话头字段实测）
+
+- **读数（本会话 `curl -D` 原文件 `tmp/head-en.txt`，12:31 前取，同一次响应里四枚头并存）**：`Server: cloudflare`、`cf-cache-status: DYNAMIC`、`Nel: {"report_to":"cf-nel",…}`、`Report-To: …a.nel.cloudflare.com…`，**同时**还有我们自己的 `Strict-Transport-Security: max-age=31536000; includeSubDomains`。⇒ 三枚 CF 专有头与一枚 Caddy 发的 HSTS 出现在同一响应里 ⇒ **链路是 CF 反代在前、Caddy 在后**，也就是**橙云（代理）状态**；而 `deploy/Caddyfile.production:3` 的注释原文是「Cloudflare DNS 必须设为『仅 DNS』（灰云），Caddy 才能自动签证书」。
+- **为什么算 major（不是文档洁癖）**：
+  1. **证书口径**：灰云是 Caddy 自动签证书的前提。现场是橙云 ⇒ 要么证书已改由 CF 侧提供（Universal SSL），要么 Caddy 的自动签一直在走 ACME-TLS 直通这种隐式路径。**两者都意味着我们文档里写的部署方式与真实部署不是一回事**——出问题时按文档排查会找错层。
+  2. **缓存口径（10-23 午本会话自己把这条削弱了）**：#269 那年缓存原本被写成"CF 规则是首要嫌疑"。同页三次连取实测 `cf-cache-status=DYNAMIC`×3、**无 `Age`** ⇒ CF 并没有真的缓存这些 HTML，若 CF 设了 Edge TTL 一般会伴随实际缓存 ⇒ **嫌疑转向 Next 对预渲染路由的框架缺省（origin 侧）**。仍是推理（B 级），定案办法不变：绕开 CF 直连源站取一次头，看 `s-maxage` 还在不在。
+  3. **网络与账务口径**：本会话多次出现 `curl` 对同域间歇超时（15–60 s、rc=28 与 bytes=0），这与"真实用户 IP 是 CF 透传还是边缘 IP"的既有判断相互影响——凡按链路层推理（限流、来源统计、跑批失败归因）都该带上"当前经 CF 代理"这一条。
+- **可复跑判据（谁能补就补）**：① 在服务器侧或临时 hosts 指向源 IP，`curl -sI --resolve tuyigf.com:443:<源IP> https://tuyigf.com/en` 取头——**若源站响应里没有 `s-maxage` 就确证是 CF 加的**；② Cloudflare 后台 Cache Rule / Page Rule 与 Edge Cache TTL 的截图或读数；③ 证书签发者（`openssl s_client` 取 issuer，CF 证书 issuer 含 Cloudflare）。本机三条都做不到（无源站 IP、无后台凭据）⇒ **全部标未核实，不猜**。
+- **与既有案的关系**：本条是 #269 的**上游**（#269 说"同站两套缓存、该头不在我们代码里"，本条给出它从哪来以及为什么现在还不能定案）；与 #266（生产构建号与 marker 分叉）互为佐证——边缘缓存在不同 URL 上翻页时刻不同，正是那组"内容像变了又没变"的统一解释。
+- **状态**：OPEN（等一次服务器侧／Cloudflare 后台的只读核对；核对前，"生产现役版本""线上现在长这样"这类话都必须带上"经 CF 代理、缓存头双标"这一限定）。
+- **号界**：271＋1。落笔前实测：`#271`（i18n 片段级词典）在 `AI_MEMORY/ISSUES.md:1`、`#270`（英文站认证面）在 `:8`（别手把新案置顶追加，文件头尾混序）——两只手已把 270/271 占掉，本条取 **#272**（`grep -n "^## #27[2-9]"` 零命中）。
+
+## #273　英文工作台仍有 325 处「没被 t() 包住」的中文：扫过 PSD 才走得到的分支里会露中文　🟠 major（英文站可用性；2026-10-23 12:51 本会话静态扫描实测）
+
+- **判据**：`node scripts/i18n-scan-unwrapped.mjs`（本会话新增，走 TypeScript 语法树：含中日韩字符的字符串字面量、不是 t() 首参、且不在 case/比较/import 位置）。
+- **读数**：合计 325 处。分布 `execute-step.tsx` 108、`workbench-view.tsx` 55、`design-file-card.tsx` 35、`typography-panel.tsx` 20、`activation-gate.tsx` 18、`support-upload-dialog.tsx` 7、`photoshop-step.tsx` 6、`working-editor-panel.tsx` 5、`account-gate.tsx` 4、`review-step.tsx` 4，其余为 1~3 处的零散文件。
+- **为什么首屏实测抓不到**：这些文案要"扫过 PSD／连上本机助手／走到错误分支／批量模式"才渲染；只有登录态、没有 PSD 的浏览器实测走不到。这正好是"数首屏中文"这条尺子的盲区——已确认登录态四步空态为 0 中文（`tmp/en-steps-peek.mjs`），但**不能**据此说英文站已无中文。
+- **已知误报（人工判定，不要机械全包）**：应用名「图译工坊内测版」、日志前缀「[typography] key 口径不符」这类非展示串会被扫进来。
+- **下一步**：分批包装，先打两条主流程 `execute-step`（执行/报告/退款）与 `design-file-card`（扫描与检查），每批同补英文词条；每批后重跑扫描看数字下降，并回归 `smoke-en-workbench`（注意：覆盖率断言只统计 t() 键，**不统计裸中文**，所以必须靠这道扫描，不能只看 100%）。
+- **出处**：`worktrees/develop/scripts/i18n-scan-unwrapped.mjs:1`、`worktrees/develop/src/components/workbench/execute-step.tsx:154`、`worktrees/develop/tmp/en-steps-peek.mjs:1`。
+
+
+## #274　台账投影的 create 路径不写回快照 ⇒ 任何"新建的任务行"第二次改都会被对账闸以 no-snapshot 永久拦下，只能全量 --force（而那会覆盖 Owner 手改的行）　🟠 major（治理闸失效路径；2026-10-23 13:0x 本会话实测，非业务缺陷）
+
+- **现象（本会话实测）**：12:36 我新建的三行（`GUIDE-WORDFACE-PSD`／`CSDN-LINK-PATCH`／`SITE-CF-PROXY`）投影回显 `create=3` 成功；13:04 我对其中两行追加"更正行"后再投影，汇总变 `create=0, update=1, heldCount=10`，明细里我的两行是 **`HELD … ｜标题=no-snapshot（…上投影=(无)）`**（`scripts/sync-task-ledger.sh --dry-run` 原式回显）。⇒ 更正没能写进飞书。
+- **根因（13:1x 复核后改写——我初稿那半句归因是错的，如实换掉）**：真正卡住的是**快照提升条件**，不是 create 路径。实读码：`scripts/sync-task-ledger.sh:135-140`——逐条打完成败后，只要 `FAILS>0` 就打「快照未提升，下次重试」并 `exit 1`；`:142-146` 只有**全成功**才把 pending 提升成 final。
+- **四枚实测钉死这条链**：① final 快照 `tmp/readback/last-projected.ndjson` mtime=**2026-10-22 16:47:14**、164 行；② pending `last-projected.ndjson.pending` mtime=**2026-10-23 13:11:21**、**186 行，我今天写的三行（GEO-SERP-CLASSIFY／SITE-HTML-CACHE／LEDGER-SNAPSHOT-GATE）全在里面**；③ 每跑 `heldCount` 从 7 涨到 10，新增的正是这三行；④ 写入本身成功（12:36 那次 `create=3` 后飞书有值）。⇒ **数据没坏、也没人改，是门锁被一行坏日期卡死了**：每跑必有一条外会话留下的 `[fail] update USAGE-LIMIT-TRIAGE`（该行 `updatedAt="2026-10-22 20:1x"`，日期列含字母 x，飞书按日期字段拒收），于是永远"有失败"、永远不提升、从此所有合法变更都被自家闸当成可疑。
+- **我初稿写错的地方（原句留在可见处，不掩盖）**：曾写"create 成功路径没有把新记录写进 P"。复核后不成立——create 分支确实 `snapshotRows.push(...)`（`scripts/sync-task-ledger.mjs:304`），问题在**整批提升被那条恒失败行拦住**。归因与修法一并改写如下。
+- **后果（不是洁癖）**：
+  1. **新建行只能改一次**：第二次修改起会被自家闸永久拦下，除非 `--force`；而 `--force` 是**全量覆盖**（`scripts/sync-task-ledger.mjs:23` 原文"--force 时全量覆盖"），本会话 dry-run 明细里同时有 `HELD ZHIHU-COPY｜状态=human-edit（飞书状态被 Owner 手改过…）`——**强推会把 Owner 的手改盖掉**，所以我没有 force，这是纪律要求的正确选择，但也因此更正到不了飞书。
+  2. **对账闸的保护面被自己稀释**：一个"因为工具没记快照"造成的假 human-edit，和真实人手改动混在同一列里，下游（含总控日检）无法分辨，久而久之大家会习惯性 `--force`，那这道闸就没了。
+- **修法（两条，都不在本会话写面内，已投中台）**：① **根因清除**＝属主会话用实测 `date` 重贴 `USAGE-LIMIT-TRIAGE` 那一行（我只动自己写的行，不代别人改账）；② **治本**＝wrapper 改成**按行提升**：成功的行进快照、失败的行留待下次重试，而不是现在的"全有或全无"——一行坏数据连坐 186 行。另建议在摘要里点名恒失败行（现在只有 stderr 的 `[fail]`，`errors=[]` 看不出原因）。
+- **改后判据三条**：a) 新建行 → 快照里查得到该 taskId；b) 同 taskId 追加更正 → 回显 `update=1` 而非 held；c) 负控：人为把飞书现值改成与 P 不同 → **仍必须 held**（这条不许被放宽）。
+- **同一轮附带观察（不另立案）**：`AI_MEMORY/ledger.jsonl` 现在第 407 行是一枚**空行**（`bytes=0`，夹在我 12:36 的 `SITE-CF-PROXY` 与别会话的 `EN-WORKBENCH-I18N` 之间）。我没有动它——按"共享追加写面不做整档重写"的规矩，删空行需要整文件重写，并发追加时可能吞掉别人的行。**影响面实测**：投影脚本照跑（`errors=[]`），但我自己的行数自证会出现"行数≠taskId 数"（本次 410 vs 409），凡按行数记账的脚本都要容忍空行。
+- **状态**：OPEN（修法要动中台脚本＝别人的写面；本会话只立案＋把更正内容改走飞书卡送达，已发 `SENT rc=0`）。已投 `总控/待投递指令.md` 一行（13:0x）。
+- **号界**：落笔前实测 `grep -n "^## #27[3-9]"` 只有 `#273`（英文工作台 t() 缺口）在 `:2033`，故取 **#274**。
+
+### #273 补记（2026-10-23 13:08）：真实余量修正为 611，因为扫描器漏了一整类写法
+
+- 原记的 325 处是**低估**：扫描器只认字符串字面量与无插值模板，**带插值的模板字符串（`共 N 行`）整类没扫到**。补认 `TemplateHead/Middle/Tail` 后为 **611 处**。
+- 新分布：`execute-step.tsx` 197、`workbench-view.tsx` 148、`design-file-card.tsx` 86、`typography-panel.tsx` 31、`batch-result-panel.tsx` 21、`support-upload-dialog.tsx` 21、`activation-gate.tsx` 14（其中 13 处已由 `t(errorMsg)` 出口覆盖，属扫描误报）、`credits-badge.tsx` 13、`photoshop-step.tsx` 13，其余 ≤9。
+- 教训：**「100% 覆盖」只统计 `t()` 的键，裸中文根本不进这条尺子**；扫描器自身的盲区又会让余量看起来更小。两个数字必须一起看，且扫描器要覆盖模板插值这类最常见的写法。
+- 本轮已修：激活闸/账号闸错误出口、`WB_TERMS` 全表、`REVIEW_PHASE_LABEL` 等标签表出口、上一步/为什么明细/内测用户/覆盖率 aria-label/版式例外/收起展开/自动保存失败/未选语言/排障上传说明。
+
+
+- **10-23 13:2x 验证补记（Owner 令跑同步脚本，跑出来的不只是"没修"，还有第二个更深的洞）**：真跑复现一致——`[fail] update USAGE-LIMIT-TRIAGE` 1 条 ⇒ 回显「⛔ 写入执行有 1 条失败（快照未提升，下次重试）」，基准文件**仍是 10-22 16:47:14 / 128,765 B 一字未动**，而 pending 刷到 13:24:07；我那三行照旧 `no-snapshot` held（heldCount 11）。
+  - **但用 pending 当基准做了一次只读模拟**（`SYNC_STATE_FILE=tmp/readback/last-projected.ndjson.pending … --dry-run`，不写任何东西）⇒ 我那三行的拦下理由从 `no-snapshot` **变成了 `human-edit`**，heldCount 反而 11→12。顺藤摸到码：`scripts/sync-task-ledger.mjs:319`——**held 行也照样 `snapshotRows.push({values: L})`**。
+  - ⇒ **第二个缺陷（独立于"不提升"）**：pending 基准记的是"我们打算写的值"，不是"实际写成的值"。于是**一旦哪天真的提升了**，所有曾被拦下的行都会带着"从没写进飞书"的新值进入基准 ⇒ 下一次跑必然 L==P 而 F 仍旧 ⇒ **被判 human-edit 永久拦下**，只能 --force 打通，而 --force 是全量覆盖、会连坐 Owner 手改的行。**这道闸一旦"恢复"，反而会把历史拦下的行全变成假人改。**
+  - **修法因此必须是三条，不是一条**：① 清除恒失败行（属主用实测 `date` 重贴 `USAGE-LIMIT-TRIAGE`）；② **按行提升**，且 pending 只收**真正写成功**（`[ok]`）的行——held 行必须**保留旧 P 值原样传下去**，不许写 L；③ 摘要点名失败行（现在 `errors=[]` 看不出原因），另加 `--only TASKID` 窄口子，让"已证明无人手改"的单行可推而不必全量强推。
+  - **改后判据加一条（第 4 条）**：拿一份"含 held 行"的 pending 提升成基准后，下一次 dry-run 里该 held 行的拦下理由**必须仍是同一类（conflict/no-snapshot），不得变成 human-edit**——这条专门防上面那个洞复发。
+
+## #275　工作台缺译行没有"行级排除"出口，且空行静默丢弃导致行号错位（Owner 2026-10-23 反馈"卡在空行"取证）　🟠 major（核心闭环缺出口；2026-10-23 20:0x 本会话在 develop@47b9b5ca 逐条实测）
+
+- **主案（P0）**：今天"这一行不翻译"的出口**只覆盖"表比稿多"那一类行**。逐行按钮的出现条件是 `object-inspector.tsx:89`（`unmatchedRowId = item.kind === 'unmatched' ? … : null`）＋ `:436`；批量那一个 `workbench-view.tsx:1483-1491` 注释自陈吃的是 `unmatchedTranslationRowIds`。`commitIgnored` 全仓 7 处调用中，用户写入口只有这两个，其余 5 处是清空（`:1742/:1845/:3666/:3948` 与定义 `:810`）。⇒ **"原文有、译文空、又确实绑着图层"的行（`kind:'invalid_target'`，`src/lib/trust-chain/binding-core.ts:1234-1249`）没有任何排除按钮**：校对页给它的按钮文字是「前往补全」（`prepare-check-labels.ts:54-59`、`error-messages.ts:176-180` 的 `actions:['前往补全']`），点下去只打开详情窗（`readiness-board.tsx:183-188` 的 `onClick={onOpen}`）。用户只剩三条重路：硬补译文／回 Excel 删行重导（重导清空本稿全部决定，`workbench-view.tsx:1732-1742`）／改用对象级"保持原样"（作用域=全部语言，`workbench-view.tsx:1427-1436`，语义不同）。
+- **可修的便宜处**：`invalid_target` 那条 item 身上已带 `translationRowId`（`binding-core.ts:1247`）⇒ 放开行级排除**不需要新数据结构**，只差一个条件句与配套语义；但语义一碰就属**合同变更**（见 AGENTS 合同变更纪律），须四层同笔＋`smoke-batch-row-contract` fixture。
+- **副案一（行号错位）**：全空行在导入即丢——xlsx `src/lib/workbench/table-file.ts:68-72`（`blankrows:false`）、csv `src/lib/workbench/csv.ts:632`、统一闸 `src/lib/workbench/parsed-row.ts:23-26`（6 个调用点）。之后所有序号是压缩后的（`csv.ts:736/742/749/778/802` 用 `第 ${idx+2} 行`；执行侧 `batch-executable-rows.ts:79/:89` `rowDisplayIndex: index + 1`）。**丢弃行数全仓无任何读数**：`git grep -nE 'droppedRow|blankDropped|removedEmpty|skippedEmpty|droppedBlank' -- src` ⇒ 退出码 1、0 行。⇒ 界面"行 37"≠用户 Excel 第 37 行，这是"我明明补了它还说空"的机制。
+- **副案二（文案合并）**：`invalid_target`（整行缺译）与 `combined`（组合行少一格，`binding-core.ts:1044-1053`）**共用同一个 `V15_INVALID_TARGET` 与同一句话**（`error-messages.ts:178` 把两种情况写成一句"目标语言列为空，或合并图层的组合行里存在空目标"），用户分不出是哪种。
+- **副案三（声明无生产者）**：`batch-executable-rows.ts:15/:35/:56` 声明并翻译了第三种排除原因 `EXCLUDED_NO_TRANSLATION`「该语言没有提供译文」，但 `git grep -n EXCLUDED_NO_TRANSLATION -- src` 只命中这三处 ⇒ **今天不可能出现在交付报告里**。按"已有此口径"设计删除语义会落空。
+- **副案四（入口不一致）**：粘贴路径保留中间空行（`grid-adapter.ts:20` 注释"去除尾部空行，保留中间空行"），导入路径丢掉全部空行。
+- **未核实（须实跑才能定性）**：批量模式"每稿一表"（`execute-step.tsx:190-193`）但忽略表是一张全局 `string[]`（`workbench-view.tsx:547`、执行侧 `execute-step.tsx:1087`），而行身份无「记录编号」时按内容派生（`workbench-revision.ts:34-42`；有合规编号时用 `record:编号`）⇒ 两份稿含同一句原文时，一次"不翻译／删掉这行"会**同时作用于两稿**，界面未说明。是否为刻意设计：仓内未找到裁决，**不得当作已定行为对外承诺**。定性证据＝一次 3 稿同原文的实跑，看被排掉的是 1 行还是 3 行。
+- **关联**：Owner 反馈原文"很多时候就卡在空行里面"＋要求增／删／撤回。方案与可点模拟见 `交付档案/执行方案/执行方案_20261023_工作台增删撤回与空行四例_对抗式审查.md`（同名 `_模拟_….html` 为可点件）。本轮零代码改动。
+- **增／删／撤回的定性（避免被当成三个新功能）**：`working-document.ts:58/:59` 有 `insertRows`/`deleteRows` 与反向补丁 `:197/:201-221`，撤销栈 `:302-376`；`insertRows` 唯一发命令方是 `reconciliation-actions.ts:135-148`（「补一行译文」），`deleteRows` **零调用方**；面板被写死只读（`workbench-view.tsx:5095-5101`，注释理由 `working-editor-panel.tsx:5`，2026-09-17），工具条在 `{!readOnly && (`（`:265`）内从不渲染。

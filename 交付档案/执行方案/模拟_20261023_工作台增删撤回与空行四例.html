@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工作台真实模拟 · 增 / 删 / 撤回 与空行四例（单稿＋多稿）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink2:#3d4757;--muted:#657084;--line:#dde2ea;--lineS:#c3cbd8;--acc:#1b5bd0;--accS:#e8effc;--ok:#0d6f4a;--okS:#e6f4ec;--bad:#ae2318;--badS:#fbeae8;--warn:#8a5a00;--warnS:#fbf1dc;--fb:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--fd:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--fm:"IBM Plex Mono",ui-monospace,Consolas,monospace;--r:10px}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink2:#c2cad7;--muted:#8d97a8;--line:#252c38;--lineS:#38414f;--acc:#78a8ff;--accS:#17233a;--ok:#54cf96;--okS:#12291f;--bad:#ff8d80;--badS:#2c1614;--warn:#e0b64a;--warnS:#2a2110}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding:26px clamp(14px,3vw,34px) 60px;display:flex;flex-direction:column;gap:26px}
+h1{font-family:var(--fd);font-size:clamp(1.5rem,3.4vw,2rem);line-height:1.25;margin:0}
+h2{font-family:var(--fd);font-size:1.05rem;margin:0 0 4px}
+h3{font-family:var(--fd);font-size:.95rem;margin:0}
+p{margin:0}
+a{color:var(--acc)}
+code{font-family:var(--fm);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.lede{color:var(--ink2);max-width:78ch}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--fm);font-size:.75rem;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-family:var(--fm);font-size:.76rem;padding:6px 13px;background:var(--surface);border:0;cursor:pointer;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
+.head{display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.meta{font-family:var(--fm);font-size:.73rem;color:var(--muted);display:flex;gap:6px 18px;flex-wrap:wrap}
+/* 工作台骨架 */
+.app{display:grid;grid-template-columns:186px minmax(0,1fr);gap:14px}
+.rail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;height:max-content}
+.rail .st{display:flex;gap:8px;align-items:flex-start;padding:8px 9px;border-radius:8px;font-size:.86rem;color:var(--ink2);cursor:pointer;border:1px solid transparent}
+.rail .st[data-on="1"]{background:var(--accS);border-color:var(--accS);color:var(--ink);font-weight:600}
+.rail .st .n{font-family:var(--fm);font-size:.72rem;opacity:.7}
+.rail .st .sub{font-size:.72rem;color:var(--muted);font-weight:400;line-height:1.5}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:13px}
+.grid{display:grid;grid-template-columns:64px 1fr 1.15fr 200px 168px;gap:10px;align-items:start}
+.gx{overflow-x:auto}
+.gx .grid{min-width:632px}
+.ghead{font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px}
+.row{padding:9px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:none}
+.row[data-kind="ghost"]{opacity:.55}
+.rid{font-family:var(--fm);font-size:.72rem;color:var(--muted);line-height:1.45}
+.rid b{display:block;color:var(--ink2);font-weight:500;font-size:.78rem}
+.src{font-size:.87rem}
+.src .em{color:var(--muted);font-style:italic}
+.why{font-size:.73rem;color:var(--muted);margin-top:3px}
+textarea{width:100%;font:inherit;font-size:.85rem;padding:5px 7px;border:1px solid var(--lineS);border-radius:6px;background:var(--surface);color:var(--ink);min-height:34px;resize:vertical}
+textarea.empty{border-color:var(--bad);background:var(--badS)}
+textarea.sug{border-color:var(--acc);background:var(--accS)}
+.badge{display:inline-block;font-family:var(--fm);font-size:.66rem;padding:1px 6px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-top:4px}
+.badge.block{background:var(--badS);color:var(--bad);border-color:var(--badS)}
+.badge.pass{background:var(--okS);color:var(--ok);border-color:var(--okS)}
+.badge.sug{background:var(--accS);color:var(--acc);border-color:var(--accS)}
+.badge.excl{background:var(--sunk);color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
+.mini{font:inherit;font-size:.74rem;padding:4px 9px;border-radius:6px;border:1px solid var(--lineS);background:var(--surface);cursor:pointer;color:var(--ink2);white-space:nowrap}
+.mini:hover{background:var(--sunk)}
+.mini.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.mini.p[disabled]{opacity:.45;cursor:not-allowed}
+.mini.g{border-style:dashed}
+.mini.d{color:var(--bad);border-color:var(--bad)}
+.money{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px;font-size:.86rem}
+.money .amt{font-family:var(--fm);font-size:1.15rem}
+.toast{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:9}
+.tst{background:var(--ink);color:var(--bg);border-radius:9px;padding:10px 13px;font-size:.83rem;display:flex;gap:10px;align-items:center;box-shadow:0 8px 26px rgba(0,0,0,.22)}
+.tst button{font:inherit;font-size:.78rem;background:transparent;border:1px solid currentColor;border-radius:6px;padding:3px 8px;color:inherit;cursor:pointer;opacity:.9}
+.hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;display:flex;flex-direction:column;gap:6px;max-height:230px;overflow:auto}
+.hline{font-family:var(--fm);font-size:.75rem;color:var(--ink2);display:flex;gap:8px;align-items:baseline}
+.hline.cur{color:var(--ink);font-weight:600}
+.hline .t{color:var(--muted);flex:none}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:13px}
+@media (max-width:760px){.app{grid-template-columns:minmax(0,1fr)}.rail{flex-direction:row;flex-wrap:wrap}.money>*{flex:0 1 auto;min-width:0}}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.88rem}
+.note p{font-size:.82rem;color:var(--ink2)}
+.callout{border-left:3px solid var(--bad);background:var(--badS);border-radius:var(--r);padding:11px 14px;font-size:.86rem;color:var(--ink2)}
+.callout b{color:var(--bad)}
+.cards{display:flex;flex-direction:column;gap:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;display:flex;flex-direction:column;gap:7px}
+.card .top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.card p{font-size:.86rem;color:var(--ink2)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:.82rem;min-width:700px}
+table.t th,table.t td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.55}
+table.t thead th{font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+table.t td.mono{font-family:var(--fm);font-size:.74rem;white-space:nowrap}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:7px;color:var(--ink2);font-size:.87rem}
+.footer{color:var(--muted);font-size:.78rem;font-family:var(--fm);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:5px}
+.tagx{font-family:var(--fm);font-size:.66rem;padding:1px 6px;border-radius:999px;background:var(--warnS);color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="head">
+  <h1>工作台真实模拟：增一行、删一行、撤回，和"卡在空行"到底卡在哪</h1>
+  <p class="lede">下面这台是<strong>按代码现状搭的模拟</strong>（数据是夹具，不是你的真稿）：左侧导轨是真实四阶段，中间那份表用的是产品里<strong>已经存在的工作稿命令模型</strong>（有 rowId、revision、撤销/重做）。你可以真的点：改译文、借同表候选、标不翻译、删行、补一行、撤销重做，看报价怎么跟着变。<strong>右上角切"现在的样子"能对比</strong>——你会看到今天这些按钮为什么一个都不在。</p>
+  <div class="bar">
+    <span>形态</span>
+    <div class="seg" id="modeSeg"><button data-mode="plan" aria-pressed="true">方案后</button><button data-mode="now" aria-pressed="false">现在的样子</button></div>
+    <span>工作台</span>
+    <div class="seg" id="draftSeg"><button data-draft="single" aria-pressed="true">单个设计稿</button><button data-draft="multi" aria-pressed="false">多个设计稿（3 份，1 份缺表）</button></div>
+  </div>
+  <div class="meta">
+    <span>取证基线 develop <code>47b9b5ca</code>（今日 19:4x 现读）</span>
+    <span>本轮零代码改动</span>
+    <span>关键出处：working-document.ts:3,58-59,299-382／working-editor-panel.tsx:5,250,265-283／reconciliation-actions.ts:135-159／object-inspector.tsx:451-453／csv.ts:632,736／table-file.ts:71／batch-executable-rows.ts:56,76-98／binding-core.ts:1044,1235,1367,1476／check-item-kinds.ts:7-11／execute-step.tsx:1084-1088,879-898</span>
+  </div>
+</div>
+
+<div class="app">
+  <nav class="rail" id="rail"></nav>
+
+  <div style="display:flex;flex-direction:column;gap:13px">
+    <div class="stage" id="stageHead"></div>
+    <div class="stage">
+      <div class="gx">
+        <div class="grid ghead"><span>行号</span><span>设计稿原文</span><span>德语译文</span><span>状态／为什么</span><span>可做的动作</span></div>
+        <div id="grid"></div>
+      </div>
+    </div>
+    <div class="money" id="money"></div>
+    <div class="two">
+      <div class="hist" id="hist"></div>
+      <div class="stage" id="aside"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<h2 style="margin-top:8px">四种"空"，今天一种挡、三种放，而且用的是同一句话</h2>
+<div class="scrollx">
+  <table class="t">
+    <thead><tr><th>哪一种空</th><th>判据（代码）</th><th>今天挡住你吗</th><th>界面上你怎么看到</th><th>方案后</th></tr></thead>
+    <tbody>
+      <tr><td><strong>原文有、译文空</strong>（真缺译）</td><td class="mono">src/lib/trust-chain/binding-core.ts:1234-1249（kind invalid_target、blocking；<strong>这条 item 自带 translationRowId </strong><code>:1247</code>）<br>src/lib/trust-chain/check-item-kinds.ts:7-11（KEEP_AS_IS 只有 missing/unmatched/excluded，不含它 ⇒ 必须给决策）</td><td><span class="badge block">挡</span> 校对页算"要你处理"，主按钮不放行</td><td>标题「缺少目标文本」＋「请在审查中补全译文」＋按钮只有一项<strong>「前往补全」</strong>（<code>prepare-check-labels.ts:54-59</code>；<code>error-messages.ts:176-180</code> 同一码只给了 <code>actions:['前往补全']</code>）；按钮点下去只是打开对象详情（<code>readiness-board.tsx:183-188</code>）</td><td>同一句改成两条：<strong>这格没填</strong>（去填／借／标不翻译）＋ <strong>行号是压缩后的</strong>（给 Excel 真行号）</td></tr>
+      <tr><td><strong>组合图层里有一格空</strong></td><td class="mono">binding-core.ts:1044-1053（:1049 是码 V15_INVALID_TARGET，:1052 才是 kind:'combined'）</td><td><span class="badge block">挡</span></td><td><strong>和上面共用同一条码、同一句话</strong>——<code>error-messages.ts:178</code> 把两种情况写成一句"目标语言列为空，<strong>或</strong>合并图层的组合行里存在空目标"→ 你不知道是整行没译还是组合里少一格</td><td>分开说，并直接列出"这个图层组里有 3 格，2 格有译文、1 格空"</td></tr>
+      <tr><td><strong>原文空、译文有</strong>（幽灵行）</td><td class="mono">parsed-row.ts:15-19（保留成行）<br>batch-executable-rows.ts:86-93 EXCLUDED_EMPTY_SOURCE</td><td><span class="badge pass">放</span> 不写入、不计费</td><td>「原文为空」，和智能检测里另一套话术并存</td><td>归到"清理"一类：<strong>一键删掉这些行</strong>（可撤销），而不是留在表里当噪声</td></tr>
+      <tr><td><strong>整行全空</strong>（Excel 尾部空行）</td><td class="mono">table-file.ts:71 blankrows:false<br>csv.ts:632 filter(trim&gt;0)</td><td><span class="badge pass">放</span> 导入即丢，<strong>静默</strong></td><td><strong>什么都不显示</strong>——但这正是行号错位的来源：丢掉后所有序号往前挪，界面"行 37"≠你 Excel 第 37 行（<code>csv.ts:736/773</code>、<code>batch-executable-rows.ts:79</code> 都是压缩后序号）</td><td>表头加一行小字「导入时丢掉 <strong>N</strong> 个空行；界面行号已重新编号，这里同时给 Excel 原行号」</td></tr>
+      <tr><td>稿里有层、表里没行（未覆盖）</td><td class="mono">binding-core.ts:1367 V15_SCOPE_NOT_CLOSED<br>check-item-kinds.ts:8（在 KEEP_AS_IS）</td><td><span class="badge pass">放</span> 可"保持原样"</td><td>「设计稿里缺译文的对象」</td><td>就地<strong>补一行</strong>（带绑定，今天这按钮在只读面板里）</td></tr>
+      <tr><td>表里有行、稿里没层（多出）</td><td class="mono">binding-core.ts:1476 unmatched → severity review</td><td><span class="badge pass">放</span> 不阻断（<code>prepare-check-summary.ts:161-162</code> 明文）</td><td>「多出的行」＋只能"忽略"，而忽略<strong>今天没有恢复入口</strong>（<code>object-inspector.tsx:451-453</code> 写着"不可撤销"）</td><td>改成软删＋撤销 toast；批量忽略一次点，不逐行</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="callout"><b>这就是"卡在空行"的机制</b>：四五种"空"共用一两句文案，其中两种挡你、三种放行；同时导入阶段静默丢掉空行让行号整体错位，你按界面提示回到 Excel 找那一行，找到的常是另一行。<b>所以体感是"我明明补了，它还说空"。</b><br><br><b>本轮新抽到的一条（更要命）</b：今天"<strong>不翻译这一行</strong>"这个出口，界面上只有一个地方能点——对象详情里、而且<strong>只有当这行在稿里找不到对应图层（多出的行）时才出现</strong>（<code>object-inspector.tsx:436</code>，按钮文案 <code>:451-453</code>）。<strong>原文有、译文空、又确实绑着图层的那种行，今天没有任何"排掉"的按钮</strong>：全仓行级忽略的写入点只有两处，<strong>两处都只吃"表比稿多"这一类行</strong>——逐行那一个 <code>workbench-view.tsx:5609</code>（由上面那个按钮喂）和批量那一个 <code>handleIgnoreUnmatched</code>（<code>:1483-1491</code>，注释自己写明"<code>unmatchedTranslationRowIds</code>＝多余译文行"）。所以你只能三选一：硬补一个译文、回 Excel 删行重导（重导会把<strong>本稿所有已做的决定清空</strong>，<code>workbench-view.tsx:1732-1742</code>），或者改用对象级"保持原样"（那是按图层、且作用域=全部语言，<code>workbench-view.tsx:1427-1436</code>）——三条都不轻。</div>
+
+<h2 style="margin-top:6px">增 / 删 / 撤回：三件事的真实完成度（这条很重要，别当成新做一套）</h2>
+<div class="scrollx">
+  <table class="t">
+    <thead><tr><th>你要的</th><th>代码里有没有</th><th>为什么你现在用不到</th><th>要补的其实只有</th></tr></thead>
+    <tbody>
+      <tr><td><strong>增一行</strong></td><td><span class="badge pass">模型与按钮都有</span><code>working-document.ts:58 insertRows</code>；「补一行译文」<code>reconciliation-actions.ts:135-159</code>；按钮 <code>working-editor-panel.tsx:194-264</code></td><td>工作稿面板<strong>唯一挂载点写死 readOnly</strong>（<code>workbench-view.tsx:5095-5101</code>），按钮被禁（<code>working-editor-panel.tsx:250</code>）；文件头注释写明原因：<strong>"编辑统一走智能检测列表，避免双轨编辑互相覆盖"</strong>（<code>:5</code>，2026-09-17 的决定）</td><td>定谁是权威编辑轨，把审查列表的输入框改成向同一命令模型发 <code>editCell</code>；回流已实现（<code>workbench-view.tsx:962-997</code>：原行写 edits、新行写 extras，并参与语言摘要）</td></tr>
+      <tr><td><strong>删一行</strong></td><td><span class="badge block">只有模型，没有入口</span><code>working-document.ts:59 deleteRows</code> ＋ 反向补丁 <code>:201-223</code>；<strong>全仓 grep <code>deleteRows</code> 无任何 UI 调用方</strong></td><td>今天最接近的是"忽略行"，但它不删：行仍在工作表里，只是投影成 <code>EXCLUDED_BY_USER</code> 不计费不执行（<code>batch-executable-rows.ts:76-84</code>）；而且<strong>两击确认后不可撤销</strong>（<code>object-inspector.tsx:451-453</code>），<strong>换表或重导会清空全部决定</strong>（<code>workbench-view.tsx:1732-1742</code>），rowId 在没填「记录编号」时由内容哈希（<code>workbench-revision.ts:34-42</code>；填了合规编号则用 <code>record:编号</code> 作稳定身份 <code>:34</code>）⇒ 体感就是"删不掉，重导又回来"</td><td>①给 deleteRows 一个入口＋软删可撤；②回流要能表达"这行没了"（现在只写 edits/extras，<strong>删行传不出去</strong>——这是我要指出的真缺口）；③忽略/排除/删除三件事各留一个词，别再共用"忽略"</td></tr>
+      <tr><td><strong>撤回</strong></td><td><span class="badge pass">撤销栈与按钮都有</span><code>working-document.ts:299-382</code> 命令栈；按钮 <code>working-editor-panel.tsx:267-283</code>（撤销／重做／立即保存）</td><td>整条工具条包在 <code>{!readOnly &amp;&amp; ...}</code> 里 ⇒ <strong>从不渲染</strong>。对象级"保留原文"倒是有恢复入口（<code>workbench-view.tsx:1428-1433</code>、<code>layout-exception-list.tsx:133-136</code>），行级忽略没有</td><td>放开工具条＋把撤销范围说清楚（撤销的是"表的改动"，不是"已写进 PSD 的内容"——后者今天明确不可撤，见下）</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="two">
+  <div class="note"><span class="hd">"撤回"有三层，别混成一层卖</span><p>① <strong>表的改动</strong>（改字/增行/删行/忽略）→ 可以撤销，模型已支持。<br>② <strong>范围决策</strong>（这次做哪几行、哪几语）→ 改了就<strong>必须重新确认</strong>，而且这是服务端硬闸：<code>scopeDecisionDigest</code> 变化 ⇒「确认后的内容已发生变化，请返回审查页重新确认」（<code>execute-step.tsx:879-898</code>、<code>api/.../execute/route.ts:153</code>、<code>api/billing/photoshop/quote/route.ts:17</code>）。<br>③ <strong>已经写进 PSD 的内容</strong> → 今天不可撤（没有 PSD 备份），确认框里写得很清楚（<code>execution-scope-dialog.tsx:82</code>）；退积分只在失败态可点（<code>execute-step.tsx:2994</code> 条件 <code>failed &amp;&amp; unsettledExecution</code>）。</p></div>
+  <div class="note"><span class="hd">报价集合只有一个来源（这是好消息）</span><p>可执行行由 <code>buildBatchExecutableRows</code> 一处算出，全库<strong>只有一处调用</strong>（<code>execute-step.tsx:1084-1088</code>）。所以"删一行改不改报价"不会有第二种答案——模拟里的报价条就是照这个口径画的：排除/删除的行退出计费，补的行只要绑定到层就进计费。</p></div>
+</div>
+
+<h2 style="margin-top:6px">方案：四步改动，顺序不能换</h2>
+<div class="cards">
+  <div class="card"><div class="top"><span class="tagx">R1</span><h3>把"哪条轨能编辑"这件事定下来（半天，纯决策＋一处放开）</h3></div><p>结论建议：<strong>工作稿命令模型＝唯一编辑轨</strong>；智能检测列表不再是第二套输入框，而是"问题行的分诊视图"，它的输入框改成向命令模型发 <code>editCell</code>，撤销/重做/立即保存这排按钮放开（今天被 <code>readOnly</code> 挡死）。这一步不做，后面三条都会撞上"双轨互相覆盖"那个老问题（也就是 9-17 锁掉它的理由）。</p></div>
+  <div class="card"><div class="top"><span class="tagx">R2</span><h3>让删除行真的能删、能撤（1.5 天）</h3></div><p>回流函数补"这行没了"的表达（现在只能表达"改了"和"多了"）；行级操作统一成三词：<strong>不翻译</strong>（保留在表里，退出写入与计费，随时可撤）／<strong>删掉这行</strong>（软删，从工作稿移除，撤销可回）／<strong>忽略多出的行</strong>（只处理"表比稿多"这一类）。删除与不翻译在报价上的差别必须可见（模拟里金额会跟着变）。<strong>属合同变更：同一提交同步浏览器投影／助手 evidence／服务端报价／结算闸＋更新 <code>smoke-batch-row-contract</code> fixture。</strong></p></div>
+  <div class="card"><div class="top"><span class="tagx">R3</span><h3>把"空"拆成四类，各给一条出路（1 天）</h3></div><p>文案分工：整行没译／组合里少一格／原文空的幽灵行／导入丢掉的空行（附 <strong>Excel 原行号</strong>）。幽灵行给"一键清掉这 N 行"（可撤销）。目标：<strong>四种空不再共用一句话</strong>，且行号能对上你桌上的 Excel。</p></div>
+  <div class="card"><div class="top"><span class="tagx">R4</span><h3">分诊台化：批量放行＋冲突点名＋撤销窗口（2 天）</h3></div><p>逐行/逐语言的"确认"改成分诊台：可自动放行的批量放行，冲突项点名不自动；每个破坏性操作给 5–8 秒"撤销"提示（业界做法：Gmail 是宽限期、Airtable/Grist 是 toast 撤销、Docs 是建议层）；<strong>必须重新确认的红线只有"报价口径变了"</strong>，其余不打断。</p></div>
+</div>
+<div class="callout"><b>外部做法给出的四条硬约束（都有官方文档）</b>：
+① <strong>撤销只回滚本人本次会话的改动</strong>——多人协作里别人的改动不可被你 undo（<a href="https://support.apple.com/zh-sg/guide/ipad/ipadc6d7301e/16.0/ipados/16.0">Apple</a>、<a href="https://liveblocks.io/blog/how-to-build-undo-redo-in-a-multiplayer-environment">Liveblocks 引 Figma</a>）；
+② <strong>哪些动作不许进撤销栈</strong>：覆盖文件、永久删除、<strong>支付与提交</strong>要确认，可逆的直接做＋撤销即可（<a href="https://learn.microsoft.com/en-us/windows/apps/design/basics/commanding-basics">Microsoft 命令设计规范</a>）；不可撤时按钮要写「无法撤销」而不是消失（<a href="https://support.microsoft.com/en-gb/office/undo-or-redo-typing-or-design-changes-6b4ab13a-32a7-427f-8dbc-a076ae2e6132">Office</a>）；
+③ <strong>审计轨迹不等于撤销</strong>：Airtable 的记录级修订历史是只读的，不能拿来恢复记录，真正兜底的是回收站 7 天／base 30 天（<a href="https://support.airtable.com/docs/record-level-revision-history-overview">文档</a>）——所以我们的撤销要落在"能改回来的地方"，不是记流水；
+④ <strong>没有可绑对象就不许造行</strong>：gettext 明确拒绝把 obsolete 条目复活成活动条目、Qt 分 obsolete/vanished、Weblate 新串要先进模板、Adobe 导入工具"导入过程中不能新增属性"（<a href="https://www.gnu.org/software/gettext/manual/html_node/Obsolete-Entries.html">gettext</a>、<a href="https://doc.qt.io/qt-6/linguist-lupdate.html">Qt</a>、<a href="https://docs.weblate.org/en/latest/devel/translations.html">Weblate</a>）——所以"补一行"必须从<strong>未覆盖的图层</strong>出发，不允许凭空插无主行；
+⑤ 另外 Excel 的教训：删行会让下面的行上移（<a href="https://support.microsoft.com/zh-cn/article/Insert-or-delete-cells-rows-and-columns-b6982f0b-a707-4282-a59d-65a3b47fafa3">官方</a>），<strong>绑定必须存稳定 ID，不能存行号</strong>——这条正对我们今天的病：空行被静默丢掉后序号整体前挪，而 rowId 现在是由内容哈希算的（<code>workbench-revision.ts:34-43</code>）。
+</div>
+
+<h2 style="margin-top:6px">要你拍两件</h2>
+<ul class="plain">
+  <li><strong>编辑轨交给谁？</strong>我建议交给工作稿命令模型（撤销/重做/增删天然可用），智能检测列表降级为"只看的分诊视图＋跳转编辑"。反过来的方案（把增删撤回在列表那套里重做一遍）＝第三套编辑轨，我不建议。</li>
+  <li><strong>删除行的语义？</strong>A：只做"不翻译"（行还在，永远可撤，最保守）；B：再加"软删"（从工作稿消失，撤销可回，重导会回来）；C：再加"写回我的表文件"（今天完全没有，且要新增写文件能力）。我建议 <strong>A＋B</strong>，C 单独立项再谈。</li>
+</ul>
+
+<div class="footer">
+  <span>本页是模拟（夹具数据），不是线上界面；四阶段导轨、行状态、报价口径按代码现状映射，出处见页头 meta。</span>
+  <span>本轮未改任何业务代码、未出包、未上站；develop 今日另一条线仍在写 4 个工作台文件，未碰。</span>
+</div>
+</div>
+
+<script>
+/* ── 数据：一份稿的 6 行，覆盖四种空 ＋ 两种正常 ───────────────────── */
+const LANGS=['DE','FR','ES','JA','EN','IT','PT','NL','SV','PL','TH','ID'];
+function baseRows(mode){
+ return [
+  {rowId:'r1',excelNo:3, idx:1, src:'静音設計', de:'Flüsterleise Betrieb', st:'ok'},
+  {rowId:'r2',excelNo:7, idx:2, src:'送風口 200mm', de:'', st:'empty_target', cand:['Auslass 200 mm','Luftauslass 200 mm'], note:'表里同一原文出现两次，两个德语译文'},
+  {rowId:'r3',excelNo:12,idx:3, src:'© 2026 Brand Inc.', de:'', st:'no_need', note:'版权行，本来不该有译文'},
+  {rowId:'r4',excelNo:18,idx:4, src:'3年保証・USB-C対応', de:'', st:'combined', note:'组合图层组：组内 2 格，USB-C 那格有译文，3年保証这格空'},
+  {rowId:'r5',excelNo:0, idx:5, src:'', de:'（空原文，德语填了内容）', st:'ghost', note:'幽灵行：Excel 里这行原文被删过，译文还留着'},
+  {rowId:'r6',excelNo:25,idx:6, src:'USB-C 対応', de:'USB-C-kompatibel', st:'ok'}
+ ];
+}
+/* ── 命令模型（真模拟产品的工作稿：命令 + 反向补丁 + 撤销栈）───────── */
+const S={mode:'plan',draft:'single',stage:2,rows:baseRows(),
+  edits:{},excluded:{},deleted:{},borrowed:{},extras:[],
+  undo:[],redo:[],digest:0,confirmed:false,rev:0};
+const PRICE=1.2;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function stamp(t){S.rev++;}
+function push(kind,label,inv){S.undo.push({kind,label,inv});S.redo.length=0;stamp();}
+function undo(){const a=S.undo.pop();if(!a)return;S.redo.push({kind:a.kind,label:a.label,inv:a.inv});a.inv('undo');S.rev++;render();toast(`已撤销：${a.label}`);}
+function redo(){const a=S.redo.pop();if(!a)return;S.undo.push({kind:a.kind,label:a.label,inv:a.inv});a.inv('redo');S.rev++;render();toast(`已重做：${a.label}`);}
+function executableRows(){return S.rows.filter(r=>!S.excluded[r.rowId]&&!S.deleted[r.rowId]).length;}
+function blockedCount(){return S.rows.filter(r=>!S.deleted[r.rowId]&&['empty_target','combined'].includes(r.st)&&!(S.edits[r.rowId]||S.borrowed[r.rowId]||S.excluded[r.rowId])).length;}
+
+/* ── 渲染 ─────────────────────────────────────────────── */
+const STAGES=[['准备素材','稿与表进得来，缺表在这一步说清'],['智能检测','问题行分诊＋就地改（本页）'],['设计稿校对','R1 后并入自检：只在异常时出现'],['生成交付','报价＋执行']];
+function renderRail(){
+  $('#rail').innerHTML=STAGES.map((s,i)=>`<div class="st" data-on="${S.stage===i?1:0}" data-st="${i}"><span class="n">${i+1}</span><div>${s[0]}${i===2?'<div class="sub">'+(S.mode==='plan'?'（方案后：折叠成一行自检）':'（今天：必须点一次「开始设计稿校对」）')+'</div>':''}</div></div>`).join('');
+  $$('#rail .st').forEach(e=>e.onclick=()=>{S.stage=+e.dataset.st;render();});
+}
+function renderHead(){
+ const blocked=blockedCount(),plan=S.mode==='plan';
+ $('#stageHead').innerHTML=`
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;justify-content:space-between">
+    <h2>${S.draft==='single'?'单个设计稿：5857 落地灯主图.psd':'多个设计稿：3 份（其中 1 份还没表）'} · 德语</h2>
+    <div class="bar"><span>工作稿 revision <code>${S.rev}</code></span><span>撤销 ${S.undo.length}／重做 ${S.redo.length}</span></div>
+  </div>
+  <div class="grid" style="display:contents"></div>
+  ${plan?`<div class="callout" style="border-left-color:var(--warn);background:var(--warnS)"><b style="color:var(--warn)">导入时丢掉 2 个全空行</b> ⇒ 下面"界面行号"已重新编号，括弧里是你的 Excel 原行号。今天这个数字不显示，所以你按"行 3"回 Excel 常会看到另一行。</div>`
+       :`<div class="callout"><b>今天：这里什么都不说。</b>全空行在 <code>table-file.ts:71 blankrows:false</code>／<code>csv.ts:632</code> 就被丢掉，之后的序号是压缩后的（<code>csv.ts:736/773</code>）；而面板被写死 <code>readOnly</code>（<code>workbench-view.tsx:5095</code>），所以下面这些按钮你今天是看不到的。</div>`}`;
+}
+function actsFor(r){
+  const plan=S.mode==='plan';
+  if(!plan){
+    const one={'empty_target':'缺目标文本','combined':'缺目标文本','ghost':'原文为空','no_need':'缺目标文本','ok':'—'}[r.st];
+    return `<span class="badge">${one}</span><div style="font-size:.7rem;color:var(--muted);margin-top:4px">编辑请在「智能检测」列表里改<br>（无撤销、无删除入口）</div>`;
+  }
+  const out=[];
+  const val=S.edits[r.rowId]||S.borrowed[r.rowId]||r.de;
+  if(!val&&!S.excluded[r.rowId]&&!S.deleted[r.rowId]) out.push(`<button class="mini" data-act="focus" data-id="${r.rowId}">补</button>`);
+  if(r.cand&&!S.borrowed[r.rowId]&&!S.deleted[r.rowId]) out.push(`<button class="mini g" data-act="borrow" data-id="${r.rowId}">借同表候选</button>`);
+  if(!S.deleted[r.rowId]) out.push(S.excluded[r.rowId]
+    ?`<button class="mini g" data-act="excl" data-id="${r.rowId}">恢复这行</button>`
+    :`<button class="mini g" data-act="excl" data-id="${r.rowId}">不翻译</button>`);
+  if(S.st==='x'){}
+  if(!S.excluded[r.rowId]) out.push(S.deleted[r.rowId]
+    ?`<button class="mini g" data-act="del" data-id="${r.rowId}">恢复这行</button>`
+    :`<button class="mini d" data-act="del" data-id="${r.rowId}">删掉这行</button>`);
+  return out.join('');
+}
+function renderGrid(){
+ const plan=S.mode==='plan';
+ $('#grid').innerHTML=S.rows.map(r=>{
+  const del=S.deleted[r.rowId],exc=S.excluded[r.rowId];
+  const val=del?'':(S.edits[r.rowId]||S.borrowed[r.rowId]||r.de||'');
+  const cls=del?'':(S.borrowed[r.rowId]?'sug':((!r.de&&!val&&!exc)?'empty':''));
+  let stTag,why;
+  if(del){stTag='<span class="badge excl">已删掉（可撤销）</span>';why='不参与写入与计费'}
+  else if(exc){stTag='<span class="badge excl">不翻译</span>';why='行还在表里，退出写入与计费'}
+  else if(r.st==='empty_target'){stTag='<span class="badge block">整行没译</span>';why='挡住：这语言不能进执行'}
+  else if(r.st==='combined'){stTag='<span class="badge block">组合里少一格</span>';why='挡住：但今天说的也是"缺少目标文本"'}
+  else if(r.st==='ghost'){stTag='<span class="badge pass">原文空的幽灵行</span>';why='不挡：EXCLUDED_EMPTY_SOURCE，不计费'}
+  else if(r.st==='no_need'){stTag='<span class="badge">不该有译文</span>';why='建议标"不翻译"，别当缺陷修'}
+  else {stTag='<span class="badge pass">已就绪</span>';why=r.note||''}
+  return `<div class="grid row" data-kind="${r.st}">
+    <div class="rid"><b>行 ${r.idx}</b>${plan&&r.excelNo?`Excel ${r.excelNo}`:(plan?'Excel —':'')}</div>
+    <div class="src">${r.src?r.src:`<span class="em">（原文为空）</span>`}${r.note?`<div class="why">${r.note}</div>`:''}</div>
+    <div>${del?`<span class="em" style="color:var(--muted);font-size:.82rem">—</span>`
+      :`<textarea data-id="${r.rowId}" class="${cls}" ${exc?'disabled':''} placeholder="${!plan?'只读预览':'这格没译文，填／借／标不翻译'}">${val}</textarea>`}
+      ${S.borrowed[r.rowId]?'<span class="badge sug">同表候选·待复核</span>':''}</div>
+    <div>${stTag}<div class="why">${why}</div></div>
+    <div class="acts">${actsFor(r)}</div>
+  </div>`;
+ }).join('') + (plan?`<div class="grid row" style="border-top:1px solid var(--line)">
+    <div class="rid"><b>＋</b></div>
+    <div class="src" style="color:var(--muted);font-size:.82rem">设计稿里有个图层，表里没有行：</div><div></div>
+    <div><span class="badge block">未覆盖的层</span><div class="why">今天：只能"保持原样不替换"，或去只读面板里补行</div></div>
+    <div class="acts"><button class="mini g" data-act="addrow">补一行（带绑定）</button></div></div>`:'');
+ $$('#grid textarea').forEach(t=>{
+   const id=t.dataset.id;
+   // 编辑会话开始时记一次前值；输入只改状态，失焦才提交一条撤销记录（真实编辑器同此）
+   let sess=null;
+   t.onfocus=()=>{sess=S.edits[id]||t.value;};
+   t.oninput=()=>{S.edits[id]=t.value;S.confirmed=false;renderMoney();renderHist();};
+   t.onblur=()=>{
+     const prev=sess===null?(S.edits[id]||''):sess;
+     const now=S.edits[id]||'';
+     sess=null;
+     if(prev===now)return;
+     S.edits[id]=now;
+     push('editCell',`改「行 ${S.rows.find(r=>r.rowId===id).idx}」译文`,(dir)=>{S.edits[id]=(dir==='undo')?prev:now;});
+     render();
+   };
+ });
+ $$('#grid [data-act]').forEach(b=>b.onclick=()=>doAct(b.dataset.act,b.dataset.id));
+}
+function doAct(act,id){
+ const r=S.rows.find(x=>x.rowId===id);
+ if(act==='focus'){const t=document.querySelector(`textarea[data-id="${id}"]`);if(t){t.focus();t.closest('.row').scrollIntoView({block:'center'});}return;}
+ if(act==='borrow'){const prev=S.borrowed[id]||'';S.borrowed[id]=r.cand[0];
+   push('editCell',`借候选填「行 ${r.idx}」`,(dir)=>{if(dir==='undo')S.borrowed[id]=prev;else S.borrowed[id]=r.cand[0];});
+   S.confirmed=false;render();toast(`已借同表候选（标"待复核"）：${r.cand[0]}`,'撤销');return;}
+ if(act==='excl'){const on=!S.excluded[id];S.excluded[id]=on?true:undefined;
+   push('exclude',`${on?'标不翻译':'恢复'}「行 ${r.idx}」`,(dir)=>{S.excluded[id]=(dir==='undo')?undefined:on;});
+   S.confirmed=false;render();toast(`${on?'这行不翻译':`行 ${r.idx} 恢复参与`}（不计费，可撤销）`,'撤销');return;}
+ if(act==='del'){const on=!S.deleted[id];
+   if(on){S.deleted[id]=true;push('deleteRows','删掉'+(r.src?`「${r.src}」`:`行 ${r.idx}`),(dir)=>{if(dir==='undo')S.deleted[id]=undefined;else S.deleted[id]=true;});}
+   else{S.deleted[id]=undefined;push('insertRows',`恢复行 ${r.idx}`,(dir)=>{if(dir==='undo')S.deleted[id]=true;else S.deleted[id]=undefined;});}
+   S.confirmed=false;render();toast(on?`已删掉行 ${r.idx}（软删；重导表会回来）`:`行 ${r.idx} 已恢复`,'撤销');return;}
+ if(act==='addrow'){const n=S.extras.length+1;const nr={rowId:'x'+n,excelNo:0,idx:90+n,src:'Type-C ケーブル付属',de:'',st:'empty_target',note:'新补的行，绑定到图层 #4312'};
+   S.extras.push(nr);S.rows=[...S.rows.slice(0,4),nr,...S.rows.slice(4)];
+   push('insertRows',`补一行（绑图层 #4312）`,(dir)=>{if(dir==='undo'){S.extras.pop();S.rows=S.rows.filter(x=>x.rowId!==nr.rowId);}else{S.extras.push(nr);S.rows=[...S.rows.slice(0,4),nr,...S.rows.slice(4)];}});
+   S.confirmed=false;render();toast('补了一行，已绑到设计稿里那个图层（未覆盖层归零）；它开始计费','撤销');return;}
+}
+function renderMoney(){
+ const ex=executableRows(),amt=(ex*PRICE).toFixed(1),bl=blockedCount();
+ const plan=S.mode==='plan';
+ const label=plan?(bl>0?`先处理 ${bl} 处挡住的地方`:'确认范围：就按这些行执行'):(bl>0?`今天：${bl} 处"缺少目标文本"未清，主按钮不放行`:'确认当前语言并继续');
+ $('#money').innerHTML=`<span>可执行行 <b>${ex}</b>（表里 ${S.rows.length-S.extras.length} 行 ＋ 补的 ${S.extras.length} − 不翻译 ${Object.values(S.excluded).filter(Boolean).length} − 删掉 ${Object.values(S.deleted).filter(Boolean).length}）</span>
+  <span class="amt">${S.draft==='multi'?(amt*3).toFixed(1):amt} 积分</span><span>${S.draft==='multi'?'三份稿各算一份，整批共此数；这一份是 '+amt:'这一份稿（多稿时每稿各算一份）'}</span>
+  <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+   ${plan?(S.confirmed?'<span class="badge pass">范围已确认</span>':'<span class="badge block">改动后范围摘要已变（服务端 digest 不命中会被拒）</span>'):'<span class="badge">今天：改动同样让凭证失效，但没有撤销可退</span>'}
+   <button class="mini p" data-q="confirm" ${bl>0?'disabled':''}>${label}</button>
+   ${plan?`<button class="mini" data-q="undo">撤销上一步</button><button class="mini" data-q="redo">重做</button>`
+        :`<button class="mini" data-q="undo" disabled>撤销</button><button class="mini" data-q="redo" disabled>重做</button>`}</span>`;
+ const c=$('[data-q="confirm"]');
+ if(c)c.onclick=()=>{S.confirmed=true;S.digest++;render();toast(plan?'范围已确认：报价与凭证已按当前可执行行重算':'已确认当前语言并继续（今天这一步没有撤销）');};
+ const u=$('[data-q="undo"]'),r2=$('[data-q="redo"]');
+ if(u)u.onclick=plan?undo:()=>toast('今天没有撤销：忽略行写「不可撤销」（object-inspector.tsx:451-453），撤销栈在只读面板里从不渲染');
+ if(r2)r2.onclick=plan?redo:()=>toast('同上');
+}
+function renderHist(){
+ $('#hist').innerHTML=`<h3>操作记录（撤销栈，模型已有：working-document.ts:299-382）</h3>
+  ${S.undo.length?S.undo.map((a,i)=>`<div class="hline ${i===S.undo.length-1?'cur':''}"><span class="t">${String(i+1).padStart(2,'0')}</span><span>${a.label}</span></div>`).join(''):'<div class="hline"><span class="t">—</span><span>还没有改动。今天这一栏不存在（面板只读）。</span></div>'}
+  ${S.redo.length?`<div class="hline" style="color:var(--muted)">可重做 ${S.redo.length} 步</div>`:''}`;
+}
+function renderAside(){
+ const plan=S.mode==='plan';
+ const drafts=S.draft==='multi'?[['5857 落地灯主图','有表 · 本页'],['5857 场景图','有表 · 与主图同一套 12 张表'],['6897 独立站主图','还没表 → 挡下一步（stage-rows.ts:187）']]:[];
+ $('#aside').innerHTML=`<h3 style="margin:0 0 2px">${plan?'这一屏还该看见的三件':'今天这一屏只有只读预览'}</h3>
+ <div class="two" style="grid-template-columns:1fr">
+  ${plan?`
+   <div class="note"><span class="hd">多稿时：空行留在哪一份稿</span><p>表槽按稿存（<code>stage-rows.ts:92-109</code>）。同 SKU 同交付物的两份稿共用一套表时，后一份会被撤选落进"等你定"（<code>stage-rows.ts:101-108</code>）；跨交付物共用一个工作簿时，同一句空会在两个槽各报一次（<code>table-file.ts:65</code>）——所以"3 处缺译"可能只有 1 处是真缺。</p></div>
+   <div class="note"><span class="hd">未覆盖的层不挡你，但必须点名</span><p>「稿有层、表没行」算 <code>KEEP_AS_IS</code>（<code>check-item-kinds.ts:8</code>）⇒ 放行保留原文；它<strong>不能</strong>静默：交付报告里要逐条列出"这几处保持原样"。今天它出现在例外清单里，折叠着。</p></div>`
+  :`
+   <div class="note"><span class="hd">今天你能点的只有这些</span><p>「忽略此行（不写入、不计费）」两击确认，<strong>注释写着"不可撤销"</strong>（<code>object-inspector.tsx:451-453</code>）；「保留原文（不替换）」可在例外清单里恢复；「清空确认并重新检查」不清译文、只清决定；「重置工作台」清一切。没有撤销、没有删除行、没有补行。</p></div>
+   <div class="note"><span class="hd">为什么被锁</span><p><code>working-editor-panel.tsx:5</code>：「readOnly 只读预览模式——编辑统一走智能检测列表，避免双轨编辑互相覆盖」。<strong>所以 R1 那一步（定权威编辑轨）不拍，增删撤回一条都上不了。</strong></p></div>`}
+ </div>
+ ${S.draft==='multi'?`<h3 style="margin:8px 0 2px">稿列表（多稿）</h3>${drafts.map((d,i)=>`<div class="hline"><span class="t">${i+1}</span><span>${d[0]} — ${d[1]}</span></div>`).join('')}`:''}`;
+}
+function toast(msg,act){
+ while($('#toast').children.length>=3)$('#toast').firstChild.remove();
+ const el=document.createElement('div');el.className='tst';el.innerHTML=`<span>${msg}</span>${act?`<button>${act}</button>`:''}`;
+ if(act)el.querySelector('button').onclick=()=>{undo();el.remove();};
+ $('#toast').appendChild(el);setTimeout(()=>el.remove(),7000);
+}
+function render(){renderRail();renderHead();renderGrid();renderMoney();renderHist();renderAside();}
+$$('#modeSeg button').forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;$$('#modeSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));S.undo=[];S.redo=[];S.edits={};S.excluded={};S.deleted={};S.borrowed={};S.extras=[];S.rev=0;S.confirmed=false;render();});
+$$('#draftSeg button').forEach(b=>b.onclick=()=>{S.draft=b.dataset.draft;$$('#draftSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();});
+render();
+</script>
+</body>
+</html>
