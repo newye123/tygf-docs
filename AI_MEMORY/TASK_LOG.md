@@ -1,3 +1,23 @@
+## 2026-10-23 21:5x 工作台 R1＋R2-a 落地（Owner 拍板"按这个走"的前两刀）｜编辑轨放开＋缺译行能一键不翻译＋撤回入口；R2-b/R3 未做
+
+- **要答什么**：Owner 看完增删撤回方案与可点模拟后说"我觉得可以，按这个走吧"＝批准 R1→R4 顺序与我推荐的两项决策（编辑轨交给工作稿命令模型；删除语义先做 A＋B）。本轮动的是 R1 与 R2-a。
+- **改了什么（develop 三笔提交，均已进 origin/develop）**：
+  - `cdade2db` **R1 权威编辑轨**：`working-editor-panel.tsx` 的快照回流由"重建文档"改为"差异合并"；`workbench-view.tsx` 挂载点不再写死只读，改成 `readOnly={experimentRunning || executionAuthorized}`（执行中/已授权仍只读），SheetDescription 按两态如实改写。撤销／重做／立即保存**第一次真的渲染出来**。
+  - `56a12e2b` **R2-a 缺译行也能按行"不翻译"**【合同变更】：新文件 `src/lib/workbench/row-exclusion.ts`（`assessRowExclusion`，行身份用 `stableTranslationRowIds` 现算现比，对不上返回 null）；对象详情抽屉的按行动作从"只有 `kind==='unmatched'`"扩到任何带 `translationRowId` 的检查项；旧的"两击确认＋不可撤销"换成一次点击＋译表工作稿里的「已标不翻译」恢复条；未匹配行本来没有可绑对象 ⇒ 判成不丢内容，不吓用户。
+  - `1bab0030` **R1 补刀（真风险）**：从 Dexie 装载的是上次打开的旧稿，这期间用户在智能检测列表改的译文只进了 store；不盖回来面板就显示旧值，下一次编辑回流会把人写的抹掉（＝9-17 那句"双轨互相覆盖"的实况）。加 `overlayDocumentFromStore` 并在 adopt 里先盖再建会话。
+- **为什么先测再写**：三条新测试全部先看它们失败——面板 2 条红在"补的行 3→2、撤销键变 disabled"，抽屉 3 条红在"按钮不存在"，盖回 3 条红在"函数不存在"。修绿后才记账。
+- **验证（本机实跑退出码）**：`npx tsc --noEmit` rc=0；`npx eslint`（我改的 6 个文件）rc=0、0 error；`npx vitest run` **19 文件 149 测试通过**（本轮净增 13 条）；`npm run test:batch-row-contract` rc=0，**新增场景 10**：绑定行被按行排除时 浏览器投影 21 行＝助手 evidence INCLUDED 21＝服务端 units>0 的 21 个令牌，排除行 0 单位 0 对象、原因文案逐字「用户已忽略该行」；`npm run test:trust-chain` rc=0；`i18n-report` 1188/1188＝100%（新增 11 条中文文案配了英文，这条门只许 100）。
+- **我自己踩的坑（记下来免得再踩）**：① 用 `node` 以 latin1 读改写 `working-document.ts`，把 431 行的 UTF-8 弄坏（`git diff` 显示整文件重写、TextDecoder fatal 报错）——处置＝坏件备份到临时目录→`git restore` 单文件（该文件未提交改动只有我的）→改用 Edit 重做→复核 cr=lf、numstat 37/0；教训＝这棵树是 CRLF＋中文，改既有源文件一律走 Edit/Write。② 场景 10 第一版把断言打在 evidence 行不存在的 `rowId` 字段上（evidence 只输出 rowToken），失败后先怀疑自己、读实现再改，没记成"层有问题"。③ 抽屉按钮标签写成多子节点 Fragment，经 Slot 渲染成空标签——单字符串＋`{langs}` 插值才对。④ 出包树没有 node_modules，preflight 三道门 3 秒即红＝环境红不是代码红；junction 依赖后多数门 PASS，`partial-index-guard` 在门链里 56 秒判红而**单独跑 rc=0（GREEN）**＝同树并发争用，不记成代码缺陷。
+- **未做（如实）**：① **R2-b 软删**（"删掉这行"从工作稿消失）没做——要先把"这行没了"表达进回流层，且删除会进 `scopeDecisionDigest`＝作废既有确认，那条得连报价口径一起谈；② **R3**（四种"空"分文案＋Excel 原行号＋导入丢弃计数）没动；③ 逐语言"不翻译"仍无原语（`EXCLUDED_NO_TRANSLATION` 至今零生产者）；④ 多稿共用忽略表的跨稿语义未改、仍标未核实（ISSUES #275）；⑤ **本轮没有登录态真浏览器点验**，测试站是否已带上这三笔见下一条部署记录。
+- **交付**：本轮无新交付件（方案与模拟仍是 20261023 那两份）；HANDOFF 已在同一提交里标注【合同变更】与偏差登记（develop `docs/HANDOFF.md:1`）。
+
+## 2026-10-23 22:1x 助手整改 v2 推进：自有 diff 深钻证伪干净＋第 6 步 HTTP 卫生三件实测落地｜分支 codex/assistant-state-guard-20261023 @ 66cbb30e（本会话｜Owner 令「继续对抗式审查钻到最深处，然后按方案执行」）
+
+- **深钻证伪（对自己 01ee489e 的独立四探针，全部证伪/存量）**：① `migrateOldConfig`（server.js:826-836）在 CONFIG_FILE 存在时直接 return——读失败期不可能走到迁移写盘；② journal 写入路径 EPERM 逃逸（execution-journal.js updateExecutionJournal 调用链无 try 包裹）为**旧实现同有行为**，本次改动未引入、且归档语义比旧的"顶掉 .bak"更保证据，记 Pre-existing；③ `restrictAclToCurrentUser` 删除后全目录 grep rc=1＝0 残留引用；④ smoke 复跑 rc=0。
+- **v2 第 6 步落地（66cbb30e，server.js +25/−1）**：① `cors()` 恒补 `Vary: Origin`；② 预检带 `Access-Control-Request-Private-Network: true` 时才应答 `Allow-Private-Network: true`；③ 请求入口拒非回环 Host → 421 `HOST_NOT_ALLOWED`（防 DNS 重绑定；端口取实际 `PORT`/TYGF_ASSISTANT_PORT 不写死）。MAJ-1（本机进程可伪造头）记接受风险。
+- **运行验证（真实起服务，TYGF_ASSISTANT_PORT=49999，dev 直跑 APP_DIR=__dirname 不触真实安装目录；默认 serverUrl=localhost:3000＝无外呼）**：六断言全绿——/ping 带 Vary: Origin；PNA 请求→应答头在、不请求→0；Host evil.com→421 且 [security] 警告落日志；Host localhost:49999→200；常规→200。托盘健康检查（TrayHost.cs:174 127.0.0.1:49152/queue/status）与白名单兼容；jsx 脚本 0 处直调 HTTP（grep -c 全 0）。实测后已按 PID 杀进程＋清理临时 .tygf_session/logs。
+- **遗留/阻塞**：TrayHost 致命闭锁需真建 exe 验收→随 3.7.25 bump 包；第 4① 回执最小证据闸被"两道合同门在本树跑不了＋develop 行排除同族并发"卡住（不动回执语义直到门能跑）；第 0 步（第一指标读数）等 Owner 定调度宿主。**等 Owner 一句**：分支 3 笔（3a220b9c/01ee489e/66cbb30e）推 GitHub 合 develop 吗——合流须走预演（行排除在飞）。
+
 ## 2026-10-23 20:4x 排版面板三令落地：撤 12 格＋自动字距接通｜commit 558384c9（本会话｜Owner 令「这些可以去掉了不做了／自动字距这个要做／继续对抗式审查钻到最深处」）
 
 - **落地内容（develop 树 6 文件，+142/−143）**：① 字符页 6 行 12 格→3 行 6 格、开关 8→2（撤下字号/缩放/对齐/语言/锯齿/大小写/上下标/下划线/删除线，Owner 令写不进＋未实测的一律不做）；② autoKerning 全链贯通：偏好校验＋归一拷贝（漏拷＝保存即丢，已防）＋浏览器映射产键＋结算条按映射真实产出标「会发/沿用」（不再固定标不发）＋面板三档下拉（沿用/度量标准/光学）；'follow'＝沿用＝不发，与助手归一同形（typography-profile.js:23 白名单本就收 METRICS/OPTICAL，执行器 applyTypography 带 0.51 容差读回比对——链条最后一环就是浏览器映射这一口）。

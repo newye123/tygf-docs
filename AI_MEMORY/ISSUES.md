@@ -2080,3 +2080,11 @@
 - **未核实（须实跑才能定性）**：批量模式"每稿一表"（`execute-step.tsx:190-193`）但忽略表是一张全局 `string[]`（`workbench-view.tsx:547`、执行侧 `execute-step.tsx:1087`），而行身份无「记录编号」时按内容派生（`workbench-revision.ts:34-42`；有合规编号时用 `record:编号`）⇒ 两份稿含同一句原文时，一次"不翻译／删掉这行"会**同时作用于两稿**，界面未说明。是否为刻意设计：仓内未找到裁决，**不得当作已定行为对外承诺**。定性证据＝一次 3 稿同原文的实跑，看被排掉的是 1 行还是 3 行。
 - **关联**：Owner 反馈原文"很多时候就卡在空行里面"＋要求增／删／撤回。方案与可点模拟见 `交付档案/执行方案/执行方案_20261023_工作台增删撤回与空行四例_对抗式审查.md`（同名 `_模拟_….html` 为可点件）。本轮零代码改动。
 - **增／删／撤回的定性（避免被当成三个新功能）**：`working-document.ts:58/:59` 有 `insertRows`/`deleteRows` 与反向补丁 `:197/:201-221`，撤销栈 `:302-376`；`insertRows` 唯一发命令方是 `reconciliation-actions.ts:135-148`（「补一行译文」），`deleteRows` **零调用方**；面板被写死只读（`workbench-view.tsx:5095-5101`，注释理由 `working-editor-panel.tsx:5`，2026-09-17），工具条在 `{!readOnly && (`（`:265`）内从不渲染。
+
+## #275 状态更新（2026-10-23 22:0x，本会话，develop@b2eb1e01 已推 GitHub）：主案已落修法（R2-a），副案四条未动
+
+- **主案已修**：行级"不翻译"不再只给"表比稿多"那一类行。新增 `src/lib/workbench/row-exclusion.ts` 的 `assessRowExclusion`（行身份现算现比、对不上返回 null），对象详情抽屉的按行动作扩到任何带 `translationRowId` 的检查项（`invalid_target`／`combined` 现在都有出口）；旧的"两击确认＋不可撤销"（`object-inspector.tsx:451-453`）撤掉，换成一次点击＋译表工作稿里的「已标不翻译」恢复条（作用域＝全部语言，每门语言的表里都列得出来）。排除仍走同一个 `ignoredTranslationRowIds` ⇒ 浏览器投影／助手 evidence／服务端报价／结算闸口径未变（合同变更已在同一提交里带 `smoke-batch-row-contract` **场景 10**：三层同集 21 行、排除行 0 单位 0 对象）。
+- **顺带修的另一条同源缺陷（登记时没写进去，补在这里）**：`invalid_target` 的抽屉底栏当时**只有「知道了」**——它既不在 `editable`（`kind==='missing'`）也不在 `gotoReview`（`unmatched|duplicate_source|combined`）分支里，所以校对页那句「前往补全」点开后**一个动作都没有**。现在这条路径有按行动作了。
+- **副案未动（如实）**：① 空行静默丢弃＋行号压缩（三处丢弃点、全仓无丢弃计数）；② `invalid_target` 与 `combined` 共用同一个 `V15_INVALID_TARGET` 同一句话；③ `EXCLUDED_NO_TRANSLATION` 仍零生产者（逐语言"不翻译"到今天仍无原语）；④ 粘贴保留中间空行 vs 导入丢弃 的不一致。
+- **仍未核实**：多稿共用一张忽略表是否为刻意设计（同原文跨稿同时生效）——需一次 3 稿同原文实跑才能定性，本轮未做。
+- **状态口径**：修法已落 R2-a（待 Owner 在测试站点复验）；R2-b（软删）与 R3（拆四种类"空"＋Excel 原行号＋丢弃计数）尚未开工。
