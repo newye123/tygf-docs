@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行方案 · 排版面板三问深查（2026-10-23）</title>
+<style>
+  :root {
+    --bg: #fafaf9; --card: #ffffff; --fg: #1c1917; --muted: #78716c;
+    --border: #e7e5e4; --teal: #0f766e; --teal-bg: #f0fdfa;
+    --amber: #b45309; --amber-bg: #fffbeb; --red: #b91c1c; --red-bg: #fef2f2;
+    --blue: #1d4ed8; --blue-bg: #eff6ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0a09; --card: #1c1917; --fg: #fafaf9; --muted: #a8a29e;
+      --border: #292524; --teal: #5eead4; --teal-bg: #042f2e;
+      --amber: #fbbf24; --amber-bg: #451a03; --red: #f87171; --red-bg: #450a0a;
+      --blue: #93c5fd; --blue-bg: #172554;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, sans-serif;
+    line-height: 1.75; font-size: 15px; padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h2 { font-size: 19px; margin: 40px 0 12px; padding-top: 18px; border-top: 2px solid var(--border); }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 14px 0; }
+  .verdict { border-left: 4px solid var(--teal); background: var(--teal-bg); padding: 14px 18px; border-radius: 8px; margin: 18px 0; }
+  .callout { border-left: 4px solid var(--amber); background: var(--amber-bg); padding: 12px 16px; border-radius: 8px; margin: 14px 0; font-size: 14px; }
+  .danger { border-left-color: var(--red); background: var(--red-bg); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--card); font-weight: 600; }
+  code { font-family: 'IBM Plex Mono', Consolas, monospace; font-size: 12.5px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+  .stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+  .stat { flex: 1 1 150px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 22px; letter-spacing: -0.02em; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .q { font-weight: 700; margin-top: 16px; }
+  .a { margin: 4px 0 0; }
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .foot { margin-top: 48px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 9px; border: 1px solid var(--border); color: var(--muted); margin-left: 6px; vertical-align: 2px; }
+  .tag.ok { color: var(--teal); border-color: var(--teal); }
+  .tag.warn { color: var(--amber); border-color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>执行方案 · 排版面板三问深查</h1>
+<div class="meta">2026-10-23 ｜ 基线 develop 工作树 <code>2fed25dc</code>（当轮实测）｜ 触发：Owner 两张界面截图＋「应该做到上面…怎么现在还有选择字重这一项在？图二这些全部都不可用？」</div>
+
+<div class="verdict">
+<b>一句话结论：</b>「体」下拉确实是违约遗留，但它不能单独删——今天的引擎就是把<b>一张脸写给一门语言的全部文字层</b>，连"只选字族"都会把粗体层压平成常规。撤格子必须和助手侧<b>逐层配脸</b>捆在一起交付。界面和明细本来就是同一份存档（通着的），坏在好用的搜索器被藏进了折叠区。灰底 20 格里 4 格是活的，其余"写不进／没接／没试"三种原因各不相同，没谎报，但看着像全废。
+</div>
+
+<h2>1. 三问三答</h2>
+
+<div class="card">
+<p class="q">问一「应该做到上面」——顶部与明细通不通？</p>
+<p class="a">通。<b>是同一份存档的两面</b>：截图里「体=Bold」与折叠区「NotoSansHans-Bold」就是同一份数据（选脸只有一处写入，折叠区摘要行读的就是它）。真正的问题是：<b>搜索式选字器（1293 款里打字找）只存在于折叠的「高级与结算明细」里</b>，顶部是一格 1293 项的原生下拉没法找；解析出的脸名也只在折叠区显示。看起来断，实际是放错了地方。</p>
+<p class="a"><b>修法</b>：搜索上移到顶部「字」格＋顶部直显脸名。纯界面，不碰引擎。</p>
+</div>
+
+<div class="card">
+<p class="q">问二「怎么还有选择字重这一项在？」</p>
+<p class="a">「体」下拉是 10-18 旧面板的遗留；10-22 方案的 S5「界面减一格」本就计划撤它，一直没排上。但更深一层：<b>就算不碰「体」、只选字族，代码也会自动回落到常规体</b>，粗体层照样被压平——违约的不是那个下拉，是"一语一张脸"这条旧管线（执行器把同一张脸逐层写给全语言，写完读回比对）。</p>
+<p class="a"><b>修法</b>：撤格子与助手侧逐层配脸（S4）捆死交付，否则只是把决定藏进黑盒、错误照旧发生。</p>
+</div>
+
+<div class="card">
+<p class="q">问三「图二这些全部都不可用？」</p>
+<table>
+<tr><th>状态</th><th>格子</th><th>真实原因</th></tr>
+<tr><td><b>活的（4）</b></td><td>字、体、行（固定磅）、字距</td><td>今天就会随执行下发</td></tr>
+<tr><td>PS 写得进、我们没接（4）</td><td>自动字距、基线、伪粗 T、伪斜 I</td><td>执行器已会写、白名单也收，<b>只差浏览器映射函数不产这三个键</b>；结算条"不会发送"是实话</td></tr>
+<tr><td>本版 PS 实测写不进（5）</td><td>语言、大小写 TT/Tt、下划线 U、删除线 S</td><td>10-17/10-18 真机探针实测：语言读取即抛内部错误；其余"写了没有变化"</td></tr>
+<tr><td>还没试过（7）</td><td>字号、水平/垂直缩放、垂直对齐、消除锯齿、上标、下标</td><td>未实测不猜；可并入下次真机探针窗一次测清</td></tr>
+</table>
+<p class="a">灰底没谎报，但"写不进"和"没试过"视觉一模一样，看着像全废——<b>是表达问题，不是能力问题</b>。</p>
+</div>
+
+<div class="callout">
+<b>另一个实锤：</b>另一会话在台账里写"字重归一模块没接进执行链"——本轮复跑 grep <b>属实</b>：归一模块（commit <code>ca74bd64</code>，153 行）目前只有测试脚本在用，执行链调用为零。同时好消息：当时挡住逐层配脸的四个引擎文件<b>均已提交、现场干净</b>，现在就能开工——且逐层配脸主刀<b>不需要</b>等真机探针读数，此前"读数前一行不改"的自我禁令过宽，在此更正。
+</div>
+
+<h2>2. 关键证据（本会话当轮实读）</h2>
+<div class="card">
+<ul>
+<li>执行器单脸写全语言：<code>TYGF_V15_Thin_Executor.jsx:62-71</code>（<code>item.font = profile.face</code> 逐层执行，写完读回比对留痕）。</li>
+<li>只选字族也压平粗体：<code>font-picker.tsx:47-56</code> 选族按当前样式找脸，找不到走 <code>typography-capabilities.ts:461</code> 的 regular 回落。</li>
+<li>顶部与明细同源：两处都写/读 <code>profiles[activeLang]</code>（面板 <code>:452-462</code> 写、<code>:811-812</code> 折叠区摘要读）。</li>
+<li>归一模块未接线：grep 实测 require 只在 <code>smoke-typography-family.mjs:14</code> 与 <code>psprobe/weight_census_score.mjs:15</code>；执行链 0 命中。</li>
+<li>S4 挡板解除：10-22 方案 V-4 点名的四文件本轮 <code>git status</code> 实测不脏；当前脏面换了一批站点文件，<b>含 typography-panel.tsx（3 行在飞）</b>——动面板前先处理共写。</li>
+<li>普查支撑默认路径：42 份母版／2,526 层，字重可判 97.8%、层内混字重 2.6%、行距机制 31.6% 文件里没记。</li>
+</ul>
+</div>
+
+<h2>3. 对抗式自查（封驳我自己这轮）</h2>
+<table>
+<tr><th>ID</th><th>判定</th><th>内容</th></tr>
+<tr><td>Z-1</td><td><b>自我更正</b></td><td>此前"S4/S7 读数前一行不改"收窄：S4 主刀用的是今天已在用的写法与读回留痕，不需要新探针读数；等读数的是 S4a、S7 和"未实测"7 格。依据：普查把可定档从 77.4%（本机清单）补到 97.8%（真稿层口径），且现场已清。</td></tr>
+<tr><td>Z-2</td><td>歧义双修</td><td>"应该做到上面"箭头有两种读法（搜索上移／脸名上移），两个修法都做，不追问。</td></tr>
+<tr><td>Z-3</td><td>避开的坑</td><td>"撤体格＋暂停字体下发"的过渡态会让内测用户已存偏好静默失效＝违反"不得静默降级"红线 ⇒ 不做半截。</td></tr>
+<tr><td>Z-4</td><td>Nit</td><td>基线/缩放在能力表与 10-20 分档文档里分类不一致，刀三统一。</td></tr>
+</table>
+
+<h2>4. 执行方案（三刀）</h2>
+
+<div class="card">
+<p><b>刀一 · 顶部好用化</b><span class="tag ok">今天落 · 纯界面</span></p>
+<ul>
+<li>搜索式选字上移到顶部「字」格（复用现有键盘模型与过滤）；顶部直显解析出的 PostScript 脸名。</li>
+<li>体格本刀不动（理由见问二）。</li>
+<li>共写处理：面板上有别会话 3 行在飞——等提交或按块级暂存避开，不卷入。</li>
+<li>判据：面板两条测试门更新并通过、tsc 不新增报错、390px 不溢出。工时约半天。</li>
+</ul>
+</div>
+
+<div class="card">
+<p><b>刀二 · 逐层配脸＋撤体格</b><span class="tag warn">合同变更 · 捆死交付</span></p>
+<ul>
+<li>助手侧：白名单加字族键；prepare 按层定档配同档脸；配不上不写＋报告点名（缺档用最近档＋选定前预警，Owner 已拍；混字重 2.6% 整层不动＋点名）。</li>
+<li>执行器：按层查脸替换单脸写法；版本 bump＋出厂件重打，走 GitHub 三段轨上测试站。</li>
+<li>界面：撤「体」格；字族下拉带「本机 N 档字重」；缺档当场预警；结算明细同步改。</li>
+<li>判据：四条排版测试门全量更新并通过。工时约 2—3 天。</li>
+</ul>
+</div>
+
+<div class="card">
+<p><b>刀三 · 表达与边角</b><span class="tag">可选</span></p>
+<ul>
+<li>"未实测"7 格并入下次真机探针窗一次测清，测完要么接通要么灰化。</li>
+<li>自动字距/伪粗接线只差半天，但真稿伪粗占比 0.2%（4 层）⇒ 建议不接。</li>
+<li>统一两份文档对基线/缩放的分类。</li>
+</ul>
+</div>
+
+<h2>5. 我已拍的三件（可推翻）</h2>
+<div class="card">
+<ol>
+<li>体格不单独撤，随刀二撤——避免"藏起决定、错误照旧"。</li>
+<li>刀一先行——不依赖引擎与真机读数，今天可落。</li>
+<li>刀二现在具备开工条件——方案发出后即按刀二顺序开工，先助手侧纯函数接线（不动在飞面板文件）。</li>
+</ol>
+</div>
+
+<div class="callout danger">
+<b>未核实：</b>"写不进/没变化"5 格的原始真机读数出自 10-17/10-18 探针记录，本轮未复跑（PS 在飞不抢实例），证据等级 B。"应该做到上面"按双修法覆盖，若理解偏了请一句纠偏。
+</div>
+
+<div class="foot">图译工坊 · 执行方案 · 2026-10-23 ｜ 同名 md 与本件同目录；飞书通道已按 Owner 令发送本 md</div>
+</div>
+</body>
+</html>
