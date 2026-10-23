@@ -1,3 +1,12 @@
+## 2026-10-23 23:0x 免 PS 引擎端到端跑通＋抓到全稿字距静默改写（新案 #276）｜Owner 令「把这个免PS引擎给我装上，并要运行起来，继续对抗式审查钻到最深处」
+
+- **先纠正前提（现场实测）**：引擎**不用装**——现役助手 3.7.24（PID 40276，19:44 起）已于 20:03:20 起出常驻引擎进程（图译工坊引擎.exe，PID 50936，父＝助手）。PS 22.0 两实例在跑、握手 ready。引擎身份实跑回显 `tygf-engine 0.7.0 (dev build)`；钉值 `3cb06ed1…b8829e` 在 vendor／dist/bin／文件实算三处一致（dist 里 38.6MB 那个 `图译工坊引擎.exe` 是**另一件** `27a687eb…`，不是钉住的那份）。"本机三键已开"＝行为反推（助手只在 PS 未跑＋旗标开时起探针），配置值属提权进程读不到，记未核实。
+- **端到端（真稿副本，原件未动）**：挑稿即踩两坑——语料最小真稿（25.5MB）是零文字层成品稿；5857/6877 母版全 PSB（清洗器硬拒 PSD_SANITIZE_UNSUPPORTED_PSB）。改用 616 层／175 文字层真稿：引擎 info 3 秒读完 25MB 真稿（**扫描／就绪道不需 PS 可用**）→ 单层 type.edit 另存 → psd-sanitize 摘全局 Txt2 1 块／437,190 B（10-20 那修没回潮）→ 盘上逐层回读（新文落盘对、auto_leading/tracking/leading_pt/transform 未变）。
+- **深钻命门（F-1，已登记 ISSUES #276）**：全部 175 文字层源稿 vs 成品逐层对读＝**175/175 光学→度量**，含未触碰层。与本日刚上线的"自动字距三档"（558384c9）直接冲突；属"打开后不是同一份稿"级。复现件 `tmp/pc-run-20261023/kerning-census.cjs`＋`kerning-source/output.json`。附 F-2 体积 176,855,002→263,343,834 B（+49.2%）。
+- **纪律守住**：写回面是守卫 `scripts/smoke-pc-wiring-freeze.mjs` **刻意冻结**（挂 #6968/#6971/#6129 三个上游 P0），**未**接进 server.js、未改守卫、未动本机助手配置、未杀常驻引擎进程。
+- **交付**：执行报告 md＋HTML＋飞书版（send rc=0），归 `交付档案/执行报告/执行报告_20261023_免PS引擎端到端跑通与全稿字距改写取证.*`；验收件留在 `tmp/pc-run-20261023/out.psd`（252MB）等 Owner PS 2021 目检。
+- **等 Owner 拍 A/B/C**：A 只认读稿（已达成，另补常驻会话回收口子）／B 要能交付＝先修 #276（建议引擎侧保留 kerning，助手侧回写当临时挡板）／C 亲验 out.psd。
+
 ## 2026-10-23 21:5x 工作台 R1＋R2-a 落地（Owner 拍板"按这个走"的前两刀）｜编辑轨放开＋缺译行能一键不翻译＋撤回入口；R2-b/R3 未做
 
 - **要答什么**：Owner 看完增删撤回方案与可点模拟后说"我觉得可以，按这个走吧"＝批准 R1→R4 顺序与我推荐的两项决策（编辑轨交给工作稿命令模型；删除语义先做 A＋B）。本轮动的是 R1 与 R2-a。
@@ -8,9 +17,16 @@
 - **为什么先测再写**：三条新测试全部先看它们失败——面板 2 条红在"补的行 3→2、撤销键变 disabled"，抽屉 3 条红在"按钮不存在"，盖回 3 条红在"函数不存在"。修绿后才记账。
 - **验证（本机实跑退出码）**：`npx tsc --noEmit` rc=0；`npx eslint`（我改的 6 个文件）rc=0、0 error；`npx vitest run` **19 文件 149 测试通过**（本轮净增 13 条）；`npm run test:batch-row-contract` rc=0，**新增场景 10**：绑定行被按行排除时 浏览器投影 21 行＝助手 evidence INCLUDED 21＝服务端 units>0 的 21 个令牌，排除行 0 单位 0 对象、原因文案逐字「用户已忽略该行」；`npm run test:trust-chain` rc=0；`i18n-report` 1188/1188＝100%（新增 11 条中文文案配了英文，这条门只许 100）。
 - **我自己踩的坑（记下来免得再踩）**：① 用 `node` 以 latin1 读改写 `working-document.ts`，把 431 行的 UTF-8 弄坏（`git diff` 显示整文件重写、TextDecoder fatal 报错）——处置＝坏件备份到临时目录→`git restore` 单文件（该文件未提交改动只有我的）→改用 Edit 重做→复核 cr=lf、numstat 37/0；教训＝这棵树是 CRLF＋中文，改既有源文件一律走 Edit/Write。② 场景 10 第一版把断言打在 evidence 行不存在的 `rowId` 字段上（evidence 只输出 rowToken），失败后先怀疑自己、读实现再改，没记成"层有问题"。③ 抽屉按钮标签写成多子节点 Fragment，经 Slot 渲染成空标签——单字符串＋`{langs}` 插值才对。④ 出包树没有 node_modules，preflight 三道门 3 秒即红＝环境红不是代码红；junction 依赖后多数门 PASS，`partial-index-guard` 在门链里 56 秒判红而**单独跑 rc=0（GREEN）**＝同树并发争用，不记成代码缺陷。
-- **部署状态（22:4x 实测）**：出包在 detached 树 `worktrees/pack-b2eb1e01`（node_modules 走 junction，不复制整树）⇒ `release/test/tygf-test-b2eb1e01fbef.zip` 54,055,370 B、SHA-256 `1115EC03…`、收据同目录，`package-release` rc=0（门链里 `partial-index-guard` 第一次 56 秒判红、单跑 rc=0＝同树并发争用，不记成代码缺陷）。**上传那一步 Owner 在终端按住（scp 未执行，服务器无残留）**，故测试站仍 `9f6f5a29`＝不含今晚三笔；已在 22:42:53 发飞书说明"已进 GitHub、测试站未上"。
+- **部署完成（23:38 实测，覆盖上一条"未上"）**：Owner 令"部署测试站并核验"⇒ 分块续传（4 块逐块 sha256 全 MATCH；首趟四块都被我自己设的 `timeout 900` 掐成 rc=124，不是链路故障）→ 远端拼接整件 SHA＝收据大写值 `1115EC03…8F94`、54,055,370 B → 收据传完字节一致 → `setsid` 跑 `deploy-test-release.sh`，远端打印 `deployed commit b2eb1e01fbef528fd3075a164672f2fc859e2710`＋`archive SHA-256 1115EC03…`＋备份 `/var/www/tygf-test-backups/deploy-20261023_232953-b2eb1e01fbef`；构建真跑了（日志有 `next build` 全程与路由表，`.next/BUILD_ID` mtime 23:32:14；迁移体检 `baseline=20 candidate=20 missing=0`）。
+- **上线核验读数**：`.deploy-commit`＝b2eb1e01 全号；`http://127.0.0.1:3001/` **200 / 104,198 B**；`/api/runtime-provenance`＝`ok:true, environment:test, status:BOUND, webCommitSha:b2eb1e01…`；PM2 三进程 online、`↺=0`；**本轮新串在服役构建里**（`已标不翻译`→`.next/static/chunks/23czyp3vt20wh.js`；`这行不翻译`／`这里就是译表的编辑处`→`2bwfn6uffhw6_.js`＋同一 SSR i18n 块）。
+- **公网 403 定性（不是故障）**：`https://test.tuyigf.com/` 本机 curl 403（162 B／换 UA 564 B）。源站 nginx 自己返回——`/etc/nginx/conf.d/tygf-test-gate.conf` 的钥匙门（`$arg_key` 或 Cookie `tygf_gate`，另有助手路由白名单）；今天之前轮转日志已有 222／186 条 403 ⇒ 部署前就在拦，与本笔无关。`/api/runtime-provenance` 在白名单内，故直连口与门内浏览器都能验。
+- **别手红不记我账（同轮取证）**：本地完整门链在 GitHub 现头 `6bf9d7ae` 上 `test:trust-chain` 判红，A/B 实测＝同一条 smoke 在 `b2eb1e01` rc=0、在 `6bf9d7ae` rc=1，红因是 `scripts/smoke-local-assistant-errors.mjs:106` 未跟随 `t()` 包装（别手 22:42 的 `831a2bca` 已为批次侧立了同款改法，这条漏了）；该文件此刻是 `M`（别手正在改），我没动它。
 - **未做（如实）**：① **R2-b 软删**（"删掉这行"从工作稿消失）没做——要先把"这行没了"表达进回流层，且删除会进 `scopeDecisionDigest`＝作废既有确认，那条得连报价口径一起谈；② **R3**（四种"空"分文案＋Excel 原行号＋导入丢弃计数）没动；③ 逐语言"不翻译"仍无原语（`EXCLUDED_NO_TRANSLATION` 至今零生产者）；④ 多稿共用忽略表的跨稿语义未改、仍标未核实（ISSUES #275）；⑤ **本轮没有登录态真浏览器点验**（测试站未更新，无法点验）。
 - **交付**：本轮无新交付件（方案与模拟仍是 20261023 那两份）；HANDOFF 已在同一提交里标注【合同变更】与偏差登记（develop `docs/HANDOFF.md:1`）。
+
+## 2026-10-23 22:4x 助手整改 3 笔合入 develop 并推 GitHub｜merge 6bf9d7ae（Owner 令「好来吧」授权推 GitHub 合 develop）
+
+- **合流预演**：merge-tree rc=0、0 冲突（develop 自 cdade2db 领先 12 笔但 download/local-assistant/ 0 笔改动＝与行排除线零重叠）。**合流**：`git merge` ort 干净并入 3 文件 +327/−22；别手在改的 6 文件（typography/i18n）原样未动（porcelain 前后逐行 diff 相等）。**验证**：合并树 node --check rc=0＋状态持久化 smoke rc=0。**推送**：分支与 develop 均上 GitHub（origin/develop=6bf9d7ae，未推 0）；**未部署测试站**（出包上站等 Owner 另行授权）。
 
 ## 2026-10-23 22:1x 助手整改 v2 推进：自有 diff 深钻证伪干净＋第 6 步 HTTP 卫生三件实测落地｜分支 codex/assistant-state-guard-20261023 @ 66cbb30e（本会话｜Owner 令「继续对抗式审查钻到最深处，然后按方案执行」）
 
