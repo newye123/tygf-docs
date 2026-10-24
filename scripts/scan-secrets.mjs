@@ -14,49 +14,52 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-// 每一类都配一条"已知坏样本"用于阳性对照
+// 阳性对照样本一律用片段拼接构造：
+// ① 避免扫描器自匹配自身源码  ② 避免把真实项目名/平台专名写进通用工具
+const S = (parts) => parts.join('')
+
 const RULES = [
   {
     id: 'private-key',
     label: '私钥文件头',
     re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/,
-    positive: '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...',
+    positive: S(['-----BEGIN ', 'RSA ', 'PRIVATE KEY-----']),
   },
   {
     id: 'github-token',
     label: 'GitHub Token',
     re: /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b|\bgithub_pat_[A-Za-z0-9_]{50,}\b/,
-    positive: 'token = ghp_' + 'a'.repeat(36),
+    positive: S(['gh', 'p_', 'a'.repeat(36)]),
   },
   {
     id: 'openai-key',
     label: 'OpenAI / 通用 sk- 密钥',
     re: /\bsk-[A-Za-z0-9_-]{20,}\b/,
-    positive: 'OPENAI_API_KEY=sk-' + 'x'.repeat(32),
+    positive: S(['s', 'k-', 'x'.repeat(32)]),
   },
   {
     id: 'aws-key',
     label: 'AWS Access Key',
     re: /\bAKIA[0-9A-Z]{16}\b/,
-    positive: 'aws_access_key_id = AKIA' + 'Q'.repeat(16),
+    positive: S(['AK', 'IA', 'Q'.repeat(16)]),
   },
   {
-    id: 'feishu-webhook',
-    label: '飞书机器人 Webhook',
-    re: /open\.feishu\.cn\/open-apis\/bot\/v2\/hook\/[A-Za-z0-9-]{20,}/,
-    positive: 'https://open.feishu.cn/open-apis/bot/v2/hook/' + '11111111-2222-3333-4444-555555555555',
+    id: 'webhook-url',
+    label: '机器人 Webhook URL',
+    re: /open\.feishu\.cn\/open-apis\/bot\/v2\/hook\/[A-Za-z0-9-]{20,}|\/services\/[A-Za-z0-9]{8,}\/[A-Za-z0-9]{8,}\/[A-Za-z0-9_-]{20,}/,
+    positive: S(['https://open.', 'feishu.cn/open-apis/bot/v2/', 'hook/', '11111111-2222-3333-4444-555555555555']),
   },
   {
     id: 'generic-secret-assign',
     label: '密钥类变量赋值（password/secret/token = 长串）',
     re: /(?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)\s*[:=]\s*['"][^'"\s]{12,}['"]/i,
-    positive: 'DB_PASSWORD="Xk29fJ2mQp81Lz"',
+    positive: S(['DB_', 'PASS', 'WORD="', 'Xk29fJ2mQp81Lz', '"']),
   },
   {
     id: 'gate-token',
     label: '访问门令牌（set $xxx_token "长hex"）',
     re: /set\s+\$\w*token\w*\s+["'][0-9a-f]{16,}["']/i,
-    positive: 'set $tygf_test_token "abcdef0123456789abcdef0123456789";',
+    positive: S(['set $', 'demo_', 'tok', 'en "', '0123456789abcdef', '0123456789abcdef', '";']),
   },
 ]
 
@@ -124,6 +127,7 @@ if (fromFileIdx !== -1 && args[fromFileIdx + 1]) {
   const candidates = listRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
   for (const rel of candidates) {
     const abs = path.resolve(rel)
+    if (abs === SELF_PATH) continue
     let st
     try {
       st = fs.statSync(abs)
