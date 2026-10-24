@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>模拟台 · YouTube 视频流水线与 SERP 位（2026-10-18）</title>
+<style>
+:root{
+  --bg:#f4f6f8;--surface:#fff;--sunk:#eaeef3;--ink:#131820;--ink-2:#3d4757;--muted:#667185;
+  --line:#dbe1ea;--line-strong:#c2cbd9;--blue:#1b5bd0;--blue-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  /* 产品官网设计令牌（worktrees/develop/src/components/site/home-v17.css:13-35 现读） */
+  --ink-ink:#111311;--muted-s:#6f746f;--line-s:#e0e3e0;--green:#2d7356;--green-soft:#eef6f1;
+  --amber:#9a6505;--red:#c24b4b;--radius-l:26px;--radius-s:16px;
+  --font-body:"Noto Sans SC","Source Han Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --pad:clamp(16px,3.4vw,34px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--blue:#78a8ff;--blue-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--ink-ink:#111311}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(22px,4vw,44px) var(--pad) 60px;display:flex;flex-direction:column;gap:26px}
+header.top h1{font-size:clamp(1.4rem,3.6vw,2rem);margin:0;line-height:1.25}
+header.top .eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+header.top p{margin:8px 0 0;max-width:78ch;color:var(--ink-2);font-size:.95rem}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding-bottom:0}
+.tab{appearance:none;border:1px solid var(--line);border-bottom:none;background:var(--sunk);color:var(--ink-2);font:inherit;font-size:.88rem;padding:9px 15px;border-radius:9px 9px 0 0;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:600;border-color:var(--line-strong);position:relative;top:1px}
+.panel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:0 12px 12px 12px;padding:var(--pad)}
+.panel.on{display:block}
+h2{font-size:1.05rem;margin:0 0 6px}
+.note{font-size:.86rem;color:var(--muted);margin:0 0 18px;max-width:88ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.68rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.info{background:var(--blue-soft);color:var(--blue)}
+
+/* ---------- 舞台 ---------- */
+.stagearea{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.stagearea{grid-template-columns:1fr}}
+.stage{position:relative;aspect-ratio:16/9;background:#0c0f0d;border-radius:var(--radius-l);overflow:hidden;box-shadow:0 18px 44px -22px #0008}
+.still{position:absolute;inset:0;opacity:0;transition:opacity .45s ease,transform 1.2s linear;transform:scale(1);padding:5% 7% 12%;display:flex;flex-direction:column;justify-content:center;gap:14px;background:radial-gradient(120% 120% at 15% 0%,#1d2620 0%,#0c0f0d 62%);color:#f2f5f1}
+.still.on{opacity:1;transform:scale(1.05)}
+.kick{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#8fd3b3}
+.big{font-size:clamp(1.3rem,3.1vw,2.15rem);line-height:1.28;font-weight:700;text-wrap:balance;margin:0}
+.sub{font-size:clamp(.82rem,1.5vw,.98rem);color:#bcc6bd;margin:0;max-width:44ch}
+.watermark{position:absolute;left:8%;bottom:6%;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;color:#ffffff55}
+.mock{margin-top:6px;background:#f7f9f6;color:#111311;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 26px -14px #0009}
+.mock .row{display:flex;align-items:center;gap:8px;font-size:.76rem;border-bottom:1px solid #e6eae4;padding-bottom:6px}
+.mock .row:last-child{border-bottom:none;padding-bottom:0}
+.mock .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+.mock .dot.a{background:var(--amber)}.mock .dot.r{background:var(--red)}
+.mock .bar{flex:1;height:7px;border-radius:4px;background:#e3e7e1}
+.mock .bar.short{max-width:38%}
+.mock .lbl{font-family:var(--font-mono);font-size:.66rem;color:#6f746f;letter-spacing:.08em}
+.mock .chip{border:1px solid #dfe4dd;border-radius:999px;padding:2px 8px;font-size:.7rem;background:#eef6f1;color:#2d7356}
+.mock .chips{display:flex;gap:6px;flex-wrap:wrap}
+.cta{margin-top:10px;display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:.9rem;color:#111311;background:#eef6f1;border:1px solid #cfe4d8;border-radius:999px;padding:8px 16px;width:max-content}
+@media (max-width:640px){
+  .still{gap:8px;padding:4% 5% 13%}
+  .big{font-size:1.12rem}
+  .sub{font-size:.74rem;max-width:34ch}
+  .still:has(.mock) .sub{display:none}
+  .mock{padding:8px 9px;gap:5px;margin-top:2px}
+  .mock .row{font-size:.64rem;padding-bottom:4px}
+  .mock .chip,.mock .lbl{font-size:.6rem}
+  .cta{font-size:.72rem;padding:6px 12px}
+  .mocktag{font-size:.55rem;padding:3px 7px}
+}
+.mocktag{position:absolute;z-index:6;right:3%;top:5%;background:#c24b4bee;color:#fff;font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;padding:4px 10px;border-radius:999px}
+.controls{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.btn{font:inherit;font-size:.84rem;padding:7px 14px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.prime{background:var(--green);border-color:var(--green);color:#fff}
+.dots{display:flex;gap:6px}
+.dots button{width:11px;height:11px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer;padding:0}
+.dots button[aria-current="true"]{background:var(--green);border-color:var(--green)}
+.clock{font-family:var(--font-mono);font-size:.8rem;color:var(--muted)}
+.rail{height:4px;background:var(--sunk);border-radius:3px;overflow:hidden;margin-top:10px}
+.rail i{display:block;height:100%;background:var(--green);width:0}
+.gatebox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:11px}
+.gatebox .hd{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.gline{font-size:.86rem;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.gline b{color:var(--ink);font-weight:600}
+.warnstrip{border-left:3px solid var(--bad);background:var(--bad-soft);padding:9px 12px;border-radius:0 8px 8px 0;font-size:.84rem;color:var(--ink-2)}
+
+/* ---------- 表 / 卡 ---------- */
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.8rem}
+.cards{display:flex;flex-direction:column;gap:11px}
+.card{border:1px solid var(--line);border-radius:11px;padding:14px 16px;display:flex;flex-direction:column;gap:7px;background:var(--surface)}
+.card.block{border-left:3px solid var(--bad)}.card.pass{border-left:3px solid var(--ok)}.card.heavy{border-left:3px solid var(--warn)}
+.card .top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.card p{margin:0;font-size:.89rem;color:var(--ink-2)}
+
+/* ---------- SERP ---------- */
+.serpgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.serpgrid{grid-template-columns:1fr}}
+.gpage{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.gbar{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--sunk)}
+.gbar .q{flex:1;font-size:.9rem;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gsec{padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.gsec:hover{background:var(--sunk)}
+.gsec.sel{background:var(--blue-soft);box-shadow:inset 3px 0 0 var(--blue)}
+.gsec .hd{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:.78rem;color:var(--muted);font-family:var(--font-mono);margin-bottom:7px}
+.aio{font-size:.88rem;color:var(--ink-2);margin:0 0 8px}
+.cites{display:flex;gap:6px;flex-wrap:wrap}
+.cite{font-family:var(--font-mono);font-size:.68rem;border:1px solid var(--line);border-radius:5px;padding:2px 7px;color:var(--muted)}
+.cite.hot{border-color:var(--green);color:var(--green)}
+.glink{color:var(--blue);font-size:1.02rem;text-decoration:none}
+.gurl{font-size:.78rem;color:var(--muted);margin:2px 0 4px}
+.gdesc{font-size:.85rem;color:var(--ink-2);margin:0}
+.carousel{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
+.thumb{flex:none;width:172px}
+.thumb .im{aspect-ratio:16/9;border-radius:10px;background:linear-gradient(135deg,#1d2620,#0c0f0d);position:relative;overflow:hidden}
+.thumb .im span{position:absolute;left:8px;top:8px;font-size:.6rem;font-family:var(--font-mono);background:#c24b4bee;color:#fff;padding:2px 6px;border-radius:4px}
+.thumb .im i{position:absolute;right:8px;bottom:8px;font-size:.62rem;font-family:var(--font-mono);color:#ffffffaa;background:#0007;padding:1px 6px;border-radius:4px}
+.thumb .cap{font-size:.76rem;color:var(--ink-2);margin-top:5px;line-height:1.45}
+.explain{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--sunk);display:flex;flex-direction:column;gap:9px;min-height:170px}
+.explain .hd{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.explain p{margin:0;font-size:.88rem;color:var(--ink-2)}
+
+/* ---------- 待拍 ---------- */
+.asks{display:flex;flex-direction:column;gap:10px}
+.ask{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:var(--surface)}
+.ask input{margin-top:5px;width:17px;height:17px;accent-color:var(--green)}
+.ask .tx{font-size:.9rem;color:var(--ink-2)}
+.ask .tx b{display:block;color:var(--ink);font-weight:600;margin-bottom:3px}
+.saved{font-family:var(--font-mono);font-size:.74rem;color:var(--muted)}
+footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">模拟台 / 更进一步 / 2026-10-18 · 全部画面为构图示意，非真实录屏</div>
+  <h1>把「YouTube 频道 + agent 出片」这套方案摆成看得见的东西</h1>
+  <p>四页：① T1 选题的成片帧与每帧的真话闸 ② 三层选型栈（哪层已有、哪层真缺、哪层判除）③ Google 结果页三种位——视频到底推得动哪一个 ④ 不依赖后台归属的度量台与停投判据。配套方案：<code>交付档案/宣传与运营/执行方案_20261018_YouTube频道与视频流水线_六路对抗审查.md</code></p>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-p="p1">① 成片帧模拟</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="p2">② 三层选型栈</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="p3">③ SERP 三种位</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="p4">④ 度量台与停投判据</button>
+</div>
+
+<!-- ============ P1 ============ -->
+<section class="panel on" id="p1">
+  <h2>T1 · 一次写回 12 个语种 —— 32 秒，一镜一主张</h2>
+  <p class="note">选题尺：<strong>一条视频＝一个买家问题＝一个查询＝一次真实跑批录屏</strong>。下面每一帧右下角都挂着它自己的真话闸状态——凡标「禁上屏」的句子，成片里不许出现；这一屏同时在演示为什么静态截图板不够用：真正的说服力在 f02–f04 的"操作真的发生了"。</p>
+  <div class="stagearea">
+    <div>
+      <div class="stage" id="stage">
+        <div class="mocktag">构图示意 · 非真实录屏</div>
+        <div class="still on">
+          <div class="kick">TWELVE LANGUAGES</div>
+          <h3 class="big">改到第几个了？</h3>
+          <p class="sub">翻译公司交回表格，图层还得一格一格贴。</p>
+          <div class="watermark">f01 · 0.0–2.4s · 无主张</div>
+        </div>
+        <div class="still">
+          <div class="kick">BATCH REWRITE</div>
+          <h3 class="big">已有译文，一次写回</h3>
+          <p class="sub">表格拖进来，逐语言检查、按对象写入文字图层。</p>
+          <div class="mock">
+            <div class="row"><span class="lbl">批次 BATCH</span><div class="bar"></div><span class="chip">12 个目标语种</span></div>
+            <div class="row"><span class="dot"></span><span class="lbl">TW</span><div class="bar"></div></div>
+            <div class="row"><span class="dot"></span><span class="lbl">EN</span><div class="bar"></div></div>
+            <div class="row"><span class="dot a"></span><span class="lbl">DE</span><div class="bar short"></div></div>
+          </div>
+          <div class="watermark">f02 · 2.4–9.4s · 缺录屏层</div>
+        </div>
+        <div class="still">
+          <div class="kick">PER-OBJECT WRITE-BACK</div>
+          <h3 class="big">逐语言检查，按对象落层</h3>
+          <div class="mock">
+            <div class="row"><span class="lbl">图层 LAYER 01</span><div class="bar"></div><span class="dot"></span></div>
+            <div class="row"><span class="lbl">图层 LAYER 07</span><div class="bar"></div><span class="dot"></span></div>
+            <div class="row"><span class="lbl">图层 LAYER 12</span><div class="bar short"></div><span class="dot r"></span></div>
+            <div class="row"><span class="lbl">写入 WRITE</span><div class="bar"></div><span class="dot a"></span></div>
+          </div>
+          <div class="watermark">f03 · 9.4–17.6s · 缺录屏层</div>
+        </div>
+        <div class="still">
+          <div class="kick">WHAT WE TELL YOU</div>
+          <h3 class="big">只说三类事，其余静默替换</h3>
+          <div class="mock">
+            <div class="chips"><span class="chip">栅格化图层</span><span class="chip">智能对象</span><span class="chip">缺行汇总 1 句</span></div>
+            <div class="row"><span class="lbl">告知面 NOTICES</span><div class="bar"></div></div>
+          </div>
+          <div class="watermark">f04 · 17.6–24.0s · 口径已过</div>
+        </div>
+        <div class="still">
+          <div class="kick">TUYIGF.COM</div>
+          <h3 class="big">图译工坊 · 有视频教程</h3>
+          <div class="cta">↗ tuyigf.com/en</div>
+          <div class="watermark">f05 · 24.0–32.0s · 片尾卡</div>
+        </div>
+      </div>
+      <div class="rail"><i id="rail"></i></div>
+      <div class="controls">
+        <button class="btn prime" id="play">播放</button>
+        <button class="btn" id="prev">上一镜</button>
+        <button class="btn" id="next">下一镜</button>
+        <div class="dots" id="dots"></div>
+        <span class="clock" id="clock">00.0 / 32.0 s</span>
+      </div>
+    </div>
+    <div class="gatebox">
+      <div class="hd">本帧真话闸（M4 判据）</div>
+      <div class="gline"><b>上屏句子</b><span id="g-copy">—</span></div>
+      <div class="gline"><b>依据</b><span id="g-src">—</span></div>
+      <div class="gline"><b>闸门</b><span id="g-gate">—</span></div>
+      <div class="gline"><b>录制手段</b><span id="g-how">—</span></div>
+      <div class="warnstrip"><strong>现在过不去的闸：</strong>主张级守卫 <code>smoke-marketing-claims</code> 在 develop 上不存在，只在未合入的 W7 补丁里，其 40 条到期日全部 ≤2026-10-10、<strong>已整体过期</strong>。所以这 5 帧目前只能停在构图示意，<strong>不能开工出片</strong>。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ P2 ============ -->
+<section class="panel" id="p2">
+  <h2>三层栈：哪层我们已有、哪层真缺、哪层判除</h2>
+  <p class="note">Owner 提的 HyperFrames 属于「渲染层」。那一层我们已跑通三轮；这套方案真正缺的是中间那层「真实操作录屏」——它恰好是产品最有说服力的画面。</p>
+  <table>
+    <tr><th>层</th><th>候选件</th><th>许可 / 现实读数</th><th>判定</th></tr>
+    <tr><td class="mono">渲染与配乐<br>（已有）</td><td>本仓 <code>video/intro-20261018</code>：playwright 1.58.1 + chromium + ffmpeg + <code>score.py</code> 原创配乐<br>技能 <code>guizang-product-video-skill</code></td><td>今天 01:38 出 <code>v3-16x9.mp4</code> 4,932,937 B／35.000000 s／<code>RENDER_EXIT=0</code>；10 镜每镜带 <code>source</code></td><td><span class="tag ok">复用，不新建</span></td></tr>
+    <tr><td class="mono">渲染层<br>（Owner 提议）</td><td>HyperFrames <code>heygen-com/hyperframes</code></td><td>66,044★ Apache-2.0；但 <code>SKILL.md:74</code>：滚动＝把视口在整页截图上平移，<strong>不点击不填表、录不到 Photoshop</strong>；内置 TTS 仅 54 个英文音色；Windows 渲染有 GPU 回退与并发坑（issue #5548）</td><td><span class="tag warn">只做静态截图板参考，不作主管线</span></td></tr>
+    <tr><td class="mono">录屏层<br>（真缺）</td><td>OpenScreen 39,921★ MIT（Windows 原生、auto-zoom 跟光标、离线字幕、明示可商用）<br>Playwright <code>recordVideo</code> Apache-2.0（唯一可脚本化的真实流程录制，无音频）<br>OBS 77,702★ GPL-2.0（录 Photoshop 窗口的唯一手段）</td><td>Screenity 18,782★ GPL-3.0 只能手动；Cap 23,388★ 主体 AGPL；Vuoom 21★ 太新</td><td><span class="tag ok">采用 OpenScreen＋Playwright＋OBS</span></td></tr>
+    <tr><td class="mono">配音字幕<br>（部分缺）</td><td>CosyVoice 24,020★ Apache-2.0（中英最强档，需 GPU）<br>Kokoro 9,407★ Apache-2.0＋<code>misaki[zh]</code>（CPU 可跑）<br>faster-whisper 25,928★ MIT（字幕）</td><td>本机中文音色质量与 GPU 条件<strong>未实测</strong>＝待验；ChatTTS AGPL、edge-tts 非官方接口商用依据未核实</td><td><span class="tag warn">先实测再定</span></td></tr>
+    <tr><td class="mono">发布层<br>（已有手段）</td><td>官方 YouTube Data API；<code>videos.insert</code> 独立桶 100 次/天×1 单位</td><td>开源自动发布器生态最高仅 1–35★（弃坑货）；配额不是瓶颈，OAuth 验证审核才是</td><td><span class="tag ok">首批手动上传</span></td></tr>
+    <tr><td class="mono">形态风险<br>（必须避）</td><td>MoneyPrinterTurbo 132,419★ MIT＝库存片＋AI 配音＋自动上传 Shorts<br>Remotion 64,795★ 非开源：营利组织免费资格 ≤3 员工，Recorder 属付费权益</td><td>YouTube 2025-07-15 政策把 Repetitious 更名 <strong>Inauthentic content</strong>：量产模板化、缺乏人类创意判断者不合格</td><td><span class="tag bad">两族全部判除</span></td></tr>
+  </table>
+  <div class="cards" style="margin-top:16px">
+    <div class="card pass"><div class="top"><span class="tag ok">一句话</span></div><p>不该问"要不要用 HyperFrames"，该问"真实录屏层怎么补"。补完它，我们已有的渲染管线就能直接吃真画面。</p></div>
+  </div>
+</section>
+
+<!-- ============ P3 ============ -->
+<section class="panel" id="p3">
+  <h2>点任何一个结果位，看它到底被什么推动</h2>
+  <p class="note">同一份视频，在 Google 上能占三个不同的位。<strong>Owner 那句"提升排名"指的是第二个，而视频真正推得动的是第一个和第三个。</strong></p>
+  <div class="serpgrid">
+    <div class="gpage">
+      <div class="gbar"><strong style="font-size:.9rem">Google</strong><div class="q">how to translate text layers in a PSD in bulk</div><span class="tag info">查询＝买家问题</span></div>
+      <div class="gsec" data-k="aio">
+        <div class="hd"><span>AI OVERVIEW</span><span class="tag warn">与品牌规模强相关，非因果证明</span></div>
+        <p class="aio">"…可以按图层批量替换文本，或用支持 PSD 图层翻译的本地化工具…"（示意摘要）</p>
+        <div class="cites"><span class="cite hot">YouTube 9.5%</span><span class="cite">Reddit</span><span class="cite">docs</span><span class="cite">wiki</span></div>
+      </div>
+      <div class="gsec" data-k="blue">
+        <div class="hd"><span>第 1 位 · 蓝链</span><span class="tag bad">视频简介挂网址推不动它</span></div>
+        <a class="glink" onclick="return false">图译工坊 · PSD/PSB 批量翻译写回 Photoshop 图层</a>
+        <div class="gurl">https://tuyigf.com › en</div>
+        <p class="gdesc">已有译文的多语言 PSD/PSB，单批最多 12 个目标语种，逐语言检查后按对象写入文字图层。（示意）</p>
+      </div>
+      <div class="gsec" data-k="caro">
+        <div class="hd"><span>视频轮播位</span><span class="tag ok">Video 结构化数据未被取消（今日官方文档在线）</span></div>
+        <div class="carousel">
+          <div class="thumb"><div class="im"><span>构图示意</span><i>0:32</i></div><div class="cap">Translate a batch of PSD text layers</div></div>
+          <div class="thumb"><div class="im"><span>构图示意</span><i>0:38</i></div><div class="cap">Drop the returned translation sheet</div></div>
+          <div class="thumb"><div class="im"><span>待验·不上屏</span><i>—</i></div><div class="cap">Without Photoshop? 免 PS 引擎未合入</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="explain" id="explain">
+      <div class="hd">机制说明</div>
+      <p>点左侧任意结果位。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ P4 ============ -->
+<section class="panel" id="p4">
+  <h2>度量台：先在不用后台账号的前提下把尺子架起来</h2>
+  <p class="note">现状：<code>GEO-OFFSITE-QUEUE</code>／<code>SEO-P2</code>／<code>GEO-RETEST</code> 三条都停在「等您定」，卡点含后台账号归属（O5）。用 SerpBear（MIT，Docker 自托管）＋免费 SERP 源可在<strong>不解决归属</strong>的情况下先拿到排名基线；GSC 只补点击与曝光。下表是架子的样子——数字必须是实跑读数，现在全标「待实测」。</p>
+  <table>
+    <tr><th>查询（取自 GEO问题集30条 v1，示例 8/20）</th><th class="mono">Google 现排</th><th class="mono">/en 收录</th><th class="mono">被哪个 AI 引擎引用</th></tr>
+    <tr><td>psd 批量翻译 图层</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实（需登录会话抽查）</td></tr>
+    <tr><td>photoshop psd text layer translation tool</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>translate psd layers without photoshop</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>batch replace text in psb</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>本地化 dtp 交付检查清单</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>图译工坊</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>psd localization checklist</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+    <tr><td>adobe psd 文字层 栅格化 怎么办</td><td class="mono">待实测</td><td class="mono">待实测</td><td class="mono">未核实</td></tr>
+  </table>
+  <div class="cards" style="margin-top:16px">
+    <div class="card block"><div class="top"><span class="tag bad">停投判据（写死）</span></div><p>每支片发布后 <strong>30／60／90 天</strong>取三个数：① YouTube 站内搜索与推荐带来的观看 ② 引荐到 <code>/en</code> 的会话数 ③ 豆包／Perplexity／ChatGPT Search 是否引用该视频。<strong>任一连续两拍为 0 ⇒ 停投，不许用"再拍 10 条"追加预算。</strong></p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">为什么不能拿"排名提升"当验收</span></div><p>新页面 1 年内进 Top10 仅 <strong>1.74%</strong>，Top10 中 72.9% 存在超 3 年；且 YouTube 描述外链抬蓝链没有任何官方机制说明或对照实验。<strong>把排名写进验收口径＝必然造出一句无法证伪的话。</strong></p></div>
+    <div class="card mid"><div class="top"><span class="tag info">取数边界</span></div><p>SerpBear 只查 Google（第三方 SERP API 取数，ScrapingRobot 免费 5000 次/月或 Serper 需 key）；要查 Bing 得另件（OpenSERP MIT，自托管多引擎，但直连爬 Google 有封禁与 ToS 风险）。收录探测用官方 Custom Search JSON API 100 次/日，注意 Site-Restricted 版已于 2025-01-08 停服、<code>site:</code> 计数只作趋势。</p></div>
+  </div>
+
+  <h2 style="margin-top:24px">待 Owner 拍三件（勾了会存在本机，下次打开还在）</h2>
+  <div class="asks" id="asks">
+    <label class="ask"><input type="checkbox" data-k="a1"><span class="tx"><b>1 · 停单令只解一类</b>09-24 令「产品测通前不做对外素材」（<code>官制.md:424</code>、<code>:1596</code>、<code>待投递指令.md:5</code>）。建议只解「按买家问题切的教程片」，品牌广告片与量产铺量仍挂起。</span></label>
+    <label class="ask"><input type="checkbox" data-k="a2"><span class="tx"><b>2 · 今天 01:38 那支 v3 成片的归属</b><code>grep -rn intro-20261018 AI_MEMORY/ 总控/ 交付档案/</code>＝exit 1、台账 <code>VIDEO|INTRO</code>＝0、<code>git status video/</code>＝<code>?? video/</code>。是你直接授权，还是别手擅自拍的？不给定性我只登记未核实，不动它。</span></label>
+    <label class="ask"><input type="checkbox" data-k="a3"><span class="tx"><b>3 · 度量台用哪个免费 SERP 源</b>ScrapingRobot（5000 次/月，注册门槛低）还是 Serper（需 key、量大）。这个选择决定 M0 基线今天能不能开跑。</span></label>
+  </div>
+  <p class="saved" id="saved"></p>
+</section>
+
+<footer>
+  <span>本模拟台所有画面均为<strong>构图示意</strong>，不是产品真实截图、不是录屏帧；红角标是刻意的——它标的正是"缺真实录屏层"这个缺口。</span>
+  <span>依据：Google Search Central（video 结构化数据／spam 政策／search updates／外链属性）、Ahrefs 2025-05-15 与 2025-06 研究、Remotion LICENSE.md:18-23、heygen-com/hyperframes README＋SKILL.md:74＋issue #5548、openscreen／Cap／Screenity／obs-studio／MoneyPrinterTurbo／Playwright Video API／Kokoro／CosyVoice／faster-whisper／towfiqi-serpbear／karust-openserp；本仓 <code>video/intro-20261018/</code> 与 <code>交付档案/宣传与运营/渠道打分_20261017_免费外链24个逐个实测.md</code>。</span>
+  <span>只读调研与方案产出，未派工、未改码、未发布任何对外素材。</span>
+</footer>
+</div>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.tab'),panels=document.querySelectorAll('.panel');
+  tabs.forEach(function(t){t.addEventListener('click',function(){
+    tabs.forEach(function(x){x.setAttribute('aria-selected',x===t?'true':'false')});
+    panels.forEach(function(p){p.classList.toggle('on',p.id===t.dataset.p)});
+  })});
+
+  /* --- 成片帧 --- */
+  var stills=[].slice.call(document.querySelectorAll('#stage .still'));
+  var meta=[
+    {copy:'「12 个语种的设计稿」「改到第几个了？」',src:'claim: false（纯痛点开场，不涉及能力断言）',gate:'可上屏 · 无需闸',how:'静帧渲染（已有管线）'},
+    {copy:'「已有译文的多语言 PSD / PSB · 单批最多 12 个目标语种」',src:'src/lib/workbench/batch-limits.ts:6 → BATCH_MAX_LANGUAGES = 12；src/lib/server/execution-batch.ts:161 服务端同口径拦截',gate:'可上屏 · 已过号（口径清单 f02，对 develop@1ed5148 现读）',how:'需 Playwright recordVideo 录真实拖入与批次创建 —— 当前缺'},
+    {copy:'「逐语言检查，按对象写入文字图层」',src:'同 f02 第二句；v2 行号已作废（execute-step.tsx:581 语义变更），派工前须按当前 HEAD 重核',gate:'待验 · 行号需重取',how:'需 OBS 录 Photoshop 窗口写回结果 —— 当前缺'},
+    {copy:'「只说三类事：栅格化图层 / 智能对象 / 缺行汇总一句」',src:'产品口径「静默默认全对上＋最小告知」（项目记忆 §7：报告面新增告知节必须为 0）',gate:'可上屏 · 但受告知节计数门约束（出厂件本有 14 个 h2，绝对节数判据＝永久红门）',how:'OpenScreen 人工录，auto-zoom 指到告知条'},
+    {copy:'「图译工坊 · 有视频教程」＋网址',src:'M3 反假绿：禁止写"提升排名"式主张',gate:'可上屏 · 文案已过禁词表形态',how:'静帧渲染（已有管线）'}
+  ];
+  var dur=[2.4,7.0,8.2,6.4,8.0],total=0;
+  dur.forEach(function(d){total+=d});
+  var idx=0,t=0,timer=null;
+  var rail=document.getElementById('rail'),clock=document.getElementById('clock'),play=document.getElementById('play');
+  var g=[document.getElementById('g-copy'),document.getElementById('g-src'),document.getElementById('g-gate'),document.getElementById('g-how')];
+  var dots=document.getElementById('dots');
+  stills.forEach(function(s,i){var b=document.createElement('button');b.addEventListener('click',function(){seek(i,0)});dots.appendChild(b)});
+  function paint(){
+    stills.forEach(function(s,i){s.classList.toggle('on',i===idx)});
+    [].slice.call(dots.children).forEach(function(d,i){d.setAttribute('aria-current',i===idx?'true':'false')});
+    var m=meta[idx];g[0].textContent=m.copy;g[1].textContent=m.src;g[2].textContent=m.gate;g[3].textContent=m.how;
+    clock.textContent=(t).toFixed(1)+' / '+total.toFixed(1)+' s';
+    rail.style.width=Math.min(100,(t/total)*100)+'%';
+  }
+  function seek(i,off){idx=i;t=(i===0?0:0);var acc=0;for(var k=0;k<i;k++)acc+=dur[k];t=acc+(off||0);paint()}
+  function tick(){
+    var acc=0;for(var k=0;k<=idx;k++)acc+=dur[k];
+    t+=0.1;
+    if(t>=acc&&idx<stills.length-1){idx++;}
+    if(t>=total){t=total;pause();paint();return}
+    paint();
+  }
+  function start(){if(timer)return;timer=setInterval(tick,100);play.textContent='暂停'}
+  function pause(){if(timer){clearInterval(timer);timer=null}play.textContent='播放'}
+  play.addEventListener('click',function(){timer?pause():start()});
+  document.getElementById('prev').addEventListener('click',function(){seek(Math.max(0,idx-1),0);paint()});
+  document.getElementById('next').addEventListener('click',function(){seek(Math.min(stills.length-1,idx+1),0);paint()});
+  paint();
+
+  /* --- SERP 说明 --- */
+  var notes={
+    aio:['AI Overview 引用位','YouTube 是目前被 AI 概览引用最多的域名之一（Ahrefs 2025-06：AI Overviews 9.5%、Perplexity 16.1%）。自家渠道打分表已引 <code>ρ=.737</code>——YouTube 与 AI 可见度的相关性远高于外链数量的 <code>ρ=.17–.29</code>。<strong>这是 Owner 提议里真值钱的部分：它服务 GEO，不服务蓝链排名。</strong>打折条件：那是 75,000 品牌的相关性，很可能被"品牌规模"混淆（大品牌本来就有频道），对零订阅新频道属未证实外推——可当下注理由，不可当承诺。'],
+    blue:['蓝链第 1 位','Google 从未把社交平台或 YouTube 描述区链接列为排名信号；官方只说明带 <code>nofollow/ugc/sponsored</code> 的链接"通常不跟踪"。YouTube 描述区当前的 rel 值＝未核实（未取一手页面证据）。间接通路确实存在——NavBoost/Glue 使用点击与行为数据（DOJ 庭审 2023-10 证词）——但需要足量点击，几十次观看形不成信号；且新页面 1 年内进 Top10 仅 1.74%。<strong>结论：靠"简介挂网址"抬蓝链，因果链第一环就没有依据。</strong>'],
+    caro:['视频轮播位','这条路今天仍是开的：Video 结构化数据官方文档今日在线、无弃用横幅，视频可出现在普通结果、Video mode、图片与 Discover；被 2025-06-12 淘汰的是 Learning Video 等 7 类（2025-09-09 删文档），"2025 年 1 月取消 Video"是把它误读成 Video。<strong>要占这一位，条件不在 YouTube，在我们自己站上：官网嵌视频＋VideoObject 标注＋标题命中查询词。</strong>第三张缩略图标"待验·不上屏"是故意的——免 PS 引擎还在 <code>worktrees/pc-port-20261017</code> 未合入，没合就不能进画面。']
+  };
+  var ex=document.getElementById('explain'),cur=document.createElement('p');
+  [].slice.call(document.querySelectorAll('.gsec')).forEach(function(s){
+    s.addEventListener('click',function(){
+      [].slice.call(document.querySelectorAll('.gsec')).forEach(function(x){x.classList.toggle('sel',x===s)});
+      var n=notes[s.dataset.k];
+      ex.innerHTML='<div class="hd">'+n[0]+'</div><p>'+n[1]+'</p>';
+    });
+  });
+
+  /* --- 待拍持久化 --- */
+  var KEY='tygf-yt-asks-20261018',saved=document.getElementById('saved');
+  var st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){st={}}
+  [].slice.call(document.querySelectorAll('#asks input')).forEach(function(c){
+    c.checked=!!st[c.dataset.k];
+    c.addEventListener('change',function(){
+      st[c.dataset.k]=c.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}
+      var n=Object.keys(st).filter(function(k){return st[k]}).length;
+      saved.textContent='本机已存：'+n+' / 3 件已勾（localStorage，不上传、不进仓库）';
+    });
+  });
+  var n0=Object.keys(st).filter(function(k){return st[k]}).length;
+  if(n0)saved.textContent='本机已存：'+n0+' / 3 件已勾（localStorage，不上传、不进仓库）';
+})();
+</script>
+</body>
+</html>

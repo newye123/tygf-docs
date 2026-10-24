@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全项目进度对抗式审查与推进令 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.05rem;color:var(--ink)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.28rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1.02rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--font-mono);font-size:.86em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-size:1.28rem;font-weight:600;line-height:1.3}
+.stat .n{font-size:.8rem;color:var(--muted)}
+.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.85em}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .id{font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.card .title{font-weight:600}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.card p{font-size:.94rem;color:var(--ink-2)}
+.card .fix{font-size:.9rem;color:var(--ink)}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.gate{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:.9rem}
+.gate .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.gate.bad .dot{background:var(--bad)}
+.gate code{margin-left:auto;font-family:var(--font-mono);font-size:.78rem;color:var(--muted)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout strong{color:var(--ink)}
+ol.plan{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px}
+ol.plan li{color:var(--ink-2)}
+ol.plan li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 接手审查</span><span class="sep">/</span><span>2026-10-20 10:1x</span><span class="sep">/</span><span>master@2120d62 · develop@f98818f</span></div>
+  <h1>全项目进度对抗式审查与推进令</h1>
+  <p class="standfirst">两站版本、工作树、控制面、账本全部以本会话实测为准。旧记录与现场冲突之处，逐条列出并给出处置。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">结论</span>
+  <p>项目没有停，但“官方账本”已经落后现场一个身位：测试站实际在 <span class="mono">6a268fe</span>、生产实际在 <span class="mono">6ff5c3c</span>，而状态文件仍写着测试站 <span class="mono">6ff5c3c</span>、生产 <span class="mono">4fa9d4f</span>。TASK_LOG 置顶的“线上 30 FAIL”本轮复跑为 <strong>0 FAIL</strong>。产品侧最大缺口仍是 <strong>每稿一表（v7）零代码</strong>——Owner 已拍板，产品仍是一张表喂全批。</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span>现场终值</h2>
+  <div class="stats">
+    <div class="stat"><span class="k">测试站</span><span class="v mono">6a268fe</span><span class="n">BOUND · 助手期望 3.7.15</span></div>
+    <div class="stat"><span class="k">生产站</span><span class="v mono">6ff5c3c</span><span class="n">BOUND · 未动</span></div>
+    <div class="stat warn"><span class="k">develop</span><span class="v mono">f98818f</span><span class="n">工作树 2 个本轮改动</span></div>
+    <div class="stat bad"><span class="k">未推</span><span class="v">6 / 8</span><span class="n">origin/develop / origin/main</span></div>
+    <div class="stat bad"><span class="k">控制面</span><span class="v">ALARM 18</span><span class="n">6 项 + 12 项</span></div>
+    <div class="stat ok"><span class="k">生产 SEO</span><span class="v">0 FAIL</span><span class="n">0 fetch failure · rc=0</span></div>
+  </div>
+  <div class="callout"><strong>取数时刻：</strong>2026-10-20 10:12 +0800。版本来自两站 <span class="mono">/api/runtime-provenance</span>；SEO 来自 <span class="mono">SEO_TARGET=https://tuyigf.com npm run test:seo-consistency</span>。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>对抗式审查：16 条判词</h2>
+  <div class="cards">
+
+    <article class="card"><div class="head"><span class="id">F1</span><span class="title">状态指针三处失真</span><span class="tag warn">治理</span></div>
+      <p>状态文件写“测试站 6ff5c3c／生产 4fa9d4f／develop 与 main 均 6ff5c3c 且干净／origin/main 落后 70 笔”。实测：测试站 6a268fe、生产 6ff5c3c、develop f98818f、origin/main..HEAD=8。</p>
+      <p class="fix">处置：只追加勘误指针，不改旧条目（单写者令）。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F2</span><span class="title">“线上 30 FAIL”已过时</span><span class="tag ok">已消</span></div>
+      <p>TASK_LOG 置顶称生产有 30 条 SEO 失败；本轮按原式复跑生产站为 0 FAIL / 0 fetch failure。那 30 条属于 4fa9d4f 法律页中间态，已随 6ff5c3c 消失。</p>
+      <p class="fix">处置：TASK_LOG 追加“已复跑归零”，不修改旧记录。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F3</span><span class="title">/en 的 Organization contactPoint 被覆盖</span><span class="tag ok">已修</span></div>
+      <p>3657a88 曾给中英首页同时加 contactPoint；71837a3（英文站 v17 整档重写）把英文首页覆盖，导致 /en JSON-LD 无联系方式。</p>
+      <p class="fix">处置：源码补回，并在 SEO 冒烟给中英首页各加一条 contactPoint 断言。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F4</span><span class="title">三笔孤儿修复已收口</span><span class="tag ok">完成</span></div>
+      <p>接手时 develop 有两处未提交修复和一个未入库的真机脚本，相关会话全部 cold。逐条复核后提交：73639e0（Txt2 fail-open 加固）、1d15964（抽屉焦点按来源归还）、0c1ae9a（真机复验脚本入库）。</p>
+      <p class="fix">验证：test:pc-txt2 15/15、test:pc-executor 17/17、test:pc-wiring-freeze 9/9、typography-picker 197+7、tsc rc=0。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F5</span><span class="title">A 档写回修复在库、未上线、未解冻</span><span class="tag warn">对外口径</span></div>
+      <p>14f0211 连同后续 5 笔均未推 origin/develop、未部署；写回冻结负向断言全绿，三键缺省关。</p>
+      <p class="fix">结论：今天只能说“修复已验证”，不能说“免 PS 写回可用”。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F6</span><span class="title">报告读数与实测版本不一致</span><span class="tag info">已登记</span></div>
+      <p>两份报告把本机 PS 写成 2026 27.10，实测为 PS 2021（22.0.0），ISSUES #186 已登记。A 档报告的 20/20 是隔离分支用例数，develop 主干当前 17/17，引用需带分支语境。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F7</span><span class="title">控制面 18 项告警</span><span class="tag bad">治理</span></div>
+      <p>在办 10/2 超限；FOLDER-IMPORT-1018 进行中未标 wip；到期未交 4 条（FONT-CUSTOM、PC-NOPS-EXEC、CONTENT-AXIS-DDG、MERGE-1017）；机器列漂移 8 处（ZHIHU-COPY 3、PC-NOPS-EXEC 5）；重复行 4 组。</p>
+      <p class="fix">处置：按“真实在办＝v7＋测试站部署”重排 WIP，其余如实降级；重复行去重；ZHIHU-COPY 因 Owner 手改保持 held。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F8</span><span class="title">双账本漂移</span><span class="tag warn">治理</span></div>
+      <p>待复验队列有 86 件、mtime 停在 10-07；ledger 仅 19 条待复验。队列已成历史堆积，不等于 86 件都在等判。</p>
+      <p class="fix">处置：以 ledger 19 条为当前工作面，队列只做归档说明。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F9</span><span class="title">治理节奏断档</span><span class="tag warn">治理</span></div>
+      <p>官制.md 停在 10-06；日报 20261019/20261020 不存在。本轮报告代行当日册的现场与处置记录；官制不动。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F10</span><span class="title">测试站落后 develop 6 笔</span><span class="tag warn">交付</span></div>
+      <p>排版抽屉的焦点归还修复、/en contactPoint、Txt2 加固均未上测试站。前两项是用户可感知的修复。</p>
+      <p class="fix">处置：随本轮测试站部署一并上站。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F11</span><span class="title">生产缺“排版新入口＋助手配对修复”</span><span class="tag warn">产品</span></div>
+      <p>生产 6ff5c3c 仍是右下药丸＋内联面板，没有卡头按钮/悬浮球/抽屉；也还没有 ASSISTANT_DEVICE_INVALID 的 origin 迁移修复。两者都应先在测试站验证。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F12</span><span class="title">v7 每稿一表零代码</span><span class="tag bad">产品主线</span></div>
+      <p>Owner 已明确拍板“每稿一表”，但 workbench-view 仍是单个 parsed 状态，矩阵、检测、执行全部用同一张表。这是当前最大的功能缺口，也是本轮推进主线。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F13</span><span class="title">_parked/ 脏树风险</span><span class="tag ok">已清</span></div>
+      <p>临时渲染验证页会挡发布预检（porcelain 非空即打包失败）。已移出到容器 tmp/parked/，develop 恢复可打包状态。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F14</span><span class="title">合同变更纪律待触发</span><span class="tag info">待 v7</span></div>
+      <p>v7 的“执行/回执按稿分组”属于合同变更，必须同笔同步浏览器投影、助手 evidence、服务端报价、结算闸四层，并在 HANDOFF 标【合同变更】。当前尚无改动，纪律先行。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F15</span><span class="title">/en contactPoint 修复未上站</span><span class="tag ok">待部署</span></div>
+      <p>本地已修，生产与测试站都还没有；下一次测试站部署会带上，生产另行授权。</p></article>
+
+    <article class="card"><div class="head"><span class="id">F16</span><span class="title">治理账本体积</span><span class="tag info">观察</span></div>
+      <p>待投递指令 549 KB、待复验队列 511 KB，远超每周 30 KB 净增目标。本轮不新增三账条目，只做对账与归档建议。</p></article>
+
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>本轮已完成并验证</h2>
+  <div class="gates">
+    <div class="gate"><span class="dot"></span>Txt2 清洗器 fail-open 加固<code>15/15</code></div>
+    <div class="gate"><span class="dot"></span>执行器合同<code>17/17</code></div>
+    <div class="gate"><span class="dot"></span>写回冻结负向断言<code>9/9</code></div>
+    <div class="gate"><span class="dot"></span>排版抽屉<code>197 + 7</code></div>
+    <div class="gate"><span class="dot"></span>类型检查<code>rc=0</code></div>
+    <div class="gate"><span class="dot"></span>生产 SEO<code>0 FAIL</code></div>
+    <div class="gate"><span class="dot"></span>/en contactPoint<code>已补·待部署</code></div>
+    <div class="gate"><span class="dot"></span>脏树<code>已清</code></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>推进序（本会话直接执行）</h2>
+  <ol class="plan">
+    <li><strong>P0 状态对账（约 30 分钟）：</strong>追加 CURRENT_STATUS 勘误指针；重排 ledger WIP 为“v7＋测试站部署”两条；控制面重复行去重、PC-NOPS-EXEC 按真相层重投影。</li>
+    <li><strong>P0 测试站部署（约 30 分钟）：</strong>干净隔离树出包 f98818f → preflight → package → scp → deploy-test-release.sh；核验 .deploy-commit、PM2 三应用 online 零重启、provenance BOUND、SEO 冒烟含新断言全绿。</li>
+    <li><strong>P1 v7 每稿一表（本日主攻）：</strong>L1 按稿映射与逐稿表槽位、单稿更换只失效该稿；L2 检测按稿×语言；L3 执行载荷逐稿行＋预览截断口径；L4 矩阵按稿分区与缺表门；四条新守卫；合同四层同笔同步并标【合同变更】。</li>
+    <li><strong>P2 其余线（本周）：</strong>写回解冻等 Owner 用 PS 2021 打开真实稿验收；生产上线只在测试站验证后单点授权。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">05</span>需 Owner 拍板</h2>
+  <div class="cards">
+    <article class="card"><div class="head"><span class="id">01</span><span class="title">写回验收</span><span class="tag warn">约 5 分钟</span></div>
+      <p>请用本机 PS 2021 打开一份真实稿，确认“产出的 PSD 能开且文字为新文”。这是解冻写回的唯一前置。</p></article>
+    <article class="card"><div class="head"><span class="id">02</span><span class="title">生产上线授权</span><span class="tag bad">红线·一句话</span></div>
+      <p>测试站验证完成后，是否授权把 f98818f 之后的产品面推生产？</p></article>
+    <article class="card"><div class="head"><span class="id">03</span><span class="title">写回下一阶段范围</span><span class="tag info">一句话</span></div>
+      <p>PSB 与多语种 shaping 是纳入下一阶段，还是先只保 PSD＋单语？不影响今天的工作。</p></article>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>红线自查（动作面）</h2>
+  <div class="callout">
+    未推 origin、未改历史、未动生产站、未翻转任何 feature flag、未改支付 flag。未删除任何数据或断言；新增断言只有两条 contactPoint 正向守卫。未重启本机 PS/助手、未 restart PM2/nginx。未擅动他人未提交现场：孤儿修复经复核后提交；容器 master 的记忆登记保持未提交，等对账后再落。测试站部署属常规动作，按既定流程执行（预检→出包→部署→回读），不触碰生产。
+  </div>
+</section>
+
+<footer class="footer">
+  <span>取证：两站 /api/runtime-provenance（10:12 实测）；bash scripts/control-plane.sh（exit=1）；SEO_TARGET=https://tuyigf.com npm run test:seo-consistency（rc=0）；五道定向门真实回显。</span>
+  <span>指针：AI_MEMORY/CURRENT_STATUS.md:1-8；AI_MEMORY/TASK_LOG.md 顶部生产回退事故条；执行方案_20261020_批量台每稿一表_v7…md；ISSUES #186。</span>
+</footer>
+
+</div>
+</body>
+</html>

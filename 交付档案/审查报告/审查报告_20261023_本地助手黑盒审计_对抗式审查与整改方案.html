@@ -1,0 +1,720 @@
+<title>本地助手黑盒审计审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:64ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre.cmd{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  line-height:1.65;
+  margin:0;
+  color:var(--ink-2);
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:5px}
+.gate li{font-size:.9rem;color:var(--ink-2);line-height:1.65}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>本地助手 · 3.7.24</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>本地助手黑盒审计：对抗式审查与整改方案</h1>
+  <p class="standfirst">对第三方黑盒报告 <code>TYGF-REM-20261023-01</code> 的逐条核验：哪些结论能直接修，哪些归因反了，哪些是旧版本的影子，以及报告没看见的那个会把授权和备份一起弄丢的放大器。全部只读，未改代码、未部署。</p>
+  <div class="meta">
+    <span>报告 146 行 / 15,249 B</span>
+    <span>源码逐行核验</span>
+    <span>官方 3.7.24 安装包实测</span>
+    <span>代码改动 0</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">有条件放行</span>
+    <p>报告抓到了一个真问题：会话文件的 ACL 是按“用户名”授权的，不是按“当前进程的身份”。<br>但它把三件事判错了，还漏了一个更严重的放大器：读不到会话文件时，程序会拿默认配置覆盖它，并且先删掉最后一份好备份。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>可以照单修的</h3>
+      <ul>
+        <li><strong>BLK-1 / F-01</strong>：ACL 目标 SID 用裸 <code>USERNAME</code> 去解析，域账号与同名本地账号并存时会锁错人。源码确认，必须修。</li>
+        <li><strong>MAJ-2 / F-03</strong>：官方 3.7.24 安装包实测 <code>NotSigned</code>；发布闸还有 <code>--allow-unsigned-beta</code> 绕过；卸载器没配签名。</li>
+        <li><strong>MAJ-5 / F-05</strong>：收费门只认“等级字符串 + 非空摘要”，服务端不重算摘要。被改的客户端可以伪造 VERIFIED / FAILED，结算跟着走。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能照单信的</h3>
+      <ul>
+        <li><strong>MAJ-3 根因</strong>：说 journal“没有 fsync、没有重放”，源码里两样都有。真问题是 ACK 后把重放输入删了、把 journal 留着，导致已成功尝试被重新数成“未知”。</li>
+        <li><strong>MAJ-4 未知</strong>：ticket 是一次性、短时、强绑定的，源码里写得很清楚。不需要再做黑盒重放实验。</li>
+        <li><strong>MAJ-1 生产信任 dev</strong>：<code>localhost:3000</code> 是响应头回退值，不是放行条件。它是配置被 ACL 故障打回默认值后的症状。</li>
+        <li><strong>MAJ-2 锚点自我抵消</strong>：本地身份文件确实可改，但代码签名也挡不住本机管理员改程序。签名照做，口径要收窄。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>核对总账</h2>
+  <p class="lede">报告的价值集中在 BLK-1；其余部分混了“黑盒能看到的表面现象”和“旧版本的影子”。先核对客户机到底在跑哪个 buildId，再决定修什么。</p>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">7</span><span class="k">已证实<br>Important 6 / Nit 1</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">报告结论更正<br>其中 1 条是核心根因</span></div>
+    <div class="stat bad"><span class="n">5</span><span class="k">未决<br>缺客户机 / 库 / 注册表读数</span></div>
+    <div class="stat"><span class="n">0</span><span class="k">本次代码改动<br>只读审查</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">最先要做的一件事</span>
+    <p>报告自称测的是 3.7.24，但它写出的 <code>assistantBuildId=transport-hardening-20261011-r1</code> 是 3.7.15～3.7.19 的身份。官方 3.7.24 是 <code>in-app-folder-picker-20261023-r1</code>，三处出厂文件逐字一致。<strong>它审的很可能不是当前出厂件。</strong>先花 5 分钟跑一条 <code>/ping</code>，否则会把旧版行为当成新版缺陷来修。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>报告说对了什么</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-01 · persisted-state.js:18-28 / 75-76</span>
+        <h3>ACL 用名字而不是进程 token</h3>
+        <span class="tag bad">Important</span>
+      </div>
+      <p>源码是 <code>const user = process.env.USERNAME</code>，然后 <code>icacls file /inheritance:r /grant:r ${user}:F</code>，<code>stdio:'ignore'</code>。在“域账号 + 同名本地账号”的机器上，名字解析可能命中本地账号；<code>/grant:r</code> 是替换语义，当前进程反而读不回文件。报告观测到的 <code>PAIR_BOUND_LOCAL_AUTH_PERSISTENCE_FAILED</code> 与这条链吻合。</p>
+      <p><strong>边界：</strong>报告的 A/B 是黑盒观测（C 级），本次没有在客户机复现；但源码机制是 A 级，修法不依赖复现。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-03 · publish-local-assistant.cjs:17 / 71-72；installer.iss</span>
+        <h3>交付物没有代码签名，闸还能被绕过</h3>
+        <span class="tag bad">Important</span>
+      </div>
+      <p>官方 3.7.24 安装包本会话实测 <code>Status=NotSigned</code>，SHA256 <code>223F68D2…</code>、25,519,666 B 与发布清单逐字一致；<code>signatureStatus=UnsignedBeta</code>。发布脚本带 <code>--allow-unsigned-beta</code>；<code>installer.iss</code> 没有 <code>SignTool</code>，也没有 <code>SignedUninstaller</code>。企业 EDR / SmartScreen 不信任、用户无法区分“厂商发的”和“别人重打包的”，都是这条的直接后果。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-05 · execution-batch.ts:1384-1399</span>
+        <h3>客户端持有判定，服务端不重算证据</h3>
+        <span class="tag bad">Important</span>
+      </div>
+      <p>收费门只检查 <code>verificationLevel === 'REOPEN_VERIFIED'</code> 且 <code>objectEvidenceDigest</code> 是<strong>非空字符串</strong>；服务端没有用逐对象证据重算这个摘要（本文件的 <code>createHash</code> 只用于 rowSet 摘要）。被改的客户端可以伪造 VERIFIED / FAILED，结算跟着走。报告 MAJ-5 的方向对，但它把修法定成“整个判定权搬云端”的 L 级项；先做摘要重算，成本低得多。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>报告说错了什么</h2>
+  <p class="lede">四条更正。第一条最重：它把“症状”写成了“根因”，如果照它重写 journal，会改错地方。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>报告原话</th><th>源码 / 实测</th><th>新结论</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">C-01</td>
+          <td class="was">MAJ-3 根因：“journal 写入与回执状态更新非幂等、无崩溃一致性（无 fsync 序 + 重放/裁决缺失）”</td>
+          <td><code>execution-journal.js:96</code> 有 <code>fs.fsyncSync</code>；<code>server.js:4147</code> 是 fsync + rename；<code>server.js:4423</code> 会从 journal 重建；<code>execution-journal.js:148</code> 有 <code>reconcileUnfinishedJournals</code></td>
+          <td><span class="now">根因不成立。</span>真实问题是 ACK 后清理删了 <code>.inputs.json</code>、journal 留着；恢复时把已成功尝试误报为未知。不要重写 journal。</td>
+        </tr>
+        <tr>
+          <td class="mono">C-02</td>
+          <td class="was">MAJ-4：“ticket 与会话的绑定关系未知”，建议做重放实验</td>
+          <td><code>execution-ticket.ts:94-179</code>：HMAC、5 分钟（批次票 60 分钟）、<code>n</code> nonce、绑定 install / activation / job / attempt / origin；<code>ticket/verify/route.ts</code> 事务消费 nonce；只读操作 30 秒重放窗口</td>
+          <td><span class="fix">已关闭。</span>一次性、短时、强绑定；不需要再做黑盒实验。</td>
+        </tr>
+        <tr>
+          <td class="mono">C-03</td>
+          <td class="was">MAJ-1：“生产构建信任 dev 源”</td>
+          <td><code>server.js:2606-2612</code> 的 <code>localhost:3000</code> 是响应头回退值；<code>server.js:2614-2620</code> 的 <code>isAllowedOrigin</code> 对未知来源仍拒绝；只有 <code>isLocalDevServer(cfg)</code> 为真才放行 localhost，而这只在配置被打回默认值后成立</td>
+          <td><span class="now">是症状，不是独立缺陷。</span>修 F-02 + 打包版移除 dev 回退即可；报告提的“浏览器持有 device secret + 每请求 HMAC”按原样不可实现。</td>
+        </tr>
+        <tr>
+          <td class="mono">C-04</td>
+          <td class="was">MAJ-2：“完整性锚点自我抵消”，应服务端签名下发、客户端仅验签</td>
+          <td>本地 <code>release-identity.json</code> 确实可改；但客户端的验签代码同样可被改</td>
+          <td><span class="tag warn">口径收窄</span>签名用于分发 / EDR / 重打包；服务端签名清单可拒收摘要不匹配的回执，但不能替代服务端证据校验。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">两处文本问题</span>
+    <p>① 验收项 <code>TimeStallerCertificate</code> 是错字，应为 <code>TimeStamperCertificate</code>；照抄会取到空值，造成假失败。② §2 要“统一明文/bytecode 强度”，§3 又说“不建议 bytecode 混淆”，自相矛盾；按 §3 执行。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>报告没看见的两个放大器</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-02 · server.js:738-755 / 8134 / 8171；persisted-state.js:68-70</span>
+        <h3>读不到会话文件，不是停下来，而是覆盖它</h3>
+        <span class="tag bad">Important</span>
+      </div>
+      <p>链路是这样的：<code>loadConfig</code> 读不到文件 → 返回默认配置（<code>serverUrl</code> 还是 <code>http://localhost:3000</code>）→ 启动时 <code>ensureMachineId(loadConfig())</code> → 发现 <code>machineId</code> 与当前 MachineGuid 不同 → <code>saveConfig</code> → <code>writeHiddenStateFile</code> 先 <code>removeFile(backupPath)</code>，再把读不到的文件 <code>renameSync</code> 成 <code>.bak</code>，然后写默认配置。</p>
+      <p><strong>后果：</strong>最后一份好备份被默认值覆盖；用户不是“这次要重新授权”，而是每次启动都可能把凭据和备份一起弄丢。报告把 BLK-1 写成“每次升级复发”，但漏了这条放大器——只修 ACL 不同时改这里，已有坏文件仍会被覆盖。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-06 · release-identity.json:4；report-renderer.js:7；check-release-identity.cjs:121</span>
+        <h3>报告自报的 buildId 不是 3.7.24 的</h3>
+        <span class="tag bad">Important</span>
+      </div>
+      <p>报告写 <code>3.7.24</code> + <code>transport-hardening-20261011-r1</code>；官方 3.7.24 是 <code>in-app-folder-picker-20261023-r1</code>。仓库记忆里，前者对应 3.7.15 / 3.7.19。三处出厂文件逐字一致，<code>check-release-identity.cjs</code> 还用正则钉住了这个值。</p>
+      <p><strong>这意味着：</strong>报告的行为证据（24 条回执、CORS、自启覆盖）可能来自旧引擎；BLK-1 仍然有效（当前源码里有），但不能把旧版行为当成 3.7.24 的缺陷清单。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F-04 · server.js:4224-4228 / 4423-4474；v15-runner.js:1029-1033</span>
+        <h3>24 条“状态未知”，主要是误报</h3>
+        <span class="tag warn">报告看到症状，归因反了</span>
+      </div>
+      <p>ACK 之后只删 <code>pending</code> 与 <code>.inputs.json</code>，journal 回执永久保留；下次启动对“缺 inputs 的 journal”直接 <code>unresolved += 1</code>。每一个已成功送达的尝试，都会在下次重启时被重新数成 <code>COMPLETION_UNKNOWN</code>。报告的 N 序列 12→23→24 与成功批次数增长同形，这更像是累计噪声，不是 24 笔卡单。</p>
+      <p><strong>但别急着删：</strong>先分类（已 ACK 成功 / 待重放 / 真未知），再决定数据修复；直接删会毁掉证据。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>整改方案</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>P0.5 先核对身份（5 分钟，阻塞其余）</h3>
+        <pre class="cmd">curl.exe -s http://127.0.0.1:49152/ping
+Get-Process | Where-Object { $_.ProcessName -match '图译工坊|tygf' } | Select-Object ProcessName, Path
+Get-Content "$env:LOCALAPPDATA\Programs\图译工坊本地助手\release-identity.json"</pre>
+        <p>期望：<code>version=3.7.24</code>、<code>assistantBuildId=in-app-folder-picker-20261023-r1</code>，进程路径在 <code>%LOCALAPPDATA%\Programs\图译工坊本地助手</code>。如果 buildId 是 <code>transport-hardening-20261011-r1</code>，报告审的是旧引擎；如果路径在 <code>D:\…</code>，这是复制安装，升级可能只更新了另一个目录。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>P0-A ACL 改为“进程 token SID + 启动自愈”</h3>
+        <ul>
+          <li>新增 <code>currentUserSid()</code>：绝对路径 <code>%SystemRoot%\System32\whoami.exe /user /fo csv /nh</code>，timeout 5s；失败再试 PowerShell <code>WindowsIdentity</code>；都失败就跳过 ACL 收紧并记 <code>ACL_SID_UNAVAILABLE</code>。</li>
+          <li><code>icacls.exe</code> 用 <code>*SID:F</code> 形式，先授权、回读确认，再单独执行 <code>/inheritance:r</code>；任何一步失败都不会把当前用户锁在外面。</li>
+          <li>启动时在读 <code>loadConfig</code> 之前，对 <code>.tygf_session</code> 和 <code>.bak</code> 各跑一次自愈；owner 有 WRITE_DAC，即使读被拒也能补回 ACE。</li>
+          <li><code>setHidden</code> 同样改绝对路径 <code>attrib.exe</code>，加 timeout 和退出码日志。</li>
+          <li>测试：扩展 <code>scripts/smoke-local-assistant-state-persistence.mjs</code>；静态断言源码里不再用 <code>process.env.USERNAME</code> 作为 ACL 目标；在临时文件上 <code>icacls /findsid &lt;当前 SID&gt;</code> 必须命中。</li>
+        </ul>
+        <p><strong>这是鉴权面，按治理需要 2 人复核。</strong></p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>P0-B 读不到就不覆盖；备份先立后破</h3>
+        <ul>
+          <li><code>loadConfig</code> 返回状态：<code>OK / MISSING / UNREADABLE / CORRUPT</code>。只有 <code>MISSING</code> 才按首次启动处理。</li>
+          <li><code>UNREADABLE</code>：先自愈并重读；仍不可读 → 打 <code>CONFIG_UNREADABLE</code> 后退出，<strong>不调用 <code>ensureMachineId</code> / <code>saveConfig</code></strong>，不改任何文件。</li>
+          <li><code>CORRUPT</code>：当前文件与 <code>.bak</code> 一起改名成 <code>.corrupt-&lt;时间戳&gt;</code> 保留证据，再按首次启动处理。</li>
+          <li><code>writeHiddenStateFile</code>：新备份复制 + fsync + 原子改名成功之后，才替换旧 <code>.bak</code>；当前文件不可读就中止；当前文件损坏就另存 <code>.corrupt-*</code>，<strong>保持 <code>.bak</code> 不动</strong>。删掉现在这行“先删旧备份、再挪当前文件”。</li>
+          <li>测试：模拟不可读 → <code>.bak</code> 哈希不变、没有新配置、日志有 <code>CONFIG_UNREADABLE</code>；恢复 ACL 后原授权还在。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>P0-C 发布完整性：闸先闭合，证书再补</h3>
+        <ul>
+          <li>生产发布移除 <code>--allow-unsigned-beta</code>；未签名只能走独立的 <code>--beta</code> 清单 / 目录，不更新生产下载页。</li>
+          <li><code>installer.iss</code> 加 <code>SignTool</code> 与 <code>SignedUninstaller=yes</code>，覆盖 setup、内层引擎 exe、托盘 exe、<code>unins000.exe</code> 四件。</li>
+          <li>证书采购现在启动（OV/EV 是外部周期）。<strong>代码闸本周能落，证书到位时间不承诺。</strong></li>
+          <li>验收：四件 <code>Get-AuthenticodeSignature</code> 全 <code>Valid</code>，<code>TimeStamperCertificate</code> 非空；不带 <code>--beta</code> 的未签名发布非零退出。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>P0-D 回执恢复误报：ACK 后留“已结算”标记</h3>
+        <ul>
+          <li><code>removeAttemptReceiptArtifacts</code> 删除 pending / inputs 之前，写 <code>&lt;attemptId&gt;.acked.json</code>；journal 回执继续保留作审计。</li>
+          <li>恢复时先建 <code>acked</code> 集合，命中的跳过并单独计数；日志拆成 <code>ACKED_SKIPPED=n</code> 与 <code>COMPLETION_UNKNOWN=m</code>。</li>
+          <li>对现有 24 条：不自动删、不自动重投；先跑只读分类脚本（已 ACK 成功 / 待重放 / 真未知），再出数据修复工单。</li>
+          <li>验收：成功批次 → ACK → 重启，<code>COMPLETION_UNKNOWN</code> 不增；人为制造一条真未知仍被计为 1。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>P1 服务端重算证据 + 打包版移除 dev 回退</h3>
+        <ul>
+          <li><strong>P1-A：</strong>云端回执带逐对象证据（<code>objectId / layerId / actualTextDigest</code>），服务端用同一规范化重算摘要；不匹配 → 422 <code>EVIDENCE_DIGEST_MISMATCH</code>，不结算。负控：改一个对象、删一个对象都必须拒收。</li>
+          <li><strong>P1-B：</strong>打包版 <code>DEFAULT_CONFIG.serverUrl</code> 用生产地址；<code>getAllowedOrigin</code> 不再回 <code>localhost:3000</code>；<code>isLocalDevServer</code> 在打包版恒为 false。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body">
+        <h3>P2 判定权与暴露面（下一个大版本，不塞进 3.7.25）</h3>
+        <p>先量化：当前有多少 <code>REOPEN_VERIFIED</code> 行是在“客户端自报、服务端没重算”的情况下结算的。如果答案是“全部”，P1-A 优先，P2 的“判定权回云端”往后放。客户端 JSX 保留为预检 / 展示；最终结论由服务端按原始证据计算。移除 <code>C:\snapshot\…</code> 这类构建路径字面量；<strong>保留中文错误文案</strong>；不做 bytecode / 加壳 / 反调试。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>验收判据</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>项</th><th>命令 / 动作</th><th>通过标准</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">身份</td><td><code>curl.exe -s http://127.0.0.1:49152/ping</code></td><td>version 3.7.24 且 buildId 为 <code>in-app-folder-picker-20261023-r1</code></td></tr>
+        <tr><td class="mono">ACL</td><td><code>whoami /user</code> 与 <code>icacls &lt;session&gt; /findsid &lt;SID&gt;</code></td><td>两个 SID 同值且命中</td></tr>
+        <tr><td class="mono">配对</td><td>客户机工作台点一次连接</td><td><code>/pair</code> 200；<code>PAIR_BOUND_LOCAL_AUTH_PERSISTENCE_FAILED</code> 不再出现</td></tr>
+        <tr><td class="mono">配置保全</td><td>隔离副本上拒绝读 <code>.tygf_session</code> 后启动</td><td><code>.bak</code> 哈希不变；无新配置；日志 <code>CONFIG_UNREADABLE</code>；恢复 ACL 后原授权还在</td></tr>
+        <tr><td class="mono">回执</td><td>成功批次 → ACK → 重启</td><td><code>COMPLETION_UNKNOWN</code> 不增；<code>ACKED_SKIPPED</code> +1</td></tr>
+        <tr><td class="mono">签名</td><td><code>Get-AuthenticodeSignature</code> 四件</td><td>全 <code>Valid</code>，<code>TimeStamperCertificate</code> 非空</td></tr>
+        <tr><td class="mono">证据</td><td>测试库篡改一条回执</td><td>4xx <code>EVIDENCE_DIGEST_MISMATCH</code>，无结算</td></tr>
+        <tr><td class="mono">发布闸</td><td>不带 <code>--beta</code> 发布未签名包</td><td>非零退出，生产 manifest 不更新</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>不做清单</h2>
+  <ul class="notes">
+    <li><strong>不重写 journal 为两阶段提交。</strong>fsync + 原子改名 + 重放已经够用；真问题是 ACK 后的误报。重写风险大于收益。</li>
+    <li><strong>不做“浏览器持有 device secret + 每请求 HMAC”。</strong>浏览器无法对同机进程保守秘密；这会把“可伪造 Origin”换成“可读浏览器存储/内存”，还会破坏现有配对与一次性票链路。</li>
+    <li><strong>不做 bytecode / 加壳 / 反调试。</strong>报告 §3 自己也用实测说明收益低、代价高，还会伤自家可诊断性。</li>
+    <li><strong>不删除中文错误文案。</strong>用户和支持需要它；只移除泄漏构建路径的字面量。</li>
+    <li><strong>不在未确认客户机 buildId 前，按报告的 3.7.24 行为结论改代码。</strong>先做 P0.5。</li>
+    <li><strong>不自动删、不自动重投那 24 条。</strong>先分类，再出数据修复工单；删了就没证据了。</li>
+    <li><strong>不拆客户过渡件。</strong>等 ACL 修复在<strong>那台机器</strong>上连续重启验证通过，再用 <code>tygf-assistant-patch.ps1 -Uninstall</code> 一次性拆除并留回滚。修复前拆，等于把客户再推下去一次。</li>
+    <li><strong>不在自启值上做“存在即不覆盖”。</strong>报告 §5 的值名与 MIN-1 的“覆盖”说法对不上（U-03）；先取升级前后注册表快照，再决定改不改安装器。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>未决与覆盖缺口</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>还缺什么</th><th>影响</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">U-01</td><td>客户机 <code>/ping</code> 的 version / buildId、进程路径、<code>release-identity.json</code></td><td>决定报告的行为结论能不能用在 3.7.24 上（F-06）</td></tr>
+        <tr><td class="mono">U-02</td><td>那 24 条的构成：已 ACK 成功 / 待重放 / 真未知；客户机 <code>receipts-pending/</code> 与服务端 attempt 状态</td><td>决定是否要数据修复工单；不分类就不能删</td></tr>
+        <tr><td class="mono">U-03</td><td>升级前后 <code>HKCU\...\Run</code> 的快照；报告 §5 的值名与 MIN-1 的“覆盖”矛盾</td><td>决定是否改安装器自启逻辑</td></tr>
+        <tr><td class="mono">U-04</td><td>客户 <code>.tygf_session</code> 的实际 owner / DACL；当前用户能否自愈</td><td>决定 P0-A 自愈是否够，还是要管理员介入</td></tr>
+        <tr><td class="mono">U-05</td><td>代码签名证书的采购 / 审核周期</td><td>决定 P0-C 的对外时间承诺；代码闸不受影响</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">覆盖缺口</span>
+    <p>未接触客户机、未运行安装器、未查云端数据库与线上 attempt 状态、未复现报告的 A/B ACL 实验、未反汇编客户实际二进制、未核对报告引用的 REA evidence ID。以上任一项都不能由本报告替代。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>最后一句</h2>
+  <div class="verdict">
+    <p>这份报告的价值在 BLK-1：它把“ACL 用名字而不是进程身份”这个隐蔽的停摆点挖出来了，这一点值得付钱。</p>
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">其余部分更像“黑盒能看到的表面现象 + 过期版本的推断”。<strong>先核对客户机到底在跑哪个 buildId，再修。</strong>否则我们可能在 3.7.24 上修一个 3.7.19 才有的问题，同时把真正会让客户每次重启丢授权的 F-02 留在原地。</p>
+  </div>
+</section>
+
+<footer>
+  <p>只读审查：报告 146 行 / 15,249 B；源码逐行核验；官方 3.7.24 安装包签名与哈希本会话实测。未改代码、未部署、未出包。</p>
+  <p>2026-10-23 · 证据等级 A（本会话命令 / file:line）／C（报告黑盒观测）／D（推断）已在正文标注。文中不含客户主机名、域账号、SID 与素材内容。</p>
+</footer>
+
+</div>

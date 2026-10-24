@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灰度名单找人 · 开源对标与对抗式审查</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>运营台 · 字体排版定制灰度名单</span><span class="sep">/</span>
+    <span>2026-10-21</span>
+  </p>
+  <h1>灰度名单「找不到人」怎么修</h1>
+  <p class="standfirst">Owner 在运营台粘了三个邮箱保存，被拒「以下用户不存在」。本轮做三件事：查开源上别人怎么解这个坑、对<strong>我自己刚提的方案</strong>做对抗式审查、给出可复跑的执行序。全程只读——未改代码、未部署、未写库。</p>
+  <div class="meta">
+    <span>6 个开源实现对标</span>
+    <span>3 路并行取证</span>
+    <span>两站真库只读实测</span>
+    <span>工作区未改动</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>病根不是文案写坏了，是<strong>这张卡只让人手填内部用户 ID，而全站没有任何一个地方能看到这个 ID</strong>。<br>
+    我本来想提的「让后端顺手把邮箱解析成 ID」，被本轮实测数据判死——覆盖率、唯一性、大小写三道全塌。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>该做的（B 案）</h3>
+      <ul>
+        <li><strong>卡内加搜索选人</strong>：输入邮箱/姓名/公司，调<strong>现成的</strong> <code>/api/admin/installs?q=</code>，点「加入」把 <strong>userId</strong> 落进输入框。存的永远还是 ID，服务端形状一字不改。</li>
+        <li><strong>切分放宽</strong>：换行 + 逗号 + 分号 + 空格都切（现在只认换行）。</li>
+        <li><strong>环境徽标</strong>：卡片标题旁显示「生产 / 测试」，数据源现成（<code>profileEnvironment()</code>）。</li>
+        <li><strong>错误文案改口</strong>：说清「这里要的是用户 ID，可用上方搜索按邮箱找人」。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不该做的（C 案）</h3>
+      <ul>
+        <li><strong>后端收邮箱自动解析</strong>：生产 68 个用户里只有 <strong>10 个</strong>有可用邮箱凭证；<code>contact</code> 字段 <strong>54 个为空、8 个值是 "sw"</strong>，且无唯一约束——仓库自己的夹具里两个人共用同一个 contact。</li>
+        <li><strong>大小写静默失配</strong>：SQLite 等值比较实测 <code>CASE_SENSITIVE</code>，大写邮箱查真实数据得 0 行。用户会得到一条永远解释不了的「不存在」。</li>
+        <li><strong>新建查找路由</strong>：<code>smoke-admin-security.mjs:323</code> 断言 admin 路由集合为空，新增即红。复用现成接口天然绕开。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>实测总账</h2>
+  <p class="lede">两站真库同一条只读 SQL 跑出的形状。判 C 案不行的三条，全在这张表里。</p>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">10/68</span><span class="k">生产站有邮箱凭证的用户<br>其余 58 人按邮箱根本找不到</span></div>
+    <div class="stat bad"><span class="n">54</span><span class="k">生产站 contact 为空的用户<br>另有 8 人该字段值是 "sw"</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k">用大写邮箱查真实数据的命中数<br>小写才命中 1</span></div>
+    <div class="stat ok"><span class="n">1</span><span class="k">现成可复用的搜索接口<br>已支持 7 个字段模糊匹配</span></div>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>探针</th><th>生产站</th><th>测试站</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">BetaUser 总数</td><td class="now">68</td><td class="now">38</td><td>内测账号行数</td></tr>
+        <tr><td class="mono">contact 为空</td><td class="now">54</td><td class="now">35</td><td><span class="tag bad">联系方式不是邮箱字段</span></td></tr>
+        <tr><td class="mono">contact 重复组</td><td class="now">2 组（空值 54 人 · "sw" 8 人）</td><td class="now">1 组（空值 35 人）</td><td><span class="tag bad">按它解析必歧义</span></td></tr>
+        <tr><td class="mono">EmailCredential</td><td class="now">10（邮箱唯一·已小写化）</td><td class="now">4</td><td><span class="tag warn">唯一可靠的邮箱→人映射，但覆盖薄</span></td></tr>
+        <tr><td class="mono">姓名重复组</td><td class="now">6 组</td><td class="now">5 组</td><td>名单里两个 <code>demo-seed</code> 是活例</td></tr>
+        <tr><td class="mono">等值比较大小写</td><td class="now">CASE_SENSITIVE</td><td class="now">CASE_SENSITIVE</td><td><span class="tag bad">大写邮箱静默 0 命中</span></td></tr>
+        <tr><td class="mono">已注销账号</td><td class="now">0</td><td class="now">0</td><td>本轮不构成风险，但解析时要定语义</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">顺带定案的一件事</span>
+    <p>这张卡是<strong>生产站</strong>的（<code>ops.tuyigf.com</code>）。生产库的排版定制总开关今早 08:22 已被打开，且没有名单行——所以「已开启 + 名单为空」这个组合只存在于生产。测试站名单从 10-19 起就有 3 个 ID，在那儿会显示 3 个标签。审计对得上：生产 <code>AdminAuditLog</code> 有 08:15:53 登录与 08:17:44、08:22:10 两次 <code>feature-flags.save</code>；测试站最后一次保存是 10-17。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>开源上别人怎么解</h2>
+  <p class="lede">六个实现撞在同一处：名单里存「应用自己定义的稳定标识」，人在界面上操作「标签」，键由系统落库——两件事从不混在同一个输入框里。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>项目</th><th>它怎么定位「指定用户」</th><th>可直接抄的一点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">Unleash<br>（GitLab 用它）</td>
+          <td><code>userWithId</code> 策略收逗号分隔的任意字符串，但要求它必须等于 SDK 传的 <code>context.userId</code>；文档示例里 ID 直接写成邮箱</td>
+          <td><span class="fix">平台不规定 ID 长什么样，只规定两边一致</span>——我们「存 ID + 服务端 fail-closed」的形状是对的，别动</td>
+        </tr>
+        <tr>
+          <td class="mono">GitLab</td>
+          <td>在 userWithId 之上再做「用户列表」对象：先建一个有名字的列表，功能开关引用它</td>
+          <td><span class="fix">可复用命名名单</span>——100 人规模属过度设计，本轮不做，记「以后再说」</td>
+        </tr>
+        <tr>
+          <td class="mono">GrowthBook</td>
+          <td>属性优先：先选属性（<code>id</code>/<code>email</code>/<code>country</code>/<code>plan</code>）→ 操作符 → 值；<code>id</code> 是默认哈希与定向属性，可用 <code>hashAttribute</code> 换</td>
+          <td><span class="fix">把「你在按什么找人」显式摆到界面上</span>，而不是让用户猜字段</td>
+        </tr>
+        <tr>
+          <td class="mono">GrowthBook<br>（输入控件）</td>
+          <td>ID 列表是个多选控件，敲进去的陌生值直接变成一枚标签（free-solo），不是报错</td>
+          <td><span class="fix">未识别的输入先变成候选，不要在保存时才炸</span></td>
+        </tr>
+        <tr>
+          <td class="mono">LaunchDarkly</td>
+          <td>上下文有 <code>kind</code> + <code>key</code> + 属性；官方口径：key 用稳定、非敏感的内部标识，邮箱只是属性；并明说客户端规则不承担真正授权控制</td>
+          <td><span class="fix">邮箱当键是反模式</span>——PII、可改、可撞</td>
+        </tr>
+        <tr>
+          <td class="mono">PostHog</td>
+          <td>发布条件按 person property（含 email）过滤，值选择框拿真实用户值做候选</td>
+          <td><span class="fix">候选来自自己的库，不来自用户记忆</span></td>
+        </tr>
+        <tr>
+          <td class="mono">Django admin</td>
+          <td><code>raw_id_fields</code>＝手填主键；<code>autocomplete_fields</code>＝搜人话、表单仍提交主键（要求关联模型声明 <code>search_fields</code>）</td>
+          <td><span class="tag ok">这就是 B 案的原型</span>——我们缺的正是「autocomplete 那一档」</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>审查结论与 findings</h2>
+  <p class="lede">审的对象是我自己上一轮提出的方案。Round 1/3，风险档 Medium（前端为主 + 一处 admin 端点文案），但落点在灰度可见性，按高风险对待。</p>
+
+  <div class="verdict">
+    <span class="lb">VERDICT</span>
+    <p>有条件放行：<strong>B 案可做</strong>（前提是不新建路由、不动存储形状、两站各跑一遍真机验收）；<strong>C 案打回</strong>。改动 0 文件（本轮只调研与审查）。已证实 9 条（Important 6 / Nit 2 / Pre-existing 1），未决 3 条。</p>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据等级</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">F-101</td><td><span class="tag bad">Important</span></td><td class="mono">settings-panel.tsx:1040-1045<br>installs-credits-panel.tsx:350-358</td><td>唯一显示 userId 的地方，前提是已经知道 userId → 功能对 Owner 不可用</td><td>A</td></tr>
+        <tr><td class="mono">F-102</td><td><span class="tag bad">Important</span></td><td class="mono">schema.prisma:57-70,131-132<br>两库只读实测</td><td>按邮箱解析：覆盖 10/68、contact 无唯一约束且脏、大小写静默失配 → 把面板开给错的人</td><td>A</td></tr>
+        <tr><td class="mono">F-103</td><td><span class="tag bad">Important</span></td><td class="mono">settings-panel.tsx:432-435<br>feature-flags-store.ts:201</td><td>只按换行切分：粘一行三个邮箱 → 当成 1 条，报「不存在」时回显一长串</td><td>A</td></tr>
+        <tr><td class="mono">F-104</td><td><span class="tag bad">Important</span></td><td class="mono">settings-panel.tsx:439</td><td>保存后用服务端返回的 ID 覆盖输入框；某条被丢弃时行数静默变短，无差异提示</td><td>A</td></tr>
+        <tr><td class="mono">F-105</td><td><span class="tag bad">Important</span></td><td class="mono">smoke-admin-security.mjs:323</td><td>新增任意 <code>/api/admin/*</code> 路由 → 门直接红（断言 admin 路由集合为空）</td><td>A</td></tr>
+        <tr><td class="mono">F-106</td><td><span class="tag bad">Important</span></td><td class="mono">route.ts:75/91/102/113/125/135<br>schema.prisma:37</td><td>六处保存一律 <code>null</code> meta，名单只有一行当前值无历史 → 「谁把谁加进生产灰度」事后查不到</td><td>A</td></tr>
+        <tr><td class="mono">F-107</td><td><span class="tag warn">Nit</span></td><td class="mono">route.ts:69</td><td>把「字段用错」说成「人不存在」，把人引去查账号，而真因是填错栏</td><td>A</td></tr>
+        <tr><td class="mono">F-108</td><td><span class="tag warn">Nit</span></td><td class="mono">settings-panel.tsx:1034<br>feature-flag-gating.ts:11-24</td><td>在生产运营台上指路测试站；而判定不看环境，加了对人就是生产生效</td><td>A</td></tr>
+        <tr><td class="mono">F-109</td><td><span class="tag">Pre-existing</span></td><td class="mono">feature-flags-store.ts:237-244</td><td>盲写整体覆盖、无 CAS/etag，<code>updatedAt</code> 只写不比 → 两个标签页互相吃掉</td><td>A</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">推翻了自己上一轮的哪句话</span>
+    <p>上一轮我说「建议改成邮箱和 ID 都收」。本轮 F-102 的三条实测把它推翻：<strong>能唯一解析的邮箱源只覆盖 10/68，另一条源是自由文本且无唯一约束</strong>。新结论：不做解析，做选人——把「输入键」这个动作从人身上拿走。</p>
+    <p>另有一处口径修正：上一轮我说「运营台没有任何地方能看到 ID」，严格讲是「没有任何地方能看到<strong>别人的</strong> ID」——名单卡保存成功后会回显自己的。这个区别决定了 F-101 的修法要落在选人控件上，而不是只在详情页加一行文本。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>执行序与验收尺</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>先跑基线留底</h3>
+        <p><code>npm run test:feature-flag-whitelist</code>、<code>test:admin-security</code>、<code>test:assistant-device-policy</code>，三条退出码抄进台账。没有基线，改完的绿说明不了任何事。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>只改两处</h3>
+        <p><code>settings-panel.tsx</code>（搜索选人 + 切分 + 单行摘要 + 环境徽标）与 <code>route.ts</code> 的错误文案。<strong>不动</strong> <code>feature-flags-store.ts</code> 的存取形状、不动 <code>feature-flag-gating.ts</code> 的 fail-closed 判定、不新建路由。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>给守卫补 4 条断言（含负控）</h3>
+        <p>① 名单里存的仍是 ID 数组（等值不变）；② 含中文逗号/分号的输入被切成多条；③ 未知条目的文案同时含「不存在」与「用户 ID」两个关键字；④ <strong>负控</strong>：65 字符的串必须仍被拒。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>静态门 + 真机两站各一遍</h3>
+        <p><code>npx tsc --noEmit</code>、<code>npm run lint</code>；浏览器实测：搜自己邮箱 → 点选 → 保存 → 标签显示「姓名 · ID」→ 刷新仍在。<strong>负控</strong>：搜一个不存在的邮箱必须显示「无匹配」而不是报错。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>发布纪律</h3>
+        <p>B 案不碰计费/回执/行排除语义，不触发合同变更四层；但按发布线规矩：测试站先上、独立复验通过，才谈生产。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">现成能力清单（决定这单有多便宜）</span>
+    <p>搜索接口已有：<code>api/admin/installs/route.ts:113-127</code> 按 姓名 / 邮箱凭证 / 联系方式 / 公司 / 用户 ID / 邀请码 / 项目名 七路模糊匹配，返回体含 <code>userId</code>、<code>email</code>、<code>name</code>、<code>userStatus</code>（<code>:334-340</code>），分页 <code>pageSize</code> 上限 100，鉴权与这张卡同一个 owner 门（<code>:86</code>）。环境标识已有：<code>profileEnvironment()</code>（<code>profile-identity.ts:3-10</code>）。UI 原语已有：<code>command.tsx</code> + <code>popover.tsx</code>（<code>cmdk</code>、<code>@radix-ui/react-popover</code> 均在 <code>package.json</code>），且仓里已有 Popover+Command 组合先例 <code>data-table-faceted-filter.tsx:118-158</code>——<strong>零新依赖</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>要你拍的三件事 + 覆盖缺口</h2>
+
+  <ul class="notes">
+    <li><strong>① 生产灰度要不要现在开。</strong>总开关今早已在生产被打开，只差名单；B 案做完后往生产名单加人就是真的对外可见。要不要加、加谁，你点头。</li>
+    <li><strong>② 保存前那行「将保存 N 人 / M 条无效」的单行摘要</strong>，算不算你定过要撤下的「过程性清单」？我按「一行摘要不算清单」来做，不同意就撤。</li>
+    <li><strong>③ 审计里能不能落「这次改了哪几个用户 ID」</strong>（不落邮箱、不落正文）。<code>schema.prisma:37</code> 写着「不记录完整请求体与用户业务正文」，ID 算不算业务正文要你解释。</li>
+  </ul>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>本轮明确没检查的</h3>
+      <ul>
+        <li>没量 <code>/api/admin/installs?q=</code> 的真实响应耗时与 SQL 条数（它每行还查设备/事件/余额，做搜索框可能偏重）。缺：浏览器计时。</li>
+        <li>没检查窄屏下这张卡的排版。</li>
+        <li>没验证 100 人上限在「点选入名单」路径上的表现。</li>
+        <li>没验证生产站是否真的会渲染出这个面板——只验到代码在生产构建 <code>6ff5c3c</code> 里、判定不看环境。</li>
+        <li>Round 只走到 1/3；B 案落地后需第 2 轮只审新 diff。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>本轮已证实的</h3>
+      <ul>
+        <li>根因：按 <code>BetaUser.id</code> 查存在性（<code>feature-flags-store.ts:249-259</code> → <code>route.ts:64-72</code>）。</li>
+        <li>环境定案：截图是生产运营台，非测试站（审计时间戳 + 两库形状双向对上）。</li>
+        <li>你粘的三个邮箱里，只有 1 个在生产真有账号；另两个一条 BetaUser 都没有（一个是申请未批 <code>new</code>，一个只在测试站是 <code>invited</code>）。</li>
+        <li>零新依赖、零新路由、零存储形状变更即可完成 B 案。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>方法：3 路并行只读取证（契约+测试面 / 鉴权+环境面 / 我自己跑的两站数据形状探针）→ 主审独立证伪 → 收敛为带 file:line 的 findings。</p>
+  <p>2026-10-21 · 本地与服务器只读实测，未部署、未提交、未写库。文中不含口令、密钥与客户素材内容。</p>
+</footer>
+
+</div>
+</body>
+</html>

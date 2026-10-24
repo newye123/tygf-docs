@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图译工坊 · 运营台原型 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(16px,3.6vw,34px);--radius:10px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,40px) var(--pad);display:flex;flex-direction:column;gap:22px}
+header h1{font-family:var(--font-display);font-size:clamp(1.4rem,3.4vw,1.9rem);margin:0 0 6px}
+header p{margin:0;color:var(--muted);font-size:.9rem}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.88rem;cursor:pointer;color:var(--ink-2)}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.tab .n{font-family:var(--font-mono);opacity:.75;margin-left:6px;font-size:.76rem}
+section[hidden]{display:none}
+section{display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-family:var(--font-display);font-size:1.35rem;font-weight:650;line-height:1.25}
+.kpi .n{font-size:.76rem;color:var(--muted)}
+.kpi.ok .v{color:var(--ok)}.kpi.warn .v{color:var(--warn)}.kpi.bad .v{color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-family:var(--font-display);font-size:.98rem}
+.spark{display:flex;align-items:flex-end;gap:2px;height:120px}
+.spark i{flex:1;background:var(--accent);opacity:.8;border-radius:2px 2px 0 0;min-width:3px}
+.spark i.hi{background:var(--ok);opacity:1}.spark i.lo{background:var(--warn);opacity:1}
+.cap{font-family:var(--font-mono);font-size:.72rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}td.num,.num{font-family:var(--font-mono);font-size:.86em}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.panel{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.phead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ptitle{font-weight:650}
+.pwhy{margin:0;font-size:.9rem;color:var(--ink-2)}
+.prow{display:flex;gap:10px;font-size:.86rem;flex-wrap:wrap}.pk{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;color:var(--muted);min-width:88px}
+.tag{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.note{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:12px 14px;font-size:.88rem;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:12px;font-size:.78rem;color:var(--muted)}
+@media print{.tabs{display:none}section[hidden]{display:flex}}
+</style></head><body><div class="wrap">
+<header><h1>图译工坊 · 运营台原型</h1><p>数据取自 Cloudflare 边缘分析（zone 级聚合），生成于 2026-10-20 17:04 +0800；窗口 2026-07-12 → 2026-10-19（100 天）。<strong>所有数字由脚本从台账与快照文件读出，未手填。</strong></p></header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-t="t1">流量总览<span class="n">真数</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-t="t2">来源与着陆<span class="n">待接入</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-t="t3">用户旅程<span class="n">待接入</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-t="t4">搜索关键词<span class="n">仅聚合</span></button>
+</nav>
+
+<section id="t1">
+  <div class="kpis">
+    <div class="kpi ok"><div class="k">累计去重访客</div><div class="v">5,385</div><div class="n">2026-07-12 起 101 天 · CF 整窗去重</div></div>
+    <div class="kpi"><div class="k">近 30 天访客</div><div class="v">2,078</div><div class="n">整窗去重（非每日相加）</div></div>
+    <div class="kpi"><div class="k">日均访客</div><div class="v">95.5</div><div class="n">中位 86.5 · 人次口径</div></div>
+    <div class="kpi ok"><div class="k">近 7 天环比</div><div class="v">+31.8%</div><div class="n">805 对 611（人次）</div></div>
+    <div class="kpi warn"><div class="k">请求/浏览比</div><div class="v">21.0×</div><div class="n">噪声倍数：接口·静态·扫描</div></div>
+    <div class="kpi"><div class="k">人均来访天数</div><div class="v">1.78</div><div class="n">9,585 人次 ÷ 5,385 人</div></div>
+  </div>
+  <div class="card"><h3>每日访客（100 天）</h3><div class="spark">
+      <i style="height:57%" title="2026-07-12 访客 150 · 浏览 184 · 请求 3,293"></i>
+      <i style="height:61%" title="2026-07-13 访客 159 · 浏览 163 · 请求 1,681"></i>
+      <i class="hi" style="height:100%" title="2026-07-14 访客 261 · 浏览 154 · 请求 1,207"></i>
+      <i style="height:38%" title="2026-07-15 访客 99 · 浏览 98 · 请求 784"></i>
+      <i style="height:41%" title="2026-07-16 访客 106 · 浏览 87 · 请求 627"></i>
+      <i style="height:25%" title="2026-07-17 访客 66 · 浏览 53 · 请求 290"></i>
+      <i style="height:30%" title="2026-07-18 访客 79 · 浏览 31 · 请求 316"></i>
+      <i style="height:33%" title="2026-07-19 访客 86 · 浏览 35 · 请求 543"></i>
+      <i style="height:25%" title="2026-07-20 访客 66 · 浏览 65 · 请求 373"></i>
+      <i style="height:43%" title="2026-07-21 访客 113 · 浏览 89 · 请求 619"></i>
+      <i style="height:34%" title="2026-07-22 访客 88 · 浏览 68 · 请求 374"></i>
+      <i style="height:32%" title="2026-07-23 访客 84 · 浏览 65 · 请求 438"></i>
+      <i style="height:29%" title="2026-07-24 访客 75 · 浏览 60 · 请求 242"></i>
+      <i class="lo" style="height:22%" title="2026-07-25 访客 57 · 浏览 58 · 请求 408"></i>
+      <i style="height:32%" title="2026-07-26 访客 84 · 浏览 144 · 请求 1,499"></i>
+      <i style="height:32%" title="2026-07-27 访客 84 · 浏览 82 · 请求 789"></i>
+      <i style="height:38%" title="2026-07-28 访客 98 · 浏览 135 · 请求 1,428"></i>
+      <i style="height:54%" title="2026-07-29 访客 140 · 浏览 214 · 请求 2,659"></i>
+      <i style="height:42%" title="2026-07-30 访客 109 · 浏览 90 · 请求 3,284"></i>
+      <i style="height:52%" title="2026-07-31 访客 136 · 浏览 127 · 请求 1,147"></i>
+      <i style="height:31%" title="2026-08-01 访客 82 · 浏览 67 · 请求 734"></i>
+      <i style="height:33%" title="2026-08-02 访客 86 · 浏览 71 · 请求 931"></i>
+      <i style="height:56%" title="2026-08-03 访客 146 · 浏览 127 · 请求 1,401"></i>
+      <i style="height:42%" title="2026-08-04 访客 109 · 浏览 94 · 请求 1,260"></i>
+      <i style="height:32%" title="2026-08-05 访客 84 · 浏览 72 · 请求 895"></i>
+      <i style="height:24%" title="2026-08-06 访客 63 · 浏览 74 · 请求 946"></i>
+      <i style="height:35%" title="2026-08-07 访客 91 · 浏览 148 · 请求 1,023"></i>
+      <i style="height:35%" title="2026-08-08 访客 91 · 浏览 57 · 请求 384"></i>
+      <i style="height:33%" title="2026-08-09 访客 87 · 浏览 84 · 请求 960"></i>
+      <i style="height:38%" title="2026-08-10 访客 100 · 浏览 107 · 请求 5,389"></i>
+      <i style="height:41%" title="2026-08-11 访客 108 · 浏览 101 · 请求 3,654"></i>
+      <i style="height:34%" title="2026-08-12 访客 90 · 浏览 84 · 请求 2,766"></i>
+      <i style="height:35%" title="2026-08-13 访客 91 · 浏览 66 · 请求 645"></i>
+      <i style="height:30%" title="2026-08-14 访客 77 · 浏览 51 · 请求 449"></i>
+      <i style="height:28%" title="2026-08-15 访客 74 · 浏览 49 · 请求 396"></i>
+      <i style="height:38%" title="2026-08-16 访客 99 · 浏览 68 · 请求 1,153"></i>
+      <i style="height:26%" title="2026-08-17 访客 69 · 浏览 43 · 请求 550"></i>
+      <i style="height:28%" title="2026-08-18 访客 74 · 浏览 51 · 请求 417"></i>
+      <i style="height:29%" title="2026-08-19 访客 76 · 浏览 49 · 请求 1,719"></i>
+      <i style="height:27%" title="2026-08-20 访客 70 · 浏览 48 · 请求 374"></i>
+      <i style="height:25%" title="2026-08-21 访客 66 · 浏览 37 · 请求 609"></i>
+      <i style="height:34%" title="2026-08-22 访客 89 · 浏览 104 · 请求 1,806"></i>
+      <i style="height:33%" title="2026-08-23 访客 85 · 浏览 97 · 请求 2,451"></i>
+      <i style="height:32%" title="2026-08-24 访客 84 · 浏览 30 · 请求 710"></i>
+      <i style="height:34%" title="2026-08-25 访客 89 · 浏览 99 · 请求 1,956"></i>
+      <i style="height:31%" title="2026-08-26 访客 82 · 浏览 62 · 请求 758"></i>
+      <i style="height:31%" title="2026-08-27 访客 82 · 浏览 85 · 请求 2,642"></i>
+      <i style="height:30%" title="2026-08-28 访客 77 · 浏览 74 · 请求 2,754"></i>
+      <i style="height:32%" title="2026-08-29 访客 83 · 浏览 90 · 请求 2,500"></i>
+      <i style="height:30%" title="2026-08-30 访客 77 · 浏览 61 · 请求 1,299"></i>
+      <i style="height:30%" title="2026-08-31 访客 78 · 浏览 58 · 请求 767"></i>
+      <i style="height:28%" title="2026-09-01 访客 74 · 浏览 55 · 请求 606"></i>
+      <i style="height:35%" title="2026-09-02 访客 92 · 浏览 61 · 请求 521"></i>
+      <i style="height:27%" title="2026-09-03 访客 71 · 浏览 48 · 请求 850"></i>
+      <i style="height:32%" title="2026-09-04 访客 83 · 浏览 85 · 请求 2,151"></i>
+      <i style="height:31%" title="2026-09-05 访客 81 · 浏览 85 · 请求 1,076"></i>
+      <i style="height:35%" title="2026-09-06 访客 92 · 浏览 108 · 请求 2,777"></i>
+      <i style="height:31%" title="2026-09-07 访客 81 · 浏览 85 · 请求 3,464"></i>
+      <i style="height:49%" title="2026-09-08 访客 127 · 浏览 100 · 请求 1,673"></i>
+      <i style="height:51%" title="2026-09-09 访客 134 · 浏览 126 · 请求 5,625"></i>
+      <i style="height:40%" title="2026-09-10 访客 104 · 浏览 99 · 请求 2,202"></i>
+      <i style="height:34%" title="2026-09-11 访客 89 · 浏览 75 · 请求 3,514"></i>
+      <i style="height:28%" title="2026-09-12 访客 73 · 浏览 59 · 请求 2,782"></i>
+      <i style="height:28%" title="2026-09-13 访客 72 · 浏览 104 · 请求 2,806"></i>
+      <i style="height:36%" title="2026-09-14 访客 93 · 浏览 154 · 请求 8,508"></i>
+      <i style="height:52%" title="2026-09-15 访客 137 · 浏览 171 · 请求 4,211"></i>
+      <i style="height:36%" title="2026-09-16 访客 95 · 浏览 148 · 请求 3,148"></i>
+      <i style="height:51%" title="2026-09-17 访客 132 · 浏览 216 · 请求 10,478"></i>
+      <i style="height:72%" title="2026-09-18 访客 187 · 浏览 187 · 请求 4,300"></i>
+      <i style="height:56%" title="2026-09-19 访客 145 · 浏览 126 · 请求 3,657"></i>
+      <i style="height:36%" title="2026-09-20 访客 94 · 浏览 69 · 请求 2,769"></i>
+      <i style="height:30%" title="2026-09-21 访客 79 · 浏览 90 · 请求 3,813"></i>
+      <i style="height:33%" title="2026-09-22 访客 85 · 浏览 87 · 请求 2,681"></i>
+      <i style="height:39%" title="2026-09-23 访客 102 · 浏览 87 · 请求 2,918"></i>
+      <i style="height:25%" title="2026-09-24 访客 65 · 浏览 115 · 请求 2,845"></i>
+      <i style="height:27%" title="2026-09-25 访客 70 · 浏览 58 · 请求 3,250"></i>
+      <i style="height:39%" title="2026-09-26 访客 103 · 浏览 89 · 请求 2,638"></i>
+      <i style="height:35%" title="2026-09-27 访客 92 · 浏览 42 · 请求 1,524"></i>
+      <i style="height:30%" title="2026-09-28 访客 77 · 浏览 47 · 请求 2,084"></i>
+      <i style="height:28%" title="2026-09-29 访客 73 · 浏览 50 · 请求 568"></i>
+      <i style="height:34%" title="2026-09-30 访客 90 · 浏览 53 · 请求 1,215"></i>
+      <i style="height:35%" title="2026-10-01 访客 92 · 浏览 35 · 请求 577"></i>
+      <i style="height:32%" title="2026-10-02 访客 84 · 浏览 40 · 请求 1,104"></i>
+      <i style="height:41%" title="2026-10-03 访客 107 · 浏览 75 · 请求 1,442"></i>
+      <i style="height:30%" title="2026-10-04 访客 78 · 浏览 48 · 请求 1,529"></i>
+      <i style="height:32%" title="2026-10-05 访客 84 · 浏览 42 · 请求 1,481"></i>
+      <i style="height:29%" title="2026-10-06 访客 76 · 浏览 137 · 请求 1,629"></i>
+      <i style="height:35%" title="2026-10-07 访客 92 · 浏览 135 · 请求 3,037"></i>
+      <i style="height:40%" title="2026-10-08 访客 105 · 浏览 164 · 请求 3,416"></i>
+      <i style="height:30%" title="2026-10-09 访客 78 · 浏览 96 · 请求 2,909"></i>
+      <i style="height:41%" title="2026-10-10 访客 107 · 浏览 111 · 请求 1,881"></i>
+      <i style="height:28%" title="2026-10-11 访客 73 · 浏览 91 · 请求 2,852"></i>
+      <i style="height:31%" title="2026-10-12 访客 80 · 浏览 73 · 请求 4,509"></i>
+      <i style="height:42%" title="2026-10-13 访客 109 · 浏览 169 · 请求 4,553"></i>
+      <i style="height:38%" title="2026-10-14 访客 98 · 浏览 154 · 请求 1,600"></i>
+      <i style="height:31%" title="2026-10-15 访客 81 · 浏览 118 · 请求 1,056"></i>
+      <i style="height:41%" title="2026-10-16 访客 107 · 浏览 238 · 请求 2,733"></i>
+      <i style="height:74%" title="2026-10-17 访客 193 · 浏览 387 · 请求 3,265"></i>
+      <i style="height:56%" title="2026-10-18 访客 145 · 浏览 300 · 请求 2,563"></i>
+      <i style="height:28%" title="2026-10-19 访客 72 · 浏览 132 · 请求 5,079"></i>
+  </div><div class="cap">绿＝峰值 2026-07-14（261）· 黄＝谷值 2026-07-25（57）· 悬停看逐日三数 · 高度＝当日访客／峰值</div></div>
+  <div class="grid2">
+    <div class="card"><h3>按月（人次口径）</h3><div class="tablewrap"><table><tr><th>月份</th><th>天数</th><th>访客相加</th><th>浏览</th><th>请求</th><th>日均</th></tr>
+      <tr><td class="num">2026-07</td><td class="num">20</td><td class="num">2,140</td><td class="num">2,002</td><td class="num">22,001</td><td class="num">107.0</td></tr>
+      <tr><td class="num">2026-08</td><td class="num">31</td><td class="num">2,659</td><td class="num">2,308</td><td class="num">44,298</td><td class="num">85.8</td></tr>
+      <tr><td class="num">2026-09</td><td class="num">30</td><td class="num">2,892</td><td class="num">2,879</td><td class="num">90,654</td><td class="num">96.4</td></tr>
+      <tr><td class="num">2026-10</td><td class="num">19</td><td class="num">1,861</td><td class="num">2,545</td><td class="num">47,215</td><td class="num">97.9</td></tr>
+    </table></div></div>
+    <div class="card"><h3>整窗去重 vs 每日相加（别混）</h3><div class="tablewrap"><table><tr><th>窗口</th><th>去重访客</th><th>每日相加</th></tr>
+      <tr><td>07-12 → 10-20（101 天）</td><td class="num">5,385</td><td class="num">9,552</td></tr>
+      <tr><td>近 30 天（09-19 → 10-19）</td><td class="num">2,078</td><td class="num">9,552</td></tr>
+    </table></div><div class="cap">差额＝跨日重复来的人。对外只可引"去重访客"，且须标"含爬虫，为上限"。</div></div>
+  </div>
+  <div class="note"><strong>口径边界：</strong>zone 级合计，官网＋内测站＋接口＋静态资源混在一起；CF 的"去重"含爬虫与扫描器 ⇒ 真人数低于此值。按站拆分与剔爬虫要靠服务器日志那步（已授权未执行）。</div>
+</section>
+
+<section id="t2" hidden>
+  <div class="card"><h3>入口页 Top（2026-09-22 → 2026-10-20，访问次数口径）</h3><div class="tablewrap"><table><tr><th>路径</th><th>访问次数</th><th>占页面合计</th></tr>
+      <tr><td class="num">/download</td><td class="num">194</td><td class="num">33.7%</td></tr>
+      <tr><td class="num">/terms</td><td class="num">154</td><td class="num">26.8%</td></tr>
+      <tr><td class="num">/en/download</td><td class="num">104</td><td class="num">18.1%</td></tr>
+      <tr><td class="num">/en/privacy</td><td class="num">39</td><td class="num">6.8%</td></tr>
+      <tr><td class="num">/pack</td><td class="num">32</td><td class="num">5.6%</td></tr>
+      <tr><td class="num">/admin</td><td class="num">21</td><td class="num">3.7%</td></tr>
+      <tr><td class="num">/auth/reset</td><td class="num">12</td><td class="num">2.1%</td></tr>
+      <tr><td class="num">/guide/ps-batch-replace-text</td><td class="num">10</td><td class="num">1.7%</td></tr>
+      <tr><td class="num">/auth/verify</td><td class="num">9</td><td class="num">1.6%</td></tr>
+      <tr><td class="num">/v1.5/authorization/check</td><td class="num">0</td><td class="num">0.0%</td></tr>
+      <tr><td class="num">/admin-api/</td><td class="num">0</td><td class="num">0.0%</td></tr>
+      <tr><td class="num">/debug.txt.gz</td><td class="num">0</td><td class="num">0.0%</td></tr>
+    </table></div><div class="cap">度量＝CF visits（访问次数），与"去重访客"不是同一把尺。快照文件 流量入口与国家_20261020.json；路径查询撞到 limit，排名可信、总数非全量。</div></div>
+  <div class="card"><h3>访客国家/地区 Top（共 77 国）</h3><div class="tablewrap"><table><tr><th>国家/地区</th><th>访问次数</th><th>占比</th></tr>
+      <tr><td>CN</td><td class="num">1272</td><td class="num">42.9%</td></tr>
+      <tr><td>US</td><td class="num">631</td><td class="num">21.3%</td></tr>
+      <tr><td>SG</td><td class="num">448</td><td class="num">15.1%</td></tr>
+      <tr><td>DE</td><td class="num">106</td><td class="num">3.6%</td></tr>
+      <tr><td>NL</td><td class="num">62</td><td class="num">2.1%</td></tr>
+      <tr><td>GB</td><td class="num">59</td><td class="num">2.0%</td></tr>
+      <tr><td>FR</td><td class="num">57</td><td class="num">1.9%</td></tr>
+      <tr><td>BE</td><td class="num">54</td><td class="num">1.8%</td></tr>
+      <tr><td>JP</td><td class="num">38</td><td class="num">1.3%</td></tr>
+      <tr><td>HK</td><td class="num">33</td><td class="num">1.1%</td></tr>
+      <tr><td>BR</td><td class="num">31</td><td class="num">1.0%</td></tr>
+      <tr><td>CA</td><td class="num">15</td><td class="num">0.5%</td></tr>
+    </table></div><div class="cap">新加坡含自家机房出口、美国含爬虫出口，均未剔除 ⇒ 只作相对参考。</div></div>
+  
+  <div class="panel">
+    <div class="phead"><span class="ptitle">来源站：谁把人流送过来（知乎 / 小红书 / 搜索 / 直链）</span><span class="tag warn">待接入</span></div>
+    <p class="pwhy">这是你要的核心一项，现在确实空。Cloudflare 有该字段但本 zone 无权限（实测报错 does not have access to the field），免费套餐锁住。</p>
+    <div class="prow"><span class="pk">数据源</span><span>自有服务器 nginx 日志的 Referer —— 数据一直都在，只是没被采集分析</span></div>
+    <div class="prow"><span class="pk">接通后会显示</span><span>来源站排行 · 各来源的着陆页 · 各来源的后续转化率 · 按日趋势</span></div>
+  </div>
+  
+  <div class="panel">
+    <div class="phead"><span class="ptitle">停留时长与跳出</span><span class="tag warn">待接入</span></div>
+    <p class="pwhy">站内零采集：没有浏览会话概念（LoginSession 是邮箱登录会话，schema:178-195），也没有任何埋点脚本。</p>
+    <div class="prow"><span class="pk">数据源</span><span>短期＝日志按客户端 30 分钟窗口估算（有误差，单页跳出记 0）；要准＝浏览器埋点（需改 CSP ＋ 政策补一行用途）</span></div>
+    <div class="prow"><span class="pk">接通后会显示</span><span>平均停留 · 跳出率 · 各页停留分布</span></div>
+  </div>
+</section>
+
+<section id="t3" hidden>
+  
+  <div class="panel">
+    <div class="phead"><span class="ptitle">注册 → 激活 → 下载助手 → 首次跑通 → 付费</span><span class="tag warn">待接入</span></div>
+    <p class="pwhy">这条是我们独有的优势数据：已登录、已告知、服务端已绑定账号身份（funnel 事件入库时解析 principalId，route.ts:130-144），合规上比匿名访客轨迹干净得多。现在断在开头——注册/邮箱验证/登录三个环节不写漏斗事件。</p>
+    <div class="prow"><span class="pk">数据源</span><span>BetaFunnelEvent（16 个事件已在合同里）＋ BetaUser ＋ CreditPurchaseOrder；缺的只是补 3 个事件并接 auth 调用点</span></div>
+    <div class="prow"><span class="pk">接通后会显示</span><span>逐级转化漏斗与流失率 · 各步中位耗时 · 卡死在哪一步最多 · 分渠道转化差（等来源接上自动出）</span></div>
+  </div>
+  <div class="note"><strong>为什么这一层比"看每个访客"更值钱：</strong>匿名轨迹告诉你"有人来过"，这条告诉你"<strong>谁真的用起来了、在哪一步放弃</strong>"。你要决定做什么功能，靠的是后者；而且它不需要动隐私政策。</div>
+</section>
+
+<section id="t4" hidden>
+  
+  <div class="panel">
+    <div class="phead"><span class="ptitle">搜索关键词（按词聚合）</span><span class="tag warn">待接入</span></div>
+    <p class="pwhy">"某个人搜了什么词进来"——任何网站都拿不到。Google 官方条款原文：点击搜索结果时<strong>通常不会</strong>把搜索词传给网站；词数据只通过 Search Console 以聚合形式提供。所以这一栏按人永远空。</p>
+    <div class="prow"><span class="pk">数据源</span><span>Google Search Console API（域名已用 DNS 方式验证）；百度站长侧现行回传口径未核实</span></div>
+    <div class="prow"><span class="pk">接通后会显示</span><span>带来曝光与点击的查询词列表 · 展示/点击/平均排名按日趋势 · 与着陆页对照（明确标注：不可关联到个人）</span></div>
+  </div>
+</section>
+
+<footer>本页为原型，数据全部来自本会话实测落盘文件；生成脚本 <span class="num">tmp/build-console.mjs</span>。方案与对抗式审查见 <span class="num">交付档案/审查报告/审查报告_20261020_用户运营台_对抗式审查与方案.md</span>。</footer>
+</div>
+<script>
+const tabs=document.querySelectorAll('.tab');
+tabs.forEach(b=>b.addEventListener('click',()=>{tabs.forEach(x=>x.setAttribute('aria-selected',String(x===b)));document.querySelectorAll('section[id^=t]').forEach(s=>{s.hidden=(s.id!==b.dataset.t)})}));
+</script>
+</body></html>

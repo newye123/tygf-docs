@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>封驳记录：C1 免 PS 扫描器重写丢分支（不判绿）· 2026-10-17</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;color:var(--accent);flex:none}
+p{margin:0;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.05rem,2.4vw,1.2rem);line-height:1.6;max-width:50ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.badv{color:var(--bad);font-weight:600}
+td.okv{color:var(--ok);font-weight:600}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <div class="eyebrow"><span>自我封驳</span><span class="sep">/</span><span>C1 免 PS 扫描器</span><span class="sep">/</span><span>不判绿</span></div>
+  <h1>我把原型重写成模块，结果丢了已验证的字段行为</h1>
+  <p class="standfirst">端到端跑通、计数器逐项一致，看着像成了；但同一 exe、同一 224 MB 真稿、同一天两次跑的排版字段对不上——<strong><code>leading</code> 原型 16/30，我的实现 0/30</strong>。原型有两条合成分支（单 run 与多 run 混合态），我只照抄了一条。不是等价移植，判不通过。</p>
+  <div class="meta"><span>2026-10-17</span><span>隔离树 <code>worktrees/pc-port-20261017</code></span><span>不进 develop·不接线</span></div>
+</header>
+
+<section>
+  <div class="verdict"><span class="lb">判词</span>
+    <p>C1 不通过。改法：别再手抄重写——把原型原样进树，只改入参化／导出／加凭记三处外部面；判据从"看计数器"升级为"与原型逐字段取差集，差集必须为空"。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">117/31/30</span><span class="k">计数器逐项一致（总层／组／文字／智能对象／非文字）</span></div>
+    <div class="stat bad"><span class="n">0/30</span><span class="k">我的实现里 <code>leading</code> 非空层数</span></div>
+    <div class="stat warn"><span class="n">16/30</span><span class="k">原型同条件实测（10-14 也是这个数）</span></div>
+    <div class="stat ok"><span class="n">4/4</span><span class="k">C2 来源凭记与三道拒的用例（这部分可留）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">对表</span>同一 exe 同一母版，两次跑的差</h2>
+  <div class="scrollx"><table>
+    <thead><tr><th>读数</th><th>原型 nops_scan_probe.json</th><th>我的 pc-scanner.js</th></tr></thead>
+    <tbody>
+      <tr><td>八项计数器</td><td class="okv">117/31/30/0/0/1/55/0</td><td class="okv">完全一致</td></tr>
+      <tr><td>findings</td><td class="okv">PSD_SMART_OBJECT_UNEDITED@8/Please note</td><td class="okv">一致</td></tr>
+      <tr><td>ledgerEntryId 抽样</td><td class="okv">10@0|SMALLRIG …三脚@0（layerId 118）</td><td class="okv">一致</td></tr>
+      <tr><td>autoLeading 为真层数</td><td class="okv">30/30</td><td class="okv">30/30</td></tr>
+      <tr><td><strong>leading 非空层数</strong></td><td class="okv">16/30</td><td class="badv">0/30</td></tr>
+      <tr><td>抽样层 leading</td><td class="okv">72（＝60pt × 1.2）</td><td class="badv">null</td></tr>
+    </tbody>
+  </table></div>
+  <p>根因（已定位）：原型 <code>nops_scan.cjs:143-144</code> 是单 run 路径，另有一段（约 206-240 行）处理<strong>多 run 混合态并逐 run 读行距</strong>——10-14 记的"leading 16/30（14 层多 run 混合态）"就来自它。我重写时只搬了一条分支。<code>leading</code> 是自动换行与排版判定的输入，丢它之后报告仍会写"扫描成功"＝静默少依据。</p>
+</section>
+
+<section>
+  <h2><span class="sn">处置</span>下一轮怎么改（四条，都可验证）</h2>
+  <ul class="notes">
+    <li><strong>包裹原型，不再重写</strong>：原型原样进树，只改三处外部面——入参化（母版／exe／taskRoot）、导出 <code>runPhotoCraftScan()</code>、写来源凭记。改动面越小，回归风险越小。</li>
+    <li><strong>判据升级为逐字段对表</strong>：同一母版双跑，对八项计数器 + 每层 <code>ledgerEntryId/layerId/sourceText/textKind</code> + <code>typography</code> 38 字段逐一取差集，差集必须为空（除已登记的 <code>hangingPunctuation</code>）。上一版判据只看计数器，所以放我假绿了一次。</li>
+    <li><strong>夹具补一条断言</strong>：多 run 混合态 ⇒ <code>leading</code> 必须非空。现有 4 条用例没覆盖这条分支，正是它让我过去的原因。</li>
+    <li>当前 <code>pc-scanner.js</code> 不进 develop、不接线，只留在隔离树作对照材料。C2（来源凭记）形状与三道拒已跑绿，可留用。</li>
+  </ul>
+  <div class="callout"><span class="lb">顺带证实的一件事</span>
+    <p>引擎身份确实从 exe 运行时取到：真稿实跑回填 <code>engineVersion = photocraft-cli 0.7.0 (dev build)</code>、<code>exeSha256 = 628268bb…c1c5fd1b</code>（与执行器钉值逐字符一致）。上一轮那个硬编码串 <code>f0e8d404</code> 已删除，回执里不再有没验过的构建身份。</p></div>
+</section>
+
+<footer>
+  <p>md 正本：<code>交付档案/现状与验收/封驳记录_20261017_C1扫描器重写丢分支_不判绿.md</code>｜记录人 Qoder｜2026-10-17</p>
+  <p>原始产物：<code>worktrees/pc-port-20261017/tmp-real-scan-observation.json</code> · <code>tmp-real-scan-provenance.json</code> · 原型输出 <code>work/nops_scan_probe.json</code> 与 <code>/tmp/nops17.txt</code>｜命令：<code>node tmp/real-scan-20261017.mjs</code> rc=0 · <code>node scripts/smoke-pc-scanner.mjs</code> 4/4 rc=0 · 双件对表脚本内联 node</p>
+</footer>
+</div>
+</body>
+</html>

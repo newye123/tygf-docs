@@ -1,0 +1,147 @@
+<title>人机混写台账治理 · GitHub 实践与对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,54px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.3rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+p{margin:0;max-width:68ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.3vw,1.14rem);line-height:1.6;max-width:56ch;font-weight:500}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-size:.8rem;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate p{font-size:.91rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>人机混写台账治理</span><span class="sep">/</span><span>2026-10-15</span></p>
+  <h1>人机混写同一张台账表 · 以后怎么管</h1>
+  <p class="standfirst">Owner 问「以后对这种要怎么管理」，令先查 GitHub 再对抗式审查。手法：6 家公开一手资料（当日检索）+ 本机两脚本实读（逐条 file:line）+ 四候选方案逐个攻防。结论：平台锁锁不住所有者，恢复会吃掉意图，能用的只有协议。</p>
+  <div class="meta"><span>调研 6 家</span><span>抓到 1 个真实漏洞（静默覆盖窗口 ≤24h）</span><span>四方案裁决：丙采用</span><span>P0 改造约半天（待拍板）</span></div>
+</header>
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 协议化</span>
+    <p><strong>「锁」锁不住你，「恢复」会吃掉你的意思，能用的只有「协议」。</strong>你是这张表的所有者——飞书官方文档明说所有者/管理员「权限不可修改」、对全部行列可增删改；平台锁只能防将来的协作者（降为 P2）。Jira 式「手改就盖回」会让你的拍板意图消失、且你不知情（官方 KB 自认）。六家里活得最久的 IssueOps / Renovate 走的是：归属讲清楚、给人明确写入口、覆盖前先对账。我们已有一半（批注列+回读闸），缺的另一半是约半天的 P0 小改造。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">02</span>现状机制 与 一个真实漏洞</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>机制</th><th>位置</th><th>关键行为</th></tr></thead>
+      <tbody>
+        <tr><td><strong>单向投影</strong></td><td class="mono">sync-task-ledger.mjs:13,92-105</td><td>只写 8 个机器列，<strong>永不触碰「Owner 批注」</strong>；payload 整列无条件生成</td></tr>
+        <tr><td><strong>幂等比对</strong></td><td class="mono">sync-task-ledger.mjs:72-86,144-165</td><td>拉飞书现状<strong>只用于「任务ID→record_id」映射</strong>——不做格值对账；命中即整行覆盖</td></tr>
+        <tr><td><strong>回读闸</strong></td><td class="mono">feishu-readback.mjs:124-154 × control-plane.sh:39-59</td><td>漂移/新批注/多余行/缺行/<strong>重复行</strong>五类告警（重复行＝当夜事故后新增，见 §07 后记）；<strong>只在每日日检里跑</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">漏洞（本次最要紧）</span>
+    <p><strong>你在表上手动改了机器列，若当天我们先跑了一次投影（还没跑到日检），改动会被静默覆盖</strong>——回读闸永远看不见它，窗口最长 24 小时。旁证（反面）：20:23 OPS-GH 漂移被回读抓到，是因为它先于投影存在；回读能看见「不一致」，但分不清「你手改的」还是「我们还没投影的」——所以它只能日检兜底，不能直接卡投影。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">03</span>别人怎么处理（6 家，当日一手资料）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>对象</th><th>做法</th><th>对我们的裁决意义</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td><strong>IssueOps</strong><br><span class="mono" style="font-size:.75rem">github.com/issue-ops</span></td><td>人用 issue 表单下结构化请求、用评论下命令；机器 parse→validate→打 label 状态机</td><td>解析器自述「只要内容没被人大改就能可靠解析」——反证自由手写会打碎机器管道；要给人<strong>结构化通道+尽早校验</strong></td></tr>
+        <tr><td class="mono">2</td><td><strong>Renovate</strong><br><span class="mono" style="font-size:.75rem">22.7k★ / mend.io</span></td><td>机器拥有 PR（描述/标签/提交）；人动过分支即<strong>冻结不动</strong>，要求显式勾选 rebase 才覆盖，并警告 "custom changes will be lost"；正式交互=checkbox/标签/<code>rebase!</code>（discussion #22076）</td><td><strong>别静默覆盖</strong>；机器覆盖前必须有人的显式动作+风险警告</td></tr>
+        <tr><td class="mono">3</td><td><strong>GitHub Projects V2</strong></td><td>官方访问控制只有项目级 Read/Write/Admin，<strong>没有字段级权限</strong>；社区玩法=「仓库为准，label 单向同步到字段」</td><td>连 GitHub 都不做「字段锁」；行业答案是<strong>单向投影+对账</strong></td></tr>
+        <tr><td class="mono">4</td><td><strong>Jira</strong></td><td>「只允许某组人改指定字段」（JRACLOUD-62157）挂了多年未做；官方 KB 替代=Automation「检测手改→改回原值」，<strong>并强制建议配通知</strong></td><td>「恢复」可做但必须配通报；否则人会以为系统坏了（KB 原话）</td></tr>
+        <tr><td class="mono">5</td><td><strong>Airtable</strong></td><td>有真字段级编辑权限；官方推荐用法原话：「保护一个驱动工作流的字段，同时让页面其余部分可编辑」</td><td>将来要上锁，这就是对标形态（飞书高级权限有同款）</td></tr>
+        <tr><td class="mono">6</td><td><strong>飞书·高级权限</strong></td><td>字段级「可阅读/可编辑」确实存在；<strong>但所有者/管理员权限不可修改、对全部行列可增删改</strong></td><td><span class="tag bad">判决</span> 平台锁=「防协作者」，不是「防你」——不能当主方案</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">04</span>对抗式审查：四个候选，逐个冷刀</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>候选</th><th>描述</th><th>最狠的刀</th><th>裁决</th></tr></thead>
+      <tbody>
+        <tr><td><strong>甲</strong></td><td>全锁上（高级权限，机器列只读）</td><td>飞书官方判死：所有者/管理员不受限→锁不住你；GitHub 没这功能、Jira 求而不得；锁完你自己改还要绕路</td><td><span class="tag warn">降 P2</span></td></tr>
+        <tr><td><strong>乙</strong></td><td>纯覆盖/恢复（现状+Jira 式）</td><td>你改「已交付」的拍板意图会被盖掉；Jira KB 自认人会困惑；现状漏洞让覆盖连记录都没有=纯静默销毁</td><td><span class="tag bad">弃</span></td></tr>
+        <tr><td><strong>丙</strong></td><td>协议化：批注=唯一人类通道；手改=命令；覆盖前先对账不静默</td><td>攻：自由文本不成结构→读批注的是人不是脚本；歧义→字面采纳+点名复核；秒级竞态→与 Jira 生态公认限制同级（JMWE 明示回滚无法 100%）；绕闸→闸内建脚本+纪律</td><td><span class="tag ok">采用</span></td></tr>
+        <tr><td><strong>丁</strong></td><td>靠自觉别手改</td><td>你已经手改/误加过——回读闸上线当夜就抓到一行全空误加（<code>reczz28NgK1sMIo0</code>，后核实为误加并已删，见 §07 后记）</td><td><span class="tag bad">弃</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">05</span>协议 v1：以后就这么管</h2>
+  <p><strong>一句话</strong>：批注=你说的；机器列=我说的；你手改机器列=你说的算（我记账）；改 ID/删行=我不动、先问你。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>你动了什么</th><th>发生什么</th></tr></thead>
+      <tbody>
+        <tr><td>「Owner 批注」写任何字</td><td><strong>永不覆盖</strong>；最近一次日检/同步我会读到、落实，并在推送里回你</td></tr>
+        <tr><td>状态/标题/负责人/下一步/到期日/出处 手改</td><td>视为<strong>你的命令</strong>：采纳+记进台账（来源注明「飞书手改」）+下次报告点名；有歧义按字面采纳并请你复核</td></tr>
+        <tr><td>任务ID 手改</td><td>身份列=恢复原值+告警（防两账串行）</td></tr>
+        <tr><td>更新时间 手改</td><td>机器戳=恢复（它不是给人改的）</td></tr>
+        <tr><td>新增整行</td><td>新任务请求：内容齐→进账「等您定」；空行→告警等你处置</td></tr>
+        <tr><td>删行</td><td>不生效（下次投影会补回来）；要停任务请在批注写「不做/删掉」</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="gates">
+    <div class="gate first"><span class="num">P0</span><div class="body"><h3>投影前对账闸（约半天，待一句话）</h3><p>每格三值比对：台账值 <strong>L</strong> / 飞书现值 <strong>F</strong> / 上次投影快照值 <strong>P</strong>（<code>--state-out</code> 落 <code>tmp/readback/last-projected.ndjson</code>）。分类：L=F 无碍；<strong>L≠F 且 F=P＝你手改的</strong>（拦下）；L≠F 且 L=P＝正常待投影（放行）；两边都动＝冲突（拦下）。拦下行默认不动（其余照常），<code>--force</code>＝全量覆盖的显式口子；2 夹具+真表空跑验证。</p></div></div>
+    <div class="gate"><span class="num">P1</span><div class="body"><h3>字段描述提示 + 清空行</h3><p>机器列加「机器列，勿手改；要改请写 Owner 批注」的描述；处置空行残渣。</p></div></div>
+    <div class="gate"><span class="num">P2</span><div class="body"><h3>多人时代再上平台锁</h3><p>高级权限+自定义角色：机器列=可阅读、批注列=可编辑——防的是协作者，不是你。</p></div></div>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">06</span>未核实 / 边界</h2>
+  <div class="callout">
+    <span class="lb">Notes</span>
+    <p>①批注去重是刻意的（<code>feishu-readback.mjs:116-120</code>，同 taskId+同文本只报一次）——同一句催办再写一遍可能不报，换句话写。②秒级竞态：对账快照那一瞬你正在键入，可能读到中间态（飞书并发写有 Write conflict 1254291，官方建议加延迟/重试）。③「所有者锁不住」出自飞书帮助中心 2026 年版文档，产品规则可能变。④ <code>lark-cli +advperm-enable/+role-create</code> 已核实存在（需管理人员、仅 custom_role）；其字段级 <code>field_perm</code> 未构造实测（开放平台 API 文档已确认参数存在）。⑤GitHub Projects「无字段级权限」依据=当日官方访问控制文档只列项目级角色，未穷举第三方插件。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">07</span>后记（同夜 22:0x–22:2x，落笔后新事实）</h2>
+  <div class="callout">
+    <span class="lb">Same-night updates</span>
+    <p>① <strong>重复行事故（机器侧，非人所为）</strong>：全量巡检发现飞书表 59 行/21 任务——19 个任务各有 3 份重复（绕行脚本执行投影计划时丢 <code>--record-id</code>，update 变 create；与 ISSUES #143 的 PowerShell 绕行同源）。已按「每任务留最新一份、删其余」清成 <strong>21 行/21 任务</strong>，复检全绿（漂移 0／重复 0／缺行 0／多余行 0）。② <strong>回读闸新增第 5 类告警「重复行」</strong>（<code>feishu-readback.mjs:133,140,146,154</code>）——事故前这是盲区，事故后已补。③ <strong>投影健全性闸</strong>：<code>sync-task-ledger.sh:103-104</code> 执行前校验「update 数 == 带 --record-id 命令数」，不符即拒绝执行（防同族重复）。④ <strong>空行更正</strong>：§04「丁」所述空行 <code>reczz28NgK1sMIo0</code> 已由另一会话核实误加并经 <code>lark-cli +record-delete</code> 删除（<code>AI_MEMORY/TASK_LOG.md</code> O1-RECHECK 条目有记）——「还躺在表里」的表述以本节为准。</p>
+  </div>
+</section>
+<footer>
+  <p>2026-10-15 夜 · 调研（web 6 家）+ 本机脚本实读（file:line）+ 对抗式审查 · 四方案裁决：丙（协议化）采用，甲降 P2，乙丁弃。</p>
+  <p>只读取证（落笔时）：未开高级权限、未改飞书表、未改代码、未提交；P0 对账闸为待拍板项。落笔后同夜变更见 §07 后记。</p>
+</footer>
+</div>

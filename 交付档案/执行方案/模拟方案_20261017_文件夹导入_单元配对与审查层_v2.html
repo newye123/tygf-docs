@@ -1,0 +1,676 @@
+<!doctype html>
+<title>文件夹导入 · 子文件夹单元与审查层 · 模拟 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:62ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:70ch}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+
+/* ================= 模拟窗 ================= */
+.sim-toolbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px}
+.sim-toolbar .label{font-size:.84rem;font-weight:600}
+.sim-hint{font-size:.76rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.74rem;color:var(--muted);align-items:center}
+.mk{display:inline-block;font-size:10px;line-height:1.4;padding:1px 7px;border-radius:999px;margin-left:6px;white-space:nowrap;vertical-align:1.5px;font-weight:600}
+.mk-new{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.mk-decide{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.sim{border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:0 12px 34px rgba(16,24,40,.07);position:relative}
+.sim-sitebar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.8rem;color:var(--ink-2);flex-wrap:wrap;gap:8px}
+.sim-sitebar .brand{font-weight:700;color:var(--ink)}
+.sim-body{padding:16px 20px 20px}
+.view{display:none}
+.view.on{display:block}
+.wcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+.wcard .t{font-size:.9rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wcard .sub{font-size:.76rem;color:var(--muted);margin-bottom:9px}
+.btn{border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap}
+.btn.primary{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.teal{background:#0d9488;border-color:#0d9488;color:#fff;font-weight:600}
+.btn.newout{border:1.5px solid #0d9488;color:#0d7f74;font-weight:600;background:var(--surface)}
+.btn.sm{padding:4px 9px;font-size:.72rem}
+.btn.off{opacity:.45;cursor:not-allowed}
+.filerow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:.78rem;background:var(--sunk);margin-top:8px;flex-wrap:wrap}
+.filerow .p{font-family:var(--font-mono);font-size:.72rem;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-gray{border:1px solid var(--line-strong);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-amber{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-red{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-sky{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.sim-hint-line{font-size:.74rem;color:var(--muted);margin-top:8px;line-height:1.7}
+.statusline{display:flex;align-items:center;gap:8px;font-size:.78rem;border-radius:8px;padding:8px 12px;margin-top:10px;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);line-height:1.6}
+.statusline.green{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.statusline.sky{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.statusline.err{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.statusline .d2{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.statusline.hide{display:none}
+.minitable{width:100%;border-collapse:collapse;font-size:.74rem;margin-top:9px}
+.minitable th{background:var(--sunk);font-size:.68rem;padding:5px 8px;border-bottom:1px solid var(--line);font-family:inherit;color:var(--muted);text-align:left;white-space:nowrap}
+.minitable td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.minitable td.m{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+.countline{font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.note-line{font-size:.72rem;color:var(--muted);margin-top:9px;line-height:1.7}
+.rowline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
+
+/* 单元卡 */
+.units{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+.unit{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:8px;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}
+.unit.show{opacity:1;transform:none}
+.unit.blocked{border-left:3px solid var(--bad)}
+.unit.okay{border-left:3px solid var(--ok)}
+.unit .uh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.unit .un{font-family:var(--font-mono);font-size:.8rem;font-weight:600}
+.unit .ul{font-size:.78rem;color:var(--ink-2);line-height:1.7}
+.unit .ul b{color:var(--ink)}
+details.why{border-top:1px dashed var(--line);padding-top:7px;font-size:.76rem;color:var(--ink-2)}
+details.why summary{cursor:pointer;color:var(--muted);font-size:.74rem}
+details.why .in{padding-top:7px;line-height:1.75}
+
+/* 表格数据流 */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:10px}
+.fbox{flex:1 1 150px;min-width:140px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:9px 11px;font-size:.74rem;line-height:1.65;color:var(--ink-2)}
+.fbox .ft{font-weight:700;font-size:.76rem;color:var(--ink);display:block;margin-bottom:2px}
+.fbox .fi{font-family:var(--font-mono);font-size:.62rem;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.06em}
+.farr{align-self:center;color:var(--line-strong);font-family:var(--font-mono);font-size:.9rem}
+
+/* 矩阵 */
+.mx td.c{font-family:var(--font-mono);font-size:.72rem;text-align:right;font-variant-numeric:tabular-nums}
+.mx td.c.ok{color:var(--ok)}
+.mx td.c.warn{color:var(--warn);font-weight:700}
+.mx td.c.bad{color:var(--bad);font-weight:700}
+.gate{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.gate label{display:flex;gap:9px;align-items:flex-start;font-size:.78rem;color:var(--ink-2);cursor:pointer;line-height:1.65}
+.gate input{margin-top:4px}
+.auditlist{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.auditrow{display:flex;gap:8px;align-items:flex-start;font-size:.78rem;line-height:1.7;color:var(--ink-2)}
+.auditrow .b{flex:none;margin-top:2px}
+
+/* 模拟助手对话框 */
+.dlgmask{display:none;position:absolute;inset:0;background:rgba(10,14,20,.42);z-index:90;align-items:center;justify-content:center}
+.dlgmask.on{display:flex}
+.dlgwin{width:min(560px,92%);background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 24px 70px rgba(8,12,20,.35);overflow:hidden}
+.dlgwin .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--sunk);border-bottom:1px solid var(--line);font-size:.8rem;font-weight:700}
+.dlgwin .bar .x{border:0;background:transparent;font-size:1rem;color:var(--muted);cursor:pointer}
+.dlgwin .bdy{padding:12px 14px}
+.dlgpath{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.72rem;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);margin-bottom:10px;overflow:hidden}
+.dlgpath input{flex:1;border:0;background:transparent;color:var(--ink);font-family:var(--font-mono);font-size:.72rem;min-width:0;outline:none}
+.dlgnote{font-size:.74rem;color:var(--muted);line-height:1.7;border:1px dashed var(--line-strong);border-radius:8px;padding:8px 11px;background:var(--bg)}
+.dlgfoot{display:flex;justify-content:flex-end;gap:8px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.walklog{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.9;min-height:40px}
+.walklog .ln{opacity:0;transition:opacity .25s}
+.walklog .ln.show{opacity:1}
+.walklog .warn{color:var(--warn)}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 工作台</span><span class="sep">/</span><span>文件夹导入 · 子文件夹单元与审查层 · 模拟 v2</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>一个子文件夹 = 一个单元：PSD 配自己的表格，放错在替换前就被接住</h1>
+    <p class="standfirst">按您的拍板与建议推进：递归读取<b>默认含子文件夹、不设勾选</b>；每个直接含 PSD 的文件夹成为一个「任务单元」，表格必须和它服务的 PSD 放同一层；导入即刻做<b>结构审＋表格体检</b>（秒级、不打开 PSD），载入单元扫描后再做<b>近似点名＋覆盖率闸</b>（打开的是只读扫描）。三道审查全部发生在「替换」之前。本页是可点全流程模拟，数字与文案尽量保真；完整方案见同目录《执行方案_20261017_文件夹导入_子文件夹单元与审查层.md》。</p>
+    <div class="meta">
+      <span>基线：develop <code>2a44d55</code></span>
+      <span>性质：模拟件（未动代码、未动两站）</span>
+      <span>已拍：默认含子文件夹 · 如实报告</span>
+      <span>参考：Adobe 官方变量数据集 / Mars Premedia 多模板 / Crowdin·i18nlint 重复检查 / 孤儿检测模式</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>速览</h2>
+    <div class="verdict">
+      <span class="lb">一句话结论</span>
+      <p>「子文件夹单元」把"哪张表配哪批稿"从记忆问题变成文件夹结构问题；审查层做三件事——导入时拦"缺表/多表合并不了"，体检表格自身（重复原文冲突、空译文、非语言列），扫描后点名"看着能对上、执行却不会替换"的近似行，并对覆盖率骤低的稿红标"疑似放错"。三道闸都在替换之前；扫描本身是只读的，不产生任何替换。</p>
+    </div>
+    <div class="stats">
+      <div class="stat acc"><span class="n">10</span><span class="k">模拟文件夹里的 PSD/PSB（递归后），忽略非 PSD 2 个、跳过隐藏目录 1 个</span></div>
+      <div class="stat ok"><span class="n">2</span><span class="k">可载入单元（各配自己的表格；一次载入一个）</span></div>
+      <div class="stat bad"><span class="n">2</span><span class="k">拦下单元（缺表格——点名原因，不静默跳过）</span></div>
+      <div class="stat warn"><span class="n">2+3</span><span class="k">表格体检警告 2 条 · 近似点名 3 条（矩阵算了覆盖、执行不会替换）</span></div>
+    </div>
+    <div class="split">
+      <div class="panel yes">
+        <h3>做得到（本页演示）</h3>
+        <ul>
+          <li>递归读全夹（默认含子文件夹），按单元清点：每单元的 PSD 与表格同级配对</li>
+          <li>结构审：缺表 → 拦下并点名；多表 → 先试合并（多语言分件），成则放行、败则拦下</li>
+          <li>表格体检：同一句原文两种译文 → 警告；空译文分语言统计；非语言列忽略说明</li>
+          <li>扫描后：近似点名（空白等价/部分包含——执行不会替换）＋ D5 覆盖率闸照旧</li>
+          <li>放错稿：覆盖率骤低红标「疑似不属于本单元」，替换前被接住</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>做不到／不做</h3>
+        <ul>
+          <li>不打开 PSD 就不知道里面有什么字——"张冠李戴"在扫描前无法 100% 拦截，如实在两道口子上防（结构＋扫描后）</li>
+          <li>不做"自动猜这表属于哪个单元"——宁可拦下点名，不猜</li>
+          <li>不封死手动拖入（逃生门保留），审查层只对“文件夹导入”的单元负责</li>
+          <li>多单元一次全进工作台＝改执行合同，列 OUT OF SCOPE（先逐个载入）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card hot"><div class="top"><h3>调研：行业里怎么做（实测摘录）<span class="mk mk-new">详版在方案 md</span></h3></div>
+        <p><b>Adobe 官方「数据驱动图形」</b>：表格列名＝变量＝绑定到具体图层，"CSV 变量数必须与 PSD 一致"，对不上直接报错——配对不明确就报错是行业常规。<br>
+        <b>Mars Premedia「Variable Images Advanced」</b>：多模板用「模板＋数据文件」配对清单驱动，结果按模板分子文件夹——"一单元一表"的先例。<br>
+        <b>Crowdin QA / i18nlint / pofilter</b>：本地化 QA 有成熟清单（重复译文恒开为错误、空译文、数字不一致…）——R2 体检的谱系。<br>
+        <b>孤儿检测模式（多项目通用）</b>：图片没有配对标注/标注没有配对图片 → 点名分级——R1 的形态来源。<br>
+        <b>psd-tools ★1480 · webtoon/psd ★1352 · ag-psd ★730</b>：PSD 读字都是本地器物的活——印证"扫描在本机助手、审查内容不上云"。</p>
+      </div>
+      <div class="card"><div class="top"><h3>待您拍板（三条）<span class="mk mk-decide">等一句话</span></h3></div>
+        <p>① 表格只认<b>同级</b>：放上一层/下一层都算"没找到"并明确提示（备选：允许向上就近找表）。<br>
+        ② <b>一次载入一个单元</b>进工作台（现有单表模型零改动）；跑多单元手动点下一步。<br>
+        ③ 表格体检的"重复原文冲突"（同行原文两种译文）<b>只警告不拦</b>——执行语义当前无法按场景区分，拦住会堵正常用法。<br>
+        拍板后按"助手 3.7.16 → 浏览器纯函数＋入口 → 审查卡 UI → 测试站验收"一趟执行。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>可点模拟（全流程）</h2>
+    <div class="sim-toolbar">
+      <span class="label">建议路径</span>
+      <span class="sim-hint">①「从文件夹导入…」→ 看逐行读取日志与四张单元卡 ②「载入」01 单元 → 看表格数据流＋体检 ③「开始扫描」→ 看矩阵、近似点名、D5 闸 ④ 返回载入 02 → 看"放错稿"被红标接住</span>
+      <button class="btn sm" id="reset-btn" type="button" style="margin-left:auto">重置模拟</button>
+    </div>
+    <div class="legend">
+      <span>标记：<span class="mk mk-new">新增〔模拟〕</span> 本方案建议新增；<span class="mk mk-decide">待拍板</span> 需要您一句话；无标记＝现状 UI 复刻。</span>
+    </div>
+
+    <div class="sim">
+      <div class="sim-sitebar">
+        <span class="brand">图译工坊<span style="margin-left:6px;background:rgba(210,140,0,.15);color:#a06a00;border-radius:99px;padding:0 6px;font-size:.64rem;font-weight:700;vertical-align:1px">v1.5</span></span>
+        <span>工作台导航：设计文件 → 表格 → 语言 → 执行</span>
+        <span>credits: 240 · demo@example.com</span>
+      </div>
+
+      <div class="sim-body">
+
+        <!-- ============ 视图 A：工作台（导入前） ============ -->
+        <div class="view on" id="view-home">
+          <div class="wcard">
+            <div class="t">多设计稿选择（批量模式）</div>
+            <div class="sub" id="home-count">已添加 0/12 个 PSD · 已扫描 0 · 扫描中 0</div>
+            <div class="rowline">
+              <button class="btn newout" id="import-btn" type="button">从文件夹导入…（默认含子文件夹）<span class="mk mk-new">新增〔模拟〕</span></button>
+              <button class="btn off" type="button">添加 PSD（单张）——逃生门，本演示略</button>
+            </div>
+            <div class="sim-hint-line">约定（本方案骨架）：<b>一个子文件夹 = 一个单元 = 该单元的 PSD ＋ 它要用的表格（同级）</b>。导入后逐个单元审查与载入。</div>
+            <div class="walklog hide" id="walklog"></div>
+            <div class="statusline hide" id="walk-status"><span class="d2"></span><span id="walk-status-tx"></span></div>
+          </div>
+        </div>
+
+        <!-- ============ 视图 B：单元列表 ============ -->
+        <div class="view" id="view-units">
+          <div class="wcard">
+            <div class="t">导入结果：按单元清点<span class="mk mk-new">新增〔模拟〕</span></div>
+            <div class="sub" id="units-sub"></div>
+            <div class="units" id="units-grid"></div>
+            <div class="rowline">
+              <button class="btn sm" id="units-back" type="button">← 返回工作台（重新导入）</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 视图 C：单元已载入的工作台 ============ -->
+        <div class="view" id="view-work">
+          <div class="statusline sky" id="work-banner"><span class="d2"></span><span id="work-banner-tx"></span></div>
+
+          <div class="wcard" style="margin-top:12px">
+            <div class="t">多设计稿选择（批量模式）</div>
+            <div class="sub" id="work-count"></div>
+            <div id="work-list"></div>
+            <div class="rowline">
+              <button class="btn primary" id="scan-btn" type="button">开始扫描（按顺序）</button>
+              <button class="btn sm" id="work-back" type="button">← 返回单元列表</button>
+            </div>
+          </div>
+
+          <div class="wcard">
+            <div class="t">表格（来自本单元）<span class="mk mk-new">新增〔模拟〕</span></div>
+            <div class="sub" id="work-tablesub"></div>
+            <div class="flow">
+              <div class="fbox"><span class="fi">STEP 1</span><span class="ft">文件夹里的表格</span>助手只读定位本单元同级的表格文件（≤5MB/个）</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 2</span><span class="ft">本机助手读字节</span>只读、不解析、不留副本；经票据放行</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 3</span><span class="ft">localhost 本机桥</span>数据在两行进程间流动，不出本机、不上云</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 4</span><span class="ft">浏览器纯前端解析</span>与手动拖入走同一条解析管线，一字不差</div>
+            </div>
+            <div id="work-tablepreview"></div>
+            <div class="auditlist" id="work-r2"></div>
+          </div>
+
+          <div class="wcard" id="work-mx-card" style="display:none">
+            <div class="t">扫描完成 · 覆盖率与执行风险<span class="mk mk-new">新增〔模拟〕</span></div>
+            <div class="sub">覆盖率矩阵照旧（三档口径）；「近似点名」与红标为本方案新增——全部在替换之前</div>
+            <div id="work-mx"></div>
+            <div id="work-r3"></div>
+            <div class="gate" id="work-gate"></div>
+            <div class="rowline">
+              <button class="btn primary off" id="exec-btn" type="button">开始替换（演示到此为止）</button>
+              <span class="sim-hint" id="exec-hint">扫描后按闸提示操作</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 模拟助手对话框 -->
+      <div class="dlgmask" id="dlgmask">
+        <div class="dlgwin">
+          <div class="bar"><span>选择文件夹（本机助手 · 原生框，置顶）</span><button class="x" id="dlg-x" type="button">×</button></div>
+          <div class="bdy">
+            <div class="dlgpath"><span>📁</span><input id="dlg-path" type="text" spellcheck="false" value="D:\客户稿\2026-10_秋季档"></div>
+            <div class="dlgnote">默认递归含子文件夹（无需勾选）。请把每个批次的 PSD 和它要用的表格放进同一个文件夹；根目录上的散稿也需要同级表格。</div>
+          </div>
+          <div class="dlgfoot">
+            <button class="btn sm off" id="dlg-pick" type="button">打开文件夹选择（模拟）</button>
+            <button class="btn sm" id="dlg-cancel" type="button">取消</button>
+            <button class="btn sm teal" id="dlg-ok" type="button">开始读取</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>审查三层 · 一句话速览</h2>
+    <div class="cards">
+      <div class="card"><div class="top"><h3>R1 结构审（导入时 · 秒级 · 不开 PSD）</h3></div>
+        <p>单元缺表 → 拦下点名；多表 → 先试合并（多语言分件合并、多数结构合同），成则放行、败则拦下；同名稿跨单元 → 警告（内容不同才提醒）；表格没配稿 → 提示；隐藏/系统目录跳过并计数。</p></div>
+      <div class="card"><div class="top"><h3>R2 表格体检（导入时 · 浏览器本机）</h3></div>
+        <p>解析硬错（编码/行数/记录编号重复/超 12 语言列）→ 拦；同一句原文两种译文 → 警告点名（只警告不拦，待拍板③）；空译文分语言统计 → 提示；非语言列忽略、合并缺行等说明原样呈现。</p></div>
+      <div class="card"><div class="top"><h3>R3 执行风险点名（扫描后 · 替换前）</h3></div>
+        <p>覆盖率矩阵＋D5 闸照旧（低于 95% 必须勾选放行）；新增「近似点名」——矩阵三档里"空白等价/部分包含"的行执行引擎不会替换（换行位置、全角空格等），逐条点名；任何一稿覆盖率骤低（如低于 50%）红标"疑似不属于本单元"。</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>模拟件说明：全部数据为演示用假数据，页面展示的是判定逻辑与界面形态，不是最终视觉稿；真实实现时的文案与交互以最终开发为准。方案全文与拍板事项见同目录《执行方案_20261017_文件夹导入_子文件夹单元与审查层.md》。</p>
+    <p>图译工坊 · 多对多工作台 · 文件夹导入 v2 模拟 · 2026-10-17 · 基线 develop 2a44d55（含 D10 4e4cdd4）</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var timers = [];
+
+  var UNITS = [
+    {
+      id: 'u1',
+      name: '01_秋季大促',
+      kind: 'okay',
+      badge: '<span class="badge-ok">可载入</span>',
+      line: '<b>4</b> 个 PSD · 表格：秋季大促_语言表.csv（EN/DE/JA · 128 行）',
+      summary: '结构通过 · 体检 2 条警告',
+      why: '体检详情：① 同一句原文出现 2 行、译文不一致——「全场包邮」第 34、87 行的 EN 译文分别是 Free shipping / Free delivery，执行时该图层会被替换，以哪行为准当前无法保证；② JA 空译文 2 处（第 12、45 行），对应图层不会被替换；③ 非语言列「备注」已忽略（正常）。',
+      psds: ['主视觉_1080x1920.psd', '主视觉_1080x1080.psd', '落地页_首屏.psd', '落地页_次屏.psd'],
+      tableSub: '1 张（来自本单元，文件夹导入）· 128 行 · 语言列：EN、DE、JA（「备注」列已忽略）',
+      r2: [
+        { b: '<span class="badge-amber">警告</span>', t: '<b>同一句原文两种译文</b>：「全场包邮」在第 34、87 行出现两次，EN 译文不同（Free shipping / Free delivery）。执行时该句命中的图层会被替换，以哪行为准当前无法保证——请回表格统一后重导。' },
+        { b: '<span class="badge-amber">警告</span>', t: '<b>JA 空译文 2 处</b>：第 12、45 行的 JA 列为空，执行时对应图层保持原样（不会被替换）。' },
+        { b: '<span class="badge-gray">说明</span>', t: '非语言列「备注」已忽略；表格编码 UTF-8 正常。' }
+      ],
+      matrix: {
+        langs: ['EN', 'DE', 'JA'],
+        rows: [
+          ['主视觉_1080x1920.psd', [100, 98, 96]],
+          ['主视觉_1080x1080.psd', [100, 97, 95.5]],
+          ['落地页_首屏.psd', [99, 96, 92.5]],
+          ['落地页_次屏.psd', [100, 100, 97]]
+        ]
+      },
+      r3: [
+        { b: '<span class="badge-amber">近似点名</span>', t: '<b>落地页_首屏.psd</b>：表格原文「限时3天 全场5折」（中间是空格），图层里是「限时3天↵全场5折」（换行位置不同）——矩阵按"空白等价"算进了覆盖，但执行引擎按规范化后完全相等配对，<b>不会替换</b>。' },
+        { b: '<span class="badge-amber">近似点名</span>', t: '<b>主视觉_1080x1920.psd</b>：表格原文「会员 专享价」（半角空格），图层里是「会员　专享价」（全角空格）——同上，执行不会替换。' },
+        { b: '<span class="badge-gray">仅提示</span>', t: '<b>落地页_次屏.psd</b>：表格原文「立即抢购」，图层是「立即抢购！」（多一个叹号）——"部分包含"很常见，仅提示，多数情况下无需处理。' }
+      ],
+      gate: { lang: 'JA', psd: '落地页_首屏.psd', pct: '92.5', sev: 'warn' }
+    },
+    {
+      id: 'u2',
+      name: '02_详情页',
+      kind: 'okay',
+      badge: '<span class="badge-ok">可载入</span>',
+      line: '<b>3</b> 个 PSD · 表格：EN.csv ＋ DE.csv（两个单语言文件）',
+      summary: '结构通过 · 合并成功 · 体检通过',
+      why: '合并说明（原样呈现）：EN.csv 为基准（128 行）；DE.csv 匹配 127 行，1 行原文不在基准表中、已追加到末尾（第 129 行）；合并后空译文：无；重复语言：无。',
+      psds: ['详情页_主图.psd', '详情页_规格.psd', 'A-产品对比.psd'],
+      tableSub: '2 张 → 按原文合并为 1 张（EN 基准 128 行 → 合并后 129 行 · 语言列：EN、DE）',
+      r2: [
+        { b: '<span class="badge-ok">通过</span>', t: '两个单语言文件合并成功（多语言分件是受支持的正规用法）；合并说明如上。' }
+      ],
+      matrix: {
+        langs: ['EN', 'DE'],
+        rows: [
+          ['详情页_主图.psd', [99, 98]],
+          ['详情页_规格.psd', [100, 97]],
+          ['A-产品对比.psd', [12, 9]]
+        ]
+      },
+      r3: [
+        { b: '<span class="badge-red">疑似放错</span>', t: '<b>A-产品对比.psd</b>：EN 12% / DE 9%，两个语言列覆盖率均远低于 50% 阈值——它可能属于别的单元（如 01_秋季大促？），或本单元表格缺它的原文。<b>已红标并拦截替换</b>：请把它移到正确单元、或补齐表格后重新扫描。' }
+      ],
+      gate: { lang: 'EN/DE', psd: 'A-产品对比.psd', pct: '12 / 9', sev: 'bad' }
+    },
+    {
+      id: 'u3',
+      name: '03_旧版归档',
+      kind: 'blocked',
+      badge: '<span class="badge-red">拦下</span>',
+      line: '<b>2</b> 个 PSD · <b>0</b> 张表格',
+      summary: '缺配套表格——不静默跳过，点名原因',
+      why: '本单元没找到配套表格。规则：表格需与设计稿放在同一个文件夹（同级）。提示：把该单元的表格放进 03_旧版归档 后重新导入；若这是历史存档暂不处理，可忽略本单元。',
+      psds: ['旧版_主图_v1.psd', '旧版_详情_v1.psd'],
+      blocked: true
+    },
+    {
+      id: 'u4',
+      name: '（根目录）散稿',
+      kind: 'blocked',
+      badge: '<span class="badge-red">拦下</span>',
+      line: '<b>1</b> 个 PSD · <b>0</b> 张表格',
+      summary: '根目录散稿也算一个单元，同样需要同级表格',
+      why: '根目录上的散稿（杂图_测试.psd）算一个单元，也需要同级的表格；当前没有找到。提示：为它建一个子文件夹并把表格一起放进去，导入时会自动归成单元。',
+      psds: ['杂图_测试.psd'],
+      blocked: true
+    }
+  ];
+
+  function clearTimers(){ timers.forEach(function(t){ clearTimeout(t); clearInterval(t); }); timers = []; }
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+
+  function showView(id){
+    ['view-home','view-units','view-work'].forEach(function(v){
+      $(v).classList.toggle('on', v === id);
+    });
+  }
+
+  function reset(){
+    clearTimers();
+    var log = $('walklog');
+    log.innerHTML = '';
+    log.classList.add('hide');
+    $('walk-status').classList.add('hide');
+    $('units-grid').innerHTML = '';
+    $('dlgmask').classList.remove('on');
+    $('scan-btn').classList.remove('off');
+    $('work-mx-card').style.display = 'none';
+    showView('view-home');
+  }
+
+  /* ---------- 导入流程 ---------- */
+  var walkLines = [
+    { t: '读取 D:\\客户稿\\2026-10_秋季档 …（本机助手，只读）', cls: '' },
+    { t: '01_秋季大促\\ → 4 个 PSD · 1 张表格', cls: '' },
+    { t: '02_详情页\\ → 3 个 PSD · 2 张表格（将按原文合并）', cls: '' },
+    { t: '03_旧版归档\\ → 2 个 PSD · 0 张表格 ⚠', cls: 'warn' },
+    { t: '（根目录） → 1 个 PSD · 0 张表格 ⚠', cls: 'warn' },
+    { t: '忽略非 PSD 2 个（logo.png、说明书.pdf）· 跳过隐藏目录 1 个（.cache）', cls: '' },
+    { t: 'R1 结构审 ＋ R2 表格体检 完成', cls: '' }
+  ];
+
+  function renderUnits(){
+    var grid = $('units-grid');
+    grid.innerHTML = '';
+    var loadable = UNITS.filter(function(u){ return !u.blocked; }).length;
+    var blocked = UNITS.length - loadable;
+    $('units-sub').textContent = '共 4 个单元：可载入 ' + loadable + ' · 拦下 ' + blocked + ' · 体检警告 2 条 · 说明 2 条（每个单元一次载入一个）';
+    UNITS.forEach(function(u, idx){
+      var div = document.createElement('div');
+      div.className = 'unit ' + u.kind;
+      var whyHtml = u.why ? '<details class="why"><summary>查看审查详情</summary><div class="in">' + u.why + '</div></details>' : '';
+      var btnHtml = u.blocked
+        ? '<span class="sim-hint">已拦下，不可载入——修好后重新导入</span>'
+        : '<button class="btn sm teal" data-load="' + u.id + '" type="button">载入工作台 →</button>';
+      div.innerHTML =
+        '<div class="uh"><span class="un">' + u.name + '</span>' + u.badge + '</div>' +
+        '<div class="ul">' + u.line + '</div>' +
+        '<div class="ul">' + u.summary + '</div>' +
+        whyHtml +
+        '<div class="rowline">' + btnHtml + '</div>';
+      grid.appendChild(div);
+      later(function(){ div.classList.add('show'); }, 90 * idx + 60);
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-load]'), function(btn){
+      btn.addEventListener('click', function(){ loadUnit(btn.getAttribute('data-load')); });
+    });
+  }
+
+  function runImport(){
+    clearTimers();
+    showView('view-home');
+    var log = $('walklog');
+    log.innerHTML = '';
+    log.classList.remove('hide');
+    $('walk-status').classList.add('hide');
+    walkLines.forEach(function(line, idx){
+      later(function(){
+        var el = document.createElement('div');
+        el.className = 'ln ' + (line.cls || '');
+        el.textContent = line.t;
+        log.appendChild(el);
+        later(function(){ el.classList.add('show'); }, 30);
+        if (idx === walkLines.length - 1) {
+          var st = $('walk-status');
+          st.classList.remove('hide');
+          $('walk-status-tx').textContent = '读取完成：4 个单元，2 个可载入、2 个拦下（原因已点名）。';
+          later(function(){
+            renderUnits();
+            showView('view-units');
+          }, 550);
+        }
+      }, 260 * idx + 150);
+    });
+  }
+
+  /* ---------- 单元载入 ---------- */
+  function loadUnit(id){
+    var u = null;
+    UNITS.forEach(function(x){ if (x.id === id) u = x; });
+    if (!u || u.blocked) return;
+    clearTimers();
+    $('work-banner-tx').textContent = '本单元已载入：' + u.name + '（' + u.psds.length + ' 个设计稿 ＋ 表格来自本单元文件夹）';
+    $('work-count').textContent = '已添加 ' + u.psds.length + '/12 个 PSD · 已扫描 0 · 扫描中 0';
+    var list = $('work-list');
+    list.innerHTML = '';
+    u.psds.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'filerow';
+      row.setAttribute('data-name', p);
+      row.innerHTML = '<span class="p">' + p + '</span><span class="badge-gray st">未扫描</span>';
+      list.appendChild(row);
+    });
+    $('work-tablesub').textContent = u.tableSub;
+    var preview = $('work-tablepreview');
+    if (id === 'u1') {
+      preview.innerHTML =
+        '<table class="minitable"><thead><tr><th>原文</th><th>EN</th><th>DE</th><th>JA</th></tr></thead><tbody>' +
+        '<tr><td>秋季新品焕新上市</td><td>New Season Launch</td><td>Neue Saison</td><td>新シーズン</td></tr>' +
+        '<tr><td>限时3天 全场5折</td><td>3 Days Only: 50% Off</td><td>Nur 3 Tage: 50 % Rabatt</td><td>3日間限定 全品50%オフ</td></tr>' +
+        '<tr><td>会员 专享价</td><td>Member Price</td><td>Mitgliederpreis</td><td>会員価格</td></tr>' +
+        '<tr><td>全场包邮（第 34 行）</td><td>Free shipping</td><td>Kostenloser Versand</td><td>全品送料無料</td></tr>' +
+        '<tr><td>全场包邮（第 87 行，译文不一致）</td><td>Free delivery</td><td>Versandkostenfrei</td><td>送料無料</td></tr>' +
+        '</tbody></table><div class="note-line">预览仅展示前 5 行（共 128 行）。「备注」列不是语言列，已按现状忽略。</div>';
+    } else {
+      preview.innerHTML =
+        '<table class="minitable"><thead><tr><th>原文</th><th>EN</th><th>DE</th></tr></thead><tbody>' +
+        '<tr><td>产品参数一览</td><td>Specifications at a glance</td><td>Produktdaten im Überblick</td></tr>' +
+        '<tr><td>细致到每一处做工</td><td>Crafted to every detail</td><td>Bis ins letzte Detail gefertigt</td></tr>' +
+        '<tr><td>七日无理由退换</td><td>7-day free returns</td><td>7 Tage Rückgaberecht</td></tr>' +
+        '</tbody></table><div class="note-line">预览仅展示前 3 行（合并后共 129 行）。合并是既有能力：两个单语言文件按归一化原文配对，绝不行号硬拼。</div>';
+    }
+    var r2 = $('work-r2');
+    r2.innerHTML = '';
+    u.r2.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'auditrow';
+      row.innerHTML = '<span class="b">' + item.b + '</span><span>' + item.t + '</span>';
+      r2.appendChild(row);
+    });
+    $('work-mx-card').style.display = 'none';
+    $('scan-btn').classList.remove('off');
+    var scanBtn = $('scan-btn');
+    scanBtn.setAttribute('data-unit', id);
+    showView('view-work');
+  }
+
+  /* ---------- 扫描 ---------- */
+  function startScan(){
+    var id = $('scan-btn').getAttribute('data-unit');
+    var u = null;
+    UNITS.forEach(function(x){ if (x.id === id) u = x; });
+    if (!u) return;
+    if ($('scan-btn').classList.contains('off')) return;
+    $('scan-btn').classList.add('off');
+    var rows = $('work-list').querySelectorAll('.filerow');
+    var done = 0;
+    rows.forEach(function(row, idx){
+      later(function(){
+        row.querySelector('.st').outerHTML = '<span class="badge-sky st">扫描中…</span>';
+        later(function(){
+          row.querySelector('.st').outerHTML = '<span class="badge-ok st">已扫描</span>';
+          done++;
+          $('work-count').textContent = '已添加 ' + u.psds.length + '/12 个 PSD · 已扫描 ' + done + ' · 扫描中 0';
+          if (done === rows.length) {
+            renderScanResults(u);
+          }
+        }, 340);
+      }, 430 * idx + 200);
+    });
+  }
+
+  function renderScanResults(u){
+    var mx = $('work-mx');
+    var langs = u.matrix.langs;
+    var html = '<table class="minitable mx"><thead><tr><th>设计稿</th>';
+    langs.forEach(function(l){ html += '<th>' + l + '</th>'; });
+    html += '</tr></thead><tbody>';
+    u.matrix.rows.forEach(function(r){
+      html += '<tr><td>' + r[0] + '</td>';
+      r[1].forEach(function(v){
+        var cls = v >= 95 ? 'ok' : (v >= 50 ? 'warn' : 'bad');
+        html += '<td class="c ' + cls + '">' + v + '%</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="note-line">口径同现状：三档（精确 / 空白等价 / 部分包含）；矩阵为执行前粗估，执行引擎按规范化后完全相等配对。</div>';
+    mx.innerHTML = html;
+
+    var r3 = $('work-r3');
+    r3.innerHTML = '<div class="countline" style="margin-top:14px">执行风险点名（替换之前）：</div>';
+    u.r3.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'auditrow';
+      row.innerHTML = '<span class="b">' + item.b + '</span><span>' + item.t + '</span>';
+      r3.appendChild(row);
+    });
+
+    var gate = $('work-gate');
+    var sev = u.gate.sev;
+    var gateCls = sev === 'bad' ? 'err' : '';
+    gate.innerHTML =
+      '<div class="statusline ' + gateCls + '"><span class="d2"></span><span>' +
+      (sev === 'bad'
+        ? '低于阈值且疑似放错：<b>' + u.gate.psd + '</b> 覆盖率 ' + u.gate.pct + '%（红线 50%）——已拦截替换。请移出该稿或补齐表格后重新扫描。'
+        : '低于 95% 阈值：<b>' + u.gate.psd + '</b> · ' + u.gate.lang + ' 覆盖率 ' + u.gate.pct + '%——请展开明细核对后勾选放行（现状 D5 闸照旧）。') +
+      '</span></div>' +
+      '<label><input type="checkbox" id="gate-check"> 我已核对 <b>' + u.gate.psd + '</b> 的覆盖率明细；' +
+      (sev === 'bad' ? '确认它确实属于本单元（12% 意味着该稿几乎不会被替换）。' : '已知悉该语言为 ' + u.gate.pct + '%，继续执行。') +
+      '</label>';
+    var execBtn = $('exec-btn');
+    execBtn.classList.add('off');
+    $('exec-hint').textContent = '需先勾选上方放行';
+    $('gate-check').addEventListener('change', function(e){
+      var on = e.target.checked;
+      execBtn.classList.toggle('off', !on);
+      $('exec-hint').textContent = on ? '已放行（演示到此为止；真实替换在助手端 Photoshop 中进行）' : '需先勾选上方放行';
+    });
+    $('work-mx-card').style.display = 'block';
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  $('import-btn').addEventListener('click', function(){ $('dlgmask').classList.add('on'); });
+  $('dlg-x').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); });
+  $('dlg-cancel').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); });
+  $('dlg-ok').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); runImport(); });
+  $('dlg-pick').addEventListener('click', function(){ $('dlg-path').value = 'D:\\客户稿\\2026-10_秋季档'; });
+  $('units-back').addEventListener('click', reset);
+  $('work-back').addEventListener('click', function(){ renderUnits(); showView('view-units'); });
+  $('scan-btn').addEventListener('click', startScan);
+  $('reset-btn').addEventListener('click', reset);
+})();
+</script>
+</body>
+</html>

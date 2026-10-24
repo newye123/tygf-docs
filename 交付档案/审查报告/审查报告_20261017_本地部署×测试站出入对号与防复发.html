@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>审查报告 20261017 本地部署×测试站出入对号与防复发</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- tags ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:44px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>审查报告：本地部署 × 内测测试站 出入对号与防复发</h1>
+<p class="meta">2026-10-17 ｜ 审查人：砚（CodeBuddy）｜ 只读取证 + 防复发脚本 <code>70bb341</code>（已推 origin/develop）</p>
+</header>
+
+<div class="verdict pass">裁定：遵循测试站（d8f507c）——「内测版」真相源在测试站；本地各树是开发现场，基线/覆盖不同是常态。要处理的只有：本地库支付类残留覆盖 3 项 ＋ 1 个陈旧 dev 进程。测试站本身无问题。</div>
+
+<h2>一、裁定</h2>
+<div class="callout">
+<p><strong>遵循测试站（d8f507c 及其 DB 覆盖）</strong>。本地不要求与测试站一致；真正要处理的只有两类：本地库支付类残留（3 项）与陈旧进程（1 个）。</p>
+</div>
+
+<h2>二、出入对号全谱</h2>
+<table>
+<tr><th>#</th><th>出入</th><th>定性</th><th>证据</th></tr>
+<tr><td>1</td><td>代码基线不同（3000 旧树无 batchWorkbenchEnabled 键）</td><td class="ok">正常</td><td>develop HEAD=70bb341；d8f507c 后仅 3 个 docs-only 提交；/api/site/feature-flags 逐实例实测</td></tr>
+<tr><td>2</td><td>本地库 8 项覆盖：alipay/manualPayment/creditPacks=true 等；测试站 DB 仅 3 键且 alipay=false</td><td class="bad">联调残留（要清）</td><td>develop/db/custom.db vs 服务器 featureFlagsV1 实测；代码默认 alipay=false（featureFlags.ts:29）⇒ 本地 true 纯属库覆盖，不是有人开了测试站支付</td></tr>
+<tr><td>3</td><td>3440 树自称独立库，实际读 develop 库</td><td class="bad">Prisma 老坑现行犯</td><td>node_modules 符号链接 → develop + DATABASE_URL=file:../ 相对路径按生成客户端的 schema 目录解析；值逐项吻合</td></tr>
+<tr><td>4</td><td>3000 实例行为与盘上任何配置对不上</td><td class="bad">陈旧进程</td><td>10-16 14:12 启动后 .env 已改（现指 Temp/tygf-build.db，该库连 SiteSetting 表都没有）</td></tr>
+<tr><td>5</td><td>multiPsd 本地 false / 测试站 true</td><td class="ok">D9 WIP 态</td><td>已提交默认 true（HEAD:featureFlags.ts:61），工作树未提交改动回退为 false</td></tr>
+</table>
+
+<h2>三、对抗式审查（自审五问）</h2>
+<div class="cards">
+<div class="card"><h3>A1 部署错了？</h3><p>不是。.deploy-commit=d8f507c1b583、home 200、PM2 online（09:5x 核验）。</p></div>
+<div class="card"><h3>A2 测试站支付被开？</h3><p>不是。测试站 DB 实测 alipay=false；true 只在本地库。</p></div>
+<div class="card"><h3>A3 multiPsd 是 bug？</h3><p>不是。D9 未提交 WIP 的预期表现。</p></div>
+<div class="card"><h3>A4 脚本局限？</h3><p>flags-drift 读工作树 featureFlags.ts（含 WIP）；后续加 --ref 读 git 基线。已知 limitation。</p></div>
+<div class="card"><h3>A5 红线：自动清？</h3><p><strong>不自动清</strong>——支付 flag 属红线类；给命令，等 Owner 确认。</p></div>
+</div>
+
+<h2>四、防复发（已落地，70bb341）</h2>
+<p>参考开源：GrowthBook / Unleash 的「环境分层 flag 管理 + 显式对账」。均为带服务的平台（重），本项目量级不适直接引入；<strong>复用其思想、零依赖落地</strong>：</p>
+<ul>
+<li><code>scripts/flags-drift.mjs</code> ＋ <code>npm run flags:drift</code>：一键对号「代码默认值 × 本地库 × N 环境」三列 diff；支付类在非生产源为 true ⇒ 退出码 1（可当门禁）。实测：差异 6 项、支付类 3 项 ⚠、FAIL。</li>
+<li>纪律三条（写入 AGENTS.md）：① 联调开覆盖前先 flags:drift 留底、用完即清；② 隔离验证 DATABASE_URL 一律绝对路径（老坑第三次实证）；③ 交付/验收只认「运行中的进程 + 它实际读的库」。</li>
+</ul>
+
+<h2>五、接下来（Owner 确认两件事即执行）</h2>
+<ol>
+<li>清本地支付类残留：sqlite3 UPDATE featureFlagsV1 三键回 false（命令见 md 版第五节）。</li>
+<li>处置 3000 陈旧进程（PID 23012）：重启或杀掉——它只会继续制造错觉。</li>
+</ol>
+
+<h2>六、遗留</h2>
+<ul>
+<li>flags-drift 加 --ref 基线参数；</li>
+<li>3440 库错位根治待 Prisma client 生成方式改造，短期靠绝对路径纪律规避。</li>
+</ul>
+
+<footer>证据正本实测于 2026-10-17 11:2x–11:4x ｜ 台账登记：ISSUES #156、TASK_LOG 2026-10-17</footer>
+</div>
+</body>
+</html>

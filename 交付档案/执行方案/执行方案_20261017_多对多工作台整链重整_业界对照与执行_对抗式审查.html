@@ -1,0 +1,255 @@
+<!doctype html>
+<title>执行方案 · 多对多工作台整链重整：清单×网格是骨架（对抗式审查）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --teal:#0d7f74; --teal-soft:#e0f2f0;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+    --teal:#5eead4; --teal-soft:#0e2a27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:64ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card.teal{border-left:3px solid var(--teal)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:72ch}
+table.rule{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.rule th{background:var(--sunk);font-size:.72rem;padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-weight:600}
+table.rule td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);line-height:1.7}
+table.rule tr:last-child td{border-bottom:none}
+.flag-ok{color:var(--ok);font-weight:700}
+.flag-no{color:var(--bad);font-weight:700}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);background:var(--surface);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.gate b{color:var(--ink)}
+.notes{display:flex;flex-direction:column;gap:9px}
+.note{font-size:.86rem;color:var(--ink-2);line-height:1.75;padding-left:14px;position:relative}
+.note::before{content:"—";position:absolute;left:0;color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.wire{font-family:var(--font-mono);font-size:.7rem;line-height:1.6;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--ink-2);margin:0}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>多对多工作台整链重整 · 清单×网格</span><span class="sep">/</span><span>对抗式审查</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>多对多工作台"完全变形"的根治：把「清单×网格」升为骨架，四步各就其位</h1>
+    <p class="standfirst">批量台之所以看起来变形，根因只有一个：<b>它是单文件工作台上外挂的一层批量投影</b>——多稿列表、矩阵、编排都是补丁，整条下游链读的仍是单文件态。本方案对照业界（Redokun 清单台 / IDML 按语言批量回收 / HandBrake 队列语义）后给出重整方向、十处变形点清算与 P0–P3 执行序，配套模拟 v4 全链可点。</p>
+    <div class="meta">
+      <span>状态：待 Owner 批（5 条待决，均附建议值）</span>
+      <span>基线：develop <code>400034f</code></span>
+      <span>性质：方案与模拟件（未动业务代码、未动两站、未触计费合同）</span>
+      <span>配套：模拟方案_20261017_多对多工作台整链重整_清单与队列_v4.html</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">00</span>速览</h2>
+    <div class="verdict">
+      <span class="lb">一句话判词</span>
+      <p>批量台的零件并不缺——多稿录入、一键扫描队列、覆盖率矩阵、逐稿编排、批次面板各自都是对的；缺的是把它们挂到同一个「批量真相」上。把<b>清单（稿）× 网格（稿×语言）升为骨架</b>，四步＝对网格的四类操作（扫→检→对→跑），执行成显式队列（失败从第 k 稿续跑），回执成聚合终态表——五个症状（镜像 hack / 只检测第一稿 / 校对压进执行 / 回执只看最后一稿 / 门槛晚亮）同根同解。</p>
+    </div>
+    <div class="stats">
+      <div class="stat bad"><span class="n">10</span><span class="k">变形点（全部带 file:line 坐标）——同一病根：批量无真相</span></div>
+      <div class="stat acc"><span class="n">13+</span><span class="k">业界参照实测（Redokun/Weblate/Tolgee/Crowdin/IDML/HandBrake/psd-tools…）</span></div>
+      <div class="stat warn"><span class="n">7</span><span class="k">整链逐环对抗式审查（导入→素材→检测→校对→交付→执行→回执）</span></div>
+      <div class="stat ok"><span class="n">P0–P3</span><span class="k">四段执行序 · P0 纯前端零合同面 · 三条红线不动</span></div>
+    </div>
+    <div class="split">
+      <div class="panel yes">
+        <h3>方向（本方案采用）</h3>
+        <ul>
+          <li><b>清单×网格＝骨架</b>：行＝稿、列＝语言、格＝业务对象（六态：扫描/命中/检测/对齐/执行/终态）</li>
+          <li><b>四步对齐网格</b>：素材＝扫格 ｜ 检测＝全稿扇出 ｜ 校对＝逐稿对账清单 ｜ 交付＝显式队列＋失败续跑</li>
+          <li><b>回执＝网格终态表</b>：M 批常驻＋合计＋退回明细＋导出</li>
+          <li><b>重整而非重写</b>：矩阵/扫描队列/编排回调/批次面板全部复用，改动集中客户端</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>三条红线不动（诚实边界）</h3>
+        <ul>
+          <li>1 稿 × N 语言＝1 批次（计费合同）；busy 门串行，不加并发</li>
+          <li>不静默跳过：失败即停保留，续跑是用户显式动作，不自动重试</li>
+          <li>矩阵仍是预检粗估（界面明示）；不承诺"检测一次＝执行必中"</li>
+          <li>全稿检测的 AI 审查费用口径未确认前不上一键全稿（见 §05 待决①）</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">01</span>事实基线：变形点清单（坐标均为 develop 实测）</h2>
+    <table class="rule">
+      <thead><tr><th>#</th><th>变形点</th><th>现状（file:line）</th></tr></thead>
+      <tbody>
+        <tr><td>变-1</td><td><b>单文件态作全链真相源</b>：下游全读 <code>psdSelection</code>，靠"镜像第一个已扫描条目"续命</td><td><code>workbench-view.tsx:2155-2177</code>（镜像 hack）／<code>:1387-1394</code>、<code>:1429-1435</code>（复制）／<code>workbench-machine.ts:2-5</code>（门）</td></tr>
+        <tr><td>变-2</td><td><b>检测名不符实</b>：「检测全部语言」只对镜像稿开批；列表无「切换当前稿」入口</td><td><code>:843</code>（<code>scanId: psdSelection?.scanId</code>）；<code>design-file-card.tsx:872-1002</code>、<code>:1205</code></td></tr>
+        <tr><td>变-3</td><td><b>校对不可前置</b>：第 2..N 稿对账被压进执行编排（pendingAdvance）；第 k 稿阻塞时前 k-1 稿已执行计费</td><td><code>:1366-1399</code>、<code>:1401-1450</code></td></tr>
+        <tr><td>变-4</td><td><b>执行编排不是队列实体</b>：失败即停＋"重新开始"从第 1 稿重跑（已完成稿重复进入执行链，提示未引导移除）</td><td><code>:1366-1399</code>、<code>:1401-1413</code>、<code>:284-294</code></td></tr>
+        <tr><td>变-5</td><td><b>回执只显示最后一稿</b>：单批面板 <code>lastBatchId</code>，M 批无聚合</td><td><code>execute-step.tsx:2706</code>；<code>batch-result-panel.tsx:32-147</code></td></tr>
+        <tr><td>变-6</td><td><b>批量身份缺失</b>：h1 两种模式都叫「工作台」；顶带单文件概念；入口 flag 默认 false</td><td><code>:1941-1953</code>、<code>:1955-2000</code>；<code>featureFlags.ts:70</code>、<code>app-shell.tsx:47</code>、<code>site-header.tsx:21</code></td></tr>
+        <tr><td>变-7</td><td><b>覆盖率口径与执行引擎分歧</b>：矩阵宽松三档 vs <code>runMatch</code> 严格归一化；闸在执行前（#140 显式放行）</td><td><code>coverage.ts:3-7</code>、<code>match.ts:41</code>；<code>:1353-1361</code>、<code>:1377-1383</code>；<code>execute-step.tsx:2144-2146</code>、<code>:2196-2220</code></td></tr>
+        <tr><td>变-8</td><td><b>录入只剩粘贴</b>：多行路径粘贴（拖拽不可用）；文件夹导入未接入</td><td><code>design-file-card.tsx:779-795</code>、<code>:912-942</code></td></tr>
+        <tr><td>变-9</td><td><b>门槛全部晚亮</b>：扫描门/覆盖率门/对账门都在起跑前一刻才亮</td><td><code>:1368-1375</code>；<code>execute-step.tsx:2167-2178</code></td></tr>
+        <tr><td>变-10</td><td><b>状态/文案补丁丛</b>：提示各自拼字符串，状态源分散，批量分支散在 141 KB 单文件组件</td><td><code>:1409-1444</code>；<code>design-file-card.tsx:621-714</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <span class="lb">口径</span>
+      <p>批量台当前未开放：<code>batchWorkbenchEnabled=false</code>（默认关，测试站同）。零件清单（保留复用）：扫描队列（旧 D10 已落地）、覆盖率矩阵、逐稿编排回调链、<code>BatchResultPanel</code>、<code>ai-review/batch</code> 服务端 API。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>调研对照（本轮实测 · 全部带出处）</h2>
+    <div class="cards">
+      <div class="card teal"><div class="top"><h3>平台模型：清单＋每格状态是行业标配</h3></div>
+        <p><b>Weblate</b>（★6,110）项目→组件制，每组件×每语言进度；<b>Tolgee</b>（★4,131）批量机器翻译/批处理操作。→ 采用"每格状态、批量进度可见"。<br>
+        <b>GitHub 实测</b>：HandBrake ★24,696 ／ psd-tools ★1,480 ／ excel-ps-batch-export ★20 ／ storytold/photocraft ★65,566（2026-10-17 API 实测）。</p></div>
+      <div class="card hot"><div class="top"><h3>最近流程参照：Redokun 清单台</h3></div>
+        <p>商用 DTP 本地化：<b>Document List＝批处理之家</b>——多文档上传、按语言/状态过滤、每文档每语言进度；批量预翻译 10–20 语言；导出短语给外部译员再导回；修订只处理变更段；导出保持版式。→ <b>直接采用"清单台"骨架</b>。</p></div>
+      <div class="card"><div class="top"><h3>出版 DTP 旁证：按语言批量回收是常态</h3></div>
+        <p>InDesign IDML 工作流：批量提取 → 多语译员并行 → <b>按语言批量回收</b>（3–12 语言常见）；Data Merge＝模板×数据行。→"共用一表 × 多稿"是我们的形态，行业早有对应。</p></div>
+      <div class="card"><div class="top"><h3>批量工具 UX 旁证：HandBrake 队列</h3></div>
+        <p>队列是一等公民：逐任务状态、<b>失败标记需人工重置</b>（无自动重试）、暂停/断点；官方讨论承认 config-first vs queue-first 张力。→ <b>采用队列语义</b>：显式队列面板＋失败即停＋人工"从第 k 稿续跑"。</p></div>
+      <div class="card"><div class="top"><h3>PSD 专项：我们这条位稀缺</h3></div>
+        <p><b>Crowdin Asset Localization</b> 官方口径：PSD 当资产——译员下载离线改再传回（TMS 不碰文字层）。<br>
+        <b>PS Variables/Data Sets</b> 模板变量制（社区吐槽繁琐）；<b>excel-ps-batch-export</b>（psd-tools）只出位图不改活文字；<b>Nativ/Brandeploy/ChangeUp</b> 商业云端模板/AI；社区用 Photopea+ag-psd+LLM 自建（150 稿）。→ 旁证："本地 ＋ 格式保持 ＋ 审查层 ＋ 免 PS/PS 双通道"组合稀缺。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>对抗式审查：整链逐环判词</h2>
+    <div class="cards">
+      <div class="card"><div class="top"><h3>环 1 · 导入</h3></div>
+        <p>现状：粘贴多行路径；文件夹导入未接。<b>判词</b>：「单元（自带表）」与「清单（共用表）」两个多稿模型未并轨——mock 链与产品链"两张皮"的根源。<b>改法</b>：统一「条目＝稿＋表来源」模型；文件夹导入按 v1–v3 方案 P3 接入，本轮只在条目模型预留字段。</p></div>
+      <div class="card"><div class="top"><h3>环 2 · 素材</h3></div>
+        <p>现状：多稿列表＋扫描队列（好的）＋矩阵旁路＋单表＋多语言。<b>判词</b>：零件齐、挂点错——矩阵应是骨架（每格＝业务对象），现在只是估算色块。<b>改法</b>：矩阵升为状态面板（六态），一切动作从网格发起并回填网格；<b>镜像 hack 退役</b>。</p></div>
+      <div class="card"><div class="top"><h3>环 3 · 智能检测</h3></div>
+        <p>现状：「检测全部」实为"当前稿 × 全部语言"。<b>判词</b>：用户以为检了全部，实际只检第一稿。<b>改法</b>：全稿扇出（客户端逐稿调用既有 <code>ai-review/batch</code>，服务端 API 不变）；需确认格可点开处理（保 WF-003）。费用口径＝待决①。</p></div>
+      <div class="card"><div class="top"><h3>环 4 · 设计稿校对</h3></div>
+        <p>现状：无校对清单，对账压进执行编排。<b>判词</b>：<b>链条倒置</b>——WF-001 说"校对完成才进交付"，批量下用户开跑前看不清各稿卡点。<b>改法</b>：逐稿对账清单，全部对齐才开交付；执行期对账门保留为防御层。</p></div>
+      <div class="card"><div class="top"><h3>环 5 · 生成交付</h3></div>
+        <p>现状：一个按钮＋晚亮的门。<b>判词</b>：起点正确，但表现是"按钮背后的隐式队列"。<b>改法</b>：显式队列面板（逐稿行状态机），覆盖率闸勾选留在本环（#140 语义不动），门点名到行。</p></div>
+      <div class="card"><div class="top"><h3>环 6 · 执行</h3></div>
+        <p>现状：会话内驱动；失败即停；"重新开始"从第 1 稿重跑。<b>判词</b>：<b>续跑语义缺失</b>——唯一出路是全量重跑（重复批次结算风险）；对照 HandBrake，业界是"显式人工重试"。<b>改法</b>：失败行「从第 k 稿续跑」＋已完成稿集守卫＋"强制重跑"显式开关（默认关）；不自动重试。</p></div>
+      <div class="card"><div class="top"><h3>环 7 · 回执</h3></div>
+        <p>现状：单批面板只显最后一稿。<b>判词</b>：组件对、范围错。<b>改法</b>：聚合回执＝M 批×N 语言终态表＋单位合计＋退回明细＋导出；推进下一稿不清空已完成结果。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>方向裁定</h2>
+    <div class="callout">
+      <span class="lb">骨架线框</span>
+      <pre class="wire">批量工作台（#batch）
+┌────────────────────────────────────────────────────────────┐
+│ 顶带：4 稿 × 3 语言 · 12 格 ｜ 已扫 4/4 · 对齐 4/4 · 完成 12/12 │
+├───────────────┬────────────────────────────────────────────┤
+│ 稿清单         │ 网格（行=稿 · 列=语言 · 格=六态业务对象）      │
+│ 01_首页.psd    │          日        韩           泰           │
+│ 02_详情页.psd  │ 01       ✓过       ✓过          ✓过          │
+│ 03_活动页.psd  │ 02       ✓过       ✓过(92.5%)   ✓过          │
+│ 04_弹窗.psd    │ 03       ✓过       ✓过          ✓过          │
+│ [＋粘贴/文件夹] │ 04       ✓过       ✓过          ✓过(88%)      │
+├───────────────┴────────────────────────────────────────────┤
+│ 四步：素材=扫格 ｜ 检测=全稿扇出 ｜ 校对=逐稿对账 ｜ 交付=队列跑 │
+│ 执行队列：稿1✓ → 稿2✓ → 稿3✗(退回) → [从第3稿续跑] → 稿4✓     │
+│ 回执：聚合 12 格终态＋合计＋退回明细＋[导出执行报告]            │
+└────────────────────────────────────────────────────────────┘</pre>
+    </div>
+    <div class="cards">
+      <div class="card hot"><div class="top"><h3>为什么不"一层层再补"</h3></div>
+        <p>变-1/2/3/5/9 是同一病根（批量无真相）的五个症状：批量态是投影，所以下游永远读单文件、检测永远只有一个"当前稿"、回执永远只有一批。继续打补丁＝再造新的镜像 hack。骨架立起来，症状同解。</p></div>
+      <div class="card"><div class="top"><h3>与两站、合同、上游件的关系</h3></div>
+        <p>P0–P2 纯客户端为主：不触服务端、不触计费/行合同四层；<code>test:batch-row-contract</code>/<code>test:trust-chain</code> 照跑证零漂移。文件夹导入＝P3 增量（v1–v3 已批方案落地后接入）；双工作台结构维持，只重整 #batch 一侧。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>执行序 P0–P3（逐段判据）</h2>
+    <div class="gates">
+      <div class="gate"><b>P0 · 身份与矩阵（纯前端，零合同面）</b>h1→「批量工作台」＋顶带「M 稿 × N 语言 · 12 格」＋全局态；矩阵交互化（格点击明细、六态色板、低于阈值直接标）；检测按钮如实标注。<br>判据：文案断言＋格状态映射单测＋batchMode=false 面零变化。</div>
+      <div class="gate"><b>P1 · 检测全稿扇出＋校对清单（客户端编排，零服务端变化）</b>逐稿调用既有 <code>ai-review/batch</code> 聚合进网格（失败稿隔离）；逐稿对账行＋全对齐才开交付。<br>判据：4 稿夹具（3 过＋1 需确认）聚合正确；对齐门断言；合同测试零漂移。</div>
+      <div class="gate"><b>P2 · 执行队列＋续跑＋聚合回执（执行会话语义）</b>队列面板状态机；「从第 k 稿续跑」＋已完成稿集守卫＋强制重跑显式开关；聚合回执常驻＋导出。<br>判据：失败续跑夹具（稿 3 失败→续跑→1/2 不重跑、新批次只含 3/4）；busy 门不变；<code>test:trust-chain</code> 零漂移。</div>
+      <div class="gate"><b>P3 · 入口扩展与引擎徽章（依赖线）</b>文件夹导入接入（共用表模式）＋清单行引擎通道徽章＋回执引擎身份行。<br>判据：按 v2/v3 各段判据；本段不新增合同面。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">06</span>待决定（5 条 · 均附建议值）</h2>
+    <div class="notes">
+      <span class="note">① 全稿检测的 AI 审查费用口径（M 稿扇出＝M×N 语言次审查，费用规则待服务端给数）：建议先做<b>逐稿手动检测</b>入口，口径确认后再上"一键全稿"。</span>
+      <span class="note">② 身份文案：h1 改「批量工作台」＋顶带「M 稿 × N 语言」（建议）；备选＝h1 加徽章不动文案。</span>
+      <span class="note">③ 失败续跑：「从第 k 稿续跑，已完成稿不重跑；重跑需先移除或显式勾选」（建议）；备选＝维持全量重跑。</span>
+      <span class="note">④ 聚合回执导出：建议 P2 纳入（CSV＋HTML，与单文件报告同源字段）。</span>
+      <span class="note">⑤ 覆盖率放行位置：维持交付页（#140 现状，建议），素材页只展示明细——避免两处放行两处真相。</span>
+    </div>
+  </section>
+
+  <footer>
+    <p>配套模拟 v4（全链可点 · 4 稿×3 语言 · 扫描队列→全稿检测→逐稿对账→队列执行（稿 3 失败→续跑）→聚合回执 · <b>真机实测全绿：24 项断言 · 22.9s · consoleErrors=[]</b>）：<code>交付档案/执行方案/模拟方案_20261017_多对多工作台整链重整_清单与队列_v4.html</code>。方案全文：同目录 md。</p>
+    <p>图译工坊 · 多对多工作台整链重整 · 2026-10-17 · 基线 develop 400034f · 性质：方案与模拟件（未动代码、未动两站、未推未部署、未触计费合同）</p>
+  </footer>
+
+</div>
+</body>
+</html>

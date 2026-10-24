@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英文站登录进不了工作台 · 根因与修复</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--ink:#16181d;--muted:#5b616e;--line:#e3e4e8;--ok:#0f7a52;--okbg:#e8f5ef;--warn:#8a5a00;--warnbg:#fdf3e0;--bad:#a8261f;--badbg:#fdecea;--accent:#1f4ed8}
+  @media (prefers-color-scheme: dark){:root{--bg:#0f1115;--card:#161a21;--ink:#e9ecf1;--muted:#9aa2b1;--line:#262b35;--ok:#5ed3a4;--okbg:#12281f;--warn:#f0c26b;--warnbg:#2a2213;--bad:#f2837a;--badbg:#2b1716;--accent:#7aa2ff}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans SC","IBM Plex Sans",system-ui,sans-serif;line-height:1.75}
+  .wrap{max-width:920px;margin:0 auto;padding:48px 24px 80px}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:29px;line-height:1.32;margin:10px 0 6px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 26px}
+  .verdict{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:10px;padding:18px 20px;margin:0 0 26px}
+  .verdict strong{color:var(--bad)}
+  h2{font-size:18px;margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;margin:20px 0 8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:16px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card p{margin:0;font-size:14px;color:var(--muted)}
+  .gates{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .gate{font-family:"IBM Plex Mono",monospace;font-size:12px;padding:5px 10px;border-radius:999px;background:var(--okbg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+  .gate.bad{background:var(--badbg);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+  .gate.warn{background:var(--warnbg);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  ul{padding-left:20px}li{margin:6px 0}
+  code{font-family:"IBM Plex Mono",monospace;font-size:13px;background:color-mix(in srgb,var(--ink) 6%,transparent);padding:1px 5px;border-radius:4px}
+  .callout{background:var(--warnbg);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:10px;padding:14px 18px;margin:18px 0}
+  .callout p{margin:6px 0;font-size:14px}
+  .flow{display:grid;gap:8px;margin:14px 0}
+  .step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14px}
+  .step b{font-family:"IBM Plex Mono",monospace;color:var(--accent);min-width:22px}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Root cause &amp; fix · 2026-10-23</div>
+  <h1>英文站「登录后进不了工作台」：根因与修复</h1>
+  <p class="sub">测试站已换成修复版 <code>9f6f5a29</code> · 可复验</p>
+
+  <div class="verdict">
+    <strong>不是登录坏了。</strong>英文用户点 Log in 被送去了<strong>中文登录页</strong>，登录完被扔进中文工作台；而英文首页导航是静态的，登录后仍显示「Log in」、没有工作台入口——看起来就像没登进去。
+  </div>
+
+  <h2>两个真问题（都在中英文共用的代码里）</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>① 登录链接写死中文站路由</h3>
+      <p>工作台账号门写死 <code>/auth/login?next=%2F%23workbench</code>，同处的「邀请码注册」写死 <code>/auth/register</code>。英文站与中文站共用这段组件，于是英文用户被送去中文页。</p>
+    </div>
+    <div class="card">
+      <h3>② 英文首页导航不认登录态</h3>
+      <p>登录后回 <code>/en</code>，导航仍显示 Log in，没有工作台入口、没有账号菜单、连退出登录都没有。中文站 2026-10-21 已修过同一问题，英文站没跟上。</p>
+    </div>
+  </div>
+
+  <h2>改成什么样（与中文站同一套处理）</h2>
+  <div class="flow">
+    <div class="step"><b>1</b><span>新增语种路由层：中文站 <code>base=''</code>（href 与改前逐字节相同），英文站 <code>base='/en'</code>；英文站没有的页面（设备与会话、积分包）返回 <code>null</code> ⇒ 隐藏入口，<strong>绝不送回中文页</strong>。</span></div>
+    <div class="step"><b>2</b><span>英文首页改为服务端注入会话，导航按「已登录 / 未知 / 未登录」三态渲染：头像菜单（邮箱 · Workbench · Log out）/ 骨架 / Log in。</span></div>
+    <div class="step"><b>3</b><span>英文首页新增 <strong>Workbench</strong> 入口 → <code>/en/workbench</code>；登录页「已登录」卡片落地改 <code>/en/workbench</code>。</span></div>
+    <div class="step"><b>4</b><span>新增英文注册页 <code>/en/auth/register</code>（中文注册页镜像：同接口、同错误分支、同样写本机激活）。</span></div>
+  </div>
+
+  <h2>顺带挖出的第三个问题（已修）</h2>
+  <p>英文登录/注册/重置页原来直接显示接口返回的 <code>message</code>，而它是中文原文——输错密码看到「邮箱或密码错误」。现在按错误码说英文，实测提示为 <strong>Wrong email or password.</strong>，整页 0 中文。</p>
+
+  <h2>验证（实跑读数）</h2>
+  <div class="gates">
+    <span class="gate">未登录工作台 → Log in → 英文登录页</span>
+    <span class="gate">登录 → 落回 /en/workbench</span>
+    <span class="gate">/en 导航出现 Workbench + 头像</span>
+    <span class="gate">退出后留在 /en 并恢复 Log in</span>
+    <span class="gate">中文站 / 导航照旧</span>
+    <span class="gate">中文工作台登录链接照旧</span>
+    <span class="gate">线上 /en 中文站路由 0 条</span>
+    <span class="gate">健康 200 / 三进程 online</span>
+  </div>
+  <p class="sub">新增两道守卫 + 对照实验：把账号门改回写死中文路径 ⇒ 门立刻红；还原 ⇒ 绿。</p>
+
+  <div class="callout">
+    <p><strong>出包被门拦了一次：</strong>中文字体守卫报「光(U+5149)」不在子集里（别处新文案带进来的字）。按门的要求重新生成子集（不改文案）：4 片 389 KiB / 1466 码位，<code>--check</code> 文案用到的 1210 码位全覆盖。</p>
+  </div>
+
+  <h2>还差什么（按该补的先后）</h2>
+  <ul>
+    <li><strong>工作台助手类错误仍有 135 处中文没接翻译</strong>（<code>local-assistant-client.ts</code>）：断网、授权过期、报价失败、扫描超时等分支，且多为带数字的拼接句，词典命中不了——下一块最该收。</li>
+    <li><strong>验证邮件链接仍是中文页</strong>：服务端写死 <code>/auth/verify</code>；要修需让发信带语种（涉及认证代码，需你点头）。</li>
+    <li><strong>设备与会话、积分包</strong>：英文站未做，入口已隐藏；要就照中文站镜像一版。</li>
+    <li>批量深层分支仍需本机 Photoshop 真跑。</li>
+  </ul>
+
+  <footer>图译工坊 · 英文站线 · 提交 9f6f5a29 · 2026-10-23</footer>
+</div>
+</body>
+</html>

@@ -101,6 +101,20 @@ function normTime(v) {
   if (!m) return s
   return `${m[1]}-${m[2]}-${m[3]} ${(m[4] ?? '00').padStart(2, '0')}:${(m[5] ?? '00').padStart(2, '0')}`
 }
+// 源头挡刀：账本日期列必须是可解析的时间串。归一化会把 "20:1x" 读成 "20:00"，
+// 看着能用，但飞书按原样拒收 ⇒ 整次写入失败、快照不提升。故在出计划前先排除该行。
+const TIME_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/
+function isLegalTime(v) {
+  const s = normText(v).trim()
+  if (!s) return true
+  const m = s.match(TIME_RE)
+  if (!m) return false
+  const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3])
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return false
+  if (m[4] !== undefined && (Number(m[4]) > 23 || Number(m[5]) > 59)) return false
+  const dt = new Date(Date.UTC(y, mo - 1, d))
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d
+}
 function normDate(v) {
   const s = normTime(v)
   return s ? s.slice(0, 10) : ''
@@ -251,7 +265,7 @@ function main() {
 
   const summary = {
     ledger: args.ledger, currentKnown: currentMap.size, total: 0, deduped: 0,
-    create: 0, update: 0, skip: 0, heldCount: 0, forcedCount: 0,
+    create: 0, update: 0, skip: 0, heldCount: 0, forcedCount: 0, invalidRowCount: 0,
     held: [], forced: [], errors: [], skippedFields: [],
     stateIn: args.state || null, stateFound: state.found, bootstrap, force: args.force, role: args.role || 'operator',
   }
@@ -284,6 +298,16 @@ function main() {
     }
     if (!STATUS_ENUM.includes(String(row.status ?? ''))) {
       summary.errors.push(`ledger:${row.__line} taskId=${taskId} 状态 "${row.status}" 不在枚举 [${STATUS_ENUM.join('/')}]，跳过`)
+      continue
+    }
+    const badDate = [['更新时间', 'updatedAt'], ['到期日', 'due']].find(
+      ([, key]) => String(row[key] ?? '').trim() !== '' && !isLegalTime(row[key])
+    )
+    if (badDate) {
+      const [col, key] = badDate
+      summary.invalidRowCount++
+      summary.errors.push(`ledger:${row.__line} taskId=${taskId} ${col} "${String(row[key])}" 不是合法时间，本行不投影（其余行照常）`)
+      process.stderr.write(`[sync-task-ledger] SKIP-INVALID ${taskId}｜${col}="${String(row[key])}" 不是合法时间，本行已排除\n`)
       continue
     }
 

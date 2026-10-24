@@ -1,0 +1,202 @@
+<!doctype html>
+<title>交接方案 · 批量工作台 v6：给接手 AI 的上线实施单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --teal:#0d7f74; --teal-soft:#e0f2f0;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+    --teal:#5eead4; --teal-soft:#0e2a27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:64ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card.teal{border-left:3px solid var(--teal)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:72ch}
+table.rule{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.rule th{background:var(--sunk);font-size:.72rem;padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-weight:600}
+table.rule td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);line-height:1.7}
+table.rule tr:last-child td{border-bottom:none}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);background:var(--surface);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.gate b{color:var(--ink)}
+.notes{display:flex;flex-direction:column;gap:9px}
+.note{font-size:.86rem;color:var(--ink-2);line-height:1.75;padding-left:14px;position:relative}
+.note::before{content:"—";position:absolute;left:0;color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 交接方案</span><span class="sep">/</span><span>批量工作台 v6（UI/UX 收口 × 文案净化）</span><span class="sep">/</span><span>给接手实施 AI</span><span class="sep">/</span><span>2026-10-17 晚</span></div>
+    <h1>设计已定稿全绿，代码还没写：把 v6 实施单交出去，随下一个测试站包上线</h1>
+    <p class="standfirst">这条线的方案、模拟验收样板、台账全部齐了；产品代码未实现。接手方按本单 §3 实施 → §4 验收（v6 模拟真机重放 32 断言）→ §5 过门＋出包部署测试站。flag <code>batchWorkbenchEnabled</code> 默认关，部署即安全，开闸归 Owner。</p>
+    <div class="meta">
+      <span>判断：直接推不具备（v6 未实现＋7 条待拍板）／交接级具备（spec＝v6 模拟，坐标全给，先例三次）</span>
+      <span>基线：develop <code>e9f639f</code>（树干净，今晚实测）</span>
+    </div>
+  </header>
+
+  <div style="border:1px solid currentColor;border-radius:10px;padding:12px 16px;margin:0 0 18px;font-size:.9rem;line-height:1.7">
+    <b>2026-10-20 增补（先读这条）</b>：Owner 已拍板「每稿一表」。本单的表模型相关部分（A2 矩阵按稿、A3 表入口/更换语义、验收尺里的矩阵样例）已被
+    <code>执行方案_20261020_批量台每稿一表_v7设计增量与实施单_对抗式审查.md</code> 取代，验收尺改为
+    <code>模拟方案_20261020_多对多工作台_每稿一表_v7.html</code>（tabbit mockv7-1020a 全绿）。本单其余部分（文案净化、执行序、过门、部署与坑）仍有效。
+  </div>
+
+  <section>
+    <h2><span class="sn">01</span>我做了什么（本线交付账）</h2>
+    <table class="rule">
+      <thead><tr><th>产物</th><th>路径</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>整链重整方案 v1</td><td><code>交付档案/执行方案/执行方案_20261017_多对多工作台整链重整_业界对照与执行_对抗式审查.{md,html}</code></td><td>十处变形点逐条 file:line；业界对照在附录</td></tr>
+        <tr><td>模拟 v4</td><td><code>..._清单与队列_v4.html</code></td><td>tabbit <code>mockv4-1017b</code>：22.9s、24 断言全过</td></tr>
+        <tr><td>模拟 v5</td><td><code>..._真实模拟_v5.html</code></td><td><b>作废</b>（含引擎字眼，违 <code>TASK_LOG.md:297</code> 口径），仅留对照</td></tr>
+        <tr><td>模拟 v6（规格样板）</td><td><code>..._最真实模拟_v6.html</code></td><td>tabbit <code>mockv6-1017b</code>：59s、32 断言全过、禁用词全页扫描 0 命中</td></tr>
+        <tr><td>v6 方案（F-1～F-12）</td><td><code>执行方案_20261017_批量工作台v6_UIUX收口与文案净化_对抗式审查.{md,html}</code></td><td>每条判词带御罪行号与真机对齐坐标</td></tr>
+        <tr><td>台账</td><td><code>AI_MEMORY/TASK_LOG.md</code> 置顶两条＋<code>ledger.jsonl</code> BATCH-CHAIN-V4</td><td>sync 投影成功；飞书已发</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <span class="lb">必须继承的窗口口径</span>
+      <p><b>界面零引擎字眼</b>（不提引擎/Photoshop/免PS/来源绑定/读回校验；正常态只显示「扫描中/检测中/执行中」；错误码去主语；展示撤下≠证据撤下——回执数据面身份照留）。出处 <code>TASK_LOG.md:297-298</code>。另：三红线不动——1 稿×N 语言=1 批次（<code>execute-step.tsx:2229-2232</code>）／busy 门串行／不静默跳过不自动重试。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>上线条件判断</h2>
+    <div class="split">
+      <div class="panel no">
+        <h3>直接推：不具备</h3>
+        <ul>
+          <li>v6 是本轮设计与模拟，<b>产品代码未实现</b>（本会话未获实现授权）。</li>
+          <li>7 条待拍板未决（§3-B，合同面）。</li>
+        </ul>
+      </div>
+      <div class="panel yes">
+        <h3>交接级：具备</h3>
+        <ul>
+          <li>规格可在 v6 模拟上真机重放（32 断言＋禁用词断言）。</li>
+          <li>实施坐标全量 file:line（§7 索引）；develop 树干净 <code>e9f639f</code>。</li>
+          <li>测试站基线已在：批量台视图（flag 默认关 <code>featureFlags.ts:70</code>）＋覆盖率闸 <code>ee05c9a</code>＋D10 <code>4e4cdd4</code>。</li>
+          <li>部署链三次先例＋两坑已登记（CRLF／不幂等）。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>实施清单</h2>
+    <div class="cards">
+      <div class="card hot">
+        <div class="top"><h3>A 可开工区（Owner 已直令/框架已批）</h3></div>
+        <p><b>A1 文案净化</b>：<code>execute-step.tsx:597/:600/:633/:1638/:1685/:1727/:2935</code>、<code>design-file-card.tsx:630/:1112/:1221</code>、<code>photoshop-step.tsx:566</code>、<code>route.ts:51</code>、<code>local-assistant-client.ts:552</code>、<code>siteContent.ts:630</code>（助手端属 PC 线不抢）；同笔更新 <code>smoke-report-coverage-honesty.mjs</code> 与 <code>smoke-display-denoise.mjs:48</code>。</p>
+        <p><b>A2 译文表导入卡</b>：核实批量分支的 CsvStep 渲染（<code>workbench-view.tsx:1897</code> 门文案）；两页签/拖入空态/进度/已导入态/更换对话框＋下游失效联动（同 <code>workbench-view.tsx:2231-2247</code> 语义）。</p>
+        <p><b>A3 矩阵门控与徽章</b>：未导入→空态＋顶带琥珀钮；「N 格低于 95%」汇总；明细用文件全名。</p>
+        <p><b>A4 死控件接线</b>：粘贴路径对话框（先例 <code>design-file-card.tsx:779-795</code>）／真 file input（.psd/.psb）／清空确认。</p>
+        <p><b>A5 顶带/导轨/计数</b>：表状态位；锁定提示三分形；计数随稿数动态（禁写死）。</p>
+      </div>
+      <div class="card teal">
+        <div class="top"><h3>B 待 Owner 拍板区（合同面，附建议值）</h3></div>
+        <p>①全稿检测费用口径（建议先前置逐稿手动）②身份文案（建议「批量工作台」＋「M 稿 × N 语言」）③失败从第 k 稿续跑（建议已完成不重跑）④聚合回执导出（建议 P2）⑤放行位置（建议维持交付页）⑥表导入复用 CsvStep（建议复用）⑦更换表失效口径（建议同单文件台）。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>执行序（照抄级）</h2>
+    <div class="gates">
+      <div class="gate"><b>1·现场</b> <code>git -C worktrees/develop status --short</code> 须干净（基线 e9f639f）。</div>
+      <div class="gate"><b>2·实施</b> A1–A5；改动集中在 workbench 组件与文案，不触计费/合同四层；动状态机跑 <code>test:workbench-flow</code>。</div>
+      <div class="gate"><b>3·过门</b> <code>npx tsc --noEmit</code>＋<code>npm run lint</code>＋<code>test:trust-chain</code>（基线 22/22）＋<code>test:batch-row-contract</code>＋<code>test:batch-workbench-flag/logic/guards</code>＋（文案两烟）＋（动交付时 <code>test:delivery-coverage</code>）。</div>
+      <div class="gate"><b>4·提交</b> 一笔提交一主题；A1 属文案合同变更——同提交同步受影响层＋HANDOFF 偏差登记标【合同变更】。</div>
+      <div class="gate"><b>5·出包部署</b> <code>worktrees/0112-deploy</code> detached 干净树 → <code>release:preflight:test</code> → <code>release:package:test</code> → scp zip → 服务器 <code>bash /home/ubuntu/deploy-test-release.sh &lt;zip&gt;</code>（脚本从包内解出，先例 <code>TASK_LOG.md:315/:466</code>）。</div>
+      <div class="gate"><b>6·核验</b> <code>.deploy-commit=&lt;sha&gt;</code>、首页 200、PM2 三应用 online 零重启、migration-drift OK；flag 默认仍 false（开闸是 Owner 动作）。</div>
+      <div class="gate"><b>7·记账</b> TASK_LOG＋ledger（BATCH-CHAIN-V4 更新行）→ <code>bash scripts/sync-task-ledger.sh</code> → 飞书 md 直发；合并 main 须发布挂号。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>验收尺 · 红线 · 坑</h2>
+    <div class="notes">
+      <p class="note"><b>验收尺＝v6 模拟</b>：打开 <code>..._最真实模拟_v6.html</code> 先看后仿；断言脚本样板 <code>tabbit-mock-v6-test.js</code>（tabbit 上限 180000ms）。实施后把 32 断言落进 <code>smoke-batch-workbench-*</code>／<code>smoke-workbench-ui-contract</code>；禁用词正则做成 smoke 防回归。</p>
+      <p class="note"><b>红线</b>：不碰生产站与两站口径、支付 flag 保持 false、不看别线未提交现场、不静默降级、合同四层同笔同步；PC-NOPS-EXEC／SITE-COPY-ADMIN／ZHIHU-COPY 等别线不属本单。</p>
+      <p class="note"><b>坑</b>：<code>.sh</code> 禁从 Windows 工作树 scp（CRLF）；部署脚本不幂等（残留 <code>/var/www/tygf-test-next</code>）；大包 scp 超时重传后核 sha256；ledger 只许 node appendFileSync；投影 held 行（ZHIHU-COPY）正常别 --force。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">06</span>给 Owner 的三个选项</h2>
+    <div class="gates">
+      <div class="gate"><b>选项 1（建议）</b>：按本单实施 A 区＋推测试站——7 待拍板不阻塞 A 区。</div>
+      <div class="gate"><b>选项 2</b>：先只做 A1 文案净化（最小增量，半天内可交付，字眼问题即刻消除）。</div>
+      <div class="gate"><b>选项 3</b>：全部等拍板后一笔实施——最慢但一次到位。</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>出处索引（实施按需现查）：变形点地图 file:line 全表在交接 md §7；测试站先例 <code>TASK_LOG.md:309/:385-387/:466-467</code>；口径 <code>TASK_LOG.md:297-298</code>；铁律 <code>PROJECT_CONTEXT.md:70</code>；spec <code>worktrees/v1.5-trust-chain/product-specs/workbench-flow.md</code>。</p>
+    <p>本交接未动业务代码、未推未部署、未碰两站、未触计费与合同四层。</p>
+  </footer>
+
+</div>
+</body>
+</html>

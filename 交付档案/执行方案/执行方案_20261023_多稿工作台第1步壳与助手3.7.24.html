@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>多稿工作台第 1 步壳与助手 3.7.24 · 2026-10-23</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --panel:#ffffff; --ink:#16181c; --muted:#5d6470; --line:#e3e4e0;
+    --accent:#1f4d3d; --accent-soft:#e8f0ec; --warn:#8a4b12; --warn-soft:#fbf1e6;
+    --bad:#8c2b2b; --bad-soft:#fbeceb; --ok:#1f4d3d;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12140f; --panel:#191c16; --ink:#eceee7; --muted:#a2a89c; --line:#2c302a;
+      --accent:#8fc9ac; --accent-soft:#1e2c25; --warn:#e2b07a; --warn-soft:#2a2318;
+      --bad:#e79b96; --bad-soft:#2b1d1c; --ok:#8fc9ac;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    -webkit-font-smoothing:antialiased;padding:40px 20px 64px}
+  .wrap{max-width:980px;margin:0 auto}
+  header.top{margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:20px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:30px;line-height:1.32;margin:10px 0 8px;letter-spacing:-.01em}
+  .meta{font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  section{margin:30px 0 0}
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 12px;font-weight:600}
+  .verdict{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    padding:20px 22px;border-radius:3px}
+  .verdict p{margin:0;font-size:17px;line-height:1.75}
+  .verdict p+p{margin-top:10px;font-size:15px;color:var(--muted)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--panel)}
+  .split>div{padding:18px 20px}
+  .split>div:first-child{border-right:1px solid var(--line);background:var(--bad-soft)}
+  .split>div:last-child{background:var(--accent-soft)}
+  .split .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  .split>div:first-child .tag{color:var(--bad)}
+  .split>div:last-child .tag{color:var(--ok)}
+  .split p{margin:0;font-size:15px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:14px 16px}
+  .stat .n{font-family:var(--mono);font-size:20px;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow:hidden;font-size:14px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent}
+  tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);white-space:nowrap}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card p{margin:0;font-size:14px;color:var(--muted)}
+  .gates{display:flex;flex-wrap:wrap;gap:8px}
+  .gate{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:2px;
+    padding:5px 10px;background:var(--panel)}
+  .gate.pass{border-color:var(--accent);color:var(--ok)}
+  .gate.pass::before{content:"✓ ";font-weight:700}
+  .notes{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px 22px}
+  .notes ul{margin:12px 0;padding-left:20px}
+  .notes li{margin:8px 0;font-size:15px}
+  .notes li b{font-weight:600}
+  .callout{background:var(--warn-soft);border:1px solid var(--warn);border-radius:3px;padding:16px 20px}
+  .callout p{margin:0;font-size:15px}
+  .callout p+p{margin-top:8px;color:var(--muted);font-size:14px}
+  code{font-family:var(--mono);font-size:.92em;background:var(--accent-soft);padding:1px 5px;border-radius:2px}
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:18px;font-size:13px;color:var(--muted)}
+  footer p{margin:6px 0}
+  @media (max-width:720px){
+    .split{grid-template-columns:1fr}
+    .split>div:first-child{border-right:none;border-bottom:1px solid var(--line)}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="kicker">执行方案 · 2026-10-23 · 测试站已上线</div>
+    <h1>多稿工作台第 1 步按你点头的样子重做了<br />助手 3.7.24 带上「页内选文件夹」</h1>
+    <div class="meta">站点 <b>https://test.tuyigf.com</b> · 现役提交 <b>730ee499</b> · 助手 <b>3.7.24</b> · <b>生产未动</b>（仍 319bc138）</div>
+  </header>
+
+  <section>
+    <h2>结论</h2>
+    <div class="verdict">
+      <p>你两次否掉的两件事都改掉了：界面改成你点头的那版模拟，选文件夹不再弹 Windows 那个灰色小窗，改成在页面里选。</p>
+      <p>现在测试站上就能点。页内选文件夹要助手 3.7.24，站点下载页给的已经是它。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>你说过的 → 现在的做法</h2>
+    <div class="split">
+      <div>
+        <div class="tag">你原来的话</div>
+        <p>「整个 UIUX 怎么跟之前…模拟…你展示的这个不一样？？」<br /><br />「还有这个打开方式也不是我要的」</p>
+      </div>
+      <div>
+        <div class="tag">这次改法</div>
+        <p>第 1 步骨架照模拟重排：文件夹栏 → 四个统计 → 左「要你处理的」右证据两栏 → 整宽语言矩阵。</p>
+        <p style="margin-top:10px">选文件夹换成站内选择器（路径／面包屑／上一级／常用位置／可展开子目录），系统对话框只作兜底。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>实测读数</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">730ee499</div><div class="l">站点现役提交</div></div>
+      <div class="stat"><div class="n">200 / 0.032s</div><div class="l">回环健康检查</div></div>
+      <div class="stat"><div class="n">3.7.24</div><div class="l">助手运行时版本</div></div>
+      <div class="stat"><div class="n">25,519,666 B</div><div class="l">安装包字节数</div></div>
+      <div class="stat"><div class="n">17 道</div><div class="l">出包门全 PASS</div></div>
+      <div class="stat"><div class="n">66%</div><div class="l">服务器根盘占用</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>你在测试站上点这四步（约 3 分钟）</h2>
+    <table>
+      <thead><tr><th style="width:56px">步骤</th><th>你要做的</th><th style="width:38%">应该看到什么</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>打开 https://test.tuyigf.com ，进多稿工作台第 1 步</td><td>文件夹栏在最上，四个数字在下面，再下面是两栏，最底一条整宽矩阵</td></tr>
+        <tr><td class="num">2</td><td>点「换文件夹」，随便点两层</td><td>出现站内选择器（不是 Windows 灰窗）；路径与「上一级」都跟着变</td></tr>
+        <tr><td class="num">3</td><td>选你真实的稿文件夹，回来对四个数字</td><td>设计稿数、语言格、要你拍板、有表无稿——和心里的数对得上</td></tr>
+        <tr><td class="num">4</td><td>左边点一条「待你拍板」，选一张表，然后刷新页面</td><td>选中即变「你定的」；刷新后仍记得，旁边写「上次带出来的」</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>这次装上去的是什么</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>第 1 步壳按模拟重做</h3>
+        <p>文件夹栏（路径／换文件夹／系统对话框兜底／统计行）→ 四个统计 → 左栏三组（待你拍板／按 SKU 看／别漏掉）＋右栏证据 → 整宽语言覆盖矩阵（行 SKU、列语言、格内份数）。</p>
+      </div>
+      <div class="card">
+        <h3>页内选文件夹</h3>
+        <p>助手新增只读「列一层目录」接口，复用你点换文件夹时本来就要给的那张许可票，不新增权限；单层 500 条、超了明说、符号链接只标记不跟随。旧助手自动退回系统对话框并说明原因。</p>
+      </div>
+      <div class="card">
+        <h3>选择优先级只有一句话</h3>
+        <p>人手覆盖 &gt; 记忆 &gt; 唯一候选自动。写在一处，三处各算一遍的老毛病这次没留，并加了负控断言。</p>
+      </div>
+      <div class="card">
+        <h3>归属记忆可继承、可遗忘</h3>
+        <p>落本机浏览器，约 200 条上限，坏数据当没记忆，表不在候选里就当这条没记住；界面注明「上次带出来的」并给「忘掉这条」。跨设备不同步是已知边界。</p>
+      </div>
+      <div class="card">
+        <h3>老路还在</h3>
+        <p>文件夹栏保留「逐稿手动导入…」回旧界面，顶栏可再回新壳。没有删除任何既有能力。</p>
+      </div>
+      <div class="card">
+        <h3>小修</h3>
+        <p>第 1 步语言示例表头不再折行，窄屏可左右滑。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>凭什么说它真的上去了</h2>
+    <div class="gates">
+      <span class="gate pass">身份 BOUND</span>
+      <span class="gate pass">webCommitSha 同值</span>
+      <span class="gate pass">期望助手 3.7.24</span>
+      <span class="gate pass">构建标识 in-app-folder-picker-20261023-r1</span>
+      <span class="gate pass">回环 200 / 0.032s</span>
+      <span class="gate pass">PM2 三条 online · restarts 0</span>
+      <span class="gate pass">安装包哈希两侧一致</span>
+      <span class="gate pass">分段下载 206</span>
+      <span class="gate pass">tsc 0 错</span>
+      <span class="gate pass">eslint 本轮 0 error</span>
+      <span class="gate pass">合同测试 PASS 127s</span>
+      <span class="gate pass">信任链 PASS</span>
+      <span class="gate pass">界面合同 19 条（含负控）</span>
+      <span class="gate pass">出包 17 道 gate</span>
+    </div>
+    <div class="notes" style="margin-top:12px">
+      <ul>
+        <li><b>站点自报身份</b>：<code>BOUND</code>；<code>webCommitSha</code> = <code>730ee499cb4f76f353c59ffe9871c8657ff3c9b0</code>；<code>expectedAssistantVersion</code> = <code>3.7.24</code>；<code>expectedAssistantBuildId</code> = <code>in-app-folder-picker-20261023-r1</code>。</li>
+        <li><b>安装包</b>：<code>tygf-engine-setup-3.7.24.exe</code> 25,519,666 字节，SHA-256 <code>223F68D2…9F90</code>；出厂 exe 自检输出 <code>{"ok":true,"version":"3.7.24","assistantBuildId":"in-app-folder-picker-20261023-r1"}</code>。</li>
+        <li><b>构建产物里确实有新字样</b>：整批语言覆盖矩阵／选择工作文件夹／逐稿手动导入／待你拍板／有表无稿／本批语言格，各命中 1 处；<code>list-dir</code> 也在。</li>
+        <li><b>归档与回滚</b>：<code>tygf-test-730ee499cb4f.zip</code> 53,892,048 字节，SHA-256 <code>2BFBAB00…FD91</code>，上传前后逐位一致；备份 <code>deploy-20261023_095447-730ee499cb4f</code>。</li>
+        <li><b>数据库未动</b>：部署脚本自报 <code>skipping database mutation</code>；服务器根盘 66%。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>还没做到的（不含糊）</h2>
+    <div class="notes">
+      <ul>
+        <li><b>没有登录态下的真浏览器实测</b>。能证明的是「构建产物里有这些字＋站点自报版本对＋健康检查通」，不等于「点开一定顺」，所以给你上面四步清单。</li>
+        <li><b>页内选文件夹依赖助手 3.7.24</b>。仍是 3.7.23 的话会退回系统对话框——能用，但不是新样子。</li>
+        <li><b>记住的偏好只在这台电脑这个浏览器</b>，换电脑不跟过去。</li>
+        <li><b>第 1 步语言矩阵要有语言列，得等表读进来</b>；读表前它只告诉你「表还没读」。</li>
+        <li><b>扫到稿后要点一次「把 N 个稿加入本批」</b>。模拟里选完文件夹直接进批次，这里保留一次确认，因为「扫到什么」不等于「这批就要什么」。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>如果第 2 步还是弹了 Windows 窗口</h2>
+    <div class="callout">
+      <p>那不是界面没生效，大概率是助手还没升级。</p>
+      <p>先在站点下载页装 3.7.24，再刷新页面重试。这一步最能直接区分「新版生效」和「助手没升级」。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>下一步等你拍板</h2>
+    <div class="cards">
+      <div class="card"><h3>第 2 步：拆表</h3><p>把混在一张表里的多语言拆开——你上次拍板 v7 的核心动作，接不接。</p></div>
+      <div class="card"><h3>第 3 步：语言覆盖率</h3><p>缺哪门语言、怎么处置，需要你定口径。</p></div>
+      <div class="card"><h3>第 4 步：出活口径</h3><p>最终出什么、按什么算一份活。</p></div>
+      <div class="card"><h3>可选：差异对照单</h3><p>要不要我把「模拟稿 vs 现在」逐条列一张对照单，你一眼看还差哪些地方不像。</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>边界</b>：生产站仍 <code>319bc1384a36</code>，本轮零操作；支付开关保持关闭；本轮无出包范围外改动。</p>
+    <p><b>对账入口</b>：<code>docs/HANDOFF.md:1</code>（顶部接力块）· <code>AI_MEMORY/TASK_LOG.md:1</code>（本轮记录）· <code>AI_MEMORY/CHANGELOG.md</code>（架构决策）· 台账 <code>AI_MEMORY/ledger.jsonl</code>（MULTIDRAFT-SHIP-3）。</p>
+    <p>图译工坊 · 2026-10-23</p>
+  </footer>
+</div>
+</body>
+</html>

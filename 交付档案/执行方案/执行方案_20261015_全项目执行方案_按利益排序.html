@@ -1,0 +1,465 @@
+<title>全项目执行方案：按「利益」排序</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:48ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>全项目执行方案</span><span class="sep">/</span>
+    <span>按利益排序</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>接下来要处理什么，以及每件事的利益关系</h1>
+  <p class="standfirst">待办一共 15 条，但真正要你花注意力的只有 3 件——其余全是「你说一句、机器去干」。本件按「你的注意力能换回多少产品利益」排序，并逐条写明不做的损失、做了的收益。</p>
+  <div class="meta">
+    <span>15 条待办</span>
+    <span>12 件等你拍板</span>
+    <span>3 件是闸</span>
+    <span>只读盘点 · 未改业务代码</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话</h2>
+
+  <div class="verdict">
+    <span class="lb">建议</span>
+    <p>本周<strong>只做 3 件</strong>：定治理走哪条路、认领今晨那次发布、处置多 PSD 那 7 个文件。这 3 件不定，后面所有活都在原地空转。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">15</span><span class="k">条待办（台账对齐）</span></div>
+    <div class="stat warn"><span class="n">12</span><span class="k">件标着「等您定」</span></div>
+    <div class="stat ok"><span class="n">3</span><span class="k">件是闸（各一句话）</span></div>
+    <div class="stat"><span class="n">0</span><span class="k">条不需要你动手的</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">先说根因</span>
+    <p>台账里 12 条都标着「等您定」，但它们的<strong>重量差了两个数量级</strong>——有的是「一句话解锁一整条产品线」，有的只是「顺手关掉一个口子」。所以真正该做的不是「把它们都干完」，而是<strong>把决策次数压下来</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>先把「利益关系」讲清楚</h2>
+  <p class="lede">这个项目里只有三方在付出和获得。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>谁</th><th>付出</th><th>得到</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>你（Owner）</strong></td>
+        <td>注意力（你唯一真正稀缺的东西）＋ 账号类动作（域名、百度、微软、Cloudflare）</td>
+        <td>产品继续增长、继续赚钱</td>
+      </tr>
+      <tr>
+        <td><strong>AI 会话</strong></td>
+        <td>工时</td>
+        <td>—（是工具，不是利益方）</td>
+      </tr>
+      <tr>
+        <td><strong>产品与用户</strong></td>
+        <td>—</td>
+        <td>流量、下载、口碑、付费</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>治理线：花你注意力，不产生产品利益</h3>
+      <ul>
+        <li>三账／日报／心跳／派工——产出的是「可追溯」。</li>
+        <li>实测 <strong>8 天零写、产品 107 笔照发</strong>。</li>
+        <li>结论：这套仪式已经维持不住，救不回来。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>产品线：直接产生利益，但被拖住</h3>
+      <ul>
+        <li>直接产生产品利益：流量／下载／付费／口碑。</li>
+        <li>但发布不可追溯 ⇒ 出事找不到回滚点。</li>
+        <li>这不是仪式问题，是<strong>真金白银的风险</strong>。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">排序原则</span>
+    <p>只有一条：<strong>每一分钟你的注意力，能换回多少产品利益。</strong>凡是「花你注意力、却不产生产品利益」的，一律降级或停掉。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>全部待办总账（对齐飞书台账 15 条）</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>任务ID</th><th>事项</th><th>台账状态</th><th>卡在谁</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">GOV-AB</td><td><strong>治理载体走 A 还是 B</strong></td><td><span class="tag warn">等您定</span></td><td>总控（已等 8 天）</td></tr>
+      <tr><td class="mono">REL-20261015</td><td><strong>今晨 07:50 生产发布是否 Owner 授意</strong></td><td><span class="tag warn">等您定</span></td><td>总控</td></tr>
+      <tr><td class="mono">PSD-7FILES</td><td><strong>多 PSD 7 个未提交文件去留</strong></td><td><span class="tag warn">等您定</span></td><td>Owner</td></tr>
+      <tr><td class="mono">NGINX-AUDIT</td><td>nginx 生效配置只读审计授权</td><td><span class="tag warn">等您定</span></td><td>总控（#134 唯一出口）</td></tr>
+      <tr><td class="mono">FAQ-PROD</td><td>生产首页 FAQ 旧版内容修复授权</td><td><span class="tag warn">等您定</span></td><td>已立案（#130）</td></tr>
+      <tr><td class="mono">ZHIHU-COPY</td><td>知乎文章旧口径修改</td><td><span class="tag warn">等您定</span></td><td>Owner</td></tr>
+      <tr><td class="mono">TESTPWD-ROTATE</td><td>测试站口令更换</td><td><span class="tag warn">等您定</span></td><td>已立案</td></tr>
+      <tr><td class="mono">DOC-COMMIT</td><td>AGENTS.md / TASK_LOG 改动提交</td><td><span class="tag warn">等您定</span></td><td>Owner</td></tr>
+      <tr><td class="mono">PAY-OPEN</td><td>支付是否开</td><td><span class="tag warn">等您定</span></td><td>老账（#6）</td></tr>
+      <tr><td class="mono">GRAY-P0</td><td>灰度与生产隔离 P0′</td><td><span class="tag warn">等您定</span></td><td>总控</td></tr>
+      <tr><td class="mono">PSD-I18N</td><td>多 PSD 批量改语言</td><td><span class="tag warn">等您定</span></td><td>总控</td></tr>
+      <tr><td class="mono">SEO-P2</td><td>英文站 SEO/GEO 第二片</td><td><span class="tag warn">等您定</span></td><td>总控</td></tr>
+      <tr><td class="mono">FONT-CUSTOM</td><td>用户字体排版定制</td><td><span class="tag bad">已搁置</span></td><td>—</td></tr>
+      <tr><td class="mono">OPS-GH</td><td>运营与 GitHub 宣传</td><td><span class="tag bad">已搁置</span></td><td>—</td></tr>
+      <tr><td class="mono">TASK-LEDGER</td><td>飞书任务台账（周提醒已建）</td><td><span class="tag ok">已交付</span></td><td>总控</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>四档排期</h2>
+
+  <h3 style="margin-top:4px">第一档 · 闸（本周，只需你各说一句话）</h3>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>事项</th><th>你要做的</th><th>建议</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td><strong>治理走 A 还是 B</strong></td><td>回「A」或「B」</td><td><span class="tag bad">选 B</span> 见 §06</td></tr>
+      <tr><td class="mono">2</td><td><strong>今晨 07:50 那次发布是你授意的吗</strong></td><td>回「是」或「不是」</td><td>是 → 补一行挂号；不是 → 立案并定回滚点</td></tr>
+      <tr><td class="mono">3</td><td><strong>多 PSD 那 7 个未提交文件怎么处置</strong></td><td>回「提交」／「暂存」／「挪走」</td><td>先定去留，否则灰度没法开工</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 style="margin-top:8px">第二档 · 定了就能推（机器干活，1–2 天）</h3>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>事项</th><th>前置</th><th>谁干</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">4</td><td>灰度与生产隔离 P0′（方案已定稿，七步约 1 天）</td><td>等第 3 件</td><td>会话</td></tr>
+      <tr><td class="mono">5</td><td>nginx 只读审计（审完入仓）</td><td>你给一次只读授权</td><td>总控</td></tr>
+      <tr><td class="mono">6</td><td>生产首页 FAQ 旧版内容修复</td><td>你给一次写入口授权</td><td>会话</td></tr>
+      <tr><td class="mono">7</td><td>测试站口令更换</td><td>你一句话</td><td>会话</td></tr>
+      <tr><td class="mono">8</td><td>AGENTS.md / TASK_LOG 提交</td><td>你一句话</td><td>会话</td></tr>
+      <tr><td class="mono">9</td><td>26 笔未推送提交推到远端</td><td>你一句话</td><td>会话</td></tr>
+      <tr><td class="mono">10</td><td>状态文档回写（CURRENT_STATUS 落后 8 天）</td><td>无</td><td>会话</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 style="margin-top:8px">第三档 · 下周（有余力）</h3>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>事项</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">11</td><td>源站加固三连（#143 → #138 → #120）</td><td>零成本，但<strong>要你去 Cloudflare 仪表盘点一下</strong></td></tr>
+      <tr><td class="mono">12</td><td>助手签名 ＋ 版本 bump（3.7.15 → 3.7.16）</td><td>用户下载看到「未知发布者」，要开自动更新必须先解决</td></tr>
+      <tr><td class="mono">13</td><td>英文站 SEO/GEO 第二片</td><td>第一片已上生产，公开面实测全 200</td></tr>
+      <tr><td class="mono">14</td><td>支线关账剩余（B 组 10 条 ＋ 孤儿目录约 45 个）</td><td>你单独批一句</td></tr>
+      <tr><td class="mono">15</td><td>那 4 条有未提交改动的分支（共 17 处）</td><td>你选「提交」还是「丢弃」</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 style="margin-top:8px">第四档 · 明确暂缓（别占你脑子）</h3>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>事项</th><th>为什么缓</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">16</td><td>用户字体排版定制</td><td>方案已出但没排期；「字体是否全在服务端算」未验证</td></tr>
+      <tr><td class="mono">17</td><td>运营与 GitHub 宣传</td><td>方向已定、辅仓已建、README 待签稿，等排期</td></tr>
+      <tr><td class="mono">18</td><td>PhotoCraft 移植</td><td>依赖 Rust 工具链，另开战线</td></tr>
+      <tr><td class="mono">19</td><td>支付上线</td><td>不急就明确「暂缓」，别挂在台账里当待办</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>每件事的利益关系（核心）</h2>
+  <p class="lede">读法：「不做的损失」＝继续放的血；「做了的收益」＝换回的利益；「你要花」＝你真正付出的注意力／动作；「谁干」＝工时由谁承担。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>事项</th><th>不做的损失</th><th>做了的收益</th><th>你要花</th><th>谁干</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>① 治理 A/B</strong></td>
+        <td>你的注意力继续被仪式消耗；没人敢照文档办事（文档落后 8–22 天）</td>
+        <td><strong>注意力一次性解放</strong>；判据自动跑</td>
+        <td>一句话</td><td>会话</td>
+      </tr>
+      <tr>
+        <td><strong>② 今晨发布挂号</strong></td>
+        <td><strong>出事找不到回滚点</strong>——线上那笔查不到挂号、查不到复验</td>
+        <td>发布可追溯、可回滚</td>
+        <td>一句话</td><td>总控</td>
+      </tr>
+      <tr>
+        <td><strong>③ 7 个未提交文件</strong></td>
+        <td>灰度开不了工；脏树越拖越难合</td>
+        <td>解锁灰度整条线</td>
+        <td>一句话</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>④ nginx 只读审计</td>
+        <td>测试站门在挡人，但<strong>仓里证明不了它长什么样</strong>（安全黑箱）</td>
+        <td>配置入仓、可复验</td>
+        <td>一次授权</td><td>总控</td>
+      </tr>
+      <tr>
+        <td>⑤ 生产 FAQ 旧版</td>
+        <td>站上挂着<strong>已删的「平均 3 分钟」承诺</strong>，AI 引擎读到；对客承诺不一致</td>
+        <td>站内口径统一</td>
+        <td>一次授权</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑥ 知乎旧口径</td>
+        <td>站外持续供旧承诺，<strong>站内改了也白改</strong></td>
+        <td>站内外口径一致</td>
+        <td>一次改文动作（你的账号）</td><td>你（会话可代拟）</td>
+      </tr>
+      <tr>
+        <td>⑦ 测试站口令</td>
+        <td>口令曾在诊断输出里回显，属<strong>已知暴露面</strong></td>
+        <td>关掉一个已知口子</td>
+        <td>一句话</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑧ AGENTS.md 提交</td>
+        <td>下次会话看到<strong>旧规则</strong> ⇒ 重复犯错</td>
+        <td>规则真正生效</td>
+        <td>一句话</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑨ 支付是否开</td>
+        <td>一直挂在决策里，谁看都当它是待办</td>
+        <td>边界明确</td>
+        <td>一句话</td><td>你</td>
+      </tr>
+      <tr>
+        <td>⑩ 灰度 P0′</td>
+        <td>生产与灰度不分家，<strong>改生产等于赌</strong></td>
+        <td>改生产不再赌</td>
+        <td>0（等③解锁）</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑪ 多 PSD 批量改语言</td>
+        <td>成果烂在脏树里，等于白做</td>
+        <td>一个功能可交付</td>
+        <td>0</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑫ SEO 第二片</td>
+        <td>英文站流量停在第一片</td>
+        <td>流量增长</td>
+        <td>0</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑬ 源站加固三连</td>
+        <td><strong>明文回源、限流不敢开、日志看不见</strong> ⇒ 生产问题没法实时处理</td>
+        <td>安全地基（后面所有监控的前提）</td>
+        <td>点一次 Cloudflare 仪表盘</td><td>你点 ＋ 会话配</td>
+      </tr>
+      <tr>
+        <td>⑭ 助手签名</td>
+        <td>用户下载看到「未知发布者」⇒ <strong>下载转化损失</strong></td>
+        <td>可开自动更新线</td>
+        <td>证书／签名动作</td><td>你 ＋ 会话</td>
+      </tr>
+      <tr>
+        <td>⑮ 支线关账剩余</td>
+        <td>59 条分支、130 个目录里还压着 10＋45 待清</td>
+        <td>盘面清爽、认知负担下降</td>
+        <td>一句话</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑯ 状态文档回写</td>
+        <td>谁照文档办事都办错</td>
+        <td>文档可用</td>
+        <td>0</td><td>会话</td>
+      </tr>
+      <tr>
+        <td>⑰ 26 笔未推送</td>
+        <td>本地领先远端 26 笔，<strong>机器丢了就没了</strong></td>
+        <td>异地备份 ＋ 可协作</td>
+        <td>0</td><td>会话</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>最该盯的一行：② 今晨发布挂号</h3>
+      <ul>
+        <li>不花你多少注意力。</li>
+        <li>但它是<strong>唯一一件「不做就有真金白银风险」的事</strong>——出事没回滚点。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>最划算的一行：① 治理 A/B</h3>
+      <ul>
+        <li>唯一一件<strong>「做了能省你注意力」</strong>的事。</li>
+        <li>省的是长期、持续的注意力。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">看完全表的一句话</span>
+    <p>其余 15 行本质都是「你说一句，机器去干」——<strong>它们不消耗你的注意力，只消耗你的决策次数</strong>。所以真正该做的不是「把它们都干完」，而是把决策次数压下来。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>治理线怎么收口（A / B 的实质）</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th></th><th>A 案：补回三账</th><th>B 案：停写归档</th></tr></thead>
+    <tbody>
+      <tr><td><strong>做法</strong></td><td>补回三账，恢复派工与复验节拍</td><td>三账停写归档，改用 git ＋ TASK_LOG ＋ 机器判据当唯一台账</td></tr>
+      <tr><td><strong>成本</strong></td><td>你的注意力 ＋ 每个会话的仪式开销</td><td>一次性迁移</td></tr>
+      <tr><td><strong>收益</strong></td><td>可追溯</td><td>不再需要你盯仪式；判据自动跑</td></tr>
+      <tr><td><strong>实测证据</strong></td><td><span class="tag bad">8 天零写、产品 107 笔照发</span> ⇒ 仪式已维持不住</td><td>已有一条落地：飞书任务台账（已交付，周提醒已建）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="verdict">
+    <span class="lb">建议</span>
+    <p>选 <strong>B</strong>。A 案要的是「你持续投入注意力去维持一套仪式」，而实测已证明这套仪式在无人盯的时候就停了。B 案把「可追溯」交给机器判据，人只需要在闸口回一句话。</p>
+  </div>
+
+  <div class="callout">
+    <span class="lb">一句话</span>
+    <p>B 案不是「放弃治理」，是<strong>把治理从仪式改成判据</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>未核实项（如实列，不含推断）</h2>
+  <ul class="notes">
+    <li><strong>孤儿目录体积</strong>：<code>du</code> 在百万文件级的目录上超时（两次尝试均失败），未测出。</li>
+    <li><strong>B 组 10 条分支的目录移除</strong>：<code>git worktree remove</code> 首次超时被 SIGTERM，重试被本机安全策略拦截——<strong>未完成，10 个目录原样保留</strong>。</li>
+    <li><strong>生产 <code>/download</code> 页面体传输</strong>：HEAD 返回 200（快速），但 body 在本机 60s 超时。属本机出口慢（本项目已知：TTFB 2–9s、曾 45s 超时），<strong>不据此断言站点问题</strong>。</li>
+    <li><strong>40 条已合并分支是否都无未提交 worktree 改动</strong>：仅对「被占用」的 14 条做了干净度检查，其余按已合并状态推断。</li>
+    <li><strong>字体功能是否全在服务端算</strong>：决定字体定制工期，未验证。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>取数：容器根 ＋ <code>worktrees/develop</code> ＋ <code>worktrees/production</code> 现场实测（17:30–17:40）＋ 飞书任务台账（17:10 刷新，15 条）。本地分支 <strong>59</strong>（原 84，已删 25）、worktree 注册 <strong>85</strong>、目录 <strong>130</strong>；三账顶号 141／151／153；生产 <code>45e7744</code>（07:50:27 merge，provenance BOUND）；<code>origin/main=af573a4</code>，本地领先 <strong>26</strong> 笔。</p>
+  <p>本件为只读盘点：未改业务代码、未提交、未部署、未碰两站。</p>
+</footer>
+
+</div>

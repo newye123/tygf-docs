@@ -1,0 +1,344 @@
+<title>批量台「每稿一绑定」· 执行方案与对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4.2vw,2.25rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+p{margin:0;max-width:70ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.62;max-width:56ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:64ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:580px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.8rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate h3{margin:0;font-size:.98rem;font-weight:600}
+.gate p{font-size:.9rem;color:var(--ink-2);max-width:66ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:.95rem;font-weight:600}
+.card p{font-size:.85rem;color:var(--ink-2);max-width:none}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.stat .v{font-family:var(--font-mono);font-size:1.3rem;font-weight:500;color:var(--accent)}
+.stat .l{font-size:.76rem;color:var(--muted)}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 16px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>批量台 · 每稿一绑定</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>12 个 SKU 各自一张不同的语言表，界面怎么区分？</h1>
+  <p class="standfirst">对象＝批量工作台第 1 步「准备素材」布局与译文表绑定模型。手法＝GitHub／公开实践调研 → 现状代码逐条取证 → 对抗式审查 → 可点模拟 HTML。</p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>发现 A1–A12</span><span>实测证据 F1–F13</span><span>待 Owner 拍板 O1–O3</span><span>模拟件已随附</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 方案可执行，含 1 条 P0 必做安全项</span>
+    <p>核心结论：<strong>区分的钥匙是「物料」不是「语言」</strong>。每个 SKU 在批量台里占一行，那一行自带<strong>自己那张表、自己那套语言子集、自己的确认进度</strong>；表与 SKU 的对应靠「配对规则自动建议 + 逐条预览确认」建立。图二那种单稿形态<strong>降级成矩阵右侧的详情区</strong>，不再占整页。</p>
+    <ul>
+      <li><strong>A1 是本次唯一会写出不可逆错误（错译文进客户 PSD）的路径</strong>，且现有闸门拦不住 → 表↔稿指纹体检列为 <strong>P0 不可延后</strong>。</li>
+      <li><strong>A2 是一处认知落差</strong>：Owner 说「一套物料共用一个语言表这个方向也可以留着」，实测<strong>批量模式里根本没有共用表能力</strong>（表按稿存副本 + 闸门明文「互不共用」）→ 这次是<strong>补能力</strong>，不是保留既有，对外要说清。</li>
+      <li><strong>A12 提醒别找轮子</strong>：GitHub 四组检索，没有「多稿 × 多语 × 每稿独立表」的成熟开源实现 → 模型必须简单，本方案只加两层（Table / Binding）。</li>
+      <li>执行链、报价口径、结算闸、助手协议、支付 flag <strong>一律不动</strong>；执行前闸的「每稿有表」语义变更须跑 <code>test:batch-row-contract</code> 与 <code>test:trust-chain</code>（AGENTS.md 铁律）。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>Owner 那个问题的直接回答</h2>
+  <div class="callout">
+    <span class="lb">为什么现在分不清</span>
+    <p>界面把「语言」当成了主角：屏幕上写着「德语 · 法语」，但不知道它属于 12 个 SKU 里的哪一个。正确的模型是把主角换成 SKU。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>层级</th><th>谁是主角</th><th>装什么</th><th>界面上长成什么</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">物料层（行）</td><td>1 个 SKU ＝ 1 个 PSD</td><td>自己的表、自己的语言子集、自己的确认进度、自己的扫描状态</td><td>左栏物料栏的一张卡</td></tr>
+        <tr><td class="mono">语种层（列）</td><td>1 个语种</td><td>这一稿在这一语种上的覆盖率 / 确认状态 / 缺列</td><td>矩阵里的一格</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="v">行</span><span class="l">表是「行」的属性 → 12 张表天然互不打架</span></div>
+    <div class="stat"><span class="v">列</span><span class="l">每行的列集合可以不同 → 没有的格子就是那行不适用</span></div>
+    <div class="stat"><span class="v">规则</span><span class="l">表↔SKU 对应靠配对规则 + 预览确认，不是手工 12×12</span></div>
+  </div>
+  <pre>┌ 准备素材 ────────────────────────── [全部扫描] [自动配对] [清除] ─┐
+├──────────────┬───────────────────────────────────────────────────────┤
+│ 物料栏（12）  │  详情区 ＝ 图二原样                                     │
+│ ┌──────────┐ │  ┌ 选择要处理的 PSD 文件 ──────────────────────────┐  │
+│ │SKU-01 主图│ │  │ [路径] [选择文件…] [扫描]                        │  │
+│ │共享表·8语 │ │  │ ┌ SKU-01_主图.psd 已扫描·12图层 [重扫][移除] ┐ │  │
+│ │8/8 已确认 │ │  │ └────────────────────────────────────────────┘ │  │
+│ └──────────┘ │  └──────────────────────────────────────────────────┘  │
+│ … ×12        │  ●原文 德语 法语 英语 …  [选择语言] [重选译文表]       │
+│              │  表：主表A_通用8语.xlsx（共享表 · 4 稿共用）           │
+│              │  绑定体检：通过 / 需你看一眼                            │
+├──────────────┴───────────────────────────────────────────────────────┤
+│ SKU × 语言 真矩阵：行=SKU 列=12 语种 144 格（粘性表头，点格跳详情）     │
+└──────────────────────────────────────────────────────────────────────┘</pre>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>现状盘点 F1–F13（逐条有据）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>事实</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F1</td><td>单批设计稿上限 <strong>12 个</strong></td><td class="mono">design-file-card.tsx:91（MAX_PSD_ENTRIES = 12）</td></tr>
+        <tr><td class="mono">F2</td><td>单批目标语种上限 <strong>12 个</strong>；表解析层超限直接整表失败</td><td class="mono">batch-limits.ts:6；csv.ts:707（CSV_TOO_MANY_LANG_COLUMNS）</td></tr>
+        <tr><td class="mono">F3</td><td>译文表按<strong>稿</strong>存放，键是路径派生 id，值是解析结果的<strong>副本</strong></td><td class="mono">workbench-view.tsx:349、:173</td></tr>
+        <tr><td class="mono">F4</td><td>批量模式<strong>硬编码</strong>「每稿一张表，互不共用」，缺表即拦</td><td class="mono">workbench-view.tsx:1950-1959（v7 F11）</td></tr>
+        <tr><td class="mono">F5</td><td>界面一切绑「当前稿」；<code>parsed</code> 就是当前稿那一张表</td><td class="mono">workbench-view.tsx:356</td></tr>
+        <tr><td class="mono">F6</td><td>图一第 2 块是<strong>第二份名单</strong>，只有「切换到该稿」，不能直接换表</td><td class="mono">workbench-view.tsx:2962-3061、:3054</td></tr>
+        <tr><td class="mono">F7</td><td>图二的语言行只画<strong>当前稿</strong></td><td class="mono">workbench-view.tsx:3063-3099</td></tr>
+        <tr><td class="mono">F8</td><td>现有「覆盖率矩阵」不是矩阵：每稿一段、段内一行 chip</td><td class="mono">coverage-matrix.tsx:95-157</td></tr>
+        <tr><td class="mono">F9</td><td>覆盖率取数口已是「每稿一表」，<strong>可复用</strong></td><td class="mono">coverage.ts:169-185</td></tr>
+        <tr><td class="mono">F10</td><td>执行模型已是「1 稿 × 该稿已确认语言 = 1 批次」</td><td class="mono">execute-step.tsx:2342</td></tr>
+        <tr><td class="mono">F11</td><td>草稿只活在当前标签页，关掉即失</td><td class="mono">workbench-view.tsx:2790</td></tr>
+        <tr><td class="mono">F12</td><td>已有「多张单语言表合并成一张多语言表」能力</td><td class="mono">merge-tables.ts:1-3</td></tr>
+        <tr><td class="mono">F13</td><td>文件夹导入时表格<strong>只列候选、不自动绑定</strong>（既有正确取舍）</td><td class="mono">design-file-card.tsx:1017-1023</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout bad">
+    <span class="lb">A2 · 认知落差，必须点名</span>
+    <p>Owner 说「一套物料都共用一个语言表格，这个方向也没有错，也可以留着」。实测：<strong>批量模式里没有共用表这个能力</strong>——表按 draftKey 存副本（F3），闸门明文要求互不共用（F4）。所以这次不是"两条路都留着"，而是<strong>要把共用这条腿补上</strong>，否则 12 个 SKU 共用一张主表会被旧闸直接拦死。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>公开实践调研</h2>
+  <h3 style="margin:6px 0 0;font-size:.98rem">GitHub 检索：没有可直接抄的现成方案</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>查询</th><th>total</th><th>最相关命中</th><th>判断</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">psd translate</td><td class="mono">56</td><td class="mono">iamgqb/psd-spec-translate（35★，翻译 Adobe 规范文档）</td><td>无「多稿×多语×每稿独立表」实现</td></tr>
+        <tr><td class="mono">psd localization</td><td class="mono">9</td><td class="mono">kabio05/YMM4-Localizer（1★，PS 插件按词典本地化图层名）</td><td>都是单文件／图层名场景</td></tr>
+        <tr><td class="mono">photoshop batch language replace</td><td class="mono">0</td><td>—</td><td>无</td></tr>
+        <tr><td class="mono">bulk translate design files</td><td class="mono">1</td><td>命中无关仓库</td><td>无</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 style="margin:10px 0 0;font-size:.98rem">同构问题在行业里长什么样</h3>
+  <ul class="notes">
+    <li><span class="n">①</span><div><b>Trados Studio 社区「Different source files for different target languages」</b>（community.rws.com … /studio/53500/）——提问者的形状与 Owner 几乎一样：源文件自带目标 locale、内容还不一样。行业结论：Trados 的模型是<strong>源文件在每个目标语言下都要复制一份</strong>，不支持「按文件里的数据直接对上不同目标语言」；社区给的唯一实操路径是<strong>把所有版本都传上去、再在每个目标语言下删掉不适用的文件</strong>，删完「Manager view 就能一屏看到所有目标语言」。<br><b>对本项目的两条意义（方向相反）：</b>① <b>不能靠「UI 上不显示」表达「这一稿不做这个语种」</b>——Trados 就是这么被逼出「删文件」这种苦活的，所以<strong>文件×语种的作用域必须在数据模型里显式存在</strong>；② 「一屏看到所有目标语言 × 所有文件」正是行业认定的正确总览形态，也就是本方案的真矩阵。</div></li>
+    <li><span class="n">②</span><div><b>Crowdin「Target File Bundles」</b>（support.crowdin.com/bundles/）——把一组源文件打成一个 bundle、bundle 可有各自的目标文件与语言。即<strong>「一组文件共享一份交付物」是行业一等公民</strong>，对应本方案的「表组／共享表」。</div></li>
+    <li><span class="n">③</span><div><b>Lokalise「Downloading translation files」</b>（docs.lokalise.com/en/articles/3150682-downloading-translation-files）——同时提供「One file per language」与「每个源文件一份翻译文件」两种形态。即<strong>共享表与独立表两种模式并存</strong>，不是二选一。</div></li>
+    <li><span class="n">④</span><div><b>设计工具里的主流形态：一语言一页面／一语言一文件</b>（Figma 生态的 Transifex／Crowdin／Lokalise／iTranslate AI Batch Translation 插件）——批量时选多个 frame 一次翻多语。印证<strong>语种是列、稿件是行</strong>是设计工具的通用形状。</div></li>
+    <li><span class="n">⑤</span><div><b>可借的机制名：file mapping</b>——Crowdin CLI／Lokalise 都有「文件映射」：用规则把源文件对上目标文件，而不是手工一对一手配。本方案的「规则自动配对」就是它的桌面版。</div></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>数据模型改造：表提为实体，绑定只存引用</h2>
+  <div class="cards">
+    <div class="card"><h3>Table（表本体）</h3><p><code>{ tableId, name, parsed, rowCount, langColumns }</code>——只解析一次，可被多稿引用。</p></div>
+    <div class="card"><h3>Binding（每稿的绑定）</h3><p><code>{ draftKey → { tableId, mode: 'own'｜'shared', languageScope } }</code>——每稿只存引用，不存副本。</p></div>
+    <div class="card"><h3>languageScope（新增一等状态）</h3><p>这一稿实际要翻哪些语种，默认＝该表全部语言列。缺列＝本稿要做但表里没有 → 红框并拦批。</p></div>
+    <div class="card"><h3>三种配表手段并存</h3><p>① 规则自动配对（主力，带预览）② 共享表组 ③ 手动逐稿选（保底＋纠正口）。</p></div>
+  </div>
+  <div class="callout">
+    <span class="lb">一次改造解决四件事</span>
+    <p>共享表不用复制文件；换表＝改一行绑定；「改了这张表会影响哪几稿」可算；持久化只需存绑定关系（表内容仍可不落盘）。</p>
+  </div>
+  <div class="callout bad">
+    <span class="lb">A10 · 关键取舍</span>
+    <p>共享表<strong>只共享表，不合并执行批次</strong>。理由：批次是计费与结算的单位（按语种分别计费，<code>pack/page.tsx:594</code>），合批会让「这一稿出了事只退这一稿」变得不可能。（这条推翻了方案起草时自己最初「共享组按组执行」的想头。）</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>界面：图一的四块去哪了</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>图一现状块</th><th>现状出处</th><th>新形态落点</th><th>变化</th></tr></thead>
+      <tbody>
+        <tr><td>① 多设计稿选择（文件夹树／粘贴路径／全部扫描）</td><td class="mono">design-file-card.tsx</td><td><strong>左栏物料栏</strong>（每张卡自带扫描态／表徽章／语言数／确认进度）＋顶部批量操作条</td><td>一份名单</td></tr>
+        <tr><td>② 译文表 · 每个设计稿一张（逐稿「切换到该稿」）</td><td class="mono">workbench-view.tsx:2962-3061</td><td><strong>并进物料栏卡片的徽章</strong>；换表入口放详情区的「重选译文表」</td><td>第二份名单消失</td></tr>
+        <tr><td>③ 语言行（原文／德语／法语／选择语言／重选译文表）</td><td class="mono">workbench-view.tsx:3063-3099</td><td><strong>右栏详情区</strong>，就是图二，但 chip 分三态</td><td>从「当前稿专属」变成「这一行的」</td></tr>
+        <tr><td>④ 覆盖率矩阵（每稿一段）</td><td class="mono">coverage-matrix.tsx:95-157</td><td><strong>真矩阵</strong>：行=SKU、列=语种、粘性表头、点格跳详情</td><td>12 段摞叠 → 1 张表</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">语言 chip 的三态（这是「每个 SKU 表语言不一样」的正解呈现）</span>
+    <p><strong>实心</strong>＝本稿要做且已确认　｜　<strong>深色描边</strong>＝本稿要做但待确认　｜　<strong>虚线灰</strong>＝表里有但本稿不做　｜　<strong>红框「缺列」</strong>＝本稿要做但表里没有这一列。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>防错绑三道体检（最关键的安全设计）</h2>
+  <div class="callout bad">
+    <span class="lb">为什么必须做</span>
+    <p>SKU 之间原文高度相似是常态（同一套文案改几个词）。错绑之后：<strong>SKU-A 的表绑到 SKU-B → 两稿原文几乎一样 → 覆盖率算出来 100% → 现有所有闸门全绿 → 把错的译文写进客户 PSD，没有任何一处报警。</strong>这是本次改造里唯一会造成不可逆错误（写进客户设计文件）的路径。</p>
+  </div>
+  <div class="gates">
+    <div class="gate"><span class="num">G1</span><div class="body"><h3>覆盖率体检（已有，沿用）</h3><p>矩阵已算绿／琥珀／红；低于 95% 阈值要显式放行，放行记入本批执行摘要。</p></div></div>
+    <div class="gate first"><span class="num">G2</span><div class="body"><h3>表 ↔ 稿指纹体检（新增 · P0 不可延后）</h3><p>表的原文集合 vs <strong>该稿</strong>图层原文集合（逐层原文只在助手侧有）：① 命中率 &lt; 60% → 判「这张表可能不是这一稿的」；② 表多出 ≥N 行本稿没有的原文 → 提示「表比稿多 N 行，可能是混稿」。落点：助手侧第 3 步 + 执行前闸。<br>与既有提示的区别：现有「表多出 N 行」是<strong>信息级</strong>（提示行号与文案）；缺的是「<strong>表可能是别人的</strong>」这一层。</p></div></div>
+    <div class="gate"><span class="num">G3</span><div class="body"><h3>缺列体检（新增 · P0）</h3><p>本稿要做但表里没有的语种 → 红框列出，并拦下「本批开始」。</p></div></div>
+  </div>
+  <div class="callout bad">
+    <span class="lb">5.1 · 与同日 08:59 v7 审查已批准结论的冲突点（必须点名，不能默默沿用）</span>
+    <p>同日 08:59《批量工作台 v7：每稿一表 · 对抗式审查》F9 条写的是「<strong>写错风险＝0</strong>：<code>match.ts:41-53</code> 归一化原文严格相等配对，外稿行配不上、不会误写」。<br><strong>这条只在「外稿原文与本稿完全不重叠」时成立。</strong>逐字核 <code>src/lib/workbench/match.ts:41-76</code>：<code>runMatch</code> 用 <code>normalizeText</code> 后的<strong>原文严格相等</strong>建索引（:51）、按行的 <code>sourceText</code> 取命中（:58/:68），取不到即 <code>NO_LAYER_MATCHED</code>（:69-76）。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>情形</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>外稿原文与本稿<strong>完全不重叠</strong></td><td>全部 <code>NO_LAYER_MATCHED</code>，<strong>一个字都不会写</strong> ⇒ F9 成立（安全，但这一稿也交不出东西）</td></tr>
+        <tr><td>外稿原文与本稿<strong>有重叠</strong>（同一套文案改几个词的 SKU——正是 Owner 说的「多个不同 SKU 的亚马逊改语言」）</td><td>重叠的那几行<strong>正常命中</strong>，写进去的是<strong>另一个 SKU 的译文</strong> ⇒ <strong>F9 不成立，错字真会写进客户 PSD</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">结论</span>
+    <p>F9 把「外稿行」当成了「必然配不上的行」，漏掉了「原文高度相似 ⇒ 照样配得上」这一档。<strong>这不是推翻 v7 的每稿一表设计</strong>（那个设计仍然正确、仍然要保留），<strong>推翻的是它的风险评估结论</strong>：v7 假设「每稿一表」本身足以防住写错；实测不够，因为<strong>真正防住写错的是「表和稿是对应的」这个前提，而界面没有、也不曾有办法验证这个前提是否成立</strong>。<br>⇒ G2 升为 P0，且必须排在 v7 已上线部分之外单独排期；<strong>在 G2 落地前，批量台每稿一表的能力不得对外宣称「不会写错」</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>批次与计费预告</h2>
+  <p>按 F10，12 稿 → 12 个批次，每批次是该稿已确认的语言数；计费按语种累计（<code>pack/page.tsx:594</code>：50 行 × 12 语种 = 600 分）。因此执行区必须先出一张本批预估表，否则 Owner 看到「12 批次 / 80 语种」会误操作。</p>
+  <pre>本批将产生：12 个批次 · 80 个语种执行 · 预计 4,000 积分（按 50 行 × 80 语种 × 1 分/行·语种 估）
+其中：SKU-04 尚未确认任何语言 → 该稿不会进入本批（先做别的稿）</pre>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>落点清单</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>文件</th><th>改什么</th><th>级</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">src/lib/workbench/table-registry.ts（新）</td><td>Table / Binding 类型、tableId 生成、共享组、languageScope 归一</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/lib/workbench/table-pairing.ts（新）</td><td>配对规则（同名／同码／唯一／子目录）、一对多与零命中判定、预览结果结构（纯函数）</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/components/workbench/design-file-card.tsx</td><td>物料栏卡片形态（并入表徽章、语言数、确认进度）＋批量操作条</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/components/workbench/workbench-view.tsx</td><td>parsedTables → tables + bindings；语言行三态；缺列体检；F4 闸门改判定；去掉第二份名单</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/components/workbench/coverage-matrix.tsx</td><td>改真矩阵渲染（行=稿／列=语种／粘性表头／点格跳详情），<strong>取数口不动</strong></td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/components/workbench/table-pairing-dialog.tsx（新）</td><td>自动配对预览清单 + 冲突点名 + 确认应用</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">src/lib/workbench/table-registry.test.ts / table-pairing.test.ts（新）</td><td>纯函数单测：共享表、一对多、零命中、缺列、换表</td><td><span class="tag bad">P0</span></td></tr>
+        <tr><td class="mono">助手侧 prepare-check</td><td>G2 指纹体检（表↔稿原文集合比对）</td><td><span class="tag warn">P1</span></td></tr>
+        <tr><td class="mono">src/lib/workbench/persistence.ts（新）</td><td>绑定关系持久化／恢复（见 O3）</td><td><span class="tag warn">P2</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">不改</span>
+    <p>执行链与计费口径、报价与结算闸、助手协议、支付 flag、单文件工作台。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>实施顺序与验证门</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>G0 · 纯函数落地</h3><p><code>table-registry</code> + <code>table-pairing</code>；vitest 覆盖共享表／一对多／零命中／缺列／换表／12 稿 12 语种。不过不往下。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>G1 · UI 重排</h3><p><code>npx tsc --noEmit</code> rc=0；<code>npm run lint</code> rc=0；浏览器实拍 12 稿矩阵（粘性表头、点格跳详情）。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>G2 · 闸门与体检同步</h3><p>F4 改判定 + 缺列体检；手工造 3 例（缺表／缺列／共享表）逐一验闸门文案与拦截。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>G3 · 合同变更门（AGENTS.md 铁律）</h3><p>执行前闸「每稿有表」语义变更 → 必须跑 <code>npm run test:batch-row-contract</code> 与 <code>npm run test:trust-chain</code> 全绿并同步更新 fixture。<strong>未跑不得部署测试站。</strong></p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>G4 · 助手侧指纹体检</h3><p>助手日志证据：错绑表被点名、正确表不误报。不过不部署。测试站部署需 Owner 单点授权。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">11</span>对抗式审查 A1–A12</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>发现</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">A1</td><td><span class="tag bad">🔴</span></td><td><strong>错绑且静默</strong>：SKU 间原文相似 → 错绑表覆盖率 100% → 全闸门放行 → 错译文写进客户 PSD</td><td>现有闸只防「表多出 N 行」（信息级），不防「表是别人的」；<strong>且与同日 08:59 v7 审查已批准的 F9「写错风险＝0」结论冲突</strong>（见 §07 的 5.1）→ <strong>G2 指纹体检，P0 必做</strong></td></tr>
+        <tr><td class="mono">A2</td><td><span class="tag bad">🔴</span></td><td><strong>共享表在批量模式根本不存在</strong>，Owner 以为可以留着</td><td>F3/F4 → 提表为实体 + 闸门改判定；<strong>对外要说清是补能力</strong></td></tr>
+        <tr><td class="mono">A3</td><td><span class="tag warn">🟠</span></td><td><strong>12 语种上限卡在「表列」层，可能被一列备注打死</strong>：Owner 的 12 语种表若带「备注／内部说明」列，会被误认成第 13 个语言列 → 整张表导入失败</td><td>语言列上限判定改为「排除已识别非语言列后 ≤ 12」，报错说清「识别到 N 个语言列候选」→ <strong>登记 ISSUE</strong></td></tr>
+        <tr><td class="mono">A4</td><td><span class="tag warn">🟠</span></td><td>图二语言行分不清「表里有」与「本稿要做」</td><td>三态 chip + 缺列红框</td></tr>
+        <tr><td class="mono">A5</td><td><span class="tag warn">🟠</span></td><td>144 格的真矩阵缺了就有 12 段摞叠，第一印象仍是「看不清」</td><td>真矩阵 + 粘性表头 + 颜色之外必有文字</td></tr>
+        <tr><td class="mono">A6</td><td><span class="tag warn">🟠</span></td><td>刷新一次要重绑 12 张表</td><td>见 O3：只持久化绑定关系，表内容不落盘</td></tr>
+        <tr><td class="mono">A7</td><td><span class="tag warn">🟠</span></td><td>12 表解析连锁失败</td><td>逐表解析、逐表点名失败，沿用既有「认不出的会跳过、跳过了哪些列给你看」口径</td></tr>
+        <tr><td class="mono">A8</td><td><span class="tag ok">🟡</span></td><td>自动配对可能挑错版本（<code>SKU-08.xlsx</code> vs <code>SKU-08_终稿.xlsx</code>）</td><td>一对多不自动选，列出让用户点</td></tr>
+        <tr><td class="mono">A9</td><td><span class="tag ok">🟡</span></td><td>共享表让「改一稿的表」变成「改全组的表」</td><td>换表与改表分离：换表＝改绑定（只影响一稿）；改表内容＝点名「会同时影响 N 稿」＋二次确认</td></tr>
+        <tr><td class="mono">A10</td><td><span class="tag ok">🟡</span></td><td>共享表合批会毁掉逐稿结算</td><td>只共享表，不合并批次（推翻起草时「共享组按组执行」的想头）</td></tr>
+        <tr><td class="mono">A11</td><td><span class="tag ok">🟡</span></td><td>「当前稿」这个隐形中心与矩阵无中心冲突</td><td>矩阵＝总览（无中心），详情＝主从（有中心）；<code>activeDraft</code> 降级为「详情区看哪一稿」，数据权威是 <code>bindings</code></td></tr>
+        <tr><td class="mono">A12</td><td><span class="tag acc">✅</span></td><td><strong>没有现成方案可抄</strong>（GitHub 四组检索：psd localization total 9、photoshop batch language replace total 0）</td><td>自研，因此模型必须简单——只加 Table / Binding 两层，不引入工作流引擎</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">12</span>待 Owner 拍板 O1–O3</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>选项</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O1</td><td>「每稿一表」是硬约束还是默认？</td><td>① 保持硬约束 ② 允许共享表（主表组）</td><td><strong>②</strong>。Owner 已明说「共用一个语言表格这个方向也没有错」；且 12 个 SKU 共用主表是极常见交付形态，①会把它挡死</td></tr>
+        <tr><td class="mono">O2</td><td>一稿多表（同一稿按语种用不同表）要不要支持？</td><td>① 不要 ② 要</td><td><strong>①</strong>。② 会把矩阵变成三维（稿×语×表），且与「稿与稿隔离」的信任链前提冲突；真要时用共享组近似</td></tr>
+        <tr><td class="mono">O3</td><td>绑定关系要不要能恢复？</td><td>① 不做 ② 只持久化<strong>绑定关系</strong>（稿路径→表文件名+语种子集+指纹），<strong>表内容不落盘</strong></td><td><strong>②</strong>。12 稿刷新一次重绑 12 次不可接受；表内容落本地有隐私顾虑，所以只存「哪张表」</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">13</span>不做什么（防跑偏）</h2>
+  <ul class="notes">
+    <li><span class="n">×</span><div>不改执行链、报价口径、结算闸、助手协议、支付 flag。</div></li>
+    <li><span class="n">×</span><div>不做「一稿多表」（O2 建议不做）。</div></li>
+    <li><span class="n">×</span><div>不把表内容写进 localStorage（只持久化绑定关系）。</div></li>
+    <li><span class="n">×</span><div>不做工作流引擎／多人协同／版本管理。</div></li>
+    <li><span class="n">×</span><div>不改单文件工作台（它本来就是图二那个形态）。</div></li>
+    <li><span class="n">×</span><div>不做「一个表按语种自动拆成 12 份分发」（现有 <code>merge-tables.ts</code> 已是反方向的合并能力，够用）。</div></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">14</span>附 · 模拟 HTML 走法</h2>
+  <p class="standfirst" style="max-width:70ch">文件：<code>交付档案/执行方案/模拟_20261020_批量台每稿一绑定_图二形态.html</code>（单文件，双击即开，无外部依赖；2026-10-20 实测 0 console error，12 张卡 / 12 行 / 144 格全部可点）。</p>
+  <ul class="notes">
+    <li><span class="n">1</span><div>左栏点任一 SKU → 右栏详情跟着换；点矩阵任一格 → 跳到那一稿那一语。<strong>SKU-10 的「繁体中文／荷兰语」两格是红框「缺列」样本。</strong></div></li>
+    <li><span class="n">2</span><div>点「自动配对」→ 12 条配对预览，<strong>3 处要人拍板</strong>：SKU-08 一对多、SKU-12 零命中、SKU-01…04 四稿共享同一张表。</div></li>
+    <li><span class="n">3</span><div>右上切「现状对照」→ 图一的四个块逐条标注为什么难受，以及它们分别收进新形态的哪里。</div></li>
+    <li><span class="n">4</span><div>异常样本一览：SKU-07 表比稿多 8 行（绑定体检警告）｜SKU-10 表只有 10 列但本稿要 12 语｜SKU-11 日/韩覆盖率 71%/66%｜SKU-08 一对多待选｜SKU-12 零命中未配表。</div></li>
+  </ul>
+</section>
+
+<footer>
+  <p>2026-10-20 · 只读取证＋方案设计（未改代码）· 基线 worktrees/develop@99baaf6 · 发现 A1–A12 · 配套可点模拟 HTML 一份。</p>
+</footer>
+</div>

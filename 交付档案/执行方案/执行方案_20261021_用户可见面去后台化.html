@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>执行方案 · 用户可见面去后台化（2026-10-21）</title>
+<style>
+  :root{
+    --bg:#f6f5f1; --paper:#ffffff; --ink:#1f2321; --muted:#5d665f; --line:#d9d6cc;
+    --accent:#0f5c4a; --accent-soft:#e3efe9; --warn:#8a5a00; --warn-soft:#fdf3dc;
+    --bad:#8f1f1f; --bad-soft:#fbe9e7; --ok:#1e6b3a; --ok-soft:#e8f4ec;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#151816;--paper:#1c211e;--ink:#e9ece8;--muted:#a3aca5;--line:#333b35;
+      --accent:#7fd3b4;--accent-soft:#203b32;--warn:#f0c36a;--warn-soft:#3a2f17;
+      --bad:#f2a09a;--bad-soft:#3d2220;--ok:#8fd6a8;--ok-soft:#1f3628;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 22px 64px}
+  header.hero{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:28px 30px;margin-bottom:22px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  h1{font-size:26px;line-height:1.3;margin:0 0 10px}
+  .lede{color:var(--muted);margin:0;max-width:72ch}
+  .verdict{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:8px 14px;border-radius:999px;
+    background:var(--warn-soft);color:var(--warn);font-weight:600;font-size:14px;border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+  section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:18px}
+  h2{font-size:18px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;margin:20px 0 8px}
+  p{margin:0 0 12px}
+  ul,ol{margin:0 0 12px;padding-left:22px}
+  li{margin:5px 0}
+  code{font-family:var(--mono);font-size:.88em;background:color-mix(in srgb,var(--ink) 7%,transparent);padding:1px 5px;border-radius:5px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 4px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:color-mix(in srgb,var(--paper) 92%,var(--bg))}
+  .stat b{display:block;font-size:22px;line-height:1.2}
+  .stat span{font-size:12px;color:var(--muted)}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:8px;margin:14px 0}
+  .callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+  .callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+  .callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+  .finding{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0}
+  .finding .tag{font-family:var(--mono);font-size:12px;color:var(--muted);margin-right:8px}
+  .sev{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
+  .sev.imp{background:var(--bad-soft);color:var(--bad)}
+  .sev.pre{background:var(--warn-soft);color:var(--warn)}
+  .finding p{margin:6px 0 0;color:var(--muted)}
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+  .gate{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .gate b{display:block;margin-bottom:4px}
+  .gate small{color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.two{grid-template-columns:1fr}}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding-top:10px}
+  .pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px}
+  .pill.no{background:var(--bad-soft);color:var(--bad)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">图译工坊 · 执行方案 · 2026-10-21</div>
+  <h1>用户可见面去后台化：账号脚注、排版能力位黄条、配对失败报错</h1>
+  <p class="lede">你的一句「以后这些后台的内容不需要在用户和前端展示」，落到代码上是三处删改、一处门控、一支新守卫。代码已改完、门禁已跑过；<strong>尚未提交、尚未部署</strong>——工作树上还有另一个会话的 12 个未提交文件。</p>
+  <div class="verdict">对抗式审查结论：有条件放行 · 风险 Medium · 已证实 6 条（Important 4）</div>
+</header>
+
+<section>
+  <h2>一、先看结论</h2>
+  <div class="stats">
+    <div class="stat"><b>3 处</b><span>用户可见面后台话已撤</span></div>
+    <div class="stat"><b>1 处</b><span>排版入口改为按能力位显示</span></div>
+    <div class="stat"><b>25</b><span>新增文案守卫断言</span></div>
+    <div class="stat"><b>rc=0</b><span>test:contracts 实跑</span></div>
+  </div>
+  <div class="callout bad">
+    <strong>「多设计稿界面不是 V12」——不成立。</strong><br>
+    你截图里「这一批：1 个设计稿 · 已扫描 0 · 1 个待扫描」就是 v12 新增的范围条（<code>workbench-view.tsx:2684</code>，<code>data-testid="workbench-scope-chip"</code>）。v12 那笔只动 6 个文件，做的是「执行范围与执行前确认」，<strong>没有重做多稿选择卡</strong>。不是旧版本，是那一块没改。
+  </div>
+  <div class="callout">
+    <strong>「本批加入 12」和「已添加 1/12」不是矛盾。</strong><br>
+    前者是文件夹预览里准备加入的数量，后者是已经在列表里的数量；点「全部加入」后才会变成 12/12。证据：<code>design-file-card.tsx:1062-1077</code>（预览四格）与 <code>:947</code>（已加入计数）。
+  </div>
+  <div class="callout warn">
+    <strong>真正让功能不可用的是两件事。</strong><br>
+    ① 排版写回能力在助手里被硬编码关闭（<code>download/local-assistant/server.js:1426</code>，<code>TYPOGRAPHY_APPLY_READY = false</code>），入口却只看灰度开关；<br>
+    ② 你装的助手还是<strong>被作废的构建</strong>（<code>bundled-engine-20261020-r1</code> ≠ 站点要求的 <code>transport-hardening-20261011-r1</code>，见 ISSUES #217）——先装 r4，再谈别的。
+  </div>
+</section>
+
+<section>
+  <h2>二、对抗式审查（findings 与证据）</h2>
+  <p><strong>范围</strong>：develop 工作树 2026-10-21 15:4x–15:5x 的本次改动（11 个已跟踪文件 + 1 个新守卫）｜<strong>Round 1/3</strong>｜<strong>+149 / −35 行</strong></p>
+
+  <div class="finding">
+    <span class="tag">F-220-01</span><span class="sev imp">Important</span><strong>排版面板对所有人展示，但能力位恒为 false</strong> <span class="pill">已修</span>
+    <p>证据：<code>server.js:1426</code> 硬编码关闭；入口三处（原 <code>workbench-view.tsx:2933/3268/3280</code>）都不查能力位。失效场景：用户点开 → 只看到一段「执行器按能力位忽略它」→ 判断功能坏了。</p>
+  </div>
+  <div class="finding">
+    <span class="tag">F-220-02</span><span class="sev imp">Important</span><strong>账号菜单页脚泄露后台概念</strong> <span class="pill">已修</span>
+    <p>证据：<code>home-account-menu.tsx:134</code>（<code>e65b572</code> 引入）「只显示你的登录邮箱，不显示后台运营备注。」——它只在解释我们的数据模型，对用户零价值。</p>
+  </div>
+  <div class="finding">
+    <span class="tag">F-220-03</span><span class="sev imp">Important</span><strong>配对失败把内部校验原样抛给用户</strong> <span class="pill">已修</span>
+    <p>证据：<code>pair-completion.cjs:105</code> 与 <code>:122</code>，回读失败与内容不一致共用「本机授权回读未通过…不要解绑或重复输入授权码」。用户会理解成“授权坏了”，真正原因被盖住。</p>
+  </div>
+  <div class="finding">
+    <span class="tag">F-220-04</span><span class="sev imp">Important</span><strong>同一族术语另有四处</strong> <span class="pill">已修</span>
+    <p><code>assistant-setup-banner.tsx:163</code>、<code>batch-execution-client.ts:243</code>、<code>design-file-card.tsx:1397</code> 的恢复提示，都在讲“组件同步/授权码/扫描执行器/助手队列”。</p>
+  </div>
+  <div class="finding">
+    <span class="tag">F-220-05</span><span class="sev pre">Pre-existing</span><strong>error-messages 单测长期红</strong> <span class="pill">已闭合</span>
+    <p>期望 26 个登记码，表里实际 27 个（<code>EXECUTION_ROW_ID_UNSUPPORTED</code> 漏登记）。连同新增 3 条一起补齐到 30，测试转绿。</p>
+  </div>
+  <div class="finding">
+    <span class="tag">F-220-06</span><span class="sev pre">Pre-existing</span><strong>文案守卫在 CRLF 下会失明</strong> <span class="pill">已闭合</span>
+    <p><code>replace(/\/\/.*$/, '')</code> 的 <code>.</code> 匹配不到行尾 <code>\r</code>，<code>$</code> 在 JS 里也不匹配“末尾换行之前” ⇒ 注释剥不掉。新守卫改用 <code>[^\r\n]*</code>，并加了正负对照。</p>
+  </div>
+
+  <h3>证伪项（不进 findings）</h3>
+  <ul>
+    <li>「多个设计稿界面不是 V12」——证伪（范围条为 v12 专有；<code>525559c</code> 未改 <code>design-file-card.tsx</code>）。</li>
+    <li>「已添加 1/12 与本批加入 12 自相矛盾」——证伪（已加入列表 vs 待加入预览）。</li>
+  </ul>
+
+  <h3>未决（各缺什么）</h3>
+  <ol>
+    <li>「本机授权回读未通过」的精确子因：<code>..._READBACK_FAILED</code> 还是 <code>..._MISMATCH</code>，本机没有助手日志分不出来；还需排除安全软件锁文件与 <code>.bak</code> 回退路径。</li>
+    <li>截图来自测试站还是生产站：元素是 v12 专有，倾向测试站，但没有 URL 证据。</li>
+    <li>排版功能最终去留：本轮按「无法使用」选了隐藏（能力位翻真自动恢复），需要你一句确认。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>三、改了什么</h2>
+  <ol>
+    <li><strong>账号菜单</strong>：删掉页脚那句。</li>
+    <li><strong>排版入口</strong>：新增 <code>typographyEntryVisible = 灰度开关 ∧ 助手能力位</code>（<code>workbench-view.tsx:346</code>），卡头按钮、面板挂载、悬浮球三处同门；助手不报可写回就不显示。</li>
+    <li><strong>排版面板</strong>：黄条缩成「排版定制暂不可用：当前助手版本不支持写回。」（<code>typography-panel.tsx:372-381</code>、<code>:583-590</code>）。</li>
+    <li><strong>配对失败</strong>：新增 <code>resolvePairBoundMessage</code>（<code>src/lib/workbench/error-messages.ts</code>），三条 <code>PAIR_BOUND_*</code> 改人话；单稿/多稿/批量就绪三处接上；原始码仍进排障位。</li>
+    <li><strong>恢复提示与安装横幅</strong>：同批去「执行器 / 组件同步 / 授权码」。</li>
+    <li><strong>防复发</strong>：新增 <code>scripts/smoke-user-visible-copy.mjs</code>（25 断言，扫 10 个用户可见面文件），已接进 <code>npm run test:contracts</code>。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>四、验证（真实退出码）</h2>
+  <div class="gates">
+    <div class="gate"><b>npm run test:contracts</b><small>rc=0，含新守卫 25 assertions passed</small></div>
+    <div class="gate"><b>npx vitest run</b><small>6 文件 / 26 测试全过（含修好的 error-messages）</small></div>
+    <div class="gate"><b>npx eslint（7 个源文件）</b><small>0 error；4 条既有 jsx-a11y warning</small></div>
+    <div class="gate"><b>npx tsc --noEmit</b><small>src 0 error；仅 .next 生成件 3 条噪声</small></div>
+  </div>
+  <p style="margin-top:12px">守卫自带阳性/阴性对照：代码里的禁词必须被抓、注释里的必须放过——防止“探针失灵报 0”。</p>
+</section>
+
+<section>
+  <h2>五、发布路径与阻塞</h2>
+  <div class="two">
+    <div class="gate"><b>① 提交</b><small>只加本次 12 个文件，不碰别人的 12 个未提交文件。</small></div>
+    <div class="gate"><b>② 出包</b><small>必须等 develop 树干净，否则打包第一秒被 porcelain 挡死——当前阻塞点。</small></div>
+  </div>
+  <div class="gate" style="margin-top:12px"><b>③ 部署测试站</b><small>出包后按老流程部署并核验；生产不动。</small></div>
+</section>
+
+<section>
+  <h2>六、需要你拍的两件事</h2>
+  <div class="callout warn">
+    <strong>1. 装 r4（约 3 分钟）</strong><br>
+    <code>tmp/setup-3.7.16-r4-身份纠偏/tygf-engine-setup-3.7.16.exe</code>。装完打开 <code>http://127.0.0.1:49152/ping</code>，应看到 <code>version=3.7.16</code>、<code>assistantBuildId=transport-hardening-20261011-r1</code>。不装，扫描/执行类报错还会继续（#217）。
+  </div>
+  <div class="callout">
+    <strong>2. 排版功能去留</strong><br>
+    本轮按「无法使用就不展示」处理；若你更想保留入口、只显示“暂不可用”，改回来只要一行。
+  </div>
+</section>
+
+<section>
+  <h2>七、遗留在案</h2>
+  <ul>
+    <li>助手侧源码未改：原始文案仍在 <code>pair-completion.cjs</code>，改动要重出 exe、走版本纪律；这次先用 Web 侧映射把用户看到的话改干净。</li>
+    <li>「回读失败」根因未定位（缺日志）。装 r4 后若仍复现，下一步是让助手把 <code>detailCode</code> 写进本地日志并可导出，而不是继续猜。</li>
+    <li>未做真浏览器渲染验证：树脏，起不了干净构建；等提交/部署后在测试站补这一眼。</li>
+  </ul>
+</section>
+
+<footer>图译工坊内测版 · 2026-10-21 15:5x · 本报告所有 file:line 与退出码均来自本会话实读/实跑</footer>
+</div>
+</body>
+</html>

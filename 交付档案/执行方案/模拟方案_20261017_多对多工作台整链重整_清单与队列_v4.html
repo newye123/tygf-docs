@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>模拟 v4 · 多对多工作台整链重整（清单×网格）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5; --canvas:#151a23;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --teal:#0d7f74; --teal-soft:#e0f2f0;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b; --canvas:#10141b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+    --teal:#5eead4; --teal-soft:#0e2a27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.page{max-width:1060px;margin:0 auto;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:22px}
+.head{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-size:clamp(1.3rem,3vw,1.7rem);line-height:1.3;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:0;color:var(--ink-2);max-width:76ch;font-size:.95rem}
+.scen{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--font-mono);font-size:.72rem;background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--ink-2)}
+.mono{font-family:var(--font-mono)}
+b.mono{font-weight:600}
+
+/* ===== simulator shell ===== */
+.sim{background:var(--canvas);border:1px solid var(--line);border-radius:14px;padding:clamp(14px,2.6vw,22px);display:flex;flex-direction:column;gap:14px}
+.sim-top{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.h1-sim{font-size:1.2rem;font-weight:700}
+.ident{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);margin-top:2px}
+.glob{display:flex;flex-wrap:wrap;gap:8px}
+.g-item{font-size:.78rem;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:3px 12px}
+.g-item b{font-family:var(--font-mono);color:var(--ink);font-weight:600}
+
+.rail{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rstep{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)}
+.rstep .rn{font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+.rstep .rs{margin-left:auto;font-size:.7rem;font-family:var(--font-mono)}
+.rstep.active{border-color:var(--accent);color:var(--ink);box-shadow:0 0 0 1px var(--accent)}
+.rstep.done{border-color:var(--ok);color:var(--ok)}
+.rstep.done .rs{color:var(--ok)}
+
+.card2{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.card2 .c-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.card2 h2{font-size:1rem;margin:0;font-weight:700}
+.fixline{font-family:var(--font-mono);font-size:.68rem;color:var(--teal);letter-spacing:.02em;margin-left:auto}
+.desc{font-size:.86rem;color:var(--ink-2);margin:0}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:inherit;font-size:.84rem;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:6px 14px;cursor:pointer;transition:filter .15s}
+button:hover:not(:disabled){filter:brightness(.97)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover:not(:disabled){filter:brightness(1.08)}
+button.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+button.small{padding:3px 10px;font-size:.78rem}
+.hint{font-size:.78rem;color:var(--muted)}
+.done-chip{font-size:.74rem;font-family:var(--font-mono);color:var(--ok);background:var(--ok-soft);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+
+/* files */
+.flist{display:flex;flex-direction:column;gap:6px}
+.frow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.85rem}
+.frow .fname{font-family:var(--font-mono);font-size:.8rem}
+.frow .fsize{color:var(--muted);font-size:.75rem;font-family:var(--font-mono)}
+.frow .fstat{margin-left:auto;font-size:.74rem;font-family:var(--font-mono)}
+.fstat.s-wait{color:var(--warn)}
+.fstat.s-scan{color:var(--accent)}
+.fstat.s-ok{color:var(--ok)}
+.fstat.s-bad{color:var(--bad)}
+.fstat.s-run{color:var(--accent)}
+
+/* matrix */
+.mwrap{overflow-x:auto}
+table.mx{border-collapse:separate;border-spacing:5px;font-size:.8rem;min-width:430px}
+table.mx th{font-size:.72rem;color:var(--muted);font-weight:600;padding:2px 6px;text-align:left}
+table.mx td.mxfile{font-family:var(--font-mono);font-size:.74rem;color:var(--ink-2);white-space:nowrap;padding-right:8px}
+td.cell{min-width:84px;text-align:center;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--sunk);cursor:pointer;font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);position:relative}
+td.cell.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%, var(--line))}
+td.cell.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%, var(--line))}
+td.cell.none{color:var(--muted);cursor:default;font-style:italic}
+td.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+td.cell .lock{display:block;font-size:.62rem;opacity:.75;font-style:normal}
+#cov-detail{font-family:var(--font-mono);font-size:.74rem;color:var(--ink-2);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:2.6em}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.72rem;color:var(--muted);font-family:var(--font-mono)}
+
+/* detection */
+.dgrid{display:flex;flex-direction:column;gap:6px}
+.drow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+.drow .dname{font-family:var(--font-mono);font-size:.78rem;min-width:120px}
+.dchip{font-family:var(--font-mono);font-size:.72rem;border-radius:999px;padding:2px 10px;border:1px solid var(--line);color:var(--muted);background:var(--sunk)}
+.dchip[data-s="ok"]{color:var(--ok);background:var(--ok-soft)}
+.dchip[data-s="warn"]{color:var(--warn);background:var(--warn-soft);font-weight:600}
+.dchip[data-s="wait"]{color:var(--accent)}
+.dconfirm{font-size:.78rem;color:var(--warn);background:var(--warn-soft);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* review */
+.rlist{display:flex;flex-direction:column;gap:6px}
+.rvrow{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.84rem;display:flex;flex-direction:column;gap:6px}
+.rvmain{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.rvmain .rvname{font-family:var(--font-mono);font-size:.78rem}
+.rvmain .rvstat{margin-left:auto;font-family:var(--font-mono);font-size:.74rem}
+.rvrow[data-s="ok"] .rvstat{color:var(--ok)}
+.rvrow[data-s="todo"] .rvstat{color:var(--warn)}
+.rvwhy{font-size:.78rem;color:var(--ink-2)}
+.rvfix{display:flex;flex-wrap:wrap;gap:8px}
+.engine{font-family:var(--font-mono);font-size:.74rem;color:var(--teal);background:var(--teal-soft);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+
+/* delivery / queue */
+.gatebar{font-size:.8rem;color:var(--warn);background:var(--warn-soft);border:1px solid var(--line);border-radius:8px;padding:9px 12px;display:flex;flex-direction:column;gap:4px}
+.gatebar b{color:var(--warn)}
+.ack{display:flex;gap:8px;align-items:flex-start;font-size:.82rem;color:var(--ink-2)}
+.ack input{margin-top:4px}
+.qlist{display:flex;flex-direction:column;gap:6px}
+.qrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.qrow .qname{font-family:var(--font-mono);font-size:.78rem;min-width:120px}
+.qrow .qstat{margin-left:auto;font-family:var(--font-mono);font-size:.74rem;color:var(--muted)}
+.qrow .guard{font-size:.68rem;font-family:var(--font-mono);color:var(--teal);background:var(--teal-soft);border-radius:999px;padding:1px 8px}
+.qrow[data-s="running"] .qstat{color:var(--accent)}
+.qrow[data-s="done"] .qstat{color:var(--ok)}
+.qrow[data-s="fail"]{border-color:color-mix(in srgb,var(--bad) 40%, var(--line))}
+.qrow[data-s="fail"] .qstat{color:var(--bad)}
+.qchip{font-family:var(--font-mono);font-size:.7rem;border-radius:999px;padding:1px 8px;border:1px solid var(--line);color:var(--muted);background:var(--sunk)}
+.qchip[data-s="ok"]{color:var(--ok);background:var(--ok-soft)}
+.qchip[data-s="run"]{color:var(--accent)}
+.qchip[data-s="bad"]{color:var(--bad);background:var(--bad-soft)}
+#resume-panel{display:none}
+#resume-panel.show{display:flex;flex-direction:column;gap:8px;border:1px solid color-mix(in srgb,var(--bad) 40%, var(--line));background:var(--bad-soft);border-radius:8px;padding:10px 14px;font-size:.83rem;color:var(--ink-2)}
+#resume-panel b{color:var(--bad)}
+
+/* receipt */
+#receipt{display:none}
+#receipt.show{display:flex;flex-direction:column;gap:10px}
+.rcpt-table{width:100%;border-collapse:separate;border-spacing:5px;font-size:.8rem;min-width:430px}
+.rcpt-table th{font-size:.72rem;color:var(--muted);font-weight:600;text-align:left;padding:2px 6px}
+.rcpt-table td.rf{font-family:var(--font-mono);font-size:.74rem;color:var(--ink-2);white-space:nowrap}
+td.rcell{text-align:center;padding:5px 8px;border-radius:7px;background:var(--ok-soft);color:var(--ok);font-family:var(--font-mono);font-size:.74rem;border:1px solid color-mix(in srgb,var(--ok) 30%, var(--line))}
+.rcpt-note{font-size:.78rem;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.rcpt-note b{color:var(--warn)}
+.rcpt-note .ok{color:var(--ok)}
+
+/* comparison */
+.cmp{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.cmp h2{font-size:.98rem;margin:0}
+table.rule{width:100%;border-collapse:collapse;font-size:.78rem}
+table.rule th{background:var(--sunk);font-size:.7rem;padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-weight:600}
+table.rule td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+table.rule tr:last-child td{border-bottom:none}
+footer{border-top:1px solid var(--line);padding-top:12px;font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="head">
+    <div class="eyebrow"><span>图译工坊 · 模拟 v4</span><span class="sep">/</span><span>多对多工作台整链重整</span><span class="sep">/</span><span>清单×网格</span><span class="sep">/</span><span>非产品截图 · 演示件</span></div>
+    <h1>批量工作台重整后：4 稿 × 3 语言 · 一张表 · 一条队列跑到聚合回执</h1>
+    <p class="sub">本模拟演示重整后形态（骨架＝清单×网格）：素材＝扫格 ｜ 检测＝全稿扇出 ｜ 校对＝逐稿对账 ｜ 交付＝显式队列（含稿 3 失败 → <b>从第 3 稿续跑</b>，已完成稿不重跑）→ 聚合回执。全程可点，约 15 秒跑完。</p>
+    <div class="scen">
+      <span class="tag">场景：4 稿 · 3 语言 · 共用一表译文表_1017.xlsx · 12 格</span>
+      <span class="tag">行业对照：Redokun 清单台 / IDML 按语言批量回收 / HandBrake 队列语义</span>
+      <span class="tag">方案：执行方案_20261017_多对多工作台整链重整…（同目录）</span>
+    </div>
+  </header>
+
+  <div class="sim">
+    <div class="sim-top">
+      <div>
+        <div class="h1-sim">批量工作台</div>
+        <div class="ident">4 稿 × 3 语言 · 12 格　｜　01_首页 · 02_详情页 · 03_活动页 · 04_弹窗　｜　表：译文表_1017.xlsx（136 单元）</div>
+      </div>
+      <div class="glob">
+        <span class="g-item">已扫 <b id="st-scanned">3/4</b></span>
+        <span class="g-item">检测 <b id="st-detect">0/12</b></span>
+        <span class="g-item">对齐 <b id="st-aligned">0/4</b></span>
+        <span class="g-item">完成 <b id="st-done">0/12</b></span>
+      </div>
+    </div>
+
+    <div class="rail" id="rail">
+      <div class="rstep" id="rs-1"><span class="rn">①</span>准备素材<span class="rs" id="rs1-s">3/4 已扫</span></div>
+      <div class="rstep" id="rs-2"><span class="rn">②</span>智能检测<span class="rs" id="rs2-s">待开始</span></div>
+      <div class="rstep" id="rs-3"><span class="rn">③</span>设计稿校对<span class="rs" id="rs3-s">待开始</span></div>
+      <div class="rstep" id="rs-4"><span class="rn">④</span>生成交付<span class="rs" id="rs4-s">未解锁</span></div>
+    </div>
+
+    <!-- ================= STEP 1 ================= -->
+    <div class="card2" id="step1">
+      <div class="c-head">
+        <h2>① 准备素材 —— 稿清单 × 覆盖率矩阵（骨架）</h2>
+        <span class="fixline">重整点：变-1 镜像 hack 退役 · 网格为唯一真相 · 变-8 录入入口</span>
+      </div>
+      <p class="desc">稿清单与网格同一真相：扫描队列逐稿跑，矩阵 12 格直接回填预检覆盖率。低于 95% 的格直接标出、点击看明细（放行口在执行前，见 ④）。</p>
+      <div class="flist" id="filelist">
+        <div class="frow" id="frow-f1"><span class="fname">01_首页.psd</span><span class="fsize">234 MB</span><span class="fstat s-ok" id="fstat-f1">已扫描</span></div>
+        <div class="frow" id="frow-f2"><span class="fname">02_详情页.psd</span><span class="fsize">188 MB</span><span class="fstat s-ok" id="fstat-f2">已扫描</span></div>
+        <div class="frow" id="frow-f3"><span class="fname">03_活动页.psd</span><span class="fsize">121 MB</span><span class="fstat s-ok" id="fstat-f3">已扫描</span></div>
+        <div class="frow" id="frow-f4"><span class="fname">04_弹窗.psd</span><span class="fsize">96 MB</span><span class="fstat s-wait" id="fstat-f4">待扫描</span></div>
+      </div>
+      <div class="rowbtns">
+        <button class="primary" id="scan-btn">一键扫描队列（1 稿待扫）</button>
+        <button id="paste-btn">粘贴多行路径加入…</button>
+      </div>
+      <div class="mwrap">
+        <table class="mx" id="mx">
+          <thead><tr><th></th><th>日语</th><th>韩语</th><th>泰语</th></tr></thead>
+          <tbody>
+            <tr><td class="mxfile">01_首页</td>
+              <td class="cell ok" id="cell-f1-ja" data-f="f1" data-l="ja">100%</td>
+              <td class="cell ok" id="cell-f1-ko" data-f="f1" data-l="ko">100%</td>
+              <td class="cell ok" id="cell-f1-th" data-f="f1" data-l="th">100%</td></tr>
+            <tr><td class="mxfile">02_详情页</td>
+              <td class="cell ok" id="cell-f2-ja" data-f="f2" data-l="ja">100%</td>
+              <td class="cell warn" id="cell-f2-ko" data-f="f2" data-l="ko">92.5%</td>
+              <td class="cell ok" id="cell-f2-th" data-f="f2" data-l="th">100%</td></tr>
+            <tr><td class="mxfile">03_活动页</td>
+              <td class="cell ok" id="cell-f3-ja" data-f="f3" data-l="ja">100%</td>
+              <td class="cell ok" id="cell-f3-ko" data-f="f3" data-l="ko">100%</td>
+              <td class="cell ok" id="cell-f3-th" data-f="f3" data-l="th">100%</td></tr>
+            <tr><td class="mxfile">04_弹窗</td>
+              <td class="cell none" id="cell-f4-ja" data-f="f4" data-l="ja">未扫描</td>
+              <td class="cell none" id="cell-f4-ko" data-f="f4" data-l="ko">未扫描</td>
+              <td class="cell none" id="cell-f4-th" data-f="f4" data-l="th">未扫描</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="cov-detail">点击任意格查看命中明细（预检粗估，执行口径以引擎匹配为准）</div>
+      <div class="legend"><span>■ 绿 ≥95%</span><span>■ 黄 &lt;95%（点击看未匹配条目）</span><span>■ 灰 未扫描</span><span>阈值：95%</span></div>
+      <div class="rowbtns">
+        <button id="to-step2" disabled>进入智能检测 →</button>
+        <span class="hint">（扫描完成后解锁）</span>
+      </div>
+    </div>
+
+    <!-- ================= STEP 2 ================= -->
+    <div class="card2" id="step2">
+      <div class="c-head">
+        <h2>② 智能检测 —— 全稿扇出（4 稿 × 3 语言）</h2>
+        <span class="fixline">重整点：变-2 检测名不符实 → 全稿扇出 · 结果回填网格</span>
+      </div>
+      <p class="desc">一次点击＝对每一稿分别开 AI 审查批（复用既有逐稿接口），结果汇总回网格；<b>需确认</b>项可点开处理（保 WF-003 可见性）。</p>
+      <div class="rowbtns">
+        <button class="primary" id="detect-btn" disabled>开始检测全部（4 稿 × 3 语言）</button>
+        <span class="hint" id="detect-hint">（扫描完成后解锁）</span>
+      </div>
+      <div class="dgrid" id="detect-grid">
+        <div class="drow"><span class="dname">01_首页.psd</span>
+          <span class="dchip" id="dchip-f1-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f1-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f1-th" data-s="wait">泰 待检</span></div>
+        <div class="drow"><span class="dname">02_详情页.psd</span>
+          <span class="dchip" id="dchip-f2-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f2-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f2-th" data-s="wait">泰 待检</span></div>
+        <div class="drow"><span class="dname">03_活动页.psd</span>
+          <span class="dchip" id="dchip-f3-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f3-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f3-th" data-s="wait">泰 待检</span></div>
+        <div class="drow"><span class="dname">04_弹窗.psd</span>
+          <span class="dchip" id="dchip-f4-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f4-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f4-th" data-s="wait">泰 待检</span></div>
+      </div>
+      <div class="dconfirm" id="dconfirm" style="display:none">
+        <span>02_详情页 × 韩语：<b>1 项需确认</b> —— 术语「无忧退货」与术语表不一致（金色 vs 蓝色）</span>
+        <button class="small primary" id="confirm-f2-ko">按术语表修正并重审</button>
+      </div>
+      <div class="rowbtns">
+        <button id="to-step3" disabled>进入设计稿校对 →</button>
+        <span class="hint">（检测全部处理完成后解锁）</span>
+      </div>
+    </div>
+
+    <!-- ================= STEP 3 ================= -->
+    <div class="card2" id="step3">
+      <div class="c-head">
+        <h2>③ 设计稿校对 —— 逐稿对账清单（开跑前全部对齐）</h2>
+        <span class="fixline">重整点：变-3 校对不可前置 → 逐稿对账前置 · 全部对齐才开交付</span>
+      </div>
+      <p class="desc">WF-001 口径在批量下恢复：每稿一行对账结论；阻塞项当场处理（忽略未命中行 / 确认排除图层），全部对齐才解锁交付。</p>
+      <div class="rlist" id="review-list">
+        <div class="rvrow" id="revrow-f1" data-s="ok">
+          <div class="rvmain"><span class="rvname">01_首页.psd</span><span class="rvstat">已对齐 ✓（40/40 单元）</span></div>
+        </div>
+        <div class="rvrow" id="revrow-f2" data-s="todo">
+          <div class="rvmain"><span class="rvname">02_详情页.psd</span><span class="rvstat" id="revstat-f2">待处理 3 项</span></div>
+          <div class="rvwhy">3 条表行未在稿中命中：서울 지점 · 특별 할인 · 무료 배송</div>
+          <div class="rvfix"><button class="small" id="fix-f2">全部忽略（3 条，不入替换）</button><span class="hint">或回稿补层后重扫</span></div>
+        </div>
+        <div class="rvrow" id="revrow-f3" data-s="ok">
+          <div class="rvmain"><span class="rvname">03_活动页.psd</span><span class="rvstat">已对齐 ✓（31/31 单元）</span></div>
+        </div>
+        <div class="rvrow" id="revrow-f4" data-s="todo">
+          <div class="rvmain"><span class="rvname">04_弹窗.psd</span><span class="rvstat" id="revstat-f4">待处理 1 项</span></div>
+          <div class="rvwhy">1 个排除图层待确认：_系统_水印（扫描建议排除）</div>
+          <div class="rvfix"><button class="small" id="fix-f4">确认排除（1 个）</button></div>
+        </div>
+      </div>
+      <div class="engine">引擎就绪：PhotoCraft 0.7.0（dev build）✓ 免 PS ｜ 或 Photoshop 2024 ✓ ｜ 双通道任选 · 扫描来源＝执行来源（绑定）</div>
+      <div class="rowbtns">
+        <button id="to-step4" disabled>进入生成交付 →</button>
+        <span class="hint" id="step3-hint">（全部稿对齐后解锁）</span>
+        <span class="done-chip" id="step3-done" style="display:none">全部稿已对齐 ✓</span>
+      </div>
+    </div>
+
+    <!-- ================= STEP 4 ================= -->
+    <div class="card2" id="step4">
+      <div class="c-head">
+        <h2>④ 生成交付 —— 显式队列（失败从第 k 稿续跑）</h2>
+        <span class="fixline">重整点：变-4 队列实体＋续跑守卫 · 变-5 聚合回执 · 变-7 覆盖率闸前移可见</span>
+      </div>
+      <div class="gatebar" id="gatebar">
+        <span><b>覆盖率闸：2 格低于 95%</b>（02_详情页×韩语 92.5% · 04_弹窗×泰语 88%）—— 低于阈值的格建议先回稿补全；继续执行需显式放行。</span>
+      </div>
+      <label class="ack"><input type="checkbox" id="ack-check"><span>我已了解：2 格低于阈值仍要继续执行（未命中单元不入替换，记录在回执）。</span></label>
+      <div class="qlist" id="queue">
+        <div class="qrow" id="qrow-f1" data-s="idle"><span class="qname">01_首页.psd</span><span class="qchips" id="qchips-f1"></span><span class="qstat" id="qstat-f1">待执行</span></div>
+        <div class="qrow" id="qrow-f2" data-s="idle"><span class="qname">02_详情页.psd</span><span class="qchips" id="qchips-f2"></span><span class="qstat" id="qstat-f2">待执行</span></div>
+        <div class="qrow" id="qrow-f3" data-s="idle"><span class="qname">03_活动页.psd</span><span class="qchips" id="qchips-f3"></span><span class="qstat" id="qstat-f3">待执行</span></div>
+        <div class="qrow" id="qrow-f4" data-s="idle"><span class="qname">04_弹窗.psd</span><span class="qchips" id="qchips-f4"></span><span class="qstat" id="qstat-f4">待执行</span></div>
+      </div>
+      <div id="resume-panel">
+        <span><b>第 3/4 稿失败，队列已停止</b> —— 03_活动页.psd：读回不一致（1 层文本与预期不符）；该批次积分<b>已退回</b>。已完成稿不会重跑。</span>
+        <div class="rowbtns">
+          <button class="primary small" id="resume-btn">从第 3 稿续跑（已完成稿跳过）</button>
+          <button class="small" id="stop-btn">停止队列（已完成稿保留）</button>
+        </div>
+      </div>
+      <div class="rowbtns">
+        <button class="primary" id="exec-btn" disabled>开始执行（逐稿队列 · 1 稿 × 3 语言 = 1 批次）</button>
+        <span class="hint" id="exec-hint">（需全部对齐 ＋ 勾选放行）</span>
+      </div>
+
+      <div id="receipt">
+        <h2 style="font-size:.95rem;margin:4px 0 0">聚合回执 —— 4 稿 × 3 语言 · 12 格终态</h2>
+        <div class="mwrap">
+          <table class="rcpt-table" id="rcpt-table">
+            <thead><tr><th></th><th>日语</th><th>韩语</th><th>泰语</th><th>批次</th></tr></thead>
+            <tbody id="rcpt-body"></tbody>
+          </table>
+        </div>
+        <div class="rcpt-note">
+          <span>合计：<b class="mono">408</b> 标准单位（136 单元 × 3 语言；口径同单文件台：1 稿 × N 语言 = 1 批次）。</span>
+          <span>失败退回明细：03_活动页 首次尝试失败（读回不一致）—— 积分已退回；续跑批次（03_活动页×3 语言）单独结算。</span>
+          <span class="ok">引擎身份：PhotoCraft 0.7.0（dev build）· 未使用 Photoshop · 来源绑定校验 ✓ · 逐语言读回校验 ✓</span>
+        </div>
+        <div class="rowbtns">
+          <button class="teal" id="export-btn">导出执行报告（CSV）</button>
+          <button id="reset-btn">重放演示</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- comparison -->
+  <section class="cmp">
+    <h2>变形点 → 重整后（本模拟体现的部分）</h2>
+    <table class="rule">
+      <thead><tr><th>#</th><th>变形现状（develop）</th><th>重整后（本模拟）</th></tr></thead>
+      <tbody>
+        <tr><td>变-1</td><td>单文件态作全链真相源，镜像首个已扫稿续命（workbench-view.tsx:2155-2177）</td><td>清单×网格为唯一真相；顶带显示「4 稿 × 3 语言 · 12 格」全局态</td></tr>
+        <tr><td>变-2</td><td>「检测全部」只对镜像稿开批（:843）</td><td>全稿扇出：4 行逐稿检测、结果回填网格、需确认可点开处理</td></tr>
+        <tr><td>变-3</td><td>第 2..N 稿对账压进执行编排，阻塞时前稿已计费（:1366-1450）</td><td>逐稿对账清单前置：全部对齐才解锁交付</td></tr>
+        <tr><td>变-4</td><td>失败即停＋「重新开始」从第 1 稿重跑（:1401-1413）</td><td>队列暂停＋「从第 3 稿续跑」＋已完成稿守卫（标注不重跑）</td></tr>
+        <tr><td>变-5</td><td>回执只显示最后一稿（execute-step.tsx:2706）</td><td>聚合回执：12 格终态＋退回明细＋导出</td></tr>
+        <tr><td>变-6</td><td>h1 都叫「工作台」（:1941-1953）</td><td>「批量工作台」＋ M 稿 × N 语言身份常显</td></tr>
+        <tr><td>变-7</td><td>覆盖率口径断裂，闸在执行前一刻才亮（coverage.ts:3-7 vs match.ts:41）</td><td>矩阵格直接标低于阈值＋交付页显式放行并写明未命中不入替换</td></tr>
+        <tr><td>变-8</td><td>录入只剩粘贴（design-file-card.tsx:779-795）</td><td>粘贴入口保留；文件夹导入按 v1–v3 方案 P3 接入（本模拟未展开）</td></tr>
+        <tr><td>变-9</td><td>扫描门/覆盖率门/对账门都在起跑前才亮</td><td>门随网格实时亮：哪稿会卡、卡在哪格，全程可见</td></tr>
+        <tr><td>变-10</td><td>状态/文案补丁丛（:1409-1444）</td><td>单一网格状态源驱动四步与回执</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <p>模拟 v4 · 图译工坊 · 2026-10-17 · 演示件（非产品截图、未动业务代码）· 配套执行方案：执行方案_20261017_多对多工作台整链重整_业界对照与执行_对抗式审查（md/HTML，同目录）。</p>
+    <p>断言关键点（tabbit 实测）：扫描后 f4 泰语格=88% ｜ 检测 12 格 11 过 1 需确认 → 确认后全过 ｜ 稿 3 失败后出现续跑按钮且稿 1/2 标「不重跑」｜ 续跑后回执 12 格全完成。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var LANGS=[['ja','日'],['ko','韩'],['th','泰']];
+  var FILES=[
+    {id:'f1',name:'01_首页.psd',units:40},
+    {id:'f2',name:'02_详情页.psd',units:40},
+    {id:'f3',name:'03_活动页.psd',units:31},
+    {id:'f4',name:'04_弹窗.psd',units:25}
+  ];
+  var COV={f1:{ja:100,ko:100,th:100},f2:{ja:100,ko:92.5,th:100},f3:{ja:100,ko:100,th:100},f4:{ja:100,ko:100,th:88}};
+  var COV_DETAIL={
+    'f2-ko':'02_详情页 × 韩语：37/40 命中（92.5%）。未匹配 3 条：서울 지점 · 특별 할인 · 무료 배송',
+    'f4-th':'04_弹窗 × 泰语：22/25 命中（88%）。未匹配 3 条：ยืนยันคำสั่งซื้อ · ที่อยู่จัดส่ง · หมายเลขโทรศัพท์'
+  };
+  var DET_RESULT={f1:{ja:'ok',ko:'ok',th:'ok'},f2:{ja:'ok',ko:'warn',th:'ok'},f3:{ja:'ok',ko:'ok',th:'ok'},f4:{ja:'ok',ko:'ok',th:'ok'}};
+
+  var state={
+    scanned:{f1:true,f2:true,f3:true,f4:false},
+    det:{},
+    rev:{f1:'ok',f2:'todo',f3:'ok',f4:'todo'},
+    qcells:{f1:0,f2:0,f3:0,f4:0},
+    qrow:{f1:'idle',f2:'idle',f3:'idle',f4:'idle'},
+    ack:false, resumed:false, running:false, receipt:false, queueStarted:false
+  };
+
+  function setText(id,t){var el=document.getElementById(id); if(el) el.textContent=t;}
+  function setAttr(id,k,v){var el=document.getElementById(id); if(el) el.setAttribute(k,v);}
+
+  function scannedCount(){return FILES.filter(function(f){return state.scanned[f.id]}).length}
+  function detProcessed(){return Object.keys(state.det).length}
+  function alignedCount(){return FILES.filter(function(f){return state.rev[f.id]==='ok'}).length}
+  function doneCells(){return FILES.reduce(function(a,f){return a+state.qcells[f.id]},0)}
+
+  function renderTop(){
+    setText('st-scanned',scannedCount()+'/4');
+    setText('st-detect',detProcessed()+'/12');
+    setText('st-aligned',alignedCount()+'/4');
+    setText('st-done',doneCells()+'/12');
+    setText('rs1-s',scannedCount()+'/4 已扫');
+    // rail 2
+    var rs2=$('#rs-2'); rs2.classList.remove('active','done');
+    if(detProcessed()<12){ setText('rs2-s', detProcessed()===0?'待开始':(detProcessed()+'/12 检测中')) }
+    else {
+      var warns=Object.keys(state.det).filter(function(k){return state.det[k]==='warn'}).length;
+      if(warns>0){ setText('rs2-s','需确认 '+warns); rs2.classList.add('active') }
+      else { setText('rs2-s','已通过 12/12'); rs2.classList.add('done') }
+    }
+    // rail 3
+    var rs3=$('#rs-3'); rs3.classList.remove('active','done');
+    setText('rs3-s', alignedCount()===4 ? '已对齐 4/4' : alignedCount()+'/4 已对齐');
+    if(alignedCount()===4) rs3.classList.add('done'); else if(detProcessed()===12) rs3.classList.add('active');
+    // rail 4
+    var rs4=$('#rs-4');
+    if(state.receipt){ rs4.classList.add('done'); rs4.classList.remove('active'); setText('rs4-s','已完成 12/12') }
+    else if(state.running){ rs4.classList.add('active'); setText('rs4-s','执行中 '+doneCells()+'/12') }
+    else if(alignedCount()===4){ rs4.classList.add('active'); setText('rs4-s','待执行') }
+    else { rs4.classList.remove('active','done'); setText('rs4-s','未解锁') }
+    if(scannedCount()===4 && detProcessed()<12){ $('#rs-2').classList.add('active') }
+    if(scannedCount()===4){ $('#rs-1').classList.add('done'); setText('rs1-s','4/4 已扫') }
+  }
+
+  function renderMatrix(){
+    FILES.forEach(function(f){
+      LANGS.forEach(function(L){
+        var el=document.getElementById('cell-'+f.id+'-'+L[0]);
+        if(!el) return;
+        if(!state.scanned[f.id]){ el.className='cell none'; el.textContent='未扫描'; return }
+        var v=COV[f.id][L[0]];
+        el.className='cell '+(v>=95?'ok':'warn');
+        el.textContent=v+'%';
+      });
+    });
+  }
+
+  function renderDetect(){
+    FILES.forEach(function(f){
+      LANGS.forEach(function(L){
+        var el=document.getElementById('dchip-'+f.id+'-'+L[0]);
+        if(!el) return;
+        var k=f.id+'-'+L[0];
+        var s=state.det[k];
+        if(!s){ el.setAttribute('data-s','wait'); el.textContent=L[1]+' 待检' }
+        else if(s==='ok'){ el.setAttribute('data-s','ok'); el.textContent=L[1]+' 通过' }
+        else { el.setAttribute('data-s','warn'); el.textContent=L[1]+' 需确认' }
+      });
+    });
+  }
+
+  function updateGates(){
+    var scanDone=scannedCount()===4;
+    var dbtn=$('#detect-btn'); dbtn.disabled=!scanDone || detProcessed()===12 || state.detRunning===true;
+    $('#to-step2').disabled=!scanDone;
+    var warnCount=Object.keys(state.det).filter(function(k){return state.det[k]==='warn'}).length;
+    var detAll=(detProcessed()===12 && warnCount===0);
+    $('#to-step3').disabled=!detAll;
+    $('#to-step4').disabled=alignedCount()!==4;
+    var execOK=(alignedCount()===4) && state.ack && !state.running && !state.receipt && !state.queueStarted;
+    $('#exec-btn').disabled=!execOK;
+  }
+
+  // ---------- step 1: scan queue ----------
+  $('#scan-btn').addEventListener('click',function(){
+    var btn=this; btn.disabled=true; btn.textContent='扫描队列运行中…';
+    var fstat=document.getElementById('fstat-f4');
+    fstat.className='fstat s-scan'; fstat.textContent='排队中…';
+    setTimeout(function(){ fstat.textContent='扫描中… 42%' },350);
+    setTimeout(function(){ fstat.textContent='扫描中… 86%' },800);
+    setTimeout(function(){
+      state.scanned.f4=true;
+      fstat.className='fstat s-ok'; fstat.textContent='已扫描 ✓';
+      renderMatrix(); renderTop(); updateGates();
+      btn.textContent='已全部扫描 ✓';
+      $('#to-step2').classList.add('primary');
+      $('#cov-detail').textContent='04_弹窗 × 泰语：22/25 命中（88%）—— 低于阈值 95%，点击格可查看未匹配条目。';
+    },1300);
+  });
+
+  $('#paste-btn').addEventListener('click',function(){
+    this.textContent='粘贴框已就绪（模拟件不展开）';
+  });
+
+  // matrix cell click
+  $$('#mx td.cell').forEach(function(td){
+    td.addEventListener('click',function(){
+      if(td.classList.contains('none')){ $('#cov-detail').textContent='04_弹窗：尚未扫描 —— 先跑扫描队列再看覆盖率。'; return }
+      $$('#mx td.cell').forEach(function(x){x.classList.remove('sel')});
+      td.classList.add('sel');
+      var f=td.getAttribute('data-f'), l=td.getAttribute('data-l');
+      var v=COV[f][l];
+      var d=COV_DETAIL[f+'-'+l];
+      $('#cov-detail').textContent=d? d : (f.toUpperCase()+' × '+l+'：'+v+'% 命中（预检粗估；执行口径以引擎匹配为准）。');
+    });
+  });
+
+  $('#to-step2').addEventListener('click',function(){ $('#step2').scrollIntoView({behavior:'smooth',block:'start'}) });
+  $('#to-step3').addEventListener('click',function(){ $('#step3').scrollIntoView({behavior:'smooth',block:'start'}) });
+  $('#to-step4').addEventListener('click',function(){ $('#step4').scrollIntoView({behavior:'smooth',block:'start'}) });
+
+  // ---------- step 2: detection fan-out ----------
+  $('#detect-btn').addEventListener('click',function(){
+    state.detRunning=true; updateGates();
+    var btn=this; btn.textContent='检测中…（逐稿扇出）';
+    FILES.forEach(function(f,i){
+      LANGS.forEach(function(L,j){ var el=document.getElementById('dchip-'+f.id+'-'+L[0]); el.setAttribute('data-s','wait'); el.textContent=L[1]+' 分析中…' });
+      setTimeout(function(){
+        LANGS.forEach(function(L){
+          var k=f.id+'-'+L[0];
+          state.det[k]=DET_RESULT[f.id][L[0]];
+        });
+        renderDetect(); renderTop(); updateGates();
+        setText('detect-hint', detProcessed()===12?'（检测完成：需确认 ' + Object.keys(state.det).filter(function(k){return state.det[k]==='warn'}).length + ' 项）':'检测中… '+detProcessed()+'/12');
+      }, 700*(i+1));
+    });
+    setTimeout(function(){
+      state.detRunning=false;
+      btn.textContent='检测完成 ✓'; btn.disabled=true;
+      var warnCount=Object.keys(state.det).filter(function(k){return state.det[k]==='warn'}).length;
+      $('#detect-hint').textContent = warnCount>0 ? '（检测完成：需确认 '+warnCount+' 项，处理后方可进入校对）' : '（全部通过）';
+      if(warnCount>0){ $('#dconfirm').style.display='flex' }
+      $('#to-step3').disabled = warnCount>0;
+      setAttr('detect-grid','data-done','1');
+      renderTop(); updateGates();
+    }, 700*4+250);
+  });
+
+  $('#confirm-f2-ko').addEventListener('click',function(){
+    state.det['f2-ko']='ok';
+    this.disabled=true; this.textContent='已修正 ✓';
+    this.parentNode.querySelector('span').innerHTML='02_详情页 × 韩语：已按术语表修正并重审 —— <b>通过 ✓</b>（记录在回执）';
+    renderDetect(); renderTop(); updateGates();
+    $('#to-step3').classList.add('primary');
+    $('#detect-hint').textContent='（检测完成：12/12 通过）';
+  });
+
+  // ---------- step 3: review ----------
+  function renderReview(){
+    $('#revrow-f2').setAttribute('data-s',state.rev.f2);
+    $('#revrow-f4').setAttribute('data-s',state.rev.f4);
+    setText('revstat-f2', state.rev.f2==='ok' ? '已对齐 ✓（40/40 单元）' : '待处理 3 项');
+    setText('revstat-f4', state.rev.f4==='ok' ? '已对齐 ✓（25/25 单元）' : '待处理 1 项');
+    if(state.rev.f2==='ok'){ $('#fix-f2').disabled=true; $('#fix-f2').textContent='已忽略 ✓'; }
+    if(state.rev.f4==='ok'){ $('#fix-f4').disabled=true; $('#fix-f4').textContent='已排除 ✓'; }
+    if(alignedCount()===4){
+      $('#step3-done').style.display='inline-block';
+      $('#step3-hint').textContent='（交付已解锁）';
+      $('#to-step4').classList.add('primary');
+    }
+    renderTop(); updateGates();
+  }
+  $('#fix-f2').addEventListener('click',function(){
+    state.rev.f2='ok';
+    var why=$('#revrow-f2 .rvwhy'); if(why) why.textContent='已忽略 3 条未命中表行（不入替换；记录在回执行明细）。';
+    renderReview();
+  });
+  $('#fix-f4').addEventListener('click',function(){
+    state.rev.f4='ok';
+    var why=$('#revrow-f4 .rvwhy'); if(why) why.textContent='已确认排除 _系统_水印（扫描建议排除）。';
+    renderReview();
+  });
+
+  // ---------- step 4: queue ----------
+  function renderQueue(){
+    FILES.forEach(function(f){
+      var row=$('#qrow-'+f.id); row.setAttribute('data-s',state.qrow[f.id]);
+      var stat=$('#qstat-'+f.id);
+      var txt={idle:'待执行',running:'执行中…',done:'已完成 ✓',fail:'失败 · 已退回'}[state.qrow[f.id]];
+      stat.textContent=txt;
+      var chipsEl=$('#qchips-'+f.id);
+      chipsEl.textContent='';
+      LANGS.forEach(function(L,j){
+        var c=document.createElement('span'); c.className='qchip';
+        if(state.qrow[f.id]==='fail'){ c.setAttribute('data-s','bad'); c.textContent=L[1]+' 未完成' }
+        else if(state.qcells[f.id]>j){ c.setAttribute('data-s','ok'); c.textContent=L[1]+' ✓' }
+        else if(state.qrow[f.id]==='running'){ c.setAttribute('data-s','run'); c.textContent=L[1]+' …' }
+        else { c.textContent=L[1] }
+        chipsEl.appendChild(c);
+      });
+    });
+    renderTop();
+  }
+
+  function runFile(f,fileDone){
+    state.qrow[f.id]='running'; renderQueue();
+    LANGS.forEach(function(L,j){
+      setTimeout(function(){
+        state.qcells[f.id]=j+1; renderQueue();
+        if(j===2){
+          setTimeout(function(){ fileDone() }, 420);
+        }
+      }, 420*(j+1));
+    });
+  }
+
+  function finishReceipt(){
+    state.receipt=true;
+    var body=$('#rcpt-body'); body.textContent='';
+    FILES.forEach(function(f){
+      var tr=document.createElement('tr');
+      var td0=document.createElement('td'); td0.className='rf'; td0.textContent=f.name; tr.appendChild(td0);
+      LANGS.forEach(function(L){
+        var td=document.createElement('td'); td.className='rcell'; td.setAttribute('data-s','ok'); td.textContent='已完成 ✓'; tr.appendChild(td);
+      });
+      var tdb=document.createElement('td'); tdb.className='rf';
+      tdb.textContent = f.id==='f3' ? '首次失败 → 续跑成功' : '正常';
+      tr.appendChild(tdb);
+      body.appendChild(tr);
+    });
+    $('#receipt').classList.add('show');
+    setAttr('receipt','data-done','1');
+    setAttr('queue','data-done','1');
+    renderTop();
+  }
+
+  function runQueue(){
+    state.running=true; updateGates();
+    $('#exec-btn').textContent='队列运行中…';
+    var order=FILES.filter(function(f){ return state.qrow[f.id]!=='done' });
+    var idx=0;
+    function next(){
+      if(idx>=order.length){ state.running=false; finishReceipt(); return }
+      var f=order[idx]; idx++;
+      runFile(f,function(){
+        if(f.id==='f3' && !state.resumed){
+          state.qrow.f3='fail'; state.qcells.f3=0; renderQueue();
+          var g=document.createElement('span'); g.className='guard'; g.textContent='已完成 · 不重跑（续跑守卫）';
+          var r1=$('#qrow-f1'); if(r1 && !r1.querySelector('.guard')) r1.appendChild(g);
+          var g2=document.createElement('span'); g2.className='guard'; g2.textContent='已完成 · 不重跑（续跑守卫）';
+          var r2=$('#qrow-f2'); if(r2 && !r2.querySelector('.guard')) r2.appendChild(g2);
+          $('#resume-panel').classList.add('show');
+          setTimeout(function(){ $('#resume-panel').scrollIntoView({behavior:'smooth',block:'nearest'}) },60);
+          state.running=false; updateGates();
+          return;
+        }
+        state.qrow[f.id]='done'; renderQueue();
+        setTimeout(next, 240);
+      });
+    }
+    next();
+  }
+
+  $('#exec-btn').addEventListener('click',function(){
+    state.queueStarted=true; this.disabled=true; runQueue();
+  });
+
+  $('#resume-btn').addEventListener('click',function(){
+    state.resumed=true;
+    this.disabled=true; this.textContent='续跑中…';
+    $('#resume-panel').classList.remove('show');
+    $('#exec-btn').textContent='续跑批次运行中…';
+    var f3=FILES[2], f4=FILES[3];
+    runFile(f3,function(){
+      state.qrow.f3='done'; renderQueue();
+      runFile(f4,function(){
+        state.qrow.f4='done'; renderQueue();
+        finishReceipt();
+      });
+    });
+    // 稿 4 排在稿 3 之后：f4 需要在 f3 完成后才开始——上面嵌套已保证
+  });
+
+  $('#stop-btn').addEventListener('click',function(){
+    this.disabled=true; this.textContent='已停止（已完成稿保留）';
+  });
+
+  $('#ack-check').addEventListener('change',function(){
+    state.ack=this.checked; updateGates();
+    if(this.checked) $('#exec-hint').textContent='（已放行 · 未命中单元不入替换）';
+  });
+
+  $('#export-btn').addEventListener('click',function(){
+    this.textContent='已导出（模拟）'; this.disabled=true;
+  });
+  $('#reset-btn').addEventListener('click',function(){ location.reload() });
+
+  // init
+  renderMatrix(); renderDetect(); renderQueue(); renderReview();
+  updateGates();
+  setAttr('sim','data-ready','1');
+})();
+</script>
+</body>
+</html>

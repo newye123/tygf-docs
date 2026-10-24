@@ -1,0 +1,458 @@
+<title>GEO 续做：机读事实面与下一步</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>GEO 续做</span><span class="sep">/</span>
+    <span>机读事实面已补 · 下一步待拍</span><span class="sep">/</span>
+    <span>2026-10-21</span>
+  </p>
+  <h1>继续做 SEO/GEO：先把"已做到但没说"的补进机器读的面</h1>
+  <p class="standfirst">结构体检已到顶（两天 87.4、不合格项一模一样），继续磨页面不改变 GEO 结果——今早实测豆包引用了 17 个来源域，一个都不是我们。还有杠杆的只剩两类动作：补机读事实面（今天做了）、做出可能被引用的页面（等你点头）。</p>
+  <div class="meta">
+    <span>基线两日同分 · 达标</span>
+    <span>两个假信号已修</span>
+    <span>llms 补多稿能力</span>
+    <span>sameAs 已入库（未部署）</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>先说方向，再说做了什么</h2>
+  <p>我看了一圈你这两天更新的内容（批量台 v12、教程页、单稿/多稿两档），结论是一句话：<strong>继续打磨页面已经不会改变 GEO 结果了</strong>。理由是今早实测的数：豆包回答「PS 批量改语言用什么工具」时引了 17 个来源网站，<strong>其中一个都不是我们</strong>；而官网结构体检连续两天 87.4 分、不合格项一模一样——能改的分已经改完了。</p><p>真正还有杠杆的只有两类：一是把<strong>产品真做到了、但对外从来没说过</strong>的能力补进机器读的那几份文件；二是做出<strong>可能被引用</strong>的页面。今天做了第一类，第二类要你点头。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>今天做完的四件</h2>
+  <p><strong>第一件，昨天的每日体检基线达标了。</strong> 10 月 20 日和 21 日两天都是 83/95、归一 87.4，七条不合格项一字不差。这不只是"分数没跌"，更是证明这把尺子稳得住，以后能拿它判断改动有没有生效。</p><p><strong>第二件，顺手抓出两个会把我们带偏的假信号，都修了。</strong></p><p>一个是：体检每天给抓下来的页面文件算指纹，今早发现首页和英文页的指纹跟昨天不同，看着像"线上天天在变"。逐字符查下去，差别只在 Cloudflare 每次响应都会改写的那段邮箱混淆串——长度一样、字节不同。把那两处归一化后再比，<strong>两天完全相等</strong>，也就是线上内容一个字没变。工具现在同时记"原始指纹"和"归一指纹"，并且每天多输出一行「内容轴」，明确告诉你今天是站点真改了，还是只是网络在抖。</p><p>另一个更值得说：体检里分值最重的两条红（缺文章类型标记、内容没有日期）其实是<strong>尺子只盯着首页</strong>造成的。你的教程页本来就有文章标记和发布日期，只是首页按规矩不该有这些。我没有偷偷改算法——那会把刚立住的两天趋势线弄断——只登记了这件事，等要用的时候再单独说明改法。</p><p><strong>第三件，把"已做到但没说"的能力补进机器读的文件。</strong></p><p><code>llms.txt</code> 和 <code>llms-full.txt</code> 是给 AI 引擎优先读的那两份说明。此前它们既没列已经上线的教程页，也<strong>完全没提"多个设计稿"这个档位</strong>——而这个功能从 10 月 18 日起就在线上了（我用 git 判断那次提交确实在生产分支里，线上运行版本也是当前这个）。现在两份都补上了真实边界：工作台分单个设计稿和多个设计稿两档，多稿档每批最多 12 个设计稿，读不到的、超上限的、译文表配不上的都会逐条点名，不静默跳过，每个稿各自对账各自生成。措辞刻意避开了我们自己定的禁写串，用线上原词。发布前机扫：两份都可疑行为零。</p><p>另外在开发分支把<strong>主体同一性</strong>补上了：结构化数据里的机构节点加了指向我们公开 GitHub 主页的 <code>sameAs</code>（那个页面我用不带登录的方式实测能打开，页内含我们域名四次），并给这道检查门新加了两条断言，防止以后有人把这行删掉。体检里最重的那条 −4 分红，根因就是这个。类型检查和 lint 全过。<strong>这六个文件都没提交、没推送、没部署</strong>。</p><p><strong>第四件，复测工具带着"记忆污染探针"跑了第一次。</strong> 三个样本全部拿到完整答案。结果比昨天更有意思：昨天 5/5 答案开头写着「按你之前关注的…」，今天只有 1/3 这样写，而且那两条没写明历史的样本照样提到我们、照样排进前三。</p><p>这里我要更正自己昨天说的一句话：<strong>那个探针只能抓"明写着历史"的答案</strong>，抓不到没提过去但照样按账号画像作答的情况。所以昨天说的"5/5 被污染"只在昨天那次成立，不能作为定论。结论不变但理由要说清：这台机器已经连着五天问同一个品牌，任何"提到率"都不构成对外证据。以后每次跑我会把"这个账号自测了几天"一起记上，没有这个数就一律标"污染程度未知"。引用池那条今天仍是硬数：17 个域、我方 0。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>需要你拍的三件（按划得来程度排）</h2>
+  <p><strong>一，发版。</strong> 开发分支攒着三件对外才有用的东西：英文首页那个联系邮箱字段（早修好了没发）、今天新加的主体同一性声明（sameAs）、以及两份机器读说明的补充。不发，这些在搜索引擎和 AI 眼里都不存在。这条是红线，我不自己动，等你一句话。</p><p><strong>二，教程页要不要做成一组。</strong> 我建议第二篇写「多个设计稿一起改语言」：目录怎么摆、一张表能不能配多个稿、上限和点名规则。这是唯一能改变"引用池里有没有我们"的动作——AI 要引用的是能被搜到的具体页面，不是我们多问它几次。你说"建"，我就照第一篇的形态做，含守卫；你说"不建"，我就不加范围。</p><p><strong>三，干净测量通道，还是昨天那四选一。</strong> 换一个没问过这个品牌的豆包账号、或者另一台干净浏览器、或者授权我动这台账号的记忆设置、或者换个引擎。不拍的话，10 月 23 日那次复测我只报引用池和位次稳定性，提到率明确标"账号记忆版"。</p><p>另有两件小的可以先放着：RSS 订阅（体检 −1 分）和 ai.txt（−1 分，但它和"llms.txt 到底要不要留"绑在一起，在你定之前我不单方面再加 AI 面文件）。</p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>最后一句提醒</h2>
+  <p>站外那一头还是卡在你侧的登录态：知乎已发的几篇是唯一进场的中文内容面，<strong>CSDN 一篇还没发出去</strong>，而按外部数据那是中文 AI 最大的引用池。这个动作不是我能在本机替你完成的。</p><p>证据与文件都在盘上：测量记录 <code>交付档案/GEO测量/</code>（今日两份数据文件 geo-baseline_20261021_doubao_v3.jsonl、geo-audit-daily.jsonl），台账三条已投影（每日基线已交付、复测等你定、机读事实面待复验），根账新立一案 #210、给 #191 补了更正。</p>
+</section>
+
+<footer>
+  <p>数据与工具：交付档案/GEO测量/（geo-audit-daily.jsonl、geo-baseline_20261021_doubao_v3.jsonl、geo-retest-v3.js、geo-audit-*.mjs）；代码改动六文件在 worktrees/develop，未提交、未推送、未部署。</p>
+  <p>2026-10-21 08:5x · 本地实测；台账已投影 create=1 update=2，两行被对账闸按规矩拦下未强推。</p>
+</footer>
+
+</div>
+</body>
+</html>

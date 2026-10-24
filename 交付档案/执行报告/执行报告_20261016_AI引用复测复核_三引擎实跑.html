@@ -1,0 +1,334 @@
+<title>AI 引用复测复核（三引擎实跑）2026-10-16</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;
+  --ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;
+  --accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;
+  --bad:#ae2318;--bad-soft:#fbeae8;
+  --warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+pre{font-family:var(--font-mono);font-size:.79rem;line-height:1.7;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;margin:0;color:var(--ink-2)}
+blockquote{margin:0;padding:12px 16px;background:var(--sunk);border-left:3px solid var(--line-strong);border-radius:0 var(--radius) var(--radius) 0;font-size:.9rem;color:var(--ink-2);max-width:72ch}
+blockquote p+p{margin-top:8px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.22rem);line-height:1.6;max-width:54ch;font-weight:500;text-wrap:balance}
+.verdict.alert{border-left-color:var(--bad)}
+.verdict.alert .lb{color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:68ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate.first .num{background:var(--bad);color:#fff}
+.gate.first{border-color:var(--bad)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.alert{background:var(--bad-soft);border-color:var(--bad-soft)}
+.callout.alert .lb{color:var(--bad)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>GEO · 引用复测复核</span><span class="sep">/</span>
+    <span>三引擎实跑</span><span class="sep">/</span>
+    <span>2026-10-16</span>
+  </p>
+  <h1>豆包在告诉用户：别去这个站</h1>
+  <p class="standfirst">在 Tabbit 登录会话里对 DeepSeek / 豆包 / Kimi 做全新会话实跑复核。只向 AI 提问，未改动任何站点、未部署、未提交。</p>
+  <div class="meta">
+    <span>3 引擎 × 全新会话</span>
+    <span>1 个主动劝退发现</span>
+    <span>撤回 3 项上一版判断</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>判定</h2>
+  <div class="verdict alert">
+    <span class="lb">本轮最重要的一句</span>
+    <p>豆包明确告诉用户：tuyigf.com 不是正规合规网站，很可能是仿冒钓鱼站，建议走国家反诈中心核验。</p>
+  </div>
+  <p class="lede">这比「搜不到我们」严重一个量级——<strong>它不是沉默，是主动劝退</strong>。而且它发生在字节系（豆包 → 抖音 / 头条搜索生态），正是我们计划投放的主阵地。</p>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先更正我自己的两处错误</h2>
+  <p class="lede">我上一版方案的<strong>第 3 步（AI 引用复测）和第 4 步（爬虫月报）都已经做完了</strong>。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>我以为「待做」</th><th>实际状态</th></tr></thead>
+      <tbody>
+        <tr><td>第 3 步 AI 引用复测（我说「逾期 14 天」）</td><td><span class="tag ok">已完成</span> 2026-10-15 深夜–10-16 08:3x，opencode 执行，记于容器根 <code>AI_MEMORY/TASK_LOG.md:174-182</code></td></tr>
+        <tr><td>第 4 步 爬虫月报（我说「从未对生产跑过」）</td><td><span class="tag ok">已完成</span> 同轮生产日志 14 天全量、47,054 行、993 bot 命中</td></tr>
+        <tr><td>P1-5 <code>llms-full.txt</code>（我列为「待做」）</td><td><span class="tag ok">已创建</span> <code>public/llms-full.txt</code>（中英 + 三问问答 + 名称澄清）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout alert">
+    <span class="lb">原因与自查</span>
+    <p>我读了 ISSUES 与 10-10 方案，但没往下读到 TASK_LOG 的那条 GEO 记录（在 <code>:174</code>，我只读了前 30 行）。这是我这轮<strong>第二个同类错误</strong>——第一轮是没读既有方案，这轮是没读最新执行记录。两次都是「先校验前提」没做够。</p>
+    <p><strong>结论：我上一版方案的 4 步里，2 步已闭环。剩下的才是真问题。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>三引擎实跑（全新会话）</h2>
+
+  <h3>2.1 汇总</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>引擎</th><th>问「图译工坊是什么？」</th><th>问「tuyigf.com 是正规网站吗？」</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Kimi</strong></td><td><span class="tag ok">✅ 完全正确</span></td><td>未测</td></tr>
+        <tr><td><strong>DeepSeek</strong></td><td><span class="tag bad">❌ 零召回</span></td><td><span class="tag warn">⚠️ 通用风险模板</span></td></tr>
+        <tr><td><strong>豆包</strong></td><td><span class="tag bad">❌ 误分类为 ImageTrans</span></td><td><span class="tag bad">🔴 判定为钓鱼站</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">与 10-16 08:3x 那轮的结论一致（Kimi 维持全对／DeepSeek 退步／豆包误分类加剧）——说明这不是偶发，是<strong>稳定态</strong>。</p>
+
+  <h3>2.2 Kimi ✅ 原文（正面基线）</h3>
+  <blockquote>
+    <p>图译工坊（tuyigf.com）是一款面向设计师的工具，专门解决批量把 Photoshop 设计稿（PSD / PSB 文件）中的文字替换成多国语言的问题。</p>
+    <p>…批量处理：单次最多可处理 12 个目标语种…源文件留本机：PSD / PSB 不离开本地…</p>
+    <p>如果你想试用，官网提供微信（tuyigf）和邮箱（tuyi@tuyigf.com）申请真实项目试跑。</p>
+  </blockquote>
+  <p class="lede"><strong>Kimi 用了搜索工具、直接引用官网域名与联系方式。</strong>说明「实搜型」引擎吃官网内容是通的。</p>
+
+  <h3>2.3 DeepSeek ❌ 原文（零召回）</h3>
+  <blockquote>
+    <p><strong>问「图译工坊是什么？」</strong><br>「图译工坊」目前并不是一个广为人知、有明确定义的专有名词。根据现有的公开信息，无法确认它具体指代什么。这可能是一个非常小众的应用、项目、账号名称，或者是你记错了名字。</p>
+    <p><strong>问「tuyigf.com 是正规网站吗？」</strong><br>目前没有关于 tuyigf.com 是否正规的公开信息。这类小众或新域名通常缺乏独立的评测和信誉记录，很难直接判断其安全性。<br>⚠️ 建议：在无法确认其正规性之前，建议不要在网站上进行注册、付款或提供个人信息。</p>
+  </blockquote>
+  <div class="callout">
+    <span class="lb">口径说明</span>
+    <p>10-16 那轮记录的「与加密货币诈骗域名 <code>tyf.cc</code> 高度相似」告警，<strong>本轮未复现</strong>。DeepSeek 本轮给的是<strong>通用风险模板</strong>（「无法确认 → 建议别付款」），未点名任何诈骗域名。这是一条<strong>未被复现的既有记录</strong>，不应作为稳定结论使用。</p>
+  </div>
+
+  <h3>2.4 豆包 🔴 原文（判定为钓鱼站）</h3>
+  <blockquote>
+    <p>✅结论：<strong>tuyigf.com 不是正规合规网站，风险很高，不建议充值、注册、转账</strong></p>
+    <p>工信部 ICP 备案系统查不到这个域名的备案记录，国内合法运营的网站必须备案，无备案属于违规境外站点</p>
+    <p>途屹控股（HK01701，正规旅游公司）官网是 tuyigroup.com，不是 tuyigf.com，<strong>这个域名很可能是仿冒它的钓鱼站</strong></p>
+    <p>网上没有该域名对应的正规企业信息，这类名字相似、多一个字母的域名，常见套路：冒充旅游 / 跨境金融平台，以高收益、充值返利诱导资金，后面限制提现、跑路</p>
+    <p>⚠️重点提醒：如果网站页面写着投资、理财、充值、赚收益…100% 是非法平台</p>
+    <p>要不要我帮你用国家反诈中心的风险查询方式，再帮你核对这个链接？</p>
+  </blockquote>
+  <p class="lede">该轮豆包标注：搜索 5 个关键词，参考 28 篇资料。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>头号问题拆解：豆包为什么这么判</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th class="mono">#</th><th>触发因素</th><th>原文依据</th><th>我们能否修</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">T1</td>
+          <td><strong>无 ICP 备案</strong></td>
+          <td>「工信部 ICP 备案系统查不到这个域名的备案记录…无备案属于违规境外站点」</td>
+          <td>❌ 需行政流程；且备案要求境内主机，而站点部署在新加坡（<code>llms.txt</code> 自述）⇒ <strong>可能涉及迁站决策</strong></td>
+        </tr>
+        <tr>
+          <td class="mono">T2</td>
+          <td><strong>域名与 <code>tuyigroup.com</code> 字面相似</strong></td>
+          <td>「途屹控股（HK01701）官网是 tuyigroup.com…很可能是仿冒它的钓鱼站」</td>
+          <td>⚠️ 无法改域名；只能靠<strong>正面语料压过</strong>（备案主体、真实企业信息、第三方可信来源）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout alert">
+    <span class="lb">这两条都不是「加个 SEO 机制」能解决的</span>
+    <p>它们是<strong>信任基础设施</strong>问题：备案主体、可验证的企业信息、第三方来源。</p>
+    <p><strong>关联</strong>：这正是项目既有 Owner 待决项 <strong>③ ICP 备案路线（与 PAY-QUAL 同链）</strong>（容器根 <code>AI_MEMORY/TASK_LOG.md:182</code>）。本轮实测把它从「合规流程」升级为<strong>「CN 引擎主动劝退用户」的直接成因</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>修正后的优先级</h2>
+  <p class="lede">我上一版按「错得多快」排序，方向对，但<strong>第一顺位选错了</strong>。</p>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <strong>域名信任（T1 / T2） <span class="tag bad">🔴 唯一「正在主动赶客」</span></strong>
+        <p><strong>现状</strong>：任何中国用户问豆包「tuyigf.com 正规吗」，得到的是一句「不是正规合规网站…很可能是钓鱼站」。</p>
+        <p><strong>为什么第一</strong>：这是<strong>主动劝退</strong>，且发生在我们的主投放阵地（字节系）。FAQ 漂移是「说错了」，这个是「让人别来」。</p>
+        <p><strong>谁能做</strong>：<strong>只有 Owner</strong>。两条路都要拍板——<br>
+        · 路线 A：推进 ICP 备案（可能需境内主机 ⇒ 与现有新加坡部署冲突，要评估迁站成本）<br>
+        · 路线 B：不备案，转而用<strong>可验证的第三方信源</strong>（企业主体信息、行业媒体、可信平台收录）压过「无备案=境外站点」的默认判定</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <strong>生产 FAQ 漂移（#130 / #131） <span class="tag bad">🔴</span> <span style="font-family:var(--font-mono);font-size:.74rem;color:var(--muted)">上一版的第 1 位，降为第 2</span></strong>
+        <p><strong>不变</strong>：它是唯一「现在就是错的」内容，且已证明发版修不了（DB 覆盖单源）。</p>
+        <p><strong>为什么降位</strong>：它影响的是「已经来的人看到的说法」；T1/T2 影响的是「根本不会来」。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <strong>三个法律页去「草案」 <span class="tag warn">🟠</span></strong>
+        <p>实测 <code>/privacy</code>、<code>/privacy/subprocessors</code>、<code>/terms</code> 正文仍含「草案」⇒ 卡住 C1 内容卡（AR-41）。</p>
+        <p><strong>顺带</strong>：这三页是<strong>信任信号</strong>，与 T2 直接相关——「正规网站通常有清晰的业务介绍与真实企业信息」。去「草案」+ 补主体信息，一箭双雕。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <strong>豆包纠偏内容（头条 / 抖音） <span class="tag warn">🟠</span></strong>
+        <p>10-16 那轮已判为「豆包纠偏主路径」。本轮实测确认误分类<strong>稳定复现</strong>（ImageTrans 俗称）。主阵地是字节系（抖音 + 头条是 CN-GEO 引用 Top 级信源）。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <strong>部署补缺段 <code>c7d2919</code> <span class="tag warn">🟡</span></strong>
+        <p>含 <code>llms-full.txt</code>、zh 三页 og:url、en/download og 回归修复、守卫扩六页。状态：<strong>已提交未部署</strong>（<code>main@ba62ba0</code>，待 Owner 单点授权）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>我撤回上一版的哪些判断</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>上一版我说的</th><th>更正</th></tr></thead>
+      <tbody>
+        <tr><td>「AI 引用复测逾期 14 天，我做不了」</td><td><strong>已完成</strong>（opencode，10-16 08:3x）。本轮我做了<strong>独立复核</strong>，结论一致</td></tr>
+        <tr><td>「爬虫月报从未对生产跑过」</td><td><strong>已跑</strong>（14 天日志、47,054 行、993 bot 命中）</td></tr>
+        <tr><td>「llms-full.txt 待做」</td><td><strong>已创建</strong></td></tr>
+        <tr><td>「第 1 位是生产 FAQ」</td><td>降为第 2 位；第 1 位是<strong>域名信任</strong>（本轮新发现）</td></tr>
+        <tr><td>「DeepSeek 域名示警 tyf.cc」</td><td>引自已既有记录；<strong>本轮未复现</strong>，不应作稳定结论</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>证据与复现</h2>
+  <pre>CLI="/c/Users/ivan/AppData/Local/Tabbit/LocalAgent/bin/tabbit-cli.exe"
+
+"$CLI" nodejs --task "GEO citation retest" --tab &lt;tabId&gt; --request-id ds-q1-fresh &lt;&lt;'JS'
+await page.goto("https://chat.deepseek.com/", {waitUntil: "domcontentloaded"});
+await page.waitForTimeout(2500);
+const box = page.locator('textarea').first();
+await box.click(); await box.fill("图译工坊是什么？");
+await page.waitForTimeout(500); await box.press("Enter");
+await page.waitForTimeout(45000);
+const text = await page.evaluate(() =&gt; document.body.innerText);
+return { title: await page.title(), tail: text.slice(-2600) };
+JS</pre>
+  <ul class="notes">
+    <li>豆包钓鱼判定：<code>doubao.com/chat/38447585373112066</code>（标题「tuyigf.com是否正规网站」）</li>
+    <li>豆包误分类：<code>doubao.com/chat/38447418361497090</code>（标题「图译工坊介绍」）</li>
+    <li>DeepSeek 零召回：<code>chat.deepseek.com/a/chat/s/f46aa6fb-…</code>（标题「图译工坊未知」）</li>
+    <li>DeepSeek 域名探针：<code>chat.deepseek.com/a/chat/s/39f3a50e-…</code>（标题「tuyigf正规性查询」）</li>
+    <li>Kimi 正确：<code>kimi.com/chat/1a1447ee-…</code></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>最后一句</h2>
+  <div class="verdict">
+    <p>这轮最大的价值不是「又跑了一遍复测」，而是<strong>发现我上一版的排序错了</strong>。</p>
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">我一直盯着「我们说的话对不对」（FAQ 漂移），但真正的洞在更前面一层：<strong>中文引擎在告诉用户「别去这个站」</strong>。前者是内容质量问题，后者是信任基础设施问题——而信任基础设施，<strong>只有你能拍板</strong>。<br><br>补一句纪律上的自查：我连续两轮都在「没读够既有记录」上栽跟头（第一轮没读方案，这轮没读最新执行记录）。已经把「动 SEO/GEO 前先读 <code>docs/records/</code> 全部相关件 + TASK_LOG 最新 GEO 条目」写进项目长期记忆。</p>
+  </div>
+</section>
+
+<footer>
+  <p>三引擎实跑（2026-10-16 19:3x–19:5x）：Tabbit 登录会话 + <code>tabbit-cli</code> 驱动 Playwright，全部新建会话。只向 AI 提问，未改动任何站点、未部署、未提交。</p>
+  <p>原文引用均来自本轮实跑截取；10-16 08:3x 那轮的结论引自容器根 <code>AI_MEMORY/TASK_LOG.md:174-182</code>。</p>
+</footer>
+
+</div>

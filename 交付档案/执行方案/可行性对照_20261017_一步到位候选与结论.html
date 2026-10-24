@@ -1,0 +1,79 @@
+<title>一步到位可行性 · 开源候选对照与结论</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(26px,5vw,52px) clamp(18px,4vw,40px);display:flex;flex-direction:column;gap:30px}
+h1{font-size:clamp(1.5rem,3.6vw,2.05rem);line-height:1.3;margin:0;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h2{font-size:1.1rem;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line);font-weight:600}
+section{display:flex;flex-direction:column;gap:14px}
+p{margin:0;max-width:74ch}code{font-family:var(--mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+a{color:var(--accent)}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+.verdict b{font-size:1.08rem;line-height:1.6}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.83rem;min-width:820px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.55}
+thead th{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+.num{font-family:var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-family:var(--mono);font-size:.68rem;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:.95rem}
+.card p{font-size:.87rem;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--mono);font-size:.72rem;color:var(--muted);line-height:1.8}
+</style>
+<div class="wrap">
+<div>
+  <div class="eyebrow">可行性对照 · 2026-10-17 17:4x · 只读调研（GitHub API 逐仓核 license/★/日期）</div>
+  <h1>没有"装上就一步到位"的；但有两个扩展值得直接抄</h1>
+</div>
+
+<section>
+  <div class="verdict">
+    <span class="eyebrow">结论</span>
+    <b>最接近的是 Puck（MIT、13.5k★、v0.23.0），但它接管整棵渲染树——首页要重写成组件树、95 个键要迁成它的 JSON、草稿/发布/回滚/审计还得自己接，约 2—3 周；而且你最痛的"字体 / 指定位置断行"它不送。真正能一步调字号的是 Onlook，但那走"改代码发 PR"，且强绑 Tailwind——我们首页 246 个 className 里 Tailwind 形为 0。</b>
+    <p>所以"一步到位"的诚实版本是：<b>不装编辑器，抄 Tiptap 的两个扩展的设计</b>——<code>extension-hard-break</code>（硬换行节点）与 <code>extension-text-style</code>（把"文字样式"做成可枚举属性、渲染成 class）。后者正是我 v3 说的"排版角色"的<b>最小正确实现</b>，官方仓库里就有，思路可以直接搬进我们的字符串/角色模型，不必引入整个编辑器。</p>
+  </div>
+</section>
+
+<section>
+  <h2>候选逐条（★、license、最近发布均为本轮 API 实测）</h2>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>项目</th><th>license / ★ / 最近</th><th>能不能只借一部分</th><th>装到我们家首页的代价</th><th>送不送"字体+断行"</th></tr></thead>
+    <tbody>
+      <tr><td><b>Puck</b><br><span class="num">puckeditor/puck</span></td><td class="num">MIT · 13,484★ · v0.23.0（2026-08-07），push 10-16</td><td><span class="tag warn">难</span>官方明写"页面必须描述为 Puck data"，<code>Render</code> 接管渲染树；<code>overrides</code> 自陈 highly experimental</td><td><span class="tag bad">2—3 周</span>首页重写为 root/components 树 + 95 键迁 JSON + 发布/审计自建</td><td><span class="tag bad">不送</span>角色枚举仍要你在 fields 里自建（0.20 起有 <code>contentEditable</code> 就地改文案）</td></tr>
+      <tr><td><b>Onlook</b><br><span class="num">onlook-dev/onlook</span></td><td class="num">Apache-2.0 · 26,930★ · 桌面版末版 v0.2.32（2025-07-17，停更≈15 个月），push 08-25，已转 web</td><td><span class="tag warn">可抄源码</span><code>packages/parser</code>（DOM→代码位置插桩）+ <code>packages/git|github</code></td><td><span class="tag bad">路线不同</span>README 实测句"run on any Next.js + <b>TailwindCSS</b> project"；我们首页 Tailwind token＝0；改动经 PR 回写代码，<b>无草稿/发布/回滚/审计</b></td><td><span class="tag ok">送</span>字号/间距/文本都能直接改——但改的是代码，不是运营自助</td></tr>
+      <tr><td><b>Tiptap</b><br><span class="num">ueberdosis/tiptap</span></td><td class="num">MIT · 38,752★ · push 10-16</td><td><span class="tag ok">最值</span><code>packages/extension-hard-break</code> 与 <code>packages/extension-text-style</code> 两个包＝硬换行 + 样式角色的最小正确实现，<code>demos/</code> 可直接跑</td><td>整编辑器：0（只读源码抄设计）；真引入＝95 键 × 每键一实例 + SSR 水合 + diff 改节点树</td><td><span class="tag ok">送</span>硬换行 <code>setHardBreak()</code>；TextStyle 可挂 class 枚举</td></tr>
+      <tr><td><b>Payload</b><br><span class="num">payloadcms/payload</span></td><td class="num">MIT · 45,299★ · push 10-17</td><td><span class="tag warn">整套换</span>唯一<b>不用搬库</b>的 CMS（官方支持 Postgres + Drizzle，可嵌 Next.js）</td><td>换掉整个内容后台；<b>Live Preview 是后台 iframe</b>，不是官网上的覆盖层；审计无官方插件（社区件仅 4★）</td><td><span class="tag warn">部分</span>Lexical 节点树 + features 白名单，但硬换行无官方 feature</td></tr>
+      <tr><td><b>BlockNote / Plate</b></td><td class="num">MPL-2.0（<code>xl-*</code> 为 GPL-3.0）· 10,304★ ／ MIT · 16,656★</td><td>工具栏/菜单在非 XL 包可用；<b>别把 <code>xl-*</code> 代码抄进产品</b></td><td>2—4 天塞进弹层，但纯文本键要变 JSON，序列化/中文断行/边界全自定</td><td><span class="tag warn">工具栏有</span>断行语义仍要自己定</td></tr>
+      <tr><td>GrapesJS / Builder.io / Plasmic / Keystatic / Tina / Decap / Sanity / Storyblok / Dato</td><td class="num">26,311★ / 8,867★ / 7,110★ / 2,462★ / 13,837★ / 19,436★ / 6,362★ / — / —</td><td><span class="tag bad">否</span>GrapesJS 只吃 HTML/CSS 无 React 组件绑定；Builder 编辑器本体不在仓库（仍 SaaS）；Keystatic/Tina/Decap 要搬 git/文件；Sanity 要搬 Content Lake；Storyblok/Dato <b>无开源编辑器</b></td><td>要么换存储要么换渲染，均大于自研</td><td>—</td></tr>
+      <tr><td><b>editable-website</b><br><span class="num">adamsiwiec1/editable-website</span></td><td class="num">MIT · <b>0★</b> · push 2026-09-21</td><td><span class="tag ok">当参照读</span>官方描述："Next.js starter for an <b>in-place editable marketing website</b>… Local JSON store you can swap for any CMS"</td><td>形状与我们自研层几乎一样 ⇒ <b>不能当依赖</b>，但可作为"我们这条路业界也有人走"的参照实现</td><td><span class="tag bad">不送</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:.86rem;color:var(--muted)">另：GitHub 搜 <code>landing page visual editor next.js</code> 的 <code>total_count=0</code>；搜"营销页文案 + 排版角色"专用开源件无相关命中 ⇒ <b>这个具体组合业界没有现成品</b>（属"查不到"，非"官方声明不存在"）。</p>
+</section>
+
+<section>
+  <h2>三条路线摆平了比</h2>
+  <div class="cards">
+    <div class="card"><h3>① 自研补一层（v3 方案）<span class="tag ok">推荐 · 把握 85%</span></h3>
+      <p>行数组 + 角色枚举 + 三视口预览，<b>3—4 天</b>。回归面只在 <code>home-view.tsx</code> 与 <code>siteContent.ts</code>；无新依赖、不动存储、不背 0.x 库升级债。抄 Tiptap 两个扩展的设计而不是引入它。</p></div>
+    <div class="card"><h3>② 换 Puck<span class="tag warn">2—3 周 · 70%</span></h3>
+      <p>只有在你打算<b>以后大量新增页面、并接受画布式排版</b>时才划算。现在只有 7 个 section 的首页，重写成本买不到对应收益，且你最痛的那件事它不解决。</p></div>
+    <div class="card"><h3>③ 用 Onlook 直改代码<span class="tag warn">70%</span></h3>
+      <p>唯一"真能一步调字号/换行"的路。前提：首页先 Tailwind 化（246 个类、400 行 CSS），且接受"改的是代码、走 PR、没有草稿/发布/回滚/审计"。适合你自己用，不适合当运营功能上线。</p></div>
+  </div>
+  <p style="font-size:.9rem"><b>如果只要"我今晚就能把这句换个行、那个词调大"</b>：那既不是 CMS 也不是编辑器，是路线 ③（或直接在代码里改 + 发版，也就是现-production 的正规通道）。<b>如果要"以后运营/我自己随时改，不改代码"</b>：路线 ①。这两件事不该混成一个需求——这是我这轮才分清的。</p>
+</section>
+
+<footer>
+  取证方式：GitHub REST API 逐仓核 <code>license.spdx_id</code> / <code>stargazers_count</code> / <code>pushed_at</code> / <code>latest release</code>（2026-10-17 实测）＋官方文档逐页取原文；未取到标未核实。本地实测：React 19 + Next 16.3.8 + Tailwind 已配置；<code>home-view.tsx</code> 791 行／38,457 B／7 个 section；246 个 className token 中 Tailwind 形 <b>0</b>；<code>home-v17.css</code> 400 行、<code>!important</code> 0；14+ 个其他组件在用 Tailwind。
+</footer>
+</div>

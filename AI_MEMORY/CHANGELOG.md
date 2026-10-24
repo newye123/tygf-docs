@@ -1,3 +1,26 @@
+## 2026-10-23 英文站 i18n 接缝定在三处出口（`useSiteCopy` 出口 / 术语 getter / t 占位符），并加两道静态守卫
+
+- **决策**：① 站点文案在 `src/lib/workbench/site-copy.ts` 的 `useSiteCopy` **出口**统一本地化一次，而不是逐个组件包 t()（200+ 调用点、局部变量名各不相同，逐个包必漏）；② `WB_ACTIONS` 的 label/hint 用 **getter**，保证在"渲染取值那一刻"求值——模块级常量会在 import 时被定格成中文；③ 动态消息（含本机助手地址）走 `t('...{url}...', { url })`，不再拼中文模板。
+- **理由**：英文站不能靠"首屏看着是英文"验收。模块级求值、文案出口、动态模板这三处漏任何一处，界面就是中文，而且**都不报错**——只能靠静态判据＋登录态逐步实测发现。
+- **守卫**：`scripts/i18n-guard-module-scope.mjs`（模块级 t() ＋ 词典缺口，rc=1；已并入 `smoke-en-workbench`）、`scripts/i18n-scan-unwrapped.mjs`（裸中文余量，当前 325 处 ⇒ #273）。覆盖率下限 `MIN_COVERAGE_PERCENT` 45 → 100。
+- **中文侧不受影响**：t() 在 zh 下原样返回同一字符串；`AppShell` 显式 `LocaleProvider locale="zh"`，不再依赖"中英文是两套根布局所以整页刷新"这一框架行为。
+
+## 2026-10-22 工作台 i18n 接缝（以中文原文为键）＋ /en/workbench 路由＋机械包装器
+
+- **新增**：src/lib/i18n/t.ts（模块级当前语言 + 词典查表 + 占位符填充；中文原样返回）、src/lib/i18n/dict-en.json（键＝中文原文）、src/lib/i18n/locale-provider.tsx。
+- **新增**：/en/workbench 英文工作台路由与 en-workbench-shell.tsx；ViewProvider 增 initialView（默认 home，中文站行为不变）。
+- **新增工具**：scripts/i18n-wrap-workbench.mjs（TS 语法树包装器，只碰显示层字符串）、scripts/i18n-report.mjs（覆盖率与按文件缺口）、scripts/smoke-en-workbench.mjs（英文首屏 0 中文 / 中文站仍中文 / 无报错 / 覆盖率下限）。
+- **改动面**：29 个工作台组件共 744 处文案被包装；中文站头部 EN 入口按视图分流到 /en/workbench。
+- **当前覆盖率**：322/645（49.9%），首屏路径全译；第 2~4 步面板 323 条待译。
+
+## 2026-10-22 英文站新增认证路由（/en/auth/login、/en/auth/reset）与首页登录入口；守卫扩到"入口存在且指对"
+
+- **新增路由**：`src/app/en/auth/layout.tsx`（居中卡片薄壳、noindex）、`login/page.tsx`（英文登录）、`reset/page.tsx`（英文重置）。行为与中文站 `(zh)/auth/*` 逐条对齐（同一套 API、错误码分支、safeNext、激活态恢复），认证逻辑未改。
+- **首页入口**：英文首页 `nav-actions` 补 `Log in`（此前 Wave 0 改版漏搬，`nav-login` 样式槽被 `/en/download` 占着），href=`/en/auth/login?next=/en`，保留测试站 `?key=` 令牌；登录后回英文站。
+- **响应式取舍**：`@media (max-width:480px)` 撤下载入口（加登录入口后 390px 实测溢出 40px）；页脚与直链下载不受影响。
+- **守卫**：`scripts/smoke-en-layout.mjs` 新增"英文首页必须有 Log in 且指向 /en/auth/login"＋"/en/auth/login 与 /en/auth/reset 必须 200 且 SSR HTML 含英文标题"，断言数 42→61。
+- **已知缺口**：英文站注册/会话管理/邮箱验证仍是中文页，英文首页登录后不变账号菜单（归 Wave 4），见 ISSUES #270。
+
 ## 2026-10-23 08:0x 多稿工作台第二笔：批量导入从「按文件名配对」改成「SKU×交付物归属」，冲突一律人定
 
 - **变了什么**：`worktrees/multidraft2` 三笔（`52f26307` 界面、`dacc8fc5` 弹窗加宽、`8a984d0c` 合同与字体修正）已推到 `origin/develop` 并部署测试站（测试站现役 `8a984d0c`，备份 `deploy-20261023_080203-8a984d0c141d`，生产未碰）。归属判据从「同名/同目录猜」换成内核 `buildAttributionPlan`（`src/lib/workbench/sku-attribution.ts`）：只认同 SKU＋同交付物；表名认不出交付物＝通用工作簿（按稿的交付物选 sheet）；**不跨交付物借表**（独立站主图不借 Amazon 主图表）；唯一候选才自动配；多候选、以及「同 SKU 同交付物多份稿抢一张表」一律台上要人定；没被认领的表进「有表无稿」并逐张说原因。

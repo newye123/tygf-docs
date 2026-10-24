@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量工作台 v7：每稿一表（设计增量与实施单）· 对抗式审查 — 2026-10-20</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#ffffff; --ink:#14171a; --ink-2:#4a5158; --ink-3:#7a828a;
+    --line:#e4e6e3; --line-strong:#c9cdc8; --acc:#1f6feb; --ok:#177245; --warn:#9a6a00; --bad:#b3261e;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+    --sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#101214; --card:#17191c; --ink:#e8eaec; --ink-2:#b6bcc2; --ink-3:#8a9198; --line:#26292d; --line-strong:#3a3f45; --acc:#6ea8fe; --ok:#5bc48b; --warn:#e0b153; --bad:#f2857f; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 64px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+  .kt{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  h1{font-size:1.6rem;line-height:1.3;margin:.4rem 0 .5rem}
+  h2{font-size:1.12rem;margin:2.2rem 0 .8rem;padding-top:1.1rem;border-top:1px solid var(--line)}
+  h3{font-size:.98rem;margin:1.4rem 0 .5rem}
+  p,li{font-size:.94rem;color:var(--ink-2)}
+  code,.mono{font-family:var(--mono);font-size:.84em;background:color-mix(in srgb,var(--acc) 8%,transparent);border-radius:5px;padding:.1em .35em}
+  .verdict{border:1px solid var(--line-strong);border-left:4px solid var(--acc);background:var(--card);border-radius:12px;padding:16px 18px;margin:18px 0}
+  .verdict .lb{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase}
+  .verdict p{margin:.5rem 0 0;color:var(--ink);font-size:.98rem}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stat b{display:block;font-size:1.35rem;color:var(--ink)}
+  .stat span{font-size:.8rem;color:var(--ink-3)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;font-size:.86rem;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+  tr:last-child td{border-bottom:0}
+  td b{color:var(--ink)}
+  .cards{display:flex;flex-direction:column;gap:12px;margin:14px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card h3{margin:0 0 .35rem;font-size:.95rem}
+  .gates{display:flex;flex-direction:column;gap:12px;counter-reset:g;margin:14px 0}
+  .gate{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 52px}
+  .gate::before{counter-increment:g;content:counter(g);position:absolute;left:14px;top:14px;width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);font-family:var(--mono);font-size:.78rem;display:flex;align-items:center;justify-content:center}
+  .callout{border:1px dashed var(--line-strong);background:color-mix(in srgb,var(--acc) 5%,transparent);border-radius:12px;padding:14px 16px;margin:14px 0}
+  .callout .lb{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--acc);text-transform:uppercase}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  ul.notes{margin:.6rem 0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:.8rem;color:var(--ink-3);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kt">设计增量与实施单 · 对抗式审查 · 2026-10-20</div>
+  <h1>批量工作台 v7：每稿一表</h1>
+  <p>依据 Owner 拍板：「各配一张表，其多个设计稿就是真的是多个不同的项目设计稿，比如多个不同 SKU 的亚马逊改语言，不可能都用一个表的吧，选『每稿一表』」。</p>
+</header>
+
+<div class="verdict">
+  <div class="lb">Verdict</div>
+  <p>把译文表从「全批一个值」改成「每稿一个值」：<b>一表对一稿、矩阵按稿、更换单稿表只失效该稿、缺表不进执行</b>。表仍在浏览器内解析不上传；报价与结算链路已天然按本稿（无需改），只需修一处「预览虚高」。模拟 v7 已真机全绿。</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><b>12</b><span>对抗审查判词 F1–F12</span></div>
+  <div class="stat"><b>4 层</b><span>联动面：投影 / 检测 / 执行计费 / 覆盖率与门</span></div>
+  <div class="stat"><b class="ok">59.9s</b><span>mockv7-1020a 真机 · 32 读数 · 0 控制台错误</span></div>
+  <div class="stat"><b>3 条</b><span>待 Owner 细项（不阻塞 L1/L4）</span></div>
+</div>
+
+<div class="callout">
+  <div class="lb">现场提示 · 2026-10-20 08:59 实测</div>
+  <p><code>worktrees/develop</code> 现<b>不干净</b>：另一线正在改 <code>typography-panel.tsx</code> 与 <code>workbench-view.tsx</code>（排版抽屉入口，未提交；2 files / +156 / -57）。本单坐标基线＝干净时的 <code>6ff5c3c</code>；该线落地后行号会整体漂移（仅 workbench-view 就 +34 行）。实施前先 <code>git status</code> 再用 grep 重取坐标，<b>不要按死行号改</b>。</p>
+</div>
+
+<h2>一、判词（对抗式审查，12 条）</h2>
+<table>
+  <thead><tr><th>#</th><th>判词</th><th>证据 / 改法</th></tr></thead>
+  <tbody>
+    <tr><td>F1</td><td><b>单值残留</b>：译文表是单个 state</td><td><code>workbench-view.tsx:264</code>；全库无按稿表状态（grep 零命中）→ <code>parsedTables[draftKey]</code></td></tr>
+    <tr><td>F2</td><td><b>表卡只有一处</b>：整批一次挂表</td><td><code>:2394</code> CsvStep、<code>:2401-2431</code> 更换对话框 → 逐稿槽位</td></tr>
+    <tr><td>F3</td><td><b>语言集被拉齐</b></td><td><code>:1344-1348</code> 同源派生 → 语言列＝各稿表表头</td></tr>
+    <tr><td>F4</td><td><b>矩阵同表</b>：并集表比单稿，吊 1/12 假红灯</td><td><code>:1350-1357</code> → 逐稿用各自表算</td></tr>
+    <tr><td>F5</td><td><b>检测扇出</b>：审查行来自单表</td><td><code>:745-786</code>、<code>review-step.tsx</code> 无 batchMode 分支 → 按「稿×语言」逐批</td></tr>
+    <tr><td>F6</td><td><b>执行载荷</b>：整表映射给每语言（12 倍无效载荷）</td><td><code>execute-step.tsx:767-783</code> → 只带本稿行</td></tr>
+    <tr><td>F7</td><td><b>报价/证据——不用改</b></td><td><code>execution-batch.ts:147-155/:188-192</code> 只读本稿 evidence；<code>billing-evidence-rows.js:63-82</code> 非本稿行 EXCLUDED</td></tr>
+    <tr><td>F8</td><td><b>结算退差——不用改</b></td><td><code>batch-v3.ts:129-141</code> 按验证单位比例退差</td></tr>
+    <tr><td>F9</td><td><b>写错风险 = 0</b></td><td><code>match.ts:41-53</code> 严格相等配对，外稿行配不上</td></tr>
+    <tr><td>F10</td><td><b>预览费用虚高（Q）</b></td><td><code>binding-core.ts:422</code> 未匹配清单上限 50 → 预览按全量或明示截断；仅显示口径</td></tr>
+    <tr><td>F11</td><td><b>缺表门</b>：有稿没表＝静默跳稿（违红线）</td><td>缺表即禁用执行＋点名缺表稿＋一键定位，不隐式跳过</td></tr>
+    <tr><td>F12</td><td><b>更换范围</b>：必须只失效该稿</td><td>v7 模拟已把「邻稿不受影响」跑成断言</td></tr>
+  </tbody>
+</table>
+
+<h2>二、数据模型（设计级）</h2>
+<div class="cards">
+  <div class="card"><h3>表以稿为键</h3><p><code>parsedTables[draftKey] = { fileName, sourceHeader, rows[], languageColumns[] } | null</code>，只存浏览器内存；沿用隐私链（表格文件不进服务器，译文只在用户点检测时按稿发服务端）。</p></div>
+  <div class="card"><h3>派生</h3><p><code>units(draft)=rows.length</code>；<code>languages(draft)=表头语言列</code>（允许各稿不同）。</p></div>
+  <div class="card"><h3>不变量</h3><p>① 执行前置＝每稿「已扫描 ∧ 已配表」；② 更换表＝单稿事务；③ 检测/校对/队列/守卫/回执行产物均按稿分组；④ 汇总计数按稿求和，不写死。</p></div>
+</div>
+
+<h2>三、实施地图（四层联动）</h2>
+<table>
+  <thead><tr><th>层</th><th>改点</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>L1 状态与投影</td><td><code>workbench-view.tsx:264 /:2394 /:1344-1357 /:745-786</code></td><td>单值 → 按稿映射；所有读取经 <code>tableFor(draft)</code> 收口；素材页第一卡改「译文表（逐稿）」清单＋「按稿清单逐张导入」批量入口（仍逐稿落位）</td></tr>
+    <tr><td>L2 检测</td><td><code>review-step.tsx</code> 及调用侧</td><td>补 batchMode 分支；按「稿×语言」发起、payload 只含本稿行；确认项按稿定位</td></tr>
+    <tr><td>L3 执行与计费</td><td><code>execute-step.tsx:767-783</code>、<code>binding-core.ts:422</code></td><td>逐稿行；报价/结算链路不动；只修预览截断显示口径；回执行与聚合回执按稿分组并挂本稿表名</td></tr>
+    <tr><td>L4 覆盖率与门</td><td>矩阵与执行门</td><td>矩阵按稿分区（每区＝该稿 × 该稿语言列）；缺表即拦；更换单稿表＝单稿事务（该稿归零、邻稿保留）</td></tr>
+  </tbody>
+</table>
+
+<h2>四、验收尺＝v7 模拟（真机读数）</h2>
+<div class="callout">
+  <div class="lb">Replay</div>
+  <p>文件 <code>模拟方案_20261020_多对多工作台_每稿一表_v7.html</code>；tabbit <code>mockv7-1020a</code>（59.9s、<code>consoleErrors=[]</code>、禁用词全页两时点 0 命中）。断言脚本：<code>交付档案/执行报告/证据_20261020_mockv7-1020a_断言脚本.js</code>。</p>
+</div>
+<ul class="notes">
+  <li>初始：顶带「配表 0/4」、琥珀钮「译文表 0/4 已配 ▾」、矩阵空态、阶段 2/3/4 锁定。</li>
+  <li>单稿配表：配 f1 后「配表 1/4」、行示「01_首页_译文表.xlsx · 40 单元」、其他稿格子示「待配表」。</li>
+  <li>批量逐张导入：「配表 4/4」；矩阵把表名挂在稿名下方；未扫描格示「未扫描」。</li>
+  <li>加两稿：稿 6 行、表槽位新增「未配表」；补齐 6/6；扫描 6/6 → 汇总「2 格低于 95%」（02×韩 92.5%、04×泰 88%）。</li>
+  <li>更换单稿表：标题「更换『02_详情页.psd』的译文表」；取消＝无变化；确认＝5/6、该稿回「待配表」、邻稿不受影响、阶段回锁；重配回 6/6。</li>
+  <li>全流程：检测 18 格（1 项确认→修正）；校对对齐；执行 f3 失败→续跑；聚合回执「6 稿 × 3 语言 / 18 格终态 / 468 标准单位」，每行挂本稿表名。</li>
+  <li>回执后更换单稿表：只有 04 行回「待重跑」（18→15 格 ok），01 行仍「已完成」，配表 5/6。</li>
+</ul>
+
+<h2>五、实施序与门</h2>
+<table>
+  <thead><tr><th>步</th><th>动作</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>现场核对：<code>git -C worktrees/develop status --short</code> 须干净</td></tr>
+    <tr><td>2</td><td>实施 L1→L4；执行/回执语义按稿分组属<b>合同变更</b>：同笔同步浏览器投影/助手 evidence/服务端报价/结算闸，并在 <code>docs/HANDOFF.md</code> 偏差登记表标【合同变更】</td></tr>
+    <tr><td>3</td><td>过门：<code>tsc --noEmit</code>、<code>lint</code>、<code>test:trust-chain</code>（22/22）、<code>test:batch-row-contract</code>、<code>test:batch-workbench-*</code> 三门、<code>test:delivery-coverage</code>、（改文案时）两个文案烟测</td></tr>
+    <tr><td>4</td><td>新增守卫：① 批量路径禁裸读单值表；② 逐稿矩阵单测（两稿两张不相交表：各 100%）；③ 更换单稿表事务单测（邻稿不动）；④ 缺表门单测</td></tr>
+    <tr><td>5</td><td>提交 → 出包部署 → 核验（<code>.deploy-commit</code>、首页 200、PM2 online、migration-drift）→ 记账</td></tr>
+  </tbody>
+</table>
+
+<h2>六、待 Owner（3 条，不阻塞 L1/L4）</h2>
+<div class="gates">
+  <div class="gate"><b>各稿语言列是否允许不同</b> —— v7 假定允许；若要全批统一，矩阵可退回单块。</div>
+  <div class="gate"><b>全稿检测费用口径</b>（v6 清单 ① 原样未决）：逐稿逐语言发起审查，怎么计费 / 是否先确认。</div>
+  <div class="gate"><b>缺表时</b>：整批拦（v7 取此）还是允许只跑已配稿＋显式确认。红线是不静默跳过。</div>
+</div>
+<p>另：v6 清单 ③失败从第 k 稿续跑、④聚合回执导出、⑤放行位置 仍按原样待决。</p>
+
+<h2>七、出处</h2>
+<ul class="notes">
+  <li>缺口勘误与 E1–E15：<code>交付档案/交接文档/交接_20261018_每稿一表缺口与译文隐私链_给接手AI.md</code>（含 §14 勘误）。</li>
+  <li>代码坐标（10-20 复核于 develop <code>6ff5c3c</code>）：<code>workbench-view.tsx:264/:745-786/:1344-1358/:2394/:2401-2431</code>；<code>execute-step.tsx:767-783</code>；<code>billing-evidence-rows.js:63-82</code>；<code>execution-batch.ts:147-155/:188-192</code>；<code>batch-v3.ts:59/:129-141</code>；<code>match.ts:41-53</code>；<code>coverage.ts:9</code>；<code>binding-core.ts:422</code>；<code>batch-execution-client.ts:335</code>。</li>
+  <li>v6 移交单（D 段文案净化等仍有效）：<code>交付档案/交接与对账/交接_20261017_批量台v6上线实施_给接手AI.md</code>。</li>
+</ul>
+
+<footer>批量工作台 v7 · 每稿一表 · 设计增量与实施单 · 2026-10-20 · opencode · 零业务代码改动，未推未部署</footer>
+</div>
+</body>
+</html>

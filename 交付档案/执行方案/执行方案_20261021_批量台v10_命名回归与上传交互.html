@@ -1,0 +1,182 @@
+<title>批量台 v10 · 命名回归（不脱节）＋ 上传交互</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--blue:#1b5bd0;--blue-soft:#e8effc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.55rem,4vw,2.15rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:60ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.blue{background:var(--blue-soft);color:var(--blue)}.tag.gray{background:var(--sunk);color:var(--muted)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.blue{background:var(--blue-soft);border-color:var(--blue)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate h3{margin:0;font-size:.96rem;font-weight:600}
+.gate p{font-size:.89rem;color:var(--ink-2);max-width:70ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500;min-width:38px}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>命名回归</span><span class="sep">/</span><span>上传交互</span><span class="sep">/</span><span>批量台 v10</span><span class="sep">/</span><span>2026-10-21</span></p>
+  <h1>命名回归（不脱节）＋ 上传交互（PSD / 译文表）</h1>
+  <p class="standfirst">Owner 三点：① 继续做多个设计稿；② <strong>上传 PSD 与上传表格的交互，我上一版没做出来</strong>；③ <strong>不要跟单个设计稿跳得太脱</strong>。本稿三件都办：<strong>收回 v9 的新词表</strong>（步骤名与操作名全部沿用单稿台，只加"多稿层"三处说法）、把<strong>两个上传交互真做出来</strong>。</p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>沿用旧名 12 项</span><span>多稿层新增 3 处说法 ＋ 4 个状态词</span><span>上传交互已做成可点</span><span>0 console error</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 收回新词表 ＋ 补上真缺口</span>
+    <p><strong>我改了主意，说清理由。</strong>Owner 那两句其实<strong>不矛盾</strong>：「名字不能是现在这个」指的是<strong>我编的那些内部词</strong>（译库 / 切片 / 来源矩阵 / 覆盖率矩阵）——它们是给代码看的；「不要跟单个设计稿跳得太脱」说的是<strong>步骤名与操作名越像单稿台越好</strong>，因为那是用户已经熟悉的那套。⇒ <strong>v9 另起一套词表是我走远了，本稿收回。</strong></p>
+    <ul>
+      <li><strong>沿用单稿台，一个字不改</strong>：准备素材 / 智能检测 / 设计稿校对 / 确认并生成；选择设计文件 · 只读预扫描；选择要处理的 PSD 文件；导入多语言译文表；选择文件… / 扫描 / 重新扫描 / 移除；选择语言 / 重选译文表；正常 / 译文为空 / 重复原文。</li>
+      <li><strong>只加"多稿层"三处说法</strong>：<strong>12 个设计稿</strong>（单稿是"这个设计稿"的复数）／<strong>每个设计稿用哪张表</strong>（用户要回答的问题原话）／<strong>这一批的进度</strong>。另加四个状态词：<strong>就绪 / 待检查 / 有 N 处要处理 / 缺语言</strong>（缺语言＝这一份<strong>做不出来</strong>）。</li>
+      <li><strong>上一版模拟的真缺口：上传交互没做。</strong>本稿把 PSD 与译文表两个上传都做成了可点的：路径输入 / 多选文件 / 粘贴多路径 / 选文件夹 / 逐个扫描与全部扫描；拖入多表 / 多选 / 逐张解析点名；以及关键的一步「<strong>每个设计稿用哪张表</strong>」——按目录就近给建议、冲突不自动选、<strong>不点确认不生效</strong>。</li>
+      <li><strong>阶段 1′ 因此更轻</strong>：命名沿用旧名 ⇒ 不用审一整套新词表；而且<strong>闸 0 的快照基线天然不会因改名而红</strong>（单稿台没改名）⇒ 风险更低。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>阶段一 · 命名：沿用单稿台 + 只加多稿层</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>位置</th><th>单稿工作台</th><th>批量工作台（<b>沿用</b>）</th></tr></thead>
+      <tbody>
+        <tr><td>步骤 1–4</td><td>准备素材 / 智能检测 / 设计稿校对 / 确认并生成</td><td><b>完全沿用</b></td></tr>
+        <tr><td>卡片</td><td>选择设计文件 · 只读预扫描 / 选择要处理的 PSD 文件 / 导入多语言译文表</td><td><b>完全沿用</b></td></tr>
+        <tr><td>操作</td><td>选择文件… / 扫描 / 重新扫描 / 移除 / 选择语言 / 重选译文表</td><td><b>完全沿用</b></td></tr>
+        <tr><td>行级状态</td><td>正常 / 译文为空 / 重复原文</td><td><b>完全沿用</b></td></tr>
+        <tr><td>列表区</td><td>—</td><td><b>12 个设计稿</b>（新增说法）</td></tr>
+        <tr><td>分配区</td><td>—</td><td><b>每个设计稿用哪张表</b>（新增说法）</td></tr>
+        <tr><td>总览区</td><td>—</td><td><b>这一批的进度</b>（新增说法）</td></tr>
+        <tr><td>格级状态</td><td>—</td><td><b>就绪 / 待检查 / 有 N 处要处理 / 缺语言</b>（新增）</td></tr>
+        <tr><td>度量</td><td>覆盖率</td><td><b>覆盖率</b>（沿用），但<b>补上分母</b>：96%（这一稿 12 个文字图层里对上 11 个）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout bad">
+    <span class="lb">收掉的内部词（不再出现在界面上）</span>
+    <p>译库 · 切片 · 归属 · 绑定 · 来源矩阵 · 覆盖率矩阵 · owner value · slice · dataset<br>⇒ 这些只活在代码里（<code>binding / slice / dataset / coverageDrafts</code>），界面上一个都不出现。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>阶段二 · 上传交互（上一版的真缺口）</h2>
+  <h3>PSD 怎么上传（贴单稿三件，多加"多"）</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>方式</th><th>批量台的形态</th><th>交互与口径</th></tr></thead>
+      <tbody>
+        <tr><td>路径输入</td><td>同单稿一个输入框</td><td>填了不存在的路径 ⇒ <b>明确报"这个路径在磁盘上找不到"</b>，不静默跳过</td></tr>
+        <tr><td>选择文件…</td><td>同名按钮，<b>弹层可多选</b>（12 个候选，带目录与图层数）</td><td>勾选 → 确定 → 加入列表（上限 12，超了逐条点名）</td></tr>
+        <tr><td>粘贴多个路径</td><td><b>批量新增</b>：<code>每行一个</code> 文本框</td><td>逐条校验，<b>找不到的路径逐条点名</b>（沿用"认不出的会跳过，跳过了哪些列给你看"）</td></tr>
+        <tr><td>选文件夹</td><td>单稿已有（连子文件夹一起找，最多 6 层）</td><td>沿用，不改</td></tr>
+        <tr><td>扫描</td><td>单稿一个「扫描」；批量加「<b>全部扫描（按顺序）</b>」</td><td>每稿独立显示 未扫描 / 扫描中 / 已扫描 + N 个文字图层，可逐个「重新扫描」「移除」</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>译文表怎么上传</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>方式</th><th>形态</th><th>交互与口径</th></tr></thead>
+      <tbody>
+        <tr><td>拖进来</td><td>拖放区（单稿也有，这里是"可以一次放多张"）</td><td>拖入 → 逐张解析</td></tr>
+        <tr><td>选择文件…</td><td>可多选（9～11 张候选，带目录、语种列数、行数）</td><td>勾选 → 确定</td></tr>
+        <tr><td>粘贴表格内容</td><td>单稿已有</td><td>沿用</td></tr>
+        <tr><td colspan="3"><b>逐张解析、逐张点名</b>：一张表解析失败（如 <code>日韩_备注列版.xlsx</code> 识别到 13 个语言候选列）<b>只这一张失败并点名</b>，其它表不受影响，可以继续。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>关键的一步：每个设计稿用哪张表</h3>
+  <p>上传完不能自动套用（既有口径 <code>design-file-card.tsx:1017-1023</code>「表格只列候选，不会自动套用」）。批量台多一层：<b>表比稿多</b>。⇒ 做成一张表，<b>一行一个设计稿</b>：</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>设计稿</th><th>用哪张表</th><th>依据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">主图\SKU-AX1001_主图.psd</td><td>（下拉，默认给出建议）</td><td><b>同一个文件夹</b> / <b>同一层目录（有 N 张，要你定）</b> / <b>唯一的合表</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="notes">
+    <li><span class="n">1</span><div>建议按<b>目录远近</b>给；<b>冲突不自动选</b>（同一层有 4 张表时，文案明说"有 4 张，要你定"）。</div></li>
+    <li><span class="n">2</span><div>下拉里的预选<b>只是建议</b>；不点「<b>确认这 N 条</b>」就<b>不生效</b>。</div></li>
+    <li><span class="n">3</span><div><b>「这一批的进度」只按已确认的分配显示</b>；没确认前那格算「未分配」。⇒ 这一条我在模拟里做实了：<b>确认前矩阵 12 格全是「未分配」</b>，确认后才变成覆盖率。</div></li>
+  </ul>
+  <div class="callout ok">
+    <span class="lb">模拟件实测</span>
+    <p>「选择文件…」弹层：12 个设计稿候选（带目录、图层数）可多选；9～11 张译文表候选可多选。实跑：加 4 个设计稿（"已加入 4/12"）→ 全部扫描（4 个同时「扫描中」→ 逐个转「已扫描」）→ 加 7 张表（"已导入 7 张"）→ 分配表出现 4 行、依据「同一层目录」→ <b>确认前矩阵 12 格全是「未分配」</b> → 点「确认这 2 条」后 → <b>4/4 已分配</b>，矩阵变成覆盖率。右上切「单稿工作台」＝ <b>原样保留</b>（准备素材 / 选择设计文件 · 只读预扫描 / 选择要处理的 PSD 文件 / 选择语言 / 重选译文表 / 智能检测，5 行审查表一字不改）。<b>0 console error。</b></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>阶段三 · 执行建议（阶段 1′ 改写）</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">0</span><div class="body"><h3>写 #workbench 快照断言脚本</h3><p><code>batchMode=false</code> 下抓关键 DOM 节点数 / 文案集合 / 按钮集合存基线。风险：无（纯新增）。<b>必须第一个做</b>——「与原行为逐字节一致」是仓库既有成文验收尺，但没有断言脚本它只是一句话。</p></div></div>
+    <div class="gate"><span class="num">1′</span><div class="body"><h3>命名：不另起词表</h3><p>步骤名/卡片名/操作名<b>全部沿用单稿台</b>；只定"多稿层"三处说法 ＋ 四个状态词 ＋ 覆盖率补分母。风险：无（文档）。<b>工作量比 v9 小很多</b>，且闸 0 基线天然不会因改名而红。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>新增 binding/* 纯函数</h3><p>行身份、归属、切片、合并、证据分级。风险：无（纯新增）。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>新增来源总览（先 mock 数据、只读）</h3><p>风险：无（纯新增）。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>新增批量台表导入器</h3><p><b>不改 <code>csv-step.tsx</code></b>。风险：无（纯新增）。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>新增按格审查面板</h3><p><b>不改 <code>review-step.tsx</code></b>。风险：无（纯新增）。</p></div></div>
+    <div class="gate"><span class="num">6</span><div class="body"><h3>挂载（第一次动共享文件）</h3><p><b>这时才</b>在 <code>workbench-view.tsx</code> 的 <code>batchMode</code> 分支挂 3/4/5。验证：闸 0 快照 rc=0 ＋ tsc/lint rc=0。风险：中。</p></div></div>
+    <div class="gate"><span class="num">7</span><div class="body"><h3>行集合并</h3><p><code>execute-step.tsx</code> <b>新增</b>批量专用实现（原实现保留）。验证：写入层语义不变。风险：中。</p></div></div>
+    <div class="gate"><span class="num">8</span><div class="body"><h3>覆盖率取数口</h3><p><code>coverage.ts</code> <b>只新增</b>函数。风险：低。</p></div></div>
+    <div class="gate"><span class="num">9</span><div class="body"><h3>接执行（最后做）</h3><p>走通「确认并生成」＋ 助手得分接口（独立一单、只读）。风险：高。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>阶段四 · 待拍板</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O10′</td><td><strong>改写：批量台沿用单稿台的步骤名与操作名、只加"多稿层"三处说法 ＋ 四个状态词 —— 这样行不行？</strong></td><td><strong>行</strong>。这样两台是「同一套产品的两种批量级」，用户从单稿台切到批量台<b>不用重新学</b>；我 v9 另起词表是走远了，收回</td></tr>
+        <tr><td class="mono">O9</td><td>批量台要不要自己写「表导入器」（不复用 <code>csv-step.tsx</code>）</td><td><strong>要</strong>（单稿台零改动）</td></tr>
+        <tr><td class="mono">O1″–O8</td><td>见 v7／v8</td><td>沿用不变</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>2026-10-21 · 只读取证＋方案设计（未改业务代码）· 基线 worktrees/develop@99baaf6 · 本稿：<strong>收回 v9 新词表</strong>（步骤名与操作名全部沿用单稿台，只加"多稿层"三处说法 ＋ 四个状态词 ＋ 覆盖率补分母）＋ <strong>补上 PSD 与译文表两个上传交互</strong>（可点，且"不点确认不生效"已在模拟里做实）。</p>
+</footer>
+</div>

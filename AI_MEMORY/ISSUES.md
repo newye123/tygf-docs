@@ -1,3 +1,42 @@
+## #279　生产首页从当前探针链路出现“能回 200 但 20 秒不收尾／直接连不上”的不稳定读数　🟠 中高（2026-10-24 新发现，范围待隔离）
+
+- **现象**：在 `worktrees/develop` 运行 `$env:SEO_TARGET='https://tuyigf.com'; npm run test:seo-consistency`，SEO 结构断言 `0 FAIL`，但首页 1 次抓取失败，最终 `rc=2`；随后 `1..5 | % { curl.exe -sS --max-time 20 -o NUL -w ... https://tuyigf.com/ }`，5 次里 2 次拿到 HTTP 200 且分别已收 90,778 B／83,147 B 但 20 秒内未正常结束，另 3 次连接阶段超时、HTTP 000。
+- **不能据此扩大说法**：这组读数只覆盖当前机器到 Cloudflare 的一条出口（成功请求的 `CF-RAY` 落到 LAX），未做另一网络、不同地区与服务器回源对照；目前只能说“当前探针链路不稳定”，不能写成“所有用户都打不开”或“源站已故障”。
+- **影响**：SEO/GEO 的结构面即使全绿，抓取器与真实访客仍可能拿不到完整响应；若不先隔离这一层，继续发内容会把新增访问导向一个可达性未证稳的入口。
+- **判据**：当前机器／另一网络／服务器回源各连续 20 次，逐次记录 DNS、连接、TTFB、完整收尾、状态码与字节；三路都无超时且响应字节稳定，才可关闭。若只某一路红，按出口／边缘节点处置；若回源也红，再查 Next 进程与源站资源。
+- **报告**：`交付档案/审查报告/审查报告_20261024_SEO_GEO与宣传下一步_五面对抗式审查.md:11`。
+
+## #277　读回通道与投影脚本对同一张飞书台账读出不同结果；我连跑三次投影有造重复行的风险　🟡 中（内部台账卫生，不碰产品）
+
+- **现象（2026-10-23 23:0x 实测）**：`scripts/sync-task-ledger.sh` 同一拍报 `skip=177`（＝读到 177 行飞书现值且与台账相等）；而 `scripts/feishu-readback.mjs` 报 **表 0 行／缺行 195**。同一张表两只手读数不一致 ⇒ 至少一边坏（怀疑读回分页/视图过滤失效），**不能**据 readback 判"表被清空"。
+- **我造成的敞口**：新行 `PC-KERNING-REWRITE` 投影连续报 `[fail] create`，我把同一脚本跑了 **3 次**。按 #274（create 成功也不写回快照），若那 3 次 create 实际落库＝现在可能有 2–3 条重复行。已停止重试。
+- **处置**：① 读回通道修好后第一件事是**按 record id 数 `PC-KERNING-REWRITE` 出现次数**，>1 就删多余行（只删我自己这一 taskId 的重复，不碰别人行）；② 投影脚本 create 失败时**不得由调用方重跑整表**——按 #274 建议加 `--only TASKID` 单行口子；③ 本类操作今后只跑一次，失败即登记不重试。
+- **判据**：`feishu-readback.mjs` 报的"表 N 行"与 `sync-task-ledger.sh` 的 `skip+held+update` 之和相等；不等即为读回坏，不得据此判数据丢失。
+
+## #276　免 PS 引擎保存会把整稿字距模式静默改成 Metrics（实测 175/175 层）　🟢 已修（2026-10-24；根因＝产品自己摘 Txt2，PS 打开仍待人工验）
+
+- **成因**：`tygf-engine 0.7.0 (dev build)` 的 `doc.save` 路径重写 TySh 时把 runs[0].kerning 归一成 `Metrics`，与是否编辑过该层无关。守卫 `scripts/smoke-pc-wiring-freeze.mjs` 列的三个上游 P0（#6968/#6971/#6129）之外的**第四个静默改动**，本会话真稿实测新发现。
+- **现状（2026-10-23 23:0x 实测）**：真稿副本（175 个文字层）单层 `type.edit` → 存新文件 → 摘全局 Txt2（1 块／437,190 B）→ 盘上逐层回读：**175/175 层 Optical→Metrics**，未触碰的层同样被改；auto_leading／tracking／leading_pt／transform 未变。编辑层文字内容落盘正确。体积 176,855,002 → 263,343,834 B（**+49.2%**）。母版类 PSB 一律被 `psd-sanitize` 硬拒（PSD_SANITIZE_UNSUPPORTED_PSB），5857/6877 全链走不了。
+- **处置**：① 免 PS **写回**继续冻结，且解冻前置加这一条：引擎侧修 kerning 保持（或保存后按源稿逐层回写 kerning）；② 对外/对内一律不称"免 PS 写回保真"；③ 扫描/就绪道（只读）不受此影响，可继续用；④ 与本仓「自动字距三档」（develop 558384c9，沿用/度量/光学）直接冲突——引擎产出的稿会把自己标的光学字距读成度量，复验时必须把 kerning 纳入读回比对。
+- **判据**：同一份真稿跑一次引擎保存后，`type.info` 逐层回读的 kerning 分布与源稿**完全一致**（当前 175/175 差＝红）；体积涨幅有上限或如实标注。复现件：`tmp/pc-run-20261023/kerning-census.cjs` ＋ `kerning-source.json`／`kerning-output.json`。
+
+### 2026-10-23 23:2x 补：根因定位到行，且已验证一条可用挡板（Owner 选 B）
+
+- **不是保存器全局丢字距**：同一份稿**不带任何命令纯重存** → 抽样 4/4 层仍 Optical（`resave.psd`）。只有跑过 `type.edit` 才全稿变 Metrics（`kerning-output.json` 175/175）。
+- **断点**：光学字距不在引擎模型里，住在文档级 `Txt2`，靠每层 `TySh` 的 `TextIndex` 索引（`crates/io/src/psd_import.rs:56`）。每次保存都重生成 `Txt2`（`crates/io/src/psd_export.rs:1458-1471`），`build_txt2` 的取值链是：先取 `previous`（文件原 `Txt2`）同槽对象 ⇒ `with_modes(runs, modes)` 复用文件样式 run ⇒ **任一环节取不到就回落到"只按模型合成 run"**，而模型里没有光学 ⇒ 写回默认度量（`crates/text/src/psd.rs:749-780`）。编辑路径使 `previous` 这条链失效＝全稿落回默认。
+- **已验证挡板（真稿 616 层／175 文字层，盘上逐层回读）**：在 `type.edit` 之后、存盘之前**补一次 `type.setStyle {kerning:"optical"}`** ⇒ 全稿 **175/175 Optical**，与源稿逐项相等。两种摆法同效：设在被编辑层（`fix2.psd`）与设在任意未触碰层（`fix1.psd`）——**说明它是会话级副作用，不是逐层写回**。`type.setStyle` 在命令表里标 `enabled:false` 但可经 `--cmd` 调用（实测 rc=0）。
+- **因此的处置口径**：挡板**不得裸用**——机制未解释清楚前，任何依赖它的实现都必须带**保存后回读校验闸**（按编辑前快照逐层比 kerning，不符即 fail closed、不出交付件）。正解仍是 Rust 侧修 `previous` 链（定位已给出，工具链在本机可用：cargo/rustc 1.99.1，增量构建实测 2m18s，产物需重钉 sha256＋更新 BUILD-MANIFEST）。
+- **仍未证**：`previous` 为何在编辑路径下失效（要读 `crates/engine/src/type_cmds.rs` 编辑分支）；挡板在**其它稿**（尤其 Txt2 结构不同、含多 master 的稿）上是否同样成立——只在这两份稿上证过。
+
+### 2026-10-24 08:5x 定案修正：根因是产品自己摘 Txt2，不是引擎归一化（上面 10-23 的三条结论作废）
+
+- **推翻①**「引擎 `doc.save` 把 `runs[0].kerning` 归一成 Metrics」：编辑后**未经清洗**的存盘 `edit-only.psd` 与 `fix2.psd` **逐字节相同**（sha `c7e5aae1b0c66aac798dabe3770641cb66be17909e94b458b6c34203ef01aa7a`），盘上 175/175 读回 Optical。
+- **推翻②**「`type.setStyle {kerning:"optical"}` 是有效挡板」：同上一句，两文件同字节 ⇒ 那次"挡板生效"的差异来自两份文件在 census 时是否已摘 Txt2，不是命令起了作用。
+- **推翻③**「只有跑过 `type.edit` 才全稿变 Metrics」：真正的变量是 **Txt2 在不在**。反证（同一件产物、只改这一个变量）：保留 Txt2 → 抽 3 层全 `Optical`；摘掉 Txt2 → 同 3 层全 `Metrics`（`tmp/pc-run-20261023/txt2-negative-control.cjs`）。
+- **修复**：`pc-executor.js` 停止调用 `sanitizePsdFile`（模块保留作应急工具）；改稿前按层建字距快照，`doc.save`+`doc.close` 后重开产物逐层比对，不符即 `KERNING_FIDELITY_LOST`（新终态码）fail closed、不出交付件。旧合同「保存后摘除 Txt2」作废。
+- **真稿复跑**：175 文字层 34.3 秒、`SAVE_SUCCEEDED`、`kerningVerified:true`、`kerningCensus:{"Optical":175}`；产物 Txt2 解析 175 个对象、175/175 带新文字、字距全 mode 2 ⇒ 也排掉「Txt2 是旧文」那类（引擎 `apply_txt2` 有文字一致性守卫，旧文会退回 Metrics）。
+- **仍开（不在本条关闭范围）**：① PS 2021 能否直接打开保留 Txt2 的产物＝本机 COM 不可用，**未核实**，等 Owner 目检；② 11/175 层混合字体（拉丁＋日文双字体）整段替换后被整层单一字体取代——引擎 `type.edit` 支持逐段样式（`crates/engine/src/type_cmds.rs:715`），执行器未用；③ 体积 176,855,002→263,700,733 B（+49.1%）为引擎存盘既有行为，待立项。
+
 ## #271　工作台 i18n 用「片段级词典」兜拼接句，英文语序在个别位置会生硬　🟡 低（已知表达问题，不影响可用性）
 
 - **成因**：scripts/i18n-wrap-workbench.mjs 按 JSX 文本节点逐段包装，而工作台里有大量「已添加 」+ {n} + 「个 PSD · 已扫描 」+ {m} 这样的拼接句。词典按片段查，英文只能片段级翻译，语序无法重组。
@@ -2088,3 +2127,11 @@
 - **副案未动（如实）**：① 空行静默丢弃＋行号压缩（三处丢弃点、全仓无丢弃计数）；② `invalid_target` 与 `combined` 共用同一个 `V15_INVALID_TARGET` 同一句话；③ `EXCLUDED_NO_TRANSLATION` 仍零生产者（逐语言"不翻译"到今天仍无原语）；④ 粘贴保留中间空行 vs 导入丢弃 的不一致。
 - **仍未核实**：多稿共用一张忽略表是否为刻意设计（同原文跨稿同时生效）——需一次 3 稿同原文实跑才能定性，本轮未做。
 - **状态口径**：修法已落 R2-a（待 Owner 在测试站点复验）；R2-b（软删）与 R3（拆四种类"空"＋Excel 原行号＋丢弃计数）尚未开工。
+
+## #278　release-preflight 的 git() helper 吞诊断并硬退：红门猝死时终端零 [release-preflight] 输出　🟡 minor（2026-10-24 14:2x 实测，develop@3a7cdbe7，GLM-5.3-Flash 外派工单发现＋主会话读码确认）
+
+- **现象**：`npm run release:preflight:test` rc=1，终端只有两行 git CRLF warning，无任何 `[release-preflight]` 行；17 道测试门一个未启动。
+- **根因（读码）**：`scripts/release-preflight.cjs:6-13` 的 `git()` 对任何非零 rc 直接 `console.error(stderr)+process.exit(1)`：① 真诊断在 **stdout**（本次＝`AI_MEMORY/ISSUES.md:1557: new blank line at EOF.`，由 :115 的 `git diff --check` rc=2 触发）被丢弃；② :121-129 远端引用门与 :195-199 错误汇总从未执行。fail-closed 方向没错，但红门不可诊断。
+- **触发链**：4 项脏文件之一（ISSUES.md 工作副本末尾多一空行）→ diff --check rc=2 → helper 硬退。清脏（收生产方案第四节）可消本次红，但缺陷对任何未来非零 rc 的 git 调用都会复发。
+- **修法方向（未动）**：git() 失败改回传 `{status,stdout,stderr}` 交调用点入 errors 汇总（仓内已有同形 `gitSoft()` :15-19），或至少失败时同时回显 stdout+stderr 再走汇总退出；属发布轨工具缺陷，修复时应跑 `release:preflight:test` 双态验证（干净树绿／脏树红且可诊断）。
+- **证据**：交付档案/执行报告/执行报告_20261024_收生产第一步_本地暴露冲突面与preflight实跑.md 第二节（node --trace-exit 定位 :10，单独复跑 git diff --check 取证 DIFFCHECK-RC=2）。

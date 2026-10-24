@@ -1,0 +1,757 @@
+<!doctype html>
+<title>文件夹导入 · 免 PS 全流程（PhotoCraft 引擎） · 模拟 v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:62ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:70ch}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+
+/* ================= 模拟窗 ================= */
+.sim-toolbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px}
+.sim-toolbar .label{font-size:.84rem;font-weight:600}
+.sim-hint{font-size:.76rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.74rem;color:var(--muted);align-items:center}
+.mk{display:inline-block;font-size:10px;line-height:1.4;padding:1px 7px;border-radius:999px;margin-left:6px;white-space:nowrap;vertical-align:1.5px;font-weight:600}
+.mk-new{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.mk-decide{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.mk-eng{background:#e0f2f0;color:#0d7f74;border:1px solid #0d9488}
+@media (prefers-color-scheme: dark){ .mk-eng{background:#0e2a27;color:#5eead4} }
+.sim{border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:0 12px 34px rgba(16,24,40,.07);position:relative}
+.sim-sitebar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.8rem;color:var(--ink-2);flex-wrap:wrap;gap:8px}
+.sim-sitebar .brand{font-weight:700;color:var(--ink)}
+.engchip{font-family:var(--font-mono);font-size:.68rem;background:var(--surface);border:1px solid #0d9488;color:#0d7f74;border-radius:999px;padding:1px 9px}
+@media (prefers-color-scheme: dark){ .engchip{color:#5eead4} }
+.sim-body{padding:16px 20px 20px}
+.view{display:none}
+.view.on{display:block}
+.wcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+.wcard .t{font-size:.9rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wcard .sub{font-size:.76rem;color:var(--muted);margin-bottom:9px}
+.btn{border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap}
+.btn.primary{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.teal{background:#0d9488;border-color:#0d9488;color:#fff;font-weight:600}
+.btn.newout{border:1.5px solid #0d9488;color:#0d7f74;font-weight:600;background:var(--surface)}
+.btn.sm{padding:4px 9px;font-size:.72rem}
+.btn.off{opacity:.45;cursor:not-allowed}
+.filerow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:.78rem;background:var(--sunk);margin-top:8px;flex-wrap:wrap}
+.filerow .p{font-family:var(--font-mono);font-size:.72rem;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-gray{border:1px solid var(--line-strong);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-amber{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-red{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-sky{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-teal{background:#e0f2f0;color:#0d7f74;border:1px solid #0d9488;border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+@media (prefers-color-scheme: dark){ .badge-teal{background:#0e2a27;color:#5eead4} }
+.sim-hint-line{font-size:.74rem;color:var(--muted);margin-top:8px;line-height:1.7}
+.statusline{display:flex;align-items:center;gap:8px;font-size:.78rem;border-radius:8px;padding:8px 12px;margin-top:10px;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);line-height:1.6}
+.statusline.green{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.statusline.sky{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.statusline.teal{background:#e0f2f0;color:#0d7f74;border-color:#0d9488}
+@media (prefers-color-scheme: dark){ .statusline.teal{background:#0e2a27;color:#5eead4} }
+.statusline.err{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.statusline .d2{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.statusline.hide{display:none}
+.minitable{width:100%;border-collapse:collapse;font-size:.74rem;margin-top:9px}
+.minitable th{background:var(--sunk);font-size:.68rem;padding:5px 8px;border-bottom:1px solid var(--line);font-family:inherit;color:var(--muted);text-align:left;white-space:nowrap}
+.minitable td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.minitable td.m{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+.countline{font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.note-line{font-size:.72rem;color:var(--muted);margin-top:9px;line-height:1.7}
+.rowline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
+
+/* 单元卡 */
+.units{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+.unit{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:8px;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}
+.unit.show{opacity:1;transform:none}
+.unit.blocked{border-left:3px solid var(--bad)}
+.unit.okay{border-left:3px solid var(--ok)}
+.unit .uh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.unit .un{font-family:var(--font-mono);font-size:.8rem;font-weight:600}
+.unit .ul{font-size:.78rem;color:var(--ink-2);line-height:1.7}
+.unit .ul b{color:var(--ink)}
+details.why{border-top:1px dashed var(--line);padding-top:7px;font-size:.76rem;color:var(--ink-2)}
+details.why summary{cursor:pointer;color:var(--muted);font-size:.74rem}
+details.why .in{padding-top:7px;line-height:1.75}
+
+/* 表格数据流 */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:10px}
+.fbox{flex:1 1 150px;min-width:140px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:9px 11px;font-size:.74rem;line-height:1.65;color:var(--ink-2)}
+.fbox .ft{font-weight:700;font-size:.76rem;color:var(--ink);display:block;margin-bottom:2px}
+.fbox .fi{font-family:var(--font-mono);font-size:.62rem;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.06em}
+.farr{align-self:center;color:var(--line-strong);font-family:var(--font-mono);font-size:.9rem}
+
+/* 矩阵 */
+.mx td.c{font-family:var(--font-mono);font-size:.72rem;text-align:right;font-variant-numeric:tabular-nums}
+.mx td.c.ok{color:var(--ok)}
+.mx td.c.warn{color:var(--warn);font-weight:700}
+.mx td.c.bad{color:var(--bad);font-weight:700}
+.gate{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.gate label{display:flex;gap:9px;align-items:flex-start;font-size:.78rem;color:var(--ink-2);cursor:pointer;line-height:1.65}
+.gate input{margin-top:4px}
+.auditlist{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.auditrow{display:flex;gap:8px;align-items:flex-start;font-size:.78rem;line-height:1.7;color:var(--ink-2)}
+.auditrow .b{flex:none;margin-top:2px}
+
+/* 模拟助手对话框 */
+.dlgmask{display:none;position:absolute;inset:0;background:rgba(10,14,20,.42);z-index:90;align-items:center;justify-content:center}
+.dlgmask.on{display:flex}
+.dlgwin{width:min(560px,92%);background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 24px 70px rgba(8,12,20,.35);overflow:hidden}
+.dlgwin .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--sunk);border-bottom:1px solid var(--line);font-size:.8rem;font-weight:700}
+.dlgwin .bar .x{border:0;background:transparent;font-size:1rem;color:var(--muted);cursor:pointer}
+.dlgwin .bdy{padding:12px 14px}
+.dlgpath{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.72rem;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);margin-bottom:10px;overflow:hidden}
+.dlgpath input{flex:1;border:0;background:transparent;color:var(--ink);font-family:var(--font-mono);font-size:.72rem;min-width:0;outline:none}
+.dlgnote{font-size:.74rem;color:var(--muted);line-height:1.7;border:1px dashed var(--line-strong);border-radius:8px;padding:8px 11px;background:var(--bg)}
+.dlgfoot{display:flex;justify-content:flex-end;gap:8px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.walklog{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.9;min-height:40px}
+.walklog .ln{opacity:0;transition:opacity .25s}
+.walklog .ln.show{opacity:1}
+.walklog .warn{color:var(--warn)}
+.walklog .teal{color:#0d7f74}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 工作台</span><span class="sep">/</span><span>文件夹导入 · 免 PS 全流程（PhotoCraft 引擎） · 模拟 v3</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>本机没有 Photoshop，也能从文件夹一路跑到替换回执</h1>
+    <p class="standfirst">把本地助手的 PhotoCraft 引擎接进「子文件夹单元」审查层：导入那一刻就把整夹 PSD 逐稿真扫（真稿实测 224 MB / 7.3 秒级），体检结论直接长在单元卡上——「能不能替换、哪里会漏」在替换之前全部可见；替换同样由引擎完成，回执写明引擎身份并声明「未使用 Photoshop」。扫描来源与执行来源<b>硬绑定</b>：跨通道执行一律被安全闸拒（已在原型跑绿；产品化在途，页内如实标注）。本页为可点模拟，完整方案见同目录《执行方案_20261017_文件夹导入x免PS引擎_导入即体检_对抗式审查.md》。</p>
+    <div class="meta">
+      <span>基线：develop <code>2a44d55</code></span>
+      <span>性质：模拟件（未动代码、未动两站）</span>
+      <span>引擎实测：224 MB 真稿扫描 7.28s rc=0 · 凭记 exeSha256 <code>628268bb…c1c5fd1b</code></span>
+      <span>在途：扫描器重做中 · 执行接线未进主线 · 安装包内置未落 · 灰度默认关</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>速览</h2>
+    <div class="verdict">
+      <span class="lb">一句话结论</span>
+      <p>免 PS 引擎让「审查层」从扫描之后提前到导入那一刻：结构审＋表格体检＋逐稿真扫一次跑完，每个单元直接带着结论卡出现——麻烦的近似行被点名、放错稿被红标、覆盖率闸进入待放行状态。审查只读，替换在后；替换由同一引擎完成，来源跨通道即拒。没有 Photoshop 的机器，从此能走完全程。</p>
+    </div>
+    <div class="stats">
+      <div class="stat acc"><span class="n">10</span><span class="k">模拟文件夹里的 PSD/PSB（递归后），忽略非 PSD 2 个、跳过隐藏目录 1 个</span></div>
+      <div class="stat ok"><span class="n">7</span><span class="k">导入期完成引擎扫描的稿（免 PS）· 2 个拦下单元未扫（缺表）</span></div>
+      <div class="stat warn"><span class="n">2+3</span><span class="k">表格体检警告 2 条 · 近似点名 3 条（矩阵算了覆盖、执行不会替换）</span></div>
+      <div class="stat bad"><span class="n">2</span><span class="k">拦下单元（缺表格——点名原因，不静默跳过）· 1 件放错稿被硬拦截</span></div>
+    </div>
+    <div class="split">
+      <div class="panel yes">
+        <h3>做得到（本页演示 · 免 PS 全流程）</h3>
+        <ul>
+          <li>导入期一次完成三道审：结构（缺表/多表合并）＋表格体检＋<b>引擎逐稿真扫</b>——不等 Photoshop、不入扫描队列</li>
+          <li>每个单元卡直接带结论：最低覆盖率、近似点名数、放错稿红标；D5 闸进入「待放行」态</li>
+          <li><b>免 PS 替换</b>：没装 Photoshop 的机器也能跑完替换；回执含引擎身份（运行时读取）＋逐稿读回校验＋「未使用 Photoshop」声明</li>
+          <li>来源安全：扫描来源＝执行来源硬绑定；跨通道执行一律拒并给出重扫指引（ISSUES #159 第一道防线已跑绿）</li>
+          <li>大稿不虚：224 MB 单稿 7.3 秒（实测）；12 稿规模导入期扫描约半分钟到一分半，进度逐稿可见</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>做不到／如实标注</h3>
+        <ul>
+          <li>引擎读不到的 2 项排版字段（悬挂标点等）<b>如实标注、不补 0</b>——不假装与 Photoshop 完全一致</li>
+          <li>引擎不在＋Photoshop 不在＝这台机器无法扫描；提示随助手版本安装引擎（内置打包在途）</li>
+          <li>免 PS 替换对外文案在「真 PS 开档验产物」通过前<b>不写「完全替代 Photoshop」</b>；当前仅白名单机器可用（灰度默认关）</li>
+          <li>不做「自动猜这表属于哪个单元」——宁可拦下点名，不猜（与 v2 一致）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card hot"><div class="top"><h3>调研：别人怎么做（实测摘录）<span class="mk mk-new">详版在方案 md</span></h3></div>
+        <p><b>PhotoCraft 上游</b>（<code>github.com/storytold/photocraft</code>）：★ 65,504 · Fork 11,425 · pure Rust 的 Photoshop clean-room 重写 · 早α · MIT／Apache-2.0 双许可——本地全读写引擎正是「免 PS」这条路稀缺的拼图（商用核验已闭合：345 依赖 crate 零 copyleft 阻断）。<br>
+        <b>行业现状</b>：批量替换类工具<u>全部依赖 PS</u>（souvikmaity JSX 脚本、yancongya 批处理器、Aangy「VariableData」商用脚本）；无 PS 系要么只读（kartsims/psd-cli ★80「extract text」）、要么商业库（Aspose.PSD）；psd-tools 文档自曝「预览与图层不一致」陷阱——对应我们「预览非权威、真扫才算数」的实测。<br>
+        <b>配对与 QA 谱系</b>（v2 已录）：Adobe 数据驱动图形「对不上就报错」／Mars Premedia 多模板配对／Crowdin·i18nlint 重复检查／孤儿检测模式。</p>
+      </div>
+      <div class="card"><div class="top"><h3>两处依据推荐值先行（可一句话改回）<span class="mk mk-decide">待您确认</span></h3></div>
+        <p>① 表格只认<b>同级</b>（备选：向上就近找表）｜② <b>一次载入一个单元</b>（多单元同进＝改执行合同，OUT OF SCOPE）｜③ 表格「重复原文两种译文」<b>只警告不拦</b>。<br>
+        新增两处本页按推荐值进模拟：④ 引擎就绪时<b>导入即自动体检</b>（可中止；引擎不在则退回「载入后再扫」的老流程）｜⑤ <b>放错稿红标升级为硬拦截</b>（v2 可勾选放行；现在须移稿或补表后重导——少一个能放错的口子）。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>可点模拟（免 PS 全流程）</h2>
+    <div class="sim-toolbar">
+      <span class="label">建议路径</span>
+      <span class="sim-hint">①「从文件夹导入…」→ 看日志三段：结构／表体／引擎扫描 ② 四张单元卡已带体检结论 ③「载入」01 → 报告直接展开 → 勾选放行 →「开始替换（免 PS）」→ 看进度与回执 ④ 返回载入 02 → 看放错稿被硬拦截 ⑤ 试「改用 Photoshop 通道」→ 看跨引擎拒绝文案</span>
+      <button class="btn sm" id="reset-btn" type="button" style="margin-left:auto">重置模拟</button>
+    </div>
+    <div class="legend">
+      <span>标记：<span class="mk mk-eng">免 PS 引擎通道〔模拟〕</span> 本轮新增的 PhotoCraft 通道；<span class="mk mk-new">新增〔模拟〕</span> 方案建议新增；<span class="mk mk-decide">待拍板</span> 需要您一句话；无标记＝现状 UI 复刻。</span>
+    </div>
+
+    <div class="sim">
+      <div class="sim-sitebar">
+        <span class="brand">图译工坊<span style="margin-left:6px;background:rgba(210,140,0,.15);color:#a06a00;border-radius:99px;padding:0 6px;font-size:.64rem;font-weight:700;vertical-align:1px">v1.5</span></span>
+        <span class="engchip">引擎：PhotoCraft 0.7.0 (dev build) · 免 PS 就绪 · 628268bb…</span>
+        <span>credits: 240 · demo@example.com</span>
+      </div>
+
+      <div class="sim-body">
+
+        <!-- ============ 视图 A：工作台（导入前） ============ -->
+        <div class="view on" id="view-home">
+          <div class="wcard">
+            <div class="t">多设计稿选择（批量模式）</div>
+            <div class="sub" id="home-count">已添加 0/12 个 PSD · 已扫描 0 · 扫描中 0</div>
+            <div class="statusline teal" style="margin-top:2px"><span class="d2"></span><span>本机引擎：<b>PhotoCraft 0.7.0 (dev build)</b> · 已就绪 · 哈希 <code>628268bb…c1c5fd1b</code> —— <b>本机无需 Photoshop</b> 即可扫描与替换（本页演示引擎通道；Photoshop 通道同样支持，两通道禁止混用）。</span></div>
+            <div class="rowline">
+              <button class="btn newout" id="import-btn" type="button">从文件夹导入…（默认含子文件夹）<span class="mk mk-new">新增〔模拟〕</span></button>
+              <button class="btn off" type="button">添加 PSD（单张）——逃生门，本演示略</button>
+            </div>
+            <div class="sim-hint-line">约定（本方案骨架）：<b>一个子文件夹 = 一个单元 = 该单元的 PSD ＋ 它要用的表格（同级）</b>。导入后逐个单元审查与载入；引擎就绪时导入即完成逐稿扫描。</div>
+            <div class="walklog hide" id="walklog"></div>
+            <div class="statusline hide" id="walk-status"><span class="d2"></span><span id="walk-status-tx"></span></div>
+          </div>
+        </div>
+
+        <!-- ============ 视图 B：单元列表 ============ -->
+        <div class="view" id="view-units">
+          <div class="wcard">
+            <div class="t">导入结果：按单元清点（已含导入期体检）<span class="mk mk-new">新增〔模拟〕</span></div>
+            <div class="sub" id="units-sub"></div>
+            <div class="units" id="units-grid"></div>
+            <div class="rowline">
+              <button class="btn sm" id="units-back" type="button">← 返回工作台（重新导入）</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 视图 C：单元已载入的工作台 ============ -->
+        <div class="view" id="view-work">
+          <div class="statusline sky" id="work-banner"><span class="d2"></span><span id="work-banner-tx"></span></div>
+
+          <div class="wcard" style="margin-top:12px">
+            <div class="t">多设计稿选择（批量模式）</div>
+            <div class="sub" id="work-count"></div>
+            <div id="work-list"></div>
+            <div class="rowline">
+              <span class="badge-teal" id="work-scanned-chip">已扫描 · PhotoCraft 引擎 · 导入时完成</span>
+              <button class="btn sm" id="work-back" type="button">← 返回单元列表</button>
+            </div>
+          </div>
+
+          <div class="wcard">
+            <div class="t">表格（来自本单元）<span class="mk mk-new">新增〔模拟〕</span></div>
+            <div class="sub" id="work-tablesub"></div>
+            <div class="flow">
+              <div class="fbox"><span class="fi">STEP 1</span><span class="ft">文件夹里的表格</span>助手只读定位本单元同级的表格文件（≤5MB/个）</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 2</span><span class="ft">本机助手读字节</span>只读、不解析、不留副本；经票据放行</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 3</span><span class="ft">localhost 本机桥</span>数据在两行进程间流动，不出本机、不上云</div>
+              <div class="farr">→</div>
+              <div class="fbox"><span class="fi">STEP 4</span><span class="ft">浏览器纯前端解析</span>与手动拖入走同一条解析管线，一字不差</div>
+            </div>
+            <div id="work-tablepreview"></div>
+            <div class="auditlist" id="work-r2"></div>
+          </div>
+
+          <div class="wcard" id="work-mx-card" style="display:none">
+            <div class="t">单元体检报告 · 扫描与执行风险<span class="mk mk-eng">免 PS 引擎通道</span></div>
+            <div class="sub" id="work-mx-sub"></div>
+            <div id="work-mx"></div>
+            <div id="work-r3"></div>
+            <div class="gate" id="work-gate"></div>
+            <div class="rowline">
+              <button class="btn primary off" id="exec-btn" type="button">开始替换（免 PS · PhotoCraft 引擎）</button>
+              <button class="btn sm" id="ps-channel-btn" type="button">改用 Photoshop 通道（查看跨引擎拒绝）</button>
+              <span class="sim-hint" id="exec-hint">按闸提示操作</span>
+            </div>
+            <div id="work-refusal"></div>
+          </div>
+
+          <div class="wcard" id="work-receipt" style="display:none">
+            <div class="t">替换执行 · 引擎回执<span class="mk mk-eng">免 PS 引擎通道</span></div>
+            <div class="walklog" id="exec-log"></div>
+            <div id="work-receipt-body"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 模拟助手对话框 -->
+      <div class="dlgmask" id="dlgmask">
+        <div class="dlgwin">
+          <div class="bar"><span>选择文件夹（本机助手 · 原生框，置顶）</span><button class="x" id="dlg-x" type="button">×</button></div>
+          <div class="bdy">
+            <div class="dlgpath"><span>📁</span><input id="dlg-path" type="text" spellcheck="false" value="D:\客户稿\2026-10_秋季档"></div>
+            <div class="dlgnote">默认递归含子文件夹（无需勾选）。请把每个批次的 PSD 和它要用的表格放进同一个文件夹；根目录上的散稿也需要同级表格。<b>本机引擎已就绪——导入时即完成逐稿内容扫描（免 PS）。</b></div>
+          </div>
+          <div class="dlgfoot">
+            <button class="btn sm off" id="dlg-pick" type="button">打开文件夹选择（模拟）</button>
+            <button class="btn sm" id="dlg-cancel" type="button">取消</button>
+            <button class="btn sm teal" id="dlg-ok" type="button">开始读取</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>审查三层 × 引擎通道 · 一句话速览</h2>
+    <div class="cards">
+      <div class="card"><div class="top"><h3>R1 结构审（导入时 · 秒级）</h3></div>
+        <p>单元缺表 → 拦下点名；多表 → 先试合并（多语言分件、多数结构合同），成则放行、败则拦下；同名稿跨单元 → 警告；隐藏/系统目录跳过并计数。与 v2 相同。</p></div>
+      <div class="card"><div class="top"><h3>R2 表格体检（导入时 · 浏览器本机）</h3></div>
+        <p>解析硬错 → 拦；同一句原文两种译文 → 警告点名；空译文分语言统计 → 提示；非语言列忽略说明。与 v2 相同。</p></div>
+      <div class="card"><div class="top"><h3>R3 扫描与执行风险（本轮升级：导入期引擎扫描）<span class="mk mk-eng">免 PS 引擎通道</span></h3></div>
+        <p>v2 里 R3 发生在「载入后扫描」；现在引擎就绪时提前到导入期：逐稿真扫（免 PS），覆盖率矩阵、近似点名（执行不会替换的行）、放错稿红标全部就位；单元卡直接带结论。<b>扫描来源＝执行来源</b>硬绑定，跨通道执行一律拒（ISSUES #159）。</p></div>
+    </div>
+    <div class="callout">
+      <span class="lb">诚实标注（本页不藏）</span>
+      <p>① 引擎扫描 38 项排版字段可得 36 项（缺「悬挂标点」；行距在多 run 混合态部分缺，扫描器正在按「包裹原型」方式重做，修好后恢复）——报告如实呈现，不补 0。② 免 PS 替换的产品化在途：扫描器重做中、执行接线未进主线、安装包内置未落、灰度默认关——本页是目标形态演示，不是当前出厂状态。③ 免 PS 替换与 Photoshop 替换的产物质量对比（真 PS 开档验证）通过前，对外不写「完全替代」。</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>模拟件说明：全部数据为演示用假数据，页面展示的是判定逻辑与界面形态，不是最终视觉稿；真实实现时的文案与交互以最终开发为准。方案全文与拍板事项见同目录《执行方案_20261017_文件夹导入x免PS引擎_导入即体检_对抗式审查.md》。</p>
+    <p>图译工坊 · 多对多工作台 · 文件夹导入 v3 模拟（免 PS 全流程） · 2026-10-17 · 基线 develop 2a44d55（含 D10 4e4cdd4）· 引擎实测引用：pc-port 树 tmp-real-scan-observation.json</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var timers = [];
+
+  var UNITS = [
+    {
+      id: 'u1',
+      name: '01_秋季大促',
+      kind: 'okay',
+      badge: '<span class="badge-ok">可载入</span>',
+      scanBadge: '<span class="badge-teal">引擎扫描 ✓ 4/4</span>',
+      line: '<b>4</b> 个 PSD · 表格：秋季大促_语言表.csv（EN/DE/JA · 128 行）',
+      scanLine: '覆盖率最低 <b>JA 92.5%</b>（落地页_首屏）· 近似点名 2 ＋ 提示 1 · D5 闸：载入后勾选放行',
+      summary: '结构通过 · 表体警告 2 条 · 引擎扫描完成（免 PS）',
+      why: '体检详情：① 同一句原文出现 2 行、译文不一致——「全场包邮」第 34、87 行的 EN 译文分别是 Free shipping / Free delivery，执行时该图层会被替换，以哪行为准当前无法保证；② JA 空译文 2 处（第 12、45 行），对应图层不会被替换；③ 非语言列「备注」已忽略（正常）。<br>扫描来源：<b>PhotoCraft 引擎 0.7.0（免 PS）</b> · 导入期完成 · 凭记 exeSha256 <code>628268bb…c1c5fd1b</code>（与本机引擎实测一致）· 38 项排版字段 36 项可读（缺悬挂标点等 2 项，已如实标注）。',
+      psds: ['主视觉_1080x1920.psd', '主视觉_1080x1080.psd', '落地页_首屏.psd', '落地页_次屏.psd'],
+      tableSub: '1 张（来自本单元，文件夹导入）· 128 行 · 语言列：EN、DE、JA（「备注」列已忽略）',
+      mxSub: '本报告由<b>导入期引擎扫描（免 PS）</b>生成 · 未重新打开 PSD · D5 覆盖率闸照旧（低于 95% 需勾选放行）',
+      r2: [
+        { b: '<span class="badge-amber">警告</span>', t: '<b>同一句原文两种译文</b>：「全场包邮」在第 34、87 行出现两次，EN 译文不同（Free shipping / Free delivery）。执行时该句命中的图层会被替换，以哪行为准当前无法保证——请回表格统一后重导。' },
+        { b: '<span class="badge-amber">警告</span>', t: '<b>JA 空译文 2 处</b>：第 12、45 行的 JA 列为空，执行时对应图层保持原样（不会被替换）。' },
+        { b: '<span class="badge-gray">说明</span>', t: '非语言列「备注」已忽略；表格编码 UTF-8 正常。' }
+      ],
+      matrix: {
+        langs: ['EN', 'DE', 'JA'],
+        rows: [
+          ['主视觉_1080x1920.psd', [100, 98, 96]],
+          ['主视觉_1080x1080.psd', [100, 97, 95.5]],
+          ['落地页_首屏.psd', [99, 96, 92.5]],
+          ['落地页_次屏.psd', [100, 100, 97]]
+        ]
+      },
+      r3: [
+        { b: '<span class="badge-amber">近似点名</span>', t: '<b>落地页_首屏.psd</b>：表格原文「限时3天 全场5折」（中间是空格），图层里是「限时3天↵全场5折」（换行位置不同）——矩阵按"空白等价"算进了覆盖，但执行引擎按规范化后完全相等配对，<b>不会替换</b>。' },
+        { b: '<span class="badge-amber">近似点名</span>', t: '<b>主视觉_1080x1920.psd</b>：表格原文「会员 专享价」（半角空格），图层里是「会员　专享价」（全角空格）——同上，执行不会替换。' },
+        { b: '<span class="badge-gray">仅提示</span>', t: '<b>落地页_次屏.psd</b>：表格原文「立即抢购」，图层是「立即抢购！」（多一个叹号）——"部分包含"很常见，仅提示，多数情况下无需处理。' }
+      ],
+      gate: { lang: 'JA', psd: '落地页_首屏.psd', pct: '92.5', sev: 'warn' },
+      replace: {
+        rows: [
+          ['主视觉_1080x1920.psd', 42], ['主视觉_1080x1080.psd', 40],
+          ['落地页_首屏.psd', 46], ['落地页_次屏.psd', 39]
+        ],
+        total: 167, seconds: 26
+      }
+    },
+    {
+      id: 'u2',
+      name: '02_详情页',
+      kind: 'okay',
+      badge: '<span class="badge-ok">可载入</span>',
+      scanBadge: '<span class="badge-teal">引擎扫描 ✓ 3/3</span>',
+      line: '<b>3</b> 个 PSD · 表格：EN.csv ＋ DE.csv（两个单语言文件）',
+      scanLine: '放错稿 1 件：<b>A-产品对比.psd 12%/9%</b> → 替换被硬拦截',
+      summary: '结构通过 · 合并成功 · 引擎扫描完成 · 1 件疑似放错（硬拦截）',
+      why: '合并说明（原样呈现）：EN.csv 为基准（128 行）；DE.csv 匹配 127 行，1 行原文不在基准表中、已追加到末尾（第 129 行）；合并后空译文：无；重复语言：无。<br>扫描来源：<b>PhotoCraft 引擎 0.7.0（免 PS）</b> · 导入期完成 · 凭记 exeSha256 <code>628268bb…c1c5fd1b</code>。',
+      psds: ['详情页_主图.psd', '详情页_规格.psd', 'A-产品对比.psd'],
+      misplaced: 'A-产品对比.psd',
+      tableSub: '2 张 → 按原文合并为 1 张（EN 基准 128 行 → 合并后 129 行 · 语言列：EN、DE）',
+      mxSub: '本报告由<b>导入期引擎扫描（免 PS）</b>生成 · 检测到疑似放错稿——红标为硬拦截，须移稿或补表后重导',
+      r2: [
+        { b: '<span class="badge-ok">通过</span>', t: '两个单语言文件合并成功（多语言分件是受支持的正规用法）；合并说明如上。' }
+      ],
+      matrix: {
+        langs: ['EN', 'DE'],
+        rows: [
+          ['详情页_主图.psd', [99, 98]],
+          ['详情页_规格.psd', [100, 97]],
+          ['A-产品对比.psd', [12, 9]]
+        ]
+      },
+      r3: [
+        { b: '<span class="badge-red">疑似放错</span>', t: '<b>A-产品对比.psd</b>：EN 12% / DE 9%，两个语言列覆盖率均远低于 50% 阈值——它可能属于别的单元（如 01_秋季大促？），或本单元表格缺它的原文。<b>硬拦截替换</b>：请把它移到正确单元、或补齐表格后重新导入（不可勾选放行）。' }
+      ],
+      gate: { lang: 'EN/DE', psd: 'A-产品对比.psd', pct: '12 / 9', sev: 'bad' }
+    },
+    {
+      id: 'u3',
+      name: '03_旧版归档',
+      kind: 'blocked',
+      badge: '<span class="badge-red">拦下</span>',
+      scanBadge: '<span class="badge-gray">未扫描（缺表）</span>',
+      line: '<b>2</b> 个 PSD · <b>0</b> 张表格',
+      scanLine: '修好后重新导入，导入期即完成引擎扫描',
+      summary: '缺配套表格——不静默跳过，点名原因',
+      why: '本单元没找到配套表格。规则：表格需与设计稿放在同一个文件夹（同级）。提示：把该单元的表格放进 03_旧版归档 后重新导入；若这是历史存档暂不处理，可忽略本单元。',
+      psds: ['旧版_主图_v1.psd', '旧版_详情_v1.psd'],
+      blocked: true
+    },
+    {
+      id: 'u4',
+      name: '（根目录）散稿',
+      kind: 'blocked',
+      badge: '<span class="badge-red">拦下</span>',
+      scanBadge: '<span class="badge-gray">未扫描（缺表）</span>',
+      line: '<b>1</b> 个 PSD · <b>0</b> 张表格',
+      scanLine: '修好后重新导入，导入期即完成引擎扫描',
+      summary: '根目录散稿也算一个单元，同样需要同级表格',
+      why: '根目录上的散稿（杂图_测试.psd）算一个单元，也需要同级的表格；当前没有找到。提示：为它建一个子文件夹并把表格一起放进去，导入时会自动归成单元。',
+      psds: ['杂图_测试.psd'],
+      blocked: true
+    }
+  ];
+
+  function clearTimers(){ timers.forEach(function(t){ clearTimeout(t); clearInterval(t); }); timers = []; }
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+
+  function showView(id){
+    ['view-home','view-units','view-work'].forEach(function(v){
+      $(v).classList.toggle('on', v === id);
+    });
+  }
+
+  function reset(){
+    clearTimers();
+    var log = $('walklog');
+    log.innerHTML = '';
+    log.classList.add('hide');
+    $('walk-status').classList.add('hide');
+    $('units-grid').innerHTML = '';
+    $('dlgmask').classList.remove('on');
+    $('work-mx-card').style.display = 'none';
+    $('work-receipt').style.display = 'none';
+    $('work-receipt-body').innerHTML = '';
+    $('exec-log').innerHTML = '';
+    $('work-refusal').innerHTML = '';
+    $('work-mx').innerHTML = '';
+    $('work-r3').innerHTML = '';
+    $('work-gate').innerHTML = '';
+    showView('view-home');
+  }
+
+  /* ---------- 导入流程（含导入期引擎扫描） ---------- */
+  var walkLines = [
+    { t: '读取 D:\\客户稿\\2026-10_秋季档 …（本机助手，只读）', cls: '' },
+    { t: '结构审：01_秋季大促 → 4 PSD · 1 表 ｜ 02_详情页 → 3 PSD · 2 表（按原文合并）｜ 03_旧版归档 → 2 PSD · 0 表 ⚠ ｜（根目录）→ 1 PSD · 0 表 ⚠', cls: '' },
+    { t: '表格体检：01 → 警告 2 条（重复原文 / 空译文）｜ 02 → 通过（合并成功）', cls: '' },
+    { t: '引擎扫描（PhotoCraft 0.7.0 · 免 PS）：01_秋季大促 4/4 ✓ ｜ 02_详情页 3/3 ✓ ｜ 拦下单元未扫（缺表）', cls: 'teal' },
+    { t: '覆盖率预检：01 最低 92.5%（JA · 落地页_首屏）· D5 待放行；02 发现疑似放错稿（12%）', cls: 'warn' },
+    { t: '体检报告就绪：2 可载入 · 2 拦下 · 1 件放错被硬拦截（R1＋R2＋R3 全部在替换之前完成）', cls: '' }
+  ];
+
+  function renderUnits(){
+    var grid = $('units-grid');
+    grid.innerHTML = '';
+    var loadable = UNITS.filter(function(u){ return !u.blocked; }).length;
+    var blocked = UNITS.length - loadable;
+    $('units-sub').textContent = '共 4 个单元：可载入 ' + loadable + ' · 拦下 ' + blocked + ' · 已扫描 7 稿（引擎 · 免 PS）· 体检警告 2 条 · 放错 1 件（每个单元一次载入一个）';
+    UNITS.forEach(function(u, idx){
+      var div = document.createElement('div');
+      div.className = 'unit ' + u.kind;
+      var whyHtml = u.why ? '<details class="why"><summary>查看审查详情</summary><div class="in">' + u.why + '</div></details>' : '';
+      var btnHtml = u.blocked
+        ? '<span class="sim-hint">已拦下，不可载入——修好后重新导入</span>'
+        : '<button class="btn sm teal" data-load="' + u.id + '" type="button">载入工作台 →</button>';
+      div.innerHTML =
+        '<div class="uh"><span class="un">' + u.name + '</span>' + u.badge + (u.scanBadge || '') + '</div>' +
+        '<div class="ul">' + u.line + '</div>' +
+        '<div class="ul">' + (u.scanLine || '') + '</div>' +
+        '<div class="ul">' + u.summary + '</div>' +
+        whyHtml +
+        '<div class="rowline">' + btnHtml + '</div>';
+      grid.appendChild(div);
+      later(function(){ div.classList.add('show'); }, 90 * idx + 60);
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-load]'), function(btn){
+      btn.addEventListener('click', function(){ loadUnit(btn.getAttribute('data-load')); });
+    });
+  }
+
+  function runImport(){
+    clearTimers();
+    showView('view-home');
+    var log = $('walklog');
+    log.innerHTML = '';
+    log.classList.remove('hide');
+    $('walk-status').classList.add('hide');
+    walkLines.forEach(function(line, idx){
+      later(function(){
+        var el = document.createElement('div');
+        el.className = 'ln ' + (line.cls || '');
+        el.textContent = line.t;
+        log.appendChild(el);
+        later(function(){ el.classList.add('show'); }, 30);
+        if (idx === walkLines.length - 1) {
+          var st = $('walk-status');
+          st.classList.remove('hide');
+          $('walk-status-tx').textContent = '体检完成（免 PS）：7 稿引擎扫描 · 2 个单元可载入、2 个拦下；1 件放错已被接住。';
+          later(function(){
+            renderUnits();
+            showView('view-units');
+          }, 550);
+        }
+      }, 300 * idx + 150);
+    });
+  }
+
+  /* ---------- 单元载入（报告直接展开） ---------- */
+  function loadUnit(id){
+    var u = null;
+    UNITS.forEach(function(x){ if (x.id === id) u = x; });
+    if (!u || u.blocked) return;
+    clearTimers();
+    $('work-banner-tx').innerHTML = '本单元已载入：<b>' + u.name + '</b> · 扫描已在导入期由 PhotoCraft 引擎完成（免 PS）· 来源凭记已绑定（跨通道执行将被拒）';
+    $('work-count').textContent = '已添加 ' + u.psds.length + '/12 个 PSD · 已扫描 ' + u.psds.length + '（引擎 · 导入期）· 来源：PhotoCraft 0.7.0';
+    var list = $('work-list');
+    list.innerHTML = '';
+    u.psds.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'filerow';
+      row.setAttribute('data-name', p);
+      var st = (u.misplaced === p)
+        ? '<span class="badge-red st">已扫描 · 疑似放错</span>'
+        : '<span class="badge-ok st">已扫描（引擎）</span>';
+      row.innerHTML = '<span class="p">' + p + '</span>' + st;
+      list.appendChild(row);
+    });
+    $('work-tablesub').textContent = u.tableSub;
+    var preview = $('work-tablepreview');
+    if (id === 'u1') {
+      preview.innerHTML =
+        '<table class="minitable"><thead><tr><th>原文</th><th>EN</th><th>DE</th><th>JA</th></tr></thead><tbody>' +
+        '<tr><td>秋季新品焕新上市</td><td>New Season Launch</td><td>Neue Saison</td><td>新シーズン</td></tr>' +
+        '<tr><td>限时3天 全场5折</td><td>3 Days Only: 50% Off</td><td>Nur 3 Tage: 50 % Rabatt</td><td>3日間限定 全品50%オフ</td></tr>' +
+        '<tr><td>会员 专享价</td><td>Member Price</td><td>Mitgliederpreis</td><td>会員価格</td></tr>' +
+        '<tr><td>全场包邮（第 34 行）</td><td>Free shipping</td><td>Kostenloser Versand</td><td>全品送料無料</td></tr>' +
+        '<tr><td>全场包邮（第 87 行，译文不一致）</td><td>Free delivery</td><td>Versandkostenfrei</td><td>送料無料</td></tr>' +
+        '</tbody></table><div class="note-line">预览仅展示前 5 行（共 128 行）。「备注」列不是语言列，已按现状忽略。</div>';
+    } else {
+      preview.innerHTML =
+        '<table class="minitable"><thead><tr><th>原文</th><th>EN</th><th>DE</th></tr></thead><tbody>' +
+        '<tr><td>产品参数一览</td><td>Specifications at a glance</td><td>Produktdaten im Überblick</td></tr>' +
+        '<tr><td>细致到每一处做工</td><td>Crafted to every detail</td><td>Bis ins letzte Detail gefertigt</td></tr>' +
+        '<tr><td>七日无理由退换</td><td>7-day free returns</td><td>7 Tage Rückgaberecht</td></tr>' +
+        '</tbody></table><div class="note-line">预览仅展示前 3 行（合并后共 129 行）。合并是既有能力：两个单语言文件按归一化原文配对，绝不行号硬拼。</div>';
+    }
+    var r2 = $('work-r2');
+    r2.innerHTML = '';
+    u.r2.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'auditrow';
+      row.innerHTML = '<span class="b">' + item.b + '</span><span>' + item.t + '</span>';
+      r2.appendChild(row);
+    });
+    $('work-receipt').style.display = 'none';
+    $('work-receipt-body').innerHTML = '';
+    $('exec-log').innerHTML = '';
+    $('work-refusal').innerHTML = '';
+    $('exec-btn').setAttribute('data-unit', id);
+    $('ps-channel-btn').classList.remove('off');
+    renderScanResults(u);
+    showView('view-work');
+  }
+
+  /* ---------- 报告（来自导入期扫描） ---------- */
+  function renderScanResults(u){
+    $('work-mx-sub').innerHTML = u.mxSub;
+    var mx = $('work-mx');
+    var langs = u.matrix.langs;
+    var html = '<table class="minitable mx"><thead><tr><th>设计稿</th>';
+    langs.forEach(function(l){ html += '<th>' + l + '</th>'; });
+    html += '</tr></thead><tbody>';
+    u.matrix.rows.forEach(function(r){
+      html += '<tr><td>' + r[0] + '</td>';
+      r[1].forEach(function(v){
+        var cls = v >= 95 ? 'ok' : (v >= 50 ? 'warn' : 'bad');
+        html += '<td class="c ' + cls + '">' + v + '%</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="note-line">口径同现状：三档（精确 / 空白等价 / 部分包含）；矩阵为执行前粗估，执行引擎按规范化后完全相等配对。扫描来源：PhotoCraft 引擎（免 PS · 凭记 628268bb…c1c5fd1b）。</div>';
+    mx.innerHTML = html;
+
+    var r3 = $('work-r3');
+    r3.innerHTML = '<div class="countline" style="margin-top:14px">执行风险点名（替换之前 · 导入期扫描生成）：</div>';
+    u.r3.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'auditrow';
+      row.innerHTML = '<span class="b">' + item.b + '</span><span>' + item.t + '</span>';
+      r3.appendChild(row);
+    });
+
+    var gate = $('work-gate');
+    var sev = u.gate.sev;
+    var execBtn = $('exec-btn');
+    var hint = $('exec-hint');
+    if (sev === 'bad') {
+      gate.innerHTML =
+        '<div class="statusline err"><span class="d2"></span><span>疑似放错（硬拦截）：<b>' + u.gate.psd + '</b> 覆盖率 ' + u.gate.pct + '%（红线 50%）——<b>不可勾选放行</b>。请移出该稿、或补齐表格后重新导入。</span></div>';
+      execBtn.classList.add('off');
+      hint.textContent = '已被硬拦截：先处理放错稿（移出或补表后重导）';
+    } else {
+      gate.innerHTML =
+        '<div class="statusline"><span class="d2"></span><span>低于 95% 阈值：<b>' + u.gate.psd + '</b> · ' + u.gate.lang + ' 覆盖率 ' + u.gate.pct + '%——请展开明细核对后勾选放行（现状 D5 闸照旧）。</span></div>' +
+        '<label><input type="checkbox" id="gate-check"> 我已核对 <b>' + u.gate.psd + '</b> 的覆盖率明细；已知悉该语言为 ' + u.gate.pct + '%，继续执行。</label>';
+      execBtn.classList.add('off');
+      hint.textContent = '需先勾选上方放行';
+      $('gate-check').addEventListener('change', function(e){
+        var on = e.target.checked;
+        execBtn.classList.toggle('off', !on);
+        hint.textContent = on ? '已放行；点「开始替换（免 PS）」运行演示' : '需先勾选上方放行';
+      });
+    }
+    $('work-mx-card').style.display = 'block';
+  }
+
+  /* ---------- 跨引擎拒绝演示 ---------- */
+  function showRefusal(){
+    var box = $('work-refusal');
+    box.innerHTML = '<div class="statusline err"><span class="d2"></span><span><b>跨引擎执行已被安全闸拒绝</b>：本单元扫描来源＝PhotoCraft 引擎（凭记 exeSha256 <code>628268bb…c1c5fd1b</code>）。执行引擎必须与扫描来源一致（ISSUES #159）——层号在两套引擎里不是同一空间，混用可能静默漏译。如需改用 Photoshop 通道：请先在 Photoshop 通道下<b>重新扫描</b>本单元，再执行；或继续用 PhotoCraft 引擎替换（推荐，本机无需 Photoshop）。</span></div>';
+  }
+
+  /* ---------- 免 PS 替换执行 ---------- */
+  function runReplace(){
+    var id = $('exec-btn').getAttribute('data-unit');
+    var u = null;
+    UNITS.forEach(function(x){ if (x.id === id) u = x; });
+    if (!u || !u.replace) return;
+    if ($('exec-btn').classList.contains('off')) return;
+    $('exec-btn').classList.add('off');
+    $('ps-channel-btn').classList.add('off');
+    $('work-receipt').style.display = 'block';
+    var log = $('exec-log');
+    log.innerHTML = '';
+    var lines = u.replace.rows.map(function(r){
+      return { t: r[0] + '：打开 → 命中替换 ' + r[1] + ' 处 → 保存 → 读回校验 ✓', cls: '' };
+    });
+    lines.push({ t: '批次完成：' + u.replace.rows.length + '/' + u.replace.rows.length + ' 稿 · 替换 ' + u.replace.total + ' 处 · 用时约 ' + u.replace.seconds + 's（模拟）', cls: 'teal' });
+    lines.forEach(function(line, idx){
+      later(function(){
+        var el = document.createElement('div');
+        el.className = 'ln ' + (line.cls || '');
+        el.textContent = line.t;
+        log.appendChild(el);
+        later(function(){ el.classList.add('show'); }, 30);
+        if (idx === lines.length - 1) {
+          later(function(){ renderReceipt(u); }, 420);
+        }
+      }, 480 * idx + 120);
+    });
+  }
+
+  function renderReceipt(u){
+    var rows = '';
+    u.replace.rows.forEach(function(r){
+      rows += '<tr><td>' + r[0] + '</td><td class="m">' + r[1] + '</td><td class="m">✓</td></tr>';
+    });
+    $('work-receipt-body').innerHTML =
+      '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px">' +
+      '<h3 style="font-size:.92rem">回执 · 批次 #A-1032（模拟）</h3>' +
+      '<span class="badge-ok">已完成</span><span class="badge-teal">引擎执行 · 未使用 Photoshop</span>' +
+      '</div>' +
+      '<table class="minitable"><thead><tr><th>设计稿</th><th>替换处数</th><th>读回校验</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="note-line">' +
+      '引擎身份：<b>photocraft-cli 0.7.0 (dev build)</b>（运行时读取，非硬编码）· 凭记 exeSha256 <code>628268bb…c1c5fd1b</code> · 扫描来源＝执行来源 ✓（ISSUES #159 安全闸通过）。<br>' +
+      '放行记录：落地页_首屏.psd · JA 92.5% 已由您勾选放行（写入回执）。<br>' +
+      '声明：<b>本批次由本地助手引擎在本机完成替换与保存，未使用 Photoshop。</b>产物已保存（位置按现有执行约定）· 全程不上云。' +
+      '</div>';
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  $('import-btn').addEventListener('click', function(){ $('dlgmask').classList.add('on'); });
+  $('dlg-x').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); });
+  $('dlg-cancel').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); });
+  $('dlg-ok').addEventListener('click', function(){ $('dlgmask').classList.remove('on'); runImport(); });
+  $('dlg-pick').addEventListener('click', function(){ $('dlg-path').value = 'D:\\客户稿\\2026-10_秋季档'; });
+  $('units-back').addEventListener('click', reset);
+  $('work-back').addEventListener('click', function(){ renderUnits(); showView('view-units'); });
+  $('exec-btn').addEventListener('click', runReplace);
+  $('ps-channel-btn').addEventListener('click', showRefusal);
+  $('reset-btn').addEventListener('click', reset);
+})();
+</script>
+</body>
+</html>

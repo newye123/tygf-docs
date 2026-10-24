@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>执行方案 · 测试站三问题（授权失效 / 绿色变暗 / 单多稿无变化）· 2026-10-18</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --card:#ffffff; --ink:#121412; --muted:#6f746f; --line:#e0e3e0;
+    --green:#2d7356; --green-soft:#eef6f1; --amber:#9a6505; --amber-soft:#fff7e7;
+    --red:#c24b4b; --red-soft:#fff1f1; --ink-soft:#f5f7f5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e100f; --card:#151816; --ink:#eef1ee; --muted:#9aa39c; --line:#2a2f2b;
+      --green:#8fbaa4; --green-soft:#16241d; --amber:#d9a84f; --amber-soft:#2a2113;
+      --red:#e37f7f; --red-soft:#2a1616; --ink-soft:#1b1f1c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 20px 72px; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.72; letter-spacing:-.01em;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:26px;line-height:1.35;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:28px}
+  h2{font-size:18px;margin:36px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;margin:22px 0 8px}
+  p{margin:8px 0}
+  code{background:var(--ink-soft);padding:1px 5px;border-radius:5px;font-size:12.5px;
+    font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+  .verdict{display:flex;gap:14px;align-items:flex-start;background:var(--green-soft);
+    border:1px solid var(--line);border-left:4px solid var(--green);border-radius:12px;padding:16px 18px;margin:18px 0}
+  .verdict b{color:var(--green)}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card h4{margin:0 0 6px;font-size:14px}
+  .card p{margin:4px 0;font-size:13px;color:var(--muted)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--green-soft);color:var(--green);border:1px solid var(--line);margin-right:6px}
+  .tag.warn{background:var(--amber-soft);color:var(--amber)}
+  .tag.bad{background:var(--red-soft);color:var(--red)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;color:var(--muted);font-weight:600;background:var(--ink-soft)}
+  td code{font-size:12px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .stat .n{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .stat .l{font-size:11.5px;color:var(--muted)}
+  .gates{list-style:none;padding:0;margin:12px 0}
+  .gates li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:8px 0;font-size:13.5px}
+  .gates li b{color:var(--green)}
+  .callout{background:var(--amber-soft);border:1px solid var(--line);border-left:4px solid var(--amber);
+    border-radius:12px;padding:14px 16px;margin:16px 0;font-size:13.5px}
+  .notes{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>执行方案：测试站三个问题（测不了 / 绿色变暗 / 单多稿无变化）</h1>
+<div class="sub">2026-10-18 起草 · 2026-10-19 补「已执行」并重写根因 · 图译工坊内测版</div>
+<div class="callout">2026-10-18 21:5x｜砚｜触发：Owner 三问 + 两张截图｜范围：只出方案与判据，未改任何产品代码</div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>〇、结论先行</h2>
+<table><thead><tr><th>#</th><th>问题</th><th>定性</th><th>一句话</th></tr></thead><tbody><tr><td>1</td><td>测试站测不了</td><td><strong>运行时授权状态失效</strong>（不是测试站挂了）</td><td>云端把当前令牌判成「设备授权代次不匹配」，助手侧一切正常（PS 已识别、扫描也能跑）</td></tr><tr><td>2</td><td>绿色变暗</td><td><strong>不是 bug，是 02:45 那次换肤换了目标</strong></td><td>teal-600 从 <code>#0d9488</code> 整体改成官网墨绿 <code>#2d7356</code>；但官网自己的主按钮是近黑 <code>#121412</code>，绿色只做点缀——所以现在的绿按钮既不旧也不官网</td></tr><tr><td>3</td><td>单/多稿没变化</td><td><strong>真缺陷，可复现的代码路径</strong></td><td>切到「多个设计稿」只改了一个布尔量，从未初始化多稿选择对象；卡片因此仍走单稿分支</td></tr></tbody></table>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>一、测试站测不了</h2>
+<h3>1.1 现场证据（全部实测，非推测）</h3>
+<table><thead><tr><th>观测</th><th>值</th><th>来源</th></tr></thead><tbody><tr><td>助手进程</td><td><code>图译工坊引擎.exe</code> pid 22076，3.7.15，<code>transport-hardening-20261011-r1</code></td><td><code>GET 127.0.0.1:49152/ping</code></td></tr><tr><td>助手自评</td><td><code>alive:true</code>、<code>activationStatus:"active"</code>、<code>photoshopDetected:true</code>、<code>taskRoot:[configured]</code></td><td>同上</td></tr><tr><td>云端拒绝</td><td><code>POST /v1.5/authorization/check -&gt; 403 code=ASSISTANT_DEVICE_INVALID origin=https://test.tuyigf.com</code></td><td>助手事件日志 21:39:40 / 21:40:16 / 21:41:24</td></tr><tr><td>票据校验同因</td><td><code>[ticket] verify rejected reason=ASSISTANT_DEVICE_INVALID cloudStatusCode=200</code></td><td>同上</td></tr><tr><td>另有网络故障</td><td>21:42:41、21:42:56、21:43:43、21:46:50 四次 <code>VERIFY_TIMEOUT</code>（10s 预算耗尽，<code>REQUEST_TIMEOUT</code>/<code>TLS_TIMEOUT</code>）</td><td>同上</td></tr></tbody></table>
+<h3>1.2 这个错误码的确切含义</h3>
+<p><code>src/lib/server/assistant-authorization.ts:27-33</code>：令牌签名与有效期都过了，卡在</p>
+<pre class="mono" style="background:var(--ink-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto"><code>hasCurrentAssistantRedemption({ assistantCodeId, machineId, tokenJti })
+→ SELECT id FROM AssistantCodeRedemption
+   WHERE assistantCodeId=? AND machineId=? AND tokenJti IS ? LIMIT 1</code></pre>
+<p>查不到那一行 ⇒ <code>ASSISTANT_DEVICE_INVALID</code>。</p>
+<h3>1.3 测试站库里的实际状态（已排除的方向）</h3>
+<p><code>/var/www/tygf-test/db/custom.db</code>（SQLite）实测：</p>
+<div style="font-size:14px"><li>运行码 <code>cmtpik8yf000ewjtpy2gwtey1</code>：<code>status=active</code>，<code>expiresAt=2099-12-31</code></li><li>本机那行：<code>machineId=19ee9b79-…</code>、<code>tokenJti=29d7d427-d85e-42d4-b91f-82355b024acc</code>、<code>redeemedAt=2026-10-18 01:16:44</code>、<code>tokenExpiresAt=2026-11-01 01:16:44</code></li><li>助手自报 <code>activationExpiresAt=2026-11-01T01:16:44+08</code> —— <strong>与该行逐秒吻合</strong>，说明当前令牌确实是 01:16:44 那次配对签出来的</li><li>直接跑 <code>tokenJti IS '&lt;该值&gt;'</code> 语义验证：命中 1 行 ⇒ SQL 与数据都没问题</li></div>
+<p>⇒ <strong>已排除</strong>：运行码被停用/过期、令牌过期、库被清空、SQL 写法错误。</p>
+<h3>1.4 已钉死：旧版令牌没有 jti（22:1x 更新，推翻了上面"读不到"的说法）</h3>
+<p><strong>推翻前提</strong>：<code>.tygf_session</code> 并非不可解。它的 AES 密钥就是 <code>sha256(MachineGuid)</code>（<code>server.js:289</code> <code>stateCipherKey()</code>），MachineGuid 从注册表 <code>HKLM\SOFTWARE\Microsoft\Cryptography</code> 读得到（本机 <code>19ee9b79-02f0-4c67-b62a-54a1df6fc399</code>）。所以本地可以自行解密——这一点我上一版判断错了。</p>
+<p>解密后看清两件事：</p>
+<div style="font-size:14px"><li><strong>真正送去云端校验的不是全局 <code>assistantToken</code>，而是按来源分存的那份</strong>。<code>authorizationForOrigin(cfg, cloudBase)</code> 取 <code>assistantAuthorizations[origin].token</code>；而 <code>requestCloudBase</code> 优先用浏览器的 Origin（只要它在 <code>allowedWebOrigins</code> 里）。<strong>从哪个站点打开工作台，就用那个站点的那份令牌。</strong></li><li>本机四份令牌实测：</li></div>
+<table><thead><tr><th>来源</th><th>exp</th><th>jti</th></tr></thead><tbody><tr><td><code>https://tuyigf.com</code></td><td>2026-10-27</td><td><code>be32f204…</code></td></tr><tr><td><code>https://test.tuyigf.com</code></td><td>2026-10-22</td><td><strong>无</strong></td></tr><tr><td><code>http://127.0.0.1:3422</code></td><td>2026-09-09（已过期）</td><td>无</td></tr><tr><td><code>http://localhost:3000</code></td><td>2026-10-31</td><td><code>29d7d427…</code></td></tr></tbody></table>
+<p><code>https://test.tuyigf.com</code> 那份 <code>exp</code> 2026-10-22，即 <strong>2026-10-08 签发</strong>；而 <code>tokenJti</code> 这个特性是提交 <code>6d9e169</code>（<strong>2026-10-10</strong>）才引入的。⇒ 这份令牌<strong>结构上就不可能带上 jti</strong>。</p>
+<p>判据是 <code>hasCurrentAssistantRedemption</code> 里的 <code>tokenJti IS ${input.tokenJti}</code>。旧令牌 <code>tokenJti = null</code> ⇒ 只匹配 <code>tokenJti IS NULL</code> 的行；而 <code>cid = cmtpik8yf000ewjtpy2gwtey1</code> 在库里<strong>只有一行</strong>，且 <code>tokenJti = 29d7d427…</code> 非空。⇒ <strong>永远不匹配，刷新一万次也一样。</strong></p>
+<p>而 <code>http://localhost:3000</code> 那份是 2026-10-17 17:16:44 重新签的，带 jti，与库里那行逐字段相同（我用同样的 SQL 语义直查，命中 1 行）。这也解释了为什么 10-17 之后从隧道走能过、从 test.tuyigf.com 走不能过。</p>
+<p>所以上一版列的三种可能，实际是第 3 种的一个特例：<strong>不是"代次错"，是"这一代的令牌压根没有代次标记"</strong>。云端返回 <code>cloudStatusCode=200</code>，是云端主动拒绝，不是网络问题。</p>
+<h3>1.4b 处置（更新）</h3>
+<p><strong>唯一有效动作</strong>：在 test.tuyigf.com 上重新连接本地助手——重配会给这个来源写一份带 jti 的新令牌。或者直接走 <code>http://localhost:3000</code> 隧道，那份令牌已经有效。</p>
+<p><strong>不做的事</strong>：不放宽云端鉴权去接受无 jti 的旧令牌。它 4 天后自然过期，放宽只是把问题推迟，还白丢一层代次保护。</p>
+<p><strong>已做的</strong>：<code>ASSISTANT_DEVICE_INVALID</code> 的文案补上了（见 P0-3），现在两条链都会明确说「请回到工作台断开本地助手，再重新连接当前电脑」，不再让人去刷新。</p>
+<h3>1.5 处置（按顺序，每步有判据）</h3>
+<p><strong>P0-1 立刻可做（你点两下，1 分钟）</strong>在工作台横幅点「重新授权」，按提示重配一次。重配会走 <code>pair</code> 路由的 upsert，把 <code>redeemedAt</code>/<code>tokenExpiresAt</code> 刷新并用库里那代的 jti 重签。<strong>判据</strong>：助手事件日志出现 <code>POST /v1.5/authorization/check -&gt; 200</code>（或不再出现 DEVICE_INVALID），且横幅变绿。</p>
+<p><strong>P0-2 若重配后仍 DEVICE_INVALID —— 加一条诊断（约 20 行改动，我可以直接做）</strong>现在 <code>pair</code> 响应与助手日志都不带 jti/machineId 的任何片段，所以永远只能猜。补两处：</p>
+<div style="font-size:14px"><li><code>src/app/api/local-assistant/pair/route.ts</code>：响应体加 <code>jti8: tokenJti.slice(0,8)</code>、<code>mid8: machineId.slice(0,8)</code>、<code>cid8: assistantCode.id.slice(0,8)</code>（只前 8 位，不泄密）；</li><li><code>download/local-assistant/server.js</code> 的 <code>authorization-check</code> 拒绝分支：把本地令牌解析出的 <code>cid8/mid8/jti8</code> 写进 <code>assistant-events.log</code>。</li></div>
+<p><strong>判据</strong>：一次失败后，把日志里的三组 8 位与库里那行比对，能一眼看出是"环境不对"还是"代次不对"。</p>
+<p><strong>P0-3 顺手修一个真 UX 缺陷</strong><code>download/local-assistant/server.js:3388</code> 的 <code>ticketFailureMessage</code> 有 <code>ASSISTANT_INSTALL_BINDING_INVALID</code>/<code>ASSISTANT_CODE_DISABLED</code>/<code>ASSISTANT_CODE_EXPIRED</code> 分支，<strong>唯独没有 <code>ASSISTANT_DEVICE_INVALID</code></strong>，于是落到兜底文案「无法验证本次文件选择许可（ASSISTANT_DEVICE_INVALID），请刷新工作台后重试」——"刷新工作台"对这个问题毫无作用，把你往错方向引。应补一句「本机授权与云端这一代对不上，请重新连接本地助手」。</p>
+<p><strong>P0-4 网络侧（独立问题，别混谈）</strong>四次 10s 超时是出口慢（已知：本机到 tuyigf.com TTFB 2–9s，曾 45s）。它不会产生 DEVICE_INVALID，但会让重配本身失败。若重配卡住，先看是不是又超时。</p>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>二、绿色变暗</h2>
+<h3>2.1 根因（一句话）</h3>
+<p><code>3b1309c feat(workbench): 文件夹递归导入 + 官网同款换肤</code>（今天 02:45）新建了 <code>src/components/workbench/workbench-tokens.css</code>，在 <code>.wb-brand</code> 作用域内<strong>整体重映射 Tailwind 色板</strong>：</p>
+<pre class="mono" style="background:var(--ink-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto"><code>--color-teal-600: #2d7356   /* 原 Tailwind 默认 #0d9488 */
+--color-emerald-600: #2d7356</code></pre>
+<p>工作台里 13 处 <code>bg-teal-600</code>（<code>csv-step.tsx:328/:546</code>、<code>design-file-card.tsx:1135/:1218/:1310</code>、<code>execute-step.tsx:2935</code>、<code>typography-panel.tsx:494/:569</code>、<code>user-account-menu.tsx:94</code> …）<strong>一行 className 没改，颜色全跟着变</strong>。线上构建产物已确认生效：<code>.next/static/chunks/1hkv1uknfzaf9.css</code> 里就是 <code>--color-teal-600:#2d7356</code>。</p>
+<p>所以"变暗"是换肤的必然结果，不是渲染错误。</p>
+<h3>2.2 但这次换肤本身有一处没对齐官网</h3>
+<p>官网 <code>home-v17.css</code> 里：<code>--accent:#2d7356</code>（绿，用于 chip/描边/文字强调），而<strong>主按钮</strong>是</p>
+<pre class="mono" style="background:var(--ink-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto"><code>.home-v17 .btn-primary { background:#121412; color:#fff }   /* home-v17.css:69 */</code></pre>
+<p>也就是说：<strong>官网的"主操作"是近黑，绿色只做点缀</strong>。换肤把工作台的实心主按钮也刷成了墨绿，于是既不像旧版（亮青绿），也不像官网（黑按钮）。</p>
+<h3>2.3 对比度实测（这条决定"能不能简单调亮"）</h3>
+<table><thead><tr><th>色值</th><th>白字对比度</th><th>结论</th></tr></thead><tbody><tr><td><code>#0d9488</code>（旧）</td><td><strong>3.74:1</strong></td><td>不达 WCAG AA 4.5:1 —— 旧版其实是不合格的</td></tr><tr><td><code>#2d7356</code>（现在）</td><td><strong>5.68:1</strong></td><td>达标，但视觉确实沉</td></tr><tr><td><code>#17805f</code>（折中候选）</td><td><strong>4.90:1</strong></td><td>达标且更亮</td></tr><tr><td><code>#121412</code>（官网主按钮）</td><td><strong>18.51:1</strong></td><td>最稳，但与"绿"无关</td></tr></tbody></table>
+<p>⇒ <strong>不能简单"调回旧绿"</strong>：那等于把对比度不合格的颜色请回来。</p>
+<h3>2.4 三个选项（要你拍一个）</h3>
+<div style="font-size:14px"><li><strong>A（推荐，最贴官网）</strong>：实心主按钮统一 <code>#121412</code>（官网 <code>btn-primary</code> 同款），绿色只留在 chip / 描边 / 成功态 / 焦点环。 代价：工作台主按钮从绿变黑，一眼看过去和官网一致；绿色信息量更少但更准。</li><li><strong>B（保留绿，提亮）</strong>：<code>--color-teal-600</code> 由 <code>#2d7356</code> 改为 <code>#17805f</code>（4.90:1 仍达标），其余不动。 代价：一处变量改动，最小；但与官网按钮仍不同款。</li><li><strong>C（不动）</strong>：接受当前墨绿，视为"官网同款"的既有决定。</li></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>三、单稿 / 多稿切换没变化</h2>
+<h3>3.1 根因（可复现，file:line 齐全）</h3>
+<div style="font-size:14px"><li><code>workbench-view.tsx:298</code> 多稿状态初始化：<code>batchMode ? clearMultiPsdSelection() : null</code> —— 只有<strong>用 <code>#batch</code> 直接进页面</strong>时才是非空对象；正常从单稿页进来时是 <code>null</code>。</li><li><code>workbench-view.tsx:1385-1400</code> <code>requestModeChange(true)</code> 只做了 <code>setBatchMode(true)</code>， <strong>从头到尾没有 <code>setMultiPsdSelection(...)</code></strong>（该文件里 <code>setMultiPsdSelection</code> 只有 3 个写入点：298 初始化、1412 切回单稿、2303 卡片回调 —— 没有一个是"切到多稿"）。</li><li><code>design-file-card.tsx:929</code> 批量分支的入口条件是 <code>if (batchMode &amp;&amp; multiSelection &amp;&amp; onMultiSelectionChange)</code> —— <code>multiSelection</code> 为 <code>null</code> ⇒ <strong>直接落回单稿卡片</strong>。</li></div>
+<p>⇒ 点「多个设计稿」的真实效果：副标题换了一句话，卡片还是单稿那张。你看到"没有变化"是对的。</p>
+<h3>3.2 为什么测试没拦住</h3>
+<p>现有 smoke 断言的是"切换器存在""文案正确""切回单稿要先确认"，<strong>没有一条断言"切到多稿后渲染的是多稿卡片"</strong>——这正是项目里反复出现的"入口在、代码在、测试绿，但真实路径不通"。</p>
+<h3>3.3 修法（一处主改 + 一条守卫）</h3>
+<div style="font-size:14px"><li><strong>主改</strong>：<code>requestModeChange</code> 切到多稿时补 ``<code>ts setMultiPsdSelection((prev) =&gt; prev ?? clearMultiPsdSelection()) </code>`<code> （保留已有选择；</code>clearMultiPsdSelection()<code> 返回 </code>{ entries: [] }<code>，</code>psd-selection.ts:80<code>） 切回单稿时（</code>confirmSwitchToSingle` 已处理）保持现有语义。</li><li><strong>守卫</strong>：在 <code>smoke-*workbench*</code> 里加一条静态断言——"<code>requestModeChange</code> 的 <code>nextMulti</code> 分支必须同时出现 <code>setBatchMode(true)</code> 与 <code>setMultiPsdSelection</code>"，并加一条反例负控（把 <code>setMultiPsdSelection</code> 删掉应当变红）。</li><li><strong>顺带核</strong>：<code>#batch</code> 深链路径（初始化非空）一直是对的，说明这是"后来加页面内切换时漏了一处"的回归，不是设计问题。</li></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>四、对抗式审查（我自己的结论被推翻/收窄的地方）</h2>
+<div style="font-size:14px"><li><strong>一开始我判断"测试站部署把授权搞坏了"——推翻。</strong> 部署（21:04）晚于首次失败（17:28），且授权代码与 develop 逐字节一致（归一化换行后 sha256 相同），部署不是因。</li><li><strong>一开始我怀疑"运行码过期/被停用"——推翻。</strong> 库里 active + 2099 到期。</li><li><strong>一开始我把绿色当 bug 找——收窄。</strong> 这是换肤的设计后果；真问题不是"色值算错"，而是"主按钮语义没跟官网对齐"，且旧色对比度本就不达标。</li><li><strong>单/多稿我一度以为是"批量功能整体没做"——推翻。</strong> 批量卡片、文件夹导入、覆盖率矩阵都在，只是<strong>入口那条状态没初始化</strong>。</li><li><strong>未钉死的一环我明写出来</strong>（令牌代次），没有拿推测当结论；对应的补丁是"让下一次失败自己说出原因"。</li></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>五、执行顺序（等你点头即可开工）</h2>
+<table><thead><tr><th>序</th><th>动作</th><th>判据</th><th>需你决定</th></tr></thead><tbody><tr><td>1</td><td>你点「重新授权」重配</td><td>助手日志出现 <code>authorization/check -&gt; 200</code></td><td>只有你能做</td></tr><tr><td>2</td><td>若仍失败：加 jti/mid/cid 三段诊断并出包</td><td>一次失败后日志能指出"环境不对"还是"代次不对"</td><td>我可以直接做</td></tr><tr><td>3</td><td>补 <code>ASSISTANT_DEVICE_INVALID</code> 文案分支</td><td>文案不再让人"刷新工作台"</td><td>我可以直接做</td></tr><tr><td>4</td><td>单/多稿状态初始化修复 + 守卫</td><td>切到多稿后出现「多设计稿选择」列表与文件夹导入</td><td>我可以直接做</td></tr><tr><td>5</td><td>色值：A / B / C 选一个</td><td>A：主按钮变近黑；B：绿变 <code>#17805f</code></td><td><strong>需要你拍</strong></td></tr></tbody></table>
+<p>1–4 都不碰生产、不翻开关；5 只是一处 CSS 变量或按钮类名。</p>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>六、交付边界</h2>
+<div style="font-size:14px"><li>本文件只做诊断与方案，<strong>未改任何产品代码、未改色值、未重配授权</strong>。</li><li>2、3、4 三条若你点头，我按「改 → 出测试包 → 部署测试站 → 实测判据」一轮做完。</li></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>七、补充：字体排版面板为什么看不到（21:5x 追加，Owner 追问）</h2>
+<h3>7.1 两个原因叠在一起</h3>
+<p><strong>A. 线上白名单是空的 ⇒ 面板对所有人不渲染（fail-closed）</strong></p>
+<table><thead><tr><th>事实</th><th>值</th></tr></thead><tbody><tr><td>测试站 <code>SiteSetting.featureFlagsV1</code></td><td><code>{"typographyCustomizationEnabled":true, …}</code> —— 总开关是开的</td></tr><tr><td>测试站 <code>SiteSetting.typographyBetaUsersV1</code></td><td><strong>整行不存在</strong></td></tr><tr><td>判定链</td><td><code>feature-flag-gating.ts:18-19</code>：<code>ids = getTypographyBetaUserIds()</code>；<code>if (ids.length === 0) return false</code></td></tr><tr><td>客户端默认</td><td><code>use-feature-access.ts:15</code> <code>DEFAULT_ACCESS = { typographyCustomization: false }</code></td></tr><tr><td>挂载条件</td><td><code>workbench-view.tsx:2481</code> <code>{featureAccess.typographyCustomization &amp;&amp; …}</code></td></tr></tbody></table>
+<p>⇒ 白名单为空＝谁都不开，<strong>跟账号无关，Owner 自己登录也一样看不到</strong>。测试站上的灰度判定文件与 develop 逐字节一致（sha256 相同），排除"部署版本不同"。</p>
+<p><strong>B. 即使加了白名单，线上也是旧版面板、且挂在第三步</strong></p>
+<table><thead><tr><th>检查</th><th>线上（b7a72f8）</th><th>本地 develop 工作树</th></tr></thead><tbody><tr><td><code>font-picker.tsx</code>（W4 字族/样式选择器）</td><td><strong>不存在</strong></td><td>有（未提交）</td></tr><tr><td><code>typography-capabilities.ts</code>（四态能力表）</td><td><strong>不存在</strong></td><td>有（未提交）</td></tr><tr><td>面板挂载位置</td><td><code>photoshop-step.tsx:190</code>（第三步）</td><td>已移到「准备素材」（未提交）</td></tr><tr><td>面板本体</td><td>旧版</td><td>W4 重写（未提交）</td></tr></tbody></table>
+<p>今天 15:37 与 17:54 那两笔（W4 六步 + 面板搬家）<strong>从未提交到 develop、也没部署</strong>；正式提交在 PR #29 分支 <code>feat/typography-panel-v4-20261018</code>（<code>47cd2fc</code> W4+搬家、<code>c26d665</code> CI 修复），至今未合并。</p>
+<p><strong>C. 本地工作树里还压着一份同样的改动</strong>：<code>git status</code> 13 项（含 4 个新文件），就是同一套 W4 + 搬家，只是落在更新的 develop 基线上，未提交。</p>
+<h3>7.2 合并预检（已做，未改任何分支）</h3>
+<p><code>git merge-tree --write-tree develop feat/typography-panel-v4-20261018</code> → 单棵树、<strong>无冲突</strong>。但工作树有 13 个同文件的未提交改动，直接 merge 会被本地改动挡住 ⇒ 必须先把工作树那 13 项处理掉（提交或丢弃），再合分支。</p>
+<h3>7.3 要让面板真的看得见，三步缺一不可</h3>
+<div style="font-size:14px"><li><strong>把 W4 落到 develop</strong>：先处理工作树 13 项（它们与 PR 分支同内容），再合 <code>feat/typography-panel-v4-20261018</code>（无冲突）；或直接把工作树这 13 项提交进 develop，PR 分支随之作废/更新。</li><li><strong>出包部署测试站</strong>（含 W4 + 搬家）。</li><li><strong>往白名单加人</strong>：<code>SiteSetting</code> 插一行 <code>key='typographyBetaUsersV1'</code>、<code>valueJson=["&lt;betaUserId&gt;"]</code>（上限 100，写入前会校验 BetaUser 是否存在）。<strong>这一步属"翻闸"，按规矩要你明确点头。</strong></li></div>
+<h3>7.4 现在的建议</h3>
+<div style="font-size:14px"><li>只做第 3 步：你能看到的是<strong>旧版面板、挂在第三步</strong>——和今天的改动对不上，反而更容易误判。</li><li>建议 1→2→3 一次做完（合并无冲突，出包部署走今天已跑通的链路），然后你登进去看到的就是 W4 版、在「准备素材」里。</li><li>白名单加谁：至少你自己；要不要连测试账号一起，你说一句。</li></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:28px 0" />
+<h2>八、已执行（22:0x–22:3x，按方案逐条落地）</h2>
+<p>Owner 令「使用对抗式审查后给个执行方案，然后按方案执行」。以下为实际执行结果，代码已进 <code>develop</code>，基线 <code>b7a72f8</code>。</p>
+<h3>8.1 代码：4 笔提交</h3>
+<table><thead><tr><th>提交</th><th>内容</th></tr></thead><tbody><tr><td><code>35fa01a</code></td><td><code>feat(typography)</code> W4 排版面板落地（<code>font-picker.tsx</code>、<code>typography-capabilities.ts</code> 新增，面板重做 589 行，后台文案改「准备素材」步骤）</td></tr><tr><td><code>5868c5d</code></td><td><code>fix(workbench)</code> 单→多切换补 <code>setMultiPsdSelection(prev =&gt; prev ?? clearMultiPsdSelection())</code>；面板改挂「准备素材」</td></tr><tr><td><code>c10dc9c</code></td><td><code>style(workbench)</code> 绿色改回：删掉 teal / emerald 全族覆盖，交回 Tailwind 默认</td></tr><tr><td><code>58a483c</code></td><td><code>fix(local-assistant)</code> <code>ASSISTANT_DEVICE_INVALID</code> 专属文案（选择链与扫描链都补）+ 两条守卫</td></tr><tr><td><code>8da9d07</code></td><td><code>fix(typography)</code> 补「高级与结算明细」折叠点的出口声明（出包门禁 <code>fold-no-report-loss</code> 拦下后修）</td></tr></tbody></table>
+<h3>8.2 守卫与对照实验（不是空跑通过）</h3>
+<p>守卫落在 <code>scripts/smoke-local-assistant-errors.mjs</code>——它本来就同时读 <code>workbench-view.tsx</code> 与 <code>server.js</code>，是天然宿主。</p>
+<div style="font-size:14px"><li><strong>单→多切换</strong>：断言 <code>nextMulti</code> 分支必须同时出现 <code>setBatchMode(true)</code> 与 <code>setMultiPsdSelection((prev) =&gt; prev ?? clearMultiPsdSelection())</code>。</li><li><strong>DEVICE_INVALID 文案</strong>：两个函数都必须有该分支，文案必须含「重新连接当前电脑」，且不得复用兜底文案「请刷新工作台后重试」。</li><li><strong>真文件对照实验</strong>（不是内存里变异一下就算）：</li><ul><li>删掉 <code>setMultiPsdSelection</code> 那行 → <code>rc=1</code>；恢复后 → <code>rc=0</code>。</li><li>删掉两处 <code>DEVICE_INVALID</code> 分支 → <code>rc=1</code>；恢复后 → <code>rc=0</code>。</li></ul></div>
+<h3>8.3 验证</h3>
+<div style="font-size:14px"><li><code>npx tsc --noEmit</code> → <strong>0 错</strong>（注意取退出码要 <code>&gt; log 2&gt;&amp;1; echo $?</code>，<code>| tail</code> 取到的是 tail 的码）。</li><li><code>npm run test:feature-flag-whitelist</code> → 全绿：19 / 57 / 63 / 86 / <strong>197</strong> / 44 / 25 断言。</li><li><code>npm run test:typography-picker</code> → smoke 197 断言 + vitest 4 例通过。</li></div>
+<h3>8.4 踩到的两个坑（记下来）</h3>
+<div style="font-size:14px"><li><code>download/local-assistant/server.js</code> 与 <code>scripts/*.mjs</code> 是 <strong>CRLF</strong>，<code>workbench-view.tsx</code> 是 <strong>LF</strong>。写变异正则时用了 <code>\n</code> 导致 <code>MUTATE-MISS</code>（一处没替换、一处静默 0 命中），差点把"对照实验没做"当成"做了"。改用 <code>\r?\n</code> 才真正命中。</li><li><code>fold-no-report-loss</code> 的判据正则 <code>[^\n]{0,160}</code> <strong>不跨行</strong>，<code>→ 同屏展开</code> 必须和「折叠不得删报」写在同一行。第一版箭头写在注释第二行，R1 过了、R2 报"取不到落点"。</li><li>出包时只给了 <code>PATH</code>（<code>file</code> 替身）却漏了 <code>CODEBUDDY_SAFE_DELETE_BULK_THRESHOLD=400</code>，于是 <code>test:contracts</code> 在第 9 段被本机删除护栏误杀（<code>count:50 threshold:50 scope:"turn"</code>）。<strong>这条护栏误杀看着像代码缺陷，其实不是</strong>——<code>release:package:test</code> 会自己再跑一遍完整 preflight，环境变量必须一起给。</li></div>
+<h3>8.5 部署（测试站，已完成）</h3>
+<div style="font-size:14px"><li>包：<code>release/test/tygf-test-8da9d07dac6f.zip</code>（41,016,979 B），SHA-256 <code>CD7AD81004BDA2DAB0C0F84E324B7A7FF7D555296A46B56E38DEC40375DB75F7</code>。</li><li>上传：整包 scp 两次都停在 14.1 MB 被掐（实测链路约 26 KB/s，不是断流），改 6 MB 分片 ×7 传完，服务器合并后 <strong>sha256 逐位相符</strong>。</li><li>部署：<code>deploy-test-release.sh &lt;zip&gt; &lt;receipt&gt;</code> → <code>.deploy-commit</code> 与 <code>.deploy-receipt.json</code> 均 <code>8da9d07dac6f…</code>，备份 <code>tygf-test-backups/deploy-20261018_234741-8da9d07dac6f</code>。</li><li>进程：<code>tygf-test</code> / <code>tygf-test-auth-mail</code> / <code>tygf-test-smart-review</code> 三进程 <strong>online、重启 0 次</strong>（注意：<code>sudo pm2 list</code> 是空的，应用跑在 ubuntu 身份下，要用不带 sudo 的 <code>pm2 list</code>）。</li></div>
+<h3>8.6 部署后独立验证（不认脚本自述）</h3>
+<table><thead><tr><th>检查项</th><th>结果</th></tr></thead><tbody><tr><td><code>/</code> <code>/terms</code> <code>/en/terms</code> <code>/privacy</code> <code>/en/privacy</code> <code>/en/privacy/subprocessors</code></td><td>全 200</td></tr><tr><td><code>/workbench</code></td><td>404（<strong>预期</strong>：工作台是 hash 视图 <code>#workbench</code>，不是路由）</td></tr><tr><td>IndexNow 两枚 key</td><td>200</td></tr><tr><td>首页 <code>check-item</code></td><td>6（与部署前一致）</td></tr><tr><td><code>/terms</code> OCR 命中</td><td><strong>2</strong>（上一轮的可证伪预测仍成立）</td></tr><tr><td><code>/en/terms</code> OCR 命中</td><td><strong>2</strong></td></tr><tr><td><code>font-picker.tsx</code> / <code>typography-capabilities.ts</code></td><td>已在服务器上</td></tr><tr><td><code>workbench-view.tsx</code> 的 <code>setMultiPsdSelection((prev) =&gt; prev ?? …)</code></td><td>命中 1 处</td></tr><tr><td>面板挂载 <code>featureAccess.typographyCustomization &amp;&amp;</code></td><td>命中 1 处</td></tr><tr><td><code>workbench-tokens.css</code> 的 teal/emerald 声明</td><td><strong>0 条</strong>（覆盖已删）</td></tr><tr><td>编译后 CSS <code>--color-teal-600</code></td><td><strong><code>#009588</code></strong>（Tailwind 默认，墨绿已消失）</td></tr><tr><td>编译后 CSS <code>--color-emerald-600</code></td><td><strong><code>#009767</code></strong></td></tr><tr><td>残留 <code>#2d7356</code></td><td>只剩 <code>--ring</code>（焦点环，按你「不需要其他调整」未动）与官网营销页背景</td></tr></tbody></table>
+<h3>8.7 灰度白名单（已按你选的「连最近测试账号一起」开）</h3>
+<p><code>SiteSetting</code> 插入一行（回滚＝删这一行）：</p>
+<pre class="mono" style="background:var(--ink-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto"><code>id            = site_typographyBetaUsersV1
+key           = typographyBetaUsersV1
+valueJson     = ["cms5damzc000fwj0id5f6d9k0","cmt4j6l8g0003wjm7k0wuamoj","cmuz9zqvo001nwjnamhj6eh1f"]</code></pre>
+<p>三个账号均 <code>status=active</code>、未删除。运行面实测（临时会话，用完即删，残留 0）：</p>
+<div style="font-size:14px"><li>名单内账号 → <code>{"ok":true,"features":{"typographyCustomization":true}}</code></li><li><strong>负控</strong>：不在名单的账号 <code>cms5damxh0001wj0ieftwbscp</code> → <code>false</code></li></div>
+<p>⇒ 面板在「准备素材」步骤可见；<code>useFeatureAccess</code> 30 秒 TTL，最坏半分钟收敛。</p>
+<h3>8.8 仍未做（等授权或不在本次范围）</h3>
+<div style="font-size:14px"><li><strong>重新配对 test.tuyigf.com 的助手授权</strong>：这个只能你在界面上点（见 1.4b）。修好的文案现在会明确告诉你去做这件事。</li><li>推 <code>origin/develop</code>、动生产、改内容库（首页旧文案）、免PS 上线——均未做。</li><li>单/多稿切换的<strong>界面观感</strong>需要你在浏览器里点一下确认（我这一层只能验到源码与接口，验不到你的眼睛）。</li></div>
+<div class="footer">本文档由 执行方案_20261018_测试站三问题_授权失效与单多稿切换.md 渲染生成；md 为唯一源，改内容请改 md 后重跑本脚本。</div>
+</div>
+</body>
+</html>

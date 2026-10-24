@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习系统没跑起来 · 对抗式审查 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:1.6rem;line-height:1.1}
+.stat .v.bad{color:var(--bad)}.stat .v.ok{color:var(--ok)}.stat .v.warn{color:var(--warn)}
+.stat .s{font-size:.78rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-22 10:22 +0800</span><span class="sep">/</span><span>风险档 Medium（只读审查，零改动）</span><span class="sep">/</span><span>Round 1/3</span></div>
+  <h1>学习系统：上传今早还在写，但"学"这一半一条也产不出来</h1>
+  <p class="standfirst">Owner 的判断基本成立，根因不是"信号传不上去"。断点在更深的三处：采集端没收"用户最终把译文定成什么"，聚合端没有任何调度器，学出来的东西也没有下游。结果就是候选规则、规则版本、规则部署三张表<strong>恒 0</strong>——不是没跑，是跑了也产不出。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：打回（打回"已有学习系统"这个对外说法）</span>
+  <p><strong>一句话：</strong>现在这台机器只做"记录"，还没做"学习"；而记录的内容不足以学出任何东西。已证实 <strong>8 条</strong>缺陷（Important 6 / Nit 2），未决 3 条。要修的第一刀是 <span class="mono">finalCode</span>，不是部署、不是开关。</p>
+</div>
+
+<div class="contract">
+  <div><b>审查对象</b>：判断「各用户单独学习系统 + 整体学习系统没跑起来」</div>
+  <div><b>代码基线</b>：业务树 develop <span class="mono">571a26d0</span></div>
+  <div><b>运行态</b>：部署机上的测试站库（只读 SQL / systemd / nginx 日志）</div>
+  <div><b>改动</b>：0 个文件；未跑构建、未动两站、未改配置</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>真实水位（测试站库，本会话现读）</h2>
+  <div class="stats">
+    <div class="stat"><span class="k">学习信号</span><span class="v ok">16</span><span class="s">最新 10-22 08:36 CST</span></div>
+    <div class="stat"><span class="k">manifest_bound</span><span class="v ok">9</span><span class="s">断链修复已生效</span></div>
+    <div class="stat"><span class="k">finalCode 非空</span><span class="v bad">0</span><span class="s">16/16 全空</span></div>
+    <div class="stat"><span class="k">候选规则</span><span class="v bad">0</span><span class="s">规则版本 0 / 部署 0</span></div>
+    <div class="stat"><span class="k">有信号的用户</span><span class="v warn">2 / 38</span><span class="s">内测账号总数 38</span></div>
+    <div class="stat"><span class="k">有同意记录</span><span class="v warn">4 / 38</span><span class="s">只在注册时自动授予</span></div>
+    <div class="stat"><span class="k">排版学习样本</span><span class="v warn">863</span><span class="s">18 次 run，仅 2 人</span></div>
+    <div class="stat"><span class="k">聚合调度器</span><span class="v bad">无</span><span class="s">只有清理 timer</span></div>
+  </div>
+  <div class="callout ok"><strong>上传侧的好消息：</strong>10-07 那笔修断链的补丁（补 <span class="mono">manifestDigest</span>）确实在起作用——9 条信号升到了 <span class="mono">manifest_bound</span>，最早一条 10-21 15:54，最新一条就在今天早上。所以"信号传不上去"的说法<strong>已过期</strong>。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>八条已证实缺陷</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">F-1 采集端不收"最终选择"，聚合端遇空即跳过</span><span class="tag bad">Important</span><span class="tag bad">根因</span></div>
+      <p>聚合器把桶内最高频 <span class="mono">finalCode</span> 当建议内容（<span class="mono">candidate-aggregator.ts:209,262</span>）；跑批脚本写的是 <span class="mono">aggregate-learning-candidates.mjs:120</span> → <span class="mono">if (!recommendation.finalCode) continue</span>，<strong>最终选择为空就直接不写库</strong>。</p>
+      <p class="fix">而五个采集点一个都不带它：<span class="mono">workbench-view.tsx:1356 / :1385 / :2768 / :3705</span> 只传 <span class="mono">actionCode</span> 和上下文；客户端 <span class="mono">learning-signal-client.ts:96</span> 是 <span class="mono">input.finalCode ?? null</span>——参数在，没人填。全 <span class="mono">src/components/**</span> 搜 <span class="mono">finalCode</span> 命中 <strong>0 处</strong>；库里 16/16 为空。</p>
+      <p class="fix"><strong>失效场景：</strong>样本攒到一万条也没用，候选规则恒 0。这条不修，其他动作全是空转。另外"用户手改译文"这个最有学习价值的动作，<strong>现在完全没有采集点</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-2 聚合没有任何调度器</span><span class="tag bad">Important</span></div>
+      <p>唯一入口是 <span class="mono">package.json:146</span>，命令里把 <span class="mono">--dry-run</span> 写死了，天生不写库；<span class="mono">--apply</span> 这条路径全仓 0 个调用者。</p>
+      <p class="fix"><strong>部署机实读：</strong><span class="mono">systemctl list-timers</span> 里学习相关只有清理单元（测试站每 12h、生产各一），<strong>没有聚合跑批单元</strong>。清理干的是"到期删除"（信号保留 180 天）。⇒ 信号躺在库里躺满 180 天等来的是删除，不是学习。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-3 学习成果没有下游</span><span class="tag bad">Important</span></div>
+      <p>非 admin 路径里读规则部署表的代码：<strong>0 处</strong>；<span class="mono">rule-resolver.ts</span> 与 <span class="mono">privacy-reducer.ts</span> 按 importer 计数在 <span class="mono">src/</span> 内均 <strong>0 引用</strong>（孤岛）；给用户下发成果接口 <span class="mono">/api/workbench/learning/rule-pack/status</span> 前端 <strong>无调用者</strong>（搜 <span class="mono">rule-pack</span> 只命中一个版本常量）。</p>
+      <p class="fix"><strong>要分清两件事：</strong>"不自动改写生产结果"是 Owner 定的红线（<span class="mono">feature-flags.ts:46-48</span> 硬编码 false），属设计、不算缺陷；但"把学习成果告诉用户"这条也没接线——这一半是真缺口。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-4 "按用户单独学习"只存在于服务端分组</span><span class="tag bad">Important</span></div>
+      <p>分组键确实支持按人（<span class="mono">candidate-aggregator.ts:160</span> 返回 <span class="mono">user:&lt;betaUserId&gt;</span>，personal 排第一），个人排版偏好也按人存了。但用户维度数据的<strong>唯一读者是管理端</strong>（<span class="mono">admin/learning/users/[id]/route.ts:24-26,67-69</span>）。</p>
+      <p class="fix">用户侧组件里和学习有关的只有那两个静默采集点，<strong>没有任何一处告诉用户"我们学到了你什么、对你有什么用"</strong>；同意开关也不给用户（<span class="mono">workbench/learning/consent/route.ts:5</span> 明写"用户侧不允许自助关闭"）。</p>
+      <p class="fix"><strong>口径后果：</strong>现在是"我们在按人收集"，不是"每人有一套为自己学的系统"。这两句对外不能混着讲。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-5 同意门把 34/38 账号永久关在外面</span><span class="tag bad">Important</span></div>
+      <p>门是 fail-closed（<span class="mono">consent-gate.ts:10-14</span> 无记录即拒；写库路由在事务内二次复核 <span class="mono">signals/route.ts:67-69</span>，拒时 403）。同意只在注册那一刻自动授予——审计日志 4 行全是 <span class="mono">registration_learning_consent</span>。</p>
+      <p class="fix"><strong>实测数量：</strong>38 账号 / 4 有记录；按注册时刻对账，策略生效日（2026-08-19）前 <strong>32</strong>、后 <strong>6</strong>。存量账号无人补过记录。</p>
+      <p class="fix"><strong>为什么现在还没炸：</strong>nginx 全历史（含 13 份轮转）里信号上报共 24 次请求，<strong>全 200、0 次 403</strong>——那 34 人根本没触发过上报。一旦有人做到那五个动作，就是静默失败，而且只能管理员在后台改。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-6 归属校验的批次 runId 支路是死的</span><span class="tag bad">Important</span><span class="tag info">存量</span></div>
+      <p>校验器认三支：<span class="mono">signal-validator.ts:170-176</span>（按 scanId 查 attempt）、<span class="mono">:177-185</span>（按 manifestDigest）、<span class="mono">:189-201</span>（按批次认领）。但批次支的 <span class="mono">runId</span> 等值比<strong>永远打不中</strong>：信号 <span class="mono">runId</span> 实测 16 条全 <span class="mono">psn_</span> 开头，批次 <span class="mono">runId</span> 实测是 UUID 形状（<span class="mono">019452…</span> 等），两串不相交；<span class="mono">execution-batch.ts</span> 里搜 <span class="mono">scanId</span> 命中 0 处。</p>
+      <p class="fix"><span class="mono">:187</span> 注释和那笔 commit 说明都写"报价/确认时把 scanId 写进 batch.runId"——<strong>注释与代码不符</strong>。现在能落库全靠 digest 两支在撑。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-7 助手本机学习证据永不进云</span><span class="tag warn">Nit</span><span class="tag info">存量</span></div>
+      <p><span class="mono">learning-evidence-client.ts:55</span> POST 到本机助手 <span class="mono">127.0.0.1:49152/learning/evidence</span>；助手 <span class="mono">server.js:6110</span> 收下只落本机，整个文件搜 <span class="mono">learning/signals</span> 命中 <strong>0 处</strong>，无外发同步。这条路上采到的东西云端永远看不到。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-8 六个学习开关形同虚设</span><span class="tag warn">Nit</span></div>
+      <p><span class="mono">feature-flags.ts:25-43</span> 定义 6 个开关、缺省全 false；两站 <span class="mono">.env</span> 里 <strong>LEARNING_ 开头的行一条都没有</strong>（实测 grep 空）。而 <span class="mono">readLearningFlags</span> 在 <span class="mono">src/</span> 内只有 1 个调用者，且是管理端总览用来<strong>显示</strong>的（<span class="mono">overview/route.ts:30</span>）——没有任何路由按它放行或拦截。</p>
+      <p class="fix"><strong>后果：</strong>"开关关着所以安全"不成立。实际安全边界只有 F-1/F-2 的天然断点和那条硬编码的 auto-apply false。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>更正：本次推翻的说法</h2>
+  <div class="tablewrap"><table>
+    <tr><th>原说法（出处）</th><th>反证</th><th>新结论</th></tr>
+    <tr><td>10-07 交接件：部署后信号表仍 0 行，待真实任务验证</td><td class="code">库内 16 行；9 行 manifest_bound；最新 10-22 08:36 CST</td><td>上传断链<strong>已修好并在生效</strong>，"还断在上传"作废</td></tr>
+    <tr><td>同件隐含：批次归属由 ownedByBatch 接通</td><td class="code">信号 runId 全 psn_*，批次 runId 全 UUID，等值比恒假</td><td>批次归属只剩 bindingPlanDigest 一支在撑（F-6）</td></tr>
+    <tr><td>本会话第一轮探针：8-19 后注册账号 0 个</td><td class="code">createdAt 是 integer 毫秒，我却用 julianday() 按文本比 → 恒 null</td><td>假读数，已按毫秒阈值重做：前 32 / 后 6。以重做为数</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>未决与覆盖缺口</h2>
+  <ul class="plain">
+    <li><strong>U-1</strong> 34 个无同意记录的账号里多少是真在用的客户——缺正确的主键桥接（我第一次 join 用错键，批次表的用户列与账号表主键不是一套，得 0 行是探针错不是事实）。</li>
+    <li><strong>U-2 已结案（10:25 现读）：</strong>测试站 <span class="mono">runtime-provenance</span> 报 <span class="mono">BOUND / 8d81d877</span>（committer 今天 09:55:27，落后 develop HEAD 仅 2 笔），且 <span class="mono">merge-base --is-ancestor 394241e 8d81d877</span> 返回 rc=0 ⇒ 落库那一版确实含断链修复，"站上是旧码"这个变量排除。</li>
+    <li><strong>U-3</strong> 一批真实多语跑完后五个采集点会被碰到几个——缺一次真机批次对账。用户若从不排除图层/确认绑定，连现在这 16 条都攒不出。</li>
+    <li><strong>没检查：</strong>生产站数据库（探针在生产库定位那步报未找到，未继续追，所以"生产也是 0"这类话我不能讲）；助手 exe 内部（只看 server.js 明文）；未跑任何测试与构建；管理端学习面板能否真打开未做界面实测。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">05</span>建议动作（最便宜 → 最贵，均超出本次授权，等 Owner 拍）</h2>
+  <ol class="plan">
+    <li><strong>先补 <span class="mono">finalCode</span>。</strong>现有采集点一起上报"用户最终定的那条"，并新增一个真正的<strong>改译采集点</strong>（手改译文是最高频、最有学习价值的动作，现在完全没采）。F-1 不通，后面全是空转。</li>
+    <li><strong>再挂调度。</strong>给聚合做一条可运行路径：先只 dry-run 出报告（多少组、缺哪些门槛），确认口径后再谈 <span class="mono">--apply</span>。挂法二选一：部署机 cron，或管理端"点一下跑一次"的路由。</li>
+    <li><strong>用户侧可见。</strong>把"你的学习成果"做出来给人看（只读展示，不碰执行权、不触红线），同时决定是否给用户自助开关。</li>
+    <li><strong>存量账号补同意记录。</strong>属法律语义变化，必须 Owner 明令并同步改隐私文案，<strong>不能静默补</strong>。</li>
+    <li><strong>F-6 / F-7 / F-8 登记为已知问题</strong>，不阻塞前三步。</li>
+  </ol>
+  <div class="callout warn"><strong>给 Owner 的判断依据：</strong>这次不用等部署、也不用开任何开关——第 1 条改完、第 2 条挂上，候选规则表才会开始有数。在那之前，"越用越准"这一类对外说法都落不了地。</div>
+</section>
+
+<div class="footer">
+  <span>证据来源：业务树 develop <span class="mono">571a26d0</span> 源码逐行；部署机 <span class="mono">systemctl list-timers</span>、测试站库只读 SQL、nginx access 全历史（含 13 份轮转）计数。所有 file:line 均为本会话 10:07—10:22 现读。</span>
+  <span>取证口径：只读审查，零文件改动、零配置改动、零部署。生产站库未取到，相关结论一律标注为未核实。</span>
+</div>
+
+</div>
+</body>
+</html>

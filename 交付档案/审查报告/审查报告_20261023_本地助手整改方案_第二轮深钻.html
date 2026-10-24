@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地助手整改方案：第二轮深钻（Round 2/3）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:64ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre.cmd{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  line-height:1.65;
+  margin:0;
+  color:var(--ink-2);
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:5px}
+.gate li{font-size:.9rem;color:var(--ink-2);line-height:1.65}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>第二轮深钻 · Round 2/3</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>本地助手整改方案：钻到因果层</h1>
+  <p class="standfirst">第一轮说的是"写法不通"。这一轮说的是"要解决的问题选错了"：这套计费按客户端上报的完成行数扣款、差额退还，所以付费客户要白拿只需要少报；而方案里最贵的那件（P1-A）防的是多报。全部只读，未改代码、未出包、未部署。</p>
+  <div class="meta">
+    <span>方案 26,403 B / sha256 26c1c80e…（与第一轮同一枚）</span>
+    <span>develop@558384c9 只读</span>
+    <span>本轮新增 11 条 ＋ 更正 3 条</span>
+    <span>代码改动 0</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">打回 · 本轮结论换了一层</span>
+    <p>方向大体仍然对。但本轮钻到底之后，最深的一条不在代码里，在因果里：<strong>P1-A 就算写通，也挡不住它声称要挡的那件事</strong>。<br>另外三条是硬的——身份核对拿错了比对对象（对着出厂清单，而真正拦人的是跑着的那台网站自带的身份）；发布闸按现写法会把测试站出包一起堵死；fail-closed 之后产品内没有任何恢复出口。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">79,513</span><span class="k">500 个对象<strong>单独</strong>的字节数，还没加行结果；上限 65,536</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">服务端持有的译文正文条数——schema 里根本没有这个字段</span></div>
+    <div class="stat warn"><span class="n">72h</span><span class="k">超限回执的真实上限：重试到批次过期，然后静默销毁证据</span></div>
+    <div class="stat ok"><span class="n">2</span><span class="k">本轮给出的服务端收口件数（零客户端改动）</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>仍然站得住的部分</h3>
+      <ul>
+        <li><strong>"读不到绝不覆盖"仍是真必要</strong>：本轮还补了一条它必须下沉到配置层的理由——每次 HTTP 响应都会读一次配置，读失败会被呈现成"未授权"，从而把用户推上写盘那条链。</li>
+        <li><strong>P0-A 的病因判断对</strong>：ACL 按裸用户名解析、先断继承后授权，两处都成立。</li>
+        <li><strong>拒绝清单整段照做</strong>：DPAPI、SQLite、加壳、mTLS 全不碰，本轮没有新增反对意见。</li>
+        <li><strong>"不做防破解"的定位对</strong>：只是它下面那句"改不了结算"需要限定。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>本轮新发现的问题</h3>
+      <ul>
+        <li><strong>P1-A 的因果反了</strong>：结算额来自上报的完成行，改过的客户端少报就少付；它的六条拒收全是防多报，而这个口子碰不到。</li>
+        <li><strong>P0.5 比错了对象</strong>：闸是拿 web 编译进去的身份做逐字相等，不是拿发布清单。</li>
+        <li><strong>beta 通道落地即空转</strong>：清单文件名读取器不认，新 buildId 又被身份闸拒。</li>
+        <li><strong>P0-D 假设的 30 天清理不存在</strong>：journal 里躺着原文与译文明文，不加密不收 ACL。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>最深的一条：有钱的口子是"少报"，而少报无法被客户端自证</h2>
+  <p class="lede">四条读数在同一条链上，逐条对号：</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>事实</th><th>位置</th><th>后果</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>实扣额由上报的完成行推出，差额退还</td><td class="mono">execution-batch.ts:2058-2065</td><td>报得少＝付得少</td></tr>
+      <tr><td class="mono">2</td><td>实扣大于 0 走 <code>commitReservation</code>，等于 0 走 <code>releaseReservation</code>（全额退）</td><td class="mono">execution-batch.ts:2218-2227</td><td>只报一行就只扣一行</td></tr>
+      <tr><td class="mono">3</td><td>行状态由客户端组装的回执决定</td><td class="mono">v15-runner.js:1041-1085</td><td>对象证据少给一行，该行即为 FAILED</td></tr>
+      <tr><td class="mono">4</td><td>交付件在客户自己硬盘上产出</td><td class="mono">v15-runner.js:1027-1032</td><td>拿到的文件与上报几行无关</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">结论</span>
+    <p>伪造"做过"要编数据——P1-A 能挡；<strong>隐瞒"做过"只要闭嘴——P1-A 挡不住</strong>。而且这条路径上服务端压根没有可对照的信息：连译文正文都不存（<code>prisma/schema.prisma</code> 里 targetText / translatedText / translationText grep 0 命中）。要让服务端"看一眼成品"，就得上传正文，直接顶穿现在的回执隐私合同（<code>execution-batch.ts:2326-2342</code>）。</p>
+    <p>所以方案第 25 行与第 221 行那句"护城河在即使读懂也改不了结算"必须限定：<strong>改不了结算动作</strong>（只有服务端写数据库），但<strong>结算基数是客户端给的</strong>。这一句不改写，后面每个会话都会以为 P1-A 做完就安全了。</p>
+  </div>
+
+  <p>顺带把第一轮我自己的一条建议判死：我建议 P1-A 要有"双版本宽容窗口"。本轮查到，窗口要按客户端版本放行，而版本是客户端自报的、常量还明文躺在出厂包里（<code>server.js:144</code>、<code>report-renderer.js:7</code>；<code>assistant-execution-contract.ts:3-4</code> 的注释自己写明"助手身份的唯一可信来源＝助手自报"）。<strong>要防的那个东西，正好是判据的来源。</strong>窗口只能建在"服务端已知的该设备最近一次配对版本"（会滞后）或批次创建时间上。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>本轮新增 findings（行号全部现读）</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>等级</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">D-01</td><td><span class="tag bad">Important</span></td><td class="mono">assistant-execution-contract.ts:69-90；localAssistant.ts:12-17；execution-batch.ts:131-132</td><td>P0.5 让客户比"出厂清单"，真正拦人的是跑着的那台 web 自带的身份。web 部署在 A 提交、包从 B 提交发布时，<code>/ping</code> 与清单逐字一致＝判绿，一建批就 <code>ASSISTANT_BUILD_MISMATCH</code> 硬失败</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-02</td><td><span class="tag bad">Important</span></td><td class="mono">local-assistant-release.ts:44, 53-66；publish-local-assistant.cjs:17</td><td>beta 通道照方案落地会空转：读取器固定找安装包同目录的 <code>local-assistant-release.json</code>，方案写的是 <code>…-beta.json</code>，下载页恒判"不可用"；beta 助手的 buildId 与现网 web 不等，又被 D-01 那道闸拒</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-03</td><td><span class="tag bad">Important</span></td><td class="mono">release-preflight.cjs:154-193；publish-local-assistant.cjs:79-91；部署三步走.md:52</td><td>删 <code>--allow-unsigned-beta</code> 卡的不只是生产——身份门对所有 target 无条件跑、发布脚本拒绝同名换二进制、受控内测发布文档用的正是这个 flag ⇒ 测试站也出不了包</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-04</td><td><span class="tag bad">Important</span></td><td class="mono">execution-batch.ts:2058-2065, 2218-2227；v15-runner.js:1041-1085</td><td>见第 02 节：付费客户少报即少付，P1-A 六条拒收全是防多报，碰不到这个口子</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-05</td><td><span class="tag bad">Important</span></td><td class="mono">receipt/route.ts:40；execution-manifest.js:10, 158；v15-runner.js:1078-1085</td><td>按真实 ID 形状重算：500 个对象<strong>单独</strong> 79,513 B；300 对象＋300 行＋diagTail 101,814 B；上限 65,536 B，413 发生在解析之前。方案自称的"500 对象压测"第一次就撞墙</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-06</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:4147-4158, 4185-4208, 8169-8174；execution-manifest.js:158, 174；receipts.js:60-63</td><td>P0-D 第 4 条假设的 30 天清理<strong>没有执行体</strong>（启动唯一清理是学习证据）。journal 里躺着明文：<code>.inputs.json</code> 存整个清单含原文与译文，<code>receipts/*.json</code> 存本机绝对路径；都走不加密、不收 ACL 的写盘路径。P0-A 护不到这些</td><td class="mono">A</td></tr>
+      <tr><td class="mono">D-07</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:2606-2628, 4486-4496, 4956-4968</td><td>每个响应（含 403/404）都读一次配置。瞬时读失败不直接写坏文件，但会把"默认配置"端给浏览器：<code>/config</code> 报未配置、激活状态归零，工作台引导重新授权——而重新授权正是写盘路径。读失败的可见后果主动把用户推上写坏配置那条链</td><td class="mono">B</td></tr>
+      <tr><td class="mono">N-04</td><td><span class="tag warn">Nit</span></td><td class="mono">persisted-state.js:96-100</td><td>备份恢复用 <code>copyFileSync</code> 且不回读核哈希；中途失败留下半截当前文件，按方案的定义当前坏＝CORRUPT，会把还完好的备份一起判掉</td><td class="mono">C</td></tr>
+      <tr><td class="mono">N-05</td><td><span class="tag warn">Nit</span></td><td class="mono">方案 :163 与 :164</td><td>同节自相矛盾：一条要 30 天清理 journal，一条要"现有 24 条不自动删"。清理按 mtime 判据，最老那批正是要留证的历史样本</td><td class="mono">A</td></tr>
+      <tr><td class="mono">P-04</td><td><span class="tag">Pre-existing</span></td><td class="mono">assistant-execution-contract.ts:3-4；server.js:144；report-renderer.js:7</td><td>客户端版本与构建号是自报的、常量明文在包里 ⇒ 任何按自报版本做灰度的设计都可被它要防的客户端伪造。全链结构性事实</td><td class="mono">A</td></tr>
+      <tr><td class="mono">P-05</td><td><span class="tag">Pre-existing</span></td><td class="mono">server.js:4147-4158</td><td>原子写盘的重命名失败时把 <code>.pid.ts.tmp</code> 留在盘上不清理，内容同样是明文清单</td><td class="mono">B</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>必要性口径修订（第二轮）</h2>
+  <p class="lede">第一轮那张三分表基本仍成立，只改三格。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">口径改为"不该按这个目标做"</span><h3>① P1-A 全量对象上传＋服务端重算</h3></div>
+      <p>第一轮说的是"现在做不通"（五件前置一件没落地）。本轮说的是：<strong>目标本身选错了</strong>。它防多报，而有钱的口子是少报（第 02 节）。</p>
+      <p class="was">它仍有一项真实价值——防 bug 造成的零交付、防夸大申报（对客户不利那一侧）。这个价值用第一轮"最小证据闸"＋服务端形状校验就能拿到大部分，成本是它的零头。要留就照这个目标留，别写成"防白拿"。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">真必要 · 判据要换</span><h3>② P0.5 身份核对</h3></div>
+      <p>仍然只要 1 分钟，但比的对象要换：客户机 <code>/ping</code> 的 version 与 buildId，必须等于<strong>客户浏览器所连那台站点</strong>的 <code>GET /api/runtime-provenance</code> 里的 <code>expectedAssistantVersion</code> / <code>expectedAssistantBuildId</code>（现成公开只读接口，无鉴权）。</p>
+      <p class="was">对不上就是发布不同步——先修发布再谈行为结论。原写法对的是出厂清单，那份清单和跑着的 web 可以不同步，于是给出假绿。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">仍只值 2 行 · 但多一条前置</span><h3>③ P0-D 回执墓碑</h3></div>
+      <p>第一轮已把它降为告警质量问题（不上云、不进结算）。本轮补一条硬前置：它假设的 30 天清理在助手里<strong>不存在</strong>。</p>
+      <p class="was">不做清理，就得先回答"journal 里的原文译文明文留多久、谁负责删"。这个问题比墓碑重要，而且它决定 P0-A 的收紧范围要不要扩。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>更正：本轮推翻第一轮我自己三条</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">C-R2-1</span><h3>buildId 的版本跨度说窄了</h3></div>
+      <p>第一轮说审计客户端自报的 <code>transport-hardening-20261011-r1</code> 对应 3.7.15。本轮用 <code>git log -S</code> 复算：它从 3.7.15 一路用到 3.7.22，在 3.7.22→3.7.23 那笔才换掉。</p>
+      <p class="was">"就是 3.7.15"这个精确断言收回，改成"落在 3.7.15–3.7.22 之间，确切版本必须 <code>/ping</code>"。方向不变：审计客户端不是 3.7.23/3.7.24，行为类结论仍需重取。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">C-R2-2</span><h3>超限回执不是"无限重试"</h3></div>
+      <p>第一轮说 413 会每 5 分钟无限重试。错：批次 72 小时转终态后结算返回 <code>BATCH_TERMINATED</code>，409 在永久拒绝集合里，于是出队删件。</p>
+      <p class="was">正确后果要这样写：活干完了，证据最多重试 72 小时，<strong>然后被静默丢掉，批次按未完成结算（退款）</strong>。这比无限重试更糟也更真实——它不吵着要人来看，它自己把证据销毁了。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">C-R2-3</span><h3>发布闸挡的范围说小了</h3></div>
+      <p>第一轮只说 P0-C 挡生产发布。本轮加强：<strong>它挡一切新 exe，包括测试站</strong>（身份门对所有 target 无条件跑 ＋ 同名不许换二进制 ＋ 内测发布文档用的就是那个 flag）。</p>
+      <p class="was">所以 P0-C 与 P0-A/P0-B 的顺序不是"建议调整"，是硬约束——不改顺序就没有热修可发。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>建议的下一步</h2>
+  <h3>6.1 若认同第 02 节：本轮真正该做的两件（都不动客户端）</h3>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">服务端一件</span><h3>批次保底</h3></div>
+      <p>结算时实扣取 <code>max(报价 × 下限比例, 按上报算出的值)</code>；整批零完成（走全额退还那条）不受影响。</p>
+      <p class="was">作用是把"少报"的收益从 100% 压到下限比例以下。比例归 Owner 或运营定，我不替它编数。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">服务端一件</span><h3>少报要付解释成本</h3></div>
+      <p>完成率低于阈值才允许退款，且必须逐行带失败原因——这条通道现成就在（回执行白名单已含 <code>reasonCode</code>）。服务端再按设备统计"低完成率批次占比"，超常的进人工对账（现有 <code>MANUAL_REVIEW</code> 结算形态可直接挂）。</p>
+      <p class="was">它把"改客户端"从零成本自我折扣，变成"要编一套逐行失败理由、还要过异常检测"。这不是密码学保证，是抬高成本——在本机完全可控这个前提下，这是能诚实做到的上限。</p>
+    </div>
+  </div>
+
+  <h3>6.2 重审门（Round 2 版）</h3>
+  <p>第一轮 6 条门保留 4 条（第 2、3、4、6 条原文不动），替换与新增如下：</p>
+
+  <div class="gates">
+    <div class="gate first"><div class="num">1</div><div class="body"><h3>P1-A 从本轮剔除</h3><p>改立 L 号单，目标重写为"防 bug 造成零交付／防夸大申报"，不再写"防白拿"；本轮先做 6.1 两条。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>P0.5 判据换对象</h3><p>比 <code>/ping</code> 与客户所连站点的 <code>/api/runtime-provenance</code>，不比出厂清单。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>P0-C 加两条前置</h3><p>beta 通道必须同时改清单名解析与身份闸按渠道取值，否则不许动 flag；发布闸改动的验收必须包含"测试站还能出包"这条正向断言。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>P0-D 加前置</h3><p>journal 明文的保留期与清理执行体先定，并明确豁免本轮点名的历史样本。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>P0-A 写清范围</h3><p>"本条只护会话文件"要写出来；journal 明文面另立一条，不许在验收里含混成"配置与状态文件已收紧"。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><h3>P0-B 必须自带离线恢复指令</h3><p>明确到"删哪个文件、用什么命令"。因为重置接口已 410 停用、卸载保留会话文件、路径又被日志脱敏抹成 <code>[path]</code>，而 <code>console.log</code> 根本不进日志文件——现在这套 fail-closed <strong>没有任何产品内出口</strong>。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>未决与覆盖缺口</h2>
+
+  <h3>未决（本轮 3 条）</h3>
+  <ol class="notes">
+    <li><strong>少报在现网的真实规模数不出来</strong>：需要"完成率低于 100% 但本机确有交付件"的批次分布。缺交付件存在性的云端可见证据——现云端记不记得到这一层，未核实。</li>
+    <li><strong>干净 Windows 上本机的继承权限真相</strong>：本机实测到的是当前用户＋SYSTEM＋Administrators，另有一个沙箱组带继承只读。缺一台没装过沙箱类软件的机器的原始输出。</li>
+    <li><strong>各客户机 journal 明文的实际留存天数与体积</strong>：只读了代码，没在任何客户机上看过目录。</li>
+  </ol>
+
+  <h3>覆盖缺口（诚实清单）</h3>
+  <ul class="notes">
+    <li>第一轮全部缺口未补：没上客户机、没跑安装器、没做 ACL 故障注入、没跑类型检查与测试套件、没实测浏览器私有网络预检、没向证书机构询价、没核实生产下载页当前怎么描述"未签名"。</li>
+    <li>本轮新增未做：没有实测超限回执的真机行为（只读代码＋算字节）；没有实测 <code>/api/runtime-provenance</code> 在测试站与生产站的真实返回（只读源码与路由）；6.1 两条建议没有做数值仿真。</li>
+    <li>第 02 节的"少报"结论是<strong>代码路径级</strong>（A 级），不是<strong>现网观测级</strong>——我没有、也不该在真机上做一次少报实验（那等于自造一次计费异常）。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>审查基线：<code>worktrees/develop@558384c9</code>（第一轮为 <code>e8d3d666</code>；本轮逐档核对，两笔之间本报告引用的 16 个文件 diff 为空，行号继续有效）。方案文件 26,403 B，sha256 <code>26c1c80e…9011cec6</code>，与第一轮同一枚。</p>
+  <p>工作树另有 5 个已改文件与 1 个未跟踪文件（他人现场），不属本次审查面，未纳入结论。本报告只读：未改任何业务代码、未出包、未部署、未改动任何账号或线上配置。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

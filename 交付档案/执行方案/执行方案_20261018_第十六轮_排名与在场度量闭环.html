@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<title>交付件</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>渠道打分</span><span class="sep">/</span><span>24 个免费外链与目录</span><span class="sep">/</span><span>2026-10-17</span></p>
+  <h1>交付件</h1>
+  <p class="standfirst">上一手 10-11 已把这批渠道分过一档。这次是<strong>逐个重新实测</strong>：站还在不在、提交口还在不在、要不要主体资质、条目页是不是服务端渲染（决定 AI 引擎抓不抓得到）。只读探测，不提交表单、不注册。</p>
+  <div class="meta"><span>24 个渠道</span><span>三轮复跑（修掉 6 个本机 TLS 假阴性）</span><span>未核实：DR／nofollow（无 Ahrefs key）</span><span>结论：建议投 3 个</span></div>
+</header>
+<h1>执行方案 · 第十六轮：排名与在场度量闭环（业界实现选型 + 对抗式审查）2026-10-18</h1>
+<ul class="notes">
+<li>号界登记：本轮号「第十六轮」由本会话于 2026-10-18 18:0x 落笔本文件时占取（落笔前实测 <code>ls 交付档案/执行方案 | grep -c 十六轮</code>＝0；仓内另有两处「第十六轮」字样属 09-25 监扫盘的自有编号，与本系列无关）。</li>
+<li>Owner 指令原话：「你到github和网上看看大家是怎么写这个算法或者是其他解决方案的了，用对抗式审查后给个执行方案」</li>
+<li>一句话结论：<strong>"看排名"这件事业界有三种实现，但没有一种能替我们拿到读数——因为我们现在缺的不是面板，是"取数能不能取全"这一层。本轮实测：同机对照下本站页面在 12 秒耐心内 44% 拿不到整份，两台异站 8/8 全通。</strong></li>
+<li>红线遵守：未部署、未翻闸、未碰支付、未登录任何平台、未引入第三方脚本、未把任何 key 写进文件。</li>
+</ul>
+<section><h2><span class="sn">01</span>一、本轮实测的四条（它们决定方案形状）</h2>
+<ul class="notes">
+<li><strong>取数完整率比"排名"更靠前。</strong> 自建哨兵 <code>交付档案/GEO测量/presence-snapshot.mjs</code> 今天跑了<strong>六轮</strong>真实读数（<code>jsonl</code> 里 <code>ts</code> 为 UTC，＋8 即本地；强制全失败的自检轮已排除），逐资产累加（算法＝Σ(tries−fullTries)/Σtries，19:53 重算）得：<strong>140 次取数尝试里 23 次未拿满＝短字节率 16.4%</strong>；分档更说明问题——<strong>12 秒档那一轮 10/30＝33.3%，30 秒档五轮 13/110＝11.8%</strong>。失败两类——<strong>连接级超时 <code>UND_ERR_CONNECT_TIMEOUT</code> 4 次</strong>（TCP/TLS 根本没连上，与百度报的「无法连接到您网站的服务器」同形）＋<strong>窗口内没传完 <code>TimeoutError</code> 12 次</strong>。（本节初稿写的是"120/20/16.7%"，那是五轮时的旧值，勘误登记在 §七 第 9 条。）逐轮：</li>
+</ul>
+<p class="lede">   - 12 秒上限：<code>clean=4/10 partial=5 failed=1</code>——<code>/</code>(2/3)、<code>/en</code>(<strong>0/3</strong>)、<code>/download</code>(2/3，p50 11.26 s)、<code>/terms</code>(2/3)、<code>/privacy</code>(1/3)、<code>/robots.txt</code>(1/3)；同轮 <code>public/</code> 出身的四件（sitemap、llms、llms-full、百度验证文件）全 <code>3/3</code>，p50 0.48—1.96 s ⇒ <strong>抖动集中在 Next 渲染面</strong>。</p>
+<p class="lede">   - 30 秒上限五轮：<code>clean</code> 依次 <strong>8、5、8、10、8</strong>——放宽耐心多数能过，但 <code>/privacy</code> 曾 p50 <strong>22.5 s</strong>、百度验证文件 p50 <strong>23.9 s 且仍 1/2</strong>、<code>/</code> 出现过整轮连接级超时。⇒ 诚实结论<strong>不是</strong>"页面取不到"，而是：<strong>12 秒耐心那一轮，Next 渲染面六件共 18 次尝试有 10 次没拿满（55.6%），同轮 <code>public/</code> 静态四件 12/12 全通</strong>；耐心放到 30 秒后同一批资产最好一轮 <code>10/10</code>。各家爬虫的耐心阈值未核实，所以这条只能判"存在被截断/判失败的风险"，<strong>不能判"百度因此不收"</strong>。</p>
+<p class="lede">   - <strong>节拍判据已落地并跑过</strong>：<code>--history</code> 对六轮真实读数给的裁决是 <code>[节拍] 同参数可比轮次=4；最近 3 轮异常标志=[异常,正常,异常] ⇒ [静默] 未达连续 3 轮同形，不报</code>。这条"连续 3 轮同形才报"的规矩，就是防止把一次链路尾误报成站点回归——今天下午我自己就差一点把 <code>/en</code> 的 12 秒档 0/3 读成"英文页挂了"。</p>
+<p class="lede">   - <strong>同机控制组</strong>（<code>-m 10</code>，各 4 发）：异站 <code>developer.mozilla.org</code> 149,818 B <strong>4/4 满字节</strong>、<code>bing.com</code> <strong>4/4</strong>；本站整页 61,613/0/95,308/93,055、<code>/icon.svg</code> 479/0/0/479、<code>/llms.txt</code> 0/0/3,534/3,534 ⇒ <strong>瓶颈在我方边缘→源站这一段，不是我这条线路</strong>。</p>
+<p class="lede">   - 单页 TTFB 摆幅实测 0.85 s → &gt;30 s（同一枚 95,308 B 首页，6 发里 1 发 30 秒超时）。</p>
+<ul class="notes">
+<li><strong>归属与读数面的真实现状</strong>（17:4x 探针 <code>tmp/rank-probe/result.txt</code>，9 格各带 rc）：apex TXT 两条，其中 <code>google-site-verification=z-gSdPVj…Bmsj0</code> 在位；<code>www</code> CNAME 无归属记录；<code>BingSiteAuth.xml</code> <strong>404</strong>（但 404 正文 7,685 B）；百度验证文件 200/32 B；边缘头 <code>cf-cache-status: DYNAMIC</code> + <code>Cache-Control: private, no-cache, no-store</code>（⇒ 每一次爬虫进站都要付整页 SSR）；sitemap 现读 <strong>8</strong> 页；本机 14 条 cron 里做 SEO/排名度量的 <strong>0</strong> 条（<code>grep -c</code> rc=1）。</li>
+<li><strong>两条我自己的过断言，本轮砍掉</strong>（病根就是根账 #137 立的"只查一个探针面就下否定式结论"）：① 上一轮我说"Bing 看起来还没验证"——根账 <code>AI_MEMORY/ISSUES.md:88</code>（#138 标题原话「GSC 9-17、Bing 9-18+10-13 提交完成」）证明 Bing 有提交史，验证记录撤下是常态，我的 DNS/文件读数不能反证"没验过"；② 我说"百度等您点一下就好"——#131 是 <strong>OPEN·major</strong>，累计 6+ 次验证在「无法连接」↔「服务器错误」↔「301 跳转」之间抖动。<strong>本轮第 1 条实测给 #131 补上了机制候选：验证文件自己就在 24 秒的尾巴上（p50 23.9 s、3/2 满字节）。</strong></li>
+<li><strong>线上首页静态 HTML 里指向本站一级页面的链接＝2 条（<code>/icon.png</code>、<code>/privacy</code>），真页面只有 1 条。</strong> ⇒ 我上一提交 <code>9bc1778</code> 补的 footer 四链<strong>确实还没生效</strong>（未部署的正证），"可发现性"这条在生产上仍是缺口。</li>
+</ul>
+<section><h2><span class="sn">02</span>二、业界到底怎么写这件事（两路调研，逐条带许可/活跃度/取数方式）</h2>
+<p class="lede"><strong>A 档形状＝自托管 SERP 排名追踪器。</strong> [SerpBear](https://github.com/towfiqi/serpbear)（MIT，2,114★，最后 push 2026-05-14）Next.js + 内置 SQLite，取数<strong>必须挂第三方 SERP API</strong>（ScrapingAnt/ScraperRobot/SearchApi/SerpApi/HasData）或自填代理 IP，README 明写只跟 Google；[serposcope](https://github.com/serphacker/serposcope)（MIT，755★）<strong>已 archived</strong>，README 自陈 "LEGACY… you better rewrite it from scratch"；[sundios/Google-rank-tracker](https://github.com/sundios/Google-rank-tracker)（305★）<strong>NOASSERTION＝无许可证</strong>，不可搬。真正像"取数层可复用件"的只有一枚：[OpenSERP](https://github.com/karust/openserp)（MIT，1,482★，2026-09-28，Go 单二进制 + Docker），google/yandex/<strong>baidu</strong>/bing/duckduckgo/ecosia 六端点同一 JSON schema，含 rank、AI 摘要、PAA，浏览器渲染或 raw HTTP 两种模式，代理池＋缓存＋resilient 模式，<strong>不要 API key、不按次计费</strong>。<strong>中文引擎在所有排名追踪器里都是空白</strong>（上述 README 里百度 0 命中）。</p>
+<p class="lede"><strong>B 档形状＝GSC API 自托管面板。</strong> [OpenGSC](https://github.com/fenjo26/OpenGSC)（MIT，45★/28 fork，push 2026-10-16，v1.10.0，单人作者、一周两提交）＝ Next.js 16 + PM2 + Nginx + <code>install.sh</code>，<strong>SQLite 是唯一全支持的生产库</strong>，1 vCPU/1 GB＋swap（Turbopack 构建峰值 ~2.4 GB，issue #21），<strong>硬要求域名+SSL——Google OAuth 不接受裸 IP</strong>。它一件装了三条线：GSC 面板（clicks/impressions/CTR/avg position、striking distance、content decay、cannibalization、GA4、Clarity、95 工具 MCP）＋ Rank Tracker（Serper/DataForSEO/ScraperRobot/A-Parser，与 GSC 平均位置叠加对照）＋ <strong>AEO Tracker</strong>（ChatGPT/Perplexity/Claude/Grok/Gemini <strong>全部开 live web search</strong>，三态 cited/mentioned/absent，附被引域名与你的名次；"Cited instead of you" 把竞品域分 12 类；<strong>每日自动跑默认关闭，因为每问＝你 key 上 4 次计费调用</strong>）。README 全文 0 次提及百度/搜狗/360/夸克。</p>
+<p class="lede"><strong>C 档形状＝AI 引用 prompt-panel。</strong> 方法论当场分裂成两派，<strong>数字不可混在一张图里</strong>：[elmo](https://github.com/elmohq/elmo)（MIT，467★，2026-10-17）与 OpenGSC 站"打真面/开 live search"；[niubigeo](https://github.com/Albert-Weasker/niubigeo)（Apache-2.0，<strong>8,206★</strong>，2026-10-10）README 明写"<strong>只观察 Provider API 响应，不碰消费者聊天界面，不含传统搜索排名追踪</strong>"。另有 [craftsail/craftsail-growth](https://github.com/craftsail/craftsail-growth)（<strong>AGPL-3.0</strong>，Go 单二进制 + SQLite，<strong>唯一把豆包/Kimi/DeepSeek/GLM/MiniMax 当引擎接入的 OSS</strong>，每日多轮采样带置信区间）、[searchstack-aeo](https://github.com/alexpospekhov/searchstack-aeo)（MIT，107★，自述 ~$5/月，可跑本地 Ollama/Qwen）、[aeo-radar](https://github.com/hellowalt/aeo-radar)（MIT，26★，Playwright+stealth 抓 ChatGPT 网页版、零 API 费，<strong>README 自陈可能违反其 ToS</strong>）、[NomaDamas/geobench](https://github.com/NomaDamas/geobench)（<strong>无许可证</strong>，71★，hit rate＋MRR＋SoV＋<strong>bootstrap 置信区间</strong>＋先 dry-run 估成本不打 API）。</p>
+<section><h2><span class="sn">03</span>三、会直接砍掉方案里几条路的六条外部事实</h2>
+<ul class="notes">
+<li><strong>GSC 的 <code>position</code> 不是位次。</strong> 官方口径＝"每个日期显示的值是你站点页面的<strong>最高位置的平均</strong>（average topmost position）"，并自认"一般应更关注展示与点击，而不是位置" [P][Performance report 帮助](https://support.google.com/webmasters/answer/7576553?hl=en)。⇒ 谁拿"平均位置 8"当 KPI，谁就是在读一个被系统性美化过的数。</li>
+<li><strong>小站的 GSC 表本身就是被筛过的。</strong> 匿名查询（Google 定义：两三个月内只有几十人搜）在<strong>表格与 API 里一律不列</strong>，且<strong>一加过滤器就整体被忽略</strong> [P][2022 deep dive](https://developers.google.com/search/blog/2022/10/performance-data-deep-dive)；Ahrefs 用 146,741 站点实测 <strong>46.08% 的点击来自未列出的隐藏词</strong> [C][近半 GSC 点击数据被隐藏](https://ahrefs.com/blog/zh/gsc-hidden-terms-study/)。</li>
+<li><strong>"AI 有没有引用我们"拿不到官方读数。</strong> [searchconsole.v1.json](https://raw.githubusercontent.com/googleapis/google-api-python-client/main/googleapiclient/discovery_cache/documents/searchconsole.v1.json)（discovery <code>revision: 20260805</code>）里 <code>SearchAnalyticsQueryRequest</code> 只有 10 个字段、<code>ApiDimensionFilter.dimension</code> 枚举只有 <code>QUERY/PAGE/COUNTRY/DEVICE/SEARCH_APPEARANCE</code>，<strong>grep <code>generative</code>/<code>ai mode</code>/<code>ai overview</code>/<code>datasource</code> 全 0 命中</strong>；UI 侧那份报表也只有 impressions、无点击/无查询词/无位次，且不含 ChatGPT/Claude/Perplexity 的引用 [P/W]。基线窗口只能从 <strong>2026-08-20</strong> 之后起算（Google 自认 08-13 起该报表因日志 bug 系统性偏低）[C][SERoundtable](https://www.seroundtable.com/google-search-console-performance-reports-drop-41884.html)。</li>
+<li><strong>程序化 SERP 这条路官方已经死了。</strong> Bing Search / Custom Search API <strong>2025-08-11 停用</strong>；Bing Webmaster 的 legacy SOAP/POX <strong>2026-08-31 退役</strong>，REST 侧改 OAuth 2.0 [P][learn.microsoft.com](https://learn.microsoft.com/en-us/bingwebmaster/)（我们 <code>scripts/submit-indexnow.mjs:128</code> 打的是 <code>https://api.indexnow.org/indexnow</code>，<strong>不在这条退役线上</strong>，实测原式见工具）。百度侧：搜索 Referer API 2022-11-30 下线、普通收录自动推送入口 2020-12-11 下线，索引量只在后台 UI、<code>site:</code> 官方定性为"估算值、不准"。</li>
+<li><strong>接第三方 SERP 供应商＝把一份仍在诉讼中的合规敞口接进产品。</strong> Google 2025-12 起诉 SerpApi（指其绕过 SearchGuard），2026-07-20 北加州联邦法院<strong>驳回 Google 的 DMCA 诉请</strong>、留 21 天可修改再诉 [W]。百度没有官方 SERP API，只有第三方接口（极速数据 ¥100/10,000 次、天行 ≈¥0.0042—0.005/次、站长之家官方提示"存在异地排名，不保证与查询 IP 一致"，且<strong>只回前 50 名</strong>）[C]。</li>
+<li><strong>AI 答案的重复采样门槛比想象高。</strong> SparkToro×Gumshue 2026-01 用 600 名真人、2,961 条提示测 ChatGPT/Claude/Google AI：<strong>两次回答出现同一品牌清单的概率 &lt;1/100，同一顺序 &lt;1/1000</strong> [C]；厂商侧经验值是探索期 5 次/问/引擎为下限。按二项比例自算（我的推导，非引用）：95% 置信 80% 功效下 n≈16·p(1−p)/Δ²，p≈0.3、要检出 20 个百分点的位移 ⇒ <strong>每条件约 56 次</strong>。⇒ 我们手上那条 <code>geo-baseline_20261017_doubao_v2.jsonl</code> 的 3/3 单发，<strong>只能判"提没提到"，不能支撑任何趋势主张</strong>。</li>
+</ul>
+<section><h2><span class="sn">04</span>四、对抗式审查（第一对象是我自己刚想到的招）</h2>
+<div class="scrollx"><table><thead><tr><th>候选</th><th>立论</th><th>反证／封顶</th><th>裁定</th></tr></thead><tbody><tr><td>C1 直接上 OpenGSC 当排名面板</td><td class="mono">MIT、活跃、SQLite 单文件、三件一线、"数据不过第三方"</td><td class="mono">要 VPS＋域名＋SSL＋自建 Google OAuth＋付费 SERP key＋<strong>一个常驻服务</strong>；且 #138 缺的是<strong>回看节拍</strong>不是面板——面板不会自己被人看；再叠一层"谁来看"的排班问题</td><td><strong>降 B 档</strong>，且把"每周谁打开一次"写成前置条件，不写"装了就有读数"</td></tr><tr><td>C2 自建 OpenSERP 打百度</td><td class="mono">Go 单容器、自带 baidu 端点、不按次计费，唯一把中文引擎当一等公民的件</td><td class="mono">它的代理池＋浏览器渲染<strong>就是规避搜索引擎反爬</strong>，与"不绕身份验证"红线同族；且第十四轮已实测百度第 3 个词起触发「百度安全验证」（<code>nodes=0 captcha=true</code>），境内 IP 稳定性未实测</td><td><strong>只当形状参考，不进产品链路、不部署</strong></td></tr><tr><td>C3 买第三方排名接口（¥9/月量级）</td><td class="mono">便宜、有历史数、绕开反爬</td><td class="mono">要付钱＋账号＋把我们的词表与域名交给第三方＝<strong>新增一类数据处理方</strong>（LEGAL-1 家族，隐私页第三方清单要同步）；官方自陈只回前 50 名＋异地排名</td><td><strong>降 B 档</strong>，等 Owner 拍；拍之前我不动</td></tr><tr><td>C4 用 GSC 官方 API 自拉聚合数（1,200 QPM、50k 行/日、rowLimit 25,000）</td><td class="mono">免费、合规、可复现；<strong>拉的是聚合点击/展示/位置，不含用户 PII ⇒ 不新增个人信息上云面</strong></td><td class="mono">前置＝Owner 侧建一个 Google Cloud 项目 + OAuth 授权（我做、也不该我做账号动作）；且 §三-2 那条筛除要写进读数口径</td><td><strong>A 档待授权</strong>：脚本我今晚就能写好并自测，缺的只是那次授权</td></tr><tr><td>C5 自建 AI 引用面板</td><td class="mono">别手已排期（第十四轮 S2：升位次/引用源/n=5 三列）</td><td class="mono">我另起一份＝两件同类；且按 §三-6，n=5 只能判粗变化，位次主张现在做不出来</td><td><strong>不重复建</strong>，只把三列口径写死成接口约定，供 S2 直接消费</td></tr><tr><td>C6 自建"在场快照"哨兵（不依赖任何账号）</td><td class="mono">零授权、零上云、零依赖；今天就能出基线；能把"取不到"与"不在场"分开</td><td class="mono">它测的是"我们能不能被完整读到"，<strong>不是排名</strong>；对外不得写成排名主张</td><td><strong>做，且本轮已做完</strong>（§五 A1/A2 与 §一 的读数就是它出的）</td></tr><tr><td>C7 把满字节率挂成发版门禁</td><td class="mono">一红就拦，防止链路再退化</td><td class="mono">外部网络读数会因本机/CF 抖动而红；本仓有 #132 恒红教训（门禁常红＝掩盖真回归）</td><td><strong>不进门禁</strong>，只作日报与告警</td></tr><tr><td>C8 先修回源/上边缘缓存（原 B1）再谈度量</td><td class="mono">度量在一条抖链子上拿到的数全是噪声</td><td class="mono">部署属红线，我无权动；且我不该用"先修好再量"当不量的借口</td><td><strong>量给它</strong>（本轮已把摆幅钉成数：0.85 s→&gt;30 s、DYNAMIC+no-store），修法仍等 Owner</td></tr></tbody></table></div>
+<section><h2><span class="sn">05</span>五、执行方案</h2>
+<p class="lede"><strong>A 档（我这边可独做，不碰红线）</strong></p>
+<ul class="notes">
+<li>A1 <code>交付档案/GEO测量/presence-snapshot.mjs</code>：10 件资产 × n 次取数完整率，落 <code>presence-snapshot_20261018.jsonl</code>（append-only，<code>fs.appendFileSync</code>），带 <code>--strict</code>／<code>--negative-control</code>／<code>PRESENCE_ORIGIN</code> 换测试站。<strong>本轮已建、已跑两档、负控已过。</strong></li>
+<li>A2 哨兵的回看节拍（<strong>本轮已做完，不再是待办</strong>）：<code>--history [文件]</code> 只读趋势，排除自检轮，按"同 <code>tries</code>＋同 <code>timeout-ms</code>"分组才比对；报警条件写死＝<strong>连续 ≥3 轮可比读数都满足 <code>failed&gt;0</code> 或 <code>partial&gt;=3</code></strong>，否则 <code>[静默]</code>；退出码 1＝报警、0＝静默、3＝无读数。<code>--self-test</code> 是离线夹具（写 <code>%TEMP%/tygf-presence-selftest.jsonl</code>，不联网、不碰真实读数），本轮 <strong>5/5 pass</strong>，其中两条专门咬我自己：一条验"只有 2 轮异常时不许报警"，一条验"夹具行不自洽（fullTries&gt;tries）时必须标 <code>invalid</code> 而不是报出一个负百分比"。</li>
+<li>A2b 节拍<strong>没有</strong>做成定时任务：本机 14 条 cron 已有多条自治轮，再挂一条带 Full Access 的无人值守会话去写这本共享台账，正是 #164 那类"一次 git add 裹走别手半笔"的成因。要挂的话请 Owner 明拍一句（节拍＋是否允许它落盘），我按"每周一次、只读、产物只进 jsonl"的形态建。</li>
+<li>A3 更正入账：把我那两条过断言（Bing／百度）写进 #138 的补记，并把本轮"验证文件自己就在 24 秒尾巴上"作为 #131 的机制候选补证——<strong>只追加，不删别人正文</strong>。</li>
+<li>A4 操卡：<code>操卡_20261018_四个地方看排名_照着点.md</code>（GSC 三处路径 / Bing 索引页 / 百度站长索引量 / Cloudflare AI Crawl Control 的 Crawlers 表），每条写清"打开哪、看哪一格、这一格只说明什么、不能推成什么"。</li>
+<li>A5 GSC API 取数脚本草案（<code>--dry-run</code> 可自测，不发真实授权），等 C4 授权即可接。</li>
+</ul>
+<p class="lede"><strong>B 档（等 Owner，一条都不绕）</strong></p>
+<ul class="notes">
+<li>B1 回源抖动/边缘缓存要不要动（现在每次爬虫进站都付整页 SSR）；</li>
+<li>B2 C4 的那次 Google Cloud OAuth；</li>
+<li>B3 OpenGSC 上不上（连"谁每周看"一起拍）；</li>
+<li>B4 第三方百度排名接口买不买（含隐私页第三方清单连锁）；</li>
+<li>B5 生成式 AI 报表基线（UI-only，窗口 ≥2026-08-20）。</li>
+</ul>
+<section><h2><span class="sn">06</span>六、验收判据（都可复跑；每条都注明本会话实际跑出的回显，未跑过的形态一律不写成判据）</h2>
+<ul class="notes">
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --negative-control</code> ⇒ rc=0，回显 <code>bogus 路径 http=[404,404,404]</code>（判定器能分辨"不在场"）。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --tries 3 --timeout-ms 12000</code> ⇒ 本轮 <code>clean=4 partial=5 failed=1</code>；同参重跑若明显更好，说明我在挑数，须并列报所有轮次。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --tries 2 --timeout-ms 30000</code> ⇒ 本轮 <code>clean=10 partial=0 failed=0</code>（绿路径）。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --strict --tries 2 --timeout-ms 30000; echo rc=$?</code> ⇒ <strong>无管道</strong>真 rc=1，回显 <code>[strict] 存在未拿满字节的资产 ⇒ exit 1</code>。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --tries 1 --timeout-ms 1</code> ⇒ <code>clean=0 partial=0 failed=10 sitemapUrls=null homeLinks=null（正文没拿到，不作 0 读）</code>——这条是本工具的<strong>防假绿/防假红负控</strong>：取数失败不得伪装成"结构上 0 条链接"。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --self-test</code> ⇒ 本轮 <code>pass=5 fail=0</code>、rc=0；夹具落在 <code>%TEMP%/tygf-presence-selftest.jsonl</code>，全程离线、不触碰真实读数文件。</li>
+<li><code>node 交付档案/GEO测量/presence-snapshot.mjs --history</code> ⇒ 本轮退出码 0（静默），回显 <code>真实读数 6 轮｜自检轮已排除 1 轮</code>、<code>同参数可比轮次=4</code>、<code>最近 3 轮异常标志=[异常,正常,异常]</code>；报警时才是 rc=1。</li>
+<li><code>grep -Ec 'rank|position' 交付档案/GEO测量/presence-snapshot.mjs</code> ⇒ 0 命中、rc=1 ⇒ 哨兵测的是"能不能被完整读到"，<strong>代码里根本没有"排名"这个概念</strong>，所以它不可能被误读成排名（本会话实测命令形态即此条，用的是 <code>grep -E</code>）。</li>
+<li><code>bash tmp/rank-probe/probe.sh</code> ⇒ 9 格各带 rc；[6] 记 5 发里 3 发不满；[9] rc=1＝0 条 SEO/排名 cron。</li>
+</ul>
+<section><h2><span class="sn">07</span>七、执行记录（2026-10-18 17:3x—18:2x，本地钟点＝jsonl 内 UTC 值 +8）</h2>
+<ul class="notes">
+<li>探针留底 <code>tmp/rank-probe/probe.sh</code>（9 格带 rc）→ 发现两条"取不到"（baidu_verify 一次 rc=28、首页 5 发 3 发不满）。</li>
+<li>建 <code>presence-snapshot.mjs</code>（零依赖，<code>fs.appendFileSync</code> 落 jsonl）→ 负控 rc=0 → 12 秒档 <code>4/5/1</code> → 30 秒档 <code>8/2/0</code>。</li>
+<li><strong>同机控制组</strong>排除"我线路"解释（异站 8/8 满字节）。</li>
+<li>单页 TTFB 6 发实测（0.85 s→&gt;30 s）；补上 <code>e.cause</code> 捕获后重跑，抓到 <strong><code>UND_ERR_CONNECT_TIMEOUT</code></strong>＝连接级失败，与百度报「无法连接到您网站的服务器」同形。</li>
+<li><strong>当场修掉自己工具里一个会造假的洞</strong>：首页正文没拿到时 <code>homeLinks</code> 会输出 0，而 0 恰好是 #169 的缺陷形状——会被下一手读成"证实了缺链接"。改成 <code>null</code> 并带一行"不作 0 读"，再用 <code>--timeout-ms 1</code> 强制全失败验该分支不崩。</li>
+<li>逐资产聚合换算（算法＝Σ(tries−fullTries)）：120 次尝试、20 次未拿满、16.7%；<code>--strict</code> 无管道真 rc=1。</li>
+<li>19:5x 补刀：给哨兵加 <code>--history</code>（趋势＋连续 3 轮同形才报警）与 <code>--self-test</code>（离线夹具），自测 <strong>5/5 pass</strong>；真实趋势跑出一轮新读数（<code>clean=8/10</code>），<code>--history</code> 裁决 <code>[静默]</code>、rc=0。</li>
+<li><strong>自测咬出两处我自己的东西</strong>：① 夹具初版把 <code>fullTries</code> 直接写成资产计数，导致趋势行报出 <code>短字节=-7/3=-233.3%</code>——负百分比在物理上不可能，说明工具对自己的派生数没有闸；② 已加健全性闸（<code>short</code> 出界即标 <code>invalid</code> 并拒绝进趋势），夹具改为按资产逐条生成自洽行。这两条都写成了 <code>--self-test</code> 里的固定断言，防止下次再漂。</li>
+<li><strong>勘误（整段一次重写，不逐次打补丁）</strong>：本文件 §一.1 初稿的"五轮／120 次／20 次／16.7%"是 18:2x 时的值；19:53 用同一算法（Σ(tries−fullTries)/Σtries）对<strong>六轮</strong>重算得 <strong>140／23／16.4%</strong>，并已按新值改写该句。旧值不删、留此登记，因为台账里 #131 补记与飞书推送引用的仍是五轮时的数——引用时以本句为准。</li>
+<li>未做（如实）：<code>/en</code> 在 12 秒档 0/3 只做了一次，未复采；各爬虫真实耐心阈值未核实；本工具<strong>没有</strong>挂进任何发版门禁（对抗审查 C7）；<strong>没有</strong>擅自新建定时任务（理由见 §五 A2b）。</li>
+</ul>
+<section><h2><span class="sn">08</span>八、配套产物</h2>
+<ul class="notes">
+<li>本件 md + 同名 HTML（house 组件体系）。</li>
+<li>读数：<code>交付档案/GEO测量/presence-snapshot_20261018.jsonl</code>；探针留底：<code>tmp/rank-probe/result.txt</code>（gitignored）。</li>
+<li>调研原文证据（含 URL 与许可）：本会话两路调研回包，要点已全部落进 §二/§三，未落地的原始长文不入库。</li>
+</ul>
+</section>
+<footer>
+  <p>读数载体：<code>tmp/geo-research/channel-probe.json</code>（24 条）；探针可复跑：<code>tmp/geo-research/probe-channels.mjs</code>。清单来源：<code>outputs/运营方案-v2-20261011/R3-中文渠道拉新手段.md</code> 第 391-428 行。</p>
+  <p>本机坑（本轮实测）：<code>curl</code> 不加 <code>--ssl-no-revoke</code> 会把 6 个活站判成不可达；<code>-w %{size_download}</code> 是传输字节不是文件字节。SSR% 为「剥标签后可见文本 ÷ HTML 体积」的粗代理，只用于横向比较，不当绝对判据。</p>
+</footer>
+</div>

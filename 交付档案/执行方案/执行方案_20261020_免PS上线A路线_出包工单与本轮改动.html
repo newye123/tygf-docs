@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>免 PS 上线 A 路线 · 出包工单与本轮改动 · 2026-10-20</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap"><header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 执行结果＋出包工单</p>
+  <h1>免 PS 扫描：真机已经跑通，但今天没人能用上；A 路线卡在缺 NSIS</h1>
+  <p class="standfirst">我用真引擎对真 PSD 做了只读扫描：1.5 秒、3 层全出、逐层原文齐备、没起 Photoshop、母版一个字节没变。要开放给用户，缺的是"新助手包"和"一台没开 PS 的机器"。</p>
+  <p class="meta">2026-10-20 17:1x · Owner 选 ② A（免 PS 上线）＋ ③ (ii)（字体排版保持不进写回）· develop 本地 <span class="mono">bd2c860</span> ＋ <span class="mono">31d0256</span>，未 push</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">三个问题的实测答案</p>
+  <p class="lede">① 免 PS 扫描<strong>技术上成立、路径上不可达</strong>——现役逻辑是"PS 在跑就走 PS"，没跑就回 202 让用户开 PS；引擎道要三键全开＋引擎件钉哈希＋新版助手包，而三键默认全关、没有界面入口。② 字体排版<strong>能设不会写进设计稿</strong>（能力位 <span class="mono">TYPOGRAPHY_APPLY_READY=false</span>），且字体清单端点在实装 3.7.15 上实测 <strong>404</strong> ⇒ 下拉禁用、只能手输 PostScript 名。③ 现役扫描<strong>仍需 Photoshop 在跑</strong>（设计如此），唯一免 PS 的现成快路是同机已有有效观测的缓存。</p>
+  <div class="stats">
+    <div class="stat ok"><span class="n">1526ms</span><span class="lb">真引擎只读扫描（3 层，SUCCESS）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="lb">母版字节变化（前后同哈希）</span></div>
+    <div class="stat bad"><span class="n">404</span><span class="lb">真机 GET /v1.5/fonts（出厂包落后）</span></div>
+    <div class="stat warn"><span class="n">7</span><span class="lb">版本 bump 的同步面（缺一门红）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel yes">
+    <p class="hd">本轮做完（含读数）</p>
+    <ul class="tl">
+      <li class="tl-body"><span class="tag">1</span><span class="mono">bd2c860</span> 覆盖率假绿灯诚实化：空分母不再报 100，格子显示「无法估算」、虚线中性描边、撤掉肯定句；闸只拦真数（不新增阻塞）；两处"共用一张表"文案改准 ⇒ 逻辑门 108 checks rc=0、守卫门 37 rc=0、<span class="mono">tsc</span> rc=0、真浏览器复测 <span class="mono">DE/FR 无法估算</span></li>
+      <li class="tl-body"><span class="tag">2</span><span class="mono">31d0256</span> 扫描"根本没开始"的两类原因改为可上报：<span class="mono">PHOTOSHOP_NOT_RUNNING</span>（此前走 202 一条事件都不发）与 <span class="mono">ALREADY_OPEN_WITH_UNSAVED_CHANGES</span>（此前被收敛成泛化码），单稿与批量两条路径都补发 ⇒ 跨层同集断言 rc=0、发布一致性 46 checks rc=0、接线冻结 9/9</li>
+      <li class="tl-body"><span class="tag">3</span>新增 <span class="mono">scripts/smoke-pc-scan-live.mjs</span>：真机免 PS 只读扫描探针，断言 <span class="mono">scan_status=SUCCESS / psVersion 为空 / 逐层原文齐备 / 凭记哈希一致 / 母版前后同 SHA</span>；缺引擎件或未给母版一律 SKIP，不假绿</li>
+      <li class="tl-body"><span class="tag">4</span>排版文案按实装行为改准：原写"仅保存在本机浏览器"与实际不符（值确实随任务送到本机助手、执行器按能力位忽略），助手侧注释同笔指向该句防两套说法</li>
+    </ul>
+  </div>
+  <div class="panel no">
+    <p class="hd">A 路线唯一硬阻塞（＋为什么不能先 bump）</p>
+    <ul class="tl">
+      <li class="tl-body"><strong>本机没有 NSIS</strong>：<span class="mono">C:\Program Files (x86)\NSIS\makensis.exe</span> 与 <span class="mono">C:\Program Files\NSIS\makensis.exe</span> 都不存在，<span class="mono">D:\ E:\ C:\tools</span> 递归到第 4 层也没有；而 <span class="mono">dist/tygf-engine-setup-3.7.15.exe</span> 在册 ⇒ 历史上是别的机器出的包。我没有静默安装任何系统工具。</li>
+      <li class="tl-body"><strong>不能先 bump 再补包</strong>：隔离树里做一次假 bump（跑完已还原）⇒ <span class="mono">check-release-identity rc=1</span>，报 <span class="mono">missing tygf-engine-setup-3.7.16.exe</span>、<span class="mono">manifest version mismatch</span>、<span class="mono">.env.example</span> 两处不符。先造一个没有产物的版本身份，正是刚花一天反对的那种常亮绿灯。</li>
+      <li class="tl-body">pkg 可用（<span class="mono">node_modules/.bin/pkg</span> 在册），缺的只是安装包这一环。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">出包工单：7 处同步面（缺一处门就红）</p>
+  <div class="gate first"><span class="sn">1</span><p><span class="mono">config/release-identity.json</span> — assistantVersion / assistantFile / assistantBuildId 三处同改</p></div>
+  <div class="gate"><span class="sn">2</span><p><span class="mono">download/local-assistant/server.js:143</span> — <span class="mono">const VERSION</span></p></div>
+  <div class="gate"><span class="sn">3</span><p><span class="mono">download/local-assistant/package.json:3</span> — version</p></div>
+  <div class="gate"><span class="sn">4</span><p><span class="mono">download/local-assistant/build/installer.iss:8</span> — AppVersion</p></div>
+  <div class="gate"><span class="sn">5</span><p><span class="mono">deploy/server-setup.sh:80 / :139</span> — NEXT_PUBLIC_LOCAL_ASSISTANT_VERSION</p></div>
+  <div class="gate"><span class="sn">6</span><p><span class="mono">.env.example</span> — 版本与安装包名两处</p></div>
+  <div class="gate"><span class="sn">7</span><p><span class="mono">public/downloads/local-assistant-release.json</span> — manifest 的 version/fileName/size/sha256，<strong>必须出包后</strong>由真产物回填</p></div>
+</section>
+
+<section class="notes">
+  <p class="hd">出包机执行序（命令原式）</p>
+  <ol>
+    <li><span class="now">1</span> <span class="mono">node build\validate-release-config.cjs config.example.json</span></li>
+    <li><span class="now">2</span> <span class="mono">build\build-engine.bat</span>（pkg 出引擎 exe）</li>
+    <li><span class="now">3</span> <span class="mono">makensis.exe build\installer.iss</span>（← 本机缺这一步）</li>
+    <li><span class="now">4</span> 产物 size/sha256 回填 manifest → <span class="mono">node scripts\check-release-identity.cjs</span> 必须 rc=0 → <span class="mono">node scripts\smoke-release-consistency.mjs</span> → <span class="mono">npm run release:preflight -- --target test</span>（部署测试站另需要你给时刻）</li>
+    <li><span class="now">5</span> 白名单机开三键：先 <span class="mono">node scripts\pc-enable-on-machine.cjs --exe "C:\Program Files\PhotoCraft\photocraft-cli.exe" --dry-run</span> 再执行（脚本自算并钉引擎哈希、写前备份、<span class="mono">--off</span> 可回滚）</li>
+    <li><span class="now">6</span> 在<strong>没开 Photoshop 的机器</strong>上跑 <span class="mono">smoke-pc-scan-live.mjs --selfcheck</span> 与 <span class="mono">--master "&lt;真稿.psd&gt;"</span>，才有资格写"免 PS 扫描可用"</li>
+  </ol>
+</section>
+
+<section class="notes">
+  <p class="hd">要你拍的两件＋我明确没做的</p>
+  <ol>
+    <li><span class="now">拍 1</span> 出包机：用你另一台装了 NSIS 的机器出包，还是批准在这台装 NSIS（我不自行安装）。</li>
+    <li><span class="now">拍 2</span> 无 PS 实测机：你的三台 PS 都开着 ⇒ 需要指定一台关着 PS 的机器或内测机。</li>
+    <li><span class="now">没做</span> 没 bump 版本、没出包、没部署、没碰生产；没在你这台机器开三键；没改别的会话正在写的脏文件（含两个 package.json，所以探针没注册 npm 入口，直接 <span class="mono">node scripts/…</span> 跑）。</li>
+    <li><span class="now">没解冻</span> 免 PS <strong>写回</strong>仍按 10-19 判决冻结（判决件 <span class="mono">:91</span>：写回继续走 Photoshop，免 PS 维持"只扫描、不预览写回"），本轮无反证。</li>
+  </ol>
+</section>
+
+<section class="notes">
+  <p class="hd">仍存的未决</p>
+  <ol>
+    <li>免 PS 观测没有 <span class="mono">bounds/wrapWidthPx</span>（契约里可选）⇒ 撑版/溢出判据失去宽度输入，<strong>影响幅度未测</strong>（缺一份真稿在引擎道上的对照）。</li>
+    <li>扫描卡住现在有码了，但<strong>还没有聚合面</strong>：后台没有按码统计"卡了多少人"的入口 ⇒ 下一步该补这个，否则还是一条条翻日志。</li>
+  </ol>
+</section>
+
+<footer>
+  <p>本轮所有读数为本会话实跑：假 bump 的门退出码、真引擎扫描的 ok/耗时/层数/前后哈希、探针各断言行、五道门的 rc 与 checks 数。审查方式为三路并行取证＋主审独立复现；其中"字体面板文案不诚实"这条来自我自己方案的假设，复核后发现原句已部分诚实、只有"仅保存在本机浏览器"与实际不符，故只改该处，未扩大改动。</p>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案：多稿工作台「全表读取 + 译文来源矩阵」</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f1f2ee;--ink:#1b1f1d;--ink2:#4c5450;--muted:#737b76;
+  --line:#e3e5df;--line2:#d2d6ce;--teal:#0f766e;--teal-soft:#e6f4f1;--amber:#9a5b08;--amber-soft:#fdf1d8;
+  --rose:#a33a32;--rose-soft:#fbe9e6;--violet:#6b4b9a;--violet-soft:#f0eafa;--sky:#2563a8;--sky-soft:#e8f0fb;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--sans:"Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:14px;--shadow:0 1px 0 rgba(0,0,0,.03),0 10px 30px -24px rgba(0,0,0,.28)
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111513;--surface:#171d1a;--sunk:#1f2622;--ink:#eef2ee;--ink2:#b7c0ba;--muted:#8d9890;--line:#2a332e;--line2:#3a453e;--teal:#5fd3c4;--teal-soft:#16312c;--amber:#f2bf66;--amber-soft:#33270f;--rose:#f08b80;--rose-soft:#361b18;--violet:#c4a8f0;--violet-soft:#271d38;--sky:#8ab8f2;--sky-soft:#15263d}
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,var(--surface),var(--teal-soft));border-radius:20px;padding:26px 28px;box-shadow:var(--shadow)}
+.kicker{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+h1{font-size:clamp(24px,3.4vw,38px);line-height:1.2;letter-spacing:-.03em;margin:0 0 10px}
+.lede{margin:0;max-width:70ch;color:var(--ink2);font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;font-size:12px;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;font-size:11px;white-space:nowrap}
+.tag.ok{background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 35%,transparent);color:var(--teal)}
+.tag.warn{background:var(--amber-soft);border-color:color-mix(in srgb,var(--amber) 35%,transparent);color:var(--amber)}
+.tag.bad{background:var(--rose-soft);border-color:color-mix(in srgb,var(--rose) 35%,transparent);color:var(--rose)}
+.tag.info{background:var(--sky-soft);border-color:color-mix(in srgb,var(--sky) 30%,transparent);color:var(--sky)}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0 0}
+.verdict>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink2)}
+.verdict b{display:block;color:var(--ink);font-size:13px;margin-bottom:3px}
+section{margin-top:26px}
+h2{font-size:18px;letter-spacing:-.015em;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+h2 .n{font:500 11px var(--mono);color:var(--teal);border:1px solid color-mix(in srgb,var(--teal) 30%,transparent);background:var(--teal-soft);border-radius:999px;padding:2px 7px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .v{font:700 24px/1.1 var(--mono);letter-spacing:-.04em}.stat .l{font-size:11.5px;color:var(--muted);margin-top:4px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 8px;font-size:14px}.panel p{margin:0;color:var(--ink2);font-size:13px}
+.panel ul{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:13px}.panel li+li{margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.card .head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:6px}
+.card .title{font-weight:700;font-size:13.5px}.card p{margin:0;color:var(--ink2);font-size:12.5px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:none}.mono{font-family:var(--mono);font-size:11.5px}
+.callout{border:1px solid var(--line2);border-radius:12px;padding:13px 15px;font-size:12.5px;color:var(--ink2);background:var(--surface)}
+.callout.warn{border-color:color-mix(in srgb,var(--amber) 35%,transparent);background:var(--amber-soft)}
+.callout.bad{border-color:color-mix(in srgb,var(--rose) 35%,transparent);background:var(--rose-soft)}
+.callout.ok{border-color:color-mix(in srgb,var(--teal) 35%,transparent);background:var(--teal-soft)}
+.callout b{color:var(--ink)}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px}
+.gate b{display:block;font-size:12.5px;margin-bottom:2px}.gate span{color:var(--muted)}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font:12px/1.55 var(--mono);color:var(--ink2)}
+code{font-family:var(--mono);font-size:.92em}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;display:flex;flex-wrap:wrap;gap:8px 18px}
+a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}
+@media(max-width:760px){.split{grid-template-columns:1fr}.wrap{padding:18px 14px 36px}.hero{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">Execution Plan · 2026-10-24</div>
+    <h1>多稿工作台：全表读取 + 译文来源矩阵</h1>
+    <p class="lede">Owner 指出的问题成立：现在只读“被自动选中的那一张表”，没有把文件夹里的每张表读出来罗列。本方案照 <b>模拟_20261021_批量改语言工作台_UIUX真实界面.html</b> 的信息架构，补上“译文表清单”，并把“表”提升为第一等事实。</p>
+    <div class="meta">
+      <span>对象：<span class="mono">worktrees/multidraft2</span></span>
+      <span>状态：<span class="tag warn">方案待拍板 · 未改代码 · 未上站</span></span>
+      <span>当前测试站：<span class="mono">42aded27</span></span>
+      <span>生产：<span class="mono">319bc1384a36</span>（零操作）</span>
+    </div>
+    <div class="verdict">
+      <div><b>根因不是少一个表格组件</b>表只有路径，读表缓存按“稿”存，自动配对在读表之前——所以表清单、来源矩阵、表级状态都无从谈起。</div>
+      <div><b>先做表册，再做矩阵</b>每张表登记一次、读表头一次、状态独立；稿通过 binding 引用表；矩阵从同一份表册派生。</div>
+      <div><b>最大风险是授权，不是 UI</b>现有逐表读要逐张验票（10 秒/次）；12 张表会放大超时。推荐助手 3.7.25 批量 survey 端点，过渡方案明确上限与重试。</div>
+      <div><b>这次只出方案</b>不删现有队列/手动选表/同名稿/一稿一表；生产零操作；3.7.25 需 Owner 另行批准。</div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">01</span>现在到底缺什么</h2>
+    <div class="split">
+      <div class="panel">
+        <h3>当前链路</h3>
+        <ul>
+          <li><span class="mono">listFolderDesigns</span> 只返回表路径/相对路径/扩展名，没有语言、sheet、行数、读状态。</li>
+          <li><span class="mono">buildAttributionPlan</span> 先按文件名 SKU 猜表，读表发生在选中之后。</li>
+          <li><span class="mono">parsedTables</span> / <span class="mono">stageTableStates</span> 按稿存；同一张表服务 12 份稿就重复读 12 次。</li>
+          <li>底部矩阵按 SKU 显示覆盖数量，不显示“这一格来自哪张表”。</li>
+          <li>表选择器只有路径，没有语言/行数/状态，用户选表前无法比较。</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>目标链路</h3>
+        <ul>
+          <li><b>表册</b>：每张表一条 TableRecord，含 sheet、语言、行数、状态、usedBy、错误、重复。</li>
+          <li><b>表头调查</b>：所有表先读表头，边读边出清单；全文只读被绑定的表。</li>
+          <li><b>绑定</b>：稿 → 表 / sheet / 交付物 / 语言；自动是建议，人可改。</li>
+          <li><b>来源矩阵</b>：行=稿，列=语言，每格来源表 + 覆盖 + 缺什么；点格开抽屉。</li>
+          <li><b>旧接口适配</b>：第 2 步仍拿 <span class="mono">parsedTables[draftKey]</span>，不破坏执行链。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span>证据：缺口有具体坐标</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>缺口</th><th>现状证据</th><th>后果</th></tr></thead>
+        <tbody>
+          <tr><td>表只有路径</td><td class="mono">local-assistant-client.ts:1091 · FolderTableEntry</td><td>不能罗列语言/行数/状态</td></tr>
+          <tr><td>读表缓存按稿</td><td class="mono">workbench-view.tsx:265 · :479 · :2027-2033</td><td>同表多稿重复读；表级状态不存在</td></tr>
+          <tr><td>先按文件名配对</td><td class="mono">sku-attribution.ts:301-331</td><td>不知道表里有没有目标语言</td></tr>
+          <tr><td>多 sheet 按交付物选一张</td><td class="mono">table-file.ts:33-38</td><td>表级视角丢 sheet；同表两种稿重复读</td></tr>
+          <tr><td>矩阵只有覆盖数</td><td class="mono">attribution-stage.tsx:1024-1092</td><td>看不到来源表/缺语言/读失败</td></tr>
+          <tr><td>表选择器只有路径</td><td class="mono">table-picker-dialog.tsx</td><td>选表前无法比较</td></tr>
+          <tr><td>逐表验票 10 秒</td><td class="mono">local-assistant-client.ts:1331 · server.js:2654</td><td>12 张表 = 12 次验票，放大超时</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span>目标界面（mock 为底，补表清单）</h2>
+    <pre>┌ 准备素材（沿用现有卡头）─────────────────────────────────────────────┐
+│ [N 份稿] [N 门语言] [N 个交付物] [就绪] [要处理] [缺语言] [矩阵格]       │
+├──────────────────────────┬─────────────────────────────────────────────┤
+│ 设计稿（可搜索）          │ 译文来源（行=稿，列=语言）                    │
+│ ● 5857 主图   就绪        │        DE       FR       JA       …          │
+│ ● 5857 A+     有问题      │ 5857  [主表][✓] [主表][97%] [缺]  …          │
+│ ○ 6896 详情   未配表      │ 6896  [详情表][✓] …                          │
+│                          │ 点击格 → 右侧详情抽屉                        │
+├──────────────────────────┴─────────────────────────────────────────────┤
+│ 译文表清单（新增）                                                       │
+│ 表名/路径 | sheet | 语言列 | 行数 | 读状态 | 被谁用 | 问题 | 操作        │
+├─────────────────────────────────────────────────────────────────────────┤
+│ 要你处理的（保留现有队列；缺表/冲突/同名稿时才占空间）                   │
+└─────────────────────────────────────────────────────────────────────────┘</pre>
+    <div class="cards" style="margin-top:12px">
+      <div class="card"><div class="head"><span class="title">表清单</span><span class="tag ok">全部表</span></div><p>未选中的、失败的、重复的、未被任何稿使用的表都要出现；不再只有被自动选中的那张。</p></div>
+      <div class="card"><div class="head"><span class="title">来源矩阵</span><span class="tag info">每格有来源</span></div><p>来源表短名 + 覆盖/缺语言/未读/错误；点格开抽屉，不再只是覆盖数字。</p></div>
+      <div class="card"><div class="head"><span class="title">保留能力</span><span class="tag warn">不删</span></div><p>手动选表、同名稿、一表一稿、逐稿手动导入、扫描队列、12 份上限全部保留。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span>核心架构：表册 → 绑定 → 矩阵</h2>
+    <div class="cards">
+      <div class="card"><div class="head"><span class="title">TableRecord</span><span class="tag ok">按表存</span></div><p>id/path/sheets/languages/rows/stage/error/fingerprint/usedBy。一张表服务 12 份稿只读一次。</p></div>
+      <div class="card"><div class="head"><span class="title">DraftTableBinding</span><span class="tag info">按稿引用</span></div><p>draftPath → tableId / sheet / deliverable / source。自动建议，手动优先；不碰表本体。</p></div>
+      <div class="card"><div class="head"><span class="title">SourceMatrixCell</span><span class="tag warn">派生</span></div><p>稿×语言 → 来源表/覆盖/缺语言/未读/错误。矩阵和表清单共用表册，不各算一套。</p></div>
+    </div>
+    <div class="callout warn" style="margin-top:12px"><b>两档读表，不能混叫“已读”：</b>所有表先 <b>survey</b>（sheet/语言/行数/空表/损坏）；只有被绑定的表 <b>full</b>（完整行，供覆盖率和第 2 步）。如果 Owner 要“每张表都读全文”，单列全量模式，单独算 5MB/张、并发 2、授权与内存预算。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">05</span>对抗式审查：最坏情况</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>最坏情况</th><th>会怎么坏</th><th>挡法</th></tr></thead>
+        <tbody>
+          <tr><td>A1</td><td>逐张 read-table</td><td>12 次验票，任一 10s 超时 → 表册不完整</td><td>3.7.25 批量 survey；过渡方案 12 张硬上限 + 单表重试 + 明示</td></tr>
+          <tr><td>A2</td><td>12×5MB base64 回浏览器</td><td>60MB 内存、解析卡 UI</td><td>survey 只回元数据；全文只读绑定表；并发 2；必要时 Worker</td></tr>
+          <tr><td>A3</td><td>同表 12 稿共用</td><td>读 12 次、状态不一致</td><td>表级缓存；binding 引用；旧 parsedTables 只做投影</td></tr>
+          <tr><td>A4</td><td>主图/A+ 双 sheet</td><td>只读一张，另一稿拿错行</td><td>survey 列全 sheet；full 按交付物选；未选 sheet 写 warnings</td></tr>
+          <tr><td>A5</td><td>文件名认不出 SKU</td><td>自动配对空，表也不显示</td><td>表册与配对解耦；未知 SKU 不静默去重；人手选表</td></tr>
+          <tr><td>A6</td><td>表多/扫描截断</td><td>只列前 N 张却像全量</td><td>tablesTruncated 逐条列未读；不假装</td></tr>
+          <tr><td>A7</td><td>损坏/空表/超 5MB</td><td>一张失败拖整屏</td><td>表级 error/truncated；可重试/换表；其它继续</td></tr>
+          <tr><td>A8</td><td>读表中换文件夹</td><td>旧结果写进新批次</td><td>epoch/token；清空表册；旧结果丢弃</td></tr>
+          <tr><td>A9</td><td>只想用一张表却被强制全读</td><td>等很久、浪费授权</td><td>survey 先出清单；绑定表优先；未用表按需读全文</td></tr>
+          <tr><td>A10</td><td>自动配对选错</td><td>执行错译文</td><td>自动只建议；来源可见；手动优先；冲突不静默</td></tr>
+          <tr><td>A11</td><td>重构破坏第 2 步</td><td>执行链拿不到表</td><td>parsedTables 适配层；先保旧接口；contract tests</td></tr>
+          <tr><td>A12</td><td>表内容敏感</td><td>上传风险</td><td>全程本地助手读；不写日志/不上传；根内/拒软链/5MB</td></tr>
+          <tr><td>A13</td><td>把“表头已读”当“全文已读”</td><td>覆盖率/执行判断错</td><td>两档状态分名；gate 只认 full</td></tr>
+          <tr><td>A14</td><td>12 表并发限流</td><td>429/超时</td><td>并发 2；退避重试；一次性票不自动重放</td></tr>
+          <tr><td>A15</td><td>直接照搬 mock 每语言专表</td><td>破坏一稿一表合同</td><td>Phase 1 一稿一表；每语言/补充表另走合同变更</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad" style="margin-top:12px"><b>最容易失败的方案：</b>只加一个“表列表”UI，读表仍按稿、配对仍按文件名。这样表清单和矩阵会各说各话，用户第二次点开还是看不到来源。必须先做表级事实。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">06</span>分阶段</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>阶段</th><th>内容</th><th>人日</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag ok">P0</span></td><td>表册/表头调查纯函数 + 路径/UNC/重复/多sheet/截断单测</td><td class="mono">1.0–1.5</td></tr>
+          <tr><td><span class="tag warn">P1</span></td><td>全表罗列 + 表级状态 + survey 队列 + 重试/取消；表选择器升级</td><td class="mono">1.0–1.5</td></tr>
+          <tr><td><span class="tag info">P2</span></td><td>mock 布局：左稿列表 + 来源矩阵 + 抽屉 + 统计；保留队列</td><td class="mono">1.5–2.0</td></tr>
+          <tr><td><span class="tag mute">P3</span></td><td>助手 3.7.25 批量 survey / 现代文件夹框（需批）</td><td class="mono">1.0–1.5</td></tr>
+          <tr><td><span class="tag mute">P4</span></td><td>每语言专表/补充表（可选，合同变更）</td><td class="mono">另计</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">07</span>验收：必须亲眼看到</h2>
+    <div class="gates">
+      <div class="gate"><b>7/7 张表都在</b><span>含未选、失败、重复、未用；截断明确列出。</span></div>
+      <div class="gate"><b>一表只读一次</b><span>12 稿共用同一表，表级 readAt/full 状态一致。</span></div>
+      <div class="gate"><b>每格有来源</b><span>矩阵格显示来源表/sheet/覆盖/缺语言；点格开抽屉。</span></div>
+      <div class="gate"><b>多 sheet 不错行</b><span>主图/A+ 各拿正确 sheet，未选 sheet 有 warning。</span></div>
+      <div class="gate"><b>失败不拖整屏</b><span>损坏/空表/超限可重试/换表，其它稿继续。</span></div>
+      <div class="gate"><b>第 2 步不回归</b><span>parsedTables[draftKey] 仍可用；执行合同不变。</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">08</span>需要 Owner 拍板</h2>
+    <div class="callout">
+      <p><b>① “全读”口径：</b>所有表读表头/语言/行数并罗列（推荐，快）；还是每张表都读全文（慢、占内存、授权多）？</p>
+      <p><b>② 来源模型：</b>Phase 1 先做一稿一表的来源矩阵；mock 的每语言专表/补充表（ov/SUP）是否现在就要？要就单开合同变更。</p>
+      <p><b>③ 助手 3.7.25：</b>是否批准批量 survey 端点 + 现代文件夹框？不做也能做 Phase 1，但 12 张表逐张验票会慢/可能超时。</p>
+      <p><b>④ 步骤名：</b>mock 叫「设计稿与译文来源」，当前叫「准备素材」；布局照 mock、名字是否改？</p>
+      <p><b>⑤ 表上限：</b>先 12 张全读，还是只读前 12 张、其余明示未读？</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">09</span>边界</h2>
+    <div class="callout warn">
+      <p>本文件只是方案：<b>不改代码、不上测试站、不碰生产</b>；当前测试站仍是 <span class="mono">42aded27</span>，生产仍是 <span class="mono">319bc1384a36</span>。</p>
+      <p>不做多根文件夹批次、不把图三文件框硬当文件夹框、不删现有队列/手动选表/同名稿/一稿一表；未批准前不发助手 3.7.25。</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>方案稿：2026-10-24</span>
+    <span>参考：模拟_20261021_批量改语言工作台_UIUX真实界面.html</span>
+    <span>完整 md 同目录：执行方案_20261024_多稿工作台_全表读取与译文来源矩阵.md</span>
+  </footer>
+</div>
+</body>
+</html>

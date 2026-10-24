@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>排版面板 PS 同款紧凑化 · 对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;
+  --muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:52ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:640px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{display:grid;grid-template-columns:26px 1fr;gap:16px;padding-bottom:22px;position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:12px;top:22px;bottom:0;width:1px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.dot{width:11px;height:11px;border-radius:50%;margin:7px 0 0 7px;background:var(--bad);box-shadow:0 0 0 4px var(--bad-soft);position:relative;z-index:1}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{font-size:.86rem;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.wire{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;font-family:var(--font-mono);font-size:.8rem;line-height:1.85;white-space:pre;overflow-x:auto;color:var(--ink-2)}
+.wire .k{color:var(--accent)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>排版面板 · PS 字符面板同款</span><span class="sep">/</span>
+    <span>2026-10-18</span>
+  </p>
+  <h1>占空间的问题，先在密度上解决</h1>
+  <p class="standfirst">按 Photoshop 字符面板重排 12 个能力字段：6 行 × 2 列、每格 24px，高级与结算明细默认折叠。抽屉入口保留为可选方案，不冒充已上线。</p>
+  <div class="meta">
+    <span>代码树 worktrees/develop</span>
+    <span>HEAD ce054b3</span>
+    <span>状态：已实现、已跑门禁</span>
+    <span>未提交 · 未推送 · 未部署</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <span class="lb">一句话结论</span>
+  <p>桌面展开态 432.75px，12 个字段两列 6 行、每格 24px；默认折叠高级与结算明细省下 308.5px。门禁全绿：197 断言 + 4 个 Vitest、浏览器模拟 92 项、tsc 与构建 rc=0。</p>
+</div>
+
+<section>
+  <h2><span class="sn">01</span>核心任务与验收</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>要成的那一件事</h3>
+      <ul>
+        <li>3 秒内看清 12 个字符能力各自能不能写。</li>
+        <li>不用先翻大表单，就能改字族、样式、行距、字距。</li>
+        <li>左手对着 Photoshop 字符面板，右手在我们面板里设同一组值。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>怎么算成了</h3>
+      <ul>
+        <li>桌面展开态 ≤ 480px：实测 432.75px。</li>
+        <li>字段格 24px、两列 6 行：实测 12 格、6 行。</li>
+        <li>360px 无横向溢出：面板 294px，文档 360/360。</li>
+        <li>结算口径不变：会发项数等于真实下发键数。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>已落地的信息架构</h2>
+  <p class="lede">面板只保留五段，顺序照 Photoshop：语言页签、12 个字段格、状态图例、8 个开关、结算摘要与保存。高级与结算明细收进折叠区。</p>
+  <div class="wire"><span class="k">[日语] [德语]</span>
+<span class="k">字</span> 选择字族      <span class="k">体</span> 先选字族
+<span class="k">号</span> —             <span class="k">行</span> 沿用 / 固定pt
+<span class="k">距</span> 度量标准      <span class="k">字</span> 字距 ‰em
+<span class="k">宽</span> 100%          <span class="k">高</span> 100%
+<span class="k">基</span> 0 pt          <span class="k">对</span> 默认
+<span class="k">语</span> 不提供        <span class="k">锐</span> 锐利
+虚线＝可写未接入 · 琥珀点＝未实测 · 灰底＝本版写不进 · 悬停看原因
+[T] [I] [TT] [Tt] [T^] [T_] [U] [S]
+本次会发 N 项 / 本次不发排版字段 · 保存到本机
+&gt; 高级与结算明细                              未定脸名</div>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><strong>字段格</strong><span class="loc">typography-panel.tsx:113</span></div>
+      <p>18px 图标列加 minmax(0,1fr) 内容列，h-6 锁 24px 高；长字体名不撑破，状态点贴在格子右侧，不占额外一行。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>两列栅格</strong><span class="loc">typography-panel.tsx:507</span></div>
+      <p>grid-cols-1 gap-1 sm:grid-cols-2：640px 以上两列 6 行；以下单列 12 行，避免把字体下拉压到 140px 以下。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>高级与结算明细</strong><span class="loc">typography-panel.tsx:594</span></div>
+      <p>默认折叠 25px，展开 333.5px；摘要行始终露「本次会发 N 项」或「本次不发排版字段」，数据不删，只让路给高度。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>读屏状态</strong><span class="loc">typography-panel.tsx:144</span></div>
+      <p>非可写字段带 sr-only 文本「可写未接入／本版写不进／未实测」加原因；8 个非可写字段 8/8 有说明，不再只靠颜色。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>入口四选一：对抗式审查</h2>
+  <p class="lede">结论：本轮产品默认仍是内联折叠条，抽屉只做到模拟并验证。用户这一轮要的是按 PS 的 UX 做、别占空间；紧凑内联已经把桌面高度压到 433px，抽屉是备用方案。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>入口</th><th>桌面占位</th><th>窄屏</th><th>主要风险</th><th>结论</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>内联折叠条</strong></td>
+          <td class="mono">433px 高</td>
+          <td class="mono">294px 宽 / 623.5px 高</td>
+          <td>窄屏 12 行要滚动</td>
+          <td><span class="tag ok">当前默认</span></td>
+        </tr>
+        <tr>
+          <td><strong>卡头 + 右侧抽屉</strong></td>
+          <td class="mono">0 占位</td>
+          <td class="mono">331.19px 宽</td>
+          <td>盖住右侧 360px；多一层焦点管理</td>
+          <td><span class="tag warn">模拟已验证，不接产品</span></td>
+        </tr>
+        <tr>
+          <td><strong>右缘竖签</strong></td>
+          <td class="mono">0 占位</td>
+          <td class="mono">≥1280 才出现</td>
+          <td>抢滚动条与 PS 面板右缘</td>
+          <td><span class="tag warn">可选，不做默认</span></td>
+        </tr>
+        <tr>
+          <td><strong>悬浮球</strong></td>
+          <td class="mono">0 占位</td>
+          <td class="mono">≥1280 才出现</td>
+          <td>遮 PS 预览；z-index 与焦点冲突</td>
+          <td><span class="tag bad">不推荐</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>抽屉并不是「新功能就一定好」。翻译类浏览器扩展用悬浮球，是因为它们寄生在别人的页面上，必须有一个常驻入口；我们自己的应用已经有卡头和折叠条，再加一只球只会遮住 PS 预览。外来参考只取模式，不引依赖：抽屉的可访问性做法对照 Radix Dialog 与 shadcn Sheet 的公开模式，模拟里的抽屉是原生 React + portal 手写。</p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>对抗式审查：会失败的地方</h2>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="dot partial"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>24px 格子对触屏偏小</strong><span class="tag warn">接受，带条件</span></div>
+        <p>24px 刚好达到 WCAG 2.5.8 的最小目标尺寸，但手指点选不如 32px 稳。本轮按桌面优先保留 24px；移动端若成主场景，只在窄屏抬到 32px，代价是再高约 96px。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot partial"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>360px 单列 12 行，面板 623.5px 高</strong><span class="tag warn">有意的取舍</span></div>
+        <p>360 下两列会把字体下拉压到 140px 以下，长字体名更难认。单列可读，代价是滚动；不想滚动可以选抽屉方案（331px 宽，900px 内可容纳）。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>状态点只靠颜色，读屏拿不到原因</strong><span class="tag ok">已修</span></div>
+        <p>每个非可写字段现在都有一段 sr-only 文本，读出状态与原因；8/8 有说明。图例仍保留给肉眼。这是本轮审查真抓到并修掉的问题。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot partial"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>高级与结算明细折叠后可能没人点</strong><span class="tag warn">接受</span></div>
+        <p>摘要行始终露「本次会发 N 项」或「本次不发排版字段」；折叠标题写明「高级与结算明细」，右侧显示脸名状态。数据没有删，只是默认不占高度。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot blind"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>原生下拉与 datalist 跨浏览器差异</strong><span class="tag warn">未核实</span></div>
+        <p>本轮只在 Chrome 验证；Safari 对 datalist 支持历来不完整，Firefox 样式也不同。预设只是加速入口，输入框始终可以手输，不把预设当唯一路径。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot partial"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>8 个不可写字段仍占格子</strong><span class="tag warn">有意保留</span></div>
+        <p>字号、字偶距、缩放、基线、对齐、语言、抗锯齿在本版 PS 写不进去，但位置保留、原因可见，不伪装成可用控件。全删会让用户以为产品没有这些概念。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot blind"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>产品入口尚未接线</strong><span class="tag bad">边界</span></div>
+        <p>当前产品代码里仍是内联折叠条；抽屉只在模拟壳里。模拟里的字符面板是产品组件真码，外围工作台是模拟壳，不是真实 Next.js 工作台。不把模拟通过写成产品已上线。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>验收与实测</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">432.75px</span><span class="k">桌面展开高度</span></div>
+    <div class="stat ok"><span class="n">24px</span><span class="k">字段格高度</span></div>
+    <div class="stat ok"><span class="n">6 × 2</span><span class="k">字段行 × 列</span></div>
+    <div class="stat ok"><span class="n">308.5px</span><span class="k">折叠高级区省下</span></div>
+    <div class="stat ok"><span class="n">197 + 4</span><span class="k">smoke 断言 + Vitest</span></div>
+    <div class="stat ok"><span class="n">92 / 0</span><span class="k">浏览器模拟 PASS / FAIL</span></div>
+  </div>
+  <div class="gates">
+    <div class="gate">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>排版面板 smoke：rc=0</h3>
+        <p><code>npm run test:typography-picker</code> 输出 197 assertions passed，Vitest 4 个用例通过。包含 PS 行序断言、紧凑栅格守卫、搜索浮层宽度守卫、禁止写入 8 字段的负控。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>浏览器模拟：92 PASS / 0 FAIL，rc=0</h3>
+        <p>覆盖 1280 内联、卡头抽屉、右缘竖签、悬浮球、900 平板、420/360 窄屏、灰度关闭、写回关闭、阶段切换、焦点与草稿保留。密度实测 432.75px、24px、6 行。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>类型与构建：rc=0</h3>
+        <p><code>npx tsc --noEmit</code> rc=0；<code>npx vite build</code> rc=0。没有用管道尾的退出码冒充 tsc。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body">
+        <h3>截图已重生成</h3>
+        <p>2026-10-18 17:11–17:12：workbench-desktop-1280-expanded、workbench-360-expanded、entry-1280-header-drawer、entry-360-header-drawer-narrow。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>改动清单</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><strong>typography-panel.tsx</strong><span class="tag ok">产品</span></div>
+      <p>6×2 紧凑栅格、24px 字段格、PS 顺序、行距/字距预设、状态图例、非可写字段读屏说明、高级与结算明细折叠。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>typography-capabilities.ts</strong><span class="tag ok">产品</span></div>
+      <p>CHAR_ROWS 按 PS 字符面板重排，图标改单字；四态与结算口径不变。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>font-picker.tsx</strong><span class="tag ok">产品</span></div>
+      <p>字族/样式下拉紧凑化，搜索浮层 320px 并按视口收口，避免窄屏越界。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>smoke-typography-picker.mjs</strong><span class="tag ok">守卫</span></div>
+      <p>新增 PS 行序与紧凑栅格守卫；保留 8 字段禁止写入的负控。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>tmp/typography-visual/sim-product</strong><span class="tag warn">模拟</span></div>
+      <p>main.tsx、test-sim.mjs、shots.mjs；交付件是悬浮与抽屉对比、整个工作台、产品位置三份 HTML。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>诚实边界</h2>
+  <div class="callout">
+    <span class="lb">不能写成已上线</span>
+    <p><strong>未提交、未推送、未部署。</strong> 抽屉只存在于模拟壳，产品入口仍是内联折叠条。模拟里的字符面板是产品组件真码，外围工作台是模拟壳，不是真实 Next.js 工作台。</p>
+  </div>
+  <ul class="notes">
+    <li>百分比行距只对旧数据露出，且明确标「不发」；固定磅值之外的自动行距本版不发送。</li>
+    <li>不可写字段只是占位与说明，代码层不会产生这些写请求；8 字段禁止写入守卫仍在。</li>
+    <li>预览是 CSS 示意，不等于 Photoshop 终态；Adobe Fonts 在浏览器里不可见。</li>
+    <li>原生下拉与 datalist 只在 Chrome 验证，Safari/Firefox 未实测。</li>
+    <li>写回能力由本地助手版本决定；未开启时横幅明确说「执行时不会被应用」，不静默降级。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>下一步</h2>
+  <div class="gates">
+    <div class="gate">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>Owner 拍入口</h3>
+        <p>继续内联（推荐，当前已是 433px），还是把卡头抽屉接进产品做可选模式。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>拍完后按 hunk 提交</h3>
+        <p>四个产品文件与 smoke；提交后再跑一次 <code>npm run release:preflight:test</code>，本轮不预先声称它能过。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>如果选抽屉</h3>
+        <p>先接产品卡头入口与焦点管理，再把模拟里的抽屉断言迁移成产品级测试；悬浮球不做。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>证据口径：本页所有高度、宽度、断言数来自 2026-10-18 本轮实跑；代码指针以 worktrees/develop 当前工作树为准。</p>
+  <p>交付状态：本地工作树，未提交、未推送、未部署。Owner 原话：「还有直接按这个UX去做就好了，现在这个占空间太多了」。</p>
+</footer>
+
+</div>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>磁盘清理 · 系统 Node 收口 · 运行时安全探针｜执行报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict.done{border-left-color:var(--ok)}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict.done .lb{color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:44ch;font-weight:500;text-wrap:balance}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.was{color:var(--muted)}
+.now{color:var(--ok);font-weight:500}
+.keep{color:var(--warn);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.65;color:var(--ink-2)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>磁盘 · 系统运行时 · 探针</span><span class="sep">/</span>
+    <span>2026-10-22 下午</span>
+  </p>
+  <h1>磁盘清出 7.1G、停维的 Node 20 收掉、再加一枚每月自己跑的探针</h1>
+  <p class="standfirst">Owner 一句「可以按你的建议来吧，磁盘也需要清理一下」，对应上午那份报告末尾列的三件后续。三件都做完并复测。</p>
+  <div class="meta">
+    <span>风险档 Medium</span>
+    <span>收尾读数 13:35:39 实测</span>
+    <span>业务代码／数据库／支付开关 未动</span>
+    <span>删前预演清单已留底</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict done">
+    <span class="lb">结论</span>
+    <p>磁盘从只剩 4.9G（88% 满）清到 <strong>剩 12G（69% 满）</strong>，回收 7.1G，并给日志加了 200M 上限——不会再无声涨回去。系统 Node 与业务 Node 现在<strong>同为 v22.23.4</strong>，那台机器上不再有停维的运行时在干活。</p>
+    <p style="font-size:.95rem;font-weight:400;color:var(--ink-2);max-width:60ch">第三件：把"您看到新闻才让我查"换成"跑一条命令给退出码"——探针已建好、跑通、并验过它真能红。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">12G</span><span class="k">可用（清理前 4.9G）</span></div>
+    <div class="stat ok"><span class="n">69%</span><span class="k">磁盘占用（清理前 88%）</span></div>
+    <div class="stat ok"><span class="n">22.23.4</span><span class="k">系统 Node＝业务 Node（同 ABI 127）</span></div>
+    <div class="stat ok"><span class="n">9</span><span class="k">探针检查项（退出码 0/1/2 三档）</span></div>
+    <div class="stat warn"><span class="n">1</span><span class="k">存量红单元（未修，非本轮引入）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>磁盘：删了什么，凭什么敢删</h2>
+  <p class="lede">原则是<strong>只删能证明归属的</strong>。先跑一遍只列不删的预演，两份清单都留在服务器上（<code>inventory-20261022_131429.txt</code> 预演、<code>..._131504.txt</code> 执行，含每项字节数）。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>删掉的东西</th><th class="mono">大小</th><th>凭什么说它是垃圾</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">/var/www/tygf-test-failed/（两枚 10-21 失败候选）</td><td class="mono">3.0G</td><td>部署脚本自己的保留位（<code>deploy-test-release.sh:257</code> <code>FAILED_RETENTION_COUNT=2</code>）。<strong>失败候选不是回滚点</strong>——回滚点是 <code>tygf-test-previous</code> 与 <code>tygf-test-backups/deploy-*</code>，那两处一枚没动。删前护栏：测试站 <code>.deploy-commit</code> 在、本机 3001＝200，任一不满足就拒删</td></tr>
+        <tr><td class="mono">/var/www/tygf-releases/3657a889…</td><td class="mono">1.7G</td><td>只保留最新两代（现役 <code>319bc13</code> ＋ 上一版 <code>6ff5c3c</code>）。删前查引用：<code>grep -rl 3657a889 /etc/systemd/system /etc/nginx</code> ⇒ <strong>0 命中</strong>；提交在 git 里，包可重建</td></tr>
+        <tr><td>7 枚超 7 天的上传安装包</td><td class="mono">1.83G</td><td><strong>只删 <code>.zip</code> 本体，收据 <code>.receipt.json</code> 全留</strong>；现役两枚（生产 <code>319bc13</code>、测试 <code>ad38603</code>）按名保留。最老几枚是 9 月 19／21 日的</td></tr>
+        <tr><td>自陈 stale 的残件 ＋ 3 个部署暂存目录</td><td class="mono">151M</td><td>那目录名字里就写着 <code>stale-20261020_231641</code>；暂存目录逐枚 <code>find</code> 过<strong>不含 <code>*.db</code> 也不含 <code>.env</code></strong> 才删</td></tr>
+        <tr><td>systemd 日志 701M → 195.6M，<strong>并落一个上限文件</strong></td><td class="mono">505M</td><td>新建 <code>/etc/systemd/journald.conf.d/10-tygf-cap.conf</code>（<code>SystemMaxUse=200M</code>）。这条是治本——以前是一次性清理，以后它涨到 200M 自己收</td></tr>
+        <tr><td>apt 包缓存</td><td class="mono">36K</td><td>纯缓存</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="panel no" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px;border-top:2px solid var(--bad)">
+    <h3 style="color:var(--bad)">有意没动的（写清楚，免得下一位以为漏了）</h3>
+    <ul>
+      <li><strong>npm 缓存 3.9G</strong>——看着最好删，实测<strong>两枚 10 月里都还在被写</strong>（各新增 540／542 个文件），而两条部署链就跑 <code>npm ci</code>（<code>deploy-release.sh:112</code>、<code>deploy-test-release.sh:407</code>）。清了下次部署要重下整套依赖，<strong>为 3.9G 换部署变慢不值</strong>。</li>
+      <li>生产状态目录里的 <code>node_modules</code> 1.3G ＋ <code>.next</code> 327M——要先验证是不是死重量（现役服务跑在 <code>tygf-releases</code> 里），本轮不猜。</li>
+      <li><code>db-backup</code> 418M／54 件——迁移前的库快照，属证据。</li>
+      <li>测试站回滚点 1.8G ＋ 今天的 <code>deploy-*</code> 备份——<strong>另一会话 12:22 刚部署过</strong>，那是它的回滚面，不碰。</li>
+      <li>旧内核 <code>6.8.0-124</code> 与两枚 swap（4G 构建 ＋ 1.9G 系统）——回滚用，也是这台只有 1.9G 内存的机器的构建兜底。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>系统 Node 20 → 22.23.4（收口 #235）</h2>
+  <p class="lede">上午查清：那个停维的 Node 20 <strong>真在执行东西</strong>——PM2 管理进程，和测试站那枚每 10 分钟的对账任务（13 个业务单元里唯一写死它的）。两条修法：改那枚单元指向我们的运行时，或<strong>把系统 Node 升到同一版本</strong>。选后者，理由全是实测：</p>
+  <ul class="notes">
+    <li><code>/usr/lib/node_modules</code> 里<strong>原生模块 0 个</strong>（<code>find … -name '*.node'</code> 计数 0）⇒ 换解释器不用重装任何依赖。</li>
+    <li>NodeSource 官方源里就有 <code>22.23.4-1nodesource1</code>，与业务运行时<strong>同版本、同 ABI 127</strong>。</li>
+    <li>而且<strong>一行 unit 配置都不用改</strong>。</li>
+  </ul>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body">
+      <h3>13:18:55 第一跤：我自己的脚本写坏了，自动回滚救回来</h3>
+      <p>以 ubuntu 身份跑，而日志目录是 root 700 ⇒ 写日志被拒 ⇒ 脚本以为"apt update 失败"，<strong>自动把源文件还原</strong>。盘上什么都没变（node 仍 <code>v20.20.2</code>、源仍是 <code>node_20.x</code>）。这一跤反而证明<strong>回滚那条链是真能跑的</strong>。</p>
+    </div></div>
+    <div class="gate"><span class="num">2</span><div class="body">
+      <h3>13:20:09 第二跤：五项门全绿，却被我判成失败</h3>
+      <p>门读数全通过（node v22.23.4、npm 10.9.9、pm2 7.0.3、两站 200、三应用 online），但<strong>我把返回值极性写反了</strong>——shell 里 0 才是通过，我用 1 表示通过 ⇒ 误判失败，脚本按预案<strong>把刚升好的 Node 又降回 20.20.2</strong>。升级被自己的 bug 回滚了一次。</p>
+    </div></div>
+    <div class="gate"><span class="num">3</span><div class="body">
+      <h3>13:24:34 先跑负控：这道门必须能红</h3>
+      <p>改对极性后，在<strong>还是 v20 的机器上</strong>单跑这道门 ⇒ 只有版本那条红、其余四条绿、整体返回非零。门能红，它的绿才可信。</p>
+    </div></div>
+    <div class="gate first"><span class="num">4</span><div class="body">
+      <h3>13:24:48 第三跑：<code>RESULT=PASS</code></h3>
+      <p>13:26:06 复采：包 <code>nodejs 22.23.4-1nodesource1</code>；系统 node <code>v22.23.4</code>／npm <code>10.9.9</code>／ABI 127；业务 node <code>v22.23.4</code>；两站本机 200 ＋ BOUND；公网 <code>/</code> 与 <code>/download</code> 200；PM2 守护进程 pid 41446（13:24:59 起）跑在新二进制上；红单元仍 1 枚。</p>
+    </div></div>
+  </div>
+  <div class="callout">
+    <span class="lb">那枚对账任务：升级没改变它</span>
+    <p>13:30:01（升级之后）报的还是同一句 <code>403 INVALID_RESPONSE</code> ⇒ <strong>运行时切换没改变它的失效形状</strong>，它是另一件事（#236），本轮未修。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">残留（如实）</span>
+    <p>机器上现在有<strong>两个 Node 安装通道</strong>：NodeSource 的 apt 包，和我们自己的 tarball 目录。版本此刻一致，但<strong>通道不一致——以后只升一个就会重新漂移</strong>。建议二选一：业务也收到 apt 通道，或把那枚单元指到 tarball 路径。本轮不做（又一次生产改动，方向该 Owner 认）。</p>
+    <p><strong>回滚</strong>：<code>nodesource.sources.bak</code> 拷回 → <code>apt-get update</code> → <code>apt-get install nodejs=20.20.2-1nodesource1</code> → 重启 <code>pm2-ubuntu</code>。这条链今天<strong>实测跑通过两次</strong>（就是那两次误回滚）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>探针：一条命令，退出码说话</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="tag ok">主入口</span><span class="loc">scripts/security-runtime-probe.sh</span></div><p><code>bash scripts/security-runtime-probe.sh</code>（网络受限加 <code>--offline</code>）。查九件事：业务与系统运行时版本、ABI 是否还是 127、<strong>待装安全包数（按 <code>noble-security</code> 这个源数，不拿"全部待装"糊）</strong>、自动更新是否真放开安全源、自动重启是否关着、红单元数对不对基线、磁盘可用率、官方那条版本线有没有更新版（<strong>安全版判红，非安全版只提醒</strong>）。</p></div>
+    <div class="card"><div class="top"><span class="tag ok">判据</span><span class="loc">scripts/security-runtime-baseline.json</span></div><p>唯一判据来源：最低版本、ABI、必须放开的安全源、自动重启必须 false、磁盘下限、红单元基线。<strong>改这个文件＝改闸</strong>，里面写明每条出处。</p></div>
+    <div class="card"><div class="top"><span class="tag ok">解析</span><span class="loc">scripts/security-runtime-latest.mjs</span></div><p>读 nodejs.org 官方发行索引，取该版本线最新版与它的安全版标记。</p></div>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>实测（正控＋负控）</h3>
+      <ul>
+        <li>13:33:42 全绿：<code>FAIL=0 WARN=1</code>（那条 WARN 是 <code>tmux</code> 被 Ubuntu 灰度推送，非安全项）；官方索引给出"已是 22.x 最新（v22.23.4，2026-10-20，security）"。</li>
+        <li>13:35 负控：把基线临时抬到 <code>22.99.0</code> ⇒ <strong><code>FAIL=2</code>、rc=1</strong>；随后按备份还原，<strong>哈希一致</strong>（<code>cc47c4003bd6cac2</code>）。</li>
+        <li>退出码分三档：<strong>0 全绿／1 有 FAIL／2 探针自己坏了</strong>——坏掉的探针绝不能被读成"安全"。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>两个坑（已写进代码注释）</h3>
+      <ul>
+        <li>本机 <code>curl nodejs.org</code> 取不到（实测 <code>http=000</code>）⇒ <strong>索引必须在服务器上取</strong>（服务器 0.05 秒 335 KB）。</li>
+        <li>把解析脚本塞进 ssh heredoc 的 <code>node -e</code> 会被解析器咬（实测 <code>SyntaxError: missing ) after argument list</code>）⇒ 独立成一个文件。</li>
+        <li><strong>有一件故意没做</strong>：没接进每日控制面或服务器 cron——那是别人的写面（<code>scripts/control-plane.sh</code> 与服务器定时单元）。要接就加一行，等 Owner 点头。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>边界与遗留</h2>
+  <ul class="notes">
+    <li>磁盘还有 6G 级可换空间，但<strong>都带代价</strong>（npm 缓存换部署变慢、状态目录 1.6G 需先验证、swap 6G 是内存兜底）。要更多空间就按第一节那张"有意没动"清单逐条拍。</li>
+    <li><strong>双安装通道漂移风险仍在</strong>（见 §02 末）。</li>
+    <li>探针<strong>只覆盖这一台服务器</strong>（主机名写在基线里，多机要扩），且<strong>不做漏洞级比对</strong>——它判"版本是否 ≥ 基线、官方是否发了安全版"，不判"某个 CVE 是否走到我们的调用路径上"。</li>
+    <li>测试站那枚 403（#236）<strong>未修</strong>；本轮所有改动都没改变它的失效形状。</li>
+    <li>没跑业务全链路（不占 PS 与积分）、没做入侵痕迹排查、没推远端、没碰数据库与支付开关。</li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>证据落位</strong>：服务器 <code>/var/backups/tygf-disk-cleanup-20261022/inventory-20261022_131429.txt</code>（预演）与 <code>..._131504.txt</code>（执行，含每项字节数与"有意不动"的理由）；<code>/var/backups/tygf-security-20261022/node22-upgrade-132448.log</code>（PASS 那一轮全过程）＋ <code>nodesource.sources.bak</code>（回滚件）；本机 <code>tmp/disk-census.sh</code>（13:02 只读盘点）、<code>tmp/disk-cleanup.sh</code>、<code>tmp/upgrade-system-node.sh</code>、<code>tmp/verify-node22.sh</code>（13:26 复采）。同目录 md 版：执行报告_20261022_磁盘清理_系统Node收口_运行时安全探针.md。</p>
+  <p>本报告不含任何密钥；所有读数为 2026-10-22 当日实测命令输出。前两跤（写日志被拒、返回值极性写反）如实记在 §02，不删。</p>
+</footer>
+
+</div>
+</body>
+</html>

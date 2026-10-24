@@ -1,0 +1,651 @@
+<!doctype html>
+<title>文件夹批量导入 · 多对多工作台模拟（PSD 与表格）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:62ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:70ch}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+
+/* ================= 模拟窗 ================= */
+.sim-toolbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px}
+.sim-toolbar .label{font-size:.84rem;font-weight:600}
+.sw{display:inline-flex;background:var(--sunk);border-radius:8px;padding:3px}
+.sw button{border:0;background:transparent;padding:6px 16px;border-radius:6px;font-size:.85rem;cursor:pointer;color:var(--muted);font-family:inherit}
+.sw button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.sim-hint{font-size:.76rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.74rem;color:var(--muted);align-items:center}
+.mk{display:inline-block;font-size:10px;line-height:1.4;padding:1px 7px;border-radius:999px;margin-left:6px;white-space:nowrap;vertical-align:1.5px;font-weight:600}
+.mk-new{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.mk-decide{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.sim{border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:0 12px 34px rgba(16,24,40,.07);position:relative}
+.sim-sitebar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.8rem;color:var(--ink-2);flex-wrap:wrap;gap:8px}
+.sim-sitebar .brand{font-weight:700;color:var(--ink)}
+.sim-body{padding:16px 20px 20px}
+.block{display:none}
+body[data-tab="batch"] #blk-batch{display:block}
+body[data-tab="single"] #blk-single{display:block}
+.wcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+.wcard .t{font-size:.9rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wcard .sub{font-size:.76rem;color:var(--muted);margin-bottom:9px}
+.btn{border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap}
+.btn.primary{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.teal{background:#0d9488;border-color:#0d9488;color:#fff;font-weight:600}
+.btn.newout{border:1.5px solid #0d9488;color:#0d7f74;font-weight:600;background:var(--surface)}
+.btn.sm{padding:4px 9px;font-size:.72rem}
+.btn.off{opacity:.45;cursor:not-allowed}
+.filerow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:.78rem;background:var(--sunk);margin-top:8px;flex-wrap:wrap}
+.filerow .p{font-family:var(--font-mono);font-size:.72rem;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filerow .dirmark{font-family:var(--font-mono);font-size:.66rem;color:var(--muted)}
+.badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-gray{border:1px solid var(--line-strong);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-amber{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-sky{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.pastebox{border:1.5px dashed var(--line-strong);border-radius:10px;padding:10px 13px;margin-top:10px;background:var(--bg)}
+.pastebox .lab{font-size:.78rem;font-weight:700}
+.pastebox input{width:100%;margin-top:7px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--font-mono);font-size:.74rem;background:var(--surface);color:var(--ink);}
+.rowline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
+.fb{font-size:.74rem;margin-top:7px;line-height:1.7}
+.fb .ok{color:var(--ok)} .fb .warn{color:var(--warn)} .fb .err{color:var(--bad)} .fb .mut{color:var(--muted)}
+.statusline{display:flex;align-items:center;gap:8px;font-size:.78rem;border-radius:8px;padding:8px 12px;margin-top:10px;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);line-height:1.6}
+.statusline.green{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.statusline.sky{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.statusline.err{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.statusline .d2{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.statusline.hide{display:none}
+.minitable{width:100%;border-collapse:collapse;font-size:.74rem;margin-top:9px}
+.minitable th{background:var(--sunk);font-size:.68rem;padding:5px 8px;border-bottom:1px solid var(--line);font-family:inherit;color:var(--muted);text-align:left;white-space:nowrap}
+.minitable td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.minitable td.m{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+.countline{font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.demo-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1px dashed var(--line-strong);border-radius:10px;padding:9px 12px;margin-top:10px;font-size:.76rem;color:var(--muted)}
+.note-line{font-size:.72rem;color:var(--muted);margin-top:9px;line-height:1.7}
+
+/* 模拟助手对话框 */
+.dlgmask{display:none;position:absolute;inset:0;background:rgba(10,14,20,.42);z-index:90;align-items:center;justify-content:center}
+.dlgmask.on{display:flex}
+.dlgwin{width:min(560px,92%);background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 24px 70px rgba(8,12,20,.35);overflow:hidden}
+.dlgwin .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--sunk);border-bottom:1px solid var(--line);font-size:.8rem;font-weight:700}
+.dlgwin .bar .x{border:0;background:transparent;font-size:1rem;color:var(--muted);cursor:pointer}
+.dlgwin .bdy{padding:12px 14px}
+.dlgpath{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.72rem;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);margin-bottom:10px}
+.dlgtree{border:1px solid var(--line);border-radius:8px;max-height:240px;overflow:auto;background:var(--bg)}
+.tnode{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:.78rem;border-bottom:1px solid var(--line);cursor:pointer}
+.tnode:last-child{border-bottom:none}
+.tnode.sel{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tnode .ic{width:14px;text-align:center;flex:none;opacity:.7}
+.tnode .cnt{margin-left:auto;font-family:var(--font-mono);font-size:.66rem;color:var(--muted)}
+.tnode.dim{opacity:.55;cursor:default}
+.dlgfoot{display:flex;justify-content:flex-end;gap:8px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.single-note{border:1px dashed var(--line-strong);border-radius:10px;padding:12px 14px;font-size:.82rem;color:var(--muted);line-height:1.75;background:var(--bg)}
+</style>
+<body data-tab="batch">
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 工作台</span><span class="sep">/</span><span>多对多批量台 · 文件夹导入模拟</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>一次导入整个文件夹：PSD 与表格，都从「选路径」开始</h1>
+    <p class="standfirst">对抗式审查结论：能做，且正好接在现成两根桩上——助手已有原生文件夹选择框（现只服务"选输出目录"），浏览器已有「多稿列表 + 一键扫描队列（D10，今天已上测试站）」。新增的只是"递归列一遍文件夹里的 PSD/表格"这一步。两条入口（打开选择框 / 粘贴地址）都必须走本机助手，因为<b>浏览器永远拿不到本地绝对路径</b>（MDN 与 WICG #145 官方立场，见下）。本页是可点全流程模拟，数字与文案尽量保真。</p>
+    <div class="meta">
+      <span>基线：develop <code>2a44d55</code>（含 D10 <code>4e4cdd4</code>）</span>
+      <span>性质：模拟件（未动代码、未动两站）</span>
+      <span>参考：browser-fs-access ★1591 / nativefiledialog ★1997 / WICG#145</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>审查速览</h2>
+    <div class="verdict">
+      <span class="lb">一句话结论</span>
+      <p>「给文件夹地址或打开选择路径，一次读全夹（含子文件夹）」在架构上成立：助手弹框/收路径 → 递归列 PSD（秒级，只列不读）→ 灌进现有列表 → 走今天的「全部扫描（按顺序）」。表格同样处理，内容只在「本机助手 ⇄ 浏览器」间流动，永不出本机。附四条待您拍板（超限怎么给、表格要不要递归、一条边界口径改述、助手 3.7.16 窗口）。</p>
+    </div>
+    <div class="stats">
+      <div class="stat acc"><span class="n">26</span><span class="k">模拟客户文件夹里的 PSD/PSB（递归子文件夹后）</span></div>
+      <div class="stat ok"><span class="n">12</span><span class="k">按自然序入库（现有上限），1 键「全部扫描」即走 D10 队列</span></div>
+      <div class="stat warn"><span class="n">14</span><span class="k">超上限未加入——如实报告，不静默截断</span></div>
+      <div class="stat"><span class="n">4+2</span><span class="k">非 PSD 忽略 4 个 · 隐藏/系统目录跳过 2 个</span></div>
+    </div>
+    <div class="split">
+      <div class="panel yes">
+        <h3>做得到</h3>
+        <ul>
+          <li>打开选择框选文件夹（复用助手现成的原生文件夹对话框与置顶合同）</li>
+          <li>粘贴文件夹完整路径（同端点，跳过对话框直接校验）</li>
+          <li>递归含子文件夹；自然序（同资源管理器）；跳过隐藏/系统/链接目录并计数</li>
+          <li>表格同理：文件夹内找出 .xlsx/.csv/.tsv 并合并解析（解析逻辑一行不改）</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>做不到／不做</h3>
+        <ul>
+          <li>浏览器端文件夹选择（webkitdirectory / showDirectoryPicker）拿不到绝对路径——PSD 扫描链路认绝对路径，走了就是死路（官方明确不给，连 jobs 式需求都被拒）</li>
+          <li>不做文件夹监视/自动增量同步（另一个功能）</li>
+          <li>不动上限 12、不动计费与执行合同、单文件台零变化</li>
+          <li>不假装能提前识别 OneDrive 云占位文件（扫描阶段才会暴露，照 D10 口径点名）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card hot"><div class="top"><h3>GitHub 参考（实测）</h3></div>
+        <p><b>GoogleChromeLabs/browser-fs-access ★1,591</b>——浏览器内读写文件内容的标准包装：确认它拿不到路径，PSD 路线方向不对。<br>
+        <b>mlabbe/nativefiledialog ★1,997 · btzy/nativefiledialog-extended ★1,078</b>——"要原生选择框就由本地进程来弹"的行业通用轮子；我们助手的 picker-dialogs.cjs 是同职能的 PowerShell 版。<br>
+        <b>Kriswd/Fdesign ★6 · greenzorro/excel-ps-batch-export ★20 · Photoshop-Automated-Resize-to-Web.jsx ★6</b>——"文件夹进 → 批量出"的先例（含 PSD+Excel 组合），佐证这是批量工具的默认期待。<br>
+        <b>WICG/file-system-access #145（已关闭）</b>——《The API should allow working with absolute paths》被官方拒绝；替代方案是存 handle 而非路径。</p>
+      </div>
+      <div class="card"><div class="top"><h3>待您拍板（四条）<span class="mk mk-decide">等一句话</span></h3></div>
+        <p>① 表格默认<b>只读所选文件夹根一层</b>（子文件夹里的旧版表格易误合并），给「含子文件夹」勾选——同意？<br>
+        ② 超限 26→12：默认自然序取前 12 + 如实报告（本页按此演示）；或弹面板让您手勾 12 个。<br>
+        ③ 边界口径改述：表格内容将经本机助手流回浏览器（不出本机、不上云、解析仍在浏览器）——知情后同意？<br>
+        ④ 助手需动版（3.7.15→3.7.16）＋装机包同步；说"做"即按"助手/浏览器/测试站"一趟闭环。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>可点模拟（全流程）</h2>
+    <div class="sim-toolbar">
+      <span class="label">视图</span>
+      <span class="sw" id="tabsw">
+        <button id="tab-batch" class="on" type="button">多对多批量台</button>
+        <button id="tab-single" type="button">单文件台（零变化）</button>
+      </span>
+      <span class="sim-hint">建议路径：①「从文件夹导入…」→ 看报告 ②「全部扫描（按顺序）」→ 看第 9 个失败被点名 ③点「已修好，继续扫描」看续跑 ④表格卡试「从文件夹导入表格…」</span>
+    </div>
+    <div class="legend">
+      <span>标记：<span class="mk mk-new">新增〔模拟〕</span> 本方案建议新增的控件；无标记＝现状 UI 复刻。</span>
+    </div>
+
+    <div class="sim">
+      <div class="sim-sitebar">
+        <span class="brand">图译工坊<span style="margin-left:6px;background:rgba(210,140,0,.15);color:#a06a00;border-radius:99px;padding:0 6px;font-size:.64rem;font-weight:700;vertical-align:1px">v1.5</span></span>
+        <span>工作台导航：设计文件 → 表格 → 语言 → 执行</span>
+        <span>credits: 240 · demo@example.com</span>
+      </div>
+
+      <div class="sim-body">
+        <!-- ============ 批量台 ============ -->
+        <div class="block" id="blk-batch">
+
+          <div class="wcard">
+            <div class="t">多设计稿选择（批量模式）</div>
+            <div class="sub" id="a-count">已添加 0/12 个 PSD · 已扫描 0 · 扫描中 0</div>
+
+            <div id="a-list"></div>
+
+            <div class="rowline">
+              <button class="btn newout" id="a-import-dlg" type="button">从文件夹导入…（含子文件夹）<span class="mk mk-new">新增〔模拟〕</span></button>
+              <button class="btn" id="a-add-one" type="button">添加 PSD（单张）</button>
+              <button class="btn" id="a-clear" type="button">清除全部</button>
+            </div>
+
+            <div class="pastebox">
+              <div class="lab">或粘贴文件夹路径<span class="mk mk-new">新增〔模拟〕</span></div>
+              <input id="a-paste" type="text" spellcheck="false" placeholder='例如：D:\客户稿\2026-10-广交会　（支持带引号、尾反斜杠；回车或点「导入」）'>
+              <div class="rowline">
+                <button class="btn sm" id="a-paste-btn" type="button">导入</button>
+                <span class="sim-hint">两条入口进的是同一条路：路径交给<b>本机助手</b>递归读取——浏览器拿不到本地路径。</span>
+              </div>
+              <div class="fb" id="a-paste-fb"></div>
+            </div>
+
+            <div class="statusline hide" id="a-report"><span class="d2"></span><span id="a-report-tx"></span></div>
+
+            <div class="rowline" style="margin-top:12px">
+              <button class="btn teal" id="a-scan" type="button">全部扫描（按顺序）</button>
+              <button class="btn off" id="a-stop" type="button">停止队列</button>
+            </div>
+            <div class="statusline sky hide" id="a-progress"><span class="d2"></span><span id="a-progress-tx"></span></div>
+            <div class="statusline hide" id="a-notice"><span class="d2"></span><span id="a-notice-tx"></span></div>
+            <div class="note-line">每个 PSD 将独立走现有预扫描链路；扫描完成后可在语言区查看覆盖率矩阵。失败即停、点名报因，绝不静默跳过。</div>
+
+            <div class="demo-strip">
+              <span>演示控制：</span>
+              <button class="btn sm" id="demo-reset" type="button">重置模拟</button>
+              <button class="btn sm" id="demo-auto" type="button">一键演示（导入→扫描→失败停下→续跑完成）</button>
+            </div>
+          </div>
+
+          <div class="wcard">
+            <div class="t">语言表格（批量模式）</div>
+            <div class="sub" id="t-count">尚未选择表格 · 单表 ≤5MB · 支持 .xlsx/.xls/.csv/.tsv/.txt</div>
+            <div class="rowline">
+              <button class="btn newout" id="t-import" type="button">从文件夹导入表格…<span class="mk mk-new">新增〔模拟〕</span></button>
+              <label style="font-size:.76rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="t-rec"> 含子文件夹（默认只读本层，防旧版误合并）</label>
+            </div>
+            <div class="statusline hide" id="t-report"><span class="d2"></span><span id="t-report-tx"></span></div>
+            <table class="minitable hide" id="t-preview">
+              <thead><tr><th>行</th><th>原文</th><th>EN</th><th>DE</th><th>JA</th></tr></thead>
+              <tbody id="t-preview-body"></tbody>
+            </table>
+            <div class="note-line">解析与合并仍全程在浏览器（SheetJS / csv.ts 一行不改）；表格字节只在「本机助手 ⇄ 浏览器」间流动，永不出本机、不上云。</div>
+          </div>
+        </div>
+
+        <!-- ============ 单文件台 ============ -->
+        <div class="block" id="blk-single">
+          <div class="wcard">
+            <div class="t">选择要处理的 PSD 文件</div>
+            <div class="sub">单文件工作台保持现状——文件夹导入只进批量台。</div>
+            <div class="rowline">
+              <button class="btn" type="button" disabled>选择 PSD 文件</button>
+              <span class="sim-hint">（现状按钮，模拟占位）</span>
+            </div>
+          </div>
+          <div class="single-note">零变化声明：本方案不新增、不删改单文件台的任何控件与流程；「从文件夹导入」只出现在多稿批量模式（它要解决的正是"很多稿"）。</div>
+        </div>
+      </div>
+
+      <!-- 模拟助手文件夹对话框 -->
+      <div class="dlgmask" id="dlgmask">
+        <div class="dlgwin">
+          <div class="bar"><span id="dlgtitle">来自本机助手：选择文件夹</span><button class="x" type="button" id="dlgx">✕</button></div>
+          <div class="bdy">
+            <div class="dlgpath"><span>📁</span><span id="dlgpath">D:\客户稿\2026-10-广交会</span></div>
+            <div class="dlgtree" id="dlgtree"></div>
+            <div class="note-line" style="margin-top:8px">（模拟的 Windows 文件夹选择框；真机由本机助手弹出，含置顶/单实例/超时三重保障）</div>
+          </div>
+          <div class="dlgfoot">
+            <button class="btn" type="button" id="dlgcancel">取消</button>
+            <button class="btn primary" type="button" id="dlgok">选择此文件夹</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>模拟说明：本页为静态模拟件（可离线打开），所有"助手返回"均为脚本演示；数字按真实上限（PSD 12 / 语言 12 / 单表 5MB）与真实文案口径设计。快捷键点：「一键演示」看全程；失败点固定在第 9 个稿（02_详情页\A-产品对比.psd，等待 Photoshop），用于演示"停下点名 + 续跑跳过已扫"。</p>
+    <p>配套解读与四条待拍板见《模拟方案_20261017_文件夹批量导入_多对多工作台.md》；本件只出模拟，未动任何代码。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var CAP = 12;
+  var PSD_ALL = [
+    ['01_主图','A-首页.psd'],['01_主图','B-轮播1.psd'],['01_主图','C-轮播2.psd'],['01_主图','D-分类页.psd'],
+    ['01_主图','E-详情头部.psd'],['01_主图','F-详情底部.psd'],['01_主图','G-活动页.psd'],['01_主图','H-品牌页.psd'],
+    ['02_详情页','A-产品对比.psd'],['02_详情页','B-规格表.psd'],['02_详情页','C-包装清单.psd'],['02_详情页','D-售后说明.psd'],
+    ['02_详情页','E-买家秀.psd'],['02_详情页','F-认证图.psd'],['02_详情页','G-物流说明.psd'],['02_详情页','H-常见问题.psd'],
+    ['02_详情页','I-试用报告.psd'],['02_详情页','J-其它.psd'],['02_详情页','K-补充.psd'],['02_详情页','L-长图.psb'],['02_详情页','M-超长图.psb'],
+    ['03_归档','V1-首页.psd'],['03_归档','V1-详情.psd'],['03_归档','V2-首页.psd'],['03_归档','旧-活动页.psd'],['03_归档','备份-品牌页.psd']
+  ];
+  var FAIL_INDEX = 8; // 第 9 个（0 基）
+
+  var S = { entries: [], queue: null, scanning: false, failArmed: true, demoTimer: null };
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* ---------- tabs ---------- */
+  $('tab-batch').addEventListener('click', function(){ document.body.setAttribute('data-tab','batch'); $('tab-batch').classList.add('on'); $('tab-single').classList.remove('on'); });
+  $('tab-single').addEventListener('click', function(){ document.body.setAttribute('data-tab','single'); $('tab-single').classList.add('on'); $('tab-batch').classList.remove('on'); });
+
+  /* ---------- render ---------- */
+  function badgeFor(e){
+    if(e.state==='ok') return '<span class="badge-ok">已扫描</span>'+(e.layers?'<span class="badge-gray">'+e.layers+' 层</span>':'');
+    if(e.state==='scanning') return '<span class="badge-sky">扫描中</span>';
+    if(e.state==='waiting') return '<span class="badge-amber">等待 Photoshop</span>';
+    return '<span class="badge-gray">需扫描</span>';
+  }
+  function renderEntries(){
+    var box = $('a-list');
+    var html = '';
+    for(var i=0;i<S.entries.length;i++){
+      var e = S.entries[i];
+      var showScan = (e.state==='todo'||e.state==='waiting');
+      var dis = (S.scanning || (S.queue && S.queue.running)) ? ' off' : '';
+      html += '<div class="filerow"><span class="ic">📄</span><span class="p" title="'+esc(e.folder+'\\'+e.name)+'">'+esc(e.folder?e.folder+'\\'+e.name:e.name)+'</span>'
+        + '<span class="dirmark">来自文件夹导入</span>'
+        + badgeFor(e)
+        + (showScan ? '<button class="btn sm'+dis+'" data-scan="'+i+'" type="button">扫描</button>' : '')
+        + '</div>';
+    }
+    box.innerHTML = html;
+    box.querySelectorAll('button[data-scan]').forEach(function(b){
+      b.addEventListener('click', function(){ singleScan(parseInt(b.getAttribute('data-scan'),10)); });
+    });
+    var okn = 0, scn = 0;
+    S.entries.forEach(function(e){ if(e.state==='ok') okn++; if(e.state==='scanning') scn++; });
+    $('a-count').textContent = '已添加 '+S.entries.length+'/'+CAP+' 个 PSD · 已扫描 '+okn+' · 扫描中 '+scn;
+  }
+
+  function setLine(id, tone, text, show){
+    var el = $(id);
+    el.className = 'statusline' + (tone?(' '+tone):'') + (show===false?' hide':'');
+    var tx = $(id+'-tx'); if(tx) tx.textContent = text;
+  }
+
+  /* ---------- fake dialog ---------- */
+  var dlgMode = 'psd', dlgCb = null;
+  function treeRow(name, cnt, cls, sel){
+    var d = cls ? (' '+cls) : '';
+    var s = sel ? ' sel' : '';
+    return '<div class="tnode'+d+s+'" data-name="'+esc(name)+'"><span class="ic">📁</span><span>'+esc(name)+'</span><span class="cnt">'+esc(cnt)+'</span></div>';
+  }
+  function openDialog(mode, cb){
+    dlgMode = mode; dlgCb = cb;
+    $('dlgtitle').textContent = mode==='psd' ? '来自本机助手：选择装有 PSD 的文件夹' : '来自本机助手：选择装有表格的文件夹';
+    var tree;
+    if(mode==='psd'){
+      tree = treeRow('（当前文件夹）2026-10-广交会','26 个 PSD/PSB · 4 个其它',null,true)
+        + treeRow('01_主图','8 个 PSD')
+        + treeRow('02_详情页','13 个 PSD/PSB')
+        + treeRow('03_归档','5 个 PSD')
+        + treeRow('文案素材','4 个非 PSD')
+        + treeRow('.cache','（隐藏目录，将跳过）','dim')
+        + treeRow('$RECYCLE.BIN','（系统目录，将跳过）','dim');
+    }else{
+      tree = treeRow('（当前文件夹）2026-10-广交会','3 个表格') 
+        + treeRow('语言表_EN.csv','1.8 MB  · 待读取')
+        + treeRow('语言表_DE.xlsx','0.9 MB  · 待读取')
+        + treeRow('语言表_JA.tsv','0.4 MB  · 待读取')
+        + treeRow('03_归档','子文件夹：1 个表格（历史版本）','dim');
+    }
+    $('dlgtree').innerHTML = tree;
+    $('dlgtree').querySelectorAll('.tnode').forEach(function(n){
+      if(n.classList.contains('dim')) return;
+      n.addEventListener('click', function(){
+        $('dlgtree').querySelectorAll('.tnode').forEach(function(x){ x.classList.remove('sel'); });
+        n.classList.add('sel');
+      });
+    });
+    $('dlgmask').classList.add('on');
+  }
+  function closeDialog(){ $('dlgmask').classList.remove('on'); }
+  $('dlgx').addEventListener('click', closeDialog);
+  $('dlgcancel').addEventListener('click', closeDialog);
+  $('dlgok').addEventListener('click', function(){
+    var mode = dlgMode, cb = dlgCb;
+    closeDialog();
+    if(cb) cb(mode);
+  });
+
+  /* ---------- import flows ---------- */
+  function clearImpLines(){
+    $('a-report').classList.add('hide');
+    $('a-notice').classList.add('hide');
+    $('a-progress').classList.add('hide');
+  }
+
+  function importPsd(done){
+    if(S.scanning || (S.queue && S.queue.running)) return;
+    clearImpLines();
+    setLine('a-report','sky','正在读取文件夹（含子文件夹）…请稍候。',true);
+    var steps = [
+      [600, '已发现 30 个文件：26 个 PSD/PSB · 4 个其它。正在按自然序整理…'],
+      [700, '跳过 2 个隐藏/系统目录（.cache、$RECYCLE.BIN）；未跟随链接目录。'],
+      [600, '']
+    ];
+    var i = 0;
+    (function next(){
+      if(i < steps.length){ var st = steps[i]; i++; setTimeout(function(){ if(st[1]) setLine('a-report','sky',st[1],true); next(); }, st[0]); return; }
+      var accepted = PSD_ALL.slice(0, CAP);
+      var added = 0, dup = 0;
+      accepted.forEach(function(p){
+        var exists = S.entries.some(function(e){ return e.folder===p[0] && e.name===p[1]; });
+        if(exists){ dup++; return; }
+        S.entries.push({ folder:p[0], name:p[1], state:'todo' });
+        added++;
+      });
+      var overflow = PSD_ALL.length - CAP;
+      var txt = '导入完成：发现 26 个 PSD/PSB — ' + added + ' 个已加入' + (added>=CAP?('（达到上限 '+CAP+'）'):'') + '；' + overflow + ' 个超出上限未加入；4 个非 PSD 已忽略；跳过 2 个隐藏/系统目录。';
+      if(dup>0) txt += ' 另有 '+dup+' 个已在列表（已忽略）。';
+      setLine('a-report','green',txt,true);
+      renderEntries();
+      if(done) done();
+    })();
+  }
+
+  function runImportTable(){
+    var rec = $('t-rec').checked;
+    setLine('t-report','sky','正在读取文件夹并解析表格…',true);
+    setTimeout(function(){
+      var rows = [['1','首页 · 品牌宣言','Home · Brand statement','Startseite · Markenstatement','ホーム · ブランドステートメント'],['2','立即咨询','Contact us now','Jetzt anfragen','今すぐ相談']];
+      var body = '';
+      rows.forEach(function(r){ body += '<tr><td class="m">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td></tr>'; });
+      $('t-preview-body').innerHTML = body;
+      $('t-preview').classList.remove('hide');
+      if(rec){
+        setLine('t-report','','已合并解析 4 个表格（语言列：EN、DE、JA；含子文件夹 1 个历史版本 语言表_EN_v1.csv ⚠ 可能是旧版）。单表均 ≤5MB。',true);
+      }else{
+        setLine('t-report','green','已合并解析 3 个表格（语言列：EN、DE、JA）；子文件夹内有 1 个历史版本（语言表_EN_v1.csv）按默认策略未加入。',true);
+      }
+      $('t-count').textContent = '3 个表格已读入并合并 · 语言列 EN、DE、JA · 单表 ≤5MB';
+    }, 900);
+  }
+
+  /* ---------- queue (D10 semantics) ---------- */
+  function queueTargets(){
+    var out = [];
+    for(var i=0;i<S.entries.length;i++){ if(S.entries[i].state==='todo' || S.entries[i].state==='waiting') out.push(i); }
+    return out;
+  }
+  function startQueue(){
+    if(S.scanning || (S.queue && S.queue.running)) return;
+    var targets = queueTargets();
+    if(targets.length===0){ setLine('a-notice','green','没有需要扫描的稿。全部已扫描完成。',true); return; }
+    S.queue = { running:true, targets:targets, cursor:0, done:0, stopped:false, total:targets.length };
+    setLine('a-notice','green','', false);
+    $('a-scan').classList.add('off');
+    $('a-stop').classList.remove('off');
+    advanceQueue();
+  }
+  function finishQueue(){
+    var q = S.queue;
+    $('a-progress').classList.add('hide');
+    $('a-scan').textContent = '全部扫描（按顺序）';
+    $('a-scan').classList.remove('off');
+    $('a-stop').classList.add('off');
+    renderEntries();
+    if(q && !q.failed){
+      setLine('a-notice','green','一键扫描完成：'+q.total+' 个设计稿已依次扫描完成。',true);
+    }
+    if(q && q.failed){ q.running = false; return; }
+    if(q) q.running = false;
+  }
+  function advanceQueue(){
+    var q = S.queue;
+    if(!q || !q.running){ return; }
+    if(q.stopped){
+      q.running = false;
+      $('a-progress').classList.add('hide');
+      $('a-scan').textContent = '全部扫描（按顺序）';
+      $('a-scan').classList.remove('off');
+      $('a-stop').classList.add('off');
+      renderEntries();
+      setLine('a-notice','','已停止队列：正在扫描的稿完成后不再继续；剩余 '+ (q.total - q.done) +' 个未扫描。',true);
+      return;
+    }
+    if(q.cursor >= q.targets.length){ finishQueue(); return; }
+    var idx = q.targets[q.cursor];
+    var e = S.entries[idx];
+    S.scanning = true;
+    e.state = 'scanning';
+    renderEntries();
+    $('a-scan').textContent = '队列扫描中…（第 '+(q.done+1)+'/'+q.total+'）';
+    $('a-scan').classList.add('off');
+    setLine('a-progress','sky','正在按顺序扫描：第 '+(q.done+1)+'/'+q.total+' 个（'+(e.folder?e.folder+'\\'+e.name:e.name)+'）',true);
+    var isFail = (S.failArmed && idx===FAIL_INDEX);
+    var delay = 550 + Math.floor(Math.random()*250);
+    setTimeout(function(){
+      S.scanning = false;
+      if(isFail){
+        e.state = 'waiting';
+        S.failArmed = false;
+        q.cursor++; q.done++;
+        q.failed = true; q.running = false;
+        $('a-progress').classList.add('hide');
+        $('a-scan').textContent = '全部扫描（按顺序）';
+        $('a-scan').classList.remove('off');
+        $('a-stop').classList.add('off');
+        renderEntries();
+        setLine('a-notice','','队列已停止：第 '+ (q.done) +'/'+ (q.total + 0) +' 个设计稿（'+ (e.folder?e.folder+'\\'+e.name:e.name) +'）扫描未完成（等待 Photoshop：本机 Photoshop 未就绪）。后续 '+ (q.total - q.done) +' 个未扫描；已扫好的不会重扫，处理后可再点「全部扫描」继续。',true);
+        $('a-scan').textContent = '全部扫描（按顺序）';
+        return;
+      }
+      e.state = 'ok';
+      e.layers = 12 + (idx*3) % 40;
+      q.cursor++; q.done++;
+      renderEntries();
+      setTimeout(advanceQueue, 120);
+    }, delay);
+  }
+  function singleScan(i){
+    if(S.scanning || (S.queue && S.queue.running)) return;
+    var e = S.entries[i];
+    if(!e || (e.state!=='todo' && e.state!=='waiting')) return;
+    S.scanning = true; e.state='scanning'; renderEntries();
+    setTimeout(function(){
+      S.scanning = false;
+      e.state = 'ok'; e.layers = 10 + i*2;
+      renderEntries();
+      setLine('a-notice','green','已扫描：'+(e.folder?e.folder+'\\'+e.name:e.name)+'。',true);
+    }, 700);
+  }
+
+  /* ---------- paste ---------- */
+  function normalizePath(s){
+    s = String(s||'').trim();
+    var changed = false;
+    if(/^".*"$/.test(s) || /^'.*'$/.test(s)){ s = s.slice(1,-1); changed = true; }
+    while(s.length>1 && (s.slice(-1)==='\\' || s.slice(-1)==='/')){ s = s.slice(0,-1); changed = true; }
+    return { path:s, changed:changed };
+  }
+  function handlePaste(){
+    var raw = $('a-paste').value;
+    var fb = $('a-paste-fb');
+    if(!raw || !raw.trim()){ fb.innerHTML = '<span class="warn">请先填写文件夹路径。</span>'; return; }
+    var n = normalizePath(raw);
+    var p = n.path;
+    if(!/^[A-Za-z]:[\\\/]/.test(p)){ fb.innerHTML = '<span class="err">请填写完整路径（以盘符开头，如 D:\\客户稿\\…）。相对路径无法交给本机助手读取。</span>'; return; }
+    if(/\.(psd|psb)$/i.test(p)){ fb.innerHTML = '<span class="err">这不是文件夹，是文件（NOT_A_DIRECTORY）。请填它所在的文件夹路径。</span>'; return; }
+    if(p.indexOf('不存在') >= 0){ fb.innerHTML = '<span class="err">文件夹不存在或不可访问（FOLDER_NOT_FOUND）。请检查路径后重试。</span>'; return; }
+    fb.innerHTML = '<span class="mut">路径已交给本机助手'+(n.changed?'（已规整引号/尾反斜杠）':'')+'，开始读取…</span>';
+    importPsd(function(){
+      fb.innerHTML = '<span class="ok">导入完成，见上方报告。'+(n.changed?'（路径已规整）':'')+'</span>';
+    });
+  }
+
+  /* ---------- demo controls ---------- */
+  function resetAll(){
+    if(S.demoTimer){ clearTimeout(S.demoTimer); S.demoTimer = null; }
+    S.entries = []; S.queue = null; S.scanning = false; S.failArmed = true;
+    $('a-paste').value = ''; $('a-paste-fb').innerHTML = '';
+    $('t-report').classList.add('hide'); $('t-preview').classList.add('hide');
+    $('t-rec').checked = false;
+    $('t-count').textContent = '尚未选择表格 · 单表 ≤5MB · 支持 .xlsx/.xls/.csv/.tsv/.txt';
+    $('a-scan').textContent = '全部扫描（按顺序）'; $('a-scan').classList.remove('off'); $('a-stop').classList.add('off');
+    clearImpLines(); renderEntries();
+  }
+
+  $('demo-reset').addEventListener('click', resetAll);
+  $('a-clear').addEventListener('click', function(){ if(S.scanning || (S.queue&&S.queue.running)) return; resetAll(); });
+  $('a-import-dlg').addEventListener('click', function(){ openDialog('psd', function(){ importPsd(); }); });
+  $('a-paste-btn').addEventListener('click', handlePaste);
+  $('a-paste').addEventListener('keydown', function(ev){ if(ev.key==='Enter') handlePaste(); });
+  $('a-scan').addEventListener('click', startQueue);
+  $('a-stop').addEventListener('click', function(){
+    if(S.queue && S.queue.running){ S.queue.stopped = true; }
+  });
+  $('a-add-one').addEventListener('click', function(){
+    if(S.scanning || (S.queue&&S.queue.running)) return;
+    if(S.entries.length >= CAP) return;
+    S.entries.push({ folder:'', name:'手动选择的稿-'+(S.entries.length+1)+'.psd', state:'todo' });
+    renderEntries();
+    setLine('a-notice','green','已添加 1 个 PSD（模拟"单张选择"按钮，实走助手原生文件框）。',true);
+  });
+  $('t-import').addEventListener('click', function(){ openDialog('tables', function(){ runImportTable(); }); });
+
+  $('demo-auto').addEventListener('click', function(){
+    resetAll();
+    S.demoTimer = setTimeout(function(){
+      importPsd(function(){
+        S.demoTimer = setTimeout(function(){
+          startQueue();
+          var iv = setInterval(function(){
+            if(!(S.scanning || (S.queue && S.queue.running))){
+              clearInterval(iv);
+              if(S.queue && S.queue.failed){
+                S.demoTimer = setTimeout(function(){
+                  setLine('a-notice','sky','已模拟修复（重新打开 Photoshop）——再点一次「全部扫描」续跑：',true);
+                  S.demoTimer = setTimeout(function(){ startQueue(); }, 900);
+                }, 1200);
+              }
+            }
+          }, 300);
+        }, 600);
+      });
+    }, 250);
+  });
+
+  renderEntries();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量台 · 表格怎么上传与审查（批量语义 + 矩阵当作业面）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f7f7f5;--surface:#fff;--sunk:#f0efec;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;
+ --line:#e2e3df;--line2:#d3d5cf;--teal:#009588;--teal-soft:#e2f3f1;--emerald:#009767;--emerald-soft:#e3f5ee;
+ --amber:#9a6505;--amber-soft:#fff7e7;--rose:#b3261e;--rose-soft:#fbeae8;--blue:#1b5bd0;--blue-soft:#e8effc;
+ --r:16px;--r-sm:12px;--font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+ --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.68;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1500px;margin:0 auto;padding:22px 18px 70px}
+.doc{display:flex;flex-direction:column;gap:11px;margin-bottom:16px}
+.eyebrow{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.32rem,2.8vw,1.8rem);line-height:1.28;font-weight:700;max-width:44ch;text-wrap:balance}
+.standfirst{margin:0;max-width:88ch;color:var(--ink2);font-size:.93rem}
+.facts{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.fx{border-left:3px solid var(--rose);padding:2px 0 2px 11px}
+.fx .n{font-family:var(--mono);font-size:.68rem;color:var(--rose);letter-spacing:.08em}
+.fx b{display:block;font-size:.89rem;margin:2px 0 3px}
+.fx p{font-size:.8rem;color:var(--ink2);margin:0}
+.fx code{background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.78em}
+.ans{background:var(--teal-soft);border:1px solid #bfe3df;border-left:3px solid var(--teal);border-radius:var(--r-sm);padding:13px 16px;font-size:.88rem;color:#0d3b37}
+.ans b{color:#08302d}
+.ans .q{font-family:var(--mono);font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:#0a6f69;display:block;margin-bottom:4px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);align-self:flex-start}
+.tabs button{border:0;background:transparent;padding:7px 15px;border-radius:999px;font-size:.85rem;font-weight:600;color:var(--ink2)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 12px 32px -18px rgba(0,0,0,.18)}
+.appbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 17px;border-bottom:1px solid var(--line);background:#fbfbfa}
+.appbar h2{margin:0;font-size:.98rem;font-weight:700}
+.appbar .right{margin-left:auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:.83rem;font-weight:600;color:var(--ink)}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn.sm{padding:4px 9px;font-size:.77rem;border-radius:8px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.92rem;font-weight:700;margin:0 0 3px}
+.card-s{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+.stack{display:flex;flex-direction:column;gap:11px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pill{font-family:var(--mono);font-size:.67rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.blue{background:var(--blue-soft);border-color:#c3d6f5;color:#12408f}
+.pill.gray{background:var(--sunk);color:var(--muted)}
+.note{font-size:.79rem;color:var(--muted);max-width:94ch}
+table.plain{border-collapse:collapse;width:100%;font-size:.79rem}
+table.plain th{font-family:var(--font-mono);font-size:.67rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:7px 9px;border-bottom:1px solid var(--line2);background:var(--sunk);white-space:nowrap}
+table.plain td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plain td.m{font-family:var(--mono);font-size:.75rem}
+table.plain tr:last-child td{border-bottom:none}
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:460px}
+
+/* 上传 */
+.drop{border:2px dashed var(--line2);border-radius:var(--r);padding:22px 18px;text-align:center;background:#fbfbfa;cursor:pointer}
+.drop:hover{border-color:var(--teal);background:#f5fcfb}
+.drop .big{font-size:1rem;font-weight:700;margin-bottom:5px}
+.drop .sm{font-size:.79rem;color:var(--muted)}
+.sem{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.semc{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:var(--surface)}
+.semc.a{border-left:3px solid var(--emerald)}
+.semc.b{border-left:3px solid var(--teal)}
+.semc h4{margin:0 0 4px;font-size:.87rem}
+.semc p{margin:0;font-size:.79rem;color:var(--ink2)}
+.semc .tagx{font-family:var(--mono);font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);margin-bottom:5px;display:inline-block}
+
+/* 审查矩阵 */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 430px;min-height:560px}
+.ml{padding:15px 16px;border-right:1px solid var(--line)}
+.mr{padding:15px 16px;background:#fbfbfa}
+.bulkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:#f3f4f1;margin-bottom:10px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.73rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--font-mono);font-size:.65rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:6px 3px;text-align:center;min-width:58px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:10px;min-width:210px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:5px 10px;border-right:1px solid var(--line);min-width:210px;font-weight:500}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f5fbfb}
+.cell{border:0;background:transparent;width:100%;min-height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 2px}
+.cell .cv{font-family:var(--font-mono);font-size:.72rem;font-weight:600}
+.cell .cs{font-size:.58rem;color:var(--muted);line-height:1.1}
+.c-done{background:var(--emerald-soft);color:#0a5a41}
+.c-pend{background:var(--amber-soft);color:var(--amber)}
+.c-iss{background:var(--rose-soft);color:var(--rose)}
+.c-none{background:transparent;color:#a8aea9}
+.c-miss{background:transparent;color:var(--rose);box-shadow:inset 0 0 0 1px var(--rose)}
+.cell.sel{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:5px 15px;font-size:.74rem;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:12px;height:12px;border-radius:4px;border:1px solid var(--line2);display:inline-block}
+.lg.on{background:var(--emerald-soft);border-color:var(--emerald)}.lg.unconf{background:var(--amber-soft);border-color:var(--amber)}
+.lg.miss{background:var(--rose-soft);border-color:var(--rose);border-style:dashed}.lg.off{border-style:dashed}
+
+/* ReviewStep 同款 */
+.rs{border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);overflow:hidden}
+.rs-h{padding:9px 12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#fafaf9}
+.rs-h .t{font-size:.86rem;font-weight:700}
+.rs table{width:100%;font-size:.78rem}
+.rs thead th{position:sticky;top:0;background:var(--sunk);font-weight:500;color:var(--muted);font-size:.73rem;padding:6px 9px;text-align:left;border-bottom:1px solid var(--line2)}
+.rs tbody td{padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+.rs tbody tr:last-child td{border-bottom:none}
+.rs td.num{width:34px;color:var(--muted);font-family:var(--mono);font-size:.72rem}
+.rs td.src{min-width:170px}
+.rs td.tgt{min-width:220px}
+.rs td.tgt input{width:100%;border:1px solid var(--line2);border-radius:7px;padding:4px 8px;font-size:.78rem;background:#fff}
+.rs td.st{min-width:150px}
+.st{font-size:.71rem;font-family:var(--mono);padding:1px 7px;border-radius:999px;display:inline-block}
+.st.empty{background:var(--rose-soft);color:var(--rose)}
+.st.dup{background:var(--amber-soft);color:var(--amber)}
+.st.conflict{background:var(--amber-soft);color:var(--amber)}
+.st.ok{background:var(--emerald-soft);color:#0a5a41}
+.ev{border-radius:var(--r-sm);padding:9px 12px;font-size:.81rem;display:flex;flex-direction:column;gap:3px}
+.ev.ok{background:var(--emerald-soft);border:1px solid #b8e0cd;color:#0a5a41}
+.ev.warn{background:var(--amber-soft);border:1px solid #eec87c;color:var(--amber)}
+.ev.bad{background:var(--rose-soft);border:1px solid #f0bdb8;color:var(--rose)}
+.ev.info{background:var(--blue-soft);border:1px solid #c3d6f5;color:#12408f}
+.ev.plain{background:var(--sunk);border:1px solid var(--line);color:var(--ink2)}
+.ev b{font-weight:700}
+footer.docf{border-top:1px solid var(--line);margin-top:22px;padding-top:12px;font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+@media (max-width:1120px){.split{grid-template-columns:1fr}.ml{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow"><span>批量台 · 表格这一块</span><span class="sep">/</span><span>上传与审查</span><span class="sep">/</span><span>2026-10-20</span><span class="sep">/</span><span>可点</span></p>
+  <h1>表格怎么上传、怎么审查：批量台缺的其实是一个「表格作业面」</h1>
+  <p class="standfirst">您问的是：<b>批量台里译文表怎么传进来、怎么审</b>——像单稿工作台那样。查完代码发现，问题的根是：<b>现在只有一种「多选文件」的语义，而批量台需要第二种</b>；而审查那一侧，<b>作业单元挂在「当前稿」这个隐形中心上</b>，12 稿 12 语 = 144 个审查单元，界面上一个都看不见。</p>
+
+  <div class="facts">
+    <div class="fx"><span class="n">事实 1 · 上传</span><b>多选文件只有一种语义：按语言合并</b><p><code>csv-step.tsx:146-172</code>：选 1 个 → 就是那张表；选多个 → <code>mergeParsedTables</code> <b>合成一张多语言表</b>。所以批量台拖 12 张表进来，现在会被合成一张（144 列）⇒ 直接撞 <code>csv.ts:707</code> 的 12 列上限。<b>批量台需要的第二种语义（多表分给多稿）根本不存在。</b></p></div>
+    <div class="fx"><span class="n">事实 2 · 审查</span><b>作业单元是（当前稿 × 当前语种）</b><p><code>ReviewStep</code> 的 <code>targetLanguage: string</code>（<code>review-step.tsx:90</code>）；<code>workbench-view.tsx:3306</code> 传的是当前稿的 <code>parsed</code> ＋ <code>currentLanguage</code>。批量动作只有「检测当前稿的全部语言」（<code>handleRunAllLanguageReview</code>），<b>不跨稿</b>。</p></div>
+    <div class="fx"><span class="n">事实 3 · 门</span><b>执行前那道门已经是「144 格全绿」，但界面上看不见</b><p><code>workbench-view.tsx:1962-1990</code> 要求每稿的每个语言都完成审查确认，缺一稿就点名拦下。<b>但用户只能一稿一稿点过去才知道还差多少</b>——这道门在界面上没有对应的面。</p></div>
+  </div>
+
+  <div class="ans">
+    <span class="q">答案</span>
+    <b>批量台的「表格」不该是另一个第 1 步，而应该是两件事：</b><br>
+    <b>① 上传＝一次拖一批（配对提案，不自动套用）</b>：批量台需要<b>第二种多选语义</b>——多张表分给多个稿（按目录就近 → 命中得分 → 人工挑），每稿一片、每片体检；单稿台那套「多选＝按语言合并」原样保留，两者<b>不能混</b>。<br>
+    <b>② 审查＝矩阵当作业面</b>：审查单元从「当前稿×当前语种」改成「<b>交付物（稿×语种）＝矩阵 144 格</b>」。点格打开的<b>就是单稿工作台同一个 <code>ReviewStep</code></b>（表结构一模一样：<code># | 原文 | 译文 | 状态</code>），不新增第二套表格 UI；批量动作改成跨稿的「全部检测 144 格」「只确认干净的格」。<b>执行前那道门在矩阵上直接看得见。</b>
+  </div>
+
+  <div class="tabs" role="group" aria-label="视图切换">
+    <button type="button" data-view="upload" aria-pressed="true">① 上传：一次拖一批 → 配对提案</button>
+    <button type="button" data-view="review" aria-pressed="false">② 审查：144 格矩阵当作业面</button>
+    <button type="button" data-view="cmp" class="doc-tab" aria-pressed="false">文档：与单稿台的关系</button>
+  </div>
+</header>
+
+<div class="app">
+  <div class="appbar">
+    <h2>批量工作台 · 译文表</h2>
+    <span class="pill teal">12 稿</span><span class="pill blue">12 语种</span><span class="pill share">144 份交付物</span>
+    <div class="right">
+      <span class="pill gray" id="sumPill">—</span>
+      <button class="btn primary" type="button" id="btnDetect">全部检测（144 格）</button>
+      <button class="btn" type="button" id="btnConfirmClean">只确认干净的格</button>
+    </div>
+  </div>
+
+  <!-- ① 上传 -->
+  <section id="v-upload">
+    <div class="stack" style="padding:16px">
+      <div class="sem">
+        <div class="semc a">
+          <span class="tagx">单稿工作台（现有，保留）</span>
+          <h4>多选文件 ＝ 按语言合并成一张表</h4>
+          <p>选 <code>ES.csv</code> ＋ <code>FR.csv</code> ＋ <code>JP.csv</code> → 合并成一张 3 语表，交给<strong>这一稿</strong>。<br><span class="mono" style="font-size:.74rem;color:var(--muted)">csv-step.tsx:146-172</span></p>
+        </div>
+        <div class="semc b">
+          <span class="tagx">批量工作台（要新增）</span>
+          <h4>多选文件 ＝ 每张表分给一个稿</h4>
+          <p>选 12 张表 → 解析全部 → 按<strong>目录就近 → 命中得分 → 人工挑</strong>给出配对提案 → 每稿一片 → 每片体检 → <strong>人确认后才落</strong>。<br><span class="mono" style="font-size:.74rem;color:var(--muted)">本轮新增语义，绝不自动套用</span></p>
+        </div>
+      </div>
+
+      <div class="drop" id="drop">
+        <div class="big">把这一批译文表拖进来（12 张）</div>
+        <div class="sm">支持 .xlsx / .xls / .csv / .tsv　·　也可以「选文件夹」一次扫全（按 <span class="mono">relPath</span> 就近配对）　·　<b>只列候选，绝不自动套用</b></div>
+      </div>
+
+      <div class="card">
+        <p class="card-t">解析结果（逐张点名，失败不连坐）</p>
+        <p class="card-s">沿用既有口径「认不出的会跳过，跳过了哪些列给你看」：<b>一张表解析失败不许拖垮整批</b>。</p>
+        <div class="scroller"><table class="plain" id="tblParsed"><thead><tr><th>文件</th><th>目录</th><th>语言列</th><th>行数</th><th>解析</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <p class="card-t">配对提案（<b>不自动生效</b>，逐条列出等您点）</p>
+        <p class="card-s">排序：<b>同目录 → 同父目录 → 同名</b>（目录证据比名字硬），再用命中得分排序；<b>一对多 / 零命中一律不自动决定</b>。</p>
+        <div class="scroller"><table class="plain" id="tblPairs"><thead><tr><th>设计稿</th><th>提案表</th><th>依据</th><th>命中</th><th>判定</th></tr></thead><tbody></tbody></table></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" type="button" id="btnApply">应用提案（9 条）</button>
+          <button class="btn" type="button">我自己配 3 条</button>
+          <span class="note" style="flex:1 1 240px">应用后每稿一片，并立刻跑<b>分区自检</b>（互斥 / 命中 / 有据）。</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 审查 -->
+  <section id="v-review" hidden>
+    <div class="split">
+      <div class="ml">
+        <div class="bulkbar">
+          <span style="font-size:.82rem;font-weight:700">审查作业面 ＝ 144 份交付物</span>
+          <span class="pill gray" id="revSum">—</span>
+          <button class="btn sm" type="button" id="btnNextIssue">跳到下一个有问题的</button>
+          <span class="note" style="flex:1 1 200px">一格 ＝ 一个 (稿 × 语种) 交付物；点格打开的是<b>单稿工作台同一个 ReviewStep</b>。</span>
+        </div>
+        <div id="mxHost"></div>
+        <div class="legend">
+          <span><i class="lg on"></i>已确认</span><span><i class="lg unconf"></i>待确认（无问题）</span>
+          <span><i class="lg miss"></i>有问题 N 处</span><span><i class="lg off"></i>未检测 / 本稿不做</span>
+        </div>
+      </div>
+      <div class="mr" id="reviewPanel"></div>
+    </div>
+  </section>
+
+  <!-- ③ 对照 -->
+  <section id="v-cmp" hidden>
+    <div class="stack" style="padding:16px">
+      <div class="card plain">
+        <p class="card-t">哪部分复用、哪部分必须分开</p>
+        <table class="plain">
+          <thead><tr><th>环节</th><th>单稿工作台</th><th>批量工作台</th><th>关系</th></tr></thead>
+          <tbody>
+            <tr><td>选表 / 粘贴</td><td>拖 1 张，或拖多张<b>按语言合并</b></td><td>拖一批<b>分给多稿</b></td><td><b>必须分开</b>：两种多选语义</td></tr>
+            <tr><td>解析</td><td colspan="2">同一套 <code>parseOneFile</code> ＋ 同一套错误文案</td><td>复用</td></tr>
+            <tr><td>表体检</td><td colspan="2">同一套：语言列上限、缺列、重复原文、同源不同译</td><td>复用</td></tr>
+            <tr><td>逐行审查 UI</td><td colspan="2"><b>同一个 <code>ReviewStep</code></b>（<code># | 原文 | 译文 | 状态</code>）</td><td><b>完全复用</b>，只换喂进来的 (表, 语种)</td></tr>
+            <tr><td>检测</td><td>「检测全部语言」＝ 本稿 N 语</td><td>「全部检测」＝ <b>144 格</b>；「只确认干净的格」</td><td>动作扩到跨稿，<b>格子内的逻辑不变</b></td></tr>
+            <tr><td>执行前的门</td><td>本稿全部语种已确认</td><td>144 格全绿（<code>workbench-view.tsx:1962-1990</code> 已是这条）</td><td><b>门不变，只是终于看得见了</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <p class="card-t">三条不能破的线</p>
+        <div class="stack">
+          <div class="ev warn"><b>① 有歧义的格不许批量确认</b>空译文、重复原文、同源不同译——这些必须人看。批量动作只对<b>干净的格</b>生效（"只确认干净的格"）。</div>
+          <div class="ev info"><b>② 配表永远要人点一下</b>沿用既有口径「表格只列候选，不会自动套用」（<span class="mono">design-file-card.tsx:1017-1023</span>）。提案里带得分和目录依据，但<b>不自动落</b>。</div>
+          <div class="ev bad"><b>③ 审查结论按 (稿, 语种) 存，不按"当前稿"存</b>否则切一次稿就丢一次确认——这也是现在 12 稿根本用不了的原因之一。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer class="docf">
+  <p>2026-10-20 · <b>方案模拟</b>（非线上界面）；示意数据：12 稿 / 12 语种 / 144 份交付物 / 9 张表（1 张超列失败、1 张一对多、1 张零候选）。</p>
+  <p>代码依据 <span class="mono">worktrees/develop@99baaf6</span>：<span class="mono">csv-step.tsx:140-186</span>（多选＝合并）·<span class="mono">merge-tables.ts:1-3</span> ·<span class="mono">csv.ts:707</span>（12 列上限）·<span class="mono">review-step.tsx:88-124,1146-1163</span>（<span class="mono">targetLanguage</span> 与表结构）·<span class="mono">workbench-view.tsx:1962-1990</span>（执行前门）·<span class="mono">workbench-view.tsx:3306-3320</span>（喂当前稿）·<span class="mono">design-file-card.tsx:1017-1023</span>（只列候选）·<span class="mono">local-assistant-client.ts:1010-1020</span>（relPath/dir）。</p>
+</footer>
+</div>
+
+<script>
+const LANGS=[{c:'de',n:'德语'},{c:'fr',n:'法语'},{c:'en',n:'英语'},{c:'es',n:'西班牙语'},{c:'ja',n:'日语'},{c:'ko',n:'韩语'},
+ {c:'pt',n:'葡萄牙语'},{c:'it',n:'意大利语'},{c:'ru',n:'俄语'},{c:'ar',n:'阿拉伯语'},{c:'zh-TW',n:'繁体中文'},{c:'nl',n:'荷兰语'}];
+const LMAP=Object.fromEntries(LANGS.map(l=>[l.c,l.n]));
+const ALL=LANGS.map(l=>l.c);
+
+const SKUS=[
+ {id:'SKU-01',rel:'主图/SKU-01_主图.psd',scope:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-02',rel:'主图/SKU-02_主图.psd',scope:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-03',rel:'主图/SKU-03_主图.psd',scope:['de','fr','en','es']},
+ {id:'SKU-04',rel:'主图/SKU-04_主图.psd',scope:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-05',rel:'详情/SKU-05_主图.psd',scope:['de','fr','en']},
+ {id:'SKU-06',rel:'详情/SKU-06_主图.psd',scope:['en','es']},
+ {id:'SKU-07',rel:'详情/SKU-07_主图.psd',scope:['de','fr','en','es','ja','ko','ru','ar','zh-TW']},
+ {id:'SKU-08',rel:'详情/SKU-08_主图.psd',scope:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-09',rel:'长尾/SKU-09_主图.psd',scope:ALL},
+ {id:'SKU-10',rel:'长尾/SKU-10_主图.psd',scope:ALL},
+ {id:'SKU-11',rel:'长尾/SKU-11_主图.psd',scope:['de','fr','en','es','ja','ko']},
+ {id:'SKU-12',rel:'长尾/SKU-12_主图.psd',scope:[]},
+];
+const TABLES=[
+ {name:'主表A_通用8语.xlsx',dir:'主图/译文',langs:8,rows:42,ok:true},
+ {name:'SKU-05_德法英.xlsx',dir:'详情/译文',langs:3,rows:28,ok:true},
+ {name:'SKU-06_英西.xlsx',dir:'详情/译文',langs:2,rows:19,ok:true},
+ {name:'SKU-07_九语.xlsx',dir:'详情/译文',langs:9,rows:51,ok:true},
+ {name:'SKU-08.xlsx',dir:'详情/译文',langs:8,rows:46,ok:true},
+ {name:'SKU-08_终稿.xlsx',dir:'详情/译文',langs:8,rows:44,ok:true},
+ {name:'全SKU合表_12SKU×12语.xlsx',dir:'长尾/译文',langs:12,rows:756,ok:true},
+ {name:'SKU-10_十语.xlsx',dir:'长尾/译文',langs:10,rows:47,ok:true},
+ {name:'SKU-11_六语.xlsx',dir:'长尾/译文',langs:6,rows:33,ok:true},
+ {name:'SKU-09_全12语_带备注列.xlsx',dir:'长尾/译文',langs:13,rows:63,ok:false,err:'目标语言候选列超过 12 列限制（当前 13 列）。第 13 列「备注」可能不是语言列。'},
+];
+const PAIRS=[
+ ['SKU-01_主图.psd','主表A_通用8语.xlsx','同父目录「主图」','100%','shared','4 稿共用这一张'],
+ ['SKU-02_主图.psd','主表A_通用8语.xlsx','同父目录「主图」','100%','shared',''],
+ ['SKU-03_主图.psd','主表A_通用8语.xlsx','同父目录「主图」','96%','shared',''],
+ ['SKU-04_主图.psd','主表A_通用8语.xlsx','同父目录「主图」','100%','shared',''],
+ ['SKU-05_主图.psd','SKU-05_德法英.xlsx','同名','100%','ok',''],
+ ['SKU-06_主图.psd','SKU-06_英西.xlsx','同名','100%','ok',''],
+ ['SKU-07_主图.psd','SKU-07_九语.xlsx','同名','92%','ok','表比稿多 8 行，切片后要体检'],
+ ['SKU-08_主图.psd','SKU-08.xlsx ／ SKU-08_终稿.xlsx','同名（一对多）','94% / 91%','amb','不自动选'],
+ ['SKU-09_主图.psd','全SKU合表_12SKU×12语.xlsx','同父目录「长尾」','100%','ok','宽表 → 切 12 片'],
+ ['SKU-10_主图.psd','SKU-10_十语.xlsx','同名','100%','ok','只有 10 列 → 2 个交付物缺列'],
+ ['SKU-11_主图.psd','SKU-11_六语.xlsx','同名','94%','ok',''],
+ ['SKU-12_主图.psd','（无候选）','—','—','miss','零命中，留空并点名'],
+];
+
+/* 审查状态：确定性生成 */
+const ISSUE_PLAN={
+ 'SKU-01|de':[], 'SKU-01|ja':[{k:'pend'}],
+ 'SKU-02|de':[{k:'empty',row:3},{k:'empty',row:9}], 'SKU-02|fr':[{k:'pend'}],
+ 'SKU-03|fr':[{k:'dup',row:5}], 'SKU-03|de':[{k:'pend'}],
+ 'SKU-04|de':[{k:'pend'}], 'SKU-04|fr':[{k:'pend'}], 'SKU-04|en':[{k:'pend'}],
+ 'SKU-05|de':[],'SKU-05|fr':[],'SKU-05|en':[],
+ 'SKU-06|en':[], 'SKU-06|es':[{k:'pend'}],
+ 'SKU-07|ko':[{k:'conflict',row:7}], 'SKU-07|ja':[{k:'pend'}],
+ 'SKU-08|de':[{k:'pend'}],
+ 'SKU-09|de':[],'SKU-09|fr':[],'SKU-09|en':[],'SKU-09|es':[],'SKU-09|ja':[{k:'pend'}],'SKU-09|ko':[{k:'pend'}],'SKU-09|zh-TW':[{k:'pend'}],
+ 'SKU-10|de':[],'SKU-10|fr':[],'SKU-10|en':[],'SKU-10|es':[],'SKU-10|ja':[],'SKU-10|ko':[],'SKU-10|pt':[],'SKU-10|it':[],'SKU-10|ru':[],'SKU-10|ar':[],
+ 'SKU-11|ja':[{k:'low',row:4}], 'SKU-11|ko':[{k:'low',row:6}],
+};
+let detected=false;
+let sel={sku:'SKU-02',lang:'de'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function issues(skuId,lang){
+  const key=skuId+'|'+lang;
+  if(!detected) return [];
+  return ISSUE_PLAN[key]||[];
+}
+function cellKind(s,lang){
+  if(!s.scope.length) return {k:'none',v:'—',t:'本稿没选语种'};
+  if(!s.scope.includes(lang)) return {k:'none',v:'—',t:'本稿不做这个语种'};
+  if(!detected) return {k:'none',v:'未检测',t:'还没跑检测'};
+  const list=issues(s.id,lang);
+  const bad=list.filter(x=>x.k==='empty'||x.k==='dup'||x.k==='conflict'||x.k==='low');
+  if(bad.length) return {k:'iss',v:bad.length+' 处',t:bad.map(x=>x.k).join(',')};
+  if(list.some(x=>x.k==='pend')) return {k:'pend',v:'待确认',t:'无问题，等人确认'};
+  return {k:'done',v:'已确认',t:'已确认'};
+}
+
+/* ── 渲染 解析结果 ── */
+function renderParsed(){
+  const tb=$('#tblParsed tbody');
+  tb.innerHTML=TABLES.map(t=>`<tr><td class="m">${esc(t.name)}</td><td class="m">${esc(t.dir)}/</td>
+    <td class="m">${t.langs}</td><td class="m">${t.rows}</td>
+    <td>${t.ok?'<span class="pill teal">解析成功</span>':'<span class="pill rose" title="'+esc(t.err)+'">解析失败 · 已点名</span>'}</td></tr>`).join('');
+}
+/* ── 渲染 配对提案 ── */
+function renderPairs(){
+  const tb=$('#tblPairs tbody');
+  tb.innerHTML=PAIRS.map(p=>{
+    const b=p[4]==='ok'?'<span class="pill teal">确定</span>':p[4]==='shared'?'<span class="pill blue">共享</span>':p[4]==='amb'?'<span class="pill amber">要你选</span>':'<span class="pill rose">没配上</span>';
+    return `<tr><td class="m">${esc(p[0])}</td><td class="m">${esc(p[1])}</td><td class="m">${esc(p[2])}</td><td class="m">${esc(p[3])}</td><td>${b}${p[5]?`<div class="note" style="margin-top:2px">${esc(p[5])}</div>`:''}</td></tr>`;
+  }).join('');
+}
+
+/* ── 渲染 审查矩阵 ── */
+function renderReviewMatrix(){
+  const head=`<thead><tr><th>稿 \\ 语种</th>${LANGS.map(l=>`<th>${l.n}</th>`).join('')}<th style="min-width:92px">本稿</th></tr></thead>`;
+  const body=SKUS.map(s=>{
+    const cells=ALL.map(code=>{
+      const st=cellKind(s,code);
+      const isSel=sel.sku===s.id&&sel.lang===code;
+      return `<td><button class="cell c-${st.k}${isSel?' sel':''}" data-c="${s.id}|${code}" title="${esc(s.rel)} · ${LMAP[code]} · ${esc(st.t)}"><span class="cv">${st.v}</span></button></td>`;
+    }).join('');
+    const done=s.scope.filter(l=>cellKind(s,l).k==='done').length;
+    const tot=s.scope.length;
+    const p=tot===0?'<span class="pill">—</span>':done===tot?`<span class="pill teal">${done}/${tot}</span>`:`<span class="pill amber">${done}/${tot}</span>`;
+    return `<tr><th><span style="font-family:var(--mono);font-size:.77rem">${esc(s.rel)}</span></th>${cells}<td>${p}</td></tr>`;
+  }).join('');
+  $('#mxHost').innerHTML=`<div class="scroller"><table class="mx">${head}<tbody>${body}</tbody></table></div>`;
+  $('#mxHost').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const [id,lang]=b.dataset.c.split('|'); sel={sku:id,lang}; renderReviewMatrix(); renderPanel();
+  }));
+  let done=0,pend=0,iss=0,tot=0;
+  SKUS.forEach(s=>s.scope.forEach(l=>{tot++;const k=cellKind(s,l).k;if(k==='done')done++;else if(k==='pend')pend++;else if(k==='iss')iss++;}));
+  $('#revSum').textContent=`已确认 ${done} · 待确认 ${pend} · 有问题 ${iss} · 共 ${tot} 格`;
+  $('#sumPill').textContent=`${done}/${tot} 格已确认`;
+}
+/* ── 渲染 右栏 ReviewStep（同款） ── */
+const ROWSRC=['Buy Now','View the Collection','Free Shipping Worldwide','30-Day Money-Back Guarantee','360° Rotation\nTowel Bar','In stock — ships in 24h','Add to Cart','Ships from US Warehouse','Limited Edition','Best Seller #1','Refund Policy','Customer Reviews'];
+function renderPanel(){
+  const s=SKUS.find(x=>x.id===sel.sku);
+  const st=cellKind(s,sel.lang);
+  const list=issues(s.id,sel.lang);
+  const rows=[];
+  const n=Math.max(3,Math.min(8,list.length?list[list.length-1].row+2:4));
+  for(let i=0;i<n;i++){
+    const src=ROWSRC[i%ROWSRC.length];
+    const iss=list.find(x=>x.row===i+1);
+    let tgt='Jetzt kaufen', stt='ok', stl='正常';
+    if(iss&&iss.k==='empty'){tgt='';stt='empty';stl='译文为空';}
+    else if(iss&&iss.k==='dup'){tgt='Kostenloser Versand';stt='dup';stl='重复原文';}
+    else if(iss&&iss.k==='conflict'){tgt='Kostenloser Versand (DE)';stt='conflict';stl='同源不同译';}
+    else if(iss&&iss.k==='low'){tgt='Kostenloser Versand';stt='conflict';stl='覆盖率偏低';}
+    rows.push({i:i+1,src,tgt,stt,stl});
+  }
+  const head=`<div class="rs-h"><span class="t">${esc(s.rel)}</span><span class="pill blue">${LMAP[sel.lang]}</span>
+      <span class="pill gray">这一片 12–21 行</span>
+      <span style="margin-left:auto"></span></div>`;
+  const body=rows.map(r=>`<tr><td class="num">${r.i}</td><td class="src">${esc(r.src).replace(/\n/g,'<br>')}</td>
+      <td class="tgt"><input value="${esc(r.tgt)}" ${r.stt==='empty'?'placeholder="(空)"':''}></td>
+      <td class="st"><span class="st ${r.stt}">${r.stl}</span></td></tr>`).join('');
+  const canConfirm = st.k!=='iss';
+  $('#reviewPanel').innerHTML=`
+    <div class="stack">
+      <div class="ev ${st.k==='iss'?'bad':st.k==='done'?'ok':'warn'}">
+        <b>这一格（${esc(s.id)} × ${LMAP[sel.lang]}）＝ 一份交付物</b>
+        ${st.k==='iss'?`有 ${st.v} 处要人处理：空译文／重复原文／同源不同译——<b>这些不许批量确认</b>。`
+         :st.k==='done'?'已确认。':'没问题，等你点「确认这一语种」。'}
+      </div>
+      <div class="rs">${head}<div style="max-height:300px;overflow:auto">
+        <table><thead><tr><th style="width:34px">#</th><th style="min-width:170px">原文</th><th style="min-width:220px">译文</th><th style="min-width:150px">状态</th></tr></thead>
+        <tbody>${body}</tbody></table></div></div>
+      <div class="row">
+        <button class="btn primary" type="button" ${canConfirm?'':'disabled style="opacity:.45"'} id="btnConfirmCell">确认这一语种</button>
+        <button class="btn" type="button">编辑整张表</button>
+        <span class="note" style="flex:1 1 180px">确认后<strong>这一格</strong>才变绿；执行前那 144 格全绿才放行。</span>
+      </div>
+      <div class="ev plain"><b>这一稿的表体检</b>
+        <div style="margin-top:4px">对稿命中率 <b>96%</b>　·　缺列 0　·　绑定证据：<b style="color:#0a5a41">能执行</b>（目录同父 + 命中分领先 4 个点）</div>
+      </div>
+    </div>`;
+  const bc=$('#btnConfirmCell');
+  if(bc) bc.addEventListener('click',()=>{
+    const key=sel.sku+'|'+sel.lang; if(!ISSUE_PLAN[key]) ISSUE_PLAN[key]=[{k:'ok'}];
+    else ISSUE_PLAN[key]=(ISSUE_PLAN[key]||[]).filter(x=>x.k!=='pend');
+    renderReviewMatrix(); renderPanel();
+  });
+}
+
+/* 视图切换 */
+function show(v){
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.view===v)));
+  ['upload','review','cmp'].forEach(k=>document.getElementById('v-'+k).hidden=(k!==v));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.view);}));
+$('#btnDetect').addEventListener('click',()=>{detected=true;renderReviewMatrix();renderPanel();});
+$('#btnConfirmClean').addEventListener('click',()=>{
+  detected=true;
+  SKUS.forEach(s=>s.scope.forEach(l=>{
+    const k=s.id+'|'+l, list=ISSUE_PLAN[k]||[];
+    const bad=list.some(x=>x.k==='empty'||x.k==='dup'||x.k==='conflict'||x.k==='low');
+    if(!bad) ISSUE_PLAN[k]=[{k:'ok'}];      // 只确认干净的格；有歧义的绝不动
+  }));
+  renderReviewMatrix(); renderPanel();
+});
+$('#btnNextIssue').addEventListener('click',()=>{
+  detected=true; renderReviewMatrix();
+  const list=[];
+  SKUS.forEach(s=>s.scope.forEach(l=>{if(cellKind(s,l).k==='iss')list.push({sku:s.id,lang:l});}));
+  if(list.length){sel=list[0];renderReviewMatrix();renderPanel();}
+});
+$('#drop').addEventListener('click',()=>{detected=true;});
+$('#btnApply').addEventListener('click',()=>{ detected=true; show('review'); renderReviewMatrix(); renderPanel(); });
+
+renderParsed(); renderPairs(); renderReviewMatrix(); renderPanel();
+</script>
+</body>
+</html>

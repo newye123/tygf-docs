@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行期技术目录污染客户素材目录 · 对抗式审查与处置</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>图译工坊 · 对抗式审查</span><span class="sep">/</span>
+      <span>2026-10-22</span><span class="sep">/</span>
+      <span>Round 1/3</span>
+    </div>
+    <h1>执行期技术目录污染客户素材目录</h1>
+    <p class="standfirst">那个多出来的文件夹是执行期的技术目录，里面放母版的工作副本和失败隔离件。跑成功后我们只删了自己那层，父级空壳没人收；更要紧的是——扫描器根本不认识它，中间态的 PSD 会被当成设计稿列出来。</p>
+    <div class="meta">
+      <span>触发：Owner「改换语言后会在这里多一个文件夹」</span>
+      <span>修复随助手 3.7.20</span>
+      <span>两项已修 · 一项按设计保留 · 一项待拍</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="verdict">
+      <span class="lb">VERDICT · 有条件放行</span>
+      <p>空壳残留与扫描误列两处已修并出厂；剩下"同步盘会不会把母版副本带出去"这条要 Owner 拍方案，我不擅自挪落点。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">01</span>盘上事实</h2>
+    <div class="stats">
+      <div class="stat warn"><span class="n">0</span><span class="k">该目录现有子项与大小（空壳）</span></div>
+      <div class="stat bad"><span class="n">3→1</span><span class="k">扫描列出的设计稿（修前→修后）</span></div>
+      <div class="stat ok"><span class="n">12</span><span class="k">新守卫断言（含正控与防误删）</span></div>
+      <div class="stat ok"><span class="n">3.7.20</span><span class="k">修复出厂版本</span></div>
+    </div>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>问题</th><th>读数</th></tr></thead>
+        <tbody>
+          <tr><td>你看到的那个目录</td><td class="mono"><code>&lt;客户素材根&gt;\.tygf-v1.5-runtime</code> 存在，子项 0、大小 0 ⇒ 纯空壳</td></tr>
+          <tr><td>谁建的</td><td class="mono">working-copy.js:92-96 执行时 mkdirSync(outputRoot, recursive)</td></tr>
+          <tr><td>里面本来放什么</td><td><code>.output_tmp/&lt;稿&gt;.__&lt;attemptId&gt;__&lt;语言&gt; 的 PSD 副本</code>（母版整份工作副本）＋ <code>quarantine/…</code>（失败隔离件）＋ JPG 预览</td></tr>
+          <tr><td>为什么长在素材目录里</td><td><code>server.js:6256 / :7462</code> 把它放在<strong>交付目录的父目录</strong>下；注释写明是为了同卷改名——跨卷会退化成整份拷贝</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>抓到的四条</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="top"><strong>F1 中间态被当成设计稿</strong><span class="tag bad">Important · 已修</span></div>
+        <p class="loc">server.js:885 扫描忽略名单</p>
+        <p>名单里没有这个技术目录。用户选文件夹时，执行期目录里的工作副本与失败隔离件会被列成设计稿，可能被加进批量队列——错译一次就是一整稿，还照扣积分。</p>
+        <p><strong>证据：</strong>取 server.js 里<strong>那段真函数</strong>就地跑夹具，3 个 PSD/PSB 全部列出（其中 2 个是中间态），探针退出码 1。修后同样夹具只列 1 个真稿件，并显式记 <code>IGNORED_DIR</code>。</p>
+      </div>
+      <div class="card">
+        <div class="top"><strong>F2 空壳留在客户素材目录</strong><span class="tag bad">Important · 已修</span></div>
+        <p class="loc">v15-runner.js:991 cleanupOutputRoot</p>
+        <p>清理只删自己的 attempt 目录，父级技术目录从没人收 ⇒ 每执行一次、每换一次语言，素材目录里就多一个文件夹。这就是你报的现象。</p>
+      </div>
+      <div class="card">
+        <div class="top"><strong>F3 失败残留无人收</strong><span class="tag warn">按设计保留</span></div>
+        <p class="loc">v15-runner.js:318</p>
+        <p>清理挂在成功分支；失败或中断的 attempt（含隔离副本）永久留下——那是排查证据，不该自动删。但界面从没告诉用户它在哪，用户只会觉得"莫名其妙多了东西"。这条要补的是<strong>告知</strong>，不是删除。</p>
+      </div>
+      <div class="card">
+        <div class="top"><strong>F4 同步盘会把母版副本带出去</strong><span class="tag bad">待 Owner 拍</span></div>
+        <p class="loc">落点策略（working-copy.js）</p>
+        <p>技术目录长在素材目录内部。若该目录被 OneDrive／坚果云同步，执行期那份<strong>母版整份副本</strong>会被同步出去——和我们对外说的「设计文件不出本机」直接打架。前提未实测，风险机制成立。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>修法与代价</h2>
+    <div class="gates">
+      <div class="gate first">
+        <span class="num">1</span>
+        <div class="body"><h3>扫描排除，且看得见</h3><p>技术目录进忽略名单，跳过项显式标 <code>IGNORED_DIR</code>——不静默消失，用户能知道"这个目录被有意忽略"。</p></div>
+      </div>
+      <div class="gate">
+        <span class="num">2</span>
+        <div class="body"><h3>空壳用完即收</h3><p>删掉自己的 attempt 目录后，父级若已空就一并收走；<strong>非空绝不动</strong>（还有别的 attempt 或失败隔离件时保留）。</p></div>
+      </div>
+      <div class="gate">
+        <span class="num">3</span>
+        <div class="body"><h3>防误删客户素材</h3><p>路径不含该标记一律拒删；只是名字里带这串字样、不在交付树内的目录也不碰。两条都写成断言钉住。</p></div>
+      </div>
+      <div class="gate">
+        <span class="num">4</span>
+        <div class="body"><h3>可测性</h3><p>清理函数改为可导出，守卫直接调用真函数，而不是 grep 源码文本——上一版"两侧门都绿却仍炸"的形态就是这么躲过去的。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>验证</h2>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>项</th><th>读数</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td>新守卫</td><td class="mono">smoke-runtime-dir-hygiene.mjs · 12 断言</td><td><span class="tag ok">PASS</span></td></tr>
+          <tr><td>正控</td><td class="mono">普通子文件夹里的稿件仍须扫到</td><td><span class="tag ok">2 个，未误伤</span></td></tr>
+          <tr><td>负控</td><td class="mono">基线绿 → 撤黑名单红 → 关空壳回收红 → 还原哈希一致复绿</td><td><span class="tag ok">四步全对</span></td></tr>
+          <tr><td>前后对照</td><td class="mono">修前列出 3（含 2 中间态）· 修后列出 1</td><td><span class="tag ok">缺陷可复现且已闭</span></td></tr>
+          <tr><td>合同链</td><td class="mono">npm run test:contracts</td><td><span class="tag ok">rc=0（新守卫已接入）</span></td></tr>
+          <tr><td>发版</td><td class="mono">1623932 → d6e9d42 → 3dc3285 · 助手 3.7.20 · 25,505,407 B</td><td><span class="tag ok">门禁全过 · 自证 ok</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="lb">我这一轮自己的两个失手</span>
+      <p><strong>一、同行夹带：</strong>改 <code>package.json</code> 里那一行守卫链时，我用整行替换，把工作树同一行上别手加的、<strong>尚未入库</strong>的两枚脚本一起提交了，发版门当场红「链里有取不到的脚本」。已摘回，别手现场未动。教训：同一行上的别手改动没法靠 hunk 分离，整行替换前必须先比对行内差异。</p>
+      <p><strong>二、端到端没跑成：</strong>想直接调装好的助手扫描端点取证，返回 403（该端点要扫描票据）。所以扫描这条的证据是"真源码函数就地求值"，比真机弱一级，如实标注。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>要你拍的这一条</h2>
+    <div class="split">
+      <div class="panel yes">
+        <h3>方案 A（我推荐）：同卷，但搬出素材目录</h3>
+        <ul>
+          <li>落到素材所在盘的卷级独立目录（按任务根哈希分格），执行期副本不再出现在客户素材树里。</li>
+          <li>同步盘场景随之消失；对外那句「设计文件不出本机」才立得住。</li>
+          <li>代价：要处理"该盘根不可写"的回退路径；改动集中在两个落点函数，需要一次助手发版。</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>方案 B：不动代码，只写进文档</h3>
+        <ul>
+          <li>隐私说明与下载页加一句"执行期间会在任务目录内产生临时副本，成功即删"。</li>
+          <li>代价：只是把风险写下来，不消除风险——同步盘仍会把母版副本传出去。</li>
+          <li>我不建议：这等于让对外主张依赖用户不去开同步。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">06</span>覆盖缺口</h2>
+    <ul class="notes">
+      <li>没在真机跑一次完整执行来验证清理（要占你的 Photoshop 与积分）；清理行为目前是真函数级测试覆盖。</li>
+      <li>你机器上这个目录当前是空的，历史失败残留有多少、有没有大文件，本轮没查——查它要遍历客户素材。</li>
+      <li>方案 A 的"盘根可写"前提未在你机器上实测。</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>报告由对抗式审查流程产出：先证伪再下结论，读数只抄本会话跑出的回显；两处修复各做过负控（改回旧行为必须红）才敢记账为绿。</p>
+    <p>develop @ 3dc3285 · 助手 3.7.20 · 包 tygf-test-3dc32853c7ac.zip</p>
+  </footer>
+
+</div>
+</body>
+</html>

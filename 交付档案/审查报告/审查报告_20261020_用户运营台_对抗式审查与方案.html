@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用户运营台 · 对抗式审查与方案 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-20 16:4x</span><span class="sep">/</span><span>风险档 High</span><span class="sep">/</span><span>Round 1/3</span></div>
+  <h1>用户运营台：先证伪，再给方案</h1>
+  <p class="standfirst">Owner 要"按个体看每个访客从哪来、搜什么词、停多久、看了哪些页"。三根柱子同时断：一项任何网站都拿不到，一项撞我们自己写的隐私承诺，一项已有封驳判例。改造后的问法三根都站得住。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：打回（原问法）→ 改造方案见 §04（有条件放行）</span>
+  <p><strong>一句话根因：</strong>你真正想知道的是"<strong>什么人会因为什么内容进来、卡在哪一步、值不值得为他做功能</strong>"。而"按个体看访客的关键词和轨迹"这个问法——关键词那一半<strong>任何网站都拿不到</strong>（不是我们的技术限制），个体轨迹那一半<strong>撞上我们对外写死的隐私承诺</strong>，而"新建一个台子"这件事 <strong>2026-09-24 已被你自己封驳过</strong>。</p>
+</div>
+
+<div class="contract">
+  <div><b>范围</b>：需求件 ＋ 站内既有面 ＋ 今日 CF 实测三读数（非 git diff）</div>
+  <div><b>改动</b>：0 文件（本轮只审不写业务码）｜风险档 <b>High</b></div>
+  <div><b>已证实</b>：7 条（Important 6 ／ Pre-existing 1）</div>
+  <div><b>未决</b>：3 条 ｜ <b>更正</b>：2 条（推翻我自己今日说法）</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>已证实的缺陷</h2>
+  <div class="tablewrap"><table>
+    <tr><th>ID</th><th>严重度</th><th>出处</th><th>失效场景</th><th>证据</th><th>等级</th></tr>
+    <tr><td>R-1</td><td><span class="tag bad">Important</span></td><td class="code">需求本身</td><td>按个体看"搜什么词进来"——<strong>永久拿不到</strong>，那一栏永远空，你会以为我们没接好</td><td>Google 官方条款原文：<em>"Are my search queries sent to websites when I click on Google Search results? <strong>Typically, no.</strong> … we <strong>aggregate</strong> queries together"</em>（policies.google.com/faq）</td><td class="code">B</td></tr>
+    <tr><td>R-2</td><td><span class="tag bad">Important</span></td><td class="code">总控/对抗审查_看板与站点方案_20260924.md:128</td><td>新建独立运营台＝造第二个带门禁的公网面，与既有裁定直接冲突</td><td>本轮 <span class="mono">sed</span> 复现原文：<em>"走已有运营台（<span class="mono">admin-sidebar-data.ts</span> 加一项 ＋ owner-only 只读路由），<strong>不得新建第二个带口令门的公网面</strong>"</em>；:5 已记"内部运营台已在仓，12 个页签"</td><td class="code">A</td></tr>
+    <tr><td>R-3</td><td><span class="tag bad">Important</span></td><td class="code">src/app/(zh)/privacy/page.tsx:57-63</td><td>把匿名访客的来源＋停留＋页面序列按人拼出来＝<strong>新增处理目的＋新增信息种类</strong>，超出对外承诺的封闭清单 ⇒ 第二个 LEGAL-1</td><td>本轮复现原文：③ IP／匿名设备标识／浏览器类型 用途限定"<strong>安全保障、防暴力破解、防滥用、限流</strong>"；:57"<strong>仅</strong>收集…最少信息"；:63"<strong>除第五节逐项表列明的内容外</strong>，我们不会长期收集"；:150-151 目的变更＝重大变更须<strong>提前 30 天</strong>通知；LEGAL-1:65 判据"<strong>必须在接通之前改文本</strong>"</td><td class="code">A</td></tr>
+    <tr><td>R-4</td><td><span class="tag bad">Important</span></td><td class="code">今日 CF 实测</td><td>来源站现在拿不到</td><td>实测报错 <span class="mono">zone '8018…' does not have access to the field 'clientrefererhost'</span>；且 <span class="mono">ZoneHttpRequests1dGroupsSum</span> 字段清单实测<strong>根本没有 referer</strong>（只有 countryMap／browserMap／contentTypeMap／responseStatusMap／threats）</td><td class="code">A</td></tr>
+    <tr><td>R-5</td><td><span class="tag bad">Important</span></td><td class="code">prisma/schema.prisma:178-195 ＋ 全仓 grep</td><td>"停留多久／看了哪些页"是<strong>采集缺口不是面板缺口</strong>，光做面板是空壳</td><td><span class="mono">LoginSession</span> 语义＝邮箱登录会话（tokenHash／12h／revokedAt），非浏览会话；grep <span class="mono">visit</span>／<span class="mono">dwell</span>／<span class="mono">pageview</span>／<span class="mono">utm</span> 在 src 0 命中</td><td class="code">A</td></tr>
+    <tr><td>R-6</td><td><span class="tag bad">Important</span></td><td class="code">funnel-event-contract.ts:9-14 ＋ funnel/event/route.ts:130-144</td><td><strong>真机会被漏掉</strong>：我们已有按人、合规干净的旅程数据，但它从"已激活装机"才开始</td><td>合同枚举 16 事件；入库时服务端解析 <span class="mono">principalId=BetaUser.id</span> 并幂等落库。断点＝<span class="mono">auth/*</span> 只写 LoginAttempt／LoginSession，<strong>不写漏斗事件</strong> ⇒ 缺 注册／邮箱验证／登录 三类</td><td class="code">A</td></tr>
+    <tr><td>R-7</td><td><span class="tag warn">Pre-existing</span></td><td class="code">src/app/api/admin/stats/route.ts:40-50,208-222</td><td>现有"近 7 日趋势"在事件超 1,000 条后<strong>失真</strong>，而你会拿它做判断</td><td>代码为 <span class="mono">findMany({ take: 1000 })</span> 后内存按日聚合；漏斗卡是"近 1000 事件里去重设备数"快照，非历史累计。⚠ 实际截断量需读生产库（U-2）</td><td class="code">A／截断量未证</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>未决（缺什么证据，不猜）</h2>
+  <ul class="plain">
+    <li><strong>U-1</strong>：CF 升套餐是否解锁 <span class="mono">clientRefererHost</span>。缺：套餐权限对照原文或实测（我没登你后台，也不该拿你账号试付费）。<strong>这条决定第二层要不要花钱。</strong></li>
+    <li><strong>U-2</strong>：<span class="mono">take: 1000</span> 截断是否已在生产发生。缺：生产库 <span class="mono">BetaFunnelEvent</span> 行数（要 SSH，本机权限层两次拦）。</li>
+    <li><strong>U-3</strong>：百度／必应是否回传搜索词。本轮只证了 Google（一手 B 级）；百度侧未查到现行一手文档 ⇒ 写未核实。</li>
+  </ul>
+  <h3>覆盖缺口（本轮明确没检查）</h3>
+  <p class="muted">实现细节与性能；第三方 SaaS 的跨境路径（只审了自有服务器口径）；CF 后台 Referrer Groups 报表实际形态；生产 nginx 日志现状（档二未执行）。</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span>先改问法</h2>
+  <div class="callout"><strong>把"每个访客从哪来"改成："流量按来源／内容分组的日趋势" ＋ "注册用户从头到尾的真实旅程"。</strong>前者零合规成本，后者是我们独有的优势数据（已登录、已告知、已绑账号身份）。按个体的匿名轨迹不做——它既拿不全，又要改对外承诺。</div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>改造方案：四层，全部扩现有 /admin，不新建站点</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">第一层 · 流量总览</span><span class="tag ok">今天可做</span><span class="tag info">零合规成本</span></div>
+      <p>在 <span class="mono">admin-sidebar-data.ts:36-70</span> 加一项 owner-only 只读板，读已落盘的 <span class="mono">traffic-daily.jsonl</span>（一天一行：访客／浏览／请求）。展示日周月趋势、国家分布、入口页 Top、请求/浏览噪声比。</p>
+      <div class="fix"><strong>为什么干净：</strong>全是 zone 级聚合计数，不落 IP／UA／日志原文（沿用 <span class="mono">site-traffic-daily.mjs:9-11</span> 既有纪律）⇒ R-3 的三项义务都不触发。<strong>顺手修 R-7</strong>：改成按日 <span class="mono">groupBy</span>，趋势才可信。判例件原话："约一个下午的量，不是新站"。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">第二层 · 来源与着陆</span><span class="tag warn">依赖档二执行</span></div>
+      <p>来源站<strong>不靠 CF，靠我们自己的 nginx 日志</strong>——Referer 本来就在记。档二那份改动落地后，写一个<strong>按日聚合</strong>的分析器：来源站排行、着陆页、各来源后续转化、停留时长估算（同一客户端 30 分钟窗口首末请求差）。</p>
+      <div class="fix"><strong>口径钉死：</strong>停留是估算（单页跳出记 0、长轮询接口会拉长）；只做聚合不落个体 ⇒ 不触发 R-3。<strong>这一层同时回答"知乎／小红书到底有没有带来人"，不花钱、不新增处理方。</strong></div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">第三层 · 用户旅程</span><span class="tag ok">建议优先</span><span class="tag info">合规干净</span></div>
+      <p>补三个漏斗事件（注册提交／邮箱验证／已登录）进合同白名单并接 <span class="mono">auth/*</span> 调用点，就把<strong>注册 → 激活 → 下载 → 首次跑通 → 付费</strong>串成一条完整序列。板上给：逐级转化与流失率、各步中位耗时、卡死在哪一步最多、分渠道转化差。</p>
+      <div class="fix"><strong>为什么最值钱：</strong>匿名轨迹告诉你"有人来过"，这条告诉你"<strong>谁真的用起来了、在哪一步放弃</strong>"——你决定做什么功能靠的是后者，而且它<strong>不需要动隐私政策</strong>。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">第四层 · 关键词（唯一可行形态）</span><span class="tag warn">需你授权 API</span></div>
+      <p>搜索词<strong>只能按词聚合、不能按人关联</strong>。可用来源是 Google Search Console——域名已用 DNS 方式验证过，接上就能拿：展示、点击、平均排名、查询词列表，按日趋势。百度站长同形态，现行回传口径未核实。</p>
+      <div class="fix"><strong>明确标注：无法回答"某个人搜了什么"，这是行业事实（R-1），不是我们的缺陷。</strong></div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">明确不做</span><span class="tag bad">三件</span></div>
+      <p>按个体拼接匿名访客的来源＋关键词＋停留＋页面序列；给未注册访客打指纹或写 cookie 做画像；新建第二个带口令门的公网面（R-2）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>更正：推翻我自己今天两句说法</h2>
+  <div class="tablewrap"><table>
+    <tr><th>原说法（本轮早前交付件）</th><th>反证</th><th>新结论</th></tr>
+    <tr><td>"跳失率、停留时长、<strong>来源渠道</strong>一个都没有"</td><td>自有 nginx 日志一直记着 <span class="mono">$http_referer</span>（脱敏补丁件还专门警告它是第二泄漏面）；CF adaptive 表也有该字段，只是本 zone 无权限</td><td>准确说法是"<strong>有源未接</strong>"——数据在日志里，缺的是采集与聚合。这个区别直接决定第二层可行</td></tr>
+    <tr><td>"CF 分析保留 ≥30 天"</td><td>实测接口可取 <span class="mono">2026-07-12 → 2026-10-20</span> 共 <strong>101 天</strong></td><td>控制台展示与 API 可查窗口不是一回事；我按 30 天设计保守了，已把脚本窗口上限从 90 放到 180 并写明依据</td></tr>
+  </table></div>
+  <div class="callout"><strong>若你坚持要"个体级轨迹"</strong>，代价不是"加个面板"，是一次对外承诺变更：修订隐私政策收集清单（中英双语）→ 更新《第三方处理方清单》的目的与信息种类 → 按 <span class="mono">page.tsx:150-151</span> <strong>提前 30 天</strong>公告 → 新增 cookie／首访告知层（站内现在<strong>没有</strong> banner，实测 0 命中）→ 新表配 <span class="mono">retentionExpiresAt</span> ＋删除执行体（现承诺"使用与事件指标最长 90 天"）→ 过 <span class="mono">npm run test:legal-pages-drift</span>。</div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>动手顺序</h2>
+  <ol class="plan">
+    <li><strong>第一层 ＋ 修 R-7</strong>：一个下午，零外部依赖，数据已在手（今日已把 101 天真数拉进台账，100 行落盘、自测仍绿）。做完你就有可信趋势板。</li>
+    <li><strong>第三层补三个事件</strong>：半天，合规干净，价值最高——注册到付费一次打通。</li>
+    <li><strong>第二层</strong>：依赖档二执行（脚本已备好＋带 4 枚负控的自检门）。来源、着陆、停留估算、渠道归因一起到手。</li>
+    <li><strong>第四层接 GSC</strong>：半天，域名已验证，需你授权我调 API。</li>
+  </ol>
+  <div class="callout"><strong>原型已经做出来了</strong>：<span class="mono">交付档案/运营台原型_20261020.html</span> —— 四个页签，第一层是真数（100 天、月度表、去重对照、入口页、国家），其余三层是带说明的空态，写清"数据源在哪、接通后显示什么、为什么现在空"。所有数字由脚本从台账与快照文件读出，未手填。</div>
+</section>
+
+<footer class="footer">
+  <div>取证方式：两路独立子代理（合规面／已有看板面）＋ 主审逐条复现（判例原文、政策原文、CF 接口实测）＋ 厂商一手文档。子代理返回一律当线索，不当事实。</div>
+  <div>依据：Google 官方隐私条款（搜索词不传给网站、仅聚合提供）；站内 <span class="mono">privacy/page.tsx:57-63,150-151</span>；<span class="mono">总控/对抗审查_看板与站点方案_20260924.md:5,128</span>；<span class="mono">LEGAL-1:65</span>；本会话 CF 实测输出。</div>
+  <div>本轮未改任何业务代码；未 commit、未 push、未部署。</div>
+</footer>
+
+</div>
+</body>
+</html>

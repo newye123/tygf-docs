@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>交接件：免 PS 引擎链——现状、已验、未做、下一步（2026-10-17）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(26px,5vw,52px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(32px,5vw,48px)}
+.masthead{display:flex;flex-direction:column;gap:13px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.3rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.75rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.24rem;margin:0;padding-bottom:9px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.73rem;color:var(--accent);flex:none}
+p{margin:0;max-width:72ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.04rem,2.3vw,1.18rem);line-height:1.6;font-weight:500;max-width:52ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.55rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.79rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:17px 19px;display:flex;flex-direction:column;gap:11px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--bad)}.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{font-family:var(--font-display);font-size:.96rem;margin:0}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.gate .num{font-family:var(--font-mono);font-size:.82rem;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:6px 8px;border-radius:8px;height:fit-content;flex:none;white-space:nowrap}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>交接件</span><span class="sep">/</span><span>免 PS 引擎链</span><span class="sep">/</span><span>给接续上线的 AI</span></div>
+  <h1>现状、已验、未做、下一步</h1>
+  <p class="standfirst">Owner 问：现在具备上线测试站的条件没有？答：<strong>不具备</strong>（就这条链而言）。本件把四个硬缺失、已验证的东西、明确没做的东西、以及下一步的执行序与判据一次交清。</p>
+  <div class="meta"><span>交接人 Qoder</span><span>实测 2026-10-17 20:27</span><span>隔离树 <code>worktrees/pc-port-20261017</code></span><span>基线 <code>338da1d</code>（develop 现 <code>e9f639f</code>，已漂 11 笔）</span></div>
+</header>
+
+<section>
+  <div class="verdict"><span class="lb">为什么不具备</span>
+    <p>① 代码未提交未推；② <code>server.js</code> 一字未动（扫描道与执行道都没接）；③ 引擎没进安装包；④ 20+ 处替 Photoshop 表功的旧句未改——这条链一上线，那些句子当场变假话。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">17·4·7</span><span class="k">三道定向门全 rc=0（执行器／扫描器／通道判定）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">扫描器与已验证原型的逐字段差集</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">develop 里 <code>photocraft</code> 命中数（引擎未内置）</span></div>
+    <div class="stat warn"><span class="n">20+</span><span class="k">仍断言 Photoshop 的旧句（含客户报告 8 处）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§2</span>接手第一件事：重取基线</h2>
+  <ul class="notes">
+    <li>工作树 <code>worktrees/pc-port-20261017</code>（分支同名），基线 develop <code>338da1d</code>；<strong>develop 已前进 11 笔到 <code>e9f639f</code></strong> ⇒ 本件所有 <code>server.js</code> 行号都会漂，动手前按现 HEAD 重取。</li>
+    <li>未提交：新增 <code>pc-channel.js</code>／<code>pc-executor.js</code>／<code>pc-scanner.js</code>、三道 <code>smoke-pc-*.mjs</code>、两件夹具、两份真跑产物；<code>package.json</code> 改 +3 脚本。未推、未部署、未碰两站。</li>
+    <li><strong>不要把旁支 <code>codex/v1.5-trust-chain</code>（<code>7d8f09b</code>）那版执行器当基线</strong>：落后 develop 764 笔、<code>server.js</code> 差 3,767 行，且哈希门是"配了才校验"（已被推翻）。</li>
+    <li><strong>号界</strong>：develop 今天已有另一只手用 <code>A1/A2/A3/A4</code> 命名排版线提交（<code>2d35bf8</code>、<code>b5ac8ce</code>、<code>e9f639f</code>）。本链步骤一律改用 <code>PC-A1…PC-F</code>，别再用裸 A2。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">§3·§4</span>已验 vs 未做</h2>
+  <div class="split">
+    <div class="panel yes"><h3>已做完并跑过（可复跑）</h3><ul>
+      <li>引擎身份改运行时 <code>--version</code> 取；缺哈希即拒 <code>PC_EXE_SHA_UNPINNED</code> ⇒ <code>smoke-pc-executor</code> 17/17 rc=0</li>
+      <li>免 PS 扫描器与原型<strong>逐字段差集 0</strong>（<code>leading</code> 16/30、<code>autoLeading</code> 布尔同值）⇒ <code>smoke-pc-scanner</code> 4/4 rc=0</li>
+      <li>通道判定层四个纯函数 + 7 条负控 ⇒ <code>smoke-pc-channel</code> 7/7 rc=0</li>
+      <li>商用许可：双许可由上游 <code>cf93edc9</code> 设立、blob 与原始快照同哈希、345 只依赖零 copyleft 阻断；exe 内嵌 OFL 字体与 SCOWL 词表 ⇒ 随包必附许可文本；商标条款要求摘掉 ArtCraft marks（与"用户不必知道"同向）</li>
+      <li>真机：224 MB 真稿扫描 rc=0（7284ms）；引擎哈希 <code>628268bb…c1c5fd1b</code></li>
+    </ul></div>
+    <div class="panel no"><h3>明确没做（别当已完成）</h3><ul>
+      <li><code>server.js</code> 一字未动：扫描道、执行道都没接</li>
+      <li>凭记可达性没量；<strong>整条 <code>test:trust-chain</code> 我没跑过</strong>（只跑三道定向门）</li>
+      <li>引擎没进安装包；<code>installer.iss</code> 无此项、无 <code>bin/</code></li>
+      <li>20+ 处替 Photoshop 表功的旧句未改（客户报告 8 处 <code>report-renderer.js:41,42,514,524,580,676,685,721</code>）</li>
+      <li>灰度白名单的服务端判定未做（仍是本地 config 语义＝管控无效）</li>
+      <li>无 PS 笔记本实机一次没跑；探针 <code>TYGF-Deploy-Probe</code> 现为 Disabled</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§5</span>上线前必须先钉的两个坑</h2>
+  <div class="split">
+    <div class="panel warn"><h3>坑 1 · 引擎失败不许进 PS 的 recovery 锁</h3><p><code>server.js:2005</code>「Photoshop 执行器尚未确认退出，安全锁保持；恢复确认前不会接收新任务」——它存在是因为 COM 往返杀不干净。引擎是普通子进程、<code>kill()</code> 确定。<strong>沿用＝给一台没 PS 的机器凭空造一把需要人工救援的锁。</strong>修法：普通失败＋可重试，并写成断言防被"顺手统一"回去。</p></div>
+    <div class="panel warn"><h3>坑 2 · 来源凭记活不到执行期</h3><p>凭记现写进扫描 <code>taskRoot</code>，而那是临时目录（就绪扫描读完即 <code>secureDelete</code>，<code>:5279/:5298</code>），执行在之后的另一个请求，manifest 又无 <code>master_path</code>/<code>scan_id</code>。甲案：凭记塞进 <strong>observation 本体</strong>随缓存走（不动合同）；取不到就升级乙案：manifest 加来源字段＝合同变更走四层同步。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§6</span>下一步执行序与判据</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">PC-A1</span><div class="body"><h3>量凭记可达性（半小时，只读）</h3><p>引擎扫描 → 缓存命中 → <code>loadObservation</code> 能否取回来源三件。取不到 ⇒ 当场改判走乙案，不进下一步。</p></div></div>
+    <div class="gate"><span class="num">PC-A2</span><div class="body"><h3>接扫描道</h3><p><code>runPreparationScan</code> 是唯一替换点（我量到 <code>:4699-4717</code> 的 <code>launchPS</code> 段，按现 HEAD 重取），下游 busy/缓存/轮询/摘要一字不动。判据：<code>node --check</code>；开关关时行为面零变化；同一母版 PS 扫 vs 引擎扫逐字段差集为空。</p></div></div>
+    <div class="gate"><span class="num">PC-A3</span><div class="body"><h3>失败分流（坑 1）</h3><p>引擎失败不进 recovery；断言 <code>status.phase !== 'recovery_required'</code> 且下一请求能被接收。</p></div></div>
+    <div class="gate"><span class="num">PC-A4</span><div class="body"><h3>执行道凭记同源（坑 2）</h3><p>跨来源一律拒（PS 扫的件不许引擎执行、引擎扫的不许 PS 执行、无凭记不许执行）；文案「请重新扫描」而非「请先启动 Photoshop」。判据：7 条负控继续绿 + 新增两条跨来源拒。</p></div></div>
+    <div class="gate"><span class="num">PC-D</span><div class="body"><h3>文案诚实化（与 PC-A2 同一班车）</h3><p>20+ 处旧句 + 两道门断言同笔更新（<code>smoke-report-coverage-honesty</code>、<code>smoke-display-denoise.mjs:48</code>）；技术归因三句按 <code>executorMode</code> 分形，字段只活在数据里。</p></div></div>
+    <div class="gate"><span class="num">PC-E</span><div class="body"><h3>内置进包</h3><p>改名 <code>tygf-engine.exe</code> 装 <code>{app}\bin\</code>；<code>licenses\</code> bundle（MIT＋Apache、NOTICE、ATTRIBUTION、OFL×2、SCOWL，构建脚本自动生成）；构建清单；开源许可页；bump 3.7.15→3.7.16 + 九文件一 exe 面；包 ~12.5 MB→量级 ~56 MB（Owner 已接受）。</p></div></div>
+    <div class="gate"><span class="num">PC-F</span><div class="body"><h3>无 PS 笔记本实机四步</h3><p>扫描 → 批量改语言 → 打开客户报告核对 → 再用真 PS 开一次产物。<strong>四步全做才算绿，本地绿不算绿。</strong></p></div></div>
+  </div>
+  <div class="callout"><span class="lb">上线门与红线</span>
+    <p>部署测试站前：<code>test:trust-chain</code> <strong>整链</strong> rc=0（含本链新加三门，我未跑整链）+ <code>test:batch-row-contract</code> rc=0 + 树干净 + 不与在飞会话同写同文件。助手侧变化必须真出安装包并验运行版本（只重打 zip 会出没无修复的包）。支付 flag 保持 false；生产部署单独一句令；不从 develop 直建生产；PC-F 全绿前对外禁写"无需 Photoshop"。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">§8·§9</span>别碰的东西 · 索引</h2>
+  <ul class="notes">
+    <li><strong>别碰</strong>：<code>worktrees/develop</code> 现场（今天 11 笔在动、另有会话在飞）；<code>codex/v1.5-trust-chain</code> 旧执行器；<code>archives/</code>、<code>backups/</code>、docs 既有方案；台账 <code>ZHIHU-COPY</code> 行被对账闸拦着（Owner 手改，别 <code>--force</code>）；探针保持 Disabled 直到 PC-E 出包。</li>
+    <li><strong>立案与台账</strong>：<code>AI_MEMORY/ISSUES.md</code> #159（跨引擎层号歧义，blocker）；<code>ledger.jsonl</code> taskId <code>PHOTO-PLAN</code>／<code>PC-LICENSE</code>／<code>PC-NOPS-EXEC</code>（在办，到期 2026-10-20，一票阀原话「使用对抗式审查继续，我的笔记本可以做为无PS验收机器」）。</li>
+    <li><strong>正本与工具件</strong>：本件 md <code>交付档案/执行方案/交接件_20261017_免PS引擎链_给接续上线AI.md</code>；交互模拟 <code>模拟_20261017_免PS通道决策与失败路径.html</code>（八情形＋错法对照，浏览器实测过）；<code>tmp/pc-closure.mjs</code>、<code>tmp/pcdeps-licenses.tsv</code>、<code>tmp/diff-scan-vs-proto.mjs</code>、<code>tmp/real-scan-20261017.mjs</code>；原型与补丁版 exe、224 MB 夹具在 <code>F:/工具开发/PC移植可行性测试_20261013/work/</code>。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>本轮实测命令：<code>git status --porcelain</code> · <code>git log --format</code>（两树 HEAD）· <code>node scripts/smoke-pc-executor.mjs</code> 17/17 · <code>smoke-pc-scanner.mjs</code> 4/4 · <code>smoke-pc-channel.mjs</code> 7/7 · <code>git rev-list --count</code>（基线漂 11 笔）</p>
+  <p>交接人 Qoder｜2026-10-17 20:27｜未推·未部署·未碰两站·旗标默认关</p>
+</footer>
+</div>
+</body>
+</html>

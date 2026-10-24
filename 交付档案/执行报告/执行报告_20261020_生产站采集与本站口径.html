@@ -1,0 +1,520 @@
+<title>生产站采集与本站口径 · 执行报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>生产站采集 · 本站口径</span><span class="sep">/</span>
+    <span>2026-10-20 23:2x</span>
+  </p>
+  <h1>生产站也要——先修掉"两站看同一个数"</h1>
+  <p class="standfirst">Owner 批"生产站也是要的"。生产线定时器已入库（<code>0510572</code>，10 文件 +607/−168），但做的过程中挖出一个更值钱的问题：<strong>官网与内测站同在一个 Cloudflare zone，原采集只取整站合计</strong> ⇒ 照原样装到生产，两块板会显示同一个数，而那个数谁都不是。</p>
+  <div class="meta">
+    <span>真拉 CF 复核</span>
+    <span>面板断言 28→42</span>
+    <span>安装闸自测 10/10</span>
+    <span>两站真机未装未跑</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论与那组数</h2>
+  <div class="verdict">
+    <span class="lb">给 Owner 的一句话</span>
+    <p>面板现在分两块：<strong>本站</strong>（这台机器自己的访问次数）与<strong>整站</strong>（原来的混算合计，保留并标注）。每台服务器要声明"我是哪个站"，没声明就不给装、也不拿整站合计冒充本站。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">1,148</span><span class="k">官网近 7 天访问次数<br>23:18:05 真拉 CF</span></div>
+    <div class="stat ok"><span class="n">74</span><span class="k">内测站同期<br>差 15 倍，混着看＝没看</span></div>
+    <div class="stat bad"><span class="n">只有 date</span><span class="k">按天数据集的可拆维度<br>实测字段数＝1，拆不了主机名</span></div>
+    <div class="stat warn"><span class="n">visits</span><span class="k">能拆主机名的数据集只给这个<br>没有去重访客，不能互推</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">为什么必须换数据集（不是偷懒的借口）</span>
+    <p>Cloudflare 的按天汇总（<code>httpRequests1dGroups</code>）维度只有日期；能按主机名拆的那个数据集（<code>httpRequestsAdaptiveGroups</code>，102 个维度）只给"访问次数"，不给去重访客。所以本站这块只报访问次数，并且明写"与整站的访客数不是同一把尺"——两把尺各说各的，比一把尺冒充两个意思诚实。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>改了什么（含一处自己埋的算错风险）</h2>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>层</th><th>改动</th><th>为什么</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">写侧</td>
+          <td class="was">新增按主机名的日行（<code>scope:"host"</code>）；主机名归一（小写＋去端口）</td>
+          <td><strong>同日同站多形状先求和再落行</strong>：实测同一站会以 <code>tuyigf.com</code> 与 <code>tuyigf.com:443</code> 各出一行，按"后条覆盖前条"处理就会少算。真数据复核：host 行 31 条、同键重复 0，两站合计与另一条独立算法逐值一致。</td>
+        </tr>
+        <tr>
+          <td class="mono">读侧</td>
+          <td><code>parseHostLines</code> 按 <code>TYGF_TRAFFIC_HOST</code> 筛本站；聚合结果新增 <code>own</code></td>
+          <td>zone 行与 host 行任一边缺，都不把另一边判 0（缺输入极性同一条规矩）。</td>
+        </tr>
+        <tr>
+          <td class="mono">面板</td>
+          <td>本站块置顶：最近一天／近 7 天／环比＋逐日曲线</td>
+          <td>没配主机名时直接说"本站口径不可用，下面只有整站合计，不能当本站的数对外引"。</td>
+        </tr>
+        <tr>
+          <td class="mono">部署</td>
+          <td>两站共用机制 <code>deploy/install-timers.sh</code>（<code>--target test|production</code>）；旧入口改转发壳</td>
+          <td>前置闸新增一条：<code>TYGF_TRAFFIC_HOST</code> 必填；生产线<strong>必须带 <code>--confirm-production</code></strong>，不带拒装。</td>
+        </tr>
+        <tr>
+          <td class="mono">生产单元</td>
+          <td><code>deploy/tygf-site-traffic.{service,timer}</code>，每日 08:25＋<code>Persistent=true</code></td>
+          <td>路径与用户全部占位符，从 <code>deploy-release.sh</code> 推导（<code>CURRENT_LINK</code>／<code>STATE_DIR</code>／<code>APP_USER</code>），模板内 0 处手写绝对路径——同族病根就是候选目录名写死导致单元连红七周。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>服务器侧四件事与读数</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>四件事（已投总控队列 23:19:55，取代 22:35:12 那条）</h3>
+        <p>① 令牌文件 <code>/etc/tygf-site-traffic.env</code>（0600，两站共用一枚）；② 测试站 <code>.env</code> 写台账路径＋<code>TYGF_TRAFFIC_HOST=test.tuyigf.com</code>；③ 装测试站 timer；④ 装生产线 timer，命令须带 <code>--confirm-production</code>。<strong>动生产前按红线仍需 Owner 再确认一句</strong>——你批的是"每日采集生产也要"，不是"任何手都可以顺手碰生产"。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>读数（23:14—23:18 逐条取码）</h3>
+        <p>面板自检 <strong>42/42</strong>；采集脚本自测 15/15；安装闸沙箱自测 <strong>10/10</strong>（含"生产线缺确认旗标即拒""未知 target 即拒""两站模板渲染无残留占位"）；五道静态门全 rc=0；关增量全量类型检查 0 条错误；eslint rc=0。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>边界（三条）</h3>
+        <p>本轮改了面板与读侧代码 ⇒ <strong>整条出包链没重跑</strong>（rc=0 仍绑 <code>e93b81f</code>），部署那只手按交接件跑一次即可；两站 systemd 侧只做了盘上形状与沙箱验证，<strong>真机未装未跑</strong>；界面层"真人点开页签"读数仍缺（到不了服务器）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>本轮实测：真拉 Cloudflare 两数据集并按主机名聚合复核（两算法逐值一致）、面板 42 条断言、安装闸 10 条沙箱断言、五门连扫、关增量全量类型检查、eslint。提交 develop@0510572。</p>
+  <p>2026-10-20 23:2x · 文中不含令牌值与访问明细；令牌只允许存在于服务器 root-only 文件或本机 gitignored 文件。</p>
+</footer>
+
+</div>
+

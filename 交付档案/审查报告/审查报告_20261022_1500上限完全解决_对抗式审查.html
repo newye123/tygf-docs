@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1500 上限怎么处理才能完全解决 · 对抗式审查 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1rem;margin:6px 0 0}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-family:var(--font-mono)}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-22 13:2x +0800</span><span class="sep">/</span><span>基线 develop <span class="mono">d8c96948</span></span><span class="sep">/</span><span>风险档 High（计费路径，永远要人）</span><span class="sep">/</span><span>Round 1/3</span></div>
+  <h1>先让大批跑得完，再谈放开 1500——真实流量里从来没一批撞到过它</h1>
+  <p class="standfirst">第一审查对象是我自己上一轮提的 B 案（"保留上限，把它改成明规则"）。它只治"报错难看"。测试站 112 个真实批次按规模分桶之后，结论反过来了：<strong>52 个"中止"全部落在 121 单位以上，而历史最大批次只有 528 单位</strong>。上限不是当下的拦路虎，跑不完才是。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：打回 ｜ B 案作为"完全解决"不成立（作为阶段一仍成立）</span>
+  <p><strong>顺序不能反：</strong>先修"大批跑不完"（阶段二），再决定上限该定在哪（阶段三）。<strong>现在删上限＝把 56% 的中止率推向更大的批。</strong>阶段一（不碰钱、不碰数值）今天可做：把"报价失败请重试"改成"这批超出单批上限，请减语种或分批"，并且超限就不让点执行。</p>
+</div>
+
+<div class="contract">
+  <div><b>取证方式</b>：只读；自己复跑产品计价函数；测试站只读 SQL</div>
+  <div><b>改动</b>：本轮 0 个文件（出方案）</div>
+  <div><b>已证实</b>：8 条 Important ＋ 3 条 Nit</div>
+  <div><b>推翻</b>：我自己 2 条＋子代理 2 条线索</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>决定性那张表（测试站 112 批全量，只读 SQL）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>批次规模（标准单位）</th><th>成功结算</th><th>中止</th><th>过期</th><th>报价未确认</th><th>中止率</th></tr>
+    <tr><td>≤ 60</td><td class="num">0</td><td class="num"><strong>0</strong></td><td class="num">7</td><td class="num">0</td><td class="num">0%</td></tr>
+    <tr><td>61 – 120</td><td class="num">6</td><td class="num"><strong>0</strong></td><td class="num">0</td><td class="num">7</td><td class="num"><strong>0%</strong></td></tr>
+    <tr><td>121 – 300</td><td class="num">12</td><td class="num">27</td><td class="num">6</td><td class="num">2</td><td class="num">57%</td></tr>
+    <tr><td>&gt; 300</td><td class="num">13</td><td class="num">25</td><td class="num">7</td><td class="num">0</td><td class="num">56%</td></tr>
+  </table></div>
+  <div class="callout bad"><strong>读数说明：</strong>历史最大批次 <span class="mono">MAX(standardRowCount) = 528</span> 单位 ⇒ <strong>从来没有一批真实用户批次走到 1500</strong>。而 121 单位以上的批次有一半以上跑不完。所以"上限卡住大单"这个判断（我自己上一轮说的）在<strong>纸面成立、在真实流量里没发生过</strong>；真正在损失用户的是中止率。上限现在客观上还兼着唯一的质量闸门——虽然它不是为这个目的写的（FA-6）。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>上限确实很紧（但没人走到那里）——用产品自己的函数实跑</h2>
+  <div class="tablewrap"><table>
+    <tr><th>场景</th><th>标准单位</th><th>报价结果</th></tr>
+    <tr><td>12 语 × 125 行（每行 100 字）</td><td class="num">1500</td><td>1500 积分，刚好通过</td></tr>
+    <tr><td>12 语 × 126 行（每行 100 字）</td><td class="num">1512</td><td><strong>抛错 BILLING_STANDARD_ROWS_EXCEEDED</strong></td></tr>
+    <tr><td>12 语 × 76 行（每行 260 字）</td><td class="num">1824</td><td><strong>抛错</strong></td></tr>
+    <tr><td>12 语 × 300 行（界面导入上限）</td><td class="num">3600</td><td><strong>抛错</strong>（超 2.4 倍）</td></tr>
+    <tr><td>单语 × 300 行</td><td class="num">300</td><td>300 积分，通过</td></tr>
+  </table></div>
+  <p><strong>读法（讲人话）：</strong>"标准单位"＝每行按原文与该语种译文中较长的一侧，每满 200 字算 1，单行单语种封顶 15，再<strong>把各语种加起来</strong>。所以 12 个语种就是 12 倍。界面允许导入 300 行（<span class="mono">csv.ts:785</span>、<span class="mono">merge-tables.ts:173</span>），宣传写"12 个语言一起处理"（<span class="mono">siteContent.ts:670/726</span>）——<strong>这两个能力互斥</strong>：12 语实际最多 125 行（文本长一点就只有 75 行），而页面没写这个条件。</p>
+  <p class="muted">补充：数字 1500 在仓库里有<strong>三份互不引用</strong>的事实源——计价侧字面量 <span class="mono">rules.ts:145/153</span>、服务端行数常量 <span class="mono">batch-limits.ts:15</span>、路由硬编码 <span class="mono">attempts/route.ts:62</span>；其中两处还被测试钉死（<span class="mono">smoke-billing-rules.mjs:61</span> 断言 1501 必抛、<span class="mono">smoke-batch-limits.mjs:16/20</span> 断言常量甚至报价路由的源码措辞）。这就是 ISSUES #223 说的"1500 三种量纲"，也是"改一行就能放开"这个想法不成立的原因。</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span>已证实的缺陷（8 条 Important）</h2>
+  <div class="cards">
+    <div class="card"><div class="head"><span class="title">FA-1 宣传的两个能力互斥</span><span class="tag bad">Important</span></div><p>300 行导入 × 12 语种＝3600 单位，报价必抛；12 语真实上限是 125 行（长文本 75 行），而定价页与 FAQ 都没写。<span class="mono">batch-v3.ts:79-117</span>、<span class="mono">csv.ts:785</span>、<span class="mono">siteContent.ts:670</span></p></div>
+    <div class="card"><div class="head"><span class="title">FA-2 确定性错误却报 500、还叫用户重试</span><span class="tag bad">Important</span></div><p>报价路由的已知错误码表 13 项里没有这个码 ⇒ 落到通用 500「批次报价失败，请重试」（<span class="mono">quote/route.ts:161-179</span>）；单语旧链同一个码走 422（<span class="mono">billing/photoshop/quote/route.ts:57</span>）——<strong>同一个错误、两条链、两种语义</strong>。而且这正好违反了 2026-08-18 计费方案自己那句"不能默认为 500"（<span class="mono">docs/…v3_开发方案_20260818.md:141</span>）。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-3 我今天留下的缺口</span><span class="tag bad">本次引入</span></div><p>超限后预估降级成"—/无预估"，但执行按钮的禁用条件里<strong>没有这一项</strong>（<span class="mono">execute-step.tsx:2786-2812</span>，只有"执行中/环境未开放"）⇒ 用户照样能点，点完吃 500。这是上一笔修复的半成品，必须补。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-4 第二道未爆的雷：重试要客户端重传整串行令牌</span><span class="tag warn">条件性</span></div><p>请求体上限 32 KB，每个行令牌序列化约 70 字节 ⇒ <strong>约 457 行就打满返 413</strong>（实测序列化：125 行 8,751 B／300 行 21,001 B／1500 行 105,001 B）。而服务端本来就存着冻结好的行集（<span class="mono">expectedRowTokensJson</span>），根本不必让客户端重传。今天界面重试未接线（<span class="mono">batch-result-panel.tsx:4</span> 自陈只读），<strong>接线那天必炸</strong>。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-5 超时围栏只按语言数缩放，不随行数</span><span class="tag bad">Important</span></div><p>派发窗口＝<span class="mono">max(5 分钟, 语言数 × 3 分钟)</span>（<span class="mono">execution-batch.ts:949-974</span>）。12 语固定 36 分钟，<strong>一批 1200 行和 120 行拿同样窗口</strong>。放开上限＝更多任务被判"从未接走/放弃"。窗口里已有的 <span class="mono">ATTEMPT_ABANDONED_NEVER_DISPATCHED</span> 这个专用原因码，说明这类误判已经发生过。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-6 上限目前是唯一的质量保护（但不是为这个目的写的）</span><span class="tag bad">Important</span></div><p>见 §01 那张表：≥121 单位的批次中止率 56–57%，≤120 单位 0%。<strong>先把上限删掉，就是把这条曲线推向更大规模。</strong>它该被替换成"按容量调度"，而不是被直接移除。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-7 数字三份事实源＋两条钉死的测试</span><span class="tag bad">Important</span></div><p>见 §02 补充。任何改数必须同批改：计价侧、常量、路由硬编码、<span class="mono">smoke-billing-rules.mjs:60-61</span>、<span class="mono">smoke-batch-limits.mjs:16/20/52</span>、定价页文案。漏一处就是下一次漂移。</p></div>
+    <div class="card"><div class="head"><span class="title">FA-8 单语旧链先抛的是"审稿解锁"那张分段表</span><span class="tag bad">Important</span></div><p>取证代理说 <span class="mono">reviewUnlockCredits</span> 是死配置，<strong>不成立</strong>：它经 <span class="mono">estimateBilling</span>（<span class="mono">rules.ts:176</span>）在 v2 单语链是活路径，且先于执行费计算 ⇒ v2 超 1500 的抛错来自那张 40/80/160/300 的分段表。改 v2 时要一起处理。</p></div>
+  </div>
+  <p class="muted"><strong>Nit（3 条，硬上限）：</strong>① <span class="mono">schema.prisma:1370</span> 注释写"语言数不乘价"，但写入的是含语言乘数的单位合计（实测 12 语 300 行＝3600）——注释与数据相反；② <span class="mono">changes/active/20260901-batch-availability-and-limits.md:5,11,30</span> 仍写"10 语言""1500 行""第 1501 行拒绝"（语言数过期、量纲也错）；③ 帮助 FAQ 与 product-specs 三份里 <span class="mono">grep 1500 命中 0</span>，用户事前无从知道有上限。</p>
+</section>
+
+<section>
+  <h2><span class="num">04</span>为什么"完全解决"必须拆三层</h2>
+  <p>数字 1500 现在同时承担三件事，而它们本该是分开的：<strong>①</strong> 2026-08-18 那张阶梯价表的最右边界（该边界对执行费已随线性计费失效）；<strong>②</strong> 服务端对数组/请求体的保护上限；<strong>③</strong> 事实上唯一"别把跑不完的大批放进去"的质量闸门。<strong>把三件事拆开，问题才关闭；它们现在挤在同一个数里，所以既误伤用户、又没人知道它到底在防什么。</strong></p>
+</section>
+
+<section>
+  <h2><span class="num">05</span>分阶段方案（目标＝完全解决）</h2>
+  <h3>阶段一 · 把"故障"变成"规则"（不碰金额、不碰数值，今天可执行）</h3>
+  <ol class="plan">
+    <li>该错误码进报价路由已知码表 ⇒ <strong>409 ＋ 可执行文案</strong>；v2 同码语义对齐（消灭"确定性错误叫用户重试"）。</li>
+    <li>修 FA-3：超上限时<strong>禁用执行按钮</strong>，提示从"无预估"升级为动作（减语种／分批）。新中文若字不在子集里 ⇒ <strong>按 #166 的正解重新生成子集，不改文案绕门</strong>。</li>
+    <li>数字归一：新增 <span class="mono">BATCH_MAX_STANDARD_UNITS</span>（数值仍是 1500），计价侧与路由改为 import；两条测试改为断言这个常量而不是断言字面量与源码措辞。</li>
+    <li>对外口径修正：定价页「上限 1500 <strong>行</strong>」改成"标准单位"并写清算法；FAQ 补一句；过期文档的"10 语言"一并更正。</li>
+    <li>FA-4 的雷：<strong>单独一笔合同变更</strong>处理（重试改用服务端已冻结行集，客户端不再重传），不与本轮混做。</li>
+  </ol>
+  <h3>阶段二 · 让大批真跑得完（上限定在哪，只有这步能给依据）</h3>
+  <ol class="plan" start="6">
+    <li>围栏按<strong>行数 × 语种数</strong>缩放（修 FA-5）。</li>
+    <li>52 个中止批次逐批只读归因（#238 没做完的那半）。</li>
+    <li>真机容量实测：至少 250 行 ×3 语、250 行 ×12 语两档 ⇒ <strong>上限新值由实测决定</strong>（项目自己"先测后建闸"的口径）。</li>
+  </ol>
+  <h3>阶段三 · 上限归位（Owner 拍板，我不擅自动钱）</h3>
+  <ol class="plan" start="9">
+    <li><strong>A′ 抬到实测值</strong>：换数不改形，最省（一个常量＋两处断言＋一句文案）。</li>
+    <li><strong>C 自动切分</strong>：界面对用户不限量，服务端按可跑完的规模切成多批、逐批报价与幂等结算。体验正确但属合同变更四层，成本最高。</li>
+    <li>推荐：阶段一今天做完 → 阶段二作为下一轮主攻（它同时解决 46% 中止率，那才是收入问题）→ 阶段三等实测数，<strong>不在数据之前先删上限</strong>。</li>
+  </ol>
+  <div class="callout ok"><strong>如果今天只做一件事：</strong>做阶段一项 1＋项 2。它不碰钱、不碰容量，却直接消灭两类最难看的体验——<strong>页面崩</strong>，和<strong>报错让人重试一个永远不会成功的事</strong>。</div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>更正、未决与覆盖缺口</h2>
+  <h3>更正（本轮推翻了什么）</h3>
+  <ul class="plain">
+    <li><strong>我上一轮</strong>「126 行以上营销稿正好在触发区 ⇒ 上限卡住大单」：触发区算对了，但<strong>真实流量里没发生过</strong>（最大 528 单位）。新结论：上限不是当下收入阻塞点，中止率才是。</li>
+    <li><strong>我上一轮</strong>「建议现在做 B 案」：B 案不修 FA-1/FA-5/FA-6 ⇒ 作为"完全解决"打回，作为阶段一保留。</li>
+    <li><strong>取证代理</strong>「reviewUnlockCredits 是死配置」：v2 活路径，且先于执行费抛错（FA-8）。</li>
+    <li><strong>取证代理</strong>「32 KB 请求体是活的高风险天花板」：只有未接线的重试路径会撞 ⇒ 降级为条件性存量（FA-4）。</li>
+  </ul>
+  <h3>未决（还缺什么证据）</h3>
+  <ul class="plain">
+    <li><strong>U-1 生产站是否同形</strong>：生产 27 批（11 中止）未做同样分桶；本次没定位到生产库路径（试猜路径打不开，未继续追）。</li>
+    <li><strong>U-2 ≥121 单位为什么跑不完</strong>：只证明了规模相关，没证明原因（内存／PS 挂起／回执断链／围栏误判）。缺逐批 attempt 时间线与终止原因分布。</li>
+    <li><strong>U-3 每行执行耗时</strong>：现只有"1—2 分钟／语"的注释级证据，阶段二必须重测。</li>
+    <li><strong>U-4 单语旧链还有多少用户在用</strong>：决定 v2 那半要不要一起改。</li>
+  </ul>
+  <h3>覆盖缺口（明确没检查的）</h3>
+  <ul class="plain">
+    <li>本轮只出方案：没跑测试与构建、没改代码、没做真机执行。</li>
+    <li>助手侧对单位数／封顶的处理（子代理报 <span class="mono">billing-evidence-rows.js:18,73</span> 复制了同一个 15）我<strong>未逐行复验 ⇒ 属未核实</strong>。</li>
+    <li>没算积分包面额与放开上限的关系；没审法务与对外承诺全文（只看定价页与 FAQ 两处）。</li>
+    <li>生产库未读；未验证更大批次真机行为。</li>
+  </ul>
+  <div class="footer">
+    <div>证据等级：本文件所有数字与结论均为等级 A（自己跑的计价函数复跑、只读 SQL、实读 file:line）；子代理返回只作为线索，已逐条证伪或降级。</div>
+    <div>审查者不占人类批准名额：阶段三项 1/2/3/4 属计费相邻面与对外文案，按治理规约需 Owner 对账；阶段三任何改数必须 Owner 明令。</div>
+    <div>图译工坊内测版 · 对抗式审查 · 2026-10-22 · Round 1/3</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

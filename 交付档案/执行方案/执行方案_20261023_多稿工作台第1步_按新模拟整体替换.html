@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多稿工作台第 1 步 · 整体替换执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.panel li::marker{color:var(--line-strong)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:640px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>多稿工作台 · 第 1 步整体替换</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>按新模拟替换第 1 步</h1>
+  <p class="standfirst">主路径整体换成新模拟的壳与交互，旧界面保留。技术上不需要再发助手——现有读表端点就够。但代码里有 5 个硬缺口，直接换会换出一个点不动的界面，必须先补。这份方案给出缺口、状态机、文件清单、人日与验收。</p>
+  <div class="meta">
+    <span>5 个硬缺口</span>
+    <span>不新增助手版本</span>
+    <span>5–5.5 人日</span>
+    <span>未改代码、未上站</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>可以换，而且比上一版方案更轻：<b>不用发助手 3.7.25</b>。<br>但先把 5 个会让用户卡死的缺口补上，再谈换皮。</p>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>能换的底气</h3>
+      <ul>
+        <li><strong>读表端点已存在</strong>：<code>/v1.5/preparation/read-table</code>（5 MB、四道边界），前端 <code>parseTableBytes</code> 与 CsvStep 同一套解析规则。</li>
+        <li><strong>归属内核不用动</strong>：冲突/缺表/orphans 已经算得出来，这次只改界面与编排。</li>
+        <li><strong>扫描队列已存在</strong>：老界面里的「全部扫描」是现成的，桥接一下就能给新壳用。</li>
+        <li><strong>旧界面可保底</strong>：<code>stageClassic</code> 一直挂载不卸载，出事能退。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能直接换的 5 个缺口</h3>
+      <ul>
+        <li><strong>G1 没有扫描入口</strong>：执行门禁要求全扫，新壳却没有按钮。</li>
+        <li><strong>G2 语言要等读表</strong>：不读表，矩阵是空的。</li>
+        <li><strong>G3 没表的稿没出口</strong>：第 2 步会永久锁死。</li>
+        <li><strong>G4 记忆会绕过"一表一稿"</strong>：两份稿被同一张表顶上。</li>
+        <li><strong>G5 文案全硬编码</strong>：改了不生效的老病根。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>五个硬缺口（都有行号）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>现状</th><th>证据</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">G1</td>
+          <td class="was">执行门禁要求全部稿扫描完成，提示"回准备素材点全部扫描"；但新壳 props 里没有扫描动作，按钮只在被 hidden 的老界面里。</td>
+          <td class="mono">workbench-view.tsx:2495-2502<br>attribution-stage.tsx:24-45<br>design-file-card.tsx:1368-1379</td>
+          <td class="fix">加扫描状态条，桥接老队列；显示进度与 PS 未连接原因</td>
+        </tr>
+        <tr>
+          <td class="mono">G2</td>
+          <td class="was">语言唯一来源是已解析表；没读表就是空数组，矩阵只能写"表还没读"。</td>
+          <td class="mono">workbench-view.tsx:1964-1970<br>attribution-stage.tsx:171, 574-578</td>
+          <td class="fix">按归属选择自动读表（并发 2），写 parsedTables，矩阵逐行点亮</td>
+        </tr>
+        <tr>
+          <td class="mono">G3</td>
+          <td class="was">只有冲突行有"选一个"；没表的稿既不能补也不能跳过，第 2 步因 <code>!parsed</code> 锁死。</td>
+          <td class="mono">attribution-stage.tsx:419-441<br>workbench-view.tsx:3142</td>
+          <td class="fix">给「去补表」+「这稿先不做（可撤销）」</td>
+        </tr>
+        <tr>
+          <td class="mono">G4</td>
+          <td class="was">记忆键只有 SKU·交付物；A 稿选表后 B 稿被同一记忆自动填上，冲突计数变 0；确认弹窗只拦同稿重复。</td>
+          <td class="mono">workbench-view.tsx:1947-1958, 2192-2193<br>sku-attribution.ts:377-386</td>
+          <td class="fix">视图层加"一表一稿"去重守卫，撞车落回冲突</td>
+        </tr>
+        <tr>
+          <td class="mono">G5</td>
+          <td class="was">新壳没有 useSiteCopy，从标题到图例全硬编码。</td>
+          <td class="mono">attribution-stage.tsx:12-22, 193-196</td>
+          <td class="fix">收进 <code>step1*</code> 文案键，验收 grep 中文硬编码</td>
+        </tr>
+        <tr>
+          <td class="mono">+</td>
+          <td class="was">选完文件夹仍是 0 稿，要点"加入本批"，与新模拟"文件夹就是这一批"冲突。</td>
+          <td class="mono">attribution-stage.tsx:245-258<br>workbench-view.tsx:2018-2032</td>
+          <td class="fix">扫描回来自动填批（上限 12），换文件夹先确认</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>替换范围</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>换（主路径）</h3>
+      <ul>
+        <li>第 1 步整屏：页头、文件夹栏＋扫描条、四统计、两栏、整宽矩阵、页脚。</li>
+        <li>交互：选文件夹即整批、自动读表出语言、按组拍板、同名稿比对、缺表补/跳、下一步直接进第 2 步。</li>
+        <li>引导：首登 4 步＋页头「?」＋区块小「?」＋空态/异常态。</li>
+        <li>文案：全部走键，设计说明句清零。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>留（一个能力都不删）</h3>
+      <ul>
+        <li>「更多」→「逐稿手动导入…」回老界面；老界面顶部能回来。</li>
+        <li>旧批量导入弹窗：主路径不再调用，老界面仍可用。</li>
+        <li>系统对话框、粘贴路径、手动加稿、清除本批、忘掉记忆。</li>
+        <li>表格格式说明、示例表下载、错误原因、Smart Review 可见性。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>交互逻辑：每份稿一个状态</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>状态</th><th>触发</th><th>界面</th><th>下一步</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag warn">stale</span></td><td>加入批次、未扫描</td><td>灰点 + 待扫描</td><td>扫描条</td></tr>
+        <tr><td><span class="tag warn">scanning</span></td><td>扫描中</td><td>转圈 + 进度</td><td>等</td></tr>
+        <tr><td><span class="tag ok">prepared</span></td><td>扫描完成</td><td>绿点</td><td>进入表的判定</td></tr>
+        <tr><td><span class="tag warn">needs-choice</span></td><td>冲突 / 同名不同内容</td><td>琥珀点 + 要你拍板</td><td>选一个</td></tr>
+        <tr><td><span class="tag bad">needs-table</span></td><td>没有候选表</td><td>红点 + 没有表</td><td>补表 / 先不做</td></tr>
+        <tr><td><span class="tag warn">reading</span></td><td>正在读表</td><td>读表中…</td><td>等</td></tr>
+        <tr><td><span class="tag ok">ready</span></td><td>表已解析</td><td>绿点 + 语言数</td><td>可下一步</td></tr>
+        <tr><td><span class="tag bad">read-error</span></td><td>读表失败</td><td>红点 + 原因</td><td>重试 / 补 / 跳</td></tr>
+        <tr><td><span class="tag warn">excluded</span></td><td>用户点先不做</td><td>灰掉 + 可撤销</td><td>撤销</td></tr>
+        <tr><td><span class="tag ok">dup-collapsed</span></td><td>同名且指纹相同</td><td>按 1 份算（可分开）</td><td>恢复两份</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">下一步可用条件（缺一不可）</span>
+    <p>所有未排除的稿都扫描完成 → 都有已读表（语言已知） → 没有待拍板 / 缺表 / 读表失败。不满足就点名差哪几件，不做"点了没反应"。</p>
+  </div>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>选文件夹之后自动跑</h3>
+        <p>列文件夹 → 自动填批（≤12） → 算归属 → 人手覆盖 &gt; 记忆 &gt; 自动 → 末尾"一表一稿"去重 → 并发 2 读表 → 矩阵逐行点亮。读一张亮一行，不整屏等。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>拍板一条冲突</h3>
+        <p>右栏只留一句结论＋证据折叠；候选卡显示 sheet 数、语言列、行数；默认"这一组 N 份稿都用这套"，另有"只这一份"。选完立刻读表、变绿、跳到下一条，toast 说清影响几份稿几个格。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>同名稿：不静默少做一稿</h3>
+        <p>指纹相同 → 折叠成一份，显示"2 份内容相同，按 1 份算"，旁边就是「分开做」；指纹不同 → 冲突卡，两份都做 / 只留一份。没扫描 → 先扫描再比对，不猜。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body">
+        <h3>扫描设计稿：手动一键</h3>
+        <p>选文件夹会自动列文件，但深度扫描要开 Photoshop，可能几十秒到几分钟。所以不自动开始：扫描条常驻"还有 9 个稿没扫描"，点一下开始，显示进度与 PS 未连接原因，扫完消失。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>数据层：不碰内核</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">新增</span><strong>stage-table-loader.ts</strong></div>
+      <p>读表 + 解析 + 并发 2 + epoch/token 取消。只读被选中的表，不读 orphans；单张 5 MB；失败单行报原因，不拖整屏。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">新增</span><strong>stage-rows.ts</strong></div>
+      <p>同名分组（指纹相同/不同/未知）、悬置选择去重、"能不能继续"判定。纯函数，可单测。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">改</span><strong>ParsedCsv.sheetNames?</strong></div>
+      <p>xlsx 分支顺手填 sheet 名（现有 <code>table-file.ts:61-65</code> 已经有列表），用来对比"两套表结构不一样"。不影响 CSV。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">守</span><strong>归属内核不动</strong></div>
+      <p><code>sku-attribution.ts</code> 的判定与单测一字不改；冲突仍由内核判，界面只负责把"为什么"说清楚。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>文件清单与人日</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>阶段</th><th>内容</th><th class="mono">人日</th><th>依赖</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag warn">P0</span></td><td>自动填批、读表编排、去重守卫、下一步门、扫描桥</td><td class="mono">2.0</td><td>无（先在现有壳跑通）</td></tr>
+        <tr><td><span class="tag warn">P1</span></td><td>新壳布局、引导/帮助、文案键、空态/异常态</td><td class="mono">2.0</td><td>P0</td></tr>
+        <tr><td><span class="tag ok">P2</span></td><td>单测/合同、测试站点验、修偏差</td><td class="mono">1.0–1.5</td><td>P1</td></tr>
+        <tr><td colspan="2"><strong>合计</strong></td><td class="mono"><strong>5–5.5</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">改哪些文件</span>
+    <p>重写 <code>attribution-stage.tsx</code>；改 <code>workbench-view.tsx</code>（自动填批、读表编排、扫描桥、下一步门、记忆去重、同表拦截）、<code>design-file-card.tsx</code>（扫描队列回报）、<code>siteContent.ts</code>（step1 文案键）、<code>types.ts</code> / <code>table-file.ts</code>（sheetNames）；新增 <code>step-guide.tsx</code>、<code>step-help.tsx</code>、<code>stage-table-loader.ts</code>、<code>stage-rows.ts</code>、<code>step-guide-state.ts</code> 与 3 个单测。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>验收</h2>
+  <h3>命令门</h3>
+  <div class="callout">
+    <p><code>npx tsc --noEmit</code> · <code>npm run lint</code> · <code>vitest run tests/unit/sku-attribution.test.ts tests/unit/stage-rows.test.ts tests/unit/stage-table-loader.test.ts tests/unit/step-guide-state.test.ts</code> · <code>npm run test:workbench-ui-contract</code> · <code>npm run test:workbench-batch-groups</code> · <code>npm run test:contracts</code></p>
+  </div>
+  <h3>手测 12 条（测试站，登录态）</h3>
+  <ol class="notes">
+    <li>选 12 稿的文件夹 → 不用点"加入本批"，统计直接有数；</li>
+    <li>矩阵先骨架后逐行点亮；读表失败那行有原因和重试；</li>
+    <li>冲突行有结构摘要；选"这一组都用" → 两份稿同时变绿；</li>
+    <li>同名指纹相同 → 按 1 份算，点"分开"能恢复；</li>
+    <li>同名不同 → 冲突卡两个选项都能走通；</li>
+    <li>没表的稿：先不做 → 统计/矩阵同步减，撤销能回来；</li>
+    <li>扫描条：未扫出现、有进度、PS 没开有原因、扫完消失；</li>
+    <li>下一步：有未定/未读/未扫被拦并点名；全绿后直接进第 2 步，不弹旧框；</li>
+    <li>清 localStorage 冷启动 → 4 步引导出现；刷新不再弹；页头「?」能重看；</li>
+    <li>换文件夹：批非空先确认；换完不串台；</li>
+    <li>375px：单栏、引导底部卡片、不遮目标；</li>
+    <li>老入口能回老界面，回来选择还在。</li>
+  </ol>
+  <h3>负控（防自欺）</h3>
+  <ul class="notes">
+    <li>去掉读表调用 → 矩阵必须为空、单测失败；</li>
+    <li>去掉去重守卫 → "两稿一表"单测失败；</li>
+    <li>主路径再接旧弹窗 → smoke 必须报红；</li>
+    <li>引导不看 seen 标记 → 第二次必须不弹。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>发布与回滚</h2>
+  <div class="callout">
+    <span class="lb">三段轨，助手不变</span>
+    <p>推 <code>origin/develop</code> → 测试站从远端取包 → 您点验 → 生产从 <code>origin/main</code>。助手仍是 3.7.24，不做出厂件、不换安装包。回滚用上一份测试站归档 <code>tygf-test-730ee499cb4f.zip</code>；数据库零改动，支付开关保持关闭。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>与模拟的 3 处差异 + 待拍板</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>模拟里</th><th>方案里</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td class="was">有表无稿的卡给「借用 Amazon 的 JP 表」</td><td class="fix">改成「去补表」+「这稿先不做」</td><td>违反内核"不跨交付物借表"，字会配到图外</td></tr>
+        <tr><td class="mono">2</td><td class="was">同名相同稿静默合并</td><td class="fix">折叠显示 + 「分开做」可恢复</td><td>不静默少做一稿，保留用户控制</td></tr>
+        <tr><td class="mono">3</td><td class="was">没有"扫描设计稿"这一步</td><td class="fix">文件夹栏下加扫描状态条</td><td>执行门禁要求全扫，现状新壳没有入口会死锁</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>要您拍板 ①：跨交付物借用</h3>
+      <ul>
+        <li><strong>推荐：删掉</strong>。守"不跨交付物借表"，缺表就补表或先不做。</li>
+        <li>另一条：允许"显式借用 + 一直标借用"，要改内核与合同，风险高。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>要您拍板 ②：扫描怎么开始</h3>
+      <ul>
+        <li><strong>推荐：手动一键</strong>。PS 可能没开，自动启动会变成重操作。</li>
+        <li>另一条：选完文件夹自动开始，进度条常驻。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lede">第三件是施工本身：按 P0→P1→P2 做，先测试站，验收后再谈生产。</p>
+</section>
+
+<footer>
+  <p>关键证据：执行门禁 <code>workbench-view.tsx:2495-2502</code>；新壳无扫描动作 <code>attribution-stage.tsx:24-45</code>；语言来源 <code>:1964-1970</code>；缺表无出口 <code>:419-441</code>；记忆绕过一表一稿 <code>:1947-1958</code>；读表端点 <code>local-assistant-client.ts:1329-1357</code>；解析 <code>table-file.ts:38-91</code>。</p>
+  <p>本轮只出方案，未改业务代码、未上站。模拟仍以 <code>模拟_20261023_多稿工作台第1步_文案减负与引导.html</code> 为准，施工时按本文第 09 节的三处差异同步。</p>
+</footer>
+
+</div>
+</body>
+</html>

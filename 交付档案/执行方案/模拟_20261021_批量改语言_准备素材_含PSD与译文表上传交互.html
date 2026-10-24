@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量改语言 · 准备素材（含 PSD 与译文表的上传交互）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f4f4f1;--sunk2:#eeeeea;
+  --ink:#121412;--ink2:#3c443f;--muted:#6c756f;--faint:#9aa19b;
+  --line:#e6e6e2;--line2:#d6d6d1;
+  --teal:#009588;--teal-700:#00776d;--teal-soft:#e4f4f2;
+  --emerald:#009767;--emerald-soft:#e5f6ef;
+  --amber:#9a6505;--amber-soft:#fff6e6;--amber-700:#7d5004;
+  --rose:#b3261e;--rose-soft:#fceceb;
+  --sky:#3d8065;--sky-soft:#eef4f1;
+  --r:16px;--r2:12px;--r3:9px;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --sh1:0 1px 2px rgba(18,20,18,.04);--sh2:0 8px 24px -12px rgba(18,20,18,.18);
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#d8d8d3;border-radius:8px;border:2px solid var(--bg)}
+.mono{font-family:var(--mono)}
+.top{height:56px;display:flex;align-items:center;gap:16px;padding:0 18px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
+.brand .mk{width:26px;height:26px;border-radius:8px;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:13px}
+.vswitch{display:flex;gap:2px;padding:3px;background:var(--sunk);border-radius:10px}
+.vswitch button{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.vswitch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh1)}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.off{background:#c9ccc7}.dot.busy{background:var(--teal);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;font-size:12px;font-weight:600}
+.shell{display:grid;grid-template-columns:228px minmax(0,1fr);min-height:calc(100vh - 56px)}
+.steps{border-right:1px solid var(--line);background:var(--surface);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.steps .hd{font-size:11px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;padding:0 8px 8px}
+.step{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:10px;text-align:left;width:100%}
+.step:hover{background:var(--sunk)}
+.step[aria-current="true"]{background:var(--teal-soft)}
+.step .n{width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;color:var(--muted);flex:none;margin-top:1px}
+.step[aria-current="true"] .n{background:var(--teal);border-color:var(--teal);color:#fff}
+.step .t{font-size:13px;font-weight:600;line-height:1.35}
+.step .s{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:1px;display:block}
+.step .badge{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding-top:2px}
+.steps .foot{margin-top:auto;padding:10px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.55}
+.main{padding:18px 20px 60px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pghead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.pghead h1{margin:0;font-size:19px;font-weight:700}
+.pghead .sub{font-size:13px;color:var(--muted);margin-top:2px;max-width:74ch}
+.pghead .tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;transition:.14s;white-space:nowrap}
+.btn:hover{border-color:var(--ink2);background:var(--sunk)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}.btn.primary:hover{background:var(--teal-700)}
+.btn.ghost{border-style:dashed;color:var(--muted)}
+.btn.sm{padding:4px 10px;font-size:12px;border-radius:7px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);overflow:hidden}
+.card>.hd{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.card>.hd h2{margin:0;font-size:13.5px;font-weight:700}
+.card>.hd .r{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.card>.bd{padding:13px 14px}
+.ws{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.input{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 11px;font-size:13px;font-family:var(--mono);background:var(--surface);color:var(--ink)}
+textarea.input{font-family:var(--mono);font-size:12px;resize:vertical;min-height:64px;line-height:1.7}
+.drop{border:2px dashed var(--line2);border-radius:12px;padding:16px;text-align:center;background:#fbfbf9;cursor:pointer;transition:.14s}
+.drop:hover,.drop.hot{border-color:var(--teal);background:var(--teal-soft)}
+.drop .t{font-size:13.5px;font-weight:700;margin-bottom:3px}
+.drop .s{font-size:12px;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap;display:inline-block}
+.tag.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.tag.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+.tag.bad{background:var(--rose-soft);border-color:#f2c8c5;color:var(--rose)}
+.tag.info{background:var(--sky-soft);border-color:#c9dcd3;color:#24584a}
+.tag.mute{background:var(--sunk2);border-color:var(--line);color:var(--muted)}
+table.lst{width:100%;border-collapse:collapse;font-size:12.5px}
+table.lst th{text-align:left;font-weight:500;color:var(--muted);font-size:11px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--sunk)}
+table.lst td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.lst tr:last-child td{border-bottom:none}
+table.lst td.m{font-family:var(--mono);font-size:12px}
+table.lst td.f{font-family:var(--mono);font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.lst select{border:1px solid var(--line2);border-radius:7px;padding:3px 6px;font-size:12px;background:var(--surface);max-width:100%}
+.rowbtn{border:1px solid var(--line2);border-radius:7px;padding:2px 8px;font-size:11.5px;color:var(--muted)}
+.rowbtn:hover{border-color:var(--ink2);color:var(--ink)}
+.mxscroll{overflow:auto;max-height:520px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:11.5px}
+table.mx th,table.mx td{padding:0;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-size:10.5px;font-weight:500;color:var(--ink2);padding:6px 3px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line2)}
+table.mx thead th:first-child{left:0;z-index:5;text-align:left;padding-left:11px;min-width:210px;background:var(--sunk)}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:6px 11px;font-weight:500;min-width:210px;box-shadow:1px 0 0 var(--line)}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f6fbfa}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:34px;padding:3px 2px}
+.cell .src{font-family:var(--mono);font-size:10px;line-height:1.2;color:var(--ink2)}
+.cell .pc{font-family:var(--mono);font-size:11px;font-weight:600;line-height:1.2}
+.k-ok{background:var(--emerald-soft)}.k-ok .pc{color:#0a5a41}
+.k-wait{background:var(--amber-soft)}.k-wait .pc{color:var(--amber-700)}
+.k-bad{background:var(--rose-soft)}.k-bad .pc{color:var(--rose)}
+.k-miss{background:var(--surface);box-shadow:inset 0 0 0 1px var(--rose)}.k-miss .pc{color:var(--rose)}
+.k-na{background:transparent}.k-na .src{color:var(--faint)}
+.legend{display:flex;flex-wrap:wrap;gap:5px 13px;font-size:11px;color:var(--muted);padding:9px 2px 0}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.note{font-size:12.5px;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:var(--r3);padding:9px 11px;line-height:1.6}
+.note.bad{background:var(--rose-soft);border-color:#f2c8c5;color:#8c1e17}
+.note.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.note.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+/* 弹层 */
+.scrim{position:fixed;inset:0;background:rgba(18,20,18,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:24px}
+.scrim.on{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);width:100%;max-width:620px;max-height:84vh;overflow:auto;box-shadow:0 30px 70px -24px rgba(0,0,0,.45)}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 17px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+.modal header h3{margin:0;font-size:14px;font-weight:700}
+.modal .body{padding:14px 17px}
+.modal footer{display:flex;gap:9px;justify-content:flex-end;padding:12px 17px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--surface)}
+.pick{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer}
+.pick:hover{border-color:var(--ink2);background:var(--sunk)}
+.pick input{width:15px;height:15px;accent-color:var(--teal)}
+.pick .n{font-family:var(--mono);font-size:12.5px}
+.pick .p{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.pick .r{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.frozen{margin-top:2px;border:1px dashed var(--line2);border-radius:var(--r2);padding:11px 14px;font-size:12.5px;color:var(--muted);background:repeating-linear-gradient(135deg,#fbfbf9,#fbfbf9 9px,#f4f4f0 9px,#f4f4f0 18px)}
+.frozen b{color:var(--ink)}
+.single{display:none;padding:18px 20px 60px;max-width:900px}
+.single.on{display:block}
+@media (max-width:1240px){.ws{grid-template-columns:1fr}}
+@media (max-width:900px){.shell{grid-template-columns:1fr}.steps{display:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="mk">图</span><span>图译工坊</span></div>
+  <div class="vswitch" role="group" aria-label="工作台">
+    <button type="button" data-w="bulk" aria-pressed="true">批量改语言</button>
+    <button type="button" data-w="single" aria-pressed="false">单稿工作台</button>
+  </div>
+  <span class="mono" id="crumb" style="font-size:11.5px;color:var(--muted);margin-left:auto">批量改语言 · 12 个设计稿</span>
+  <div class="right">
+    <span><i class="dot ok"></i> 本地助手已连接</span><span>Photoshop 2021 · 就绪</span><span class="avatar">Ivan</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="steps" id="steps" aria-label="步骤">
+    <div class="hd">批量改语言</div>
+    <button class="step" type="button" data-step="1" aria-current="true"><span class="n">1</span><span><span class="t">准备素材</span><span class="s">设计稿与译文表</span></span><span class="badge" id="b1">0/12</span></button>
+    <button class="step" type="button" data-step="2"><span class="n">2</span><span><span class="t">智能检测</span><span class="s">逐稿逐语种</span></span><span class="badge" id="b2">0/144</span></button>
+    <button class="step" type="button" data-step="3"><span class="n">3</span><span><span class="t">设计稿校对</span><span class="s">与设计稿逐句核对</span></span></button>
+    <button class="step" type="button" data-step="4"><span class="n">4</span><span><span class="t">确认并生成</span><span class="s">12 份稿 × 12 门语言</span></span></button>
+    <div class="foot">本批预计 <b>12</b> 个批次 · <b>88</b> 份交付物<br>积分按语种累计，预估 <b>3 840</b> 分</div>
+  </nav>
+
+  <main class="main" id="bulk">
+    <div class="pghead">
+      <div>
+        <h1>准备素材</h1>
+        <div class="sub">和单稿工作台<b>同一套步骤</b>，只是第 1 步一次可以加多个设计稿、多个译文表；后面的步骤逐稿跑，界面不变。</div>
+      </div>
+      <div class="tools">
+        <button class="btn" type="button" id="btnScanAll">全部扫描（按顺序）</button>
+        <button class="btn primary" type="button" id="btnNext">下一步：智能检测</button>
+      </div>
+    </div>
+
+    <div class="ws">
+      <!-- 卡片 A：上传设计稿 -->
+      <div class="stack">
+        <div class="card">
+          <div class="hd"><h2>选择设计文件 · 只读预扫描</h2><span class="r"><span class="tag mute" id="cntP">已加入 0/12</span><span class="tag info" id="cntS">已扫描 0</span></span></div>
+          <div class="bd stack">
+            <div class="row">
+              <input class="input" style="flex:1 1 250px" placeholder="D:\项目\2026Q4_秋季新品\主图\SKU-AX1001_主图.psd" id="pathInput">
+              <button class="btn" type="button" id="btnPickPsd">选择文件…</button>
+              <button class="btn primary" type="button" id="btnScanOne">扫描</button>
+            </div>
+            <details>
+              <summary style="font-size:12px;color:var(--muted);cursor:pointer">粘贴多个路径（每行一个）</summary>
+              <textarea class="input" id="pastePsd" style="margin-top:7px" placeholder="D:\项目\2026Q4_秋季新品\主图\SKU-AX1002_主图.psd&#10;D:\项目\2026Q4_秋季新品\详情页\SKU-BX2077_详情页.psd"></textarea>
+              <div class="row" style="margin-top:7px"><button class="btn sm" type="button" id="btnAddPaste">加入列表</button><span style="font-size:11.5px;color:var(--muted)">路径不存在会逐条点名，不会静默跳过</span></div>
+            </details>
+            <div class="row" style="gap:6px">
+              <span style="font-size:12px;color:var(--muted)">也可以直接拖一个文件夹进来（连子文件夹一起找，最多 6 层）：</span>
+              <button class="btn sm" type="button" id="btnFolder">选文件夹</button>
+            </div>
+            <div id="psdList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡片 B：上传译文表 -->
+      <div class="stack">
+        <div class="card">
+          <div class="hd"><h2>导入多语言译文表</h2><span class="r"><span class="tag mute" id="cntT">已导入 0 张</span><span class="tag warn" id="cntF">解析失败 0</span></span></div>
+          <div class="bd stack">
+            <div class="drop" id="dropTbl">
+              <div class="t">把译文表拖进来</div>
+              <div class="s">支持 .xlsx / .xls / .csv / .tsv　·　一次可以放多张　·　也可以粘贴表格内容</div>
+            </div>
+            <div class="row">
+              <button class="btn" type="button" id="btnPickTbl">选择文件…</button>
+              <span style="font-size:12px;color:var(--muted)">放进来的表会先列出来，<b>不会自动套用</b>。</span>
+            </div>
+            <div id="tblList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><h2>每个设计稿用哪张表</h2><span class="r"><span class="tag mute" id="cntA">0/12 已分配</span></span></div>
+          <div class="bd" id="assignBox">
+            <div class="note">先导入设计稿和译文表，这里会按<b>同一个文件夹里就近</b>的规则给出建议，你可以改。<b>不会自动生效</b>。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡片 C：这一批的进度 -->
+    <div class="card">
+      <div class="hd"><h2>这一批的进度</h2><span class="r"><span class="tag mute">行＝设计稿，列＝语种，格＝这一份的状态</span><span class="tag mute" id="cntG">0 格</span></span></div>
+      <div class="bd" style="padding:0">
+        <div class="mxscroll" id="mx"></div>
+        <div class="legend">
+          <span><i style="background:var(--emerald-soft);border:1px solid #bfe6d3"></i>就绪</span>
+          <span><i style="background:var(--amber-soft);border:1px solid #eed296"></i>待检查</span>
+          <span><i style="background:var(--rose-soft);border:1px solid #f2c8c5"></i>有 N 处要处理</span>
+          <span><i style="background:var(--surface);border:1px solid var(--rose)"></i>缺语言（表里没这一列）</span>
+          <span><i style="background:transparent"></i>本稿不做这一门语言</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="frozen">
+      <b>与单稿工作台的关系：</b>步骤名（准备素材 / 智能检测 / 设计稿校对 / 确认并生成）、卡片名（选择设计文件 · 只读预扫描 / 导入多语言译文表）与操作名（选择文件… / 扫描 / 重新扫描 / 移除 / 选择语言 / 重选译文表）<b>全部沿用单稿工作台</b>；批量台只多了一层「<b>多个设计稿</b>」和「<b>每个设计稿用哪张表</b>」。右上切到「单稿工作台」看的是<b>原样保留</b>的那一套。
+    </div>
+  </main>
+
+  <!-- 单稿工作台（原样保留） -->
+  <main class="single" id="single">
+    <div class="pghead"><div><h1>准备素材</h1><div class="sub">选择设计文件 · 只读预扫描</div></div><div class="tools"><span class="mono" style="font-size:11.5px;color:var(--muted)">draft-a.psd · 原文 · 德语 · 法语</span></div></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="hd"><h2>选择要处理的 PSD 文件</h2></div>
+      <div class="bd stack">
+        <div class="row">
+          <input class="input" style="flex:1 1 260px" value="D:\项目\draft-a.psd" readonly>
+          <button class="btn" type="button">选择文件…</button>
+          <button class="btn primary" type="button">扫描</button>
+        </div>
+        <div style="display:flex;gap:11px;align-items:center;border:1px solid var(--line2);border-radius:12px;padding:11px 13px">
+          <span style="font-size:17px">📁</span>
+          <div style="min-width:0"><div class="mono" style="font-size:13px;font-weight:600">draft-a.psd</div>
+            <div style="font-size:11.5px;color:var(--muted);display:flex;gap:11px"><span>已扫描</span><span>3 个文字图层</span></div></div>
+          <div style="margin-left:auto;display:flex;gap:7px"><button class="btn sm" type="button">重新扫描</button><button class="btn sm" type="button">移除</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px"><div class="bd">
+      <div class="row" style="gap:8px">
+        <span class="tag" style="background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69;padding:4px 11px;font-size:12.5px;border-radius:999px">原文</span>
+        <span class="tag" style="padding:4px 11px;font-size:12.5px;border-radius:999px">德语</span><span class="tag" style="padding:4px 11px;font-size:12.5px;border-radius:999px">法语</span>
+        <button class="btn sm" type="button">选择语言</button>
+        <button class="btn sm" type="button" style="border-color:#d9a84f;color:var(--amber-700);background:var(--amber-soft)">重选译文表</button>
+      </div>
+    </div></div>
+    <div class="card">
+      <div class="hd"><h2>智能检测</h2><span class="r"><span class="tag warn">德语 3 处待确认</span><span class="tag ok">法语已确认</span></span></div>
+      <div class="bd"><table class="lst">
+        <thead><tr><th style="width:34px">#</th><th>原文</th><th>译文</th><th style="width:120px">状态</th></tr></thead>
+        <tbody>
+          <tr><td class="m">1</td><td>Buy Now</td><td>Jetzt kaufen</td><td><span class="tag ok">正常</span></td></tr>
+          <tr><td class="m">2</td><td>Free Shipping</td><td>Versand kostenlos</td><td><span class="tag ok">正常</span></td></tr>
+          <tr><td class="m">3</td><td>30-Day Money-Back Guarantee</td><td></td><td><span class="tag bad">译文为空</span></td></tr>
+          <tr><td class="m">4</td><td>In stock — ships in 24h</td><td>Auf Lager</td><td><span class="tag ok">正常</span></td></tr>
+          <tr><td class="m">5</td><td>View the Collection</td><td>Die Kollektion ansehen</td><td><span class="tag warn">重复原文</span></td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="frozen" style="margin-top:14px"><b>单稿工作台 · 原样保留：</b>本页文案与结构<b>一字不改</b>（准备素材 / 选择设计文件 · 只读预扫描 / 选择要处理的 PSD 文件 / 选择语言 / 重选译文表 / 智能检测）。本次改造的批量能力<b>不挂载</b>在这套上，两个工作台<b>不共用组件</b>。</div>
+  </main>
+</div>
+
+<!-- 选文件弹层 -->
+<div class="scrim" id="scrim" role="dialog" aria-modal="true">
+  <div class="modal" id="modal">
+    <header><h3 id="mTitle">选择文件</h3><button class="btn sm" type="button" style="margin-left:auto" id="mClose">关闭</button></header>
+    <div class="body" id="mBody"></div>
+    <footer><button class="btn" type="button" id="mCancel">取消</button><button class="btn primary" type="button" id="mOk">确定</button></footer>
+  </div>
+</div>
+
+<script>
+const LANGS=[{c:'DE',n:'德语'},{c:'FR',n:'法语'},{c:'EN',n:'英语'},{c:'ES',n:'西班牙语'},{c:'JA',n:'日语'},{c:'KO',n:'韩语'},
+ {c:'PT',n:'葡萄牙语'},{c:'IT',n:'意大利语'},{c:'RU',n:'俄语'},{c:'AR',n:'阿拉伯语'},{c:'ZH-TW',n:'繁体中文'},{c:'NL',n:'荷兰语'}];
+const LMAP=Object.fromEntries(LANGS.map(l=>[l.c,l.n]));
+const ALL=LANGS.map(l=>l.c);
+const ROOT='D:\\项目\\2026Q4_秋季新品\\';
+/* 候选设计稿（文件选择弹层里可勾选） */
+const CANDIDATES=[
+ {f:'主图\\SKU-AX1001_主图.psd',ly:12},{f:'主图\\SKU-AX1002_主图.psd',ly:12},{f:'主图\\SKU-AX1003_主图.psd',ly:12},{f:'主图\\SKU-AX1004_主图.psd',ly:12},
+ {f:'详情页\\SKU-AX1005_详情页.psd',ly:9},{f:'详情页\\SKU-BX2077_详情页.psd',ly:16},{f:'详情页\\SKU-BX2078_详情页.psd',ly:14},{f:'详情页\\SKU-BX2079_详情页.psd',ly:14},
+ {f:'长尾\\SKU-CX3301_长尾页.psd',ly:21},{f:'长尾\\SKU-CX3302_长尾页.psd',ly:18},{f:'详情页\\SKU-DX4408_详情页.psd',ly:31},{f:'长尾\\SKU-DX4409_长尾页.psd',ly:10},
+];
+/* 候选译文表 */
+const TBL_CAND=[
+ {n:'AX1001-AX1004_文案主表.xlsx',d:'主图\\译文',langs:['DE','FR','EN','ES','JA','KO','PT','IT'],rows:42,ok:1,for:'主图'},
+ {n:'AX1005_德法英.xlsx',d:'详情页\\译文',langs:['DE','FR','EN'],rows:28,ok:1,for:'详情页'},
+ {n:'BX2077_九语.xlsx',d:'详情页\\译文',langs:['DE','FR','EN','ES','JA','KO','RU','AR','ZH-TW'],rows:51,ok:1,for:'详情页'},
+ {n:'BX2078_八语.xlsx',d:'详情页\\译文',langs:['DE','FR','EN','ES','JA','KO','PT','IT'],rows:46,ok:1,for:'详情页'},
+ {n:'BX2079_八语.xlsx',d:'详情页\\译文',langs:['DE','FR','EN','ES','JA','KO','PT','IT'],rows:44,ok:1,for:'详情页'},
+ {n:'CX3301_全12语.xlsx',d:'长尾\\译文',langs:ALL,rows:63,ok:1,for:'长尾'},
+ {n:'CX3302_九语.xlsx',d:'长尾\\译文',langs:['DE','FR','EN','ES','JA','KO','RU','AR','ZH-TW'],rows:47,ok:1,for:'长尾'},
+ {n:'DX4408_六语.xlsx',d:'详情页\\译文',langs:['DE','FR','EN','ES','JA','KO'],rows:33,ok:1,for:'详情页'},
+ {n:'全SKU_文案合表_2026Q4.xlsx',d:'译文',langs:ALL,rows:756,ok:1,for:'全部'},
+ {n:'促销补充_两句.xlsx',d:'译文',langs:ALL,rows:2,ok:1,for:'全部'},
+ {n:'日韩_备注列版.xlsx',d:'译文',langs:ALL,rows:40,ok:0,err:'目标语言候选列超过 12 列限制（当前 13 列）。第 13 列「备注」可能不是语言列。'},
+];
+let psds=[], tbls=[], assign={}, step=1, modalMode=null, modalSel=new Set();
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lname=c=>c+' '+(LMAP[c]||'');
+const dirOf=p=>p.split('\\').slice(0,-1).join('\\');
+
+/* ═══ 弹层 ═══ */
+function openModal(mode){
+  modalMode=mode;
+  const list = mode==='psd'?CANDIDATES:TBL_CAND;
+  $('#mTitle').textContent = mode==='psd'?'选择设计稿文件（可多选）':'选择译文表（可多选）';
+  $('#mBody').innerHTML=list.map((c,i)=>{
+    const nm=mode==='psd'?c.f:c.n;
+    const p=mode==='psd'?c.f:c.d+'\\'+c.n;
+    const meta=mode==='psd'?`${c.ly} 个文字图层`:`${c.langs.length} 个语种列 · ${c.rows} 行`;
+    const chk=(mode==='psd'?psds:tbls).some(x=>x.n===nm);
+    return `<label class="pick"><input type="checkbox" data-i="${i}" ${chk?'checked':''}><span style="min-width:0">
+      <span class="n">${esc(nm)}</span><span class="p">${esc(p)}</span></span><span class="r">${esc(meta)}</span></label>`;
+  }).join('');
+  $('#mBody').querySelectorAll('input[data-i]').forEach(ch=>ch.addEventListener('change',()=>{
+    const i=+ch.dataset.i; const list2=modalMode==='psd'?CANDIDATES:TBL_CAND;
+    const key=modalMode==='psd'?list2[i].f:list2[i].n;
+    if(ch.checked) modalSel.add(key); else modalSel.delete(key);
+  }));
+  $('#scrim').classList.add('on');
+}
+$('#mClose').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#mCancel').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#mOk').addEventListener('click',()=>{
+  if(modalMode==='psd'){
+    CANDIDATES.forEach(c=>{ if(modalSel.has(c.f)&&!psds.some(x=>x.n===c.f)) psds.push({n:c.f,ly:c.ly,st:'未扫描'}); });
+  }else{
+    TBL_CAND.forEach(c=>{ if(modalSel.has(c.n)&&!tbls.some(x=>x.n===c.n)) tbls.push({...c}); });
+  }
+  modalSel.clear(); $('#scrim').classList.remove('on'); render();
+});
+$('#btnPickPsd').addEventListener('click',()=>openModal('psd'));
+$('#btnPickTbl').addEventListener('click',()=>openModal('tbl'));
+$('#btnFolder').addEventListener('click',()=>openModal('psd'));
+$('#dropTbl').addEventListener('click',()=>openModal('tbl'));
+$('#dropTbl').addEventListener('dragover',e=>{e.preventDefault();$('#dropTbl').classList.add('hot');});
+$('#dropTbl').addEventListener('dragleave',()=>$('#dropTbl').classList.remove('hot'));
+$('#dropTbl').addEventListener('drop',e=>{e.preventDefault();$('#dropTbl').classList.remove('hot');openModal('tbl');});
+/* 粘贴路径 */
+$('#btnAddPaste').addEventListener('click',()=>{
+  const lines=$('#pastePsd').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  let bad=0;
+  lines.forEach(p=>{
+    const rel=p.replace(/^D:\\项目\\2026Q4_秋季新品\\/,'');
+    const c=CANDIDATES.find(x=>x.f===rel);
+    if(c){ if(!psds.some(x=>x.n===c.f)) psds.push({n:c.f,ly:c.ly,st:'未扫描'}); }
+    else { bad++; }
+  });
+  if(bad) alert('有 '+bad+' 条路径在磁盘上找不到，已逐条点名：\n'+lines.filter(p=>!CANDIDATES.some(x=>x.f===p.replace(/^D:\\项目\\2026Q4_秋季新品\\/,''))).join('\n'));
+  render();
+});
+/* 扫描 */
+function scanOne(rec){
+  rec.st='扫描中';
+  render();
+  setTimeout(()=>{ rec.st='已扫描'; render(); },900);
+}
+$('#btnScanOne').addEventListener('click',()=>{
+  const p=$('#pathInput').value.trim();
+  if(p){
+    const rel=p.replace(/^D:\\项目\\2026Q4_秋季新品\\/,'');
+    const c=CANDIDATES.find(x=>x.f===rel);
+    if(c){ if(!psds.some(x=>x.n===c.f)) psds.push({n:c.f,ly:c.ly,st:'未扫描'}); scanOne(psds[psds.length-1]); render(); }
+    else alert('这个路径在磁盘上找不到：\n'+p);
+  }else{
+    const t=psds.find(x=>x.st!=='已扫描');
+    if(t) scanOne(t); else alert('没有待扫描的设计稿');
+  }
+});
+$('#btnScanAll').addEventListener('click',()=>{
+  psds.filter(x=>x.st!=='已扫描').forEach((rec,i)=>setTimeout(()=>scanOne(rec),i*500));
+});
+
+/* ═══ 渲染 ═══ */
+function renderPsdList(){
+  if(!psds.length){$('#psdList').innerHTML='<div class="note">还没有设计稿。<b>选择文件…</b> 可以一次选多个；也可以拖一个文件夹进来。</div>';return;}
+  $('#psdList').innerHTML=`<table class="lst"><thead><tr><th>文件</th><th style="width:96px">状态</th><th style="width:70px">图层</th><th style="width:78px">用哪张表</th><th style="width:118px"></th></tr></thead><tbody>
+    ${psds.map((p,i)=>{
+      const a=assign[p.n];
+      const tb=a?tbls.find(t=>t.n===a):null;
+      const cov=a?covOf(p.n,a):null;
+      return `<tr>
+        <td class="f" title="${esc(ROOT+p.n)}">${esc(p.n)}</td>
+        <td>${p.st==='已扫描'?'<span class="tag ok">已扫描</span>':p.st==='扫描中'?'<span class="tag info"><i class="dot busy" style="margin-right:4px"></i>扫描中</span>':'<span class="tag mute">未扫描</span>'}</td>
+        <td class="m">${p.ly}</td>
+        <td>${tb?`<span class="tag info">${esc(tb.n.replace(/\.xlsx$/,''))}</span>${cov!==null?` <span class="mono" style="font-size:11px">${cov}%</span>`:''}`:'<span class="tag mute">未分配</span>'}</td>
+        <td><button class="rowbtn" data-re="${i}">重新扫描</button> <button class="rowbtn" data-rm="${i}">移除</button></td>
+      </tr>`;}).join('')}
+    </tbody></table>`;
+  $('#psdList').querySelectorAll('[data-re]').forEach(b=>b.addEventListener('click',()=>{const r=psds[+b.dataset.re];r.st='未扫描';scanOne(r);}));
+  $('#psdList').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{const r=psds[+b.dataset.rm];delete assign[r.n];psds.splice(+b.dataset.rm,1);render();}));
+}
+function covOf(psdN,tblN){
+  const t=tbls.find(x=>x.n===tblN); if(!t) return null;
+  const seed=[100,97,96,94,92,88,86,71,66][Math.abs(psdN.length*7+tblN.length*3)%9];
+  return seed;
+}
+function renderTblList(){
+  if(!tbls.length){$('#tblList').innerHTML='<div class="note">还没有译文表。拖进来或<b>选择文件…</b>；一次可以放多张。</div>';return;}
+  $('#tblList').innerHTML=`<table class="lst"><thead><tr><th>文件</th><th style="width:92px">语种列</th><th style="width:56px">行数</th><th style="width:92px">解析</th><th style="width:66px"></th></tr></thead><tbody>
+   ${tbls.map((t,i)=>`<tr>
+     <td class="f" title="${esc(ROOT+t.d+'\\'+t.n)}"><div>${esc(t.n)}</div><div style="font-size:10.5px;color:var(--faint)">${esc(t.d)}\\</div></td>
+     <td class="m">${t.langs.length}</td><td class="m">${t.rows}</td>
+     <td>${t.ok?'<span class="tag ok">解析成功</span>':'<span class="tag bad" title="'+esc(t.err)+'">失败</span>'}</td>
+     <td><button class="rowbtn" data-tm="${i}">移除</button></td></tr>`).join('')}
+   </tbody></table>${tbls.some(t=>!t.ok)?'<div class="note bad" style="margin-top:9px"><b>有表没解析成功</b>：'+tbls.filter(t=>!t.ok).map(t=>esc(t.n)+'（'+esc(t.err)+'）').join('；')+'<br>其它表不受影响，可以继续。</div>':''}`;
+  $('#tblList').querySelectorAll('[data-tm]').forEach(b=>b.addEventListener('click',()=>{tbls.splice(+b.dataset.tm,1);render();}));
+}
+function suggestions(){
+  const out=[];
+  for(const p of psds){
+    const dir=dirOf(p.n);
+    const same=tbls.filter(t=>t.ok&&t.d===dir);
+    const parent=tbls.filter(t=>t.ok&&t.d.split('\\')[0]===dir.split('\\')[0]);
+    const all=tbls.filter(t=>t.ok&&t.d==='译文');
+    let pick=null,why='';
+    if(same.length===1){pick=same[0].n;why='同一个文件夹';}
+    else if(same.length>1){pick=same[0].n;why='同一个文件夹（有 '+same.length+' 张，要你定）';}
+    else if(parent.length===1){pick=parent[0].n;why='同一层目录';}
+    else if(parent.length>1){pick=parent[0].n;why='同一层目录（有 '+parent.length+' 张，要你定）';}
+    else if(all.length===1){pick=all[0].n;why='唯一的合表';}
+    out.push({p:p.n,dir,pick,why,cands:[...new Set([...same,...parent,...all].map(t=>t.n))]});
+  }
+  return out;
+}
+function renderAssign(){
+  const box=$('#assignBox');
+  if(!psds.length||!tbls.length){
+    box.innerHTML='<div class="note">先导入设计稿和译文表，这里会按<b>同一个文件夹里就近</b>的规则给出建议，你可以改。<b>不会自动生效</b>。</div>';
+    $('#cntA').textContent='0/12 已分配';return;
+  }
+  const sg=suggestions();
+  box.innerHTML=`<table class="lst"><thead><tr><th>设计稿</th><th style="width:200px">用哪张表</th><th style="width:160px">依据</th><th style="width:84px">预览覆盖率</th></tr></thead><tbody>
+   ${sg.map((s,i)=>{
+     const cur=assign[s.p]||s.pick||'';
+     const opts=s.cands.length?s.cands:[...tbls.filter(t=>t.ok).map(t=>t.n)];
+     return `<tr>
+      <td class="f" title="${esc(ROOT+s.p)}">${esc(s.p)}</td>
+      <td><select data-a="${i}"><option value="">（不分配）</option>${opts.map(o=>`<option ${o===cur?'selected':''}>${esc(o)}</option>`).join('')}</select></td>
+      <td style="font-size:11.5px;color:var(--muted)">${s.why||'—'}</td>
+      <td class="m">${cur?covOf(s.p,cur)+'%':'—'}</td></tr>`;}).join('')}
+   </tbody></table>
+   <div class="note warn" style="margin-top:9px"><b>不会自动套用。</b>上面是按「同一个文件夹里就近」给的建议，你确认或改完再点下面。<br><b>下面的「这一批的进度」只按已确认的分配显示</b>；没确认之前，那一格算「未分配」。</div>
+   <div class="row" style="margin-top:9px"><button class="btn primary" type="button" id="btnApplyAssign">确认这 ${sg.length} 条</button><span style="font-size:11.5px;color:var(--muted)">确认前，其它表不生效</span></div>`;
+  box.querySelectorAll('select[data-a]').forEach(sel=>sel.addEventListener('change',()=>{
+    const s=sg[+sel.dataset.a]; assign[s.p]=sel.value||undefined;
+    if(!sel.value) delete assign[s.p];
+    renderAssign(); renderPsdList(); renderMatrix();
+  }));
+  $('#btnApplyAssign').addEventListener('click',()=>{sg.forEach(s=>{if(assign[s.p]===undefined&&s.pick) assign[s.p]=s.pick;});render();});
+  $('#cntA').textContent=Object.keys(assign).length+'/'+psds.length+' 已分配';
+}
+function renderMatrix(){
+  const head=`<thead><tr><th>设计稿 ＼ 语种</th>${LANGS.map(l=>`<th>${l.c} ${l.n}</th>`).join('')}</tr></thead>`;
+  const body=psds.map(p=>{
+    const a=assign[p.n]; const t=a?tbls.find(x=>x.n===a):null;
+    const cells=ALL.map(c=>{
+      let k='na',src='—',pc='';
+      if(!t){k='na';src='未分配';}
+      else if(!t.langs.includes(c)){k='na';src='—';}
+      else{const cv=covOf(p.n,a);k=cv>=95?'k-ok':cv>=80?'k-wait':'k-bad';src='表';pc=cv>=95?'✓':cv+'%';}
+      return `<td><div class="cell ${k}"><span class="src">${esc(src)}</span><span class="pc">${pc}</span></div></td>`;
+    }).join('');
+    return `<tr><th><span style="display:flex;gap:7px;align-items:center"><i class="dot ${p.st==='已扫描'?(a?'ok':'warn'):'off'}"></i><span class="mono" style="font-size:11.5px">${esc(p.n)}</span></span></th>${cells}</tr>`;
+  }).join('');
+  $('#mx').innerHTML=psds.length?`<table class="mx">${head}<tbody>${body}</tbody></table>`:'<div class="note" style="margin:13px">还没有设计稿。</div>';
+  $('#cntG').textContent=psds.length*ALL.length+' 格';
+}
+function render(){
+  renderPsdList(); renderTblList(); renderAssign(); renderMatrix();
+  const scanned=psds.filter(p=>p.st==='已扫描').length;
+  $('#cntP').textContent='已加入 '+psds.length+'/12';
+  $('#cntS').textContent='已扫描 '+scanned;
+  $('#cntT').textContent='已导入 '+tbls.length+' 张';
+  $('#cntF').textContent='解析失败 '+tbls.filter(t=>!t.ok).length;
+  $('#b1').textContent=scanned+'/'+psds.length;
+  $('#b2').textContent='0/'+(psds.length*ALL.length);
+}
+/* 视图切换 */
+document.querySelectorAll('.vswitch button').forEach(b=>b.addEventListener('click',()=>{
+  const w=b.dataset.w;
+  document.querySelectorAll('.vswitch button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('#bulk').style.display=w==='bulk'?'flex':'none';
+  $('#single').classList.toggle('on',w==='single');
+  $('#steps').style.display=w==='bulk'?'':'none';
+  $('#crumb').textContent=w==='bulk'?'批量改语言 · '+psds.length+' 个设计稿':'单稿工作台 · 原样保留';
+}));
+document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.step').forEach(x=>x.setAttribute('aria-current',String(x===b)));
+}));
+render();
+</script>
+</body>
+</html>

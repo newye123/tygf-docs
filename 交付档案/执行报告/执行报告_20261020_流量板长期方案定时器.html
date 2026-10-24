@@ -1,0 +1,532 @@
+<title>流量板长期方案定时器 · 执行报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>流量板 · 长期方案定时器</span><span class="sep">/</span>
+    <span>2026-10-20 22:3x</span>
+  </p>
+  <h1>每日采集已做成仓库部件，只剩服务器三条命令</h1>
+  <p class="standfirst">Owner 判"按长期方案来"。能在本机做完的部分已提交 <code>9ca8976</code>：一个每日定时采集的 systemd 单元对，接进仓库既有的 timer 安装机制，并带 fail-closed 前置校验。<strong>到不了服务器这件事本轮没有变化</strong>，三条命令已投进总控待投递队列（22:35:12）。</p>
+  <div class="meta">
+    <span>面板断言 17→28</span>
+    <span>安装闸离线自测 5/5</span>
+    <span>关增量全量 tsc rc=0</span>
+    <span>未装、未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">给 Owner 的一句话</span>
+    <p>长期方案的代码侧齐了：装一条命令、跑一次冒烟，测试站的「站点流量」板就会每天自己长出数。<br>做的时候撞出一件必须提前讲的事——<strong>不在服务器上显式指定数据文件位置，面板就会永远空着</strong>，哪怕定时器天天成功。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">为什么"永远空着"（这条是设计后果，不是 bug）</span>
+    <p>发布打包规则把我们的内部账本目录整个排除在包外（<code>.gitattributes:7</code>，<code>AI_MEMORY/ export-ignore</code>）。而面板缺省就是去那个目录找数据文件。所以服务器上必须用 <code>TYGF_TRAFFIC_LEDGER</code> 把路径指到<strong>发布时不会被删的状态目录</strong>——这一步不是可选优化，是面板能不能出数的前提。安装脚本现在会强制检查它，没配好就不许装。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>剩下的三条命令（已投队列，等一只到得了测试站的手）</h2>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>步</th><th>命令</th><th>为什么这么设计</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">①</td>
+          <td class="was"><code>sudo install -m 0600 /dev/null /etc/tygf-site-traffic.env</code><br>再写入 <code>CF_ANALYTICS_API_TOKEN</code>／<code>CF_ZONE_ID</code></td>
+          <td>令牌只落这一枚 root-only 文件，不进应用环境文件、不进仓库、不进任何文档；单元里用不带 <code>-</code> 的 <code>EnvironmentFile</code>——<strong>缺文件就让单元判红，不许"今天静默没数"</strong>。</td>
+        </tr>
+        <tr>
+          <td class="mono">②</td>
+          <td class="was"><code>TYGF_TRAFFIC_LEDGER=/var/www/tygf-test-state/traffic-daily.jsonl</code> 写进 <code>/var/www/tygf-test/.env</code></td>
+          <td>写侧与读侧同源（本轮把采集脚本的缺省路径也改成先认这个键）。路径落在状态目录：<strong>候选目录会被删，状态目录不会</strong>。安装脚本还会验它确实在状态目录下。</td>
+        </tr>
+        <tr>
+          <td class="mono">③</td>
+          <td class="was"><code>sudo -n bash deploy/install-test-timers.sh tygf-test-site-traffic</code></td>
+          <td>前置校验四件事（文件在／权限 0600／两键非空／台账在状态目录），任一不满足<strong>拒绝安装</strong>；装完 <code>systemctl start</code> 当场冒烟并核台账行数与末行日期。病根：本仓有过"定时器路径写错连红七周、清理其实一直没跑"的先例。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>本轮改了什么</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>两个单元模板（新增）</h3>
+      <p><code>deploy/tygf-test-site-traffic.service</code> ＋ <code>.timer</code>。沿用同族既有形状：路径一律占位符（<code>@APP_DIR@</code>／<code>@NODE_BIN@</code>，本轮新增 <code>@STATE_DIR@</code>），由安装脚本从 <code>deploy-test-release.sh</code> 推导后渲染，模板里不出现任何手写绝对路径。定时用 <code>OnCalendar</code> ＋ <code>Persistent=true</code>：同族旧写法是相对定时，机器停几天就少几天数。</p>
+    </div>
+    <div class="card">
+      <h3>安装脚本（加固）</h3>
+      <p>状态目录从 <code>SUPPORT_BUNDLE_DIR</code> 取父目录（唯一权威源）；请求本单元时走四道前置校验；渲染后仍由 <code>check-unit-paths.sh</code> 验路径存在性；末尾新增"当场跑一次并核台账落盘"。缺令牌文件时 <code>fail</code> 并给出建文件的确切命令，不打印任何值。</p>
+    </div>
+    <div class="card">
+      <h3>采集脚本（同源）</h3>
+      <p>缺省输出路径改为先认 <code>TYGF_TRAFFIC_LEDGER</code>。此前写侧只认 <code>--out</code>、读侧只认这个环境变量，两边不同源——在服务器上就是"写进状态目录、面板去应用目录读旧文件"。</p>
+    </div>
+    <div class="card">
+      <h3>测试（两条）</h3>
+      <p>面板自检 17→<strong>28 条</strong>（新增同源、root-only、<code>ReadWritePaths</code>、<code>Persistent</code>、三道前置、冒烟各一条）；另建 <code>scripts/smoke-site-traffic-timer.sh</code> 在沙箱副本里验"该拦的拦住、拦完才轮到后面的检查"，5 条全过。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>读数与边界</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">28/28</span><span class="k">面板自检断言<br>22:33:19 实跑</span></div>
+    <div class="stat ok"><span class="n">5/5</span><span class="k">安装闸离线自测<br>沙箱副本，不碰 systemd</span></div>
+    <div class="stat ok"><span class="n">rc=0</span><span class="k">关增量全量类型检查<br>＋ eslint</span></div>
+    <div class="stat warn"><span class="n">未重跑</span><span class="k">整条出包链<br>本轮不在其编译面上</span></div>
+  </div>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>边界要说清</h3>
+        <p>本轮只动 <code>scripts/</code> 与 <code>deploy/</code>，不在前端构建的编译面上，所以<strong>没有重跑整条出包链</strong>；出包链 rc=0 的实测绑在 <code>e93b81f</code> 那一枚。所有 systemd 侧行为<strong>只做了盘上形状与沙箱验证</strong>，真机装载与冒烟还没跑过——那正是投给服务器那只手的活。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>一条自勘</h3>
+        <p>提交说明里把 <code>AI_MEMORY/ export-ignore</code> 写成 <code>.gitattributes:5</code>，实测在 <code>:7</code>。已在投递行里按实测行号勘正，旧提交不回改。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>还等你两句</h3>
+        <p>① 测试站装好之后，<strong>生产站要不要也挂每日采集</strong>——按规矩生产要另说一句，我不会顺手带上；② 前面挂着的三件不变：推 15 笔、#207 那道闸改不改、生产机明文口令要不要立案。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>本轮实测：面板自检 28 条、安装闸沙箱自测 5 条、关增量全量类型检查、eslint；提交 <code>develop@9ca8976</code>（6 文件 +161/−3）。systemd 侧仅做盘上形状与沙箱验证，真机未装未跑。</p>
+  <p>2026-10-20 22:3x · 文中不含令牌值、客户名称与素材内容；令牌只允许存在于服务器 root-only 文件或本机 gitignored 文件。</p>
+</footer>
+
+</div>
+

@@ -1,0 +1,651 @@
+<title>折行算法业界对照与 s5 加固</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.dot.ok{background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 · 执行方案</span><span class="sep">/</span>
+    <span>折行算法 wrap-planner</span><span class="sep">/</span>
+    <span>2026-10-17</span>
+  </p>
+  <h1>折行算法：别人怎么写，我们改了什么，还差什么</h1>
+  <p class="standfirst">六个业界参照（Chrome balance / TeX—Typst Knuth–Plass / Netflix 字幕 / PS 段落合成器 / JLREQ 禁则 / UAX#14–CSS）逐一对照，确认「固定行数整数 DP」是三条硬约束下的唯一可行族；s5 把它的输入端修硬：混排分词、JLREQ 禁则、NBSP 黏连、failPlan 宽度口径。</p>
+  <div class="meta">
+    <span>16 组 smoke 全过</span>
+    <span>浏览器检查 13 项 0 失败</span>
+    <span>2 文件 +132/−11</span>
+    <span>本地提交 762a784 · 未推送</span>
+    <span>零调用方 · 未接线</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>别人要么放弃行数控制，要么放弃禁则，要么放弃可审计性。<br>我们把三者同时当硬约束——这不是偏好，是取证链和跨端一致性倒逼出来的唯一解。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>可以直接用的（本次已落）</h3>
+      <ul>
+        <li><strong>混排分词</strong>：含空格句里的 CJK 段不再整段焊成不可断 token。<code>TITAN Pro バンパー・ケースに対応します</code> 在 5000U 预算下从「直接失败（最宽 token 14000U）」变为 <strong>4 行可行</strong>。</li>
+        <li><strong>JLREQ 禁则对齐</strong>：两处集合共新增 77 个字符（行头 +62／行尾 +15）＋ NBSP 两侧黏连；小書き仮名、々 类繰り返し記号、括号变体、半角标点全进硬约束。</li>
+        <li><strong>失败也诚实</strong>：failPlan 的整串宽度改取调用方传入的度量表，负控实测 18×777＝13986，不再报 em 兜底口径。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不用照抄的（各有硬伤）</h3>
+      <ul>
+        <li><strong>Knuth–Plass（TeX/Typst）</strong>：行数自由——模拟台上 3 行文案被排成 5 行；浮点＋断字字典与跨端逐字节一致冲突。</li>
+        <li><strong>贪心／balance</strong>：贪心不守禁则（模拟台实测 2 处违规）；balance 二分缩宽牺牲可用宽度、不认原稿行数。</li>
+        <li><strong>PS 段落合成器</strong>：黑盒——断点不可读、软换行不落 0x0D（H4 实测零换行符排 5 行）、PS 22 无避头尾入口。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>六家对照</h2>
+  <p class="lede">选型过滤器不是「谁好」，是三条硬约束：① 行数守约（原稿几行、最多 +1）② 跨端逐字节一致（全整数）③ 取证链只认 0x0D。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>方案</th><th>怎么断</th><th>优点</th><th>为何接不上我们</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Chrome/Firefox<br><code>text-wrap: balance</code></strong></td>
+          <td>二分找不额外加行数的最小宽度，再让贪心在缩窄宽度里填（≤6/≤10 行）</td>
+          <td>改几行 CSS 就有均衡效果</td>
+          <td><span class="now">不认原稿行数、不守禁则、牺牲可用宽度</span>；浮点＋浏览器启发式，接不上②③</td>
+        </tr>
+        <tr>
+          <td><strong>TeX / Typst<br>Knuth–Plass</strong></td>
+          <td>全局 badness＋伸缩；Typst <code>par.linebreaks</code> simple/optimized 两档</td>
+          <td>段落美学全局最优</td>
+          <td><span class="now">行数自由——把「好看」放在「行数守约」前面</span>；浮点＋断字字典，①先过不了</td>
+        </tr>
+        <tr>
+          <td><strong>Netflix 字幕规则</strong></td>
+          <td>2 行上限；标点后断、连词/介词前断；42 字符/行</td>
+          <td>规则表简单、可读</td>
+          <td>纯贪心＋语义规则，无回流；译文业务的行数预算比字幕强</td>
+        </tr>
+        <tr>
+          <td><strong>PS 段落合成器</strong></td>
+          <td>官方＝「整段断点网络」＋加权罚分；切档实测改断法 147×13→149×13</td>
+          <td>开箱即用</td>
+          <td><span class="now">黑盒：断点不可读、软换行不落 0x0D、PS 22 无避头尾入口</span>——砸取证链，双重出局</td>
+        </tr>
+        <tr>
+          <td><strong>JLREQ／JIS X 4051<br>禁则表</strong></td>
+          <td>不负责在哪断，负责哪些位置不许断（行头/行尾禁则类）</td>
+          <td>把断行质量从「好看」提升到「合规」</td>
+          <td><span class="fix">已对齐</span>——s5 的 77 个新增字符就是照它补的</td>
+        </tr>
+        <tr>
+          <td><strong>既有实测（09-20）</strong></td>
+          <td>tex-linebreak 双次证伪；foliojs/linebreak 只取 UAX#14 思想；断字词典列后续批</td>
+          <td>省下重复踩坑</td>
+          <td><span class="fix">不引任何三方折行库</span>——本班车既定边界</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">来源</span>
+    <p>developer.chrome.com《CSS text-wrap: balance》／ w3.org《Approaches to line breaking》／ w3.org TR/jlreq（§3.1.7/3.1.8/3.2）／ partnerhelp.netflixstudios.com 字幕风格指南；Knuth &amp; Plass 1981、Typst 文档（名称引用）。PS 侧事实均来自本机 PS 22 探针实测。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>s5 四个动手点</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">F1</span>
+        <h3>混排分词——最重的一处</h3>
+        <span class="tag bad">原为直接失败</span>
+      </div>
+      <p>s5 前只按空格切、每段整段压成一个 token：<code>TITAN Pro バンパー・ケースに対応します</code> ⇒ 第三个 token 14000U，预算 5000U 时直接 <code>BUDGET_BELOW_CLUSTER</code>，失败原因还误导人。s5 起词段内嵌入无空格脚本按「词段＋字素簇」混合切分（<code>wrap-planner.ts:135-163</code>）。同夹具对照：<span class="was">s4 失败</span> → <span class="fix">s5 4 行可行</span>。</p>
+      <p><strong>附带清掉一处死代码</strong>：<code>isNoSpaceScript</code> 自 s3 起定义但零调用（s5 前全文件唯一命中即定义行），s5 起成为混排分词的实际判据。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F2</span>
+        <h3>禁则对齐 JLREQ：新增 77 字符＋NBSP</h3>
+        <span class="tag ok">不变式全绿</span>
+      </div>
+      <p>行头 +62（小書きの仮名 24 字、々ゝゞヽヾ〃、〕〗〙〛｝］｣〟”’»｠、,.;:!?)]}、‐゠〜 等）；行尾 +15（開き括弧变体与半角 <code>([{</code>）；「・」「ー」等 s4 语义一字未删、只做加法。smoke 14 不变式：5 段真实语料 × 4 档预算，全部可行方案禁则违规＝0。</p>
+      <p><strong>纪律</strong>：测试里的 <code>BAD_START</code>/<code>BAD_END</code> 字面量与生产集合是双清单，改集合必须同步改断言。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F3</span>
+        <h3>NBSP 黏连</h3>
+        <span class="tag ok">字符零丢失</span>
+      </div>
+      <p>U+00A0 同时进两集合 ⇒ 两侧都不成断点，<code>10 kg</code> 类数字单位不拆；smoke 15 实测逐字路径字符零丢失、行首/行尾永不出现 NBSP。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">F4</span>
+        <h3>failPlan 宽度口径</h3>
+        <span class="tag warn">负控钉死</span>
+      </div>
+      <p>失败计划原用 em 兜底表算整串宽度（写死 520 口径），与规划本体收的真度量表不符。改为 <code>table.widthU(input)</code>（<code>:291-292</code>）；负控：自定义表 777U/字、18 字 ⇒ 13986，不再报 520。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">对抗自查：影响面</span>
+    <p><strong>零调用方</strong>——产品代码无 import，本次改动影响不了任何在跑路径；接线（wrapProfile 冻结＋三点比对）仍按既定纪律随 P4/3.7.0 发版批走。不引三方库、不碰 composer、不动取证链，三条边界原样保持。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>核对总账</h2>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">16</span><span class="k">smoke 组全过<br>原 12 组未改一字</span></div>
+    <div class="stat warn"><span class="n">77</span><span class="k">禁则新增字符<br>行头+62／行尾+15 ＋NBSP</span></div>
+    <div class="stat ok"><span class="n">13/13</span><span class="k">模拟台浏览器检查<br>0 失败</span></div>
+    <div class="stat"><span class="n">0</span><span class="k">产品调用方<br>影响面为零</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">关键数字链</span>
+    <p>14000U 最宽 token <span class="was">→</span> 5000U 预算下 4 行可行；18×777＝13986（失败宽度负控）；<code>npm run test:wrap-planner</code> 复跑回显 <code>[wrap-planner] all assertions passed</code>；<code>npx tsc --noEmit</code> 0 错；eslint 0 错；commit 2 文件 +132/−11。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>诚实的遗留清单（未做，不是漏做）</h2>
+  <ul class="notes">
+    <li><strong>泰文词典分词</strong>：仍按字素簇硬断（与现状一致，独立项）。</li>
+    <li><strong>数字黏连</strong>：<code>1,234</code>/<code>3.5</code> 里的逗号句点后仍可能成断点——半角标点进的是「禁行头」，数字环视需另做；记为已知限制。</li>
+    <li><strong>U+3000 全角空格</strong>：不特殊处理（罕见，NBSP 已覆盖主场景）。</li>
+    <li><strong>断点等级细化</strong>：句末标点后优先断等美学细化评估后推迟——禁则已保底，代价函数里已区分空格/字素簇两级。</li>
+    <li><strong>西文无空格文本逐字断</strong>：既有行为原样保留，待将来单独评审。</li>
+    <li><strong>软换行取证</strong>：本轮调研未发现新取证途径，研究项维持阻塞（H4 已证「让 PS 排」＝主取证法当场失效）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>执行序与判据</h2>
+
+  <div class="tl">
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>调研 → 对抗式审查</strong><span class="tag ok">完成</span></div>
+        <p>六家做法收齐、逐条对本管道三条约束；确认整数 DP 为唯一现成可行族。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot ok"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>s5 实施与验证</strong><span class="tag ok">完成</span></div>
+        <p>混排分词／JLREQ 禁则／NBSP／failPlan 宽度；16 组 smoke＋tsc＋eslint 全绿；本地提交 <code>762a784</code>（未推送）。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot ok"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>模拟 v3 对比台</strong><span class="tag ok">完成</span></div>
+        <p>四断行器＋黑盒同台、禁则断点地图、原理卡、s5 台账；浏览器实跑 13 项检查 0 失败。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>接线（随 P4/3.7.0 发版批）</strong><span class="tag warn">将来</span></div>
+        <p>wrapProfile 版本隔离＋三点比对；判据＝真实字体度量表下同夹具断法结构一致。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>第二批候选</strong><span class="tag warn">待示意</span></div>
+        <p>数字黏连、泰文词典、软换行取证——是否排入下一未接线窗口由 Owner 示意。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>证据索引</h2>
+  <ul class="notes">
+    <li><strong>模块与测试</strong>：<code>worktrees/develop/src/lib/workbench/wrap-planner.ts:14-20,54-69,73-85,130-177,186-188,291-292,332-338,343-368</code>；<code>scripts/smoke-wrap-planner.mjs:195-273</code>。</li>
+    <li><strong>提交</strong>：<code>git show --stat 762a784</code>（2 文件 +132/−11；父 <code>b5ac8ce</code>，前序 <code>8cfdd72</code>）。</li>
+    <li><strong>PS 探针</strong>：<code>tmp/ps-spike-20261017/outH4.json</code>（705×13→174×97 零 CR 5 行）、<code>outH5.json</code>（composer 147×13→149×13）、<code>tasklog-entry-v2.md</code>。</li>
+    <li><strong>模拟件</strong>：<code>交付档案/执行方案/模拟方案_20261017_折行算法对比_v3.html</code>。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>本方案只读审查＋未接线模块加固：未部署、未推送、未碰支付 flag 与生产链。测试数字均为本机真实回显。</p>
+  <p>2026-10-17 · 图译工坊内测版 · 折行算法 s5 · 本地交付件</p>
+</footer>
+
+</div>

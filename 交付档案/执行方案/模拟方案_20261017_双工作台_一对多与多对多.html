@@ -1,0 +1,705 @@
+<!doctype html>
+<title>双工作台 · 模拟方案（一对多 / 多对多）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.2vw,1.18rem);line-height:1.65;max-width:56ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.05em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.acc{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.85rem;min-width:640px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.76rem;color:var(--muted)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:70ch}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+
+/* ================= 模拟窗 ================= */
+.sim-toolbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px}
+.sim-toolbar .label{font-size:.84rem;font-weight:600}
+.sw{display:inline-flex;background:var(--sunk);border-radius:8px;padding:3px}
+.sw button{border:0;background:transparent;padding:6px 16px;border-radius:6px;font-size:.85rem;cursor:pointer;color:var(--muted);font-family:inherit}
+.sw button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.sim-hint{font-size:.76rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.74rem;color:var(--muted);align-items:center}
+.mk{display:inline-block;font-size:10px;line-height:1.4;padding:1px 7px;border-radius:999px;margin-left:8px;white-space:nowrap;vertical-align:middle;font-weight:600}
+.mk-decide{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.mk-live{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.mk-done{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.sim{border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:0 12px 34px rgba(16,24,40,.07)}
+.sim-sitebar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.8rem;color:var(--ink-2);flex-wrap:wrap;gap:8px}
+.sim-sitebar .brand{font-weight:700;color:var(--ink)}
+.sim-sitebar .v15{display:inline-block;margin-left:6px;background:rgba(210,140,0,.15);color:#a06a00;border-radius:99px;padding:0 6px;font-size:.64rem;font-weight:700;vertical-align:1px}
+.sim-sitebar nav{display:flex;gap:14px;flex-wrap:wrap}
+.sim-sitebar nav span{color:var(--muted);cursor:default}
+.sim-sitebar nav span.cur{color:var(--ink);font-weight:600}
+.sim-sitebar .acct{display:flex;gap:10px;align-items:center;color:var(--muted)}
+body[data-entry="off"] .nav-batch{display:none}
+.entry-off-note{display:none;margin:10px 20px 0;border:1px dashed var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:9px 13px;font-size:.78rem}
+body[data-entry="off"] .entry-off-note{display:block}
+.sim-body{padding:16px 20px 20px}
+.block{display:none}
+body[data-tab="one"] #blk-one{display:block}
+body[data-tab="batch"] #blk-batch{display:block}
+.wbhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wbhead h3{font-size:1.06rem;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wbhead .sub{font-size:.82rem;color:var(--muted);margin-top:1px;max-width:64ch}
+.pills{display:flex;gap:8px;align-items:center}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 11px;font-size:.78rem;white-space:nowrap}
+.pill.credit{color:var(--ok);border-color:var(--ok);background:var(--ok-soft)}
+.statusband{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:9px 13px;font-size:.78rem;margin-top:12px}
+.statusband .dotg{width:8px;height:8px;border-radius:50%;background:#12b76a;flex:none;display:inline-block}
+.statusband .doty{width:8px;height:8px;border-radius:50%;background:#e0a800;flex:none;display:inline-block}
+.statusband .fname{font-weight:700;text-decoration:underline;text-decoration-style:dotted;cursor:pointer}
+.statusband .sep2{color:var(--line-strong)}
+.statusband .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.chip{font-size:.72rem;font-weight:600;border-radius:8px;padding:3px 9px;white-space:nowrap}
+.chip.amber{background:var(--warn-soft);color:var(--warn)}
+.chip.green{background:var(--ok-soft);color:var(--ok)}
+.main{display:grid;grid-template-columns:176px 1fr;gap:16px;margin-top:14px}
+@media (max-width:800px){.main{grid-template-columns:1fr}}
+.rail .st{display:flex;gap:9px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:3px;cursor:pointer;font-size:.84rem}
+.rail .st:hover{background:var(--sunk)}
+.rail .st.active{background:var(--ink);color:var(--bg)}
+.rail .num{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-strong);color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface)}
+.rail .st.done .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.rail .st.active .num{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.rail .st .cap{font-size:.68rem;color:var(--muted);display:block;line-height:1.3}
+.rail .st.active .cap{color:var(--line-strong)}
+.block .step{display:none}
+.block[data-step="1"] .step1,.block[data-step="2"] .step2,.block[data-step="3"] .step3,.block[data-step="4"] .step4{display:block}
+.wcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+.wcard .t{font-size:.85rem;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wcard .t .hint{font-weight:400;color:var(--muted);font-size:.74rem}
+.rowline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+.winp{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:.8rem;background:var(--bg);color:var(--ink-2)}
+.btn{border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:default;border:1px solid var(--line-strong);background:var(--surface);display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap}
+.btn.primary{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.teal{background:#0d9488;border-color:#0d9488;color:#fff;font-weight:600}
+.btn.amber{border-color:var(--warn);background:var(--warn-soft);color:var(--warn);font-weight:700}
+.btn.sm{padding:4px 9px;font-size:.72rem}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.off{opacity:.45}
+.filerow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:.78rem;background:var(--sunk);margin-top:8px;flex-wrap:wrap}
+.badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-gray{border:1px solid var(--line-strong);color:var(--muted);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.badge-amber{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 8px;font-size:.68rem;white-space:nowrap}
+.pastebox{border:1.5px dashed var(--line-strong);border-radius:10px;padding:10px 13px;margin-top:10px;background:var(--bg)}
+.pastebox .lab{font-size:.78rem;font-weight:700}
+.pastebox textarea{width:100%;min-height:58px;margin-top:7px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--font-mono);font-size:.72rem;background:var(--surface);color:var(--muted);resize:none}
+.pastefb{font-size:.72rem;margin-top:7px;line-height:1.7}
+.pastefb .fl-ok{color:var(--ok)} .pastefb .fl-warn{color:var(--warn)} .pastefb .fl-muted{color:var(--muted)}
+.statusline{display:flex;align-items:center;gap:8px;font-size:.78rem;border-radius:8px;padding:8px 12px;margin-top:10px;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.statusline.green{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.statusline.sky{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.statusline .d2{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.minitable{width:100%;border-collapse:collapse;font-size:.74rem;min-width:0;margin-top:9px}
+.minitable th{background:var(--sunk);font-size:.68rem;padding:5px 8px;border-bottom:1px solid var(--line);font-family:inherit;text-transform:none;letter-spacing:0;color:var(--muted);white-space:normal}
+.minitable td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.kv{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.8rem;padding:7px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.kv .k{color:var(--muted)}
+.kv .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.linklike{color:var(--accent);text-decoration:underline;font-size:.78rem;cursor:pointer}
+.detailsline{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:9px 2px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer}
+.actionbar{display:flex;align-items:center;gap:12px;border-top:2px solid var(--line-strong);margin-top:14px;padding-top:11px;flex-wrap:wrap}
+.actionbar .status{flex:1;text-align:right;font-size:.76rem;color:var(--muted);min-width:120px}
+.plannot{border:1px dashed var(--line-strong);border-radius:10px;padding:10px 13px;font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.75}
+.plannot b{color:var(--ink)}
+.plannot .tag{margin-right:6px;vertical-align:1px}
+.covwrap{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:10px;background:var(--sunk)}
+.covwrap .ct{font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.covtable{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:9px;min-width:0}
+.covtable th,.covtable td{border:1px solid var(--line);padding:5px 7px;text-align:center;background:var(--surface)}
+.covtable th{background:var(--sunk);color:var(--muted);font-weight:600}
+.covtable td.psdname{text-align:left;font-family:var(--font-mono);font-size:.66rem;color:var(--ink-2);white-space:nowrap}
+.covtable td.cov{cursor:pointer;font-weight:700;font-variant-numeric:tabular-nums}
+.cov-hi{background:var(--ok-soft);color:var(--ok)}
+.cov-mid{background:var(--warn-soft);color:var(--warn)}
+.cov-lo{background:var(--bad-soft);color:var(--bad)}
+.cov-none{color:var(--muted);background:var(--surface)}
+.covdetail{display:none;border:1px solid var(--accent);background:var(--accent-soft);border-radius:9px;padding:9px 12px;margin-top:9px;font-size:.74rem;color:var(--ink-2)}
+.covdetail.on{display:block}
+.covnote{font-size:.68rem;color:var(--muted);margin-top:8px;line-height:1.7}
+.entryrow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:.78rem;background:var(--surface);margin-top:8px;flex-wrap:wrap}
+.countline{font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.plot{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:9px;background:var(--bg);font-size:.74rem;color:var(--ink-2)}
+.plot .h{font-weight:700;color:var(--ink);font-size:.76rem}
+.callout-sim{margin-top:14px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:11px 14px;font-size:.8rem;color:var(--ink-2)}
+.blk-batch-note{display:none;margin-bottom:12px;border:1px dashed var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:9px 13px;font-size:.78rem}
+body[data-entry="off"] .blk-batch-note{display:block}
+</style>
+<body data-tab="one" data-entry="on">
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 工作台</span><span class="sep">/</span><span>双工作台模拟（一对多 · 多对多）</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>两个工作台：一对多走单文件台，多对多走批量台</h1>
+    <p class="standfirst">对抗式审查结论：您要的「两个工作台」结构已经落地并上测试站（<code>2367950</code>，14:25 部署）——一套四步组件、两个并列视图，互不顶替。当前唯一的拦路是入口开关在测试站还是「关」：顶栏看不到「批量工作台」。下面模拟的就是打开后的样子，附三处待您拍板的手感项。</p>
+    <div class="meta">
+      <span>基线：develop / 测试站 <code>2367950</code>（SSH 实取 .deploy-commit）</span>
+      <span>入口开关：批量工作台 = 关（flags API 与 DB 双证）</span>
+      <span>状态：模拟＋等您拍板（本件只出模拟，未动代码）</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>审查速览</h2>
+    <div class="verdict">
+      <span class="lb">一句话结论</span>
+      <p>双工作台已经从「实验顶替」变成「并列视图」并且上线测试站；只差把入口开关打开。批量台内部还有 3 个手感项（矩阵要不要拦、要不要一键扫描、拖拽做不做）和 1 个页面身份小改，都给了建议，等您一句话。</p>
+    </div>
+    <div class="stats">
+      <div class="stat ok"><span class="n">2</span><span class="k">工作台并列（一对多 / 多对多），互不顶替</span></div>
+      <div class="stat acc"><span class="n">1</span><span class="k">套四步组件，两个视图共用一个实现</span></div>
+      <div class="stat warn"><span class="n">4</span><span class="k">待您拍板 / 授权（含打开入口开关）</span></div>
+      <div class="stat"><span class="n">2367950</span><span class="k">测试站已部署（10-17 14:25 备份对号）</span></div>
+    </div>
+    <div class="split">
+      <div class="panel yes">
+        <h3>已核实（每条可对号）</h3>
+        <ul>
+          <li>批量台是独立视图：<code>AppView = 'home'|'workbench'|'batch'</code>，<code>#batch</code> 未开放时回落首页（<code>view-context.tsx:22-23</code>）。</li>
+          <li>顶栏入口由服务端合并开关控制：关＝不显示「批量工作台」（<code>site-header.tsx:18-22</code>、<code>featureFlags.ts:66-67</code>）。</li>
+          <li>多稿录入＝粘贴多行路径、逐类如实报告（重复／非法／超限 12 已忽略）（<code>design-file-card.tsx:640</code> 一带）。</li>
+          <li>覆盖率矩阵在批量台语言区（<code>workbench-view.tsx:2261</code>），三色＋点格明细；明写「只做提示，不会阻止执行」。</li>
+          <li>批量执行「全部扫描完成才放行、逐稿串行、失败即停不静默跳过」（<code>workbench-view.tsx:1326-1397</code>、<code>execute-step.tsx:2120</code>）。</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>边界与红线（自查）</h3>
+        <ul>
+          <li>本件只出模拟：不改代码、不提交、不动测试站开关（打开开关＝您一句话授权）。</li>
+          <li>矩阵「只提示不拦」是现状事实，照实呈现，不美化成已经拦住。</li>
+          <li>粘贴而非拖拽是浏览器的如实限制（拖入拿不到绝对路径），不当作缺陷藏起来。</li>
+          <li>计费口径是「1 稿 × N 语言 = 1 批次」：多对多＝多个批次依次计费，费用随稿数线性增长——需要您知悉确认。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>对号表：您要的「两个工作台」，现在到哪了</h2>
+    <div class="scrollx"><table>
+      <thead><tr><th>需求点</th><th>现状（2367950 实测）</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr><td>两个工作台并列</td><td>视图决定模式：<code>#workbench</code> 单文件台、<code>#batch</code> 批量台，同一套四步组件（<code>workbench-view.tsx:192</code>；不再读全局实验开关）</td><td><span class="tag ok">已实现</span></td></tr>
+        <tr><td>批量入口</td><td>顶栏「批量工作台」由服务端合并开关控制；关＝入口不显示且 #batch 回落首页（<code>site-header.tsx:21</code>）</td><td><span class="tag warn">开关现关·待开</span></td></tr>
+        <tr><td>多稿录入</td><td>粘贴多行路径，一次最多 12 个；重复／非法／超限逐类报告；加入后为「需重新扫描」，逐个点扫描（<code>design-file-card.tsx:690-806</code>）</td><td><span class="tag ok">已实现</span></td></tr>
+        <tr><td>逐稿扫描</td><td>每稿一枚「扫描」按钮；没有「一键全部扫描」队列</td><td><span class="tag warn">待拍板 D10</span></td></tr>
+        <tr><td>覆盖率矩阵</td><td>稿 × 语言三色格＋点格明细（覆盖率/可翻译文本数）；低于阈值只提示不拦截；粗估口径已注明（<code>coverage-matrix.tsx</code>）</td><td><span class="tag warn">待拍板 D5</span></td></tr>
+        <tr><td>批量执行防呆</td><td>全部扫描完成才放行；未完成点名到底；逐稿串行；失败即停并点名，不静默跳过（<code>workbench-view.tsx:1326-1397</code>，T-0176 修复）</td><td><span class="tag ok">已实现</span></td></tr>
+        <tr><td>执行范围</td><td>「仅当前语言」/「全部 N 个语言一次执行」两按钮，选择记忆在本机（T-0176）</td><td><span class="tag ok">已实现</span></td></tr>
+        <tr><td>页面身份</td><td>批量台的页标题仍是「工作台」，与单文件台完全同名（<code>workbench-view.tsx:1893</code> 无 batchMode 分支）</td><td><span class="tag warn">建议 A1</span></td></tr>
+        <tr><td>计费口径</td><td>1 稿 × N 语言 = 1 个批次；3 稿＝3 个批次依次执行，费用 ×3（逐稿结算）</td><td><span class="tag acc">请知悉</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout"><span class="lb">一条关键的修复（T-0176）</span><p>第七轮真机实测曾发现：批量卡的扫描只写多稿列表、不写单文件态，导致交付门锁死、批量执行面板根本点不到。现已修：批量扫描结果镜像为首个已扫描条目，执行时逐稿自动切换（<code>workbench-view.tsx:2110-2126、1384-1390</code>）——这正是「多对多」能跑通的关键一步。</p></div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>模拟（切视图：一对多 ⇄ 多对多）</h2>
+    <div class="sim-toolbar">
+      <span class="label">工作台</span>
+      <div class="sw" id="tabsw">
+        <button class="on" data-tab="one">① 一对多 · 单文件台</button>
+        <button data-tab="batch">② 多对多 · 批量台</button>
+      </div>
+      <span class="label" style="margin-left:6px">入口开关</span>
+      <div class="sw" id="entrysw">
+        <button data-entry="off">关（测试站现状）</button>
+        <button class="on" data-entry="on">开（开启后）</button>
+      </div>
+      <span class="legend">
+        <span class="mk mk-done" style="display:inline-block">已实现·已上测试站</span>
+        <span class="mk mk-decide" style="display:inline-block">待拍板</span>
+        <span class="mk mk-live" style="display:inline-block">批量台专属</span>
+        <span>左侧导轨可点，四步都能看；数字均为演示值。</span>
+      </span>
+    </div>
+
+    <div class="sim">
+      <div class="sim-sitebar">
+        <span class="brand">图译工坊<span class="v15">V1.5</span></span>
+        <nav>
+          <span>首页</span>
+          <span>工作台</span>
+          <span class="nav-batch" style="color:var(--accent);font-weight:600">批量工作台<span class="mk mk-live" title="由服务端合并开关控制（batchWorkbenchEnabled）；关＝入口不显示、#batch 回落首页（site-header.tsx:21）">开关控制</span></span>
+          <span>EN</span>
+        </nav>
+        <span class="acct"><span>◉ 776 积分</span><span>下载助手</span><span>👤</span></span>
+      </div>
+      <div class="entry-off-note">入口开关「关」：顶栏没有「批量工作台」，直接访问 <b>#batch</b> 会回落到首页——这就是测试站现在（合并值 batchWorkbenchEnabled=false、DB 无覆盖）的真实形态。切到「开」看开启后的样子。</div>
+
+      <div class="sim-body">
+
+        <!-- ================= 一对多 block ================= -->
+        <div class="block" id="blk-one" data-step="1">
+          <div class="wbhead">
+            <div>
+              <h3>工作台 <span class="mk mk-live" title="这是与批量台并列的单文件台：1 个设计稿 × N 种语言">一对多 · 1 稿 × 5 语</span></h3>
+              <p class="sub">扫描设计稿、导入译文并在本机生成多语言文件；设计文件不会上传。</p>
+            </div>
+            <div class="pills">
+              <span class="pill credit">◉ 776 积分</span>
+              <span class="pill">👤 账号</span>
+            </div>
+          </div>
+
+          <div class="statusband">
+            <span class="dotg"></span>
+            <span class="fname" title="点击＝重新扫描（之后需要重新与设计稿对账）">0409_EDM-RF-EN.psd</span>
+            <span class="sep2">·</span>
+            <span style="color:var(--muted)">测试表.xlsx</span>
+            <span class="sep2">·</span>
+            <span style="color:var(--muted)">5 个语言</span>
+            <span class="right"><span class="chip amber">⚠ 3 项待处理 ▾</span></span>
+          </div>
+
+          <div class="main">
+            <div class="rail" data-rail="one">
+              <div class="st active" data-go="1"><span class="num">1</span><span>准备素材<span class="cap">文件与译文表</span></span></div>
+              <div class="st" data-go="2"><span class="num">2</span><span>智能检测<span class="cap">检测与确认</span></span></div>
+              <div class="st" data-go="3"><span class="num">3</span><span>设计稿校对<span class="cap">与设计稿对账</span></span></div>
+              <div class="st" data-go="4"><span class="num">4</span><span>生成交付<span class="cap">确认与执行</span></span></div>
+            </div>
+
+            <div>
+              <!-- 一对多 · 第 1 步 -->
+              <div class="step step1">
+                <div class="wcard">
+                  <div class="t">选择要处理的 PSD 文件 <span class="hint">只读预扫描 · 不上传设计文件</span></div>
+                  <div class="rowline">
+                    <input class="winp" value="C:\Design\0409_EDM-RF-EN.psd" readonly>
+                    <span class="btn">📁 选择文件…</span>
+                    <span class="btn teal">扫描</span>
+                  </div>
+                  <div class="filerow">
+                    📁 <b>0409_EDM-RF-EN.psd</b>
+                    <span class="badge-ok">✓ 已扫描</span>
+                    <span class="badge-gray">22 个文字图层</span>
+                    <span class="badge-gray">隐藏 1</span>
+                    <span style="margin-left:auto;display:flex;gap:6px"><span class="btn sm">重新扫描</span><span class="btn sm ghost">移除</span></span>
+                  </div>
+                  <p style="font-size:.72rem;color:var(--muted);margin-top:7px">粘贴一处 PSD/PSB 路径会自动开始扫描（免点「扫描」）；扫描超过 24 小时后进入「需重新扫描」。</p>
+                </div>
+                <div class="wcard">
+                  <div class="t">译文表 <span class="hint">导入多语言译文表（表格 / 粘贴）</span></div>
+                  <div class="filerow">✓ <b>测试表.xlsx</b>
+                    <span style="color:var(--muted)">西班牙语 · 德语 · 日语 · 法语 · 意大利语</span>
+                    <span style="margin-left:auto;display:flex;gap:6px"><span class="btn sm">选择语言</span><span class="btn sm amber">重选译文表</span></span>
+                  </div>
+                </div>
+                <div class="plannot"><span class="tag ok">保持原样</span><b>一对多＝现有单文件台，本波不动它。</b>双工作台方案的全部改动都在「批量台」一侧；这张台只要保持现在能跑的样子。</div>
+              </div>
+
+              <!-- 一对多 · 第 2 步 -->
+              <div class="step step2">
+                <div class="wcard">
+                  <div class="t">智能检测 <span class="hint">· 西班牙语</span></div>
+                  <div class="statusline"><span class="d2"></span>2 行缺少译文（可在下方直接补写）</div>
+                  <table class="minitable">
+                    <thead><tr><th style="width:34px">#</th><th>原文</th><th>译文（可编辑）</th><th style="width:88px">状态</th></tr></thead>
+                    <tbody>
+                      <tr><td>26</td><td>Precision zoom lights</td><td><span class="badge-gray">补写译文…</span></td><td><span class="badge-amber">缺译文</span></td></tr>
+                      <tr><td>31</td><td>20W RF 20C</td><td>Puerto RF 20C portátil</td><td><span class="badge-amber">偏长</span></td></tr>
+                    </tbody>
+                  </table>
+                  <div class="rowline" style="justify-content:flex-end;margin-top:9px"><span class="btn">✓ 检测完成</span></div>
+                </div>
+              </div>
+
+              <!-- 一对多 · 第 3 步 -->
+              <div class="step step3">
+                <div class="wcard">
+                  <div class="t">设计稿校对 <span class="hint">· 与设计稿对账，逐条定掉才能生成</span></div>
+                  <div class="statusline"><span class="d2"></span>3 项与设计稿对不上——每一处都要你决定，不决定就不能生成。</div>
+                  <table class="minitable">
+                    <thead><tr><th>问题</th><th style="width:150px">处理</th></tr></thead>
+                    <tbody>
+                      <tr><td>「限时优惠」在设计稿上出现 2 次，表里只给了 1 条译文</td><td><span class="linklike">两处都用这条 / 只改一处…</span></td></tr>
+                      <tr><td>第 87 行：表里缺这一条的日语译文</td><td><span class="linklike">我来补一句 / 保留原文</span></td></tr>
+                      <tr><td>译文比设计稿宽，将按规则缩小字号</td><td><span class="linklike">知道了</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 一对多 · 第 4 步 -->
+              <div class="step step4">
+                <div class="wcard">
+                  <div class="t">确认并生成</div>
+                  <div style="font-size:.8rem">
+                    <div style="margin:6px 0 2px;font-weight:600">项目与文件名称</div>
+                    <input class="winp" value="0409_EDM-RF-EN" readonly style="width:100%">
+                  </div>
+                  <div class="kv"><span class="k">保存到</span><span class="v"><span style="font-family:var(--font-mono);font-size:.72rem">源 PSD 目录下自动新建「文件名__时间戳」文件夹（默认）</span></span></div>
+                  <div class="kv"><span class="k">执行范围</span><span class="v"><span class="btn sm primary">仅当前语言 JP</span><span class="btn sm">全部 5 个语言一次执行</span></span></div>
+                  <div class="kv"><span class="k">费用</span><span class="v">全部 5 个语言 · 预计冻结 <b>340</b> 积分（最终以服务端权威报价为准）</span></div>
+                  <div class="statusline green"><span class="d2"></span>就绪 · 点击「开始替换」后，Photoshop 将在本机依次生成 5 个语言版本</div>
+                  <div class="rowline" style="justify-content:flex-end"><span class="btn teal">▶ 开始替换（5 个语言）</span></div>
+                </div>
+              </div>
+
+              <div class="actionbar">
+                <span class="btn ab-prev">上一步</span>
+                <span class="status ab-status">准备素材</span>
+                <span class="btn teal ab-next">审查原文与译文</span>
+                <span class="mk mk-done">唯一导航·已达标</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= 多对多 block ================= -->
+        <div class="block" id="blk-batch" data-step="1">
+          <div class="blk-batch-note">入口开关「关」时：这张台整体不可达（顶栏无入口、#batch 回落首页）。下面是开启后的形态。</div>
+          <div class="wbhead">
+            <div>
+              <h3>工作台 <span class="mk mk-live" title="与单文件台同一组件渲染；标题暂同名（工作台），顶栏导航高亮区分——建议 A1">多对多 · 3 稿 × 5 语</span></h3>
+              <p class="sub">扫描设计稿、导入译文并在本机生成多语言文件；设计文件不会上传。</p>
+            </div>
+            <div class="pills">
+              <span class="pill credit">◉ 776 积分</span>
+              <span class="pill">👤 账号</span>
+            </div>
+          </div>
+
+          <div class="statusband">
+            <span class="dotg"></span>
+            <span class="fname" title="批量模式下检查链读「当前镜像稿」（首个已扫描条目）">0409_EDM-RF-EN.psd</span>
+            <span class="sep2">·</span>
+            <span style="color:var(--muted)">测试表.xlsx</span>
+            <span class="sep2">·</span>
+            <span style="color:var(--muted)">5 个语言</span>
+            <span class="right"><span class="chip amber">⚠ 3 项待处理 ▾</span></span>
+          </div>
+
+          <div class="main">
+            <div class="rail" data-rail="batch">
+              <div class="st active" data-go="1"><span class="num">1</span><span>准备素材<span class="cap">多稿与译文表</span></span></div>
+              <div class="st" data-go="2"><span class="num">2</span><span>智能检测<span class="cap">检测与确认</span></span></div>
+              <div class="st" data-go="3"><span class="num">3</span><span>设计稿校对<span class="cap">与设计稿对账</span></span></div>
+              <div class="st" data-go="4"><span class="num">4</span><span>生成交付<span class="cap">批量执行</span></span></div>
+            </div>
+
+            <div>
+              <!-- 多对多 · 第 1 步 -->
+              <div class="step step1">
+                <div class="wcard">
+                  <div class="t">多设计稿选择（批量模式）<span class="mk mk-live">批量台专属</span></div>
+                  <div class="countline">已添加 <b>3/12</b> 个 PSD · 已扫描 2 · 扫描中 0</div>
+
+                  <div class="entryrow">📁 <b>0409_EDM-RF-EN.psd</b> <span class="badge-ok">✓ 已扫描</span> <span class="badge-gray">22 层</span><span style="margin-left:auto"><span class="btn sm">扫描</span></span></div>
+                  <div class="entryrow">📁 <b>0415_Spring_Promo.psd</b> <span class="badge-ok">✓ 已扫描</span> <span class="badge-gray">18 层</span><span style="margin-left:auto"><span class="btn sm">扫描</span></span></div>
+                  <div class="entryrow">📁 <b>0421_RF_Tripod.psd</b> <span class="badge-amber">需重新扫描</span> <span class="badge-gray">已超 24 小时</span><span style="margin-left:auto"><span class="btn sm">扫描</span></span></div>
+
+                  <div class="pastebox">
+                    <span class="lab">一次录入多个 · 粘贴路径（每行一个）</span>
+                    <textarea readonly>C:\Design\0409_EDM-RF-EN.psd
+C:\Design\0415_Spring_Promo.psd
+C:\Design\0421_RF_Tripod.psd
+C:\Design\readme.txt</textarea>
+                    <div class="rowline"><span class="btn sm">＋ 加入列表</span><span class="hint" style="font-size:.72rem;color:var(--muted)">加入后需逐个点「扫描」；全部扫描完成后才能开始批量执行。</span></div>
+                    <div class="pastefb"><span class="fl-ok">✓ 已加入 3 个</span>；<span class="fl-muted">1 行不是 .psd/.psb 后缀（已忽略）</span>。<span class="fl-muted">重复路径会在加入时提示「已在列表里（已忽略）」，超过 12 个上限的部分不加入并如实告数。</span></div>
+                  </div>
+
+                  <div class="rowline"><span class="btn sm">＋ 添加 PSD（3/12）</span><span class="btn sm">清除全部</span></div>
+                  <p style="font-size:.72rem;color:var(--muted);margin-top:7px">每个 PSD 将独立走现有预扫描链路；扫描完成后可在语言区查看覆盖率矩阵。</p>
+                  <div class="plannot">
+                    <span class="tag warn">待拍板 D8</span><b>为什么是粘贴、不是拖拽：</b>浏览器拖入文件拿不到绝对路径（安全限制），所以走「粘贴多行路径」。若您要更顺滑，可加一条「从文件夹多选」（走助手原生对话框）作为替代入口——架起成本中等。<br>
+                    <span class="tag warn">待拍板 D10</span><b>3 稿就要点 3 次「扫描」：</b>目前没有「一键按顺序扫完」的队列。建议加一枚「全部扫描（按顺序）」，一处失败即点名停下（沿用现在不静默跳过的口径）。
+                  </div>
+                </div>
+
+                <div class="wcard">
+                  <div class="t">译文表 <span class="hint">导入多语言译文表（表格 / 粘贴）</span></div>
+                  <div class="filerow">✓ <b>测试表.xlsx</b>
+                    <span style="color:var(--muted)">西班牙语 · 德语 · 日语 · 法语 · 意大利语</span>
+                    <span style="margin-left:auto;display:flex;gap:6px"><span class="btn sm">选择语言</span><span class="btn sm amber">重选译文表</span></span>
+                  </div>
+                </div>
+
+                <div class="wcard" style="background:var(--sunk)">
+                  <div class="t">语言（默认全部，取消勾选可排除） <span class="hint">与单文件台同一处</span></div>
+                  <div class="rowline">
+                    <span class="btn sm primary">ES</span><span class="btn sm primary">DE</span><span class="btn sm primary">JA</span><span class="btn sm primary">FR</span><span class="btn sm primary">IT</span>
+                    <span class="linklike" style="margin-left:8px">完成</span>
+                  </div>
+
+                  <div class="covwrap">
+                    <div class="ct">覆盖率矩阵（3 稿 × 5 语言）<span class="mk mk-live" title="批量台专属：workbench-view.tsx:2261，单文件台没有它">批量台专属</span><span class="mk mk-done">已实现·已上测试站</span></div>
+                    <table class="covtable" id="covtable">
+                      <thead><tr><th style="text-align:left">设计稿 \ 语言</th><th>ES</th><th>DE</th><th>JA</th><th>FR</th><th>IT</th></tr></thead>
+                      <tbody>
+                        <tr><td class="psdname">0409_EDM-RF-EN.psd</td><td class="cov cov-hi" data-psd="0409_EDM-RF-EN.psd" data-lang="ES" data-cov="100" data-texts="22">100%</td><td class="cov cov-mid" data-psd="0409_EDM-RF-EN.psd" data-lang="DE" data-cov="96" data-texts="22">96%</td><td class="cov cov-lo" data-psd="0409_EDM-RF-EN.psd" data-lang="JA" data-cov="87" data-texts="22">87%</td><td class="cov cov-hi" data-psd="0409_EDM-RF-EN.psd" data-lang="FR" data-cov="100" data-texts="22">100%</td><td class="cov cov-hi" data-psd="0409_EDM-RF-EN.psd" data-lang="IT" data-cov="97" data-texts="22">97%</td></tr>
+                        <tr><td class="psdname">0415_Spring_Promo.psd</td><td class="cov cov-hi" data-psd="0415_Spring_Promo.psd" data-lang="ES" data-cov="95" data-texts="18">95%</td><td class="cov cov-mid" data-psd="0415_Spring_Promo.psd" data-lang="DE" data-cov="92" data-texts="18">92%</td><td class="cov cov-lo" data-psd="0415_Spring_Promo.psd" data-lang="JA" data-cov="83" data-texts="18">83%</td><td class="cov cov-mid" data-psd="0415_Spring_Promo.psd" data-lang="FR" data-cov="97" data-texts="18">97%</td><td class="cov cov-mid" data-psd="0415_Spring_Promo.psd" data-lang="IT" data-cov="90" data-texts="18">90%</td></tr>
+                        <tr><td class="psdname">0421_RF_Tripod.psd</td><td class="cov cov-none" data-psd="0421_RF_Tripod.psd" data-lang="ES" data-cov="0" data-texts="0">—</td><td class="cov cov-none" data-psd="0421_RF_Tripod.psd" data-lang="DE" data-cov="0" data-texts="0">—</td><td class="cov cov-none" data-psd="0421_RF_Tripod.psd" data-lang="JA" data-cov="0" data-texts="0">—</td><td class="cov cov-none" data-psd="0421_RF_Tripod.psd" data-lang="FR" data-cov="0" data-texts="0">—</td><td class="cov cov-none" data-psd="0421_RF_Tripod.psd" data-lang="IT" data-cov="0" data-texts="0">—</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="covdetail" id="covdetail"></div>
+                    <div class="statusline" style="margin-top:9px"><span class="d2"></span>日语（JA）在 2 个设计稿上覆盖率低于 95%。<b>矩阵目前只做提示，不会阻止执行</b>，请自行确认——要不要在低覆盖时加一次「确认再执行」，见待拍板 D5。</div>
+                    <div class="covnote">覆盖率为粗估：按文字对象与译文行做三档判定（精确／空白等价／部分包含），比执行时的严格匹配引擎更宽松；最终以执行前检查为准。点任意百分比可看明细（试试 0415 的 JA）。</div>
+                  </div>
+                </div>
+                <div class="plannot"><span class="tag acc">口径</span>批量模式下第 2、3 步的检查与对账按<b>当前镜像稿</b>推进（首个已扫描条目）；批量执行时每稿开始前自动切换到对应设计稿（<code>workbench-view.tsx:1384-1390</code>）。</div>
+              </div>
+
+              <!-- 多对多 · 第 2 步 -->
+              <div class="step step2">
+                <div class="wcard">
+                  <div class="t">智能检测 <span class="hint">译文表级 · 两稿共用同一张表</span></div>
+                  <div class="statusline"><span class="d2"></span>2 行缺少译文（可在下方直接补写）</div>
+                  <table class="minitable">
+                    <thead><tr><th style="width:34px">#</th><th>原文</th><th>译文（可编辑）</th><th style="width:88px">状态</th></tr></thead>
+                    <tbody>
+                      <tr><td>26</td><td>Precision zoom lights</td><td><span class="badge-gray">补写译文…</span></td><td><span class="badge-amber">缺译文</span></td></tr>
+                      <tr><td>31</td><td>20W RF 20C</td><td>Puerto RF 20C portátil</td><td><span class="badge-amber">偏长</span></td></tr>
+                    </tbody>
+                  </table>
+                  <div class="rowline" style="justify-content:flex-end;margin-top:9px"><span class="btn">✓ 检测完成</span></div>
+                </div>
+              </div>
+
+              <!-- 多对多 · 第 3 步 -->
+              <div class="step step3">
+                <div class="wcard">
+                  <div class="t">设计稿校对 <span class="hint">· 按当前镜像稿（0409_base）对账</span></div>
+                  <div class="statusline"><span class="d2"></span>3 项与设计稿对不上——每一处都要你决定，不决定就不能生成。</div>
+                  <table class="minitable">
+                    <thead><tr><th>问题</th><th style="width:150px">处理</th></tr></thead>
+                    <tbody>
+                      <tr><td>「限时优惠」在设计稿上出现 2 次，表里只给了 1 条译文</td><td><span class="linklike">两处都用这条 / 只改一处…</span></td></tr>
+                      <tr><td>第 87 行：表里缺这一条的日语译文</td><td><span class="linklike">我来补一句 / 保留原文</span></td></tr>
+                      <tr><td>译文比设计稿宽，将按规则缩小字号</td><td><span class="linklike">知道了</span></td></tr>
+                    </tbody>
+                  </table>
+                  <div class="plannot" style="margin-top:10px"><span class="tag acc">口径</span>批量执行时会逐稿自动切换镜像稿并对账（执行前复制该稿扫描结果，<code>:1384-1390</code>）；您在这里看到的是「当前稿」的对账。</div>
+                </div>
+              </div>
+
+              <!-- 多对多 · 第 4 步 -->
+              <div class="step step4">
+                <div class="wcard">
+                  <div class="t">多设计稿执行（批量模式）<span class="mk mk-live">批量台专属</span><span class="mk mk-done">已实现·T-0176 修复过</span></div>
+                  <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">2/3 已扫描 · 5 语言 · 共 15 格</div>
+
+                  <div class="statusline" style="margin-top:0"><span class="d2"></span>还有 1 个设计稿没有扫描完成，暂不能开始：<b>0421_RF_Tripod.psd</b>。请回到「准备素材」逐个点「扫描」。</div>
+                  <p style="font-size:.72rem;color:var(--muted);margin-top:7px">（不静默跳过：未扫完就点名到底，这是 T-0176 的修复口径。）</p>
+
+                  <div class="plot">
+                    <span class="h">执行编排</span>
+                    <span>每个设计稿独立走现有批次链（1 设计稿 × N 语言 = 1 个批次），按列表顺序执行；助手 busy 门天然串行，无需额外并发控制。</span>
+                  </div>
+
+                  <div class="kv"><span class="k">执行范围</span><span class="v"><span class="btn sm">仅当前语言 JA</span><span class="btn sm primary">全部 5 个语言一次执行</span></span></div>
+                  <div class="kv"><span class="k">费用</span><span class="v">3 个设计稿 × 5 个语言 · 3 个批次依次执行 · 预计冻结 <b>1020</b> 积分（演示值；最终以服务端权威报价为准）</span></div>
+                  <div class="kv" style="border-bottom:none"><span class="k">完成后</span><span class="v">「全部 3 个设计稿已执行完成。」逐稿结算；某一稿失败即停并点名，不会跳过。</span></div>
+
+                  <div class="statusline" style="background:var(--sunk);border-color:var(--line-strong);color:var(--muted)"><span class="d2" style="background:var(--line-strong)"></span>未就绪 · 全部 3 稿扫描完成后，按钮变为「开始执行（逐 PSD 编排）」（执行中显示「第 x/3 个设计稿」进度）</div>
+                  <div class="rowline" style="justify-content:flex-end"><span class="btn teal off">▶ 开始执行（逐 PSD 编排）</span></div>
+                  <div class="plannot">
+                    <span class="tag acc">请知悉</span><b>计费口径：</b>多对多＝多批次，费用随稿数线性增长（3 稿＝3 批次）。<br>
+                    <span class="tag warn">待拍板 D5</span><b>矩阵与执行的关系：</b>矩阵只提示不拦截（现状）；低覆盖时若不加一道确认，覆盖率 83% 的稿也会照跑——要不要加「低于阈值时确认一次」，您拍。
+                  </div>
+                </div>
+              </div>
+
+              <div class="actionbar">
+                <span class="btn ab-prev">上一步</span>
+                <span class="status ab-status">准备素材</span>
+                <span class="btn teal ab-next">审查原文与译文</span>
+                <span class="mk mk-done">底部操作条·唯一常驻导航</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout-sim" id="sim-note"><b>正在看：多对多（批量台，入口开关「开」）。</b>切到「一对多」看单文件台原样；把入口开关拨到「关」可看到测试站现在的真实形态（无入口、#batch 回落首页）。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>需要您拍板 / 授权的四件事</h2>
+    <div class="cards">
+      <div class="card hot">
+        <div class="top"><h3>① 打开测试站入口开关（让您上站看真界面）</h3><span class="tag acc">一句话即可</span></div>
+        <p>测试站已部署 <code>2367950</code>，但合并开关「批量工作台」现在是关的（实测）：顶栏没有入口、#batch 回落首页。经您同意后，我在运营台把它打开，您就能在测试站真机走通「粘贴 3 稿 → 扫描 → 矩阵 → 逐稿执行」。</p>
+      </div>
+      <div class="card">
+        <div class="top"><h3>② D5 · 覆盖率低于阈值时，执行前要不要加一次确认</h3><span class="tag warn">建议加</span></div>
+        <p>现状矩阵「只做提示，不会阻止执行」。建议：低于 95% 时在「开始执行」前弹一次确认（列出低覆盖的稿×语言），不改变「不拦截」的口径，只加一道知情确认。修复登记 #140 一并核销。</p>
+      </div>
+      <div class="card">
+        <div class="top"><h3>③ D10 · 要不要「一键扫描全部」（按顺序）</h3><span class="tag warn">建议加</span></div>
+        <p>现在 3 稿点 3 次、12 稿点 12 次。建议加一枚「全部扫描（按顺序）」队列按钮：逐稿扫描、失败即点名停下（沿用现在不静默跳过的口径）；保留逐稿手动按钮。</p>
+      </div>
+      <div class="card">
+        <div class="top"><h3>④ D8 · 拖拽替代入口 + A1 · 批量台页面身份</h3><span class="tag warn">建议 A1 先做 / D8 缓</span></div>
+        <p>D8：拖拽在浏览器拿不到绝对路径，维持粘贴即可；若要更顺滑，加「从文件夹多选」（走助手原生对话框），可缓排。A1：批量台标题现在与单文件台同名「工作台」，建议批量台显式改为「批量工作台」或副标题点明身份——一句话小改，防用户迷路。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>怎么在测试站看到（依赖 ① 的授权）</h2>
+    <div class="callout">
+      <span class="lb">上站路径（打开开关后）</span>
+      <p>登录测试站 → 顶栏点「批量工作台」→ 粘贴 3 行 PSD 路径 → 逐个点「扫描」（需本地助手与 Photoshop 就绪）→ 语言区看覆盖率矩阵 → 开始执行走逐稿串行。若中途某项对不上，按「不静默跳过」的口径会点名提示，照提示处理即可。</p>
+    </div>
+    <div class="callout">
+      <span class="lb">本件性质与基线</span>
+      <p>只出模拟，未改任何代码、未提交、未打开开关。核验基线：测试站 <code>.deploy-commit = 2367950</code>（2026-10-17 14:25 部署，备份 <code>deploy-20261017_142528-23679507f878</code>）；合并 flags 实测 <code>batchWorkbenchEnabled=false</code>、DB 无覆盖行；模拟中的数字均为演示值，真实报价以服务端为准。</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>产出：opencode 会话 · 2026-10-17 · 基线 <code>2367950</code>（develop 与 feat/batch-workbench 同点，已推送）。</p>
+    <p>依据件：《执行方案_20261016_批量工作台_对抗式复审与最优路径》、《模拟方案_20261017_工作台调整_结构归位与减法续做》、develop TASK_LOG（T-0175/T-0176）；代码指针以 <code>2367950</code> 为准。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var body=document.body;
+
+  // 视角切换：一对多 / 多对多
+  var simNote=document.getElementById('sim-note');
+  var notes={
+    one:'<b>正在看：一对多（单文件台）。</b>这是现有工作台的原样：1 个设计稿 × 5 种语言。它没有被批量改动影响；切到「多对多」看批量台。',
+    batch:'<b>正在看：多对多（批量台）。</b>注意这不是单文件台的放大版——文件区变「多设计稿选择」、语言区多出覆盖率矩阵、第 4 步是「逐 PSD 编排」的批量执行。切到「一对多」可对比。'
+  };
+  document.querySelectorAll('#tabsw button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#tabsw button').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      body.dataset.tab=b.dataset.tab;
+      simNote.innerHTML=notes[b.dataset.tab];
+    });
+  });
+
+  // 入口开关
+  document.querySelectorAll('#entrysw button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#entrysw button').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      body.dataset.entry=b.dataset.entry;
+    });
+  });
+
+  // 导轨与步骤（每个 block 独立）
+  var status={1:'准备素材',2:'智能检测',3:'设计稿校对',4:'可生成'};
+  var nextBtn={1:'审查原文与译文',2:'开始设计稿校对',3:'生成当前语言版本（22 个对象将替换）',4:''};
+  document.querySelectorAll('.block').forEach(function(blk){
+    var rail=blk.querySelector('.rail');
+    if(!rail) return;
+    var abStatus=blk.querySelector('.ab-status');
+    var abNext=blk.querySelector('.ab-next');
+    rail.querySelectorAll('.st').forEach(function(st){
+      st.addEventListener('click',function(){
+        rail.querySelectorAll('.st').forEach(function(x){x.classList.remove('active')});
+        st.classList.add('active');
+        var n=st.dataset.go;
+        blk.dataset.step=n;
+        if(abStatus) abStatus.textContent=status[n];
+        if(abNext){
+          abNext.textContent=nextBtn[n]||'（交付步隐藏主按钮·执行入口在执行卡内）';
+          abNext.classList.toggle('off',!nextBtn[n]);
+        }
+      });
+    });
+  });
+
+  // 覆盖率矩阵：点格出明细
+  var detail=document.getElementById('covdetail');
+  if(detail){
+    detail.classList.add('on');
+    detail.innerHTML='<b>匹配明细（示例）</b>：覆盖率 <b>83%</b> · 可翻译文本 18 条 —— 严格匹配 15 · 空白等价 1 · 部分包含 0 · 未匹配 2 条（「限时优惠」×1、「Learn more」）。建议回到「智能检测 / 设计稿校对」逐条处理后再执行。点其他格子看对应数据。';
+    document.querySelectorAll('#covtable .cov').forEach(function(td){
+      td.addEventListener('click',function(){
+        var psd=td.dataset.psd,lang=td.dataset.lang,cov=parseInt(td.dataset.cov,10),texts=parseInt(td.dataset.texts,10);
+        if(cov===0){
+          detail.innerHTML='<b>'+psd+' · '+lang+'</b>：该设计稿尚未扫描（需重新扫描），先回到上方逐稿「扫描」；扫描完成后这里就地出覆盖率（加入参考细口径）。';
+          detail.classList.add('on');
+          return;
+        }
+        var strict=Math.round(texts*(cov/100));
+        var rest=texts-strict;
+        detail.innerHTML='<b>匹配明细（示例）</b>：'+psd+' · '+lang+' —— 覆盖率 <b>'+cov+'%</b> · 可翻译文本 '+texts+' 条 —— 严格匹配 '+strict+' · 空白等价 '+(rest>1?1:rest)+' · 部分包含 0'+(rest>1?' · 未匹配 '+(rest-1)+' 条（点开看清单）':'')+'。建议回到「智能检测 / 设计稿校对」逐条处理后再执行。';
+        detail.classList.add('on');
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

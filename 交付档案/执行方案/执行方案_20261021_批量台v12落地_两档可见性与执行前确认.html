@@ -1,0 +1,210 @@
+<title>批量台 v12 落地 · 两档可见性与执行前确认</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:60ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:640px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.gray{background:var(--sunk);color:var(--muted)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.warn{background:var(--warn-soft);border-color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px}
+.gate .num{font-family:var(--font-mono);font-size:.95rem;font-weight:500;color:var(--accent);background:var(--accent-soft);min-width:34px;height:32px;padding:0 8px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate h3{margin:0;font-size:.95rem;font-weight:600}
+.gate p{font-size:.88rem;color:var(--ink-2);max-width:72ch}
+.gate.hi{border-color:var(--accent)}
+.gate.hi .num{background:var(--accent);color:var(--surface)}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>执行方案</span><span class="sep">/</span><span>批量台 v12 落地</span><span class="sep">/</span><span>2026-10-21</span></p>
+  <h1>两档可见性与执行前确认：已按方案执行</h1>
+  <p class="standfirst">对抗式审查找出 11 处「方案说得通、代码里落不下去」的地方，逐条处置后施工。结论：<strong>四条全部落地，门全绿；单稿档的既有渲染一个节点都没动。</strong></p>
+  <div class="meta"><span>基线 worktrees/develop@670f7cb</span><span>tsc rc=0</span><span>eslint 0 error</span><span>新门 44 条断言</span><span>既有 7 个 smoke 全绿</span><span>未提交 · 未推 · 未部署</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>一句话结论</h2>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p><strong>多稿档第一次在屏幕上说出「这一批 12 个」，而且按主按钮之前必须先看一眼范围。</strong></p>
+    <ul>
+      <li><strong>② 范围条</strong>：切换器右边常驻 —— <code>这份稿：xxx.psd</code> / <code>这一批：12 个设计稿 · 已扫描 9 · 3 个待扫描</code>。</li>
+      <li><strong>③ 状态带</strong>：写成 <code>batchMode ? 集合语义 : 原样</code>，单稿分支 12 行既有 JSX <strong>逐字未改</strong>。</li>
+      <li><strong>⑥ 主按钮</strong>：多稿 <code>开始执行（本批 12 份 · 逐份）</code>；单稿按钮不动（它的 N 是语言数）。</li>
+      <li><strong>D1 前置确认</strong>：两个入口都先弹确认，<code>取消，先不开始</code> / <code>确认并开始</code>；确认前不冻结、不写盘；框里明写「开始之后不能撤销 / 没有 PSD 备份」。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>对抗式审查：11 条发现与处置</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>发现</th><th>证据</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F1</td><td><b>「单稿档逐字节不变」与 ② 自相矛盾</b>：范围条本身要在单稿档显示新节点</td><td>方案 §7 的不变式 vs ② 的验收</td><td><b>重定义</b>：保护「既有节点」，② 声明为纯增量</td></tr>
+        <tr><td class="mono">F2</td><td><b>状态带不能搬「全部扫描」</b>：队列有单例守卫，另起一套＝两次扫描同一稿</td><td class="mono">design-file-card.tsx:742 / :1231</td><td>只给「去扫描（还有 N 个）」跳第 1 步（<code>workbench-view.tsx:2736-2744</code>）</td></tr>
+        <tr><td class="mono">F3</td><td><b>单稿按钮的 N 是语言数不是份数</b></td><td class="mono">execute-step.tsx:2745-2747</td><td>⑥ 只改多稿卡片（<code>:2432</code>）</td></tr>
+        <tr><td class="mono">F4</td><td><b>份数不能用进度索引</b>：越界会被夹回</td><td class="mono">execute-step.tsx:2263-2266</td><td>份数一律取 <code>totalEntries</code></td></tr>
+        <tr><td class="mono">F5</td><td><b>误触不可逆</b>：写进 PSD 的内容没有还原手段</td><td class="mono">siteContent.ts:423 / cancel/route.ts:3</td><td>D1 落在派发之前，文案不许暗示能撤销</td></tr>
+        <tr><td class="mono">F6</td><td><b>TOCTOU</b>：确认框开着时范围可能变</td><td>覆盖率放行是勾选；列表可增删</td><td>范围指纹 + 变了就禁用确认（<code>:1964</code> / <code>:2274</code>）</td></tr>
+        <tr><td class="mono">F7</td><td><b>双确认顺序不能颠倒</b>：D1 不能绕过覆盖率闸</td><td class="mono">execute-step.tsx:2405（disabled 仍含 coverageGateBlocked）</td><td>D1 的 run 只是原函数，不参与任何门</td></tr>
+        <tr><td class="mono">F8</td><td><b>没有渲染快照闸</b></td><td>scripts 全是静态断言 + API smoke</td><td>用项目既有静态合同测试做唯一自动门；渲染级登记为残留风险</td></tr>
+        <tr><td class="mono">F9</td><td><b>批量档不能丢每稿重扫</b></td><td class="mono">design-file-card.tsx:538-560</td><td>合同测试钉死「队列仍在文件卡里」</td></tr>
+        <tr><td class="mono">F10</td><td><b>可访问性</b>：不能只靠颜色</td><td>—</td><td>色点 aria-hidden，语义全走文本；确认框用 Radix Dialog</td></tr>
+        <tr><td class="mono">F11</td><td><b>「N 项待处理」是当前稿的数</b>，与批次计数并排会被读成同一口径</td><td class="mono">workbench-view.tsx:941 / :2811</td><td>多稿档加「本稿 」前缀；单稿档渲染不变</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>五条不变式（回归判据）</h2>
+  <div class="gates">
+    <div class="gate hi"><div class="num">1</div><div class="body"><h3>单稿档既有节点逐字不变</h3><p>证据：<code>git diff</code> 里单稿分支只多出 <code>) : (</code> 和 <code>)}</code> 两行，分支内部 0 行改动（<code>workbench-view.tsx:2747-2789</code>）。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>计数只有一个判据</h3><p><code>isMultiPsdEntryScanned</code>（<code>psd-selection.ts:111</code>），不另写 <code>state === 'prepared'</code>。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>扫描队列只有一个 owner</h3><p>在 <code>design-file-card.tsx</code> 内部；状态带只做跳转。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>不可逆边界写在用户看得见的地方</h3><p>确认框里「开始之后不能撤销」「没有 PSD 备份」是硬文案，不许删。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>确认之前零副作用</h3><p>D1 只 <code>setScopeConfirm</code>，不调 API、不冻结、不写盘。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行顺序（实际按这个做的）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>阶段</th><th>内容</th><th>闸 / 判据</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">S0</td><td>核对基线（HEAD / 工作树）</td><td>只动授权文件；同文件他人未提交改动不碰</td><td><span class="tag ok">670f7cb</span></td></tr>
+        <tr><td class="mono">S1</td><td>② 范围条</td><td>纯增量节点，两档各有话术</td><td><span class="tag ok">落地</span></td></tr>
+        <tr><td class="mono">S2</td><td>③ 状态带按档分支</td><td>单稿分支零改动</td><td><span class="tag ok">落地</span></td></tr>
+        <tr><td class="mono">S3</td><td>⑥ 多稿主按钮带份数</td><td>单稿文案不动</td><td><span class="tag ok">落地</span></td></tr>
+        <tr><td class="mono">S4</td><td>D1 确认框 + 两个入口</td><td>取消出口 / 不可逆边界 / 指纹防 TOCTOU</td><td><span class="tag ok">落地</span></td></tr>
+        <tr><td class="mono">S5</td><td>验证</td><td>tsc / eslint / 新门 / 7 个既有 smoke</td><td><span class="tag ok">全绿</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">为什么这个顺序</span><p>②③ 是纯展示，任何时刻可单独回滚；D1 改的是「点下去是否立刻派发」，放最后——前面全绿了再动。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>用户看到的变化</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>位置</th><th>单个设计稿</th><th>多个设计稿</th></tr></thead>
+      <tbody>
+        <tr><td>切换器右侧</td><td><code>● 这份稿：SKU-AX1001_主图.psd</code></td><td><code>● 这一批：12 个设计稿 · 已扫描 9 · 3 个待扫描</code></td></tr>
+        <tr><td>顶部状态带</td><td>原样（文件名 + 扫描状态 + 解析名 + N 个语言 + 已对齐）</td><td><code>● 12 个设计稿 · 9 个已扫描 · 3 个待扫描</code> ＋ <code>去扫描（还有 3 个）</code> ＋ <code>本稿 N 项待处理</code></td></tr>
+        <tr><td>第 4 步主按钮</td><td><code>开始执行（3 个语言）</code>（原样）</td><td><code>开始执行（本批 12 份 · 逐份）</code>；执行中 <code>第 3/12 个</code></td></tr>
+        <tr><td>点主按钮</td><td>先弹确认：设计稿 / 语言 / 替换行数 / 预计费用</td><td>先弹确认：本批 N 份 / 共 M 个语言格 / 费用按受理时报价冻结</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>验证（真实命令与真实退出码）</h2>
+<pre>npx tsc --noEmit --incremental false                  → rc=0
+npx eslint execution-scope-dialog.tsx execute-step.tsx workbench-view.tsx
+                                                      → 0 error / 7 warning（既有 a11y label，非本轮）
+npm run test:workbench-scope                          → ok (44 assertions)   rc=0
+npm run test:workbench-ui-contract                    → ok                    rc=0
+npm run test:batch-workbench-guards                   → 37 checks             rc=0
+npm run test:batch-workbench-logic                    → 108 checks            rc=0
+npm run test:batch-workbench-flag                     → 9 checks              rc=0
+npm run test:workbench-flow                           → ok                    rc=0
+npm run test:execute-step-reset                       → PASS                  rc=0
+npm run test:batch-progress-count-contract            → all invariants passed rc=0</pre>
+  <div class="callout ok"><span class="lb">新门 44 条怎么分的</span><p>A ②（节点 / 两档话术 / 位置）｜B ③（分支写法 / 单稿 5 个既有标记 / 唯一判据 / 不许第二套队列）｜C ⑥（份数 / 进度 / 单稿不被拼接）｜D D1（两个入口 / 不再直接派发 / 指纹重算 / stale / 收口唯一）｜E 不做项（无「停止这一批」/ 无「撤销已写入」/ 无 cancelBatch / 服务端语义未变 / 无批次级路由）｜F 测试入口已登记。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>不做项（不是遗漏）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>为什么不做</th></tr></thead>
+      <tbody>
+        <tr><td><b>C1 停止</b></td><td>需要批次级后端取消语义 + 高风险状态机门禁 + 合同变更四层同步；现有取消只释放 <code>reserved</code>（<code>cancel/route.ts:3</code>），没有批次级入口。半成品＝按钮点了没反应，比没有更坏</td></tr>
+        <tr><td><b>C2 取消并退回</b></td><td>同上，且要与 <code>execution-batch.ts</code> 的结算口径同批改，必须走合同变更纪律（<code>test:batch-row-contract</code> + <code>test:trust-chain</code>）</td></tr>
+        <tr><td><b>C3 撤销已写入</b></td><td><b>产品没有 PSD 备份</b>（<code>siteContent.ts:423</code> 只让用户自己备份），没有还原源。承诺撤销＝撒谎</td></tr>
+        <tr><td><b>P1 默认密度</b></td><td>折叠会隐藏条目，属 Drift Guard #2/#3 敏感操作，需要单独验收；本轮先不叠风险</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>残留风险</h2>
+  <div class="callout warn"><span class="lb">如实列</span>
+    <p><b>1. 没有渲染级回归</b>：门是静态源码断言，不是 DOM 快照。建议下一步补最小渲染 harness，只跑 4 条：单稿 chip / 多稿 chip / 两档状态带 / 确认框按钮。</p>
+    <p><b>2. 没有浏览器实测</b>：dev server 需要共享开发库与登录态，本轮未启动，避免碰共享库。所以「看起来对不对」只有源码与文案层面的证据。</p>
+    <p><b>3. 批量确认框没有预估金额</b>：每稿行数各自报价，前端拿不到统一数，文案如实写「按受理时报价并冻结」。</p>
+    <p><b>4. 未提交</b>：工作树里混着其他会话的改动，提交会把别人的半成品一起带上。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>回滚</h2>
+  <div class="callout"><span class="lb">四处独立，可单独撤</span>
+    <p>① <code>git checkout -- src/components/workbench/workbench-view.tsx</code>（撤 ②③）；② 删 <code>execution-scope-dialog.tsx</code> + 撤 <code>execute-step.tsx</code> 的 D1 hunk；③ 删 <code>scripts/smoke-workbench-scope.mjs</code> + <code>package.json</code> 那一行。</p>
+    <p><b>注意</b>：<code>execute-step.tsx</code> 里有别人的未提交改动，只能按 hunk 撤，不许整文件 checkout。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>与权威 Spec 的关系</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>维度</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag ok">MISSING</span></td><td>无。四步仍是四步（<code>siteContent.ts:430-434</code>），没有新增步骤</td></tr>
+        <tr><td><span class="tag warn">PARTIAL</span></td><td>D1 只覆盖「派发前确认」，不覆盖「执行中停止」——明确边界，不是假装做完</td></tr>
+        <tr><td><span class="tag ok">CONTRADICTS</span></td><td>无。<code>workbench-flow.md:10</code> 要求第 4 步「确认语言、文件名、保存位置、费用并启动真实生成」，确认框正是把这四项摆出来</td></tr>
+        <tr><td><span class="tag ok">UNREQUESTED</span></td><td>无。②③⑥ 来自 v12 方案，D1 来自您原话「不小心按到…没有取消按钮」</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <span>改动文件：<code>workbench-view.tsx</code>（②③）、<code>execute-step.tsx</code>（⑥D1）、<code>execution-scope-dialog.tsx</code>（新）、<code>smoke-workbench-scope.mjs</code>（新）、<code>package.json</code>（+1 script）。</span>
+  <span>未提交 · 未推 · 未部署 · 支付 flag 未动 · 未碰共享库。</span>
+  <span>同文件内他人未提交的「本地内存闸」改动（<code>LOCAL_MEMORY_LOW</code> 等）本轮未触碰。</span>
+</footer>
+</div>

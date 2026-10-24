@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生产 manifest 拒绝修复 · 复验与同类卡点 · 2026-10-21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-21 08:4x</span><span class="sep">/</span><span>风险档 High</span><span class="sep">/</span><span>Round 3/3</span></div>
+  <h1>生产 manifest 拒绝：测试站那版没修好，补修在本地</h1>
+  <p class="standfirst">要回答的问题只有一个：<strong>2026-10-20 的修复上线后，用户还会不会卡在同一个地方</strong>。答案是会——测试站上的 <code class="mono">c3e3247</code> 只拦了"确认绑定 / 排除行"里的编号，没拦真正上送的 <code class="mono">translations[].rowId</code>。补修三笔已跑通，但两站都还没部署。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：打回（被审 c3e3247）｜补修版有条件放行</span>
+  <p><strong>一句话根因：</strong>浏览器闸的字段清单里没有 <code class="mono">translations[].rowId</code>，而同一条注释和同一份冒烟还把这个错误前提<strong>锁成了"必须放行"</strong>；助手侧 <code class="mono">binding-core.js:1068</code> 把 rowId 原样搬进 <code class="mono">fragmentRowIds</code>，清单 <code class="mono">:168</code> 照旧硬拒。测试越绿，越说明门只锁住了它想锁的形状。</p>
+</div>
+
+<div class="contract">
+  <div><b>范围</b>：develop <span class="mono">c3e3247..51cb265</span>；被审对象＝测试站 <span class="mono">c3e3247</span>，补修未部署</div>
+  <div><b>改动</b>：补修 3 提交 / 9 文件 / <b>+94 −26</b>；审查只读，另建 6 个探针</div>
+  <div><b>已证实</b>：4 条（Important 3 ／ Nit 1）</div>
+  <div><b>未决</b>：4 条 ｜ <b>更正</b>：1 条（我自己的错误前提）</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>被审版到底修没修好：没有</h2>
+  <div class="tablewrap"><table>
+    <tr><th>站点</th><th>commit</th><th>状态</th><th>对用户意味着什么</th></tr>
+    <tr><td>测试站 test.tuyigf.com</td><td class="code">c3e3247d4fd8…</td><td><span class="tag warn">被审·未修好</span></td><td>中文 / 空格 / 全角编号的表仍会在清单阶段整批拒</td></tr>
+    <tr><td>生产站 tuyigf.com</td><td class="code">6ff5c3c1414f…</td><td><span class="tag bad">不含任何修复</span></td><td>用户此刻仍会卡住：Photoshop 不启动，取消/完成都点不动</td></tr>
+    <tr><td>本地 develop</td><td class="code">51cb265</td><td><span class="tag ok">补修已跑通</span></td><td>未部署；部署后才有意义</td></tr>
+  </table></div>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">F-1</span><span class="tag bad">Important</span><span class="muted mono">本次引入的"半修"</span></div>
+      <p><strong>失效场景：</strong>用户的「记录编号」是中文 ⇒ 浏览器拼出 <code class="mono">record:第一行</code> ⇒ 闸放行 ⇒ 助手编进 <code class="mono">fragmentRowIds</code> ⇒ 清单 <code class="mono">MANIFEST_FRAGMENT_ROWS_INVALID</code> ⇒ 与修复前完全同形。</p>
+      <p class="fix"><strong>证据：</strong><code class="mono">c3e3247:local-assistant-client.ts:92-97</code>（类型里没有 translations）；<code class="mono">c3e3247:smoke-row-id-whitelist.mjs:162-167</code>（<code class="mono">assert.doesNotThrow</code> 锁死错误前提）；<code class="mono">binding-core.js:1068/1108</code>；<code class="mono">execution-manifest.js:9/168</code>；探针 <code class="mono">probe-gap-final</code>：闸 <code class="mono">BLOCK</code>，助手仍 <code class="mono">REJECT</code>。</p>
+      <p class="fix"><strong>处置：</strong><code class="mono">2c06da3</code> 把闸扩到 translations / translationsByLanguage / targetsByLanguage（<code class="mono">:99-127</code>），测试 (18)/(18b)/(18c) 翻面成 <code class="mono">assert.throws</code>。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-2</span><span class="tag bad">Important</span><span class="muted mono">错误码丢失</span></div>
+      <p><strong>失效场景：</strong>闸抛的是 <code class="mono">ExecutionRowIdError extends TypeError</code>，而界面两处 catch 只认 <code class="mono">LocalAssistantRequestError</code> ⇒ 机读码变成 null，系统性分类与漏斗永远收不到，中文文案也落不下去。</p>
+      <p class="fix"><strong>证据：</strong><code class="mono">execute-step.tsx:1310</code>、<code class="mono">:2028-2031</code>、<code class="mono">row-identifier.ts:54</code>；新码已登记在 <code class="mono">batch-error-policy.ts:53/196</code>，但收不到。</p>
+      <p class="fix"><strong>处置：</strong><code class="mono">2c06da3</code> 在闸内换成 <code class="mono">requestError(message, EXECUTION_ROW_ID_UNSUPPORTED_CODE)</code>（<code class="mono">:146</code>）。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-3</span><span class="tag bad">Important</span><span class="tag warn">存量·同类</span></div>
+      <p><strong>失效场景：</strong>字距拉到 1000%（10000‰em）⇒ 浏览器接受并持久化 ⇒ 助手 <code class="mono">TYPOGRAPHY_INVALID/tracking-range</code>。和行标识同族：浏览器放行、助手在冻结积分之后才拒。</p>
+      <p class="fix"><strong>证据：</strong>本会话现跑探针：9999 ok／10000 拒／−1000 ok／−1001 拒；源头 <code class="mono">typography-profile.js:16</code>。</p>
+      <p class="fix"><strong>处置：</strong><code class="mono">a75ce4d</code> 把浏览器上限改成 9999（<code class="mono">typography-persistence.ts:53</code>、面板 <code class="mono">:498</code>、换算夹紧），冒烟新增三条夹紧断言。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-4</span><span class="tag warn">Nit</span><span class="tag warn">存量</span></div>
+      <p><strong>失效场景：</strong>排障快照落盘失败只回 503，日志里没有原因；磁盘满 / 权限 / 路径不存在三种情况长得一模一样。</p>
+      <p class="fix"><strong>处置：</strong><code class="mono">51cb265</code> 只记录 errno 码（<code class="mono">route.ts:71-74</code>），不改用户可见行为、不落正文。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>还有没有类似的卡点：逐条排查</h2>
+  <div class="tablewrap"><table>
+    <tr><th>怀疑</th><th>判据</th><th>结论</th></tr>
+    <tr><td>记录编号重复会不会又整批拒</td><td class="code">csv.ts:775-779 硬抛；助手探针也抛 V15_TRANSLATION_ROW_ID_DUPLICATE</td><td><span class="tag ok">导入就停</span> 不是隐藏卡点</td></tr>
+    <tr><td>空 rowId 会不会编出非法清单</td><td class="code">binding-core.js:468-470 → row-${position+1}</td><td><span class="tag ok">自动补合法 id</span></td></tr>
+    <tr><td>升级后旧决定带旧编号撞新闸</td><td class="code">workbench-revision.ts:53-58 摘要含 rowId；decision-persistence.ts:38-43 摘要不等即拒恢复</td><td><span class="tag ok">旧决定自动失效</span> 不构成部署回归</td></tr>
+    <tr><td>MASTER_FINGERPRINT_STALE</td><td class="code">全仓 grep 0 命中</td><td><span class="tag ok">码不存在</span> 怀疑作废</td></tr>
+    <tr><td>合并多语言表另造编号绕过闸</td><td class="code">merge-tables.ts:49/144 只做比较键，不回填 recordId</td><td><span class="tag ok">不绕过</span></td></tr>
+    <tr><td>陈旧 forcedBindings.ledgerEntryId</td><td class="code">探针：助手静默忽略并回落按原文绑定；浏览器取自当前 snapshot</td><td><span class="tag warn">未决</span> 未见真机路径</td></tr>
+    <tr><td>云端 review 三件套空值</td><td class="code">空缺即 EXECUTE_PREPARE_INPUT_INVALID（无细分原因）</td><td><span class="tag warn">未决</span> 缺 UI 级实测</td></tr>
+    <tr><td>逐语言失败文案是否说人话</td><td class="code">V15_* 码 → 文案映射未点击复现</td><td><span class="tag warn">未决</span></td></tr>
+  </table></div>
+  <div class="callout warn">
+    <strong>一条按人话说的结论：</strong>同类卡点里，真正会让用户"再卡一次"的只有行标识这一族（F-1/F-2）和字距上限（F-3）。其余要么在导入就停，要么有摘要失效兜底，要么根本没有这个码。没证的我不写成"没问题"——它们留在上表的"未决"里。
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>更正：我自己的错误前提</h2>
+  <div class="callout bad">
+    <p><strong>原说法（写进了 c3e3247 的注释与冒烟）：</strong>"助手不校 translations[].rowId，所以闸不得拦。"</p>
+    <p><strong>反证：</strong><code class="mono">binding-core.js:1068</code> / <code class="mono">:1108</code> / <code class="mono">:945</code> 把 rowId 原样搬进 <code class="mono">fragmentRowIds</code>；<code class="mono">execution-manifest.js:168</code> 硬拒；探针跑出编译结果与拒绝原文。</p>
+    <p><strong>新结论：</strong>那句话是错的，而且它让"测试全绿"变成了<strong>绿在错误前提上</strong>。旧断言已翻面，这一条记在本次审查的账上。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>本轮真实跑过的验证</h2>
+  <div class="tablewrap"><table>
+    <tr><th>命令 / 探针</th><th>结果</th></tr>
+    <tr><td class="code">npm run test:row-id-whitelist</td><td><span class="tag ok">RC=0</span> 语料 18 条…派发闸接线 5/5</td></tr>
+    <tr><td class="code">npx tsc --noEmit</td><td><span class="tag ok">RC=0</span></td></tr>
+    <tr><td class="code">npm run lint</td><td><span class="tag ok">RC=0</span> 35 warnings / 0 errors</td></tr>
+    <tr><td class="code">npm run test:error-message-contract</td><td><span class="tag ok">RC=0</span> all invariants passed</td></tr>
+    <tr><td class="code">npm run test:batch-row-contract</td><td><span class="tag ok">RC=0</span> all assertions passed</td></tr>
+    <tr><td class="code">node scripts/smoke-typography-picker.mjs</td><td><span class="tag ok">200 assertions passed</span></td></tr>
+    <tr><td class="code">vitest …typography-picker.test.tsx --pool=threads</td><td><span class="tag ok">7/7 passed</span></td></tr>
+    <tr><td class="code">probe-fixed-chain</td><td>中文编号 ⇒ <code class="mono">source:wb-bde6f3d2:1</code> ⇒ 助手 <code class="mono">assistantIdAccepted: true</code></td></tr>
+    <tr><td class="code">probe-gap（修后）</td><td>浏览器 <code class="mono">BLOCK</code>；助手清单 <code class="mono">REJECT</code> ⇒ 证明闸必要</td></tr>
+    <tr><td class="code">probe-typography-range</td><td>9999 ok／10000 拒／−1000 ok／−1001 拒</td></tr>
+  </table></div>
+  <div class="callout">
+    <strong>一次环境红，没有记成绿：</strong>默认的 <code class="mono">npm run test:typography-picker</code> 第一次 RC=1，原因是 vitest forks worker 60 秒未启动（<em>Failed to start forks worker…Timeout waiting for worker to respond</em>），不是断言失败；换 <code class="mono">--pool=threads</code> 后 7/7 通过。
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>部署状态与放行条件</h2>
+  <p>三笔补修只在本地 develop，<strong>没有部署到任何站点</strong>。没有直接发的原因有三条：develop 比 c3e3247 多 4 个无关提交；工作树里有别的会话未提交的改动；生产部署与翻 flag 是红线，需要明文授权。</p>
+  <ol class="plan">
+    <li><strong>A（推荐，最小面）：</strong>从生产基线 <code class="mono">6ff5c3c</code> 起发布分支，只 cherry-pick <code class="mono">2c06da3</code> / <code class="mono">a75ce4d</code> / <code class="mono">51cb265</code>，先测试站、后生产。</li>
+    <li><strong>B（整包）：</strong>develop 当前 HEAD 整体发测试站，接受那 4 个无关提交后再发生产；回归面更宽。</li>
+    <li><strong>放行四条件：</strong>① 至少 2c06da3 上测试站；② 用种子用户原表（脱敏副本）跑出"不再 MANIFEST_FRAGMENT_ROWS_INVALID"的回执；③ 生产部署有 Owner 明文授权；④ 发布后回读 runtime-provenance 确认 sha。</li>
+  </ol>
+</section>
+
+<div class="footer">
+  <div>证据基线：测试站 <span class="mono">c3e3247d4fd8068f438f89b091d1727378c03fc3</span>；生产站 <span class="mono">6ff5c3c1414ff09f3fc4bb8940c462aa3fb2e760</span>（2026-10-21 08:3x 现取 <span class="mono">/api/runtime-provenance</span>）。</div>
+  <div>补修提交：<span class="mono">2c06da3c8e9ac33927c9d18349db37b4a6c6404b</span> / <span class="mono">a75ce4dba7f6c73b8a8ac39d0f27777d1706484d</span> / <span class="mono">51cb2658d5c70b28338f69c3cad8fb440f151b56</span>。</div>
+  <div>覆盖缺口：未用真机 Windows 助手 + PS 22 跑用户原表；未部署；未做 UI 点击级复现；<span class="mono">scripts/risk_scan.sh</span> 在本仓不存在。</div>
+</div>
+
+</div>
+</body>
+</html>

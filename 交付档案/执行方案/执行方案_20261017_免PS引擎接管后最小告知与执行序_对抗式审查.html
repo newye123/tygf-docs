@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>免 PS 引擎接管后的最小告知与执行序 · 对抗式审查（2026-10-17）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.6vw,2.45rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0}
+p{margin:0;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--warn)}
+.verdict p{font-size:clamp(1.05rem,2.4vw,1.22rem);line-height:1.6;max-width:50ch;font-weight:500}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--bad)}
+.panel h3{color:var(--ink)}.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}.stat.ok .n{color:var(--ok)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card.block{border-left:3px solid var(--bad)}.card.heavy{border-left:3px solid var(--warn)}.card.mid{border-left:3px solid var(--line-strong)}.card.ev{border-left:3px solid var(--ok)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:70ch}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>最小告知口径落地</span><span class="sep">/</span><span>执行序重排</span></div>
+  <h1>界面不提引擎之后，必须改的是那 20 多处旧句子</h1>
+  <p class="standfirst">Owner 三条决定：界面只显示"扫描中"／继续 public fork 出厂／接受包体积涨到量级 ~56 MB。本轮先撤回我自己上一版那句界面告知——然后发现一个更硬的问题：<strong>产品里已有 20+ 处句子在断言"Photoshop 干了这件事"，引擎一接管它们当场变假话</strong>，其中 8 处印在客户拿到的报告里。</p>
+  <div class="meta"><span>2026-10-17</span><span>基线 develop <code>ee05c9a</code></span><span>铁律 <code>PROJECT_CONTEXT.md:70</code></span></div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">判词</span>
+    <p>您的方向和铁律不冲突——铁律要的是"未完成能力必须明确报错"，不是"用哪个引擎要报"。冲突的是那 20 多处替 Photoshop 表功的旧句：它们才是静默降级的真身。</p>
+    <div class="split">
+      <div class="panel yes"><h3>照常显示"扫描中"（合法）</h3><ul>
+        <li>正常跑通时不解释引擎、不点工具名</li><li>数据面照旧记引擎身份（<code>executorVersion</code> 已有落点，不新建）</li><li>符合您定过的「展示撤下≠证据撤下」</li>
+      </ul></div>
+      <div class="panel no"><h3>必须报错的三处（不能用"扫描中"糊）</h3><ul>
+        <li>引擎缺件／哈希未通过 ⇒ 如实失败并给可动作</li><li>引擎扫不出的层（智能对象／不可读文字层）⇒ 走既有聚合告知</li><li>扫描字段缺 2 项 ⇒ 登记不补 0</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">8</span><span class="k">客户交付报告里断言 Photoshop 的处数</span></div>
+    <div class="stat bad"><span class="n">11</span><span class="k">工作台界面句子处数（两个组件＋步骤页）</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">状态标签／接口投影／站点文案在说"等待 Photoshop"</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">会被改文案撞红的 smoke 门（须同笔更新）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>旧断言清单（本轮实测逐条取到）</h2>
+  <div class="cards">
+    <div class="card block"><div class="top"><span class="tag bad">交付件 8 处</span><span class="loc">download/local-assistant/report-renderer.js:41,42,514,524,580,676,685,721</span></div>
+      <p>错误码标题 <code>'Photoshop 执行失败'</code>／<code>'执行中断'</code>；行动指引两处 <code>'…请先在 Photoshop 编辑/栅格化后重新扫描'</code>；归因句 <code>'换行未在 Photoshop 生效'</code>、<code>'字体由 Photoshop 兜底'</code>、<code>'实际效果以 Photoshop 渲染为准'</code>。<strong>这是客户手里的那份文件</strong>——引擎接管后它把没参与的工具写成执行人，还给出去 PS 操作的指引。</p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">界面 11 处</span><span class="loc">execute-step.tsx:597,600,633,1638,1685,1727,2935 · design-file-card.tsx:630,1112,1221 · photoshop-step.tsx:566</span></div>
+      <p>含 <code>'V1.5 执行在 Photoshop 阶段未成功'</code>、<code>'Photoshop 阶段正在本机推进'</code>、队列状态标签 <code>'等待 Photoshop'</code>。注意 <code>design-file-card.tsx</code> 与 <code>execute-step.tsx</code> <strong>此刻在别会话的未提交现场里</strong>（实测 porcelain 含这两件）⇒ 必须串行，不能同写。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">接口与站点 4 处</span><span class="loc">photoshop/status/route.ts:51 · local-assistant-client.ts:552 · siteContent.ts:630 · server.js:4585</span></div>
+      <p><code>'已提交，等待 Photoshop…'</code>、<code>'正在等待 Photoshop 自动化与 JSX 往返验证'</code>，以及助手 <code>'Photoshop 未运行。请先启动 Photoshop，再重新扫描设计文件。'</code> ⇒ <strong>最后一句在没装 PS 的机器上是一条做不到的指令</strong>，属错指引而非缺告知。诊断文案 <code>server.js:1287</code> 保留（只在 PS 存在时走到）。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">守卫 2 处</span><span class="loc">scripts/smoke-report-coverage-honesty.mjs · scripts/smoke-display-denoise.mjs:48</span></div>
+      <p>前者断言报告原句，后者断言 <code>'Photoshop 未运行'</code> 原样透传。⇒ 改句子必须同笔改这两处断言，否则出厂门红；也就是说这次是<strong>文案合同变更</strong>，不是润色。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>文案处置（一律去主语或中性，不新增解释句）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><h3>错误码标题 → 去主语</h3><p><code>'本机执行失败'</code>／<code>'处理中断'</code>。不归功 PS，也不提引擎。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>行动指引 → 保指引去工具名</h3><p>"这些层本次不处理，需先栅格化后重新扫描"；"只重建报告，不会重新执行、不重复冻结积分"。用户照做即可，不需要知道谁在执行。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>技术归因 → 必须按引擎分形（不能一刀切）</h3><p><code>报告 :580 :721</code> 那几句陈述的是<strong>实测事实</strong>：PS 走 COM 实测渲染行数，引擎走自身读回，写成同一句就是把没测的说成测过。改法：报告输入带 <code>executorMode</code>（<strong>内部字段，界面不显示</strong>），两套措辞都不点引擎名。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>等待态标签 → 让它根本不该出现</h3><p>引擎可用时直接进正常"扫描中"；只有引擎缺件/校验不过才进失败态，文案统一 <code>'本机处理组件未就绪'</code>。保留"等待 Photoshop"会让没装 PS 的用户去找一个不存在的产品。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>既有判据不动</h3><p>报告面"新增告知节数＝0（对出厂件取差集）"继续成立——我们改句子、不加节，并给这条留负控。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>执行序（关键变化：C 与 D 同一班车）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">A</span><div class="body"><h3>移植 · 约半天 · 无悔</h3><p>新签 <code>worktrees/pc-port-20261017</code>，六处接线按 develop 现行行号重做。判据：<code>node --check</code>＋<code>test:pc-executor</code> 12/12＋<code>test:trust-chain</code> 整链 rc=0＋开关断路零变化。</p></div></div>
+    <div class="gate"><span class="num">B</span><div class="body"><h3>引擎身份闸 · 约半天＋真机一小时 · 阻断级</h3><p><code>EXECUTOR_VERSION</code> 运行时取；无哈希即拒；默认钉 <code>628268bb…c1c5fd1b</code>；负控喂未修版必拒；集成产物 PS 2021＋PS 22 双版开档、n≥3 母版。</p></div></div>
+    <div class="gate"><span class="num">C</span><div class="body"><h3>扫描兜底 · 1–2 天</h3><p><code>server.js:4582</code>／<code>:5243</code> 按 <code>executorMode</code> 分流，产出同构 <code>scan-observation.json</code>。判据：同母版双扫逐字段差集只允许 <code>leading</code>／<code>hangingPunctuation</code>，且如实登记不补 0。</p></div></div>
+    <div class="gate"><span class="num">D</span><div class="body"><h3>文案诚实化 · 0.5–1 天 · 与 C 同一笔提交同一班车</h3><p>§02 全清单＋两个 smoke 门断言同笔更新。理由：C 上线那一刻旧句就开始替没参与的工具表功，分两班车等于中间出一版假话。</p></div></div>
+    <div class="gate"><span class="num">E</span><div class="body"><h3>内置出厂包 · 约一天</h3><p>引擎改名 <code>tygf-engine.exe</code> 进 <code>{app}\bin\</code>；<code>licenses\</code> bundle（MIT＋Apache、NOTICE、ATTRIBUTION、OFL×2、SCOWL）；构建清单 <code>{commit, Cargo.lock sha256, exe sha256, 许可 bundle sha256}</code>；开源许可页（文件级，不是运行提示）；bump 3.7.15→3.7.16＋九文件一 exe 面。</p></div></div>
+    <div class="gate"><span class="num">F</span><div class="body"><h3>灰度与验收</h3><p>白名单挪服务端判定（同构 <code>feature-flags-store.ts:184</code>，不信本地 config）；一台<strong>真无 PS</strong> 机器走完：扫描→批量执行→打开客户报告核对→再用真 PS 开一次产物。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">我现在做什么</span>
+    <p>按作业模式 <strong>A→B 现在就开工</strong>（独立新树、旗标默认 false、不碰两站不翻 flag），交包附真实运行证据；C＋D 接续同班车；E 里"出安装包"可本地做，<strong>部署测试站仍需您一句</strong>。唯一还缺的输入：<strong>无 PS 验收用哪台机器</strong>——没有它，C/D/E 的全绿都只是本地绿。</p></div>
+</section>
+
+<footer>
+  <p>本轮实测：<code>grep -n 静默降级 AI_MEMORY/PROJECT_LOG…PROJECT_CONTEXT.md</code>（:70 原文）· <code>grep -rn</code> 全量 PS 断言扫盘（报告 8／界面 11／接口站点 4）· <code>grep -rln</code> 定位两处 smoke 守卫 · <code>git status --porcelain</code> 确认两文件在别会话现场 · 证据面 <code>executorVersion</code> 落点 <code>receipts.js:73/:107</code>、<code>v15-runner.js:168/:204/:280/:292</code></p>
+  <p>md 正本：<code>交付档案/执行方案/执行方案_20261017_免PS引擎接管后最小告知与执行序_对抗式审查.md</code>｜报告人 Qoder｜2026-10-17</p>
+</footer>
+
+</div>
+</body>
+</html>

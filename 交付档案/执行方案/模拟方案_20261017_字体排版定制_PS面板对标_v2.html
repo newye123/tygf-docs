@@ -1,0 +1,347 @@
+<title>字体排版定制 v2 · PS 面板对标与换行路线对照</title>
+<style>
+:root{--bg:#f5f6f8;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e4f3ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--teal:#0f6b63;--teal-soft:#e3f2f0;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--teal:#6fd5c8;--teal-soft:#0f2926}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7}
+.wrap{max-width:1140px;margin:0 auto;padding:clamp(18px,4vw,40px) clamp(12px,3vw,32px) 70px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(1.35rem,3.3vw,1.95rem);line-height:1.25;margin:.2em 0 .15em}
+.sub{margin:0;color:var(--ink-2);max-width:82ch}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:.83rem;font-family:var(--body)}
+.tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(13px,2.2vw,22px);display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:1.05rem}h3{margin:0 0 4px;font-size:.92rem}
+.hint{margin:0;color:var(--muted);font-size:.81rem}
+.grid{display:grid;gap:14px}@media(min-width:920px){.c2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cw{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;padding:2px 6px;border-radius:5px;background:var(--sunk);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}.badge.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.mono{font-family:var(--mono);font-size:.75rem}
+table{border-collapse:collapse;width:100%;font-size:.79rem}
+th,td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;background:var(--sunk)}
+input[type=text],select,textarea{width:100%;min-height:31px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:4px 8px;font-family:var(--body);font-size:.84rem}
+textarea{min-height:58px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:3px}label.f>span{font-size:.69rem;color:var(--muted)}
+input[type=range]{width:100%}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:6px 11px;font-size:.79rem;cursor:pointer;font-family:var(--body)}
+.btn[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.langtab{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 9px;font-size:.76rem;cursor:pointer}
+.langtab[aria-pressed=true]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.pspanel{border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;background:var(--sunk)}
+.pshead{display:flex;border-bottom:1px solid var(--line-strong);background:var(--surface)}
+.pshead button{border:none;background:transparent;color:var(--ink-2);padding:7px 15px;font-size:.8rem;cursor:pointer;border-right:1px solid var(--line);font-family:var(--body)}
+.pshead button[aria-selected=true]{background:var(--sunk);color:var(--ink);font-weight:600}
+.psbody{padding:12px;display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.knob .kh{display:flex;gap:6px;align-items:center;font-size:.68rem;color:var(--muted);margin-bottom:2px}
+.knob .kh b{color:var(--ink-2);font-weight:600;font-size:.71rem}
+.knob.off{opacity:.45}
+.canvas{position:relative;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);padding:16px 14px 14px;overflow:hidden}
+.frame{position:relative;border:1px dashed var(--accent);background:var(--accent-soft);overflow:hidden}
+.cap{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bad)}
+.capl{position:absolute;top:-14px;font-size:.6rem;color:var(--bad);font-family:var(--mono);white-space:nowrap}
+.metrics{display:flex;gap:5px 14px;flex-wrap:wrap;font-size:.74rem;color:var(--ink-2)}
+.metrics b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.note{border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:9px 11px;font-size:.79rem}
+.note.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.receipt{border-left:3px solid var(--line-strong);padding:5px 0 5px 10px}.receipt .t{font-size:.79rem;font-weight:600}.receipt .d{font-size:.71rem;color:var(--muted)}
+.receipt.ok{border-color:var(--ok)}.receipt.warn{border-color:var(--warn)}.receipt.bad{border-color:var(--bad)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:.71rem;padding-top:13px}
+.verdict{border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:.88rem}
+.hidden{display:none!important}
+</style>
+<div class="wrap">
+<header>
+<p class="eyebrow">图译工坊内测版 · 模拟件 v2 · 2026-10-17 · 判定全部来自本机 PS 22.0.0 探针 A—H4</p>
+<h1>拿 Photoshop 的「字符 / 段落」面板当尺子：哪些旋钮真能拧，哪些是摆设</h1>
+<p class="sub">你发的两张截图我按<b>版式</b>读（分组与控件位置），里面的数值不作依据。做法：从本机 Photoshop 脚本字典 <span class="mono">omv.xml</span> 取出 <span class="mono">TextItem</span> 的 57 个真属性，逐个在 PS 22 上试「能否访问 / 能否写 / 读回是否相等 / 包围盒是否真变」，再对着截图上那 26 个控件出表。</p>
+<div class="row" style="margin-top:9px">
+<span class="badge ok">可写且真改版面 10</span><span class="badge warn">可写但本轮看不出效果 25</span><span class="badge bad">字典有、访问即抛错 11</span><span class="badge bad">枚举值本版本不存在 4</span><span class="badge">另 2 项成员名未穷尽＝未核实</span>
+</div>
+</header>
+
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" aria-selected="true" data-view="t1">① 面板对标表</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t2">② 提案面板 v2 + 画布模拟</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t3">③ 新线索：让 PS 自己换行</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t4">④ GitHub 与业界参考</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t5">⑤ 探针台账</button>
+</div>
+
+<section id="t1">
+<div><h2>① 截图里 26 个控件逐个对号</h2><p class="hint">「实测」列＝本机 PS 22 真跑出来的（写→读回→包围盒）；「我们」列＝建议取舍。注意一处方法学坦白：我用<b>包围盒尺寸</b>当"生效"代理判据，所以只挪位置不改大小的旋钮（基线偏移、缩进、对齐）会被记成"没变"，这类只判"可写＋读回"，不判"生效"。</p></div>
+<div class="card tight" style="padding:0;overflow:auto">
+<table><thead><tr><th>PS 面板控件</th><th>DOM 属性</th><th>PS 22 实测</th><th>我们做不做</th></tr></thead><tbody>
+<tr><td>字体族 + 字体样式</td><td class="mono">font</td><td><span class="badge ok">可写</span> 但只认 PostScript 脸名；显示名静默换脸</td><td><b>做</b>：合并成一个"脸"选择器</td></tr>
+<tr><td>字号</td><td class="mono">size</td><td><span class="badge ok">可写生效</span> 12→20pt，宽 557→929</td><td><b>藏</b>（红线：不许自动缩字号）</td></tr>
+<tr><td>行距</td><td class="mono">useAutoLeading / leading / autoLeadingAmount</td><td><span class="badge ok">可写生效</span> 关自动后 60pt ⇒ 高 55→133；不关＝静默无效</td><td><b>做</b>：四档，落 autoLeadingAmount</td></tr>
+<tr><td>字距调整（视觉/罗马/度量）</td><td class="mono">autoKerning</td><td><span class="badge ok">可写生效</span> 成员是 MANUAL / METRICS / <b>OPTICAL</b>；写 OPTICAL 实测宽 585→580。<span class="badge bad">「罗马」档不存在</span>（我第一版按 ROMAN 试，报无效枚举值——是我猜错名字）</td><td><b>做</b>：三档改两档（度量／视觉），默认跟随</td></tr>
+<tr><td>字距（VA 图标）</td><td class="mono">tracking</td><td><span class="badge ok">可写生效</span> 500 ⇒ 122→242；口径 1/1000 em 实测对上</td><td><b>做</b>：滑块</td></tr>
+<tr><td>水平缩放 %</td><td class="mono">horizontalScale</td><td><span class="badge ok">可写生效</span> 150 ⇒ 宽 557→836</td><td><b>藏</b>：拉伸字形＝变形，只作显式勾选</td></tr>
+<tr><td>垂直缩放 %</td><td class="mono">verticalScale</td><td><span class="badge ok">可写生效</span> 150 ⇒ 高 13→20</td><td><b>藏</b>：同上</td></tr>
+<tr><td>基线偏移</td><td class="mono">baselineShift</td><td><span class="badge warn">可写读回</span> 8 pt 往返（尺寸代理看不出）</td><td><b>高级</b>折叠</td></tr>
+<tr><td>颜色</td><td class="mono">color</td><td><span class="badge ok">可写</span>（本轮未测像素）</td><td><b>不做</b>：改色属设计决定，不是排版</td></tr>
+<tr><td>全部大写 / 小型大写</td><td class="mono">capitalization</td><td><span class="badge bad">不可用</span> 枚举类真名是 <span class="mono">TextCase</span>，实测只有 <span class="mono">NORMAL</span> 一个成员；写 ALL / SMALL 报"无效枚举值"</td><td><b>不做</b>（这台机器的 PS 22 不给）</td></tr>
+<tr><td>删除线 / 下划线 / 上标 / 下标</td><td class="mono">strikeThru / underline</td><td><span class="badge warn">半开</span> 读回是 <span class="mono">STRIKEOFF / UNDERLINEOFF</span> ⇒ 成员确实存在，但"开"档的名字我<b>没穷尽</b>（试 STRIKE_THRU / UNDERLINE 均报无效）＝未核实</td><td><b>不做</b>（译文用不上）</td></tr>
+<tr><td>连字 fi / st / 旧体</td><td class="mono">ligatures / alternateLigatures / oldStyle</td><td><span class="badge warn">前两个可写</span>（默认 ligatures=true）；<span class="badge bad">oldStyle 访问抛错</span></td><td><b>高级</b>：只给"连字 开/关"</td></tr>
+<tr><td>语言下拉</td><td class="mono">language</td><td><span class="badge bad">读就抛"内部错误"</span>，写未验</td><td><b>不做</b>（我们已有语种轴）</td></tr>
+<tr><td>抗锯齿（锐利…）</td><td class="mono">antiAliasMethod</td><td><span class="badge ok">可写</span> 默认 CRISP，可写 SHARP；成员 NONE/SHARP/SMOOTH/CRISP</td><td><b>不做</b>：渲染细节非排版</td></tr>
+<tr><td>九宫对齐</td><td class="mono">justification</td><td><span class="badge ok">可写生效</span> 枚举 7 个值齐（含两端对齐三档）</td><td><b>高级</b>：默认"跟随原图层"</td></tr>
+<tr><td>首行缩进 / 左缩进 / 右缩进</td><td class="mono">firstLineIndent / leftIndent / rightIndent</td><td><span class="badge warn">可写读回 0</span> 点文本下写了仍是 0 pt ⇒ 只对段落文本有意义</td><td><b>不做</b>（除非走 ③ 那条路）</td></tr>
+<tr><td>段前距 / 段后距</td><td class="mono">spaceBefore / spaceAfter</td><td><span class="badge warn">可写读回 0</span> 同上</td><td><b>不做</b></td></tr>
+<tr><td>避头尾法则（JIS 宽松…）</td><td class="mono">—（DOM 无 kinsoku）</td><td><span class="badge bad">无入口</span>；最接近的 <span class="mono">hangingPuntuation</span> 可写（悬挂标点，拉丁向）</td><td><b>不做</b>：只能走 ActionManager，未验</td></tr>
+<tr><td>段落合成器</td><td class="mono">textComposer</td><td><span class="badge ok">可切两档</span> 成员真名 <span class="mono">ADOBESINGLELINE / ADOBEEVERYLINE</span>；写 EVERYLINE 实测 147×13→149×13。<span class="badge bad">东亚合成器不存在</span>（我第一版试 JAPANESEWIDE 报无效）</td><td><b>高级</b>：单行 vs 逐行（影响整段折行质量）</td></tr>
+<tr><td>不换行（noBreak）</td><td class="mono">noBreak</td><td><span class="badge bad">可写但是雷</span> 段落文本里写 true ⇒ 包围盒 <b>147×13 变 0×0</b>（文字整层消失，且不抛错）</td><td><b>不做</b>，并写进助手侧禁改清单</td></tr>
+<tr><td>间距组合设置</td><td class="mono">minimum/desired/maximumGlyph·Letter·Word Scaling</td><td><span class="badge ok">九项全可写</span>；<span class="mono">minimumLetterScaling=80</span> 在段落文本下 147→137（变窄），在点文本下却 557→693（变宽）⇒ <b>方向随文本类型翻转，语义未定性</b></td><td><b>待议</b>：可能是压行宽的第二杠杆，先补一轮定向实验再说</td></tr>
+<tr><td>连字复选框（段落）</td><td class="mono">hyphenation + hyphenate*</td><td><span class="badge warn">总开关可写</span>；<span class="badge bad">6 个子参数访问全抛"该功能可能无法在此版本使用"</span></td><td><b>不做</b>：细档拿不到</td></tr>
+<tr><td>竖排（文字方向）</td><td class="mono">direction</td><td><span class="badge ok">可写生效</span> VERTICAL ⇒ 557x13 变 14x557</td><td><b>待议</b>：日文有真需求，但与我们的硬换行写回语义未对过</td></tr>
+<tr><td>文本形状 / 变形 warp</td><td class="mono">warpStyle / warpBend</td><td><span class="badge bad">warpStyle 成员不含 BEND</span>（实测有效成员 NONE/TWIST/BULGE/FISHEYE/FLAG）；warpBend 可写但无可见变化</td><td><b>不做</b></td></tr>
+<tr><td>（面板上没有）文字类型</td><td class="mono">kind</td><td><span class="badge ok">可写</span> POINTTEXT→PARAGRAPHTEXT，随后 width 可设 ⇒ PS 自己换行</td><td><b>见 ③</b>：新线索，代价大</td></tr>
+<tr><td>（面板上没有）宽度/高度框</td><td class="mono">width / height</td><td><span class="badge bad">点文本下访问抛"只能用于段落文本"</span>；段落文本下可写 180pt ⇒ 705x13 变 174x97</td><td><b>见 ③</b></td></tr>
+</tbody></table>
+</div>
+<div class="verdict"><b>结论：不能照抄 PS 面板，但可抄的比我第一版说的多。</b> 26 个控件里，PS 22 脚本能真拧动并改变版面的有 <b>10 个</b>；<b>11 个属性在本版本访问直接抛错</b>（语言、旧体、连字符细档、点文本下的框宽…）；<b>4 个连枚举值都不存在</b>（大小写两档、warp 的 BEND、以及"罗马"字距档）。<b>可抄的是它的分组语言（字符／段落两组、"跟随"这一态、单位直接标在控件上），不是它的全部旋钮。</b><br><span class="mono">自我更正入账：</span>本页第一版把「字距调整方式」和「段落合成器」写成"做不了"，那是<b>我枚举成员名猜错</b>（ROMAN / JAPANESEWIDE）造成的——按真名 OPTICAL / ADOBEEVERYLINE 重测后两项都成立（H5）。同一小时我在行距上犯过一次同样的错（G 探针）。<b>规矩：写"这个不行"之前必须先把成员名穷举一遍，否则一律标未核实。</b></div>
+</section>
+
+<section id="t2" class="hidden">
+<div><h2>② 提案面板 v2：PS 的分组语言，只留实测拧得动的</h2><p class="hint">按语言各一套；默认只露 3 个旋钮（脸 / 行距档 / 字距），其余进"段落与细节"折叠。右侧画布用<b>本机真装字体</b>实时渲染，并给出行数与高度的闭式预测——你说"有文字展示很直观"，这一版把它做成主角。</p></div>
+<div class="grid cw">
+<div class="stack" style="display:flex;flex-direction:column;gap:12px">
+<div class="row" id="langs"></div>
+<div class="pspanel">
+<div class="pshead"><button id="tabChar" aria-selected="true">字符</button><button id="tabPara" aria-selected="false">段落与细节</button></div>
+<div class="psbody" id="bodyChar">
+<div class="knob" style="grid-column:1/-1"><div class="kh"><b>字体（脸级 PostScript 名）</b><span class="badge ok">实测可写</span></div><select id="selFace"></select><div class="kh" id="faceEcho"></div></div>
+<div class="knob"><div class="kh"><b>行距</b><span class="badge ok">实测可写</span></div>
+<div class="row" id="leadRow"><button class="btn" data-lead="follow" aria-pressed="true">跟随</button><button class="btn" data-lead="120">紧凑</button><button class="btn" data-lead="150">标准</button><button class="btn" data-lead="190">宽松</button></div>
+<div class="kh">落 autoLeadingAmount（实测 300 ⇒ 高 55→85）</div></div>
+<div class="knob"><div class="kh"><b>字距 tracking</b><span class="badge ok">实测生效</span></div><input type="range" id="rTrack" min="-40" max="400" step="10" value="0"><div class="kh" id="trackEcho"></div></div>
+<div class="knob"><div class="kh"><b>字号</b><span class="badge warn">默认锁死</span></div><input type="range" id="rSize" min="10" max="40" step="1" value="14"><div class="kh">红线：不许自动缩字号；这一格只有你手动拖才动</div></div>
+<div class="knob"><div class="kh"><b>假粗体</b><span class="badge ok">可写</span></div><div class="row"><button class="btn" id="bFaux" aria-pressed="false">关闭</button></div><div class="kh">实测宽度 557→589；不许自动开（会画出不存在的字重）</div></div>
+</div>
+<div class="psbody hidden" id="bodyPara">
+<div class="knob"><div class="kh"><b>对齐</b><span class="badge ok">可写</span></div><select id="selJust"><option value="left">跟随原图层</option><option value="center">居中</option><option value="right">右对齐</option><option value="justify">两端对齐</option></select></div>
+<div class="knob"><div class="kh"><b>连字 ligatures</b><span class="badge ok">可写</span></div><div class="row"><button class="btn" id="bLig" aria-pressed="true">开（PS 默认）</button></div></div>
+<div class="knob"><div class="kh"><b>文字方向</b><span class="badge warn">可写·未对过写回语义</span></div><div class="row"><button class="btn" id="bDir" aria-pressed="false">横排</button></div></div>
+<div class="knob"><div class="kh"><b>基线偏移</b><span class="badge ok">可写</span></div><input type="range" id="rBase" min="-10" max="20" step="1" value="0"></div>
+<div class="knob"><div class="kh"><b>字距调整方式</b><span class="badge ok">实测可写</span></div><select id="selKern"><option value="follow">跟随原图层</option><option value="METRICS">度量（默认）</option><option value="OPTICAL">视觉（换字体后更稳）</option></select><div class="kh">实测写 OPTICAL ⇒ 宽 585→580；本版本没有"罗马"档</div></div>
+<div class="knob"><div class="kh"><b>段落合成器</b><span class="badge ok">实测可切两档</span></div><select id="selComp"><option value="follow">跟随原图层</option><option value="SINGLELINE">单行合成（PS 默认）</option><option value="EVERYLINE">逐行合成（整段权衡折行）</option></select><div class="kh">成员真名 ADOBESINGLELINE / ADOBEEVERYLINE；实测切档会改版面 ⇒ 它影响"折在哪几行"，属我们取证链要盯的变量</div></div>
+<div class="knob" style="grid-column:1/-1"><div class="kh"><b>本版本拧不动的（灰掉，不给你点）</b></div>
+<div class="row">
+<span class="badge bad">全部大写 / 小型大写</span><span class="badge bad">warp 变形（BEND 档）</span><span class="badge bad">避头尾 JIS</span><span class="badge bad">间距组合档位名</span><span class="badge bad">连字符细档 6 项</span><span class="badge bad">语言</span><span class="badge">删除线 / 下划线（"开"档成员名未穷尽＝未核实）</span>
+</div><div class="kh">理由见 ①：属性访问抛错、枚举成员不存在，或我没试全（后者一律标未核实，不写成"没有"）。</div></div>
+</div>
+</div>
+<div class="card tight"><div class="kh" style="font-size:.7rem;color:var(--muted)">译文文本（可改，用你自己的句子试）</div><textarea id="txt"></textarea></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="card">
+<div class="row" style="justify-content:space-between"><h3 style="margin:0">设计稿框内实际效果</h3><span class="badge" id="modeBadge">点文本 · 我们插硬换行</span></div>
+<div class="row" style="margin-bottom:8px"><button class="btn" id="bMode" aria-pressed="false">切换：让 PS 自己折行（段落文本）</button><span class="kh" style="font-size:.68rem;color:var(--muted)">同一段字、同一个框宽，两种做法的差别与取证代价</span></div>
+<div class="canvas"><div class="frame" id="frame"><div class="txt" id="prev"></div></div><div class="cap" id="cap"></div><div class="capl" id="capl">原稿行宽预算</div></div>
+<div class="row" style="margin-top:9px"><span class="kh" style="font-size:.7rem;color:var(--muted)">原稿该层实测宽</span><input type="range" id="rBudget" min="80" max="420" step="10" value="240" style="flex:1"><b class="mono" id="budgetEcho"></b></div>
+<div class="metrics" style="margin-top:8px"><span>预测行数 <b id="mLines"></b></span><span>预测层高 <b id="mH"></b></span><span>单行宽 <b id="mW"></b></span><span>预算 <b id="mB"></b></span></div>
+<div id="verdict2" style="margin-top:8px"></div>
+</div>
+<div class="card tight"><div class="kh" style="font-size:.7rem;color:var(--muted);margin-bottom:6px">执行回执（按实测规则生成）</div><div id="receipts"></div></div>
+<div class="card tight"><div class="kh" style="font-size:.7rem;color:var(--muted)">闭式（本机六点逐位对上）</div><div class="mono">h = (n−1) × leading + h₁ · Δw = 间隙数 × tracking ÷ 1000 × size</div><div class="kh" style="font-size:.68rem;color:var(--muted)">h₁ 取该脸单行实测高；leading＝自动档时取 amount×字号÷100。预览用浏览器字体度量，<b>近似</b>，终态以 PS 回读为准。</div></div>
+</div>
+</div>
+</section>
+
+<section id="t3" class="hidden">
+<div><h2>③ 新线索：把点文本转成段落文本，让 Photoshop 自己换行</h2><p class="hint">H4 探针实测：同一段 105 字符、无一个换行符，<span class="mono">kind=POINTTEXT</span> 时包围盒 705×13；置 <span class="mono">PARAGRAPHTEXT</span> 后设 <span class="mono">width=180pt</span> ⇒ <b>174×97</b>（按闭式反算正好 5 行）。也就是说 PS 自己的排版引擎能替我们做"译文顶宽就换行"这件事。</p></div>
+<div class="grid c2">
+<div class="card"><h3>这条路的甜头</h3>
+<ul style="margin:0;padding-left:1.2em;font-size:.84rem">
+<li>09-23 那三族里最大的一族「设计稿只有一行、译文更宽」（31 处）可能<b>一行代码解决</b>：给框宽，PS 自己折。</li>
+<li>用的是 PS 自己的字体度量和断行规则 ⇒ 我们那套 em 估算 + 整数 DP 求解器的<b>误报面（实测 24.5% 是误报）</b>直接消失。</li>
+<li>缩进／段前后距／对齐这些"只对段落文本有效"的旋钮同时被解锁（① 表里那 5 个"写了没反应"的项）。</li>
+</ul></div>
+<div class="card"><h3>代价（三条，每条都能单独否决它）</h3>
+<ul style="margin:0;padding-left:1.2em;font-size:.84rem">
+<li><b>取证会静默失真</b>：我们现行"渲染行数"主法＝数交付件里的 <span class="mono">0x0D</span>（点文本下视觉行≡硬换行，定义级正确）。段落文本的折行是<b>软换行，不落 0x0D</b>——H4 那段文字一个换行符都没有却是 5 行 ⇒ 数 CR 得 1、真值 5。<b>这条不解决就不能上线</b>。</li>
+<li><b>禁则闸门失效</b>：PS 自己折在哪我们看不见也管不着——片假名连写内部禁断、小假名不得落行首、数字与单位不得断（对手交付件里 13 例）这些我们已立案的禁则，全变成黑箱。</li>
+<li><b>交付件的图层结构变了</b>：点文本→段落文本是设计文件层面的改动，客户的后续编辑习惯、我们"母版结构不动"的对外说法、以及报价/结算链对图层几何的假设都要重判。</li>
+</ul></div>
+</div>
+<div class="verdict"><b>我的判断（对抗式审查后）：不进这一班车，单列研究项，且先只做取证实验。</b> 理由：它诱惑力全在"少写求解器"，但它砸的是我们<b>唯一能证明"渲染成什么样"的那条腿</b>；一个看不见折行的交付件等于把 #75 的病重新打开。要真走，前置是"软换行可取证"——候选办法是逐行宽度反推或像素带扫描（后者已实测在生产量级跑不完）。<b>可立刻做的</b>：把它当"高级选项"给内测用户手动开，同时强制上报"该层已转段落文本"，取证标"未采集"，绝不计入"已验证"。</div>
+</section>
+
+<section id="t4" class="hidden">
+<div><h2>④ GitHub 与业界参考</h2><p class="hint">两路调研：一路查开源排版面板与 PSD 引擎数据字段（仍在回收，回收后另发一版），一路查"避头尾/连字/合成器在业界到底给不给用户、脚本能不能设"。下面是有出处的部分；<b>没出处的全部落在本节末尾的"未核实"里，不当结论用</b>。</p></div>
+<div class="card tight" style="padding:0;overflow:auto"><table><thead><tr><th>产品</th><th>暴露给用户</th><th>藏起来</th></tr></thead><tbody>
+<tr><td><b>Canva</b></td><td>字体/字重/字号/颜色/对齐/大小写/<b>字间距＋行间距滑块</b>/效果；<b>可按语言筛字体</b>；竖排页另有"字偶间距与连字"（<a href="https://www.canva.com/help/format-text/">format-text</a>、<a href="https://www.canva.cn/help/vertical-text-cn/">竖版文字</a>）</td><td>段落合成器、避头尾档位、hyphenation 全无可调项</td></tr>
+<tr><td><b>Figma</b></td><td>字体/字号/行高/字距/对齐/段落间距；OpenType 面板＝连字、上下文替换、序数字、样式集、变体（<a href="https://help.figma.com/hc/en-us/articles/4913951097367-Use-OpenType-features">Use OpenType features</a>）</td><td><b>没有任何 CJK 换行／避头尾／间距组合控制</b></td></tr>
+<tr><td><b>Google Slides</b></td><td>API 面只有 lineSpacing / alignment / indent* / space* / direction / spacingMode / avoidWidowsAndOrphans（<a href="https://developers.google.cn/workspace/slides/api/reference/rest/v1/presentations.pages/text">REST 参考</a>）</td><td>无 kinsoku、无 mojikumi、无连字、无合成器</td></tr>
+<tr><td><b>Word / PowerPoint</b></td><td><b>亚洲版式是真入口</b>：段落对话框 Asian/Chinese/Japanese Typography 选项卡，勾"use Asian rules for controlling first and last characters"（＝避头尾），OOXML 有 <span class="mono">w:kinsoku</span> 与 <span class="mono">w:overflowPunct</span>，简中/繁中/日文默认启用（<a href="https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.kinsoku?view=openxml-3.0.1">kinsoku</a>、<a href="https://learn.microsoft.com/zh-cn/previous-versions/office/gg696065(v=office.14)">互操作说明</a>）</td><td>连字／合成器档位不暴露</td></tr>
+<tr><td><b>InDesign</b>（专业尺子）</td><td>全都有：禁则集、间距组合（文字組み）、连字、四种合成器（含 Adobe Japanese Paragraph/Single-line），且 mojikumi 直接参与对齐时的 aki 计算；官方支持"按语言/样式表绑定"（<a href="https://helpx.adobe.com/indesign/desktop/language-and-proofing/chinese-japanese-and-korean/format-cjk-text.html">Format CJK text</a>、<a href="https://learn.adobe.com/nz/indesign/using/text-composition.html">Set text composition</a>）</td><td>—（CJK 版默认就是 Adobe Japanese Paragraph Composer）</td></tr>
+</tbody></table></div>
+<div class="grid c2">
+<div class="card"><h3>对我们最要紧的两条外部事实</h3>
+<ul style="margin:0;padding-left:1.2em;font-size:.84rem">
+<li><b>避头尾会改变行数</b>：日文换行由 JIS X 4051 定，句号/读点/闭括号不得居行首（<a href="https://en.wikipedia.org/wiki/Line_breaking_rules_in_East_Asian_languages">Wikipedia 换行规则</a>）；开着它为了避开禁则字符会<b>额外换行或挤压行宽</b>（<a href="https://helpx.adobe.com/photoshop/using/asian-type.html">Adobe Asian type in Photoshop</a>）。⇒ 一旦我们让 PS 自己折行（③ 那条路），日/中译文的行数就取决于这个开关，而 <b>PS 22 的 DOM 根本没有这个开关</b>。</li>
+<li><b>UXP 那套文本 API 帮不上我们</b>：<span class="mono">ParagraphStyle.kinsoku / mojikumi / layoutMode</span> 的属性页标 min-version <b>24.1</b>，而 changelog 把 Text support 记在 <b>24.2</b>（两页口径自相矛盾，<a href="https://developer.adobe.com/photoshop/uxp/2022/ps_reference/classes/paragraphstyle/">ParagraphStyle</a>、<a href="https://developer.adobe.com/photoshop/uxp/2022/ps_reference/changelog/">Changelog</a>）。我们产品下限是 PS 22 ⇒ <b>只能走 ActionManager，而 key 名一个都没查到出处</b>。</li>
+</ul></div>
+<div class="card"><h3>取 key 名的唯一可靠办法（记下来，别再猜）</h3>
+<p class="hint" style="margin:0">在真机上装 <b>Alchemist / ScriptingListener</b>，手点一次"避头尾=JIS 宽松"，读它打出来的 AM 代码（<a href="https://blog.cutterman.cn/2021-12-12/action-manager-part1/">Action Manager 教程</a>、<a href="https://github.com/jardicc/alchemist">jardicc/alchemist</a>）。我这轮三次靠猜枚举名犯错（<span class="mono">PARABOLATEXT</span>、<span class="mono">JAPANESEWIDE</span>、<span class="mono">ROMAN</span>），<b>猜出来的判据比没有判据更坏</b>——它会让下一只手以为"已经测过"。</p>
+<p class="hint" style="margin:6px 0 0">顺带一条外部印证：官方类型定义里 <span class="mono">AutoKernType</span> 就是 MANUAL / METRICS / <b>OPTICAL</b>（<a href="https://raw.githubusercontent.com/docsforadobe/Types-for-Adobe/master/Photoshop/2015.5/index.d.ts">Types-for-Adobe PS 2015.5</a>），与我 H5 实测一致；那份定义还列了 <span class="mono">hyphenation / hangingPuntuation / textComposer</span> 等属性，但<b>没有</b> kinsoku / mojikumi / tsume（全文 0 命中）。</p></div>
+</div>
+<div class="card tight"><h3>未核实（不许当结论用）</h3><p class="hint" style="margin:0">① 任何 kinsoku / mojikumi / 合成器的 <b>ActionManager key 名</b>（一个都没查到出处）；② 日文设计"常用第几档间距组合"；③ "翻译场景该不该关连字"的权威建议；④ Crowdin / Phrase / Lokalise / memoQ 有没有"按语言设排版规则"——只查到 per-string 长度约束与视觉上下文，<b>没查到排版预设＝未核实，不等于没有</b>；⑤ 稿定设计 / 美图设计室 / Photoshop 自身能否指定字体；⑥ 删除线与下划线"开"档的成员名（我只试了 OFF 形）。</p></div>
+</section>
+
+<section id="t5" class="hidden">
+<div><h2>⑤ 探针台账（本机 PS 22.0.0，14:58—15:5x）</h2><p class="hint">只读探针 2 个，写测探针 6 个，全部只在新建空白稿 <span class="mono">TYGF_SPIKE_*</span> 上写、<span class="mono">close(SaveOptions.DONOTSAVECHANGES)</span>；测完把前台还给 Owner 原来那份文档（回显 <span class="mono">frontRestored=true</span>），结束时打开文档数 1（＝他自己的那份）。母版与客户稿未打开未修改。</p></div>
+<div class="card tight" style="padding:0;overflow:auto"><table><thead><tr><th>探针</th><th>回答什么</th><th>净结论</th></tr></thead><tbody>
+<tr><td class="mono">A 只读清单</td><td>字体名字口径</td><td>1605 脸 / 1319 显示名；postScriptName 唯一、familyName 不存在</td></tr>
+<tr><td class="mono">B 写回</td><td>可写性/读回/缺字体/顺序</td><td>脸名精确往返；显示名与错名静默换脸；tracking 生效；先设字体后写 contents 存活</td></tr>
+<tr><td class="mono">C 属性普查+字形</td><td>TextItem 有哪些旋钮</td><td>Arial 写日文 ⇒ 读回 KozGoPr6N-Regular（PS 按脚本换脸）；textStyleRange 不存在</td></tr>
+<tr><td class="mono">D / E / F</td><td>ActionDescriptor 能否写行距</td><td>三种写法全抛错 ⇒ AD 路线未跑通；F0 普查到 useAutoLeading/autoLeadingAmount 存在（这条救了行距）</td></tr>
+<tr><td class="mono">G 关自动再写</td><td>行距能不能落</td><td><b>能</b>：useAutoLeading=false 后 60pt ⇒ 55→133；amount=300 ⇒ 55→85；纯数字 24 也收</td></tr>
+<tr><td class="mono">H2 枚举成员</td><td>枚举真名</td><td>TextType 只有 POINTTEXT/PARAGRAPHTEXT；TextComposer 只有 ADOBESINGLELINE；TextCase 只有 NORMAL；Language 读抛"内部错误"</td></tr>
+<tr><td class="mono">H3 面板旋钮普查</td><td>26 控件逐个定生死</td><td>可写生效 8 / 可写无可见变化 25 / 访问抛错 11 / 枚举值不存在 6（后两处被 H5 修正）</td></tr>
+<tr><td class="mono">H5 成员名补测</td><td>我是不是又猜错了枚举名</td><td><b>是，两处</b>：<span class="mono">AutoKernType.OPTICAL</span> 与 <span class="mono">TextComposer.ADOBEEVERYLINE</span> 都能写且改版面 ⇒ "做不了"改判"做"。另：<span class="mono">TextCase</span> 确实只有 NORMAL；<span class="mono">strikeThru/underline</span> 读回是 STRIKEOFF/UNDERLINEOFF（"开"档名未穷尽＝未核实）；<span class="mono">noBreak=true</span> 在段落文本下把包围盒压成 <b>0×0</b>（不抛错）＝新雷；<span class="mono">minimumLetterScaling</span> 在段落文本下 147→137、点文本下 557→693（方向翻转，未定性）</td></tr>
+<tr><td class="mono">I 全量清单转储</td><td>字体清单能否拿 PostScript 名当唯一键</td><td>PS 报 <b>1605 行，但 PostScript 名只有 1587 个不同值</b>（18 行重复，全是 Cascadia 可变字体）⇒ 清单必须<b>按 PS 名去重</b>再进下拉；显示名只有 1319 个不同值，更不能当键。<b>更正</b>：本页早期版本与 v1 模拟件里"postScriptName 逐脸唯一"那句是我只数了前 40 条得出的，按全量转储作废</td></tr>
+<tr><td class="mono">H4 点→段落</td><td>PS 能不能自己换行</td><td><b>能</b>：kind=PARAGRAPHTEXT + width=180pt ⇒ 705×13 变 174×97（5 行，零个换行符）</td></tr>
+</tbody></table></div>
+<div class="grid c2">
+<div class="card tight"><div class="kh" style="font-size:.7rem;color:var(--muted)">两条闭式（七个独立点逐位对上）</div><div class="mono">h = (n−1)×leading + h₁ ⇒ 55 / 133 / 85 / 61 / 113 / 163 / 97 全中<br>Δw = 间隙数 × tracking ÷ 1000 × size ⇒ 500:+120、−100:−24 全中</div></div>
+<div class="card tight"><div class="kh" style="font-size:.7rem;color:var(--muted)">方法学坦白（判据的边界）</div><div class="kh" style="font-size:.72rem;color:var(--muted)">①"生效"我用的是<b>包围盒尺寸</b>代理 ⇒ 只挪位置不改尺寸的旋钮（基线偏移/缩进/对齐）会被记成"没变"，这类只判"可写＋读回"。② 连字、悬挂标点、hyphenation 这些<b>只在折行时起作用</b>，本轮全在点文本单行上测 ⇒ 它们的"没变"不等于"没用"，需在段落文本场景复测（已登记为待办）。③ 字典文件 <span class="mono">omv.xml</span> 注册日期 2026-05-21，可能不对应 PS 22 ⇒ 一切以本机实测为准，字典只当属性名清单用。</div></div>
+</div>
+</section>
+
+<footer>
+证据：<span class="mono">tmp/ps-spike-20261017/</span> 下 outA…outH4.json 与同名 .jsx 探针；前案 <span class="mono">交付档案/执行方案/执行方案_20261017_用户字体排版定制_GitHub调研与PS七探针_对抗式审查.md</span>；面板现状 <span class="mono">src/components/workbench/typography-panel.tsx</span>；问题登记 <span class="mono">AI_MEMORY/ISSUES.md #157 #158</span>。本页只做模拟，未改产品代码。
+</footer>
+</div>
+<script>
+(function(){
+var LANGS=['ja','ko','th','de','en','es','fr','ru','id','vi'];
+var LL={ja:'日语',ko:'韩语',th:'泰语',de:'德语',en:'英语',es:'西语',fr:'法语',ru:'俄语',id:'印尼语',vi:'越南语'};
+var FACES=[
+{ps:'NotoSansSC-Regular',fam:'Noto Sans SC',st:'Regular',w:400,cjk:true},
+{ps:'NotoSansSC-Bold',fam:'Noto Sans SC',st:'Bold',w:700,cjk:true},
+{ps:'NotoSansSC-Thin',fam:'Noto Sans SC',st:'Thin',w:100,cjk:true},
+{ps:'NotoSerifSC-Regular',fam:'Noto Serif SC',st:'Regular',w:400,cjk:true},
+{ps:'AdobeHeitiStd-Regular',fam:'Adobe Heiti Std',st:'Regular',w:400,cjk:true},
+{ps:'KozGoPr6N-Regular',fam:'小谷哥特 Pr6N（PS 日文兜底脸）',st:'Regular',w:400,cjk:true},
+{ps:'YuGothic-Medium',fam:'Yu Gothic',st:'Medium',w:500,cjk:true},
+{ps:'MS-Gothic',fam:'MS Gothic',st:'Regular',w:400,cjk:true},
+{ps:'MalgunGothic-Semilight',fam:'Malgun Gothic',st:'Semilight',w:300,cjk:true},
+{ps:'ArialMT',fam:'Arial',st:'Regular',w:400,cjk:false},
+{ps:'Arial-BoldMT',fam:'Arial',st:'Bold',w:700,cjk:false},
+{ps:'Helvetica',fam:'Helvetica',st:'Regular',w:400,cjk:false},
+{ps:'MyriadPro-Regular',fam:'Myriad Pro',st:'Regular',w:400,cjk:false},
+{ps:'Tahoma',fam:'Tahoma',st:'Regular',w:400,cjk:false}];
+var INST={}; FACES.forEach(function(f){INST[f.ps]=f;});
+var SAMPLE={
+ ja:'取り付けトルク 3.5in、1/4-20 ボルトを規定値まで増し締めしてください。',
+ ko:'조임 토크 3.5in, 1/4-20 볼트를 규격값까지 증시締め하십시오.',
+ th:'แรงบิด 3.5in ขัน螺栓 1/4-20 ให้ถึงค่าที่กำหนด',
+ de:'Anzugsdrehmoment 3,5 in – Schraube 1/4-20 bis zum Sollwert anziehen und mit Drehmomentschlüssel prüfen.',
+ en:'Torque spec 3.5in — tighten the 1/4-20 bolt to the stated value with a calibrated wrench.',
+ es:'Par de apriete 3,5 in: apriete el perno 1/4-20 hasta el valor indicado con llave calibrada.',
+ fr:'Couple de serrage 3,5 in : serrer le boulon 1/4-20 à la valeur indiquée avec une clé calibrée.',
+ ru:'Момент затяжки 3,5 дюйма: затяните болт 1/4-20 до указанного значения калиброванным ключом.',
+ id:'Torsi pengencangan 3,5 in — kencangkan baut 1/4-20 hingga nilai yang ditentukan dengan kunci terkalibrasi.',
+ vi:'Lực siết 3,5 in — siết bu lông 1/4-20 đến giá trị quy định bằng cờ-lê đã hiệu chuẩn.'};
+var st={lang:'de',face:'NotoSansSC-Regular',lead:'follow',track:0,size:14,faux:false,just:'left',lig:true,vert:false,base:0,budget:240,mode:'point',kern:'follow',comp:'follow',txt:SAMPLE.de};
+function el(i){return document.getElementById(i)}
+function tabs(){var h=el('langs');h.innerHTML='';LANGS.forEach(function(c){var b=document.createElement('button');b.className='langtab';b.textContent=LL[c];b.setAttribute('aria-pressed',String(c===st.lang));b.onclick=function(){st.lang=c;st.txt=SAMPLE[c];render()};h.appendChild(b)})}
+function faces(){var s=el('selFace');s.innerHTML='';FACES.forEach(function(f){var o=document.createElement('option');o.value=f.ps;o.textContent=f.fam+' '+f.st+'  ·  '+f.ps;if(f.ps===st.face)o.selected=true;s.appendChild(o)})}
+var ctx=document.createElement('canvas').getContext('2d');
+function measure(text,font,px,tracking){
+  ctx.font=(st.faux?'700 ':'400 ')+px+'px "'+font+'", sans-serif';
+  var w=ctx.measureText(text).width;
+  var gaps=Math.max(0,text.length-1);
+  return w+gaps*tracking/1000*px*(window.devicePixelRatio?1:1);
+}
+function wrapLines(text,font,px,tracking,maxW){
+  var words=text.split(/(\s+)/),lines=[],cur='';
+  for(var i=0;i<words.length;i++){
+    var t=cur+words[i];
+    if(cur && measure(t.trim(),font,px,tracking)>maxW){lines.push(cur.trim());cur=words[i]}else cur=t;
+  }
+  if(cur.trim())lines.push(cur.trim());
+  return lines.length?lines:[''];
+}
+function render(){
+  tabs();faces();
+  var f=INST[st.face];
+  el('txt').value=st.txt;
+  el('faceEcho').innerHTML='写入值 <span class="mono">'+st.face+'</span> · '+f.fam+' '+f.st+' · 实测读回相等 <span class="badge ok">exact</span>'+(f.cjk?'':' · 该脸无中日韩字形，写 CJK 时 PS 会自己换脸');
+  el('trackEcho').innerHTML='当前 <b class="mono">'+st.track+'</b>（1/1000 em，实测口径）';
+  el('budgetEcho').textContent=st.budget+'pt';
+  var lead = st.lead==='follow'? Math.round(st.size*1.75) : Math.round(st.size*parseInt(st.lead,10)/100);
+  var px=st.size;
+  var oneLine=measure(st.txt,st.face,px,st.track);
+  var lines=wrapLines(st.txt,st.face,px,st.track,st.budget);
+  var n=lines.length;
+  var h1=Math.round(px*1.05);
+  var h=(n-1)*lead+h1;
+  el('mLines').textContent=n+' 行';
+  el('mH').textContent=h+'pt（闭式）';
+  el('mW').textContent=Math.round(oneLine)+'pt';
+  el('mB').textContent=st.budget+'pt';
+  var fr=el('frame');fr.style.width=st.budget+'px';
+  var pv=el('prev');pv.textContent=st.txt;
+  pv.style.fontFamily='"'+st.face+'", "Noto Sans SC", sans-serif';
+  pv.style.fontWeight=st.faux?'700':String(f.w);
+  pv.style.fontSize=px+'px';
+  pv.style.letterSpacing=(st.track/1000)+'em';
+  pv.style.lineHeight=lead+'px';
+  pv.style.textAlign=st.just==='left'?'left':st.just;
+  pv.style.fontStyle=st.vert?'italic':'normal';
+  el('cap').style.left=st.budget+'px';
+  el('capl').style.left=(st.budget+4)+'px';
+  var over=oneLine>st.budget;
+  el('verdict2').innerHTML=over?'<div class="note">单行要 '+Math.round(oneLine)+'pt，超预算 '+st.budget+'pt ⇒ 必须折成 '+n+' 行；按现行做法＝我们插 '+(n-1)+' 个 0x0D 硬换行。</div>':'<div class="note ok">单行 '+Math.round(oneLine)+'pt ≤ 预算 '+st.budget+'pt ⇒ 不用折行，静默通过、不打扰你。</div>';
+  var rc=[];
+  rc.push(['ok','字体已写入','请求 '+st.face+'，读回一致（实测规则：读回≠所设时这里会变成"PS 已换脸"并点名）']);
+  if(st.lead!=='follow')rc.push(['ok','行距已落','先 useAutoLeading=false，再 autoLeadingAmount='+st.lead+'（实测 300 ⇒ 高 55→85）']);
+  else rc.push(['','行距跟随原图层','未写入，PS 保持自动行距（默认 amount=175）']);
+  if(st.track)rc.push(['ok','字距已落',st.track+'（1/1000 em）']);
+  if(st.kern!=='follow')rc.push(['warn','字距调整方式已记为 '+st.kern,'实测可写（OPTICAL 使宽 585→580），但<b>本页预览模拟不了它的差异</b>——真值只在 PS 回读里']);
+  if(st.comp!=='follow')rc.push(['warn','段落合成器已记为 '+st.comp,'实测切档会改版面（147×13→149×13）；它改变"折在哪几行"，属取证链必须记录的变量']);
+  if(!f.cjk && /[\u3040-\u30ff\u4e00-\u9faf\uac00-\ud7af]/.test(st.txt))rc.push(['bad','该脸装不下这门语言的字','你选的 '+st.face+' 没有中日韩字形；实测 PS 会静默换成 KozGoPr6N-Regular ⇒ 必须点名，不许装可用']);
+  if(st.mode==='box')rc.push(['warn','该层已转段落文本','软换行不落 0x0D ⇒ 现行"数换行符"取证法会少报 '+(n-1)+' 行，本层取证标"未采集"']);
+  el('receipts').innerHTML=rc.map(function(r){return '<div class="receipt '+r[0]+'"><div class="t">'+r[1]+'</div><div class="d">'+r[2]+'</div></div>'}).join('');
+  el('modeBadge').textContent=st.mode==='point'?'点文本 · 我们插硬换行':'段落文本 · PS 自己折行';
+  el('bMode').setAttribute('aria-pressed',String(st.mode==='box'));
+  el('bMode').textContent=st.mode==='point'?'切换：让 PS 自己折行（段落文本）':'切换：回到点文本（我们插硬换行）';
+  if(st.mode==='box'){el('verdict2').innerHTML+='<div class="note bad">取证对照：这一版文字里我们<b>一个 0x0D 都不插</b>，折行由 PS 软换行产生 ⇒ 现行"数交付件里的换行符"主法会报 <b>1 行</b>，而真值是 <b>'+n+' 行</b>（实测 H4：705×13 转段落文本给 180pt 框宽 ⇒ 174×97，零个换行符、5 行）。这就是我不建议这一班车走这条路的原因。</div>';}
+  el('bLig').setAttribute('aria-pressed',String(st.lig));el('bLig').textContent=st.lig?'开（PS 默认）':'关';
+  el('bDir').setAttribute('aria-pressed',String(st.vert));el('bDir').textContent=st.vert?'竖排（实测可写）':'横排';
+  el('bFaux').setAttribute('aria-pressed',String(st.faux));el('bFaux').textContent=st.faux?'开（字形是画出来的）':'关闭';
+  Array.prototype.forEach.call(el('leadRow').children,function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-lead')===st.lead))});
+}
+el('selFace').onchange=function(e){st.face=e.target.value;render()};
+el('rTrack').oninput=function(e){st.track=Number(e.target.value);render()};
+el('rSize').oninput=function(e){st.size=Number(e.target.value);render()};
+el('rBudget').oninput=function(e){st.budget=Number(e.target.value);render()};
+el('rBase').oninput=function(e){st.base=Number(e.target.value);render()};
+el('txt').oninput=function(e){st.txt=e.target.value;render()};
+el('selJust').onchange=function(e){st.just=e.target.value;render()};
+Array.prototype.forEach.call(el('leadRow').children,function(b){b.onclick=function(){st.lead=b.getAttribute('data-lead');render()}});
+el('bLig').onclick=function(){st.lig=!st.lig;render()};
+el('bDir').onclick=function(){st.vert=!st.vert;render()};
+el('bFaux').onclick=function(){st.faux=!st.faux;render()};
+el('selKern').onchange=function(e){st.kern=e.target.value;render()};
+el('selComp').onchange=function(e){st.comp=e.target.value;render()};
+el('bMode').onclick=function(){st.mode=st.mode==='point'?'box':'point';render()};
+el('tabChar').onclick=function(){el('bodyChar').classList.remove('hidden');el('bodyPara').classList.add('hidden');el('tabChar').setAttribute('aria-selected','true');el('tabPara').setAttribute('aria-selected','false')};
+el('tabPara').onclick=function(){el('bodyPara').classList.remove('hidden');el('bodyChar').classList.add('hidden');el('tabPara').setAttribute('aria-selected','true');el('tabChar').setAttribute('aria-selected','false')};
+// expose mode switch for tab 3 demo
+window.__setMode=function(m){st.mode=m;render()};
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){b.onclick=function(){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.setAttribute('aria-selected',String(x===b))});
+  ['t1','t2','t3','t4','t5'].forEach(function(id){el(id).classList.toggle('hidden',id!==b.getAttribute('data-view'))});
+}});
+render();
+if(document.fonts&&document.fonts.ready&&document.fonts.ready.then)document.fonts.ready.then(function(){render()});
+})();
+</script>

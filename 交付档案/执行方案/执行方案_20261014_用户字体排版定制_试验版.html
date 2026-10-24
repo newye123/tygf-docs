@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用户字体排版定制 · 执行方案（试验版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- tags ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:44px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>用户字体排版定制 · 试验版</span><span class="sep">/</span>
+    <span>2026-10-14</span>
+  </p>
+  <h1>用户字体排版定制 · 执行方案（试验版）</h1>
+  <p class="standfirst">网页端为每种语言提供私人定制排版（字体 + 字距 + 行距 + 粗细），脚本写入前由本地助手读取并应用到 PSD 写回。试验定位：内测可开、生产闸不碰、支付 flag 不碰；创收入口留 P2。依据《审查报告_20261014_用户字体排版定制_五路对抗式审查》。</p>
+  <div class="meta">
+    <span>P0 半天 · 零改动</span>
+    <span>P1 约 2-3 工作日</span>
+    <span>一次助手版本 bump</span>
+    <span>envelope 旁路 · 不进摘要</span>
+    <span>待 Owner 拍板</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>路径总览</h2>
+
+  <div class="verdict">
+    <span class="lb">核心工程决策</span>
+    <p>用户排版定制全程走 <strong>envelope 旁路字段</strong>（<code>typography</code>），<strong>不进 <code>executionManifestDigest</code></strong>——试验期不触碰四层合同，风险锁在本机；P2 再决定是否冻结进计划合同。</p>
+  </div>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">P0</span>
+      <div class="body">
+        <h3>spike：把四个 PS 语义钉死（0.5 天，零代码、零落盘）</h3>
+        <p>手跑一次性 jsx，回答 app.fonts 名称格式 / 属性可写性与顺序 / 读回归一 / 缺字体三态。台账产出即 P1 的字段白名单与失败码。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">P1</span>
+      <div class="body">
+        <h3>试验版：一次助手下班车 + 网页面板 + envelope 旁路</h3>
+        <p>助手：字体探针 + <code>GET /v1.5/fonts</code> + prepare 收定制 + runner 透传 + 执行器应用与回读。网页：按语言排版面板 + 本地持久化 + 传输 + flag 默认关。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">P2</span>
+      <div class="body">
+        <h3>契约化 / 学习库 / 创收（另立项）</h3>
+        <p>typography 冻结进 manifest（四层同步+fixture）；接 <code>LearningBrandScope</code> 品牌域与学习库；覆盖预检（#66/#78）；付费档位。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>P0 · spike 六问（不落仓库、不进版本纪律）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>记录项</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">S1</td><td><code>app.fonts</code> 名称格式（显示名 vs PostScript）、数量、样本 30 个</td><td>名称样本表；与 <code>textItem.font</code> 接受值对齐规则</td></tr>
+        <tr><td class="mono">S2</td><td><code>font / tracking / leading / fauxBold</code> 可写性 + 设置顺序（先字体后 contents vs 反之）</td><td>逐字段可写/只读/无效；顺序 A/B 各测 3 层</td></tr>
+        <tr><td class="mono">S3</td><td>读回归一：设 font=X → 读回 == X？（显示名/PS 名归一）</td><td>归一函数草案；不等时的观测值</td></tr>
+        <tr><td class="mono">S4</td><td>缺字体：设本机没有的字体名 → 抛错 / 静默改回 / UB</td><td>三态判定 + 失败码设计</td></tr>
+        <tr><td class="mono">S5</td><td>多脚本混排层（日文+拉丁）设字体行为</td><td>主 run 是否被改；PS 是否另加 fallback run</td></tr>
+        <tr><td class="mono">S6</td><td>PS 版本谱（≥PS 2021；#141 ES3 教训核对）</td><td>版本—结论表</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">止损开关</span>
+    <p>S2/S3 不过 ⇒ P1 缩水为「仅字体选择」或暂停。并行小项：浏览器 CSS 预览可行性抽查（含 Adobe Fonts 不可见说明文案）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>P1 · 助手侧（一次版本 bump，走下一班车）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>件</th><th>改动</th><th>锚点</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">字体探针</td><td>新增极小 <code>TYGF_Fonts_Probe.jsx</code>（dump app.fonts → JSON）或搭车 readiness 扫描（建议独立探针：职责单一）</td><td><code>Readiness_Scanner.jsx:3,47</code>；<code>Probe-LineTerminator.jsx:15</code></td></tr>
+        <tr><td class="mono">清单端点</td><td><code>GET /v1.5/fonts</code>：Origin 白名单、无票只读、本机缓存 + <code>?refresh=1</code></td><td>照 <code>server.js:4037,4372-4386</code></td></tr>
+        <tr><td class="mono">prepare 收定制</td><td>body 增 <code>typographyProfileByLanguage</code>（白名单校验）；存任务目录，不落摘要</td><td><code>local-assistant-client.ts:1196-1215</code> → <code>server.js:5750</code></td></tr>
+        <tr><td class="mono">runner 透传</td><td>options 增 <code>typography</code>；envelope 顶层加旁路字段（与 manifest 平级）</td><td><code>v15-runner.js:193-199</code>；摘要不变式 <code>:144</code></td></tr>
+        <tr><td class="mono">执行器应用</td><td>读 <code>envelope.typography</code>；逐 assignment 应用 + 逐项 try + 读回；结果附 applied 证据；<code>EXECUTOR_VERSION</code> bump</td><td><code>Thin_Executor.jsx:89-128</code>；<code>:81-83</code> 兼容性</td></tr>
+        <tr><td class="mono">失败码</td><td>新增：<code>FONT_UNAVAILABLE</code> / <code>FONT_FALLBACK_APPLIED</code> / <code>TYPOGRAPHY_INVALID</code>（显式、可上屏）</td><td>与 #66 教训对齐（<code>ISSUES.md:641-648</code>）</td></tr>
+        <tr><td class="mono">版本纪律</td><td>runtime 身份 / 安装包 / release identity / <code>/api/local-assistant/latest</code> 全同步</td><td><code>server.js:100</code>；worktree <code>AGENTS.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>P1 · 网页侧</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>件</th><th>改动</th><th>锚点</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">面板组件</td><td>新增 <code>typography-panel.tsx</code>：按语言页签；PS Character 面板方向——字体（族+样式=粗细）、字距（tracking 1/1000em）、行距（leading pt，含「沿用原图层」项）、可选字号缩放%；实时预览（本机可见字体 CSS 渲染，不可见者标注）</td><td>挂载点 <code>photoshop-step.tsx</code> 或交付前</td></tr>
+        <tr><td class="mono">持久化</td><td>新增 <code>typography-persistence.ts</code>：key <code>tygf:v15:typography</code>，TTL + scanId/fingerprint 绑定</td><td>照抄 <code>decision-persistence.ts:30,38,41-55</code></td></tr>
+        <tr><td class="mono">获取清单</td><td><code>fetchLocal('/v1.5/fonts', {}, 15000)</code></td><td><code>local-assistant-client.ts:183-208</code></td></tr>
+        <tr><td class="mono">传输</td><td>prepare 调用处带 <code>typographyProfileByLanguage</code>；类型同步</td><td><code>local-assistant-client.ts:1193-1215</code></td></tr>
+        <tr><td class="mono">开关</td><td><code>typographyCustomizationEnabled</code> 默认 false；测试站白名单可开</td><td><code>src/config/featureFlags.ts:4-52</code></td></tr>
+        <tr><td class="mono">报告可见性</td><td>逐语言显示应用摘要 + FALLBACK 标志（复用 <code>FONT_FALLBACK</code> 芯片语义）；面板边界文案「仅影响本机写回译文层」</td><td><code>v15-runner.js:706-711</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>验证（真跑才敢说 PASS）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>层</th><th>门</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">静态</td><td><code>npx tsc --noEmit</code>、<code>npm run lint</code></td></tr>
+        <tr><td class="mono">smoke</td><td>新增 <code>smoke-typography-profile.mjs</code>（校验/透传/旧执行器忽略旁路字段的兼容）；<code>smoke-photoshop-script</code> 加 Thin Executor 合同（字体设置必须 try + 读回）</td></tr>
+        <tr><td class="mono">合同（应绿验证）</td><td><code>npm run test:trust-chain</code>、<code>npm run test:batch-row-contract</code>——旁路设计理应不触合同，跑了才算</td></tr>
+        <tr><td class="mono">真机</td><td>测试机 3 语言（<strong>JA 重点</strong>、DE 拉丁、KO 缺字场景）→ 逐语言报告标志核对；Owner 目视</td></tr>
+        <tr><td class="mono">回滚</td><td>flag 关即恢复旧行为；旧执行器读新 envelope 无感（R4 首测即验）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>风险与止损</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>风险</th><th>止损</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">R1</td><td>tracking/leading 在目标 PS 版本不可写或行为怪异</td><td>P0 S2 定音；缩水为「仅字体选择」，字距/行距顺延</td></tr>
+        <tr><td class="mono">R2</td><td>混排层字体语义歧义（只对主 run 生效）</td><td>P0 S5 定死语义；报告如实标注</td></tr>
+        <tr><td class="mono">R3</td><td>预览与 PS 实际不一致（Adobe Fonts 等）</td><td>预览标注「+PS 内可见」；不承诺预览=终态</td></tr>
+        <tr><td class="mono">R4</td><td>envelope 旁路字段被旧执行器/校验意外拒绝</td><td>首测即验「旧执行器读新 envelope」；不行则退「manifest 版本升位、字段可选」备选</td></tr>
+        <tr><td class="mono">R5</td><td>用户需更新助手才可用（bump 摩擦）</td><td>内测范围可控；不强制推送；文案说明</td></tr>
+        <tr><td class="mono">R6</td><td>摘要误动</td><td>smoke 锁定：旁路存在时 <code>executionManifestDigest</code> 不变</td></tr>
+        <tr><td class="mono">R7</td><td>字体清单隐私（机器画像）</td><td>试验版只留本机；上云需新同意位（P2）</td></tr>
+        <tr><td class="mono">R8</td><td>违反「不得静默降级」</td><td>读回判据强制（#66 同族防线）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>待 Owner 拍板</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>决定</th><th>建议默认</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td>试验开放范围</td><td>测试站 + 白名单内测，flag 默认关；不对外宣传</td></tr>
+        <tr><td class="mono">D2</td><td>是否接受一次助手版本 bump（下一班车）</td><td>接受（否则功能到不了用户机）</td></tr>
+        <tr><td class="mono">D3</td><td>定制作用范围</td><td>仅译文层（不改原文字体）；逐语言独立</td></tr>
+        <tr><td class="mono">D4</td><td>字距/行距口径</td><td>tracking 1/1000em（PS 口径）；leading pt；默认「沿用原图层」</td></tr>
+        <tr><td class="mono">D5</td><td>是否即刻启动 P0 spike</td><td>可即刻（半天、零改动、零落盘）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>复现与证据指针</h2>
+  <ul class="notes">
+    <li>链路：<code>v15-runner.js:144,193-199</code>；<code>Thin_Executor.jsx:81-83,107-128</code>；<code>local-assistant-client.ts:1193-1215</code></li>
+    <li>字体纯函数：<code>glyph-coverage.js:29,53,111</code>；消费方 <code>typography-census.mjs:18,64-66,197</code>、<code>smoke-glyph-coverage.mjs:13-17</code></li>
+    <li>存储模板：<code>decision-persistence.ts:30,38,41-55</code>；端点模板：<code>server.js:4037,4372-4386,2236-2242</code></li>
+    <li>前序：<code>交付档案/审查报告/审查报告_20261012_PSD原生改文字_五路对抗式审查.html</code>（字体规则）；<code>交付档案/执行方案/执行方案_20260920_排版质量_第一性原理与实测复用.md</code>（复用裁决与「不做字号缩小」红线）</li>
+    <li>问题档案：<code>AI_MEMORY/ISSUES.md:641-648</code>（#66 机制）、#78（字形可行性保留事实）；学习定位 <code>schema.prisma:1322,1162</code>；运转态=全景 20261003 §D3</li>
+  </ul>
+</section>
+
+<footer>
+  <p>本方案不涉及：支付 flag、生产站、合同四层、跨端同步、字体文件分发。P0 完成后以台账回填本方案的字段白名单与失败码定稿。</p>
+  <p>2026-10-14 · 基线 develop@756978c · 待 Owner 拍板后执行（P0 可即刻）。</p>
+</footer>
+
+</div>
+</body>
+</html>

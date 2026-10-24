@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模拟：排版面板改漂浮可拖浮窗（2026-10-23）</title>
+<style>
+  :root{
+    --bg:#f6f7f8; --card:#ffffff; --border:#e4e7ea; --fg:#1a2129; --muted:#5f6b78;
+    --teal:#0d7d6c; --teal-soft:#e6f4f1; --amber-bg:#fff7e6; --amber-bd:#f0c36d; --amber-fg:#7a5410;
+    --shadow:0 8px 28px rgba(15,30,40,.16); --radius:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#10161c; --card:#18212a; --border:#2a3641; --fg:#e8edf2; --muted:#93a1af;
+      --teal:#2fbfa5; --teal-soft:#12332e; --amber-bg:#2a2210; --amber-bd:#8a6b25; --amber-fg:#f0cf8f;
+      --shadow:0 8px 28px rgba(0,0,0,.5); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
+  header.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:5}
+  header.top h1{font-size:15px;margin:0;margin-right:auto}
+  .btn{border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer}
+  .btn:hover{border-color:var(--teal)}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+  .note{padding:12px 20px;font-size:12.5px;color:var(--muted);line-height:1.7}
+  .note b{color:var(--fg)}
+  kbd{border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;background:var(--card)}
+  /* 伪工作台背景 */
+  .stage{padding:18px 20px 40px;max-width:1100px;margin:0 auto}
+  .fakecard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .fakecard h3{margin:0 0 8px;font-size:13px}
+  .fakecard p{margin:0;font-size:12px;color:var(--muted);line-height:1.7}
+  .fakegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .fakegrid div{height:52px;border:1px dashed var(--border);border-radius:8px;background:var(--bg)}
+  /* ---- 旧版右侧全高抽屉 ---- */
+  #oldDrawer{position:fixed;top:0;bottom:0;right:0;width:min(360px,92vw);background:var(--card);border-left:1px solid var(--border);box-shadow:var(--shadow);z-index:40;display:none;flex-direction:column}
+  #oldDrawer .od-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  #oldDrawer .od-body{flex:1;overflow:auto;padding:12px 14px;font-size:10px;color:var(--muted);line-height:1.9}
+  /* ---- 新版漂浮面板 ---- */
+  #floatPanel{position:fixed;z-index:60;width:min(360px,92vw);background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden}
+  #fpHead{cursor:grab;touch-action:none;user-select:none;display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);outline:none}
+  #fpHead:focus-visible{box-shadow:inset 0 0 0 2px var(--teal)}
+  #fpHead.dragging{cursor:grabbing}
+  #fpHead .ttl{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;margin-right:auto}
+  .badge{font-size:10px;font-weight:700;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:1px 6px}
+  .iconbtn{border:1px solid var(--border);background:var(--card);border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
+  .iconbtn:hover{color:var(--fg);border-color:var(--teal)}
+  #fpBody{padding:10px 12px 12px;font-size:12px;line-height:1.6;max-height:min(72vh,640px);overflow:auto}
+  .hint{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--amber-fg);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+  .hint .dot{width:7px;height:7px;border-radius:99px;background:#f0a13c;margin-top:5px;flex:none}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;background:var(--card)}
+  .pill.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .grid6{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .cell{border:1px solid var(--border);border-radius:6px;height:26px;display:flex;align-items:center;gap:6px;padding:0 7px;font-size:12px}
+  .cell .g{width:16px;height:16px;flex:none;border-radius:4px;background:var(--teal-soft);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+  .cell .v{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell.todo{border-style:dashed}
+  .settle{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px;font-size:12px;color:var(--muted)}
+  .settle b{color:var(--teal)}
+  .tip{margin-top:10px;font-size:11.5px;color:var(--muted)}
+  /* 面板拖动时全页禁选中 */
+  body.panel-dragging{user-select:none}
+  body.panel-dragging *{cursor:grabbing !important}
+  .log{font-size:11.5px;color:var(--muted);padding:0 20px 30px;line-height:1.8}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>模拟：排版面板 · 漂浮可拖浮窗（新版 vs 旧版右侧全高抽屉）</h1>
+  <button class="btn" id="btnOld">显示旧版抽屉</button>
+  <button class="btn primary" id="btnNew">打开漂浮面板（新版）</button>
+  <button class="btn" id="btnResetPos">清除记住的位置</button>
+  <button class="btn" id="btnShrink">模拟窄屏（缩到 640px 宽）</button>
+</header>
+
+<div class="note">
+  <b>可玩的点：</b>① 按住标题栏拖动面板（松手位置会记住，刷新后还在）；② 焦点进面板后按 <kbd>Esc</kbd> 关闭，焦点在外面按 Esc 不会误关；③ <kbd>Tab</kbd> 到标题栏后按 <kbd>方向键</kbd> 移动（<kbd>Shift</kbd> 加速）；④ 后面的工作台不再被灰罩锁住，随便点；⑤ 右上角按钮可对照<b>旧版通天抽屉</b>；⑥ 拖出屏幕外松手会被夹回来。
+</div>
+
+<div class="stage" id="stage">
+  <div class="fakecard"><h3>第一步 · 准备素材（示意）</h3><p>这里是工作台背景。旧版抽屉打开时这里被灰罩+inert 锁死；新版浮窗打开时可以正常点击滚动——试试点下面的格子或选中这段字。</p>
+    <div class="fakegrid"><div></div><div></div><div></div><div></div></div></div>
+  <div class="fakecard"><h3>第二步 · 审校译文（示意）</h3><p>浮窗拖到哪都能继续操作底下的内容。</p></div>
+</div>
+
+<div class="log" id="log"></div>
+
+<!-- 旧版：右侧通天抽屉（还原线上形态：全高、灰罩、10px 小字） -->
+<div id="oldDrawer" role="dialog" aria-modal="true" aria-label="排版定制（旧版形态）">
+  <div class="od-head"><span>排版定制 · 旧版</span><button class="iconbtn" id="oldClose" aria-label="关闭">✕</button></div>
+  <div class="od-body">
+    字号 10px 的正文说明……（旧版：抽屉通到屏幕上下两端，空态时只有一句话，显得又高又空；灰罩锁住背景。）<br><br>
+    语言：JA<br>字体族 ——　样式 ——<br>行距 ——　自动字距 ——<br>字距 ——　基线偏移 ——<br><br>
+    本次会发 0 项。预览≠PS 终态。<br><br>
+    ↑ 这就是截图里"字小、太高、太空"的形态。
+  </div>
+</div>
+
+<!-- 新版：漂浮面板 -->
+<div id="floatPanel" role="dialog" aria-modal="false" aria-label="排版定制">
+  <div id="fpHead" tabindex="0" aria-label="排版面板标题栏：按住拖动移动面板，或聚焦后用方向键移动">
+    <span class="ttl">✥ 排版定制</span>
+    <span class="badge">内测预览</span>
+    <button class="iconbtn" id="fpClose" aria-label="关闭排版面板" data-no-drag>✕</button>
+  </div>
+  <div id="fpBody">
+    <div class="hint"><span class="dot"></span><span>排版定制暂不可用（示意告警条）：这里演示告警仍常驻面板内，字号已从 10px 抬到 12px。</span></div>
+    <div class="pills">
+      <button class="pill on">日语</button><button class="pill">韩语</button><button class="pill">英语</button><button class="pill">＋</button>
+    </div>
+    <div class="grid6">
+      <div class="cell"><span class="g">字</span>字体族<span class="v">思源黑体</span></div>
+      <div class="cell"><span class="g">体</span>样式<span class="v">Bold</span></div>
+      <div class="cell"><span class="g">行</span>行距<span class="v">18 pt</span></div>
+      <div class="cell"><span class="g">距</span>自动字距<span class="v">度量标准</span></div>
+      <div class="cell"><span class="g">字</span>字距<span class="v">25 ‰em</span></div>
+      <div class="cell todo"><span class="g">基</span>基线偏移<span class="v">待接</span></div>
+    </div>
+    <div class="settle">本次会发 <b>4</b> 项：字体 · 行距 · 自动字距 · 字距（伪粗/伪斜本版不发）</div>
+    <div class="tip">高度跟内容走：空态时不会出现"通天又空"的抽屉；内容超长才内部滚动（上限 72vh）。位置存在本机浏览器，不上传。</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY='tygf.sim.typographyPanelPos.v1';
+  var panel=document.getElementById('floatPanel'), head=document.getElementById('fpHead'), log=document.getElementById('log');
+  var open=false, pos=null;
+
+  function say(m){ log.innerHTML='<div>· '+m+'</div>'+log.innerHTML; }
+  function vw(){ return window.innerWidth } function vh(){ return window.innerHeight }
+  function rect(){ return panel.getBoundingClientRect() }
+  function clamp(x,y){
+    var r=rect(), w=r.width||360;
+    var xMin=-(w-48), xMax=vw()-48, yMin=0, yMax=vh()-48;
+    return {x:Math.min(Math.max(x,xMin),xMax), y:Math.min(Math.max(y,yMin),yMax)};
+  }
+  function apply(){ if(pos){ panel.style.left=pos.x+'px'; panel.style.top=pos.y+'px'; panel.style.right='auto'; panel.style.bottom='auto'; } }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(pos)) }catch(e){} }
+  function load(){
+    try{ var raw=localStorage.getItem(KEY); if(!raw) return null; var p=JSON.parse(raw);
+      if(typeof p!=='object'||p===null||!isFinite(p.x)||!isFinite(p.y)) return null; return p;
+    }catch(e){ return null }
+  }
+  function defaultPos(){ return clamp(vw()-Math.min(360,vw()*0.92)-24, 72) }
+
+  function openPanel(){
+    open=true; panel.style.display='flex';
+    pos=pos||load()||defaultPos(); var c=clamp(pos.x,pos.y); pos={x:c.x,y:c.y}; apply(); save();
+    document.getElementById('btnNew').textContent='关闭漂浮面板';
+    // 非模态：不抢焦点、不加灰罩、不锁滚动、不 inert —— 焦点留在触发按钮上
+    say('打开浮窗：不加灰罩、不锁滚动、不抢焦点（aria-modal=false）');
+  }
+  function closePanel(){
+    open=false; panel.style.display='none';
+    document.getElementById('btnNew').textContent='打开漂浮面板（新版）';
+    say('关闭浮窗');
+  }
+  document.getElementById('btnNew').onclick=function(){ open?closePanel():openPanel() };
+
+  // ---- 拖动：pointer events + setPointerCapture；拖动期间只改 left/top（命令式），不进 React 式重渲染 ----
+  var dragging=false, start=null;
+  head.addEventListener('pointerdown',function(e){
+    if(e.target.closest('[data-no-drag]')) return;      // F2：关闭按钮不触发拖动
+    if(e.button!==undefined && e.button!==0) return;
+    dragging=true; start={mx:e.clientX,my:e.clientY,x:pos.x,y:pos.y};
+    head.setPointerCapture(e.pointerId); head.classList.add('dragging');
+    document.body.classList.add('panel-dragging');       // F7：拖动期间禁选中
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove',function(e){
+    if(!dragging) return;
+    var c=clamp(start.x+e.clientX-start.mx, start.y+e.clientY-start.my);
+    pos={x:c.x,y:c.y}; apply();                          // 高频路径：只写样式
+  });
+  function endDrag(e){
+    if(!dragging) return; dragging=false;
+    head.classList.remove('dragging'); document.body.classList.remove('panel-dragging');
+    var c=clamp(pos.x,pos.y); pos=c; apply(); save();    // 松手才落存储
+    say('拖动结束：位置已记住 ('+Math.round(pos.x)+','+Math.round(pos.y)+')，刷新后还在');
+  }
+  head.addEventListener('pointerup',endDrag);
+  head.addEventListener('pointercancel',endDrag);
+
+  // ---- 键盘：方向键移动（焦点在标题栏时）；Esc 关闭（焦点在面板内时，F4） ----
+  head.addEventListener('keydown',function(e){
+    var step=e.shiftKey?32:8, d={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
+    if(d){ var c=clamp(pos.x+d[0],pos.y+d[1]); pos=c; apply(); save(); e.preventDefault(); say('方向键移动到 ('+Math.round(pos.x)+','+Math.round(pos.y)+')'); }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape'||!open) return;
+    if(panel.contains(document.activeElement)){ closePanel(); say('Esc 关闭（焦点在面板内，门控生效）'); }
+    else { say('焦点不在面板内：Esc 被忽略（旧版会误关）'); }
+  });
+
+  // ---- 窗口变化：夹回视口（F3） ----
+  window.addEventListener('resize',function(){
+    if(!open) return; var c=clamp(pos.x,pos.y);
+    if(c.x!==pos.x||c.y!==pos.y){ pos=c; apply(); save(); say('窗口变了：面板夹回视口内'); }
+  });
+
+  // ---- 其它按钮 ----
+  document.getElementById('fpClose').onclick=closePanel;
+  var od=document.getElementById('oldDrawer');
+  document.getElementById('btnOld').onclick=function(){ od.style.display=od.style.display==='flex'?'none':'flex'; this.textContent=od.style.display==='flex'?'隐藏旧版抽屉':'显示旧版抽屉' };
+  document.getElementById('oldClose').onclick=function(){ od.style.display='none'; document.getElementById('btnOld').textContent='显示旧版抽屉' };
+  document.getElementById('btnResetPos').onclick=function(){ try{localStorage.removeItem(KEY)}catch(e){}; pos=null; if(open){pos=defaultPos();apply()} say('已清除记住的位置（下次打开回默认右上）') };
+  document.getElementById('btnShrink').onclick=function(){
+    var st=document.getElementById('stage').style;
+    if(st.maxWidth==='640px'){ st.maxWidth='1100px'; this.textContent='模拟窄屏（缩到 640px 宽）' }
+    else { st.maxWidth='640px'; this.textContent='恢复全宽'; say('模拟窄屏：若面板被夹在屏幕外，resize 监听会自动夹回') }
+  };
+
+  // 演示交互：语言 pill / 底下格子可点
+  document.querySelectorAll('.pill').forEach(function(p){ p.onclick=function(){ document.querySelectorAll('.pill').forEach(function(q){q.classList.remove('on')}); p.classList.add('on'); } });
+  document.querySelectorAll('.fakegrid div').forEach(function(d){ d.onclick=function(){ d.style.background=d.style.background?'':'var(--teal-soft)' } });
+
+  say('就绪。点右上「打开漂浮面板（新版）」开始玩。');
+})();
+</script>
+</body>
+</html>

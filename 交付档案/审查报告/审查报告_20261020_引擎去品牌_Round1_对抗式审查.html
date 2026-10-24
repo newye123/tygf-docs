@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对抗式审查 Round 1 · 引擎去品牌 · 2026-10-20</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 对抗式审查 Round 1/3</p>
+  <h1>审我自己刚交付的"引擎去品牌"：有条件放行——可见面中性了，但三处仍会露出来，还抓到一条假负控</h1>
+  <p class="standfirst">VERDICT：有条件放行（内测可用，对外发布不放行）。范围＝我本人四笔 3ec8a4b／dce444f／b99f706／7729ea0；风险档 High（安装器与发布面按规矩必须过人）。</p>
+  <p class="meta">已证实 12 条（Important 9／Nit 2／存量另计）· 未决 3 条 · 修后门全绿：bundled 18/18、fonts 28、enable-script 6/6、wiring-freeze 9/9、observation 9/9、pc-channel 7/7</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">结论</p>
+  <p class="lede">"品牌已彻底看不见"这句<strong>不成立</strong>；成立的是"用户可见面已中性化"。三处仍会露：① 覆盖安装会把上一代上游原件留在 <span class="mono">{app}\bin</span>（已修 <span class="mono">[InstallDelete]</span>）；② 我已交给你的两份东西（r1 安装包说明、便携候选包）还在教人用 <span class="mono">photocraft-cli-0.7.0.exe</span>；③ 字体端点在降级分支上必 500（存量缺陷，Owner 机器实测）。另外我上一轮那条"版本串会被 provenance 白名单拒 ⇒ 执行链会炸"的归因<strong>是错的</strong>，本轮公开更正。</p>
+  <div class="stats">
+    <div class="stat bad"><span class="n">7</span><span class="lb">本轮已修的缺陷</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="lb">已证实但需你或后续处理</span></div>
+    <div class="stat warn"><span class="n">3</span><span class="lb">未决（缺证据）</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="lb">我自己写的假负控（已重做）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel yes">
+    <p class="hd">本轮已修（提交 7729ea0）</p>
+    <ul class="tl">
+      <li class="tl-body"><span class="tag">F-01</span><strong>存量·用户可见 500</strong>：<span class="mono">GET /v1.5/fonts</span> 在 Owner 机器实测 <span class="mono">HTTP 500 FONTS_INTERNAL "Cannot read properties of undefined (reading 'map')"</span>。根因 <span class="mono">server.js:1484</span> 缓存只放 <span class="mono">{byName,stats,count}</span>，而 <span class="mono">:1560</span> 降级分支取 <span class="mono">dir.entries</span>。已补字段＋给"探针成功但形状不对"加捕获与日志原因</li>
+      <li class="tl-body"><span class="tag">F-02</span><strong>我写的假负控</strong>：上一轮 [B2b] 的"残留引擎会被清掉"夹具，残留件与钉值件<strong>同名</strong> ⇒ 删不删都过。已改用上一代真实文件名＋过期许可件，并做变异测试：关掉清场 ⇒ 门立刻红 <span class="mono">PC_VENDOR_STAGED_BIN_DIRTY</span>，还原后哈希一致、门复绿</li>
+      <li class="tl-body"><span class="tag">F-03</span><span class="mono">vendor-engine.cjs</span> 会删目录内容却对 <span class="mono">--dist</span> 毫无约束 ⇒ 一次参数打错能清空打包机目录。已加 <span class="mono">PC_VENDOR_DIST_UNSAFE</span>（默认只允许 <span class="mono">build\dist</span>，越界须显式 <span class="mono">--allow-external-dist</span>），licenses 一并清场＋逐件比对；新负控 [B2c]</li>
+      <li class="tl-body"><span class="tag">F-04</span><span class="mono">installer.iss</span> 覆盖安装不删不再被引用的旧文件 ⇒ <span class="mono">{app}\bin</span> 会同时躺着新旧两份引擎（旧那份属性仍是 PhotoCraft／Learning Machines）。已补 <span class="mono">[InstallDelete] Type: files; Name: "{app}\bin\photocraft-cli*.exe"</span></li>
+      <li class="tl-body"><span class="tag">F-05</span><span class="mono">--bundled</span> 打在未支持内置寻址的旧助手上 ⇒ 写空路径后界面只报"Photoshop 未运行"，真因不可见。已按 <span class="mono">release-identity.json</span> 卡版本下限（&lt;3.7.16 或读不到即拒、一字不改），新负控 [C4]</li>
+      <li class="tl-body"><span class="tag">F-06</span><span class="mono">vendor/photocraft/README.txt</span> 还写着旧钉值 <span class="mono">be118612…</span> 与旧文件名，和同目录 <span class="mono">engine.sha256</span> 互相矛盾 ⇒ 打包机会照旧的去 stage。已改写</li>
+    </ul>
+  </div>
+
+  <div class="panel no">
+    <p class="hd">已证实但本轮没修 · 与更正</p>
+    <div class="card">
+      <p class="k">🟠 F-08 跨来源守卫其实不在位（存量，账上是 PC-A4 待补）</p>
+      <p class="body"><span class="mono">decideExecuteChannel</span> 生产调用点 0 处、凭记里的 <span class="mono">engineExeSha256</span> 读取者 0 个 ⇒ #159"PS 扫的件不许交给引擎"这条守卫在执行期不发生；Readiness 的 producer 不带引擎身份，云端分不清快照是谁扫的。</p>
+      <p class="loc">download/local-assistant/pc-channel.js:89（函数在、无调用者）· server.js:5401 写入侧 · readiness 侧无引擎字段</p>
+      <p class="fix">要么现在补 PC-A4 的两处接线＋两个码，要么明确它排在写回解冻之后——但别再把它当"守卫已生效"记账。</p>
+    </div>
+    <div class="card">
+      <p class="k">🟠 F-09 我交给你的两份东西现在是误导性的</p>
+      <p class="body">r1 的说明.txt 教你用 <span class="mono">C:\Program Files\PhotoCraft\…</span>；便携候选包测试卡 5 处指旧文件名、钉值仍是 <span class="mono">be118612…</span>。和仓库现状（<span class="mono">3cb06ed1… tygf-engine.exe</span>）不一致。</p>
+      <p class="loc">tmp/setup-3.7.16-内测/说明.txt:7,13,29,42 · tmp/pc-candidate-3.7.16/测试卡.txt:11,18,24,33,51</p>
+      <p class="fix">等 r3（含字体的重建）出来后统一替换或加"已被取代"标注，并重算和值。</p>
+    </div>
+    <div class="card">
+      <p class="k">🟠 F-07 自编引擎缺三只日文字体（正在定论）</p>
+      <p class="body">逐串计数：上游原件 <span class="mono">BIZ UDPGothic=1 · Shippori Mincho=4 · BIZ UDMincho=1</span>，我们这份 <span class="mono">0/0/0</span>。机制在上游 <span class="mono">crates/text/build.rs</span>：不设 <span class="mono">CRAFT_FONTS_DIR</span> 则 <span class="mono">CRAFT_FONTS</span> 为空。第一次带该变量重建后产物<strong>字节完全相同</strong>⇒ 变量没生效，现用 <span class="mono">CRAFT_FONTS_REQUIRED=1</span> 强制复现中。</p>
+      <p class="loc">tmp/photocraft-src/crates/text/build.rs:26-36 · crates/text/src/craft_fonts.rs:6（"today it carries the Japanese fonts"）· 计数为本轮 node 直读两枚 exe</p>
+      <p class="fix">若确认缺失：出包链必须把 craft-fonts 固定 commit 纳入（我已按上游 release.yml 的 <span class="mono">CRAFT_FONTS_REF=abb8331…</span> 取到 51MB 检出），并把这条写进 BUILD-MANIFEST 的硬前置。</p>
+    </div>
+    <div class="card">
+      <p class="k">🔴 更正：我上一轮那条"执行链会被版本串炸"归因错了</p>
+      <p class="body">控制实验：喂干净标识符也抛 <span class="mono">PROVENANCE_ID_INVALID</span>（我夹具本身字段就错）；再读调用点，<span class="mono">review_engine_version</span> 取的是浏览器传来的 <span class="mono">body.reviewEngineVersion</span>（智能审查引擎），与排版引擎无关；后者版本串只落本机 <span class="mono">scan-provenance.json</span>／observation，不进这条校验。⇒ 今天不炸，降级为"将来若路由进 safeId 字段才会炸"的观察项。</p>
+      <p class="loc">server.js:6453（body.reviewEngineVersion）· runtime-provenance.js:9,43 · pc-scanner.js:278（排版引擎版本落本机）</p>
+      <p class="fix">教训：白名单实测 false 不等于"这条链会用到它"，必须顺着调用点证明数据流。</p>
+    </div>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">未决三条 · 各缺什么证据</p>
+  <div class="gate first"><span class="num">U-01</span><div class="body">Owner 机器字体探针失败的真因——那行原因被 500 吞了。修后需复测：你重启助手用新包，或我在临时端口起一份 dev 助手实测（不碰你那份）。</div></div>
+  <div class="gate"><span class="num">U-02</span><div class="body">自编产物与上游原件的完整功能差异：字体这项待最终定论；体积差 24 MB 未完全归因（heif 特征串两边都 3，不是它）。缺一次逐能力对照（真稿扫描字段比对）。</div></div>
+  <div class="gate"><span class="num">U-03</span><div class="body">许可扫描：10-17 的 345/345 是对上游产物跑的，自编产物没重跑，而且<b>仓库里没有可复跑的扫描脚本</b> ⇒ "每次升引擎必须重扫"目前是纸面门。</div></div>
+</section>
+
+<section class="notes">
+  <p class="hd">覆盖缺口与要你的部分</p>
+  <ul class="notes">
+    <li>没跑 tsc／lint／全站测试；没做真机无 PS 端到端；没审同期别人那几笔（0510572、9ca8976、c3e3247）；没实际运行安装与卸载程序，"卸载是否清干净"是按 Inno 追踪规则推的，不是跑出来的。</li>
+    <li>安装器与发布面按规矩必须过人：① r3 出来后要不要换装（顺带清掉这台机上的旧引擎）；② F-08 的执行期守卫现在补还是继续排在写回解冻之后；③ develop 已积到二十来笔未推，推不推。</li>
+    <li>红线自查：未 push、未部署两站、未翻支付闸、未重启你的 PS 与助手、未代装系统依赖之外的东西（NSIS／Rust 是你当轮明令装的）；进程收尾只按 PID。</li>
+  </ul>
+</section>
+
+<div class="callout"><span class="lb">收口补记（2026-10-21 09:05 轮，同轮 date 回显 09:03:10 +0800）</span>三条未决里两条已定论。<strong>U-02 真稿对照</strong>：30,128,727 B 客户稿（96 层含 24 文字层）两份引擎各跑一次只读扫描 ⇒ 层数 24=24、observation 键集相同、逐层结构不一致 0/24、正文逐层一致、findings 0=0、耗时 780ms（自编）vs 1886ms（上游）、母版前后同哈希 ⇒ <strong>扫描道上自编产物与上游原件等价</strong>。唯一实测差异是那三只日文字体：强制重建（cargo clean ＋ CRAFT_FONTS_DIR ＋ CRAFT_FONTS_REQUIRED=1，13m29s，rc=0）后生成的 craft_fonts.rs 确有 3 条 include_bytes，但<strong>最终 exe 字节与不带字体时完全相同</strong>（sha 仍 3cb06ed1…）⇒ CLI 的存活引用图不引用该静态表、链接期丢弃；扫描不依赖它，将来排版/写回若需引擎侧字体回退要先接引用再复测。<strong>F-09 已清</strong>：r1／r2／便携候选包三份说明都加"已被取代"抬头并重算和值（10／11／25 文件，mismatches 全 0）；新交付 <span class="mono">tmp/setup-3.7.16-r3-含旧件清理</span>（25,503,355 B、SHA-256 f0be3564…、ISCC rc=0／44.656 秒），比 r2 只多一条"装前自动删掉 <span class="mono">{app}\bin\photocraft-cli*.exe</span>"。顺带又修一处<strong>假失败</strong>：探针 <span class="mono">smoke-pc-scan-live.mjs</span> 写死上一代钉值 <span class="mono">be118612…</span>，任何不传 <span class="mono">--sha256</span> 的调用都被判"哈希不符 ⇒ 必然拒"；改为"显式 → 同目录 engine.sha256（文件名须匹配）→ 无则明说未钉值并跳过"，三态实测（提交 <span class="mono">87eee39</span>）。<strong>U-01 仍开放</strong>：Owner 机器字体探针失败的真因被那个 500 吞了；他的助手实测仍在跑 r1 构建（pid 45968，10-20 22:56 起，version=3.7.16、build=bundled-engine-20261020-r1、PS running=true）⇒ 换装 r3 并重启后才能复测，按红线我不替他重启。<strong>U-03 仍开放</strong>：许可扫描未对自编产物重跑，且仓内无可复跑脚本 ⇒ 纸面门。提交合计 <span class="mono">7729ea0</span> ＋ <span class="mono">87eee39</span>；门全绿 bundled 18/18、fonts 28、pc-channel 7/7、wiring-freeze 9/9、observation 9/9、enable-script 6/6；develop 未推实测 25 笔。</div>
+
+<div class="callout"><span class="lb">一句话</span>去品牌这件事做对了一半：属性、文件名、图标、版本输出确实换成我们的了，但我交付给你的旧两份东西和覆盖安装的残留还会露出来，而我上一轮写的一条"负控"其实是假的——现在都补了，并留下三条我独自定不了论的项（字体差异、探针失败真因、许可扫描无脚本可跑）。</div>
+
+<div class="callout">
+  <h3>更正（2026-10-21 Round 2 追加，本段取代上文两处说法）</h3>
+  <p><strong>一、"带字体重建后最终 exe 字节与不带字体时完全相同"是错的。</strong>那次比哈希比的是出厂件本身，不是重建产物。
+  同拍重测：出厂件 43,252,736 B（3cb06ed1…，三只字体串计数 0/0/0）
+  vs 带字体重建 67,435,008 B（423e627b…，1/4/1），差 24,182,272 B
+  ⇒ 字体确实进了最终 exe，"链接期被丢弃"不成立；出厂件没带字体只是因为构建时没设 CRAFT_FONTS_DIR。</p>
+  <p><strong>二、本报告的"门全绿"不足以支撑出厂链已验，且 r1/r2/r3 三个包不可用。</strong>
+  内置引擎门当时既无 npm 入口也不在 test:trust-chain 总链里；三包的 assistantBuildId 被改成
+  bundled-engine-20261020-r1，而工作台合同门要求 buildId／reportSchemaVersion／reportRendererVersion 三项<strong>全等</strong>
+  （src/lib/workbench/assistant-compatibility.ts:38-47，版本只是下限）。差分实跑结论＝装上即 ASSISTANT_CONTRACT_MISMATCH。
+  全文见 <code>审查报告_20261021_免PS出厂链_Round2_对抗式审查.md/.html</code>（同目录）。</p>
+</div>
+
+<footer>
+  <p>证据位置：交付档案/审查报告/审查报告_20261020_引擎去品牌_Round1_对抗式审查.md · worktrees/develop 提交 7729ea0（7 文件 +159/−30）· 门输出：/tmp 各门回显 · 变异测试：关清场⇒rc=1、还原⇒哈希一致 rc=0</p>
+  <p>方法：两路并行取证（品牌残留面／中性化回归面）＋主审逐条独立复现；子代理返回只当线索，全部结论均自跑命令或读到 file:line。</p>
+</footer>
+</div>
+</body>
+</html>

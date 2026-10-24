@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图译工坊 · 项目现状与「不走 PS」通道评估（2026-10-12）</title>
+<style>
+  :root{
+    --green:#2d7356; --green-d:#1f5340; --green-l:#e8f2ee;
+    --ink:#1c2420; --ink2:#4a5a52; --line:#dce7e1;
+    --amber:#b45309; --amber-l:#fef3e2;
+    --red:#b42318; --red-l:#fdecea;
+    --blue:#1d4ed8; --blue-l:#e8eefc;
+    --grey-l:#f4f7f5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f7faf8;color:var(--ink);
+    font-family:"Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;
+    font-size:15px;line-height:1.75}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 80px}
+  header.hero{background:linear-gradient(135deg,var(--green) 0%,var(--green-d) 100%);
+    color:#fff;border-radius:16px;padding:40px 44px;margin-bottom:36px}
+  .hero h1{margin:0 0 10px;font-size:28px;letter-spacing:.5px}
+  .hero p{margin:4px 0;opacity:.92;font-size:14px}
+  .hero .meta{margin-top:18px;font-size:12.5px;opacity:.8}
+  h2{font-size:20px;margin:44px 0 14px;padding-left:12px;border-left:4px solid var(--green)}
+  h3{font-size:16px;margin:26px 0 8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card .k{font-size:12px;color:var(--ink2);letter-spacing:.4px}
+  .card .v{font-size:19px;font-weight:700;margin-top:3px}
+  .card .s{font-size:12.5px;color:var(--ink2);margin-top:3px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;
+    margin:14px 0;font-size:13.5px;border:1px solid var(--line)}
+  th{background:var(--green-l);text-align:left;padding:9px 12px;font-size:12.5px;color:var(--green-d);white-space:nowrap}
+  td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:#fbfdfc}
+  .tag{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+  .t-ok{background:var(--green-l);color:var(--green-d)}
+  .t-warn{background:var(--amber-l);color:var(--amber)}
+  .t-bad{background:var(--red-l);color:var(--red)}
+  .t-info{background:var(--blue-l);color:var(--blue)}
+  .t-grey{background:var(--grey-l);color:var(--ink2)}
+  .note{background:var(--amber-l);border-left:4px solid var(--amber);border-radius:8px;
+    padding:12px 16px;margin:16px 0;font-size:13.5px}
+  .note.red{background:var(--red-l);border-color:var(--red)}
+  .note.blue{background:var(--blue-l);border-color:var(--blue)}
+  .note.green{background:var(--green-l);border-color:var(--green)}
+  code{background:var(--grey-l);border-radius:4px;padding:1px 6px;font-size:12.5px;
+    font-family:Consolas,"Courier New",monospace}
+  .tl{border-left:2px solid var(--line);margin:16px 0 16px 8px;padding-left:22px}
+  .tl .it{position:relative;margin-bottom:16px}
+  .tl .it::before{content:"";position:absolute;left:-29px;top:6px;width:10px;height:10px;
+    border-radius:50%;background:var(--green)}
+  .tl .d{font-size:12.5px;color:var(--ink2);font-weight:700}
+  .tl .t{font-size:14px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .fine{font-size:12.5px;color:var(--ink2)}
+  .q{font-size:13px;background:#fff;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin:10px 0}
+  ol.compact li,ul.compact li{margin-bottom:6px}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>图译工坊 · 项目现状与「不走 PS」通道评估</h1>
+  <p>截至 2026-10-12 · 依据：Git 实测 / 两站 provenance 只读探针 / TASK_LOG T-0149–T-0165 / 当日三份新记录件</p>
+  <p>主线上（代码与测试站）已推进到助手 <b>3.7.15</b>；<b>生产站仍停在 09-19 基线</b>；「不走 Photoshop」的替换通道完成两条候选路线的实测，结论是：<b>纯字节手术走不通，开源渲染库未过终验，产品现有 PS 路径本身健康</b>。</p>
+  <div class="meta">本页为只读现状介绍，未改动任何代码 / 未部署 / 未推送。文中所有判断均带证据指针；拿不准的一律写「未决」，不写「没有」。</div>
+</header>
+
+<h2>一分钟概要</h2>
+<div class="cards">
+  <div class="card"><div class="k">测试站（线上，15:0x 复探）</div><div class="v">d5a84f8 + 3.7.15</div><div class="s">/manifest 403 修复已上站；runbook §5 机械化验收曾 PASS=28</div></div>
+  <div class="card"><div class="k">生产站（线上）</div><div class="v">eeb994c / 3.6.60</div><div class="s">自 09-19 冻结；三周多的修复与助手新版本均未上生产</div></div>
+  <div class="card"><div class="k">本地代码线</div><div class="v">main = develop = cbacbdf</div><div class="s">已对齐同点；领先 origin <b>7 笔</b>未推（现场仍在动，时点读数）</div></div>
+  <div class="card"><div class="k">生产工序第一故障</div><div class="v">VERIFY_TIMEOUT</div><div class="s">10-12 当天吃掉 12 语种批次里的 8 个；并行会话已在 WIP 里抬到 25s</div></div>
+  <div class="card"><div class="k">「不走 PS」路线 A</div><div class="v">字节手术 ✕</div><div class="s">只改描述符不改像素 ⇒ PS 打开不重渲染，画布仍是源文</div></div>
+  <div class="card"><div class="k">「不走 PS」路线 B</div><div class="v">开源渲染库 ？</div><div class="s">PC=storytold/photocraft（Rust 重写 PS）；泰文是「本机字体目录配置问题」为主，非结构性死亡</div></div>
+</div>
+
+<h2>一、两站与代码线实测（2026-10-12）</h2>
+<table>
+  <tr><th>面</th><th>读数</th><th>取证</th></tr>
+  <tr><td>测试站 Web</td><td><code>d5a84f8cdbbb…</code>，BOUND/test（15:0x 复探；此前为 <code>54a41bf7</code>）</td><td><code>/api/runtime-provenance</code> 只读 GET</td></tr>
+  <tr><td>测试站助手</td><td><b>3.7.15</b> / <code>transport-hardening-20261011-r1</code>，available=true</td><td>同上 + T-0162/T-0167 部署记录</td></tr>
+  <tr><td>生产站 Web</td><td><code>eeb994cda917…</code>（09-19 基线）</td><td>只读 GET</td></tr>
+  <tr><td>生产站助手</td><td><b>3.6.60</b>（差 15 个助手版本）</td><td>只读 GET</td></tr>
+  <tr><td>本地 main / develop</td><td>双双 <code>cbacbdf</code>，<code>main...develop = 0 0</code>（完全同点）</td><td><code>git rev-list --left-right --count main...develop</code></td></tr>
+  <tr><td>未推送</td><td>本地领先 <code>origin</code> <b>7 笔</b>（#146 修复、T-0165 补记、本人 2 笔、<b>cbacbdf /manifest 403 修复</b>、d5a84f8 合流、b58ddbf 记账）</td><td><code>rev-list --count origin/develop..HEAD</code> + <code>ls-remote</code> 双证</td></tr>
+</table>
+<div class="note blue"><b>读法提醒</b>：测试站 ≠ 生产站。全部 Wave1–4、助手 3.7.14/3.7.15、SEO/GEO 改动目前只在 develop/测试站；生产站要等一次<b>授权开窗 + 出包前置（两树同点已满足）+ 部署</b>。AGENTS.md 明令「不得从 develop 直建生产」。</div>
+
+<h2>二、这两天（10-10 → 10-12）修了什么</h2>
+<div class="tl">
+  <div class="it"><div class="d">10-10 深夜–10-11</div><div class="t"><b>Wave1–4 全量合流 develop</b>：WP0 地基 / WP2 术语表 / WP3 测试地基(vitest) / WP4 产品核心 UX / WP5 交付五数 / WP6 安全(next 16.3.8) / WP7 UI 收敛 / WP8 移动端与可访问性 / WP9 观测 / WP10 发布门(迁移差集) / WP11 术语接线 / WP12 发布门补完(<b>P-02 真机验收门</b> + 部分索引断言 + 迁移决策) / WP13 资源与死代码。</div></div>
+  <div class="it"><div class="d">10-11</div><div class="t"><b>测试站三次部署</b>：<code>77b4829</code>（构建期 OOM，加持久化 swap）→ <code>3ce5b6d</code> → <code>54a41bf7</code>（正式）。<b>助手 3.7.15 随 Web 正式发布</b>；runbook §5 首次机械化验收 <b>PASS=28 FAIL=0 WARN=0</b>（含 9 张保护表逐表比对、安装包 SHA 逐位一致）。</div></div>
+  <div class="it"><div class="d">10-11</div><div class="t"><b>账户与文案</b>：设备按电脑聚合、一键解绑整台电脑（<code>29cf132</code>）；网络超时不再被说成「重新激活」（<code>74125e7</code>）；/pack 计费文案与实现对齐。</div></div>
+  <div class="it"><div class="d">10-11</div><div class="t"><b>传输加固</b>：#139 只读票据传输失败有界重试（L1，未部署）／#140 建连计时器只算 DNS+TCP／#141 ExtendScript 字面量转义补全 ⇒ 助手 3.7.15 出厂（<code>b36773c</code>）。</div></div>
+  <div class="it"><div class="d">10-11</div><div class="t"><b>部署链路</b>：#146 备份目录无轮转根因修复（<code>$BACKUP_ROOT</code> 保留策略 + 守卫 + fixture 故障注入实证）；出包前置两树同点；upload 40MB 约 20 分钟的排期认知。</div></div>
+  <div class="it"><div class="d">10-10/11</div><div class="t"><b>SEO/GEO（本人执行）</b>：robots 具名 AI 检索/取用代理组、守卫断言、test 环境 <code>NEXT_PUBLIC_SITE_URL</code> 注入、服务端 AI 爬虫日志月报（<code>a3b18d7</code>）；100 轮对抗审查方案 <code>docs/records/20261010_SEO_GEO_v2_…</code>。生产诚实文案（删「平均 3 分钟」、改「源文件不出本机」）<b>已修未上生产</b>。</div></div>
+  <div class="it"><div class="d">10-12（今天，进行中）</div><div class="t"><b>「不走 PS」通道三轮实测</b>：字节手术原型真机验收（<code>验收记录_20261012_…</code>）、生产工序诊断（<code>诊断记录_20261012_…</code>）、泰文排版五路核验（<code>outputs/五路核验_泰语那一跳_20261012.html</code>）。<b>均未提交、未改产品代码</b>。</div></div>
+  <div class="it"><div class="d">10-12 下午（并行会话，现场仍在动）</div><div class="t"><b>cbacbdf</b>：v3 批次票据独立 TTL（5→60 分钟）修复 <code>/manifest</code> 偶发 403（登记 #149），<b>已部署测试站</b>（测试站从 <code>54a41bf7</code> 前进到 <code>d5a84f8</code>，T-0167）。production 树另有在飞 WIP（验票抬时 25s + 失败报告 + 回执自愈，未提交）。⇒ <b>本页所有 Git/站点读数的有效时刻以探针时刻为准，下次读数前先复跑。</b></div></div>
+</div>
+
+<h2>三、专题：「不走 PS」的通道——你让我重建的那条路</h2>
+
+<h3>3.1 为什么想做它</h3>
+<p>现在的写入链路是：<b>Windows 电脑 + 安装本地助手 + 本机跑着完整版 Photoshop</b>，助手通过 COM/ExtendScript 驱动 PS DOM 逐层改文字、由 PS 自己存盘。它同时是：用户装机门槛、批跑卡死的最大来源（ historically 双锁/挂起/超时）、以及「换电脑就断链」的根因。把 PS 从生产链路里拿掉，是这个产品形态上的质变。</p>
+
+<h3>3.2 两条候选路线，都已实测</h3>
+<table>
+  <tr><th>候选</th><th>做法</th><th>实测结果</th><th>判定</th></tr>
+  <tr>
+    <td><b>A · 字节手术</b><br><span class="fine">研究原型 <code>splice.mjs</code></span></td>
+    <td>直接改 PSD/PSB 里的文字描述符（Txt / EngineData / luni / Txt2 / XMP / run / FontSet），<b>不碰通道与像素</b></td>
+    <td>① 与英文源件<b>逐像素全等（0.000/255）</b>、148 个叶层通道字节全同——证明它「只换描述符」；② 但 PS 打开产物后<b>不按描述符重渲染</b>，画布显示源文；另存副本再开仍是源文；逐层非破坏性触碰才刷出目标语言；③ 产物 55 个 TySh 块 18 个 <code>len%4==2</code>（PS 容忍、Photopea 报错）</td>
+    <td><span class="tag t-bad">「拿掉 PS」不成立</span><br><span class="tag t-warn">「降级成无脑渲染器」待核</span></td>
+  </tr>
+  <tr>
+    <td><b>B · 自带渲染器的开源库</b><br><span class="fine">PhotoCraft 一类</span></td>
+    <td>完整的读写+排版库，重排后导出</td>
+    <td>① 58 份真实语料批测：贴存量像素 <b>0.34/255</b>、PC 自己排版 <b>0.82</b>（最好 0.44、最差 2.88 是日文文件）——渲染保真接近；② 泰文经同几何对照实为 <b>4/4 一致性劣化</b>（竖版份额外显眼），机理是 <b>PC 只扫两个系统字体目录、扫不到本机就有的 AdobeThai</b>（本机配置问题，大概率可救）；③ 「PC 存的 PSD 在真 PS 里打开对不对」<b>结构化验收仍未做</b>——原以为 tmp 有线索，经主 Agent 取证（§五-5.1 注）那是<b>二月假线索</b>；但二月留了个「非 Adobe 写入器＋PS 打开无恙」正向样本</td>
+    <td><span class="tag t-warn">仍开着，主流死因被推翻</span><br><span class="tag t-info">泰文=字体目录配置</span></td>
+  </tr>
+  <tr>
+    <td><b>C · 现产品路径</b><br><span class="fine">PS DOM 写入</span></td>
+    <td>JSX 赋值 <code>layer.textItem.contents</code>，PS 自己 save()</td>
+    <td>本轮拿到<b>正面证据</b>：参照件（产品上一批次产物）PS 打开即显示目标语言，55 个文字层完整、<b>0 层栅格化</b>、无豆腐块；55 层里 47 层包围盒随目标语言改变（真重排版）</td>
+    <td><span class="tag t-ok">健康</span>（本轮异常均为原型独有）</td>
+  </tr>
+</table>
+
+<div class="note red"><b>最重要的口径纪律（两层）</b>：<br>
+① <b>我们手上没有独立真值</b>。翻遍本地 5857 全部批次目录，参照件全是<b>本产品自己历次批次的产物</b>。所以一切「与参照件逐字节一致」只能读作<b>「与上一批次回归一致」</b>，不是「我们对了」。写侧要建立独立验证，得让第三方（客户手工 PS 或另一套工具）产一份可比对的产物。<br>
+② <b>「PS 打开时会重渲染」这条仍是 1:1 未决</b>（5389 等长改写曾观测到画布显示新文字且那次 patch 一个像素都没动 vs 本轮 5857 变长改写打开/保存都不重渲染）。别把本轮 §四 的 ①②③ 当三个样本——它们是<b>同一份文件同一次会话</b>。判据很便宜：同一文件做等长/变长两份 patch 对照观测，<b>需你当场授权</b>。</div>
+
+<h3>3.3 这条路当下的位置</h3>
+<ul class="compact">
+  <li><b>已杀死的只有一个候选</b>：「不渲染就能换字」。它不等于「PS 永远拿不掉」——路线 B（带渲染器的库）没死。</li>
+  <li><b>但路线 B 的天花板也不是「不用 Adobe」</b>：交付物是 PSD，<b>最终判官是客户自己的 Photoshop</b>。验收那一次总还得开 PS。它当下更合适的角色是<b>验收员/参照物生产者</b>，不是生产者。</li>
+  <li><b>复活原型（路线 A）的前置</b>：先修 <code>len%4</code> 对齐（<code>pad4.mjs</code> 已验证有效），并且必须接受「仍需逐层触碰刷新像素」——若真需要逐层触碰，「降级成渲染器」的收益基本为零。</li>
+  <li><b>读侧是有独立尺子的</b>：57 份真实客户来件、3525 层零违反（读路径不受本轮结论影响）。</li>
+</ul>
+
+<h2>四、生产工序当前故障排名（10-12 诊断，按「今天有没有真的吃掉产出」排）</h2>
+<table>
+  <tr><th>#</th><th>故障</th><th>今天的实损</th><th>修法与代价</th><th>状态</th></tr>
+  <tr><td>1</td><td><b>VERIFY_TIMEOUT</b>：验票单跳预算 10s，跨太平洋链路常态超时；10-08 <code>4a373ad</code> 删掉重试后硬失败 0→11 次（<b>知情删除</b>，因重试重放的是一次性票）</td><td><b>有</b>：12 语种批次第 5 个语种 10 秒被拒，<b>整批中断、8 个语种从未执行、用户无任何报告</b></td><td>A（首选）单跳抬到 ~30s（<code>server.js</code>，随 3.7.16）＋ B 网页端失败报告（不动身份，可独立先发）；C 重新出票是批次状态机变更，走高危流程</td><td><span class="tag t-bad">排名第一</span></td></tr>
+  <tr><td>2</td><td><b>回执重放打本机 <code>::1:3000</code></b> 永不终止（每 5 分钟一次 ECONNREFUSED，自 09-11 起）</td><td>无产出损失，但日志已写 <b>2 万行</b>、界面不提示</td><td>回环分支跳过本轮 POST + 每天至多一次告警（约 6 行，自愈不丢数据）；运维侧可立即改 <code>.tygf_session</code> 的 serverUrl（需授权）</td><td><span class="tag t-warn">开放</span></td></tr>
+  <tr><td>3</td><td><b>报告口径</b>：文档级表 vs 跑次级表混用（41 行 vs 实际 12 行，夸大 3.4×）；「已替换文字层」与「文字层总数」不同量纲；映射/回读率是自指指标（24 份报告恒等于 1.0）；「疑似未翻译」只聚合成数字没落到行</td><td>无产出损失，但<b>报告在误导决策</b></td><td>只显示已算出的判据（落到逐层行）；<code>report-renderer.js</code>，随 3.7.16</td><td><span class="tag t-warn">开放</span></td></tr>
+  <tr><td>4</td><td><b>字体覆盖</b>：PS DOM 无逐字符 hasGlyph API，但 <b>Node 侧可算</b>（fontkit）。实测：泰语是唯一硬约束语种（整机 1378 面只有约 14 面有泰文码位）；两个字体全覆盖 12 语种（Tahoma 差日语、Noto Sans SC 差泰语）；正确规则是<b>逐层判「该层字体覆盖不了该层目标文字才换」</b></td><td>今天无</td><td><code>glyph-coverage.js</code> 已存在但是<b>死代码</b>；前置=字体集基准定死 ＋ fontkit 进 exe 的打包 spike（exe 从未打过第三方模块）</td><td><span class="tag t-info">结论已测出，未接线</span></td></tr>
+  <tr><td>5</td><td><b>零产出 ⇒ 零报告</b>耦合：助手侧是<b>被测试锁死的刻意设计</b>（不建空交付目录）；但<b>网页侧 Recovery 10.4 失败报告「设计过、文档写过、代码一天没实现」</b>（<code>generate.ts</code> 整模块零引用）</td><td>有（与 #1 叠加放大）：「什么都没做」和「做砸了」在用户眼里一模一样</td><td>方案 W 只改网页端、不动 runtime 身份；补丁备在 <code>tmp/w-patch/</code> 未套用（待授权）</td><td><span class="tag t-warn">待授权</span></td></tr>
+</table>
+
+<h2>五、四路并行深挖结果（只读调查，子 Agent 零残留）</h2>
+
+<div class="note blue"><b>第二轮对抗式审查（本轮）校准了两个上一轮的结论，并坐实一个未决命题</b>：①「泰文 3 好 1 坏」<b>被推翻</b>——按同几何对照组应为「4/4 一致性劣化、竖版份额外显眼」，且全批最差样本（2.88）<b>一条字体警告都没有</b>，mae 高 ⟺ 缺字体这个等式不成立；②「PC 说字体没装＝本机没这个字体」<b>被推翻</b>——PC 只扫 <code>%WINDIR%\Fonts</code> 与 <code>%LOCALAPPDATA%\Microsoft\Windows\Fonts</code> 两个目录，AdobeThai 就在本机（PDFL 目录）但不在扫描范围；③「PS 打开会不会重渲染」的 1:1 矛盾<b>坐实为真未决</b>（正方两条证据均无原始观测记录，反方 n=1）。另：调查期间并行会话又推了 2 笔（/manifest 403 修复 cbacbdf 已上测试站），<b>本页全部时点读数以探针时刻为准</b>。</div>
+
+<h3>5.1 路线 B 的身份与数据（子 Agent A，数字经子 Agent G 独立重算确认）</h3>
+<div class="note green"><b>PC 是谁，已证实</b>：PhotoCraft = 开源项目 <b>storytold/photocraft</b>——「Rust 写的 clean-room reimplementation of Adobe Photoshop」（官网 getartcraft.com）。已装机为 Windows 应用，批测直接调 <code>photocraft-cli.exe</code>；源码快照里写死「每次编辑都用 <code>photocraft-text</code> 重渲染该层并重生成 PSD <code>TySh</code>」⇒ <b>自带渲染器、能存可编辑文字层的 PSD，两条都已证</b>。</div>
+<table>
+  <tr><th>模式（58 份语料，40 份有「PS 自己导出的 JPG」当尺子）</th><th>平均 mae/255</th><th>最好</th><th>最差</th><th>读法</th></tr>
+  <tr><td>stored（贴文件里存的合成像素）</td><td><b>0.34</b></td><td>0.19</td><td>1.08</td><td>解码+转发忠实</td></tr>
+  <tr><td>typeset（PC 自己的排版引擎重排）</td><td><b>0.82</b></td><td>0.44</td><td><b>2.88</b></td><td>差距全部来自排版；PC run 40/40 code=0，5.1s/份</td></tr>
+</table>
+<div class="note"><b>「泰文坏」要修正口径（原判读被对抗审查推翻）</b>：4 份泰文样本全中同一条 PC 警告 <code>warning: font 'Adobe Thai' is not installed; text may render using a fallback face</code>（verbatim，i=2/12/16/23 四份逐字相同）。<b>但按「同几何、有 PS 尺子」的 stored 对照剥掉底噪后：4 份泰语的 Δ(typeset−stored) 全部高于非泰文基线（0.36–0.56 vs 0.17–0.24，差&gt;32 占比 6–25 倍）⇒ 是 4/4 一致性劣化，不是「1/4 坏」</b>；竖版那份（i=2，画布 2187×5545）只是把劣化放大到肉眼可见（2.11 vs 其他三份 0.63–0.83）。三条推翻性证据：①全批最差是日文文件 i=56（2.88）且<b>零字体警告</b>；②4 份泰文的层数/文字层数/字体声明完全相同，唯一具名差异是<b>画布几何</b>（竖版 A+ 详情页 vs 12412×1250 横幅）；③<strong>「3 好」部分是 1094px 降采样 + 平均值的阈值假象</strong>。<br><br><b>机理被上一轮归错了</b>：PC 的字体只来自四处（bundled Latin／craft-fonts 日文／<code>load_system_fonts</code> 扫两个目录／register_font_data API），<b>没有字体目录配置项、环境变量或 CLI 参数</b>。它的 "not installed" 是「不在我扫的两个目录里」的陈述，<b>不是「机器没这个字体」</b>——AdobeThai 就在本机（<code>…PDFL Resource\Resource\Fonts</code>）。PC 还有内置 <code>THAI_FAMILIES</code> 回退（Leelawadee UI/Tahoma，均在扫描目录内且覆盖泰文）⇒ <b>现状不是豆腐块，是「字形对、字形源错」</b>。<br><br><b>可救性（推断，未实测）</b>：把 AdobeThai 装进 <code>%LOCALAPPDATA%\Microsoft\Windows\Fonts</code>（仅为我安装，无需动 WINDIR）⇒ PC 扫描即中、按 PostScript 名精确命中（<code>resolve_postscript</code>），与 PS 同 face 同 metrics ⇒ 大概率大幅收口；因泰文 GSUB（叠字/声调重排）实现差异，mae 不会归零。另 PC 文档有个 <code>type.resolveMissingFonts</code> 命令，但源码快照的 specs 里没有 ⇒ <b>未核实现役 exe 是否有</b>。真正不便宜的那一半：<b>交付物若给客户打开，客户机的字体集不在我们控制内</b>——「以渲染方哪套字体为基准」仍是未定口径。</div>
+<div class="note blue"><b>一条未投递线索（必须报）</b>：<code>tmp/pc-roundtrip/</code> 里有一次 <code>in.psd</code>(176MB) → <code>out.psd</code>(264MB，<b>PC 存档</b>) → <code>ps_out.png</code> 的链路，同目录 <code>cmp.js</code> 注释写「对比 PhotoCraft 渲染 vs Photoshop 渲染」⇒ <b>极可能有一次人工用 PS 打开过 PC 的产物</b>，但无任何记录/日志/逐层读回。所以「PC 存的 PSD 在真 PS 里打开对不对没人验过」这句要改口径：<b>结构化验收确实没做，但存在一个来源不明的 ps_out.png——判「PS 当不当判官」之前，先花一次授权把它的来历问明白。</b></div>
+
+<div class="note"><b>主 Agent 亲自取证（2026-10-13 上午，只读）：ps_out.png 来历查清，「PC 存档」判读被证伪</b>。证据链：① EXIF——<code>ps_out.png</code>＝<b>Adobe Photoshop 26.5，2026-02-04 16:45</b> 导出（2164×6895，画布对不上任何现存 PSD）；<code>in.png</code>/<code>out.png</code>＝<b>PS 22.0，2026-02-05 10:11</b> 同秒导出（4429×6900＝in/out.psd 画布）；已知 PC 渲染零 EXIF ⇒ 这三张全是<b>二月旧档</b>（10-11 晚才落进 tmp）。② <b>storytold/photocraft 建仓 2026-09-30</b>（GitHub API）⇒ 二月它根本不存在，<b>out.psd 铁定不是 PC 写的</b>（子 Agent A「PC 存档」判读证伪）。③ out.psd 指纹：非 Adobe 写入器（版本资源 readerName=CS6、25 个资源块=in.psd 33 的子集但重排）。④ 全库检索（含 archives/backups/_parked）：<b>二月实验零记录</b>。⑤ 内容取证：两份 PSD 的 175 个文字层唯一差异＝一处 <code>79.6mm</code>→<code>79.6毫米</code>（简中改字），恰对应渲染差分的 70×17 像素框（x[193,262] y[6648,6664]，674px）。⑥ <b>存量合成 vs PS 渲染</b>：out.psd 存量区与 out.png（PS 渲染）<b>0/3570 字节全等</b>、与 in.png 差 2022/3570 ⇒ 二月工具<b>存档前已自行重排像素</b>，PS 22.0 打开这份非 Adobe PSD 后<b>原样采信存量像素、未再重排</b>。<br><b>结论</b>：(a)「PS 开过 PC 输出」的线索是<b>假线索</b>——PC 输出从未被 PS 验过，补验仍是待办；(b) 二月留下一个「<b>非 Adobe 写入器＋像素同步＋PS 打开无恙</b>」的正向样本（n=1、工具身份不明、无记录），对路线 B 类路线是利好但不构成验收；(c) 该样本解决不了「像素陈旧时 PS 是否重排」——那仍需 §5.2 的等长/变长对照；(d) <b>新问题（要问 Owner）：二月那次「79.6mm→79.6毫米」实验是谁做的、用的什么工具？</b>仓库里查无此记录。</div>
+
+<h3>5.2 对抗式审查坐实：「1:1 矛盾」是真的，且给出了最小观测设计（子 Agent E）</h3>
+<div class="note red"><b>裁决：矛盾坐实，需活体 PS 观测——只读证据溶解不了。</b>正方（5389「画布显示 7777」）<b>两条证据均无原始观测记录</b>：psd-patch 目录只有测前清单、无截图无结果；第二轮「显示日文」只存一句话且记录栏空白。<b>反方 n=1</b>（一份文件一次会话，①/②/③ 是同会话三步骤，治理层已自判非 3:1）。可结构差异逐个查过：psd/psb 格式、等长/变长、run 数组、FontSet、对齐疤、像素陈旧度——<b>没有一条能解释两面的反向差异</b>。</div>
+<div class="note"><b>本轮新查出的最强候选机理（仍未坐实）</b>：<code>splice.mjs:19-21</code> 明说删文档级 <code>Txt2</code> 缓存就是为逼 PS 打开时重新排版；第二轮正好做过「Txt2 保留 vs 删除」两份对照，<b>但那份「显示日文」到底是哪一臂，无记录可判</b>，且 <code>--no-txt2</code> 从未成功打开过（没有兜底）。另：<code>tmp/stale-pixel-probe-20261012/</code> 有 6 个只读探针脚本（同包围盒不同字节比像素，专为分辨「重编码 vs 重渲染」而造），<b>但零输出件——有工具、无数据</b>。<br><b>最小观测设计（你授权后跑）</b>：同一源件复制两份——A 等长 patch（改满 6 处副本、不动 run/字体/结构）、B 变长 splice（算全不变量）；各自由<b>新会话</b>打开同版本 PS，记录：PS 版本+构建号、机器、弹窗原文、PS 导出的画布 jpg（非截图）、图层名、双击进文字层读出的文字、DOM 还是画布像素、前后 md5；判据：A 新字/B 旧字⇒等长假说成立；均旧字⇒5389 为不可复现轶事；均新字⇒反方不成立、全案重开。<b>记录必须当场填进清单（前三轮记录栏全空就是这个项目栽了三次的坑）。</b></div>
+
+<h3>5.3 对四路回包自身的独立复核：10 项中 2 项异议、2 项部分支持（子 Agent G）</h3>
+<table>
+  <tr><th>主张</th><th>独立重算/重读</th><th>判定</th></tr>
+  <tr><td>stored 0.34 / typeset 0.82 / 最差 2.88 / 最好 0.44</td><td>从 JSON 重算：40 行、Σ13.80/Σ32.96 ⇒ 0.345/0.824，min/max 逐项吻合</td><td><span class="tag t-ok">支持</span></td></tr>
+  <tr><td>58 份语料、40 份有尺子、only 40 compared</td><td>manifest 58、jpg 非空 40；cmp 两文件 i 集 == hasRuler 集；cmpall.mjs:23 无尺跳过</td><td><span class="tag t-ok">支持</span></td></tr>
+  <tr><td>PC 身份（storytold/photocraft、Rust、自带渲染器）</td><td>type_cmds.rs:6-7 与 orgrepos.json 描述逐字核对，无夸大</td><td><span class="tag t-ok">支持</span></td></tr>
+  <tr><td>三条证伪（ticketAttemptBudgetMs 在 server.js:2282-2284 / 抬内层单独生效 / glyph 非死代码）</td><td>grep 独立复核全部成立；但 cited :2568 实为 authorizePreparationScan，且<b>未提交 WIP 已在该点传 25000</b> ⇒ 「链上 budgetMs=0」只对 HEAD 成立，对当前工作树已过期</td><td><span class="tag t-warn">支持（附基线说明）</span></td></tr>
+  <tr><td>production 树 3 项未提交 WIP</td><td>实为 <b>4 条</b>（含 <code>COMMIT_MSG_TMP.txt</code>；该草稿数分钟后被并行会话提交掉）。server.js diff +186/−22、execute-step +95</td><td><span class="tag t-warn">口径差</span></td></tr>
+  <tr><td><s>未推送恰 2 笔</s></td><td><b>错</b>：调查期间并行会话又提交 2 笔（cbacbdf /manifest 403 修复、d5a84f8 合流、b58ddbf 记账）⇒ <b>未推送 = 7 笔</b>（origin=d0befb4 经 ls-remote 复核，非旧 ref 假象）</td><td><span class="tag t-bad">异议（已订正）</span></td></tr>
+  <tr><td><s>HANDOFF :826 表 7 行待追认</s></td><td><b>错</b>：实为 <b>9 数据行、8 行待追认</b>（漏计 834-836 三条）</td><td><span class="tag t-bad">异议（已订正）</span></td></tr>
+  <tr><td>#139 ISSUES 状态行滞后</td><td>原文「测试站未部署、线上仍跑 3ce5b6d」vs T-0162 提交链与 CURRENT_STATUS 现役 54a41bf ⇒ 确滞后</td><td><span class="tag t-ok">支持</span></td></tr>
+  <tr><td>splice 571 处编辑/净 −7596/186 长度字段</td><td>判读清单-JP.md:30 逐字吻合</td><td><span class="tag t-ok">支持</span></td></tr>
+  <tr><td>verify-w 副本非纯 W（含 server.js 25s 抬时）</td><td>diff +101/−14，含 <code>EXECUTION_VERIFY_ATTEMPT_TIMEOUT_MS = 25000</code> 且三处传 EXECUTION_VERIFY_BUDGET</td><td><span class="tag t-ok">支持</span></td></tr>
+</table>
+
+<h3>5.4 路线 A 的编辑面与复活前置（子 Agent B，复核通过）</h3>
+<table>
+  <tr><th>事实</th><th>结论</th></tr>
+  <tr><td>splice.mjs 编辑清单（644 行）</td><td>571 处编辑，只碰描述符族：<code>Txt </code>/EngineData/<code>luni</code>/<code>Txt2</code>/XMP/段落 run/RunArray/样式 run/FontSet/186 个长度字段；读入即 <code>skipLayerImageData</code> ⇒ <b>「不碰通道与像素」已证到行号</b></td></tr>
+  <tr><td>5389「画布显示 7777」观测</td><td>可追溯到 <code>tmp/psd-patch/</code>（等长是硬闸、逐字节 diff 预期窗口外 0 处），<b>但该目录只有被测前清单，没有观测结果记录</b> ⇒ 可追溯、无原始日志</td></tr>
+  <tr><td>两次静默失败的位置</td><td>都在变长独有路径：①漏改 6 份副本之一 ⇒ PS 不弹窗、静默读旧文字；②样式 run 未按比例重分配 ⇒ PS 直接丢弃新文字回退旧像素</td></tr>
+  <tr><td>复活前置（7 项）</td><td>TySh 对齐<b>未修</b>（pad4 只验到报错消失，从没接到 splice 输出上）；字体前提已更正但代码<b>未改</b>；「必须有人重渲染」是<b>死结未修</b>；<code>--no-txt2</code> 已证败；读回 6 码元<b>未解</b>；写侧独立真值 0 份；样式 run 元素数校准<b>未验</b></td></tr>
+  <tr><td>方案 W 备件现状</td><td><b>补丁已套在 <code>tmp/verify-w/</code> 副本树</b>（execute-step.tsx R1–R10 落点全在），但该副本多一个不属于 W 的 server.js 25s 抬时改动 ⇒ 不是纯 W 副本；README 里 V1–V9 验证一项都没跑，唯一实测是 <code>git apply --check</code> rc=0</td></tr>
+</table>
+
+<h3>5.5 对诊断记录的复核：32 条断言，3 条要改（子 Agent C）</h3>
+<table>
+  <tr><th>诊断记录原断言</th><th>复核判定</th></tr>
+  <tr><td><code>ticketAttemptBudgetMs</code> 在 <code>post-json.cjs:305-315</code></td><td><span class="tag t-bad">归错文件</span>真身在 <code>server.js:2282-2284</code></td></tr>
+  <tr><td>「只抬内层不抬外层 = 什么都没改」</td><td><span class="tag t-bad">该路径不成立</span>batch/execute 的 <code>budgetMs=0</code> ⇒ min 退化为内层常量，<b>抬内层单独即生效</b>（作为通用风险警示仍有效）</td></tr>
+  <tr><td><code>glyph-coverage.js</code> 全仓零引用＝死代码</td><td><span class="tag t-bad">证伪</span>两个 dev 脚本 require 它（只是产品链路零引用、且都没接闸门）；fontkit 在 <b>devDependencies</b> 且未装</td></tr>
+  <tr><td>其余 29 条（server.js/v15-runner/report-renderer/execute-step/generate.ts 零调用/sanitize 不命中…）</td><td><span class="tag t-ok">已验</span>行号与 HEAD 逐字吻合；仅 2 处轻微漂移（用户话术 2971→2972、回执定时器 7307→7317）</td></tr>
+</table>
+
+<h3>5.6 治理台账与生产阻断面（子 Agent D，经 G 复核修订）</h3>
+<table>
+  <tr><th>项</th><th>读数（时点：2026-10-12 下午，现场仍在动）</th></tr>
+  <tr><td>未推送内容</td><td><b>7 笔</b>（不是 2 笔——调查期间并行会话新增 2 笔）：<code>b3d6bf5</code> #146 修复 → <code>7b6bccb</code> T-0165 → <code>9452eef</code>/<code>5ca5edd</code>（本人 SEO 记录与 T-0166）→ <code>cbacbdf</code> <b>/manifest 403 修复（v3 票据 TTL 5→60min，#149）</b> → <code>d5a84f8</code> 合流 → <code>b58ddbf</code> T-0167。origin=<code>d0befb4</code>（ls-remote 复核）。<b>T-0165 的 #146 修复仍只活在开发机与服务器 /tmp</b>（live 安装被权限分类器拦，停在授权前）</td></tr>
+  <tr><td>测试站（15:0x 复探）</td><td>已从 <code>54a41bf7</code> <b>前进到 <code>d5a84f8</code></b>（/manifest 403 修复上站，T-0167）；助手仍 3.7.15。<b>生产站仍 <code>eeb994c</code>/3.6.60（09-19 冻结）</b></td></tr>
+  <tr><td>仍 OPEN 的三个 🔴</td><td><b>#128</b> money 语言级单赢家锁真实数据 0 触发；<b>#137</b> request 相 8.7% 失败重试覆盖不到；<b>#138</b> getClientIp 恒 unknown 全站共桶（叠加新登记的 #149 一族票据问题已修待推）</td></tr>
+  <tr><td>生产阻断·技术门</td><td>#128/#137/#138 三 🔴 ＋ runbook §5.0 缺料（缺现役助手真实交付报告）＋ #129 迁移型部署无「拒绝未识别迁移」门</td></tr>
+  <tr><td>生产阻断·授权门</td><td><b>「生产部署」与「支付 flag」两句 Owner 明确授权从未出现</b>；push、#146 服务器安装、#130 文档口令、#145 历史 exe 均停在授权前</td></tr>
+  <tr><td>HANDOFF 偏差表</td><td>:780 历史区已清零；<b>:826 表实为 9 数据行、8 行待追认</b>（不是 7 行）</td></tr>
+  <tr><td>在飞 WIP（请并行会话收尾）</td><td>worktrees/production：<code>server.js</code>+186/−22、<code>execute-step.tsx</code>+95、新 <code>failure-report.ts</code>（其 COMMIT_MSG_TMP.txt 已被并行会话用于提交 /manifest 修复，代码 WIP 仍未提交）＝ §六-1/§四-4.2/§7.2 的在飞实现。<b>注意：该 WIP 已在验票点传 25000 预算 ⇒ "链上 budgetMs=0" 的复核结论只对 HEAD 成立</b></td></tr>
+</table>
+
+<h2>六、需要你拍板的事（按杠杆排序，已按两轮深挖+对抗审查修订）</h2>
+<ol class="compact">
+  <li><b>生产部署开窗</b>：main=develop 同点（<code>cbacbdf</code>）、出包前置已满足、未推送 7 笔；开窗即把三周修复 + 3.7.15 + SEO 诚实文案 + /manifest 403 修复一起上生产。授权门硬核就是这一句（另需支付 flag 保持 false 的明示）。</li>
+  <li><b>三个 🔴 的处置顺序</b>：#128（老批是否永久不受护——要你一句话）、#137（对赌设计要不要开，过高风险 12 问）、#138/#143（源站 :80 明文回源，修它要你去 CF 仪表盘）。</li>
+  <li><b>VERIFY_TIMEOUT 修法 A+B</b>：复核已确认「抬内层单独即生效」（原「必须抬外层」的警告不适用于该路径）⇒ A 比原判断更便宜。<b>但 production 树已有在飞 WIP 在做 A+4.2+W（且已在验票点传 25000）</b>——先让那个会话收尾提交并跑门禁，别两路一起改。</li>
+  <li><b>「不走 PS」下一步二选一</b>：① 补 PC 终验——ps_out.png 来历已自查清（二月假线索，见 §五-5.1 注），<b>PC 输出→真 PS 打开的结构化验收从未做过，仍是第一缺口</b>；顺带做那个便宜修复：把 AdobeThai 装进 <code>%LOCALAPPDATA%\Microsoft\Windows\Fonts</code>（仅为我安装）后重跑 4 份泰文，看 Δ 是否收口（推断未实测）；② 先搁置，修生产工序 #1/#2/#3。</li>
+  <li><b>问一句旧事（零成本）</b>：二月那次「79.6mm→79.6毫米」的 PSD 改字实验（out.psd，非 Adobe 工具所写，PS 22.0 打开无恙）<b>仓库里查无记录</b>——是你/早期会话做的吗？用的什么工具？若那工具还在，路线 B 的「PS 打开」缺口可能已被它填过一半。</li>
+  <li><b>两件便宜观测的授权</b>（都不改文件、只读+导出）：<br>　· <b>等长/变长对照实验</b>（同一源件两份：A 等长 patch、B 变长 splice，各自由新会话打开同版本 PS，记录弹窗/画布导出/双击读字/md5）——判「PS 打开会不会重渲染」，决定「降级成无脑渲染器」是否活着；<br>　· <b>PS 定向重读那 4 层</b>（产物 3 层读回少 1 码元；字节已证完整，归因已撤回，勿按「写侧丢字」修）。</li>
+  <li><b>写侧独立真值</b>：是否安排一次「客户手工 PS / 另一套工具」的第三方产物？没有它，以后所有「写侧通过」都只能说「回归一致」。这条不授权，「不走 PS」永远谈不上验收。</li>
+  <li><b>push 授权（现在欠 7 笔）</b>：本地领先 origin 7 笔（含 /manifest 403 修复与 #146）。要推说一声，先给 diff 清单。</li>
+</ol>
+
+<h2>七、四条口径纪律（深挖后仍然全部成立，并各补一例）</h2>
+<div class="cols">
+  <div class="q"><b>回归 ≠ 真值。</b>写侧 0 份独立真值；5389 的「一致」也只有被测前清单、无观测记录。</div>
+  <div class="q"><b>别把一次会话当多样本。</b>PC 的 4 份泰文一度被说成「02/49/54/56」——49/54/56 其实是日文文件。</div>
+  <div class="q"><b>平均值会掩盖单点失败。</b>0.82/255 的均值遮住两份结构残差（2.88 的日文、2.11 的泰文），也遮住「报错消失≠渲染恢复」。</div>
+  <div class="q"><b>纸面推断压不过实测。</b>「必须抬外层」「glyph 死代码」「ticketAttemptBudgetMs 在 post-json」三条今天被复核证伪；原记录的 32 条行号断言 29 条反而逐字成立——两种都要记。</div>
+</div>
+
+<h2>八、证据索引</h2>
+<table>
+  <tr><th>主题</th><th>指针</th></tr>
+  <tr><td>真机验收（PS COM + ExtendScript）</td><td><code>验收记录_20261012_PSD原生改文字_PS真机实跑.md</code>（含两处前提更正与一次归因撤回）</td></tr>
+  <tr><td>生产工序诊断（跑次死因/字体/回执重放/VERIFY_TIMEOUT 定案）</td><td><code>诊断记录_20261012_生产工序_跑次死因与字体覆盖.md</code>（§8 有带日期的回归 Commit <code>4a373ad</code>；§八 32 条 file:line 断言经子 Agent C 逐条复核，3 条证伪见 §5.5）</td></tr>
+  <tr><td>泰文排版五路核验</td><td><code>outputs/五路核验_泰语那一跳_20261012.html</code>、<code>outputs/PSD原生改文字_原理与实现_20261012.html</code>（后者结论已被验收记录部分修订，以新件为准）</td></tr>
+  <tr><td>路线 B 一手材料</td><td><code>tmp/pcbatch/</code>（58 份批测+判据脚本）、<code>tmp/pcprobe/</code>（PC 源码快照+CLI 文档：fonts.rs 字体来源、type_cmds.rs 重渲染）、<code>tmp/pc-roundtrip/</code>（out.psd + ps_out.png 线索）、<code>tmp/acprobe/</code>（storytold 组织仓清单）</td></tr>
+  <tr><td>路线 A 一手材料</td><td><code>tmp/psb5857/splice.mjs</code>（644 行编辑清单）、<code>tmp/psd-patch/</code>（5389 等长）、<code>tmp/pptest/pad4.mjs</code>、<code>tmp/verify-w/</code>（方案 W 已套副本）、<code>tmp/stale-pixel-probe-20261012/</code>（6 个探针脚本、零输出）</td></tr>
+  <tr><td>字体一手材料</td><td><code>tmp/fontprobe/</code>（1378 面实测、泰文仅约 14 面、AdobeThai 缺 0 字符）、<code>tmp/fontgap/findings.md</code></td></tr>
+  <tr><td>SEO/GEO 100 轮对抗审查与调整方案</td><td><code>docs/records/20261010_SEO_GEO_v2_对抗审查100轮与调整方案.md</code>（develop）</td></tr>
+  <tr><td>项目动作总账</td><td><code>worktrees/develop/AI_MEMORY/TASK_LOG.md</code> T-0149–T-0167；<code>AI_MEMORY/ISSUES.md</code> #128–#149</td></tr>
+  <tr><td>复现方式</td><td>本页 §一 的只读探针命令（provenance/rev-list/ls-remote）与 tmp/pcbatch 的 JSON 均可即时复跑</td></tr>
+</table>
+
+<footer>
+  图译工坊内测版 · 现状介绍生成于 2026-10-12（只读编制，未改动代码/未部署/未推送）。<br>
+  口径：凡未核实处写「未决」；不把「与上一批次一致」写成「已通过」；不伪造验收记录与独立真值。
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>整合执行方案：九条线合流、开源对标与上线排序 · 2026-10-17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#111311; --muted:#6f746f; --line:#e0e3e0; --line-strong:#d2d7d3;
+  --bg:#fbfcfb; --panel:#ffffff; --soft:#f4f6f4;
+  --accent:#2d7356; --accent-soft:#e8f2ec;
+  --red:#c24b4b; --red-soft:#fbeeee;
+  --amber:#9a6505; --amber-soft:#fdf4e3;
+  --blue:#2f5d8a; --blue-soft:#eaf1f8;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Noto Sans SC","IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  font-size:15px; line-height:1.72; letter-spacing:-.008em;
+}
+.wrap{max-width:960px;margin:0 auto;padding:56px 24px 80px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.88em}
+code{background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+header.top{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:36px}
+.kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:31px;line-height:1.28;margin:12px 0 10px;letter-spacing:-.022em}
+.sub{color:var(--muted);font-size:14px}
+
+.verdict{
+  border:1px solid var(--line-strong);border-left:4px solid var(--accent);
+  background:var(--panel);border-radius:var(--radius);padding:22px 24px;margin:0 0 34px;
+}
+.verdict h2{margin:0 0 10px;font-size:17px;color:var(--accent)}
+.verdict p{margin:0 0 10px}
+.verdict p:last-child{margin:0}
+
+h2.sec{font-size:20px;margin:44px 0 6px;letter-spacing:-.015em}
+h2.sec .num{color:var(--muted);font-weight:500;margin-right:10px;font-family:"IBM Plex Mono",monospace;font-size:16px}
+.sec-lead{color:var(--muted);font-size:14px;margin:0 0 18px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat .n{font-size:23px;font-weight:700;letter-spacing:-.02em;font-family:"IBM Plex Mono",monospace}
+.stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+.stat.ok .n{color:var(--accent)} .stat.warn .n{color:var(--amber)} .stat.bad .n{color:var(--red)}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px}
+th{text-align:left;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   border-bottom:1px solid var(--line-strong);padding:9px 10px;vertical-align:bottom}
+td{border-bottom:1px solid var(--line);padding:11px 10px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.mono{font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:18px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;padding:2px 8px;border-radius:999px;margin-bottom:10px}
+.tag.keep{background:var(--accent-soft);color:var(--accent)}
+.tag.cut{background:var(--red-soft);color:var(--red)}
+.tag.hold{background:var(--amber-soft);color:var(--amber)}
+.tag.info{background:var(--blue-soft);color:var(--blue)}
+.card p{margin:0 0 8px;font-size:13.5px;color:var(--muted)}
+.card p:last-child{margin:0}
+.card strong{color:var(--ink)}
+
+.gates{list-style:none;padding:0;margin:16px 0}
+.gates li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.gates li:last-child{border-bottom:none}
+.gates .st{flex:0 0 auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;
+  padding:2px 8px;border-radius:5px;margin-top:2px;white-space:nowrap}
+.st.pass{background:var(--accent-soft);color:var(--accent)}
+.st.fail{background:var(--red-soft);color:var(--red)}
+.st.skip{background:var(--soft);color:var(--muted)}
+.st.env{background:var(--amber-soft);color:var(--amber)}
+.gates .d{flex:1}
+.gates .d b{display:block;font-weight:600}
+.gates .d span{color:var(--muted);font-size:13px}
+
+.callout{border:1px solid var(--line-strong);border-radius:var(--radius);padding:20px 22px;margin:20px 0;background:var(--panel)}
+.callout.warn{border-left:4px solid var(--amber);background:var(--amber-soft)}
+.callout.danger{border-left:4px solid var(--red);background:var(--red-soft)}
+.callout.ok{border-left:4px solid var(--accent);background:var(--accent-soft)}
+.callout h3{margin:0 0 8px;font-size:15px}
+.callout ol,.callout ul{margin:0;padding-left:20px}
+.callout li{margin:5px 0;font-size:13.5px}
+
+.notes{background:var(--soft);border-radius:var(--radius);padding:18px 22px;margin:18px 0}
+.notes ul{margin:0;padding-left:20px}
+.notes li{font-size:13.5px;color:var(--muted);margin:6px 0}
+.notes li b{color:var(--ink)}
+
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer p{margin:4px 0}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#e8ece9; --muted:#9aa39c; --line:#2a312c; --line-strong:#39423b;
+    --bg:#0f1210; --panel:#161a17; --soft:#1b201c;
+    --accent:#6fbf95; --accent-soft:#16281f;
+    --red:#e08b8b; --red-soft:#2a1a1a;
+    --amber:#d9a94e; --amber-soft:#2a2214;
+    --blue:#8ab0d8; --blue-soft:#16202b;
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">图译工坊 · 整合执行方案 · 2026-10-17 夜</div>
+  <h1>九条线合流、开源对标与上线排序</h1>
+  <div class="sub">主 Agent 拆解 · 四路子 Agent 调查 · 对抗式审查 · 主 Agent 整合与门禁</div>
+</header>
+
+<div class="verdict">
+  <h2>一句话结论</h2>
+  <p><strong>九条线里八条已提交、卡在「没部署」，只有一条（批量台 v6）代码还没写。</strong>关键路径不是「再多做几件事」，而是先把两条分叉合流、把门禁跑绿、把已完成的推上测试站。</p>
+  <p>同时一条硬拦截：<strong>免 PS 写回（PC-E/F）必须冻结</strong>——PhotoCraft 的 <code>type.edit</code> 写回路径今天被社区实测为「让 Photoshop 27.10 打开即崩」或「改了等于没改」。</p>
+</div>
+
+<h2 class="sec"><span class="num">01</span>现场对账</h2>
+<p class="sec-lead">全部为本会话亲手跑出的读数；合流前树在动（23:03 → 23:40 之间又多了别线一笔）。</p>
+
+<div class="stats">
+  <div class="stat bad"><div class="n">19</div><div class="l">合流前 develop 缺 main 的提交数</div></div>
+  <div class="stat warn"><div class="n">14 / 6</div><div class="l">领先 / 落后 origin/develop</div></div>
+  <div class="stat warn"><div class="n">3</div><div class="l">develop 缺的英文法律页</div></div>
+  <div class="stat warn"><div class="n">4e4cdd4</div><div class="l">测试站当前 bound sha</div></div>
+  <div class="stat ok"><div class="n">0</div><div class="l">合流后工作树脏文件</div></div>
+</div>
+
+<table>
+  <thead><tr><th>项</th><th>读数</th><th>含义</th></tr></thead>
+  <tbody>
+    <tr><td>合流前 develop</td><td class="mono">600741e</td><td>23:40 别线仍在同一棵树提交</td></tr>
+    <tr><td>develop 缺件</td><td class="mono">en/terms · en/privacy · en/privacy/subprocessors</td><td>从这棵树出包 ⇒ 线上已收录 URL 当场 404</td></tr>
+    <tr><td>IndexNow key</td><td class="mono">565cd117…（线上 200）</td><td>develop 那枚是对的；main 另存一份 62dde7e8… 需收口</td></tr>
+    <tr><td>本地 main</td><td class="mono">4fa9d4f，领先 origin/main 4 枚</td><td>未推</td></tr>
+    <tr><td>pc-port 树</td><td class="mono">338da1d + 14 件未提交</td><td>A2/A5 已验未提交；两枚 tmp 含客户派生文本</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sec"><span class="num">02</span>四路开源调查</h2>
+<p class="sec-lead">子 Agent 调查，主 Agent 逐条复验。外部结论里最关键的一条推翻了既定路线。</p>
+
+<div class="cards">
+
+  <div class="card">
+    <span class="tag keep">维持自研</span>
+    <h3>折行算法</h3>
+    <p>BudouX 只给日文短语切分，<strong>不给宽度、不给禁则</strong>；linebreak 禁则表最全但<strong>数据停在 Unicode 13</strong>；<code>text-wrap</code> 需浏览器引擎，离线写回 PSD 不可用。</p>
+    <p>s5 值钱的是「整数定点宽度 + 固定行数 DP + tier/fail 分级」，开源件零覆盖。<strong>不引库</strong>，补两张禁则表即可。</p>
+  </div>
+
+  <div class="card">
+    <span class="tag info">借模式</span>
+    <h3>批量工作台</h3>
+    <p>不为一条线性链引状态机库。该引 <code>react-dropzone</code>（<code>getInputProps()</code> 直接接活死控件）与 <code>TanStack Table</code>（headless，不会塞假 0%）。</p>
+    <p>tus 协议的纪律最值钱：<strong>续跑前先问真实 offset，对不上就拒绝</strong> ⇒ 重算每格状态，不信旧百分比。铁律补一条：<strong>失败即停 ≠ 丢弃已完成</strong>。</p>
+  </div>
+
+  <div class="card">
+    <span class="tag cut">冻结</span>
+    <h3>免 PS 引擎</h3>
+    <p>PhotoCraft 的 issue tracker 里 <code>type.edit</code> 写回<strong>是明确坏的</strong>：</p>
+    <p><strong>#6968</strong>（今天开，high）写回后 PS 2026 27.10 <strong>打开即崩</strong>；<strong>#6971</strong> 文件能开但<strong>文本层仍是旧文字</strong>（Txt2 不同步）；<strong>#6129</strong> 每次编辑重建 TySh，丢 13+ 段落字段。</p>
+    <p>⇒ PC-E 出厂面与开旗标<strong>立即冻结</strong>；退回「免 PS 扫描 + 预览」，写回继续走 PS。</p>
+  </div>
+
+  <div class="card">
+    <span class="tag hold">可做待批</span>
+    <h3>GEO 边缘缓存</h3>
+    <p><code>Vary: rsc…</code> 是 App Router 13.0 起默认加的，不是动态标志；<code>no-store</code> 来自动态渲染。</p>
+    <p>Cloudflare <strong>Edge TTL → "Ignore cache-control"</strong>（<code>override_origin</code>）能覆盖 <code>no-store</code>，但<strong>只能缓存无 <code>rsc</code> 的匿名 HTML</strong>，RSC 必须 bypass，否则串内容。终局是 ISR + purge。</p>
+  </div>
+
+</div>
+
+<h2 class="sec"><span class="num">03</span>对抗式审查：被推翻的六个判断</h2>
+<p class="sec-lead">包括我自己犯的。</p>
+
+<table>
+  <thead><tr><th style="width:31%">想当然</th><th>实测</th><th style="width:26%">后果</th></tr></thead>
+  <tbody>
+    <tr><td>免 PS 写回只差排期</td><td>PhotoCraft #6968 / #6971 今天开的 P0，写回让 PS 崩或静默不生效</td><td><strong>PC-E/F 冻结</strong>，话术不得说「已支持免 PS 写回」</td></tr>
+    <tr><td>v6 是 13 处文案小改</td><td>实测 <strong>68 处用户可见禁用词</strong>（siteContent 25、execute-step 12、design-file-card 7…）</td><td>v6 A1 是独立一整笔，不塞进本次上线</td></tr>
+    <tr><td>合流冲突取 ours 最省事</td><td><strong>我自己踩了</strong>：<code>checkout --ours home-view.tsx</code> 把 main 新增的中文内容卡整段回退</td><td>已补回中英两侧，并写进 commit message</td></tr>
+    <tr><td>tsc 过了、门就绿了</td><td><code>test:content-studio-v1</code> 红：<code>FRAGMENT_KEYS</code> 断言「中文树不得再有碎片键」</td><td>按刀四语法并成单键（<code>1ed5148</code>）</td></tr>
+    <tr><td>sitemap-parity rc=126 是脚本坏了</td><td>直接 <code>node</code> 跑 <strong>RESULT=GREEN 缺口 0</strong>；126 来自本机 npm script-shell 的 <code>bash: Permission denied</code></td><td>判 GREEN，登记环境注记</td></tr>
+    <tr><td><code>TSC_RC=0</code> 就是通过</td><td>第一次写的是 <code>npx tsc | tail -20; echo $?</code> ⇒ <strong>取的是 tail 的退出码</strong></td><td>重跑不带管道才拿到真 rc=0</td></tr>
+  </tbody>
+</table>
+
+<div class="callout danger">
+  <h3>顺带挖出一个死代码里的定时炸弹</h3>
+  <p style="margin:0 0 8px"><code>server.js:53</code> 只解构了 <code>runPhotoCraftScan / readEngineLayerIndex</code>，而 <code>:5305</code> 调用了 <code>buildReadinessObservations</code>。<code>pc-scanner.js:378</code> 的导出齐全 ⇒ <strong>漏解构</strong>。</p>
+  <p style="margin:0">三键缺省全关时不可达，所以「行为零变化」成立；但一旦 <code>pcExecutorEnabled=true</code> 且走 engine 通道，<code>runReadinessScan</code> <strong>必抛 ReferenceError</strong>。现有 smoke 测不出来，因为它直接测纯函数、不经过接线层。已修（<code>317f07d</code>）。</p>
+</div>
+
+<h2 class="sec"><span class="num">04</span>执行序列与门禁实测</h2>
+
+<ul class="gates">
+  <li><span class="st pass">DONE</span><div class="d"><b>develop ← main（#172 断链修复）</b><span><code>26de3ad</code> · 解 6 处冲突</span></div></li>
+  <li><span class="st pass">DONE</span><div class="d"><b>develop ← origin/develop 6 笔 + 补回中英内容卡 + 英文页脚改指 /en/terms、/en/privacy</b><span><code>4c2793d</code> · 解 1 处冲突（hero 数组形状）</span></div></li>
+  <li><span class="st pass">DONE</span><div class="d"><b>checklist 标题并成单键</b><span><code>1ed5148</code> · 撞上刀四的碎片键守卫</span></div></li>
+  <li><span class="st pass">DONE</span><div class="d"><b>PC 线提交 A2+A5（13 文件 +2342/−91）与漏解构修复</b><span><code>2d37955</code> + <code>317f07d</code></span></div></li>
+  <li><span class="st pass">PASS</span><div class="d"><b>tsc / lint / batch-row-contract / content-studio / sitemap-parity</b><span>tsc rc=0（0 行输出）· lint 0 errors 37 warnings · batch-row all passed · content-studio PASS · sitemap GREEN 缺口 0</span></div></li>
+  <li><span class="st env">ENV</span><div class="d"><b>release:preflight:test 未全绿</b><span>前 3 道门 PASS；<code>test:contracts</code> 挂第 9 段 <code>smoke-isolated-db-harness</code> 的「cleanup 删除临时库」——根因是本机 <code>SAFE_DELETE_BULK_CONFIRM_REQUIRED</code>（删除计数 50/50 按 turn 累计不重置），<strong>不是代码缺陷</strong></span></div></li>
+  <li><span class="st pass">PASS</span><div class="d"><b>受影响关键段逐条复跑</b><span>photoshop-script / wrap-planner / release-consistency / preparation-failure-observation / execute-step-reset / feature-flag-whitelist 全部 rc=0</span></div></li>
+  <li><span class="st skip">NOT RUN</span><div class="d"><b>test:seo-consistency</b><span>需 <code>SEO_TARGET</code>；部署后对测试站跑才有意义</span></div></li>
+</ul>
+
+<h2 class="sec"><span class="num">05</span>明确不做（带理由，不是遗漏）</h2>
+
+<table>
+  <thead><tr><th style="width:30%">项</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td><strong>PC-E 出厂面 / 开 <code>pcExecutorEnabled</code></strong></td><td>PhotoCraft 写回有 P0。做了＝把用户文件写坏</td></tr>
+    <tr><td>PC-A4 执行期同源闸</td><td>三键全关时分支不可达；且写回路径未定，闸守的东西还不存在</td></tr>
+    <tr><td>批量台 v6 A 区（68 处文案 + A2–A5 交互）</td><td>独立一整笔；A1 属【合同变更】需同笔同步两个 smoke + HANDOFF 标注</td></tr>
+    <tr><td>推 <code>origin/develop</code> / <code>origin/main</code></td><td>推共享状态，需 Owner 一句</td></tr>
+    <tr><td>Cloudflare 边缘缓存</td><td>Owner 的账号；给形状不代做</td></tr>
+    <tr><td>生产部署</td><td>红线</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sec"><span class="num">06</span>待 Owner 拍</h2>
+
+<div class="callout warn">
+  <h3>按「一句话能解锁多少」排序</h3>
+  <ol>
+    <li><strong>部署测试站</strong>——解锁 8 条线生效。前置：preflight 需在干净环境复跑一次拿 rc=0。</li>
+    <li><strong>推 origin</strong>（<code>develop</code> 与 <code>main</code> 各一句）——不同步远端，别线拿不到合流结果。</li>
+    <li><strong>v6 是否开工</strong>（68 处文案净化 + A2–A5 交互）——建议另起一批。</li>
+    <li><strong>CF 边缘缓存</strong>是否试（只对匿名 HTML，300s，可一键回退）。</li>
+    <li><strong>域名信任路线</strong>——豆包把 tuyigf.com 判成仿冒钓鱼站，这是 GEO 的头号问题，比任何页面优化都硬。</li>
+    <li><strong>PhotoCraft 路线</strong>——等上游修 Txt2（#6971 已定位到具体块），还是转 Aspose OEM（$1,797/开发者）。</li>
+  </ol>
+</div>
+
+<h2 class="sec"><span class="num">07</span>诚实边界</h2>
+
+<div class="notes">
+  <ul>
+    <li><b>preflight 未全绿</b>（rc=1，环境护栏）⇒ 不得据此宣称「可以上线」；需在删除计数重置的会话或干净 CI 里完整复跑。</li>
+    <li><b>test:seo-consistency NOT RUN</b>：对生产跑会被本机出口慢拖成 fetch 失败。</li>
+    <li><b>真机渲染 NOT RUN</b>：<code>npm run dev</code> 被 <code>dev-isolated</code> 挡（CJK 路径派生 workspace 名不合法）。页脚链接与 FAQ <code>&lt;h3&gt;</code> 的视觉只在源码与门禁层验过。</li>
+    <li>子 Agent 的外部结论里，PhotoCraft <b>#6968 / #6971 已复验原文</b>；#6129 / #2717 与 Cloudflare 文档细节<b>未复验</b>，按「子 Agent 读数」对待。</li>
+    <li><b>英文 checklist 段是我按 <code>siteContentEn.checklist</code> 形状新写的组件</b>（main 的英文版内联在 <code>en/page.tsx</code>，随组件化被弃），视觉未真机核。</li>
+  </ul>
+</div>
+
+<footer>
+  <p>执行者：砚（主 Agent）｜子 Agent：折行 / 批量台 / 免 PS 引擎 / GEO 缓存 四路调查 + PC 线提交 + v6 行号重取</p>
+  <p>提交：<code>26de3ad</code> · <code>4c2793d</code> · <code>1ed5148</code>（develop）｜<code>2d37955</code> · <code>317f07d</code>（pc-port）｜备份点 <code>backup/pre-main-merge-20261017</code></p>
+  <p>调查产出：<code>tmp/research-1017/</code> A–E 五份｜门禁日志：<code>/tmp/*.log</code></p>
+</footer>
+
+</div>
+</body>
+</html>

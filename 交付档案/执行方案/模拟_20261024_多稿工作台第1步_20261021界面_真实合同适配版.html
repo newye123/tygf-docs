@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>多稿工作台第 1 步 · UI/UX 模拟（2026-10-21 界面 × 真实合同适配版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#ffffff;--sunk:#f4f4f1;--sunk2:#eeeeea;
+  --ink:#121412;--ink2:#3c443f;--muted:#6c756f;--faint:#9aa19b;
+  --line:#e6e6e2;--line2:#d6d6d1;
+  --teal:#009588;--teal-700:#00776d;--teal-soft:#e4f4f2;
+  --emerald:#009767;--emerald-soft:#e5f6ef;
+  --amber:#9a6505;--amber-soft:#fff6e6;--amber-700:#7d5004;
+  --rose:#b3261e;--rose-soft:#fceceb;
+  --sky:#3d8065;--sky-soft:#eef4f1;
+  --violet:#6b3fa0;--violet-soft:#f1eafb;
+  --r:16px;--r2:12px;--r3:8px;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --sh1:0 1px 2px rgba(18,20,18,.04);--sh2:0 8px 24px -12px rgba(18,20,18,.18);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input{font-family:inherit}
+.mono{font-family:var(--mono)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d8d8d3;border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ── 顶栏 ── */
+.top{height:56px;display:flex;align-items:center;gap:16px;padding:0 18px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand .mk{width:26px;height:26px;border-radius:8px;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+.vswitch{display:flex;gap:2px;padding:3px;background:var(--sunk);border-radius:10px}
+.vswitch button{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);transition:.14s}
+.vswitch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh1)}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.off{background:#c9ccc7}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* ── 主体 ── */
+.shell{display:grid;grid-template-columns:228px minmax(0,1fr);min-height:calc(100vh - 56px)}
+.steps{border-right:1px solid var(--line);background:var(--surface);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.steps .hd{font-size:11px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;padding:0 8px 8px}
+.step{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:10px;text-align:left;width:100%;transition:.14s}
+.step:hover{background:var(--sunk)}
+.step[aria-current="true"]{background:var(--teal-soft)}
+.step .n{width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;color:var(--muted);flex:none;margin-top:1px}
+.step[aria-current="true"] .n{background:var(--teal);border-color:var(--teal);color:#fff}
+.step .t{font-size:13px;font-weight:600;line-height:1.35}
+.step .s{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:1px}
+.step.done .n{background:var(--emerald);border-color:var(--emerald);color:#fff}
+.step .badge{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding-top:2px}
+.steps .foot{margin-top:auto;padding:10px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.55}
+
+.main{padding:18px 20px 60px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pghead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.pghead h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.pghead .sub{font-size:13px;color:var(--muted);margin-top:2px;max-width:70ch}
+.pghead .tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--ink);transition:.14s;white-space:nowrap}
+.btn:hover{border-color:var(--ink2);background:var(--sunk)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:var(--teal-700)}
+.btn.ghost{border-style:dashed;color:var(--muted)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:7px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* 待办条（保留现役「要你处理的」队列能力，压缩成一条，不占常驻空间） */
+.todo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid #eed296;background:var(--amber-soft);border-radius:var(--r2);padding:9px 13px;font-size:12.5px;color:var(--amber-700)}
+.todo b{color:var(--ink)}
+.todo .btn{border-color:#eed296;background:var(--surface)}
+
+/* 文件夹入口卡（空态：没读文件夹时）——与单稿同款入口 */
+.fgate{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);padding:18px 20px}
+.fgate .tt{display:flex;align-items:flex-start;gap:9px;margin-bottom:12px}
+.fgate .tt h2{margin:0;font-size:14px;font-weight:700}
+.fgate .tt p{margin:2px 0 0;font-size:12.5px;color:var(--muted);line-height:1.6;max-width:72ch}
+.fgate .row{display:flex;flex-wrap:wrap;gap:8px}
+.fgate .row input{flex:1 1 300px}
+.fgate .note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.65}
+.fgate .classic{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px}
+.fgate .classic button{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* 文件夹条（已读取后常驻顶部：当前路径＋换文件夹＋重扫） */
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:9px 13px}
+.fbar .p{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12px}
+.fbar .meta{font-size:11.5px;color:var(--muted)}
+
+/* 汇总 */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:11px 13px;box-shadow:var(--sh1)}
+.stat .v{font-family:var(--mono);font-size:19px;font-weight:500;line-height:1.25}
+.stat .l{font-size:11.5px;color:var(--muted)}
+.stat .v.ok{color:var(--emerald)}.stat .v.warn{color:var(--amber)}.stat .v.bad{color:var(--rose)}
+
+/* 工作区 */
+.ws{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);overflow:hidden}
+.card>.hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.card>.hd h2{margin:0;font-size:13.5px;font-weight:700}
+.card>.hd .r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.card>.bd{padding:12px 14px}
+.srch{width:100%;border:1px solid var(--line2);border-radius:9px;padding:7px 10px;font-size:12.5px;background:var(--sunk)}
+.list{display:flex;flex-direction:column;gap:4px;max-height:560px;overflow:auto;padding:8px}
+.item{width:100%;text-align:left;border:1px solid transparent;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;transition:.12s}
+.item:hover{background:var(--sunk)}
+.item[aria-current="true"]{background:var(--teal-soft);border-color:#bfe3df}
+.item .n{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;min-width:0}
+.item .n .f{font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .p{font-family:var(--mono);font-size:10.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .m{font-size:11px;color:var(--muted);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.tag.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.tag.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+.tag.bad{background:var(--rose-soft);border-color:#f2c8c5;color:var(--rose)}
+.tag.info{background:var(--sky-soft);border-color:#c9dcd3;color:#24584a}
+.tag.mute{background:var(--sunk2);border-color:var(--line);color:var(--muted)}
+
+/* 矩阵 */
+.mxscroll{overflow:auto;max-height:620px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+table.mx th,table.mx td{padding:0;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-size:11px;font-weight:500;color:var(--ink2);padding:7px 4px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line2)}
+table.mx thead th:first-child{left:0;z-index:5;text-align:left;padding-left:12px;min-width:250px;background:var(--sunk)}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:7px 12px;font-weight:500;min-width:250px;box-shadow:1px 0 0 var(--line)}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f6fbfa}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:40px;padding:4px 2px;position:relative;transition:.1s}
+.cell .src{font-family:var(--mono);font-size:10.5px;line-height:1.25;color:var(--ink2)}
+.cell .pc{font-family:var(--mono);font-size:11.5px;font-weight:600;line-height:1.2}
+.cell .rel{font-size:9.5px;color:var(--faint);line-height:1.1}
+.cell:hover{filter:brightness(.965)}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--ink);border-radius:2px}
+.k-ok{background:var(--emerald-soft)}.k-ok .pc{color:#0a5a41}
+.k-wait{background:var(--amber-soft)}.k-wait .pc{color:var(--amber-700)}
+.k-bad{background:var(--rose-soft)}.k-bad .pc{color:var(--rose)}
+.k-unread{background:var(--sunk2)}.k-unread .pc{color:var(--muted)}
+.k-noscan{background:transparent;box-shadow:inset 0 0 0 1px var(--line2)}.k-noscan .pc{color:var(--faint)}
+.k-unbound{background:var(--surface);box-shadow:inset 0 0 0 1px var(--rose)}.k-unbound .pc{color:var(--rose)}
+.k-na{background:transparent}.k-na .src{color:var(--faint)}
+
+/* 表清单 */
+.tinv table{width:100%;border-collapse:collapse;font-size:12px}
+.tinv th{text-align:left;font-weight:500;color:var(--muted);font-size:11px;padding:7px 10px;border-bottom:1px solid var(--line2);background:var(--sunk);white-space:nowrap}
+.tinv td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tinv tr:last-child td{border-bottom:none}
+.tinv td.m{font-family:var(--mono);font-size:11px}
+.tinv .btn.sm{padding:2px 8px;font-size:11px}
+
+/* 抽屉 */
+.drawer{position:fixed;top:56px;right:0;bottom:0;width:428px;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--sh2);z-index:45;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.drawer.open{transform:none}
+.drawer .dh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px}
+.drawer .dh h3{margin:0;font-size:14px;font-weight:700;font-family:var(--mono)}
+.drawer .dh .p{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px;word-break:break-all}
+.drawer .db{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.drawer .df{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;background:var(--sunk)}
+.kv{display:grid;grid-template-columns:88px 1fr;gap:5px 10px;font-size:12.5px}
+.kv dt{color:var(--muted);font-size:12px}
+.kv dd{margin:0}
+.note{font-size:12.5px;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:var(--r3);padding:9px 11px;line-height:1.6}
+.note.bad{background:var(--rose-soft);border-color:#f2c8c5;color:#8c1e17}
+.note.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.note.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+ul.plain{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink2);line-height:1.7}
+table.mini{width:100%;border-collapse:collapse;font-size:12px}
+table.mini th{text-align:left;font-weight:500;color:var(--muted);font-size:11px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--sunk)}
+table.mini td{padding:6px 8px;border-bottom:1px solid var(--line)}
+table.mini td.m{font-family:var(--mono);font-size:11.5px}
+table.mini tr:last-child td{border-bottom:none}
+
+/* 单稿台视图（原样保留，零改动示意） */
+.single{display:none;padding:18px 20px 60px;max-width:880px}
+.single.on{display:block}
+.bulk.off{display:none}
+.crumb{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--muted);padding:10px 14px 0}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+.frozen{margin-top:14px;border:1px dashed var(--line2);border-radius:var(--r2);padding:11px 14px;font-size:12.5px;color:var(--muted);background:repeating-linear-gradient(135deg,#fbfbf9,#fbfbf9 9px,#f4f4f0 9px,#f4f4f0 18px)}
+.frozen b{color:var(--ink)}
+.frozen ul{margin:6px 0 0;padding-left:18px;line-height:1.7}
+@media (max-width:1180px){.shell{grid-template-columns:1fr}.steps{display:none}.ws{grid-template-columns:1fr}.drawer{width:100%}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="mk">图</span><span>图译工坊</span></div>
+  <div class="vswitch" role="group" aria-label="工作台范围">
+    <button type="button" data-w="bulk" aria-pressed="true">多个设计稿</button>
+    <button type="button" data-w="single" aria-pressed="false">单个设计稿</button>
+  </div>
+  <span class="crumb" id="crumb">多个设计稿 · 12 份稿 · 12 门语言</span>
+  <div class="right">
+    <span><i class="dot ok"></i> 本地助手已连接</span>
+    <span>Photoshop 2021 · 就绪</span>
+    <span class="avatar">Ivan</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="steps" id="steps" aria-label="步骤">
+    <div class="hd">多个设计稿</div>
+    <button class="step" type="button" aria-current="true"><span class="n">1</span><span><span class="t">准备素材</span><span class="s">设计稿与译文来源</span></span></button>
+    <button class="step" type="button"><span class="n">2</span><span><span class="t">审查原文与译文</span><span class="s">逐稿逐语种</span></span><span class="badge">38/78</span></button>
+    <button class="step" type="button"><span class="n">3</span><span><span class="t">设计稿校对</span><span class="s">与设计稿逐句核对</span></span></button>
+    <button class="step" type="button"><span class="n">4</span><span><span class="t">生成交付</span><span class="s">12 份稿 × 各自语种</span></span></button>
+    <div class="foot">本批预计 <b>12</b> 个批次 · <b>78</b> 份交付物<br>积分按语种累计，预估 <b>2 340</b> 分</div>
+  </nav>
+
+  <main class="main bulk" id="bulk">
+    <div class="pghead">
+      <div>
+        <h1>准备素材</h1>
+        <div class="sub" id="pgSub">选一个工作文件夹就行：每个子文件夹＝一套要改的 SKU（PSD 和译文表放一起）。本机读取、不上云。</div>
+      </div>
+      <div class="tools" id="pgTools">
+        <button class="btn" type="button" id="scanAll" title="按顺序扫描所有未扫描的稿">全部扫描（按顺序）</button>
+        <button class="btn" type="button" id="surveyAll" title="把文件夹里每张表的表头（sheet/语言列/行数）都读出来，列在下方表清单">读全部表头</button>
+        <button class="btn ghost" type="button" id="onlyIssue">只看有问题的</button>
+        <button class="btn ghost" type="button" title="旧经典界面：逐稿手动导入（保留兜底）">更多 ▾</button>
+      </div>
+    </div>
+
+    <!-- 空态：文件夹入口卡（与单稿同款；「选择文件夹」走 Windows 原生文件夹选择框） -->
+    <div class="fgate" id="fgateCard">
+      <div class="tt">
+        <span style="font-size:16px;color:var(--teal)">🔍</span>
+        <div>
+          <h2>读取工作文件夹</h2>
+          <p>粘贴或选择文件夹路径，点「读取文件夹」。先做<b>只读预扫描</b>：列出里面的 PSD 与译文表（子文件夹＝一组），不改任何文件、不上传。</p>
+        </div>
+      </div>
+      <div class="row">
+        <input class="srch" id="gatePath" placeholder="D:\项目\2026Q4_秋季新品" spellcheck="false" style="background:var(--surface);border:1px solid var(--line2)">
+        <button class="btn" type="button" id="gatePick" title="Windows 原生文件夹选择框，弹出直接选文件夹">📁 选择文件夹…</button>
+        <button class="btn primary" type="button" id="gateRead" disabled>读取文件夹</button>
+      </div>
+      <p class="note" id="gateNote">约定：每个子文件夹放一套要改的 SKU——它的 PSD 和它的译文表放在一起；1 张表 ⇒ 全组共用，多张 ⇒ 按同名一对一，配不上的逐条点名。一组最多 12 个 PSD。读取只在本机进行。</p>
+      <div class="classic"><button type="button" id="gateClassic">不用文件夹？逐稿手动导入（旧界面）</button></div>
+    </div>
+
+    <!-- 已读取：文件夹条 + 主体 -->
+    <div id="loadedWrap" style="display:none;flex-direction:column;gap:14px">
+      <div class="fbar">
+        <span style="font-size:15px">📁</span>
+        <span class="p" title="当前工作文件夹">D:\项目\2026Q4_秋季新品</span>
+        <span class="meta">12 份设计稿 · 8 张表 · 跳过 0</span>
+        <button class="btn sm" type="button" id="fbarChange">换文件夹</button>
+        <button class="btn sm" type="button" id="fbarRescan">重扫</button>
+      </div>
+
+      <div class="todo" id="todo"></div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="ws">
+      <div class="card">
+        <div class="hd"><h2>设计稿</h2><span class="r"><span class="tag mute" id="cntD">12</span></span></div>
+        <div class="bd" style="padding-bottom:0"><input class="srch" id="srch" placeholder="搜索文件名或 SKU 码"></div>
+        <div class="list" id="dlist"></div>
+      </div>
+
+      <div class="card">
+        <div class="hd">
+          <h2>译文来源</h2>
+          <span class="r"><span class="tag mute" id="cntC">144 格</span></span>
+        </div>
+        <div class="bd" style="padding:0">
+          <div class="mxscroll" id="mx"></div>
+          <div class="legend">
+            <span><i style="background:var(--emerald-soft);border:1px solid #bfe6d3"></i>就绪（≥95%）</span>
+            <span><i style="background:var(--amber-soft);border:1px solid #eed296"></i>待检查（80–94%）</span>
+            <span><i style="background:var(--rose-soft);border:1px solid #f2c8c5"></i>有问题（&lt;80%）</span>
+            <span><i style="background:var(--sunk2);border:1px solid var(--line2)"></i>表头已读 · 待读全文</span>
+            <span><i style="background:transparent;border:1px dashed var(--line2)"></i>未扫描</span>
+            <span><i style="background:var(--surface);border:1px solid var(--rose)"></i>未配表</span>
+            <span><i style="background:transparent;border:1px dotted var(--faint)"></i>— 本稿不做这门语言</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tinv">
+      <div class="hd">
+        <h2>译文表清单</h2>
+        <span class="tag mute" id="cntT">7 张表 · 全部列出（含未被选中的）</span>
+        <span class="r"><span class="tag info">同一张表只读一次，多稿共用</span></span>
+      </div>
+      <div class="bd" style="padding:0;overflow:auto">
+        <table>
+          <thead><tr>
+            <th>表名</th><th>相对路径</th><th>sheet</th><th>语言列</th><th style="text-align:right">行数</th><th>读状态</th><th>被谁用</th><th>操作</th>
+          </tr></thead>
+          <tbody id="tinv"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="frozen">
+      <b>对照说明（这份模拟 = 2026-10-21 目标界面 × 现有产品真实规则）：</b>
+      <ul>
+        <li><b>布局照 2026-10-21 mock</b>：统计卡 → 左「设计稿」列表 ＋ 右「译文来源」矩阵 → 点格开右侧抽屉；步骤导航、顶栏沿用现役「多个设计稿／单个设计稿」与「准备素材」命名。</li>
+        <li><b>矩阵格的语义按现有「一稿一表」合同适配</b>：每稿绑一张表，行的语言格来自这张表；灰格「—」＝本稿的表没有这门语言（本稿不做它）。mock 里的「每语言专表／补充表／合表分片」需要合同变更，列为后续版本，本版不做。</li>
+        <li><b>覆盖率分层给真话</b>：稿没扫描就不给数字（虚线「未扫」）；表只读了表头就写「待读全文」；全文读完才给 ✓／%。不会把「算不出」涂成绿色。</li>
+        <li><b>新增「译文表清单」</b>（mock 没画、Owner 10-23 要的）：文件夹里每张表都列出 sheet／语言列／行数／读状态／被谁用——包括读失败的、没人用的，不再只显示被选中的那张。</li>
+        <li><b>「读取文件夹」流程完整保留</b>：没读文件夹时＝上面的入口卡（路径输入＋Windows 原生「选择文件夹」＋「读取文件夹」＋只读预扫描说明＋逐稿手动导入出口）；读取后＝顶部文件夹条（当前路径＋换文件夹＋重扫）。模拟里这两个状态都能走到：点「选择文件夹」会填入示例路径，「读取文件夹」转一下进主界面，「换文件夹」退回入口卡。</li>
+        <li><b>现役能力全部保留</b>：文件夹入口、原生选文件夹、只读预扫描、扫描队列可停、同名稿合并、跳过可撤销、换一张表、逐稿手动导入旧界面、「要你处理的」待办（压缩成顶部一条，点「去处理」直达）。</li>
+      </ul>
+    </div>
+    </div><!-- /loadedWrap -->
+  </main>
+
+  <!-- 单个设计稿（原样保留 · 零改动示意） -->
+  <main class="single" id="single">
+    <div class="pghead">
+      <div>
+        <h1>准备素材</h1>
+        <div class="sub">选择设计文件 · 只读预扫描</div>
+      </div>
+      <div class="tools"><span class="crumb">draft-a.psd · 原文 · 德语 · 法语</span></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="hd"><h2>选择要处理的 PSD 文件</h2></div>
+      <div class="bd">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="srch" style="flex:1 1 260px" value="D:\项目\draft-a.psd" readonly>
+          <button class="btn" type="button">选择文件…</button>
+          <button class="btn primary" type="button">扫描</button>
+        </div>
+        <div style="display:flex;gap:11px;align-items:center;border:1px solid var(--line2);border-radius:12px;padding:11px 13px;margin-top:10px">
+          <span style="font-size:17px">📁</span>
+          <div style="min-width:0">
+            <div class="mono" style="font-size:13px;font-weight:600">draft-a.psd</div>
+            <div style="font-size:11.5px;color:var(--muted);display:flex;gap:11px"><span>已扫描</span><span>3 个文字图层</span></div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:7px"><button class="btn sm" type="button">重新扫描</button><button class="btn sm" type="button">移除</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="frozen"><b>单个设计稿 · 原样保留：</b>本次重排全部包在「多个设计稿」分支内，单稿档的文案与结构<b>一字不改</b>；「排版定制」卡头两档共用，也不动。</div>
+  </main>
+</div>
+
+<!-- 详情抽屉 -->
+<aside class="drawer" id="drawer" aria-label="详情">
+  <div class="dh">
+    <div style="min-width:0">
+      <h3 id="dTitle">—</h3>
+      <div class="p" id="dPath">—</div>
+    </div>
+    <button class="btn sm" type="button" style="margin-left:auto" id="dClose">关闭</button>
+  </div>
+  <div class="db" id="dBody"></div>
+  <div class="df" id="dFoot"></div>
+</aside>
+
+<script>
+/* ════════ 数据：真实感命名 ×「一稿一表」真实合同 ════════ */
+const LANGS=[
+ {c:'DE',n:'德语'},{c:'FR',n:'法语'},{c:'EN',n:'英语'},{c:'ES',n:'西班牙语'},{c:'JA',n:'日语'},{c:'KO',n:'韩语'},
+ {c:'PT',n:'葡萄牙语'},{c:'IT',n:'意大利语'},{c:'RU',n:'俄语'},{c:'AR',n:'阿拉伯语'},{c:'ZH-TW',n:'繁体中文'},{c:'NL',n:'荷兰语'}];
+const LMAP=Object.fromEntries(LANGS.map(l=>[l.c,l.c+' '+l.n]));
+const ALL=LANGS.map(l=>l.c);
+
+/* 表册：每张表一条记录；stage: survey(表头已读) / full(全文已读) / error(读失败) */
+const TABLES={
+ 'AX-MAIN':{n:'AX1001-1004_文案主表.xlsx',dir:'2026Q4_秋季新品/主图/译文',sheets:['主图','A+'],langs:['DE','FR','EN','ES','JA','KO','PT','IT'],rows:42,stage:'full',used:['SKU-AX1001','SKU-AX1002','SKU-AX1003','SKU-AX1004']},
+ 'AX1005' :{n:'AX1005_三语.xlsx',dir:'2026Q4_秋季新品/详情页/译文',sheets:['Sheet1'],langs:['DE','FR','EN'],rows:28,stage:'survey',used:['SKU-AX1005']},
+ 'BX2077' :{n:'BX2077_九语.xlsx',dir:'2026Q4_秋季新品/详情页/译文',sheets:['Sheet1'],langs:['DE','FR','EN','ES','JA','KO','RU','AR','ZH-TW'],rows:51,stage:'full',used:['SKU-BX2077']},
+ 'ALL'    :{n:'全SKU_文案合表_2026Q4.xlsx',dir:'2026Q4_秋季新品/译文',sheets:['Sheet1'],langs:ALL,rows:756,stage:'full',used:['SKU-BX2078','SKU-BX2079','SKU-CX3301','SKU-DX4408']},
+ 'CX3302' :{n:'CX3302_专表.xlsx',dir:'2026Q4_秋季新品/长尾/译文',sheets:['Sheet1'],langs:['DE','FR','EN','ES','JA','KO','PT','IT'],rows:18,stage:'survey',used:['SKU-CX3302']},
+ 'BROKEN' :{n:'旧版_损坏表.xlsx',dir:'2026Q4_秋季新品/译文/旧',sheets:null,langs:null,rows:null,stage:'error',err:'文件损坏：xlsx 解析失败（第 0 字节）',used:[]},
+ 'JA-OLD' :{n:'日语专表_2026Q3.xlsx',dir:'2026Q4_秋季新品/译文',sheets:['Sheet1'],langs:['JA'],rows:12,stage:'survey',used:[]},
+};
+
+/* 设计稿：st: scanned / scanning；table: 绑定的表 key（一稿一表）；pending: 配对待确认 */
+const DESIGNS=[
+ {id:'SKU-AX1001',f:'SKU-AX1001_主图.psd',p:'2026Q4_秋季新品/主图/SKU-AX1001_主图.psd',st:'scanned',table:'AX-MAIN',sheet:'主图',ly:12,pending:false,pc:{DE:100,FR:100,EN:100,ES:98,JA:100,KO:96,PT:100,IT:99}},
+ {id:'SKU-AX1002',f:'SKU-AX1002_主图.psd',p:'2026Q4_秋季新品/主图/SKU-AX1002_主图.psd',st:'scanned',table:'AX-MAIN',sheet:'主图',ly:12,pending:false,pc:{DE:100,FR:97,EN:100,ES:95,JA:93,KO:88,PT:100,IT:94}},
+ {id:'SKU-AX1003',f:'SKU-AX1003_主图.psd',p:'2026Q4_秋季新品/主图/SKU-AX1003_主图.psd',st:'scanned',table:'AX-MAIN',sheet:'主图',ly:12,pending:false,pc:{DE:100,FR:96,EN:100,ES:91,JA:90,KO:100,PT:88,IT:92}},
+ {id:'SKU-AX1004',f:'SKU-AX1004_主图.psd',p:'2026Q4_秋季新品/主图/SKU-AX1004_主图.psd',st:'scanned',table:'AX-MAIN',sheet:'主图',ly:12,pending:false,pc:{DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,PT:100,IT:100}},
+ {id:'SKU-AX1005',f:'SKU-AX1005_详情页.psd',p:'2026Q4_秋季新品/详情页/SKU-AX1005_详情页.psd',st:'scanned',table:'AX1005',sheet:'Sheet1',ly:9,pending:true,pc:{DE:100,FR:100,EN:100}},
+ {id:'SKU-BX2077',f:'SKU-BX2077_详情页.psd',p:'2026Q4_秋季新品/详情页/SKU-BX2077_详情页.psd',st:'scanned',table:'BX2077',sheet:'Sheet1',ly:16,pending:false,pc:{DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,RU:98,AR:100,'ZH-TW':92}},
+ {id:'SKU-BX2078',f:'SKU-BX2078_详情页.psd',p:'2026Q4_秋季新品/详情页/SKU-BX2078_详情页.psd',st:'scanned',table:'ALL',sheet:'Sheet1',ly:14,pending:false,pc:{DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,PT:100,IT:100}},
+ {id:'SKU-BX2079',f:'SKU-BX2079_详情页.psd',p:'2026Q4_秋季新品/详情页/SKU-BX2079_详情页.psd',st:'scanned',table:'ALL',sheet:'Sheet1',ly:14,pending:false,pc:{DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,PT:100,IT:100}},
+ {id:'SKU-CX3301',f:'SKU-CX3301_长尾页.psd',p:'2026Q4_秋季新品/长尾/SKU-CX3301_长尾页.psd',st:'scanned',table:'ALL',sheet:'Sheet1',ly:21,pending:false,pc:{DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,PT:100,IT:100,RU:100,AR:97,'ZH-TW':89,NL:83}},
+ {id:'SKU-CX3302',f:'SKU-CX3302_长尾页.psd',p:'2026Q4_秋季新品/长尾/SKU-CX3302_长尾页.psd',st:'scanning',table:'CX3302',sheet:'Sheet1',ly:18,pending:false,scanPct:45,pc:{}},
+ {id:'SKU-DX4408',f:'SKU-DX4408_详情页.psd',p:'2026Q4_秋季新品/详情页/SKU-DX4408_详情页.psd',st:'scanned',table:'ALL',sheet:'Sheet1',ly:31,pending:false,pc:{DE:100,FR:100,EN:94,ES:88,JA:71,KO:66}},
+ {id:'SKU-DX4409',f:'SKU-DX4409_长尾页.psd',p:'2026Q4_秋季新品/长尾/SKU-DX4409_长尾页.psd',st:'scanned',table:null,sheet:null,ly:10,pending:false,pc:{}},
+];
+const D=Object.fromEntries(DESIGNS.map(d=>[d.id,d]));
+let selD='SKU-DX4408', selL='JA', selMode='cell', onlyIssue=false, drawerOpen=false, query='';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lname=c=>(LMAP[c]||c);
+
+/* 一格的状态（一稿一表合同下的诚实分层） */
+function cell(d,c){
+  if(d.st==='scanning') return {k:'noscan',src:'—',pc:null,txt:'未扫',issue:false};
+  if(!d.table) return {k:'unbound',src:'—',pc:null,txt:'未配表',issue:true};
+  const t=TABLES[d.table];
+  if(!t.langs.includes(c)) return {k:'na',src:'—',pc:null,txt:'',issue:false};   // 本稿不做这门语言
+  if(t.stage==='error') return {k:'bad',src:d.table,pc:null,txt:'读失败',issue:true};
+  if(t.stage==='survey') return {k:'unread',src:d.table,pc:null,txt:'待读全文',issue:false};
+  const pc=d.pc[c];
+  if(pc===undefined) return {k:'unread',src:d.table,pc:null,txt:'待读全文',issue:false};
+  if(pc>=95) return {k:'ok',src:d.table,pc,txt:'✓',issue:false};
+  if(pc>=80) return {k:'wait',src:d.table,pc,txt:pc+'%',issue:true};
+  return {k:'bad',src:d.table,pc,txt:pc+'%',issue:true};
+}
+function designState(d){
+  if(d.st==='scanning') return {k:'mute',t:'扫描中 '+d.scanPct+'%'};
+  if(!d.table) return {k:'bad',t:'未配表'};
+  if(d.pending) return {k:'warn',t:'配对待确认'};
+  const cells=TABLES[d.table].langs.map(c=>cell(d,c));
+  if(cells.some(x=>x.k==='bad')) return {k:'bad',t:'有问题'};
+  if(cells.some(x=>x.k==='wait'||x.issue)) return {k:'warn',t:'待检查'};
+  if(TABLES[d.table].stage==='survey') return {k:'mute',t:'待读全文'};
+  return {k:'ok',t:'就绪'};
+}
+function todoItems(){
+  const out=[];
+  DESIGNS.forEach(d=>{
+    const st=designState(d);
+    if(st.t==='未配表') out.push({t:'未配表',d,label:d.f+'：文件夹里没有能配上的表，手动选一张或跳过'});
+    if(st.t==='配对待确认') out.push({t:'配对待确认',d,label:d.f+'：自动建议 '+TABLES[d.table].n+'（另有候选 AX-MAIN 主表），待你确认'});
+    if(st.t==='有问题') TABLES[d.table].langs.filter(c=>cell(d,c).k==='bad').forEach(c=>out.push({t:'覆盖率<80%',d,c,label:d.f+' · '+lname(c)+'：'+cell(d,c).pc+'%，大部分句子没对上'}));
+  });
+  Object.values(TABLES).filter(t=>t.stage==='error').forEach(t=>out.push({t:'读表失败',label:t.n+'：'+t.err+'（重试或换表）'}));
+  return out;
+}
+function renderStats(){
+  let ok=0,wait=0,bad=0,deliver=0,fail=0;
+  DESIGNS.forEach(d=>{
+    if(d.st!=='scanning'&&d.table) deliver+=TABLES[d.table].langs.length;
+    if(d.st!=='scanning'&&d.table) TABLES[d.table].langs.forEach(c=>{const x=cell(d,c);if(x.k==='ok')ok++;else if(x.k==='wait')wait++;else if(x.k==='bad')bad++;});
+  });
+  fail=Object.values(TABLES).filter(t=>t.stage==='error').length;
+  $('#stats').innerHTML=`
+   <div class="stat"><div class="v">12</div><div class="l">设计稿</div></div>
+   <div class="stat"><div class="v">12</div><div class="l">语种（全批并集）</div></div>
+   <div class="stat"><div class="v">${deliver}</div><div class="l">本批要做的交付物</div></div>
+   <div class="stat"><div class="v ok">${ok}</div><div class="l">就绪</div></div>
+   <div class="stat"><div class="v warn">${wait}</div><div class="l">待检查</div></div>
+   <div class="stat"><div class="v bad">${bad}</div><div class="l">有问题（&lt;80%）</div></div>
+   <div class="stat"><div class="v ${fail?'bad':''}">${fail}</div><div class="l">读表失败</div></div>
+   <div class="stat"><div class="v">144</div><div class="l">矩阵格数（12×12）</div></div>`;
+}
+function renderTodo(){
+  const items=todoItems();
+  if(items.length===0){$('#todo').style.display='none';return}
+  $('#todo').style.display='';
+  const byType={};items.forEach(x=>byType[x.t]=(byType[x.t]||0)+1);
+  $('#todo').innerHTML=`<b>要你处理的 ${items.length} 件：</b>${Object.entries(byType).map(([k,v])=>`${esc(k)} ${v}`).join(' · ')}
+    <button class="btn sm" type="button" id="goTodo">去处理第一件</button>`;
+  $('#goTodo').addEventListener('click',()=>{const first=items[0];selD=first.d?first.d.id:selD;selL=first.c||((first.d&&first.d.table)?TABLES[first.d.table].langs[0]:'DE');selMode='cell';openDrawer();});
+}
+function renderList(){
+  const host=$('#dlist');
+  const shown=DESIGNS.filter(d=>!query||d.f.toLowerCase().includes(query.toLowerCase())||d.id.toLowerCase().includes(query.toLowerCase()));
+  host.innerHTML=shown.map(d=>{
+    const st=designState(d);
+    const langs=d.table?TABLES[d.table].langs:[];
+    const est=langs.filter(c=>d.pc[c]!==undefined);
+    const avg=est.length?Math.round(est.reduce((a,c)=>a+d.pc[c],0)/est.length):null;
+    const badN=langs.filter(c=>cell(d,c).k==='bad'||cell(d,c).k==='wait').length;
+    return `<button class="item" type="button" data-d="${d.id}" aria-current="${d.id===selD}">
+      <span class="n"><i class="dot ${st.k==='ok'?'ok':st.k==='warn'?'warn':st.k==='bad'?'bad':'off'}"></i><span class="f">${esc(d.f)}</span></span>
+      <span class="p">${esc(d.p)}</span>
+      <span class="m"><span class="tag ${st.k}">${st.t}</span>
+        ${d.table?`<span>${langs.length} 语种</span>`:''}
+        ${avg!==null?`<span class="mono">${avg}%</span>`:''}
+        ${badN?`<span class="tag ${st.k==='bad'?'bad':'warn'}">${badN} 处</span>`:''}
+        ${d.st==='scanning'?`<span class="tag mute">扫描 ${d.scanPct}%</span>`:''}</span>
+    </button>`;
+  }).join('')||`<div style="padding:16px;text-align:center;color:var(--faint);font-size:12px">没有匹配「${esc(query)}」的稿</div>`;
+  host.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{selD=b.dataset.d;selMode='draft';openDrawer();render();}));
+  $('#cntD').textContent=DESIGNS.length;
+}
+function renderMatrix(){
+  const head=`<thead><tr><th>设计稿 ＼ 语种</th>${LANGS.map(l=>`<th><button type="button" data-lang="${l.c}" title="点击查看这门语言下每份稿的来源与状态" style="padding:4px 6px;border-radius:6px;cursor:pointer">${l.c}</button></th>`).join('')}</tr></thead>`;
+  const body=DESIGNS.map(d=>{
+    const cells=ALL.map(c=>{
+      const x=cell(d,c);
+      const hidden=onlyIssue&&!x.issue;
+      const isSel=selMode==='cell'&&d.id===selD&&c===selL;
+      return `<td><button class="cell k-${x.k}${isSel?' sel':''}" data-c="${d.id}|${c}" style="${hidden?'opacity:.22':''}"
+        title="${esc(d.f)} · ${lname(c)}">
+        <span class="src">${esc(x.k==='na'?'—':(x.src==='—'?'':x.src))}</span><span class="pc">${esc(x.txt)}</span></button></td>`;
+    }).join('');
+    const st=designState(d);
+    return `<tr><th><span style="display:flex;gap:7px;align-items:center"><i class="dot ${st.k==='ok'?'ok':st.k==='warn'?'warn':st.k==='bad'?'bad':'off'}"></i><span class="mono" style="font-size:12px">${esc(d.f)}</span></span></th>${cells}</tr>`;
+  }).join('');
+  $('#mx').innerHTML=`<table class="mx">${head}<tbody>${body}</tbody></table>`;
+  $('#mx').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const [id,c]=b.dataset.c.split('|'); selD=id; selL=c; selMode='cell'; openDrawer(); render();
+  }));
+  $('#mx').querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{selL=b.dataset.lang;selMode='lang';openDrawer();}));
+  $('#cntC').textContent=ALL.length*DESIGNS.length+' 格';
+}
+function renderTinv(){
+  $('#tinv').innerHTML=Object.entries(TABLES).map(([k,t])=>{
+    const stageTxt=t.stage==='full'?'<span class="tag ok">全文已读</span>':t.stage==='survey'?'<span class="tag warn">表头已读</span>':`<span class="tag bad">读失败</span>`;
+    const usedTxt=t.used.length?`${t.used.length} 稿（${t.used.map(u=>D[u].f.replace('.psd','').replace('SKU-','')).slice(0,3).join('、')}${t.used.length>3?'…':''}）`:'<span style="color:var(--rose)">0 稿 · 未用</span>';
+    const act=t.stage==='error'
+      ?`<button class="btn sm" type="button" data-retry="${k}">重试</button>`
+      :t.stage==='survey'
+        ?`<button class="btn sm" type="button" data-full="${k}">读全文</button>`
+        :`<button class="btn sm" type="button" data-tdetail="${k}">详情</button>`;
+    return `<tr>
+      <td class="m" style="font-weight:600">${esc(t.n)}</td>
+      <td class="m" style="color:var(--muted)">${esc(t.dir)}</td>
+      <td class="m">${t.sheets?t.sheets.join(' / '):'—'}</td>
+      <td>${t.langs?t.langs.map(l=>`<span class="tag mute">${l}</span>`).join(' '):'<span style="color:var(--rose)">'+esc(t.err||'')+'</span>'}</td>
+      <td class="m" style="text-align:right">${t.rows??'—'}</td>
+      <td>${stageTxt}</td>
+      <td style="font-size:11.5px">${usedTxt}</td>
+      <td>${act}</td>
+    </tr>`;
+  }).join('');
+  $('#tinv').querySelectorAll('[data-full]').forEach(b=>b.addEventListener('click',()=>{TABLES[b.dataset.full].stage='full';render();}));
+  $('#tinv').querySelectorAll('[data-retry]').forEach(b=>b.addEventListener('click',()=>{const t=TABLES[b.dataset.retry];t.stage='survey';t.sheets=['Sheet1'];t.langs=['DE','FR'];t.rows=40;t.err=undefined;render();}));
+  $('#tinv').querySelectorAll('[data-tdetail]').forEach(b=>b.addEventListener('click',()=>{selMode='table';openTableDrawer(b.dataset.tdetail);}));
+  $('#cntT').textContent=Object.keys(TABLES).length+' 张表 · 全部列出（含未被选中的）';
+}
+function renderDrawer(){
+  const d=D[selD]; const c=selL|| (d.table?TABLES[d.table].langs[0]:ALL[0]);
+  const x=cell(d,c);
+  const t=d.table?TABLES[d.table]:null;
+  const issues=[];
+  if(!d.table) issues.push(`<li>这份稿<b>没配上表</b>：文件夹里没有按 SKU 能对上的表。手动选一张，或跳过这份稿。</li>`);
+  else if(t.stage==='error') issues.push(`<li>绑定的表<b>读失败</b>（${esc(t.err||'')}）。重试或换一张表。</li>`);
+  else{
+    if(d.pending) issues.push(`<li>配对是<b>自动建议</b>的（${esc(t.n)}，另有候选 AX-MAIN 主表含 8 语）。确认用这张，还是换？</li>`);
+    if(x.pc!==null&&x.pc<80) issues.push(`<li>对稿覆盖率 <b>${x.pc}%</b>，低于 80%：大部分句子没对上，先补表或改表。</li>`);
+    else if(x.pc!==null&&x.pc<95) issues.push(`<li>对稿覆盖率 <b>${x.pc}%</b>，低于 95% 阈值，需要人工确认后再进生成。</li>`);
+    if(t.stage==='survey') issues.push(`<li>这张表目前只读了<b>表头</b>（sheet／语言列／行数）。点「读全文」后才有覆盖率与第 2 步的行。</li>`);
+  }
+  $('#dTitle').textContent=d.f;
+  $('#dPath').textContent=d.p;
+  $('#dBody').innerHTML=`
+    <dl class="kv">
+      <dt>状态</dt><dd><span class="tag ${designState(d).k}">${designState(d).t}</span>　<span class="tag mute">${d.ly} 个文字图层</span>${d.st==='scanning'?`　<span class="tag mute">扫描 ${d.scanPct}%</span>`:''}</dd>
+      <dt>这一份</dt><dd class="mono">${lname(c)}</dd>
+      <dt>取自</dt><dd>${t?esc(t.n):'—'}${t&&t.sheets.length>1?`（sheet：${esc(d.sheet||t.sheets[0])}）`:''}</dd>
+      <dt>对稿覆盖率</dt><dd class="mono">${x.pc===null?'—':x.pc+'%'}</dd>
+      <dt>交付物</dt><dd class="mono">${d.id}__${c}</dd>
+    </dl>
+    ${issues.length?`<div class="note ${x.k==='bad'?'bad':'warn'}"><b>要处理的</b><ul class="plain" style="margin-top:5px">${issues.join('')}</ul></div>`
+      :`<div class="note ok"><b>这一份就绪</b>覆盖率达到阈值，人工确认后即可进入生成。</div>`}
+    ${t&&t.langs?`<div><div style="font-size:12px;color:var(--muted);margin-bottom:5px">这张表的语言列</div>
+      <table class="mini"><thead><tr><th>语种</th><th>这份稿</th></tr></thead><tbody>
+      ${t.langs.map(l=>`<tr><td class="m">${lname(l)}</td><td><span class="tag ok">做</span></td></tr>`).join('')}
+      ${ALL.filter(l=>!t.langs.includes(l)).map(l=>`<tr><td class="m" style="color:var(--faint)">${lname(l)}</td><td><span class="tag mute">— 本稿不做</span></td></tr>`).join('')}
+      </tbody></table></div>`:''}
+    <div class="note">这份稿的译文全部取自 <b>${t?esc(t.n):'—'}</b>（一稿一表）。同一张表被 ${t?t.used.length:0} 份稿共用时只读一次；换表在这里换，整行跟着变。</div>`;
+  $('#dFoot').innerHTML=`
+    <button class="btn primary" type="button" title="到第 2 步看这份稿×这门语言的逐句审核">查看该稿审核</button>
+    <button class="btn" type="button">${t&&t.stage==='survey'?'读这张表的全文':'换一张表'}</button>
+    ${t&&t.stage==='error'?'<button class="btn" type="button">重试读表</button>':''}
+    <button class="btn ghost" type="button" style="margin-left:auto">跳过这份稿（可撤销）</button>`;
+}
+function renderLangDrawer(){
+  const c=selL;
+  const rows=DESIGNS.filter(d=>d.table&&TABLES[d.table].langs.includes(c));
+  $('#dTitle').textContent=lname(c)+' · 全部设计稿';
+  $('#dPath').textContent=`本批 12 份稿中，${rows.length} 份做这门语言`;
+  $('#dBody').innerHTML=`
+    ${rows.length===0?`<div class="note warn">没有任何表提供这门语言——本批不做它。</div>`:`
+    <table class="mini"><thead><tr><th>设计稿</th><th>来源表</th><th>覆盖率</th><th>状态</th></tr></thead><tbody>
+    ${rows.map(d=>{const x=cell(d,c);return `<tr><td class="m">${esc(d.f)}</td><td class="m">${esc(TABLES[d.table].n)}</td><td class="m">${x.pc===null?'—':x.pc+'%'}</td><td><span class="tag ${x.k==='ok'?'ok':x.k==='wait'?'warn':x.k==='bad'?'bad':'mute'}">${x.txt||'—'}</span></td></tr>`}).join('')}
+    </tbody></table>`}
+    <div class="note">列头视图：点矩阵里任何一格可以看单份交付物的详情。</div>`;
+  $('#dFoot').innerHTML=`<button class="btn" type="button" id="dClose2">关闭</button>`;
+  const b=$('#dClose2'); if(b) b.addEventListener('click',closeDrawer);
+}
+function openTableDrawer(k){
+  const t=TABLES[k];
+  drawerOpen=true;$('#drawer').classList.add('open');
+  $('#dTitle').textContent=t.n;
+  $('#dPath').textContent=t.dir;
+  $('#dBody').innerHTML=`
+    <dl class="kv">
+      <dt>读状态</dt><dd>${t.stage==='full'?'全文已读':t.stage==='survey'?'表头已读':'读失败'}</dd>
+      <dt>sheet</dt><dd class="mono">${t.sheets?t.sheets.join(' / '):'—'}</dd>
+      <dt>语言列</dt><dd>${t.langs?t.langs.map(l=>`<span class="tag mute">${l}</span>`).join(' '):'—'}</dd>
+      <dt>行数</dt><dd class="mono">${t.rows??'—'}</dd>
+      <dt>被谁用</dt><dd>${t.used.length?t.used.map(u=>esc(D[u].f)).join('、'):'没有稿用这张表（可在抽屉里手动绑定）'}</dd>
+    </dl>
+    ${t.stage==='error'?`<div class="note bad"><b>读失败</b>：${esc(t.err||'')}</div>`:''}
+    <div class="note">同一张表被多稿共用只读一次；这张表的状态变化会同步反映到矩阵里所有相关格。</div>`;
+  $('#dFoot').innerHTML=`
+    ${t.stage==='survey'?'<button class="btn primary" type="button" id="dFull2">读全文</button>':''}
+    ${t.stage==='error'?'<button class="btn primary" type="button" id="dRetry2">重试</button>':''}
+    <button class="btn" type="button" id="dClose3">关闭</button>`;
+  const f=$('#dFull2');if(f)f.addEventListener('click',()=>{t.stage='full';render();renderDrawer();});
+  const r=$('#dRetry2');if(r)r.addEventListener('click',()=>{t.stage='survey';t.sheets=['Sheet1'];t.langs=['DE','FR'];t.rows=40;t.err=undefined;render();renderDrawer();});
+  const x=$('#dClose3');if(x)x.addEventListener('click',closeDrawer);
+}
+function openDrawer(){drawerOpen=true;$('#drawer').classList.add('open');if(selMode==='lang')renderLangDrawer();else renderDrawer();}
+function closeDrawer(){$('#drawer').classList.remove('open');drawerOpen=false;}
+$('#dClose').addEventListener('click',closeDrawer);
+$('#onlyIssue').addEventListener('click',()=>{onlyIssue=!onlyIssue;$('#onlyIssue').textContent=onlyIssue?'看全部':'只看有问题的';renderMatrix();});
+$('#srch').addEventListener('input',e=>{query=e.target.value.trim();renderList();});
+$('#scanAll').addEventListener('click',()=>{
+  const d=DESIGNS.find(x=>x.st==='scanning');
+  if(d){d.st='scanned';d.pc={DE:100,FR:100,EN:100,ES:100,JA:100,KO:100,PT:98,IT:100};}
+  render();
+});
+$('#surveyAll').addEventListener('click',()=>{Object.values(TABLES).forEach(t=>{if(t.stage==='error'){t.stage='survey';t.sheets=['Sheet1'];t.langs=['DE','FR'];t.rows=40;t.err=undefined;}});render();});
+/* ── 文件夹流程：空态入口卡 ⇄ 已读取主界面 ── */
+const SUB_GATE='选一个工作文件夹就行：每个子文件夹＝一套要改的 SKU（PSD 和译文表放一起）。本机读取、不上云。';
+const SUB_LOADED='左边 12 份设计稿；右边这张表是 <b>译文来源</b>——每格是一份交付物，写着它从哪张译文表取、当前对稿覆盖率多少、还差什么。';
+function setPhase(p){
+  const gate=p==='gate';
+  $('#fgateCard').style.display=gate?'':'none';
+  $('#loadedWrap').style.display=gate?'none':'flex';
+  $('#pgTools').style.display=gate?'none':'';
+  $('#pgSub').innerHTML=gate?SUB_GATE:SUB_LOADED;
+  if(gate){closeDrawer();$('#crumb').textContent='多个设计稿 · 未读取文件夹';}
+  else{$('#crumb').textContent='多个设计稿 · 12 份稿 · 12 门语言';render();}
+}
+const gatePath=$('#gatePath'),gateRead=$('#gateRead');
+gatePath.addEventListener('input',()=>{gateRead.disabled=!gatePath.value.trim();});
+gatePath.addEventListener('keydown',e=>{if(e.key==='Enter'&&gatePath.value.trim())gateRead.click();});
+$('#gatePick').addEventListener('click',()=>{
+  gatePath.value='D:\\项目\\2026Q4_秋季新品';gateRead.disabled=false;
+  $('#gateNote').innerHTML='已选：<b>D:\\项目\\2026Q4_秋季新品</b>（Windows 原生文件夹框）。点「读取文件夹」开始只读预扫描。';
+});
+gateRead.addEventListener('click',()=>{
+  gateRead.disabled=true;gateRead.innerHTML='<span class="spin"></span> 读取中…';
+  window.setTimeout(()=>{
+    gateRead.textContent='读取文件夹';gateRead.disabled=!gatePath.value.trim();
+    setPhase('loaded');
+  },900);
+});
+$('#fbarChange').addEventListener('click',()=>setPhase('gate'));
+$('#fbarRescan').addEventListener('click',()=>{
+  const b=$('#fbarRescan');b.innerHTML='<span class="spin"></span> 重扫中…';b.disabled=true;
+  window.setTimeout(()=>{b.textContent='重扫';b.disabled=false;render();},800);
+});
+setPhase('gate');
+document.querySelectorAll('.vswitch button').forEach(b=>b.addEventListener('click',()=>{
+  const w=b.dataset.w;
+  document.querySelectorAll('.vswitch button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('#bulk').classList.toggle('off',w!=='bulk');
+  $('#single').classList.toggle('on',w==='single');
+  $('#steps').style.display=w==='bulk'?'':'none';
+  $('#crumb').textContent=w==='bulk'?'多个设计稿 · 12 份稿 · 12 门语言':'单个设计稿 · 原样保留';
+  if(w!=='bulk')closeDrawer();
+}));
+function render(){renderStats();renderTodo();renderList();renderMatrix();renderTinv();if(drawerOpen&&selMode!=='table'){if(selMode==='lang')renderLangDrawer();else renderDrawer();}}
+render();
+</script>
+</body>
+</html>

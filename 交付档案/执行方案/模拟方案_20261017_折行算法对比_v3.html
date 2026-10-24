@@ -1,0 +1,485 @@
+<title>折行算法对比台 v3 · 贪心 / 固定行数DP / Knuth-Plass / 等比缩宽</title>
+<style>
+:root{--bg:#f5f6f8;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e4f3ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--teal:#0f6b63;--teal-soft:#e3f2f0;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--teal:#6fd5c8;--teal-soft:#0f2926}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(18px,4vw,40px) clamp(12px,3vw,32px) 70px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(1.35rem,3.3vw,1.95rem);line-height:1.25;margin:.2em 0 .15em}
+.sub{margin:0;color:var(--ink-2);max-width:86ch}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:.83rem;font-family:var(--body)}
+.tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(13px,2.2vw,22px);display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:1.05rem}h3{margin:0 0 4px;font-size:.92rem}
+.hint{margin:0;color:var(--muted);font-size:.81rem}
+.grid{display:grid;gap:14px}@media(min-width:980px){.c2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.card.topbar{border-top:2px solid var(--line-strong)}
+.card.primary{border-top:2px solid var(--ok)}
+.card.shipped{border-top:2px solid var(--warn)}
+.card.rival{border-top:2px solid var(--accent)}
+.card.static{border-top:2px solid var(--muted)}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;padding:2px 6px;border-radius:5px;background:var(--sunk);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}.badge.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.mono{font-family:var(--mono);font-size:.75rem}
+table{border-collapse:collapse;width:100%;font-size:.79rem}
+th,td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;background:var(--sunk)}
+input[type=text],select,textarea{width:100%;min-height:31px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:4px 8px;font-family:var(--body);font-size:.84rem}
+textarea{min-height:52px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:3px}label.f>span{font-size:.69rem;color:var(--muted)}
+input[type=range]{width:100%}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:6px 11px;font-size:.79rem;cursor:pointer;font-family:var(--body)}
+.btn[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.metrics{display:flex;gap:5px 14px;flex-wrap:wrap;font-size:.74rem;color:var(--ink-2)}
+.metrics b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.note{border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:.79rem}
+.note.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.ln{display:grid;grid-template-columns:minmax(0,1fr) 118px 96px;gap:8px;align-items:center;border-bottom:1px dashed var(--line);padding:4px 0}
+.ln:last-child{border-bottom:none}
+.ltxt{font-size:.86rem;white-space:pre;overflow:hidden;text-overflow:ellipsis;font-family:var(--body)}
+.ltxt.viol{background:var(--bad-soft);border-radius:4px;padding:0 3px}
+.barwrap{height:9px;background:var(--sunk);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.bar{height:100%;background:var(--teal)}
+.bar.over{background:var(--bad)}
+.lw{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-align:right;white-space:nowrap}
+.seqwrap{font-size:1.02rem;line-height:2.4;word-break:break-all}
+.seqwrap .ch{white-space:pre}
+.brk{display:inline-block;width:3px;height:1.05em;vertical-align:-2px;margin:0 1px;border-radius:2px;background:var(--ok)}
+.brk.badStart{background:var(--bad)}
+.brk.badEnd{background:var(--warn)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:.71rem;padding-top:13px}
+.verdict{border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:.88rem}
+.hidden{display:none!important}
+.kv{display:flex;flex-direction:column;gap:5px;font-size:.82rem}
+.kv .r{display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px}
+.kv .r b{color:var(--ink-2);font-weight:600;font-size:.78rem}
+.rc{border-left:3px solid var(--line-strong);padding:5px 0 5px 10px}.rc .t{font-size:.79rem;font-weight:600}.rc .d{font-size:.72rem;color:var(--muted)}
+.rc.ok{border-color:var(--ok)}.rc.warn{border-color:var(--warn)}.rc.bad{border-color:var(--bad)}
+</style>
+<div class="wrap">
+<header>
+<p class="eyebrow">图译工坊内测版 · 模拟件 v3 · 2026-10-17 · 折行算法对比台（数值＝现行模块同口径移植，em 兜底表）</p>
+<h1>「这个算法」是怎么断行的：四个断行器 + 一位黑盒，同台跑同一段译文</h1>
+<p class="sub">你问「别人怎么写这个算法或有什么其他方案」。这页把四个方案做成可点可调的同台对比：<b>贪心填满</b>、<b>我们现行版</b>、<b>s5 修复版</b>（本日已改、过测、本地提交 762a784）、<b>Knuth–Plass 简化版</b>（TeX/Typst 家族）、<b>等比缩宽</b>（Chrome text-wrap:balance 的思路），外加 Photoshop 合成器这位不能脚本化观察的<b>黑盒</b>。所有切分与宽度计算逐字移植自 <span class="mono">src/lib/workbench/wrap-planner.ts</span>，整数口径（1/1000 em），不是另起炉灶重写。</p>
+<div class="row" style="margin-top:9px">
+<span class="badge ok">固定行数＋禁则＝万里长城：只有我们的 DP 全绿</span><span class="badge warn">贪心：快，但不守禁则</span><span class="badge warn">KP：行数不受你控</span><span class="badge warn">缩宽：行更齐，但吃掉可用宽度</span><span class="badge bad">PS 合成器：断在哪由它定，不可逐行脚本化</span>
+</div>
+</header>
+
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" aria-selected="true" data-view="t1">① 算法对比台</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t2">② 禁则断点地图</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t3">③ 方案原理卡</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t4">④ 为什么只能硬换行</button>
+<button class="tab" role="tab" aria-selected="false" data-view="t5">⑤ s5 执行台账</button>
+</div>
+
+<section id="t1">
+<div><h2>① 同一段译文，六个断行器并排跑</h2><p class="hint">预算与行数可调；每条线下面是「占预算比例」条。「现行版 vs 修复版」是这次改动的正面对照；后三个陪跑方案用来回答「别人的做法长什么样、为什么我们没有照抄」。宽度用 em 兜底表（拉丁 520 / 全角 1000 / 空格 520 单位）——真实部署时换成助手侧真度量表，<b>断法结构一致、绝对宽度不同</b>。</p></div>
+<div class="grid c2">
+<div class="card topbar" style="grid-column:1/-1">
+<div class="row">
+<label class="f" style="flex:2;min-width:260px"><span>测试文案（点选预置，或直接改写右下输入框）</span><select id="selSample"></select></label>
+<label class="f" style="flex:1;min-width:150px"><span>行宽预算 <b id="budgetEcho" class="mono"></b></span><input type="range" id="rBudget" min="2" max="24" step="1"></label>
+<label class="f" style="flex:1;min-width:130px"><span>原稿行数 <b id="nEcho" class="mono"></b></span><input type="range" id="rN" min="1" max="4" step="1"></label>
+<label class="f" style="flex:1;min-width:130px"><span>允许加行 <b id="capEcho" class="mono"></b></span><input type="range" id="rCap" min="0" max="2" step="1"></label>
+</div>
+<label class="f"><span>文案（可与预置不同）</span><textarea id="txt"></textarea></label>
+</div>
+<div id="cards" class="grid c2" style="grid-column:1/-1"></div>
+</div>
+</section>
+
+<section id="t2" class="hidden">
+<div><h2>② 禁则断点地图：哪些位置能断、哪些被禁、s5 新禁了谁</h2><p class="hint">按 JLREQ／JIS X 4051 的行头/行尾禁则类对齐后，s5 相对现行版新增了一批禁则字符（小書き仮名・繰り返し記号・更多括号变体・半角标点・NBSP）。下面把每个字符间隙标出来：绿＝可断，红＝断后行首违规（右邻是禁行头字符），黄＝断后行尾违规（左邻是禁行尾字符）。</p></div>
+<div class="row">
+<button class="btn" id="vS4" aria-pressed="false">用现行版集合（s4）</button>
+<button class="btn" id="vS5" aria-pressed="true">用 s5 集合（新）</button>
+</div>
+<label class="f"><span>检查文案</span><textarea id="chkTxt"></textarea></label>
+<div class="seqwrap" id="seq"></div>
+<div class="legend"><span><i style="background:var(--ok)"></i>可断 <b class="mono" id="cOk">0</b></span><span><i style="background:var(--bad)"></i>禁行头 <b class="mono" id="cBad1">0</b></span><span><i style="background:var(--warn)"></i>禁行尾 <b class="mono" id="cBad2">0</b></span></div>
+<div class="card"><h3>s5 相对 s4 的新增禁则字符</h3><div class="kv" id="setDiff"></div></div>
+</section>
+
+<section id="t3" class="hidden">
+<div><h2>③ 五个方案各自在干什么</h2><p class="hint">按「谁在用 / 怎么断 / 优点 / 代价」四栏读；来源都是公开资料，数字与引文出处见每卡末行。</p></div>
+<div class="grid c2" id="theory"></div>
+</section>
+
+<section id="t4" class="hidden">
+<div><h2>④ 为什么这条路必须是「我们算断点 + 插硬换行」</h2><p class="hint">这是决定「折行算法值得修但没得选」的取证链约束，来自本机 PS 22 探针（A—H4）与 09-20 实测，不是理论偏好。</p></div>
+<div class="grid c2">
+<div class="card static"><h3>H4：让 PS 自己折行 ⇒ 取证法当场失效</h3><p class="hint" style="font-size:.84rem">实测：705×13 的文案转段落文本、给 180pt 框宽 ⇒ 包围盒变 174×97，<b>全文零个换行符、却排了 5 行</b>。我们的主取证法是「数交付件里的 0x0D」——软换行一个都不落 0x0D，主法会报 1 行，真值 5 行。</p><div class="rc bad"><div class="t">结论</div><div class="d">软换行 = 取证链断裂，不是偏好问题。</div></div></div>
+<div class="card static"><h3>PS 22 不给「每行从哪断」的读数</h3><p class="hint" style="font-size:.84rem">DOM 没有逐行原点/断点读数；备选取证＝像素带扫描（生产量级跑不完）与几何反推（一致率 68–95%，已被否）。</p><div class="rc bad"><div class="t">结论</div><div class="d">断点必须由我们自己算、自己写，才数得清、验得明。</div></div></div>
+<div class="card static"><h3>合成器档位会改断法（147×13→149×13）</h3><p class="hint" style="font-size:.84rem">实测把段落合成器从 ADOBESINGLELINE 切到 ADOBEEVERYLINE，同一段文字包围盒就变了——它改变「折在哪几行」。避头尾/mojikumi 在 PS 22 DOM 无入口（UXP 要 24.1+），所以「把禁则甩给 PS」也做不到。</p><div class="rc warn"><div class="t">结论</div><div class="d">合成器保持「跟随」并如实记录当前值；断行质量由我们的规划器负责。</div></div></div>
+<div class="card static"><h3>差分验证：修的是一个「已建未接」的模块</h3><p class="hint" style="font-size:.84rem">wrap-planner 早在 s4 就写好了（固定行数＋真宽度预算＋禁则硬约束＋显式失败），但产品代码零调用（<span class="mono">compileBindings</span> 调用方只有 server 与批处理规划）。本次 = 未接线期把算法本身修硬，接线仍随 P3/P4 发版批走。</p><div class="rc ok"><div class="t">结论</div><div class="d">改动不影响任何在跑的产品路径（零调用方），风险窗口极窄。</div></div></div>
+</div>
+</section>
+
+<section id="t5" class="hidden">
+<div><h2>⑤ s5 执行台账（本日实际跑过的数字）</h2><p class="hint">提交：develop 本地 <span class="mono">762a784</span>（未推送）。测试：<span class="mono">npm run test:wrap-planner</span>（原 12 组＋s5 4 组＋两条不变式非空断言）全过；<span class="mono">test:wrap-solver</span> 未受影响（跑过）；<span class="mono">npx tsc --noEmit</span> 0 错；<span class="mono">eslint</span> 0 错。</p></div>
+<div class="grid c2">
+<div class="card primary"><h3>修了什么（4 处）</h3><div class="rc ok"><div class="t">① 混排分词</div><div class="d">含空格且内嵌 CJK 的句子不再整段成为不可断 token。实测对照：`TITAN Pro バンパー・ケースに対応します`、预算 5000U、原稿 3 行 —— s4：直接失败（BUDGET_BELOW_CLUSTER，最宽 token 14000U=14 个全角）→ s5：4 行可行（extra_line）。</div></div><div class="rc ok"><div class="t">② 禁则对齐 JLREQ</div><div class="d">新增行头禁则类：小書きの仮名（っ ャ ョ ヶ …24 字）、繰り返し記号（々ゝゞヽヾ〃）、括号变体（〕〗｝］”’»｠…）、半角标点（,.;:!?)]}）、ハイフン類（‐゠〜）等；行尾补開き括弧变体与半角 ( [ { 。不变式：5 段真实语料 ×4 档预算的可行方案里，禁则字符零落行首/行尾。</div></div><div class="rc ok"><div class="t">③ NBSP 黏连</div><div class="d">U+00A0 两侧都不得成为断点（`10 kg` 类数字单位不拆），逐字路径字符零丢失。</div></div><div class="rc ok"><div class="t">④ failPlan 宽度口径</div><div class="d">失败计划的整串宽度原先误用 em 兜底表，改为调用方传入的度量表（负控测试：自定义表 777 单位/字 ⇒ 失败宽度 18×777=13986，不再报 520 口径）。</div></div></div>
+<div class="card"><h3>没做什么 / 为什么</h3><div class="rc warn"><div class="t">没有接线</div><div class="d">wrapProfile 版本隔离要动助手协议＋安装包＋三点比对＋DB 列，已定为与 P4 同批、随发版窗口做（见 09-20 方案 L3）。</div></div><div class="rc warn"><div class="t">没有引任何三方折行库</div><div class="d">09-20 已实测：tex-linebreak 双次证伪（超长词不报错/行数不受控/无 LICENSE）；foliojs/linebreak 只取 UAX#14 思想，代码仍内联；hyphen 词典仍是后续批。</div></div><div class="rc warn"><div class="t">没做泰文词典分词 / 拉丁词内连字</div><div class="d">泰文按字素簇硬断（与现状一致，词典分词是独立项）；德语长词内连字属「第二批」，现由 DP 在词内逐字断或显式失败二选一。</div></div><div class="rc warn"><div class="t">没有动 composer</div><div class="d">六面对抗审查已锁：composer 保持「跟随」并记录当前值（切档会改变折行，147×13→149×13）。</div></div></div>
+<div class="card" style="grid-column:1/-1"><h3>负控与不回归</h3><div class="kv"><div class="r"><b>原 12 组断言</b><span>未改一字，全部通过（s4 已含「・」的行为原样保留：バンパー・ケース 4 字预算下仍判 3 行不劈复合词）。</span></div><div class="r"><b>s5 新增断言</b><span>13 混排可行 / 14 行首行尾禁则不变式（≥8 个可行方案非空）/ 15 NBSP 两侧黏连＋字符零丢失 / 16 失败宽度口径负控。</span></div><div class="r"><b>确定性与整数</b><span>全整数运算未破坏：同输入两次逐字段一致（原测 6 组仍过）。</span></div><div class="r"><b>范围审计</b><span>提交仅含 2 文件（wrap-planner.ts +62/−?, smoke +81），未裹走同工作树其它会话的活动修改（另有一份 JSX 在改，不在本次提交里）。</span></div></div></div>
+</div>
+</section>
+
+<footer>
+模拟件 v3 · 2026-10-17 · 数值来源：本机 node 实跑（wrap-planner s4/s5 与 smoke 13–16 同口径）、PS 22 探针 A—H4、09-20 排版质量实测。诚实声明：本页宽度用 em 兜底表而非真字体度量，PS 渲染亦非逐像素复刻——这页比的是「断法结构」，不是像素。合成器/避头尾等 PS 侧事实均来自本机探针实测，来源行见第③页各卡。
+</footer>
+<script>
+(function(){
+'use strict';
+function el(id){return document.getElementById(id);}
+var SPACED_RE=/[ \t]/;
+var COMBINING=new RegExp('\\p{M}','u');
+function isCombining(ch){return COMBINING.test(ch);}
+function isNoSpaceScript(code){
+  return (code>=0x0e00&&code<=0x0e7f)||(code>=0x1000&&code<=0x109f)||(code>=0x1780&&code<=0x17ff)||(code>=0x0e80&&code<=0x0eff)||(code>=0x3000&&code<=0x30ff)||(code>=0x3400&&code<=0x4dbf)||(code>=0x4e00&&code<=0x9fff)||(code>=0xac00&&code<=0xd7af)||(code>=0xf900&&code<=0xfaff);
+}
+function charFactor(code){
+  if((code>=0x3000&&code<=0x30ff)||(code>=0x3400&&code<=0x4dbf)||(code>=0x4e00&&code<=0x9fff)||(code>=0xf900&&code<=0xfaff)||(code>=0xac00&&code<=0xd7af)||(code>=0xff00&&code<=0xff60))return 1000;
+  if(code>=0x0400&&code<=0x04ff)return 550;
+  if(code>=0x0e00&&code<=0x0e7f)return 620;
+  if(code>=0x0600&&code<=0x06ff)return 550;
+  if(code>=0x0900&&code<=0x097f)return 600;
+  return 520;
+}
+function widthOf(t){var w=0,arr=Array.from(t);for(var i=0;i<arr.length;i++)w+=charFactor(arr[i].codePointAt(0)||0);return w;}
+var S4_START=new Set(Array.from('、。，．：；！？）】》」』〉·・ー～%‰℃'));
+var S4_END=new Set(Array.from('（【《「『〈#'));
+var S5_START=new Set(Array.from('、。，．：；！？）】》」』〉〕〗〙〛｝］｣〟”’»｠·・ー～〜%‰℃％｡､･ｰ'+'々ゝゞヽヾ〃‐゠ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ⁇⁈⁉,.;:!?)]}'));
+S5_START.add('\u00a0');
+var S5_END=new Set(Array.from('（【《「『〈〔〖〘〚〝‘“｟｢«［｛#([{'));
+S5_END.add('\u00a0');
+function setsFor(v){return v==='s4'?{s:S4_START,e:S4_END}:{s:S5_START,e:S5_END};}
+
+function tokenize(text,v){
+  var tokens=[];
+  if(SPACED_RE.test(text)){
+    var parts=text.split(/([ \t]+)/);
+    for(var p=0;p<parts.length;p++){
+      var part=parts[p];
+      if(part===''||SPACED_RE.test(part))continue;
+      if(v==='s4'){tokens.push({text:part,widthU:widthOf(part),spaceBefore:tokens.length>0,breakRank:0});continue;}
+      var local=[],run='',arr=Array.from(part);
+      for(var i=0;i<arr.length;i++){
+        var ch=arr[i];
+        if(isCombining(ch)&&local.length>0&&local[local.length-1].breakRank===1){var last=local[local.length-1];last.text+=ch;last.widthU+=widthOf(ch);continue;}
+        if(isNoSpaceScript(ch.codePointAt(0)||0)){
+          if(run!==''){local.push({text:run,widthU:widthOf(run),spaceBefore:false,breakRank:0});run='';}
+          local.push({text:ch,widthU:widthOf(ch),spaceBefore:false,breakRank:1});
+        }else run+=ch;
+      }
+      if(run!=='')local.push({text:run,widthU:widthOf(run),spaceBefore:false,breakRank:0});
+      if(local.length>0){local[0].spaceBefore=tokens.length>0;for(var q=0;q<local.length;q++)tokens.push(local[q]);}
+    }
+    return tokens;
+  }
+  var clusters=[],arr2=Array.from(text);
+  for(var j=0;j<arr2.length;j++){
+    var c2=arr2[j];
+    if(clusters.length>0&&isCombining(c2)){var lc=clusters[clusters.length-1];lc.text+=c2;lc.widthU+=widthOf(c2);}
+    else clusters.push({text:c2,widthU:widthOf(c2),spaceBefore:false,breakRank:1});
+  }
+  return clusters;
+}
+function canBreakAfter(tokens,i,st){
+  var left=tokens[i],right=tokens[i+1];
+  if(!left||!right)return false;
+  var la=Array.from(left.text),ra=Array.from(right.text);
+  var ll=la[la.length-1],rf=ra[0];
+  if(ll!==undefined&&st.e.has(ll))return false;
+  if(rf!==undefined&&st.s.has(rf))return false;
+  if(rf!==undefined&&isCombining(rf))return false;
+  return true;
+}
+function joinLine(tokens,from,to){
+  var line='';
+  for(var i=from;i<to;i++){if(i>from&&tokens[i].spaceBefore)line+=' ';line+=tokens[i].text;}
+  return line;
+}
+function lineWidthOf(tokens,from,to,spaceU){
+  var w=0;
+  for(var i=from;i<to;i++){if(i>from&&tokens[i].spaceBefore)w+=spaceU;w+=tokens[i].widthU;}
+  return w;
+}
+function isWidow(line,spaced){var n=Array.from(line.replace(/\s+/g,'')).length;return spaced?n<3:n<2;}
+var INF=Math.floor(Number.MAX_SAFE_INTEGER/4);
+var RANK_W=50,WIDOW_P=5000;
+function dpFixedN(tokens,budgetU,lineCount,spaceU,breakable,spaced){
+  var n=tokens.length;if(lineCount>n)return null;
+  var best=[],prev=[],slackOf=[];
+  for(var a=0;a<=n;a++){best.push(new Array(lineCount+1).fill(INF));prev.push(new Array(lineCount+1).fill(-1));slackOf.push(new Array(lineCount+1).fill(0));}
+  best[0][0]=0;
+  for(var k=1;k<=lineCount;k++){
+    for(var i=k;i<=n;i++){
+      var isLast=(k===lineCount);
+      for(var j=k-1;j<i;j++){
+        if(best[j][k-1]>=INF)continue;
+        if(k>1&&!breakable[j-1])continue;
+        var width=lineWidthOf(tokens,j,i,spaceU);
+        if(width>budgetU)continue;
+        var slack=budgetU-width;
+        var cost=best[j][k-1];
+        if(!isLast)cost+=Math.floor((slack*slack)/1000);
+        if(k>1)cost+=RANK_W*tokens[j].breakRank;
+        if(isLast&&isWidow(joinLine(tokens,j,i),spaced))cost+=WIDOW_P;
+        if(cost<best[i][k]){best[i][k]=cost;prev[i][k]=j;slackOf[i][k]=isLast?0:slack;}
+      }
+    }
+  }
+  if(best[n][lineCount]>=INF)return null;
+  var lines=[],cursor=n;
+  for(var k2=lineCount;k2>=1;k2--){var from=prev[cursor][k2];if(from<0)return null;lines.unshift({from:from,to:cursor});cursor=from;}
+  var slackTotal=0;
+  for(var idx=0;idx<lines.length;idx++){if(idx===lines.length-1)continue;slackTotal+=slackOf[lines[idx].to][idx+1];}
+  return {lines:lines,cost:best[n][lineCount],slackU:slackTotal};
+}
+function planSim(target,budgetU,sourceLineCount,maxExtra,v){
+  var st=setsFor(v),tokens=tokenize(target,v),spaceU=widthOf(' ');
+  var widest=0;for(var i=0;i<tokens.length;i++)if(tokens[i].widthU>widest)widest=tokens[i].widthU;
+  var base={tier:'fail',reason:null,lines:[target],lineWidthsU:[widthOf(target)],widestTokenU:widest,sourceLineCount:sourceLineCount,budgetU:budgetU};
+  if(widest>budgetU){base.reason='BUDGET_BELOW_CLUSTER';return base;}
+  var breakable=tokens.map(function(_,i){return canBreakAfter(tokens,i,st);});
+  if(!breakable.some(Boolean)){base.reason='NO_LEGAL_BREAK';return base;}
+  var spaced=SPACED_RE.test(target);
+  var upper=Math.min(sourceLineCount+maxExtra,tokens.length);
+  for(var lines=sourceLineCount;lines<=upper;lines++){
+    var res=dpFixedN(tokens,budgetU,lines,spaceU,breakable,spaced);
+    if(!res)continue;
+    var rendered=res.lines.map(function(l){return joinLine(tokens,l.from,l.to);});
+    var widths=res.lines.map(function(l){return lineWidthOf(tokens,l.from,l.to,spaceU);});
+    var forbidden=0;
+    for(var b=0;b<res.lines.length-1;b++)if(!breakable[res.lines[b].to-1])forbidden++;
+    return {tier:rendered.length===sourceLineCount?'normal':'extra_line',reason:null,lines:rendered,lineWidthsU:widths,lineCount:rendered.length,sourceLineCount:sourceLineCount,budgetU:budgetU,slackU:res.slackU,cost:res.cost,forbidden:forbidden,widestTokenU:widest};
+  }
+  base.reason='BUDGET_EXHAUSTED';return base;
+}
+function greedyRanges(tokens,budgetU,breakable,spaceU,withBackoff){
+  var ranges=[],start=0;
+  while(start<tokens.length){
+    var wsum=tokens[start].widthU,end=start+1;
+    while(end<tokens.length){
+      var add=tokens[end].widthU+(tokens[end].spaceBefore?spaceU:0);
+      if(wsum+add>budgetU)break;
+      wsum+=add;end++;
+    }
+    if(withBackoff&&end<tokens.length&&end>start+1){
+      for(var cut=end;cut>start+1;cut--){if(breakable[cut-1]){end=cut;break;}}
+    }
+    ranges.push({from:start,to:end});start=end;
+  }
+  return ranges;
+}
+function rangeStats(tokens,ranges,budgetU,spaceU,st){
+  var viol=0,overflow=0,lines=[],widths=[];
+  for(var i=0;i<ranges.length;i++){
+    lines.push(joinLine(tokens,ranges[i].from,ranges[i].to));
+    var w=lineWidthOf(tokens,ranges[i].from,ranges[i].to,spaceU);
+    widths.push(w);if(w>budgetU)overflow++;
+    if(i<ranges.length-1&&!canBreakAfter(tokens,ranges[i].to-1,st))viol++;
+  }
+  return {lines:lines,lineWidthsU:widths,violations:viol,overflow:overflow};
+}
+function greedyBlind(tokens,budgetU,v){
+  return rangeStats(tokens,greedyRanges(tokens,budgetU,null,widthOf(' '),false),budgetU,widthOf(' '),setsFor(v));
+}
+function kpLite(tokens,budgetU,maxLines,breakable,spaced){
+  var spaceU=widthOf(' '),n=tokens.length,bestTotal=Infinity,bestSol=null;
+  for(var k=1;k<=Math.min(maxLines,n);k++){
+    var best=[],prev=[];
+    for(var a=0;a<=n;a++){best.push(new Array(k+1).fill(Infinity));prev.push(new Array(k+1).fill(-1));}
+    best[0][0]=0;
+    for(var kk=1;kk<=k;kk++){
+      for(var ii=kk;ii<=n;ii++){
+        var isLast=(kk===k);
+        for(var jj=kk-1;jj<ii;jj++){
+          if(!(best[jj][kk-1]<Infinity))continue;
+          if(kk>1&&!breakable[jj-1])continue;
+          var width=lineWidthOf(tokens,jj,ii,spaceU);
+          if(width>budgetU)continue;
+          var lineCost=0;
+          if(!isLast){
+            var slack=budgetU-width,gaps=Math.max(1,ii-jj),stretch=gaps*250,r=slack/stretch;
+            var badness=100*r*r*r;
+            if(r>1)badness+=5000*(r-1)+5000;
+            lineCost=Math.pow(10+badness,2);
+          }
+          var c=best[jj][kk-1]+lineCost;
+          if(c<best[ii][kk]){best[ii][kk]=c;prev[ii][kk]=jj;}
+        }
+      }
+    }
+    if(best[n][k]<Infinity&&(best[n][k]<bestTotal||(best[n][k]===bestTotal&&bestSol&&k<bestSol.lineCount))){
+      bestTotal=best[n][k];
+      var lines=[],cursor=n;
+      for(var kk2=k;kk2>=1;kk2--){var from=prev[cursor][kk2];if(from<0){lines=null;break;}lines.unshift({from:from,to:cursor});cursor=from;}
+      if(lines)bestSol={lines:lines,total:bestTotal,lineCount:k};
+    }
+  }
+  if(!bestSol)return null;
+  var out=rangeForSol(bestSol.lines);
+  function rangeForSol(ls){
+    var linesT=[],widths=[],lrs=[];
+    for(var i=0;i<ls.length;i++){
+      var w=lineWidthOf(tokens,ls[i].from,ls[i].to,spaceU);
+      widths.push(w);linesT.push(joinLine(tokens,ls[i].from,ls[i].to));
+      if(i<ls.length-1){var slack=budgetU-w,gaps=Math.max(1,ls[i].to-ls[i].from);lrs.push(slack/(gaps*250));}
+      else lrs.push(null);
+    }
+    return {lines:linesT,lineWidthsU:widths,lrs:lrs,total:bestSol.total,lineCount:bestSol.lineCount};
+  }
+  return out;
+}
+function balancePlan(tokens,budgetU,breakable,v){
+  var spaceU=widthOf(' '),st=setsFor(v);
+  var k0=greedyRanges(tokens,budgetU,breakable,spaceU,true).length;
+  var w=budgetU,bestW=budgetU;
+  while(w>=50){
+    var c=greedyRanges(tokens,w,breakable,spaceU,true).length;
+    if(c<=k0){bestW=w;w-=Math.max(10,Math.round(budgetU/64));}else break;
+  }
+  var ranges=greedyRanges(tokens,bestW,breakable,spaceU,true);
+  var stat=rangeStats(tokens,ranges,budgetU,spaceU,st);
+  stat.effectiveWidthU=bestW;stat.baseCount=k0;
+  return stat;
+}
+function fmtPct(n,budget){return Math.round(n/budget*100)+'%';}
+function linesHTML(lines,widths,budgetU,st){
+  var html='';
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i],cs=Array.from(line);
+    var viol=(st.s.has(cs[0])||st.e.has(cs[cs.length-1]));
+    var pct=Math.min(100,Math.round(widths[i]/budgetU*100));
+    html+='<div class="ln"><span class="ltxt'+(viol?' viol':'')+'" title="'+line.replace(/"/g,'&quot;')+'">'+line+'</span><span class="barwrap"><span class="bar'+(widths[i]>budgetU?' over':'')+'" style="width:'+pct+'%"></span></span><span class="lw">'+widths[i]+' · '+fmtPct(widths[i],budgetU)+'</span></div>';
+  }
+  return html;
+}
+var SAMPLES=[
+  {k:'ja-mixed',label:'日语 · 混排（含空格＋中黑）',text:'TITAN Pro バンパー・ケースに対応します'},
+  {k:'ja-compound',label:'日语 · 无空格复合词',text:'バンパー・ケースに対応、フィルターも付属'},
+  {k:'ja-small',label:'日语 · 小書き仮名（修正版才守得住）',text:'キャンペーン・チケットはスケッチブックとセットです'},
+  {k:'de-word',label:'德语 · 长复合词',text:'90°- und 180°-Schraubenschlüsselwinkelverriegelung gewährleistet einen bequemen Betrieb'},
+  {k:'zh-paren',label:'中文 · 括号禁则',text:'设备到货后请立即（检查包装完整性）并核对装箱清单数量'},
+  {k:'ko-spaced',label:'韩语 · 带空格',text:'무선 충전 스탠드와 USB-C 케이블이 함께 제공됩니다'},
+  {k:'fr-nbsp',label:'法语 · NBSP 数字单位',text:'Poids\u00A010 kg, livré avec câble\u00A0USB-C'},
+  {k:'custom',label:'自定义（右下输入框）',text:null}
+];
+var st={sample:0,sampleText:SAMPLES[0].text,custom:null,budget:7,n:2,cap:1,chk:'キャンペーン・チケットはスケッチブックとセットです',chkS5:true};
+
+function renderCards(){
+  var text=st.sampleText,budgetU=st.budget*1000,n=st.n,cap=st.cap;
+  var st4=setsFor('s4'),st5=setsFor('s5');
+  var s4=planSim(text,budgetU,n,cap,'s4');
+  var s5=planSim(text,budgetU,n,cap,'s5');
+  var tokens5=tokenize(text,'s5');
+  var breakable5=tokens5.map(function(_,i){return canBreakAfter(tokens5,i,st5);});
+  var sp=SPACED_RE.test(text);
+  var greedy=greedyBlind(tokens5,budgetU,'s5');
+  var kp=kpLite(tokens5,budgetU,Math.min(tokens5.length,n+cap+3),breakable5,sp);
+  var bal=balancePlan(tokens5,budgetU,breakable5,'s5');
+  var html='';
+  html+=cardPlan('现行版 wrap-planner（s4）','shipped','空格分词＋原禁则集；本次修复前状态',s4,budgetU,st5);
+  html+=cardPlan('修复版 wrap-planner（s5）','primary','混排分词＋JLREQ 禁则集＋NBSP 黏连',s5,budgetU,st5);
+  html+='<div class="card rival"><div class="row"><h3>贪心填满 First-Fit</h3><span class="badge">不守禁则的基线</span><span class="badge">同一分词器(s5)</span></div><p class="hint" style="font-size:.78rem">逐个 token 塞满就断，不回看禁则。这是「不写 DP 也能上线」的最省事版本——代价看违规数。</p>'+
+    (greedy.lines.length?('<div>'+linesHTML(greedy.lines,greedy.lineWidthsU,budgetU,st5)+'</div><div class="metrics"><span>行数 <b>'+greedy.lines.length+'</b></span><span>禁则违规 <b>'+greedy.violations+'</b></span><span>溢出 <b>'+greedy.overflow+'</b></span></div>'+
+    (greedy.violations>0?'<div class="note bad">禁则违规 '+greedy.violations+' 处——把它修好你等于在重写 DP 的回退逻辑。</div>':'<div class="note ok">本例恰好无违规（预算与内容对齐的巧合，不是保证）。</div>')):'')+'</div>';
+  if(!kp){html+='<div class="card rival"><h3>Knuth–Plass 简化版</h3><div class="note bad">预算太紧：连 '+Math.min(tokens5.length,n+cap+3)+' 行都排不下（同一内容我们的规划器会显式失败）。</div></div>';}
+  else{
+    var kpNote='';
+    if(kp.lineCount>n+cap)kpNote='拎重点：KP 用了 '+kp.lineCount+' 行——<b>超出了这张台面上允许的 +'+cap+' 档</b>（我们最多 '+(n+cap)+' 行）。它把「排得好看」放在「行数守约」前面，这正是本管道不能把它直接接上的原因；它给的 '+kp.lineCount+' 行里每行的伸缩需求见上。';
+    else if(kp.lineCount>n)kpNote='行数 '+kp.lineCount+' ≠ 原稿 '+n+'（KP 不看你的行数意图）——这正是我们没照抄它的原因。';
+    else if(kp.lineCount<n)kpNote='行数 '+kp.lineCount+' 少于原稿 '+n+'。';
+    else kpNote='行数恰好与原稿一致；行内给出「伸缩需求」（简化模型 0.25em/间隙）。';
+    html+='<div class="card rival"><div class="row"><h3>Knuth–Plass 简化版</h3><span class="badge">TeX / Typst 家族</span><span class="badge">浮点</span><span class="badge">行数自由</span></div><p class="hint" style="font-size:.78rem">全局罚分（badness=(10+100r³)²）＋行数自由＋伸缩（拉伸/压缩行内间隙）；末行免罚。简化掉 TeX 的 fitness/连字罚分。</p><div>'+linesHTML(kp.lines,kp.lineWidthsU,budgetU,st5)+'</div><div class="metrics"><span>行数 <b>'+kp.lineCount+'</b></span><span>总罚分 <b>'+Math.round(kp.total)+'</b></span><span>伸缩需求 <b>'+kp.lrs.map(function(r){return r===null?'—':(r>=0?'+':'' )+Math.round(r*100)+'%';}).join(' / ')+'</b></span></div><div class="note">'+kpNote+'</div></div>';
+  }
+  html+='<div class="card rival"><div class="row"><h3>等比缩宽（text-wrap: balance 思路）</h3><span class="badge">Chrome/Firefox 在用</span><span class="badge">贪心＋外部搜索</span></div><p class="hint" style="font-size:.78rem">它是「二分找不加行数的最小宽度」再让贪心在缩窄后的宽度里填——用外部搜索逼出均衡，不写 DP。有效宽被压到 '+bal.effectiveWidthU+'U（预算 '+budgetU+'U 的 '+fmtPct(bal.effectiveWidthU,budgetU)+'）。</p><div>'+linesHTML(bal.lines,bal.lineWidthsU,budgetU,st5)+'</div><div class="metrics"><span>行数 <b>'+bal.lines.length+'</b>（原作 '+n+'）</span><span>有效宽 <b>'+bal.effectiveWidthU+'U</b></span><span>禁则违规 <b>'+bal.violations+'</b></span><span>溢出 <b>'+bal.overflow+'</b></span></div>'+(bal.lines.length!==n?'<div class="note">行数 != 原稿行数：浏览器版还会限制段长（Chrome ≤6 行、FF ≤10 行），且它不认识「原稿是几行」这件事。</div>':'<div class="note ok">行数与原稿一致，且各行宽度接近等比——代价是可用宽度只用 '+fmtPct(bal.effectiveWidthU,budgetU)+'。</div>')+'</div>';
+  html+='<div class="card static"><div class="row"><h3>Photoshop 段落合成器</h3><span class="badge">黑盒（本页不模拟）</span></div><div class="kv"><div class="r"><b>两种模式</b><span>ADOBESINGLELINE（逐行）/ ADOBEEVERYLINE（跨行网络断点，官方描述为「考虑整个段落的断点网络」）</span></div><div class="r"><b>实测行为</b><span>切档改断法：147×13 → 149×13（本机 PS 22 探针）</span></div><div class="r"><b>为什么不用它排</b><span>① 断点不可脚本化读取（无逐行原点）；② 软换行不落 0x0D ⇒ 取证链断；③ PS 22 DOM 无避头尾入口（mojikumi 在 UXP 24.1+）。</span></div></div></div>';
+  el('cards').innerHTML=html;
+  el('budgetEcho').textContent=(budgetU/1000)+' 字宽（'+budgetU+'U）';
+  el('nEcho').textContent=n+' 行';
+  el('capEcho').textContent='+'+cap;
+}
+function cardPlan(title,cls,tagline,plan,budgetU,st5){
+  var body='';
+  if(plan.tier==='fail'){
+    body='<div class="note bad">失败：'+plan.reason+'（最宽 token '+plan.widestTokenU+'U；整串 '+plan.lineWidthsU[0]+'U）。失败不改写文本、原样返回——这是设计里的显式失败，不是异常。</div>';
+  }else{
+    var wMax=0;for(var i=0;i<plan.lineWidthsU.length;i++)if(plan.lineWidthsU[i]>wMax)wMax=plan.lineWidthsU[i];
+    body='<div>'+linesHTML(plan.lines,plan.lineWidthsU,budgetU,st5)+'</div><div class="metrics"><span>行数 <b>'+plan.lineCount+'</b>（原稿 '+plan.sourceLineCount+'）</span><span>最宽行 <b>'+fmtPct(wMax,budgetU)+'</b></span><span>松弛合计 <b>'+plan.slackU+'</b></span><span>代价 <b>'+plan.cost+'</b></span><span>禁则违规 <b>'+plan.forbidden+'</b></span></div>'+(plan.tier==='extra_line'?'<div class="note">比原稿多 '+(plan.lineCount-plan.sourceLineCount)+' 行（在允许档内）。</div>':'<div class="note ok">保持原稿行数。</div>');
+  }
+  return '<div class="card '+cls+'"><div class="row"><h3>'+title+'</h3><span class="badge">'+tagline+'</span></div>'+body+'</div>';
+}
+function renderChk(){
+  var text=st.chk,stt=st.chkS5?setsFor('s5'):setsFor('s4'),arr=Array.from(text);
+  var html='',cOk=0,cBad1=0,cBad2=0;
+  for(var i=0;i<arr.length;i++){
+    html+='<span class="ch">'+arr[i]+'</span>';
+    if(i<arr.length-1){
+      var rf=arr[i+1],ll=arr[i];
+      if(stt.s.has(rf)){html+='<span class="brk badStart" title="右邻是禁行头字符"></span>';cBad1++;}
+      else if(stt.e.has(ll)){html+='<span class="brk badEnd" title="左邻是禁行尾字符"></span>';cBad2++;}
+      else{html+='<span class="brk" title="可断"></span>';cOk++;}
+    }
+  }
+  el('seq').innerHTML=html;
+  el('cOk').textContent=cOk;el('cBad1').textContent=cBad1;el('cBad2').textContent=cBad2;
+}
+function renderSetDiff(){
+  var ns=[],ne=[];
+  S5_START.forEach(function(c){if(!S4_START.has(c))ns.push(c);});
+  S5_END.forEach(function(c){if(!S4_END.has(c))ne.push(c);});
+  el('setDiff').innerHTML='<div class="r"><b>新增禁行头（'+ns.length+'）</b><span class="mono">'+ns.join(' ')+'</span></div><div class="r"><b>新增禁行尾（'+ne.length+'）</b><span class="mono">'+ne.join(' ')+'</span></div><div class="r"><b>不变</b><span>原集合一字未删——只做加法，・与ー等 s4 语义原样保留。</span></div>';
+}
+function renderTheory(){
+  var cards=[
+    ['贪心填满 First-Fit','谁在用：几乎所有轻量排版/字幕/终端换行。怎么断：从上到下把 token 塞进当前行，塞不下就断。优点：O(n)、一眼能懂。代价：不守禁则就没有回退，守禁则要手写回退（等于局部重写 DP）；末行寡行控不住。','参考：Netflix 字幕风格指南的 2 行规则就是「贪心＋语义规则」的形态（标点后断/连词介词前断）——他们靠规则表补，不靠全局搜索。'],
+    ['固定行数 DP（我们的）','谁在用：JLREQ 行分割处理推荐思路（段落整体最优）+ 我们把「原稿行数」做成硬约束。怎么断：O(N·n²) 分段 DP，代价=松弛²/1000＋断点等级×50＋寡行 5000，全整数、平手取更早断点。优点：行数可控＋禁则硬约束＋失败可解释。代价：自己的模块要自己维护、要过跨端逐字节确定性。','参考：W3C JLREQ §3.2「行分割处理」；W3C「Approaches to line breaking」综述。'],
+    ['Knuth–Plass','谁在用：TeX、Typst（par.linebreaks: optimized）。怎么断：全局 badness＋伸缩（拉伸/压缩行内间隙），行数自由。优点：段落美学全局最优。代价：行数不受「原稿几行」控制；经典实现浮点＋字典连字，跨端逐字节一致性要重做。','参考：Knuth & Plass 1981《Breaking Paragraphs into Lines》；Typst 文档 linebreaks: simple/optimized；Adobe 合成器社区解读=「KP 的商用变体+HZ」（专利早已过期）。'],
+    ['等比缩宽 balance','谁在用：Chrome（≤6 行）/Firefox（≤10 行）的 text-wrap: balance。怎么断：二分找「不额外加行数」的最小宽度，再让贪心在缩窄宽度里填。优点：改两三行 CSS 就有均衡效果。代价：可用宽度被主动牺牲；不解决禁则/失败语义；不认识原稿行数。','参考：developer.chrome.com「CSS text-wrap: balance」实现说明（二分＋80% 起搜）。'],
+    ['Photoshop 段落合成器','谁在用：PS 自己的段落文本。怎么断：官方＝「考虑整个段落的断点网络」＋按字距/词距/连字均匀度加权罚分；日文涉 mojikumi aki。优点：开箱即用。代价：断点不可读、软换行不落 0x0D、PS22 无避头尾入口——站在我们的取证链上直接用不了。','参考：Adobe 官方帮助（段落合成器）；本机 PS 22 探针实测（切档 147×13→149×13）。'],
+    ['JLREQ 禁则表','谁在用：我们的 s5 修复直接对齐它。怎么断：不负责「在哪断」，负责「哪些位置不许断」：行头禁则=閉じ括弧/句読点/中黒/繰り返し記号/小書き仮名/長音/ハイフン类；行尾禁则=開き括弧类。优点：把断行质量从「好看」提升到「合规」。代价：类别多、变体多——s5 两处集合共新增 77 个字符（行头 +62／行尾 +15，另加 NBSP 两侧黏连）就是照着这个表补的。','参考：W3C JLREQ §3.1.7/3.1.8（行头/行尾禁则）；JIS X 4051；CSS line-break: strict/normal/loose 的同源映射。']
+  ];
+  var html='';
+  for(var i=0;i<cards.length;i++){
+    html+='<div class="card'+(i===1?' primary':' rival')+'"><h3>'+cards[i][0]+'</h3><p class="hint" style="font-size:.84rem">'+cards[i][1]+'</p><div class="rc"><div class="d">'+cards[i][2]+'</div></div></div>';
+  }
+  el('theory').innerHTML=html;
+}
+var sel=el('selSample');
+for(var i=0;i<SAMPLES.length;i++){var o=document.createElement('option');o.value=String(i);o.textContent=SAMPLES[i].label;sel.appendChild(o);}
+el('rBudget').value=String(st.budget/1000);
+el('rN').value=String(st.n);
+el('rCap').value=String(st.cap);
+el('txt').value=st.sampleText;
+el('chkTxt').value=st.chk;
+sel.onchange=function(e){
+  var s=SAMPLES[Number(e.target.value)];
+  st.sample=Number(e.target.value);
+  if(s.text!==null){st.sampleText=s.text;el('txt').value=s.text;}
+  renderCards();
+};
+el('txt').oninput=function(e){st.sampleText=e.target.value;renderCards();};
+el('rBudget').oninput=function(e){st.budget=Number(e.target.value);renderCards();};
+el('rN').oninput=function(e){st.n=Number(e.target.value);renderCards();};
+el('rCap').oninput=function(e){st.cap=Number(e.target.value);renderCards();};
+el('chkTxt').oninput=function(e){st.chk=e.target.value;renderChk();};
+el('vS4').onclick=function(){st.chkS5=false;el('vS4').setAttribute('aria-pressed','true');el('vS5').setAttribute('aria-pressed','false');renderChk();};
+el('vS5').onclick=function(){st.chkS5=true;el('vS5').setAttribute('aria-pressed','true');el('vS4').setAttribute('aria-pressed','false');renderChk();};
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){b.onclick=function(){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.setAttribute('aria-selected',String(x===b))});
+  ['t1','t2','t3','t4','t5'].forEach(function(id){el(id).classList.toggle('hidden',id!==b.getAttribute('data-view'))});
+}});
+renderCards();renderChk();renderSetDiff();renderTheory();
+window.__sim={planSim:planSim,greedyBlind:greedyBlind,kpLite:kpLite,balancePlan:balancePlan,tokenize:tokenize,widthOf:widthOf,canBreakAfter:canBreakAfter,breakableOf:function(text,v){var tk=tokenize(text,v),stt=setsFor(v);return tk.map(function(_,i){return canBreakAfter(tk,i,stt);});},SETS:{s4:setsFor('s4'),s5:setsFor('s5')}};
+})();
+</script>

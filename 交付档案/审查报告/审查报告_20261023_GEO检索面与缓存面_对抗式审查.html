@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEO 检索面与缓存面 · 对抗式审查 · 2026-10-23</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:1.6rem;line-height:1.1}
+.stat .v.bad{color:var(--bad)}.stat .v.ok{color:var(--ok)}.stat .v.warn{color:var(--warn)}
+.stat .s{font-size:.78rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="masthead">
+  <div class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span><span>Round 1 of 3</span><span class="sep">/</span><span>2026-10-23 10:1x 校核</span>
+  </div>
+  <h1>我把昨天报给您的搜索面读数推翻了</h1>
+  <p class="standfirst">审对象不是别人的代码，是<b>我自己昨天到今天早上交给 Owner 的那套 SEO/GEO 结论</b>。做法：四跑真实浏览器搜索页并表、线上资产逐字节复算、六路径缓存头实测。结论先说——<b>结构面那条尺子能用；检索面那条尺子昨天不可用（今天修好了）；"百度零收录"这句是读错了方向：我们唯一在百度前排的资产不是官网，是那篇站外文章。</b></p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT</span>
+  <p><b>有条件放行</b>。放行的条件只有一条：以后所有"某引擎有没有我们"的话，<b>必须拆成三轴说</b>——本站域名／站外我们／同族名撞车；并且说"没有"之前，必须证明那一行拿到了可用结果页。</p>
+  <div class="contract">
+    <span>范围：测量件与根账，<b>无任何业务代码改动</b></span>
+    <span>基线：root <b>f56c550</b>..WORKTREE／develop <b>4a5f68ef</b>（未动）</span>
+    <span>风险档：<b>Low</b>（本机脚本；执行链、报价、结算、支付开关一律未触达）</span>
+    <span>已证实：<b>6</b> 条 Important ＋ <b>2</b> 条 Nit（全部为存量缺陷，本次定位）</span>
+    <span>未决：<b>4</b> 条（均需 Cloudflare 后台／服务器侧／站长平台读数）</span>
+    <span>离线断言：<b>52</b> 条全绿（基线 37 ＋ 分类器 15）</span>
+  </div>
+</div>
+
+<section>
+  <h2><span class="num">一</span>昨天那句"百度 0 条在场"是怎么错的</h2>
+  <p>探针判断"我们有没有在页上"用的是<b>一个 ASCII 子串</b>：<span class="code">/tuyigf/i</span> 打在结果的 host＋来源名＋标题上。可百度的结果卡把<b>中文站名</b>放在来源位（"CSDN博客"），把跳转壳 <span class="code">/link?url=…</span> 放在 host 位（十条里九条 host 都是 <span class="code">www.baidu.com</span>）。于是我们那篇文章明明在页上，探针看不见。</p>
+  <div class="callout"><strong>并表后的真相（5 枚独立渲染页，跨 10-21 与 10-23 两天）</strong>：我们那篇 CSDN 首篇在百度四组自有查询里稳定在场——品牌词第 <b>3/4/6</b>、产品词第 <b>5</b>（四次同值）、需求词第 <b>5/7/8</b>、长句词第 <b>1/1/3</b>。官网域名确实没在场，但"百度完全没有我们"是错的。</div>
+  <p>同一批页里还冒出第二个此前没被记录的事实：两只引擎的<b>品牌词</b>页第 5–8 位都有同族名产品「美译工坊」（来源位 <span class="code">ios.lbgpmb.cn</span>）。这不是推测，是实拍。</p>
+</section>
+
+<section>
+  <h2><span class="num">二</span>已证实的缺陷（8 条，全部存量、本次定位并修复）</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>级</th></tr></thead>
+    <tbody>
+      <tr><td class="code">AR-1</td><td>Important</td><td class="code">geo-serp-classify.mjs（新建，替掉旧 ownInItems）</td><td>只认 ASCII 域名 ⇒ 页上有我们却读成"0 在场"，且中文品牌名永远匹配不上</td><td class="code">并表 5 枚页见上表；旧行 ownMentions=6 而 ownInItems=-1（geo-serp_20261021_r3.jsonl:2）</td><td>A</td></tr>
+      <tr><td class="code">AR-2</td><td>Important</td><td class="code">geo-serp-probe.mjs:54 / :62</td><td>"位次"是<b>解析成功项的下标</b>：没有标题锚点的块被整块跳过 ⇒ 名次被往前挤；且只落盘前 10 条、位次却在全量数组上算</td><td class="code">修后取结果块原始序号 pos；旧 jsonl 无 pos ⇒ 分类器如实退回下标，并被负控 C4b 点名</td><td>A</td></tr>
+      <tr><td class="code">AR-3</td><td>Important</td><td class="code">geo-serp-probe.mjs:105-137</td><td>阳性对照那一组自己撞墙 ⇒ 旧规则把<b>整通道</b>判死，同轮已经看见的肯定读数一起作废＝白丢数据</td><td class="code">10-23 09:38 百度 prod/guide 各 18 条真页却回显 INVALID；拆双闸后回显 肯定可用 6/7｜否定可用 6/7</td><td>A</td></tr>
+      <tr><td class="code">AR-4</td><td>Important</td><td class="code">geo-audit-lib.mjs:67-80<br>geo-audit-fetch.mjs:64-95</td><td><b>同一站点两套缓存策略</b>：首页 <span class="code">no-store</span>，而 /en／/download／教程页回 <span class="code">s-maxage=31536000</span>（一年）⇒ 跨日抓回的字节不可比；改了文案没 purge 时，爬虫与用户可能长期看旧版</td><td class="code">09:52:49 六路径实测；全仓 31536000 只命中两处 HSTS（Caddyfile.production:18／staging:31）⇒ 该头不在我们代码里</td><td>A＋来源未核实</td></tr>
+      <tr><td class="code">AR-5</td><td>Important</td><td class="code">ISSUES.md #266（本条补记）</td><td>我昨天说"生产换过一次构建而 provenance 没变号"，暗示可能发了没挂号的代码</td><td class="code">git merge-base --is-ancestor c96bc253 319bc1384a36 ⇒ rc=0（那笔本就在生产现役提交里）；marker 与 /en 构建号 11 小时未再变 ⇒ 更像缓存翻页与部署交叠</td><td>A</td></tr>
+      <tr><td class="code">AR-6</td><td>Important</td><td class="code">geo-serp_20261021*.jsonl 的 Bing 行</td><td>我把"两跑数字全等"当成<b>独立复采</b>来加强结论</td><td class="code">7 组 bodyChars／items／ownMentions 三值逐组全等 ⇒ 更像同一份页面被复用；今天重跑 prod/guide/brand 的字节数与 10-21 不同（4640/4540/1503）⇒ 独立在场，但"双跑同值"这句作废</td><td>A</td></tr>
+      <tr><td class="code">AR-7</td><td>Nit</td><td class="code">geo-serp-probe.mjs:34</td><td>阴性对照串自带 <span class="code">tuyigf</span> ⇒ 查询回显命中"本站不得出现"守卫，可把可用通道判死</td><td class="code">r3 第 14 行 ownMentions=2；已换成与本站无共同子串的串</td><td>A</td></tr>
+      <tr><td class="code">AR-8</td><td>Nit</td><td class="code">geo-serp-probe.mjs:72</td><td>百度对未收录 <span class="code">site:</span> 回的是"没有找到该URL…以下是网页中包含…"，<b>不是空结果页</b>；旧词表不含它 ⇒ 读成"0 条在场"</td><td class="code">五枚 site: 页一律 items=0／body≈370／块=0；新增 noindex_hint 单列</td><td>A</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">立案落点：根账 <span class="code">AI_MEMORY/ISSUES.md</span> 新增 <b>#268</b>（检索面判据缺陷＋"归属只认标题签名、不认平台名"这条新纪律）与 <b>#269</b>（缓存双标，major）；<b>#266</b> 就地补记降级。</p>
+</section>
+
+<section>
+  <h2><span class="num">三</span>接下来怎么办：三条路，只有一条值得走</h2>
+  <div class="callout"><strong>百度那条路不是死路，是走错了门。</strong>我们唯一在百度前排的资产是那篇站外文章。所以杠杆从"想办法让百度收官网"变成"<b>把站外前排的注意力接回官网</b>"——而递交权益那扇门目前是关的（「快速抓取」被明文拒、「普通收录」页无推送区块，昨天已在后台实拍）。</div>
+  <div class="stats">
+    <div class="stat"><span class="k">体检分（第 4 天）</span><span class="v">87.4</span><span class="s">连续 4 个日历日同分、FAIL 集合逐 id 一致</span></div>
+    <div class="stat"><span class="k">Bing 品牌词</span><span class="v">第 1</span><span class="s">三次独立渲染同值（10-21／今天两跑）</span></div>
+    <div class="stat"><span class="k">Bing 需求词</span><span class="v bad">前十无</span><span class="s">"PSD 批量替换文字"——官网两只引擎都不在</span></div>
+    <div class="stat"><span class="k">百度：站外我们</span><span class="v">第 1–8</span><span class="s">四组自有查询全部在场</span></div>
+    <div class="stat"><span class="k">百度：官网域名</span><span class="v warn">未在场（弱证据）</span><span class="s">百度的 URL 位不总显示域名，只能看来源位</span></div>
+    <div class="stat"><span class="k">同族名撞车</span><span class="v bad">第 5–8</span><span class="s">「美译工坊」ios.lbgpmb.cn，两只引擎都有</span></div>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>B1 · 缓存策略改不改（要您点头）</h3><p>把 <span class="code">/en</span>／<span class="code">/download</span>／教程页那年缓存降到短 TTL＋部署后主动 purge。要改代码并上站，走三段轨。<b>不拍的代价：</b>改了文案或法务页后，用户与爬虫可能最长一年还看旧版；我的测量线也会一直报"跨日不可比"。</p></div>
+    <div class="card"><h3>B2 · 站外面继续投不投（要您点头）</h3><p>两个小动作：① 在那篇 CSDN 原文里把官网做成<b>可点链接</b>＋一句"图译工坊（官网 tuyigf.com）"；② 针对"PSD 批量替换文字"（官网两只引擎都不在前十）再写一篇专文。<b>发布得您在 CSDN 点</b>——我三次点红色按钮都没发出提交请求，这条有记录。</p></div>
+    <div class="card"><h3>B3 · 同族名要不要对外区分（要您点头）</h3><p>实拍依据已到位：两只引擎品牌词页第 5–8 位都是「美译工坊」。不区分，品牌词流量继续被同名产品分走；区分，就要在对外文案里加一句边界话，得先过写法定则。</p></div>
+    <div class="card"><h3>B4–B5 · 老账两笔</h3><p>#211 外部主体页走组织型甲案还是承认个人账号乙案；#212「多个设计稿」能不能对外说。再加三段轨第三段的发布授权（生产现役仍 <span class="code">319bc13</span>）。</p></div>
+  </div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>今天我自己做完的</th><th>退出判据（可复跑）</th><th>真实回显</th></tr></thead>
+    <tbody>
+      <tr><td>三轴分类器＋块序位次＋阴性串去污染＋noindex 提示</td><td class="code">node 交付档案/GEO测量/geo-serp-classify-test.mjs</td><td class="code">分类器负控全绿 15/15 · rc=0</td></tr>
+      <tr><td>缓存头留底进抓取器＋日基线新增缓存轴</td><td class="code">node 交付档案/GEO测量/geo-audit-self-test.mjs<br>node 交付档案/GEO测量/geo-audit-daily.mjs --force</td><td class="code">负控全绿 37/37 · rc=0<br>缓存轴＝…download(365天),en(365天),guide(365天)｜no-store：home<br>内容轴＝文案与构建均未变｜构建号轴＝未变（4 件同枚）</td></tr>
+      <tr><td>四跑并表（旧行现场重算，标明下标位次／块序）</td><td class="code">node tmp/serp-merge.mjs</td><td class="code">11 组 × 最多 5 枚页全部对齐（脚本暂留 tmp，转正与否听您的）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>我判断不该做的三件事</h3><p>① <b>不追百度递交权益</b>：没权益、快速抓取被明文拒；手动递交也改变不了前排构成。② <b>不把豆包回答面当对外证据</b>：这台账号自问已第 6 天，污染探针只是下限检测。③ <b>不再用单一"在场性位次"</b>：一个数字混着三件事，就是昨天那句错话的病根。</p></div>
+    <div class="card"><h3>未决四条（缺什么证据）</h3><p>U-1 <span class="code">s-maxage</span> 从哪来（CF 后台规则或绕开 CF 的服务器侧对照）；U-2 Bing 到底收了几页（需一次阳性过关且 site: 非薄的复跑）；U-3 官网在百度是否真未收录（站长平台<b>索引量</b>页）；U-4 生产部署时刻（服务器侧构建目录时间戳）。前两条我能自己补，后两条要您或运维。</p></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>测量件：<span class="code">交付档案/GEO测量/geo-serp-classify.mjs · geo-serp-probe.mjs · geo-audit-lib.mjs · geo-audit-fetch.mjs · geo-audit-self.mjs · geo-audit-daily.mjs</span></p>
+  <p>读数：<span class="code">geo-serp_20261021_r2/r3.jsonl · geo-serp_20261023.jsonl · geo-serp_20261023_r2.jsonl · geo-audit-daily.jsonl</span>（同日多行＝勘误重录，取最后一行）</p>
+  <p><b>红线遵守</b>：未提交、未 push、未部署任何一站、未动支付 flag 与历史账务、未在百度/CSDN 后台点过任何发布或递交按钮、盘上零凭据。</p>
+  <p class="code">交付档案/审查报告/审查报告_20261023_GEO检索面与缓存面_对抗式审查.md · 2026-10-23 10:1x</p>
+</footer>
+
+</main>
+</body>
+</html>

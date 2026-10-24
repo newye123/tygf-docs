@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>利用 GitHub 打通数据不互通 · 对抗式审查与内部四项优化落地 · 2026-10-24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:960px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(34px,5vw,52px);
+}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.8rem,4.4vw,2.4rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.quicknav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:12px 14px;
+  position:sticky;
+  top:10px;
+  z-index:10;
+}
+.quicknav a{
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--ink-2);
+  text-decoration:none;
+  padding:4px 10px;
+  border-radius:6px;
+  background:var(--sunk);
+  border:1px solid var(--line);
+}
+.quicknav a:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.quicknav .theme-btn{
+  margin-left:auto;
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  background:transparent;
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:4px 10px;
+  cursor:pointer;
+}
+
+section{display:flex;flex-direction:column;gap:18px;scroll-margin-top:72px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.86em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{font-size:clamp(1.04rem,2.2vw,1.18rem);line-height:1.65;max-width:64ch;font-weight:500}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:.88rem;
+  font-weight:500;
+  color:var(--surface);
+  background:var(--ok);
+  width:42px;height:38px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">
+      <span>对抗式审查 + 内部四项优化实装</span><span class="sep">/</span>
+      <span>GitHub 打通方案裁定</span><span class="sep">/</span>
+      <span>2026-10-24</span>
+    </p>
+    <h1>「利用 GitHub 打通数据不互通」对抗式审查 · 暨内部四项优化工具落地报告</h1>
+    <p class="standfirst">网友推荐「用 GitHub 打通各端数据不互通」，放到我们项目的真实物理现场里到底行不行？本报告用四把压力刀给出分层裁定，并把刚拍板的 4 个内部优化工具（<code>sync-yt-skills.mjs</code>、<code>doctor-testsite-assistant.mjs</code>、<code>build-hot-index.mjs</code>、<code>tasklog-prepend.mjs</code>）全部实装落盘、跑通正负控验证。</p>
+    <div class="meta">
+      <span>Skills 打通：4 套 / 51 文件 (mismatches=0)</span>
+      <span>联调诊断：秒级抓出 141 次 VERIFY_TIMEOUT</span>
+      <span>热索引：2.5MB → 16.6KB</span>
+      <span>负控：全红拦截并还原</span>
+    </div>
+  </header>
+
+  <nav class="quicknav" aria-label="章节快速导航">
+    <a href="#s01">01 对抗审查：GitHub 打通真伪</a>
+    <a href="#s02">02 四层数据互通架构</a>
+    <a href="#s03">03 今日已落地的 4 个内部工具</a>
+    <a href="#s04">04 负控与实测证据账</a>
+    <button type="button" class="theme-btn" onclick="const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'">切换亮/暗</button>
+  </nav>
+
+  <div class="verdict">
+    <span class="lb">VERDICT · 分层放行（Skills 与业务代码走 GitHub = YES；同机高频账本与未脱敏档案走 GitHub = BLOCK）</span>
+    <p>网友说的「用 GitHub 打通」<strong>只对低频、无隐私的资产（Skills 技能包 + 业务代码三段轨）真香</strong>。如果拿 GitHub 充当同一台电脑上多个 AI 会话的高频账本（<code>TASK_LOG</code> / <code>ledger.jsonl</code>）同步总线，会立刻撞上 <strong>「同机忘 pull 反致失忆、置顶/追加必出 Merge Conflict 锁死脚本、9 类敏感信息外泄、985 份档案撑爆构建包」</strong> 四个大坑。同机打通靠<strong>本机单一真源目录 + 同步脚本</strong>，今天已为您全部实装跑通。</p>
+  </div>
+
+  <!-- 01 -->
+  <section id="s01">
+    <h2><span class="sn">01</span>用四把混沌压力刀审「拿 GitHub 打通一切」</h2>
+    <div class="split">
+      <div class="panel yes">
+        <h3><span>✓</span> 适合走 GitHub 打通的两类数据（Survived: YES）</h3>
+        <ul>
+          <li><strong>自研与通用 Skills 仓库（跨电脑 / 开源复用）</strong>：<code>yt-adversarial-review</code>、<code>yt-uiux</code>、<code>yt-sansheng-liubu</code>、<code>yt-zongkong-round</code> 变更低频、体积小（51 个文件）、脱敏后零隐私。完全可仿照本机已有的 <code>ljg-push</code> 推向独立的 <code>yt-skills</code> GitHub 仓。</li>
+          <li><strong>业务代码与两站发布（GitHub 三段轨）</strong>：<code>worktrees/develop</code> → <code>origin/develop</code> → 测试站 → <code>origin/main</code> → 生产站，配 <code>release-preflight.cjs</code> 祖先门禁，已彻底解决本机与服务器代码不互通。</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3><span>✕</span> 绝不能靠 GitHub 实时打通的四类坑（Survived: NO）</h3>
+        <ul>
+          <li><strong>刀 1 · 跨接缝探针</strong>：OpenCode 和 Qoder 本来就在同一块硬盘上！它们不互通是因为目录分裂（<code>.agents</code> vs <code>.qoder</code>）和死指针。如果绕道 GitHub，哪个会话忘了 <code>git pull</code> 反而读到旧数据。</li>
+          <li><strong>刀 2 · 并发重放探针</strong>：多个 AI 同时往 <code>TASK_LOG.md</code> 第 1 行置顶或往 <code>ledger.jsonl</code> 末行追加，走 Git 合并 <strong>100% 触发 <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> 冲突标记</strong>，当场搞崩 JSONL 解析器。</li>
+          <li><strong>刀 3 · 隐蔽泄密检测</strong>：容器根 <code>ISSUES.md</code>（526KB）与 <code>交付档案/</code>（985 份）含大量服务器路径、客户素材目录名（如 <code>5857</code>）与本机路径，未过 9 类敏感面门禁前严禁推 GitHub。</li>
+          <li><strong>刀 4 · 规模跳变</strong>：数百兆治理档案一旦混进业务仓 <code>newye123/tygf.git</code>，会直接拖垮测试站与生产站构建。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02">
+    <h2><span class="sn">02</span>最稳的四层数据互通架构（什么走哪条路）</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr>
+            <th>要打通的数据层</th>
+            <th>谁和谁互通</th>
+            <th>正确通道（Survived: YES）</th>
+            <th>为什么不用 GitHub 实时合并</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Skills 技能大脑</strong></td>
+            <td>OpenCode ↔ Qoder ↔ 跨电脑</td>
+            <td><strong>同机</strong>：容器根 <code>skills/</code> 单一真源 + <code>node scripts/sync-yt-skills.mjs</code><br><strong>跨机</strong>：独立 <code>yt-skills</code> GitHub 仓</td>
+            <td>同机同步只需 0.1 秒且零网络故障；今日运行后 OpenCode 已当场加载出 <code>yt-sansheng-liubu</code> 与 <code>yt-zongkong-round</code>。</td>
+          </tr>
+          <tr>
+            <td><strong>2. 项目热状态与开机上下文</strong></td>
+            <td>上一个 AI 会话 ↔ 下一个 AI 会话</td>
+            <td><strong>同机热索引</strong>：<code>AI_MEMORY/HOT_INDEX.md</code>（16.6 KB，由 <code>build-hot-index.mjs</code> 只读生成）+ <code>worktrees/develop/docs/HANDOFF.md</code></td>
+            <td>把 2.5 MB 历史大账浓缩成 16.6 KB 实时热索引，解决 <code>CURRENT_STATUS.md</code> 单写者滞后 4 天的问题。</td>
+          </tr>
+          <tr>
+            <td><strong>3. 任务台账与 Owner 批注</strong></td>
+            <td>AI 会话 ↔ Owner 手机/飞书</td>
+            <td><strong>飞书多维表三值对账闸</strong>：<code>AI_MEMORY/ledger.jsonl</code> ↔ <code>scripts/sync-task-ledger.sh</code>（<code>L/F/P</code> 比对 + <code>feishu-readback.mjs</code>）</td>
+            <td>飞书天生支持人手随时批注「Owner 批注」列，而三值对账闸保证机器永不覆盖人手改。</td>
+          </tr>
+          <tr>
+            <td><strong>4. 业务代码与站点版本</strong></td>
+            <td>本机开发树 ↔ 测试站 ↔ 生产站</td>
+            <td><strong>GitHub 三段轨</strong>：<code>newye123/tygf.git</code>（<code>origin/develop</code> / <code>origin/main</code>）+ <code>release-preflight.cjs</code></td>
+            <td>这一层正是 GitHub 最擅长的领域，已有硬门禁守护。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03">
+    <h2><span class="sn">03</span>今日已为您实装落地的 4 个内部优化工具</h2>
+    <div class="stats">
+      <div class="stat ok">
+        <span class="n">51 / 51</span>
+        <span class="k">4 套 <code>yt-*</code> Skill 三端文件哈希 100% 对齐</span>
+      </div>
+      <div class="stat bad">
+        <span class="n">141 次</span>
+        <span class="k">新诊断器 1 秒抓出助手日志里的 <code>VERIFY_TIMEOUT</code></span>
+      </div>
+      <div class="stat ok">
+        <span class="n">16.6 KB</span>
+        <span class="k"><code>HOT_INDEX.md</code> 体积（较 2.5MB 原账降幅 99%）</span>
+      </div>
+      <div class="stat ok">
+        <span class="n">4 / 4</span>
+        <span class="k"><code>tasklog-prepend</code> 自检（1 正控 + 3 负控全过）</span>
+      </div>
+    </div>
+
+    <div class="gates">
+      <div class="gate">
+        <div class="num">PASS</div>
+        <div class="body">
+          <h3>工具 1 · <code>scripts/sync-yt-skills.mjs</code>（四套自研 Skill 单一真源与跨工具同步器）</h3>
+          <p><strong>落点</strong>：建立 <code>F:\工具开发\图译工坊内测版\skills\</code>，收拢 <code>yt-adversarial-review</code>、<code>yt-uiux</code>、<code>yt-zongkong-round</code>、<code>yt-sansheng-liubu</code>，一键同步至 <code>.agents/skills</code>、<code>.qoder/skills</code>、<code>.qoder-cn/skills</code>。<br>
+          <strong>命令</strong>：<code>node scripts/sync-yt-skills.mjs</code>（同步）｜<code>node scripts/sync-yt-skills.mjs --check</code>（只读哈希对账）。</p>
+        </div>
+      </div>
+
+      <div class="gate">
+        <div class="num">PASS</div>
+        <div class="body">
+          <h3>工具 2 · <code>scripts/doctor-testsite-assistant.mjs</code>（测试站与本地助手 10 秒联调诊断器）</h3>
+          <p><strong>落点</strong>：一键只读检查本地助手 <code>49152/ping</code>、测试站 <code>runtime-provenance</code>、以及助手日志尾部 250 行。<br>
+          <strong>实测战果</strong>：运行 1 秒即输出 <code>[BLOCK] 验票超时/慢跳: VERIFY_TIMEOUT=141 次, slow_hop=76 次 (最大耗时=9481ms)</code> 及 <code>[WARN] 设备绑定漂移: 18 次 ASSISTANT_INSTALL_BINDING_MISMATCH</code>，以后再也不用靠猜 UI 排障。</p>
+        </div>
+      </div>
+
+      <div class="gate">
+        <div class="num">PASS</div>
+        <div class="body">
+          <h3>工具 3 · <code>scripts/build-hot-index.mjs</code> + <code>AGENTS.md</code> 指针纠偏</h3>
+          <p><strong>落点</strong>：修正 <code>AGENTS.md:71-73</code> 指向 44 天前 <code>v1.5-trust-chain</code> 的死指针；只读抽取最近 15 条任务日志、12 条活跃在办、15 条等您定项与 18 份最新交付档案，生成 <code>AI_MEMORY/HOT_INDEX.md</code>（16,633 B）。</p>
+        </div>
+      </div>
+
+      <div class="gate">
+        <div class="num">PASS</div>
+        <div class="body">
+          <h3>工具 4 · <code>scripts/tasklog-prepend.mjs</code>（<code>TASK_LOG.md</code> 防吞标题唯一写入口）</h3>
+          <p><strong>落点</strong>：强制校验新条目必须以 <code>## 202...</code> 开头、只含 1 个二级标题，且拼接后全文 <code>^## </code> 计数精确等于 <code>原计数 + 1</code>，彻底终结手工 <code>edit</code> 吞标题事故。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s04">
+    <h2><span class="sn">04</span>负控与实测证据账（遵循 <code>yt-adversarial-review</code> 铁律）</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr>
+            <th>被测工具</th>
+            <th>基线正控输出与退出码</th>
+            <th>负控注入方式</th>
+            <th>负控输出与退出码（必红）</th>
+            <th>还原核验</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono"><code>sync-yt-skills.mjs</code></td>
+            <td><code>PASS skills=4 targets=3 checked=51 mismatches=0</code> (<code>rc=0</code>)</td>
+            <td>向 <code>.qoder/skills/yt-uiux/SKILL.md</code> 追加一行漂移注释后跑 <code>--check</code></td>
+            <td><code>[FAIL] drift qoder-repo:yt-uiux/SKILL.md (ssot=1faf0d81 != dst=732b545d)</code> (<code>rc=1</code>)</td>
+            <td>重跑同步后 <code>--check</code> 回到 <code>mismatches=0, rc=0</code></td>
+          </tr>
+          <tr>
+            <td class="mono"><code>tasklog-prepend.mjs</code></td>
+            <td>合法单节置顶 <code>beforeCount=2 -&gt; afterCount=3</code> (<code>rc=0</code>)</td>
+            <td>① 非 <code>## 202</code> 开头；② 单次塞 2 个二级标题；③ 替换吞掉原首行标题</td>
+            <td>3 发负控全部精准抛错拦截（<code>INVALID_HEADING</code> / <code>INVALID_SECTION_H2_COUNT</code> / 计数未 +1）</td>
+            <td>内存自检 <code>SELF-TEST PASS (1/1 + 3/3)</code></td>
+          </tr>
+          <tr>
+            <td class="mono"><code>doctor-testsite-assistant.mjs</code></td>
+            <td>探测在线助手 3.7.24 + 测试站 <code>ffab3b2e</code></td>
+            <td>读取含真实故障的本机助手日志尾部 250 行</td>
+            <td>准确标红 <code>VERIFY_TIMEOUT=141</code> 与 <code>BINDING_MISMATCH=18</code> 并返回 <code>rc=1</code></td>
+            <td>纯只读探针，零文件写入</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>本文件由 <code>yt-adversarial-review</code> 生成 · 4 个内部优化工具均已落盘于容器根 <code>scripts/</code> 并登记进 <code>AGENTS.md</code>。</p>
+    <p>同名 Markdown：<code>交付档案/审查报告/审查报告_20261024_GitHub打通数据不互通对抗式审查与内部四项优化落地.md</code>（已发送飞书）。</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

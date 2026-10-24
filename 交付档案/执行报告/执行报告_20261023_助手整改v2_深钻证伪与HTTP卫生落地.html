@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行报告｜助手整改 v2：深钻证伪干净 ＋ HTTP 卫生三件实测落地</title>
+<style>
+:root{--bg:#f7f7f5;--card:#ffffff;--ink:#1c1c1e;--muted:#6e6e73;--line:#e5e5e0;--ok:#1a7f4b;--okbg:#e8f5ee;--warn:#8a6d1a;--warnbg:#faf3df;--bad:#b3261e;--badbg:#fbeae8;--accent:#2f5fe0;--mono:'IBM Plex Mono',ui-monospace,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#141416;--card:#1e1e20;--ink:#ececec;--muted:#9a9aa0;--line:#333;--ok:#5cc48f;--okbg:#17301f;--warn:#d8b45a;--warnbg:#332b12;--bad:#e5726a;--badbg:#3a1d1a;--accent:#7ba0f0}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans','Noto Sans SC',-apple-system,'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;padding:32px 16px}
+main{max-width:960px;margin:0 auto}
+.masthead{border-bottom:3px solid var(--ink);padding-bottom:18px;margin-bottom:24px}
+.masthead .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.masthead h1{font-size:26px;margin-top:8px;font-weight:700}
+.masthead .meta{margin-top:10px;font-size:13px;color:var(--muted)}
+.masthead .meta code{font-family:var(--mono);font-size:12px}
+.verdict{border:2px solid var(--ok);background:var(--okbg);border-radius:10px;padding:16px 20px;margin-bottom:24px}
+.verdict .lb{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ok);display:block;margin-bottom:6px}
+.verdict p{font-size:15px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat .n{font-size:26px;font-weight:700;font-family:var(--mono)}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}.stat.bad .n{color:var(--bad)}
+.stat .k{font-size:12px;color:var(--muted);margin-top:4px}
+h2{font-size:19px;margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+h2 .sn{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 7px}
+p.lede{color:var(--muted);font-size:14px;margin-bottom:12px}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-bottom:16px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+code,.mono{font-family:var(--mono);font-size:12.5px;background:var(--okbg);border-radius:4px;padding:1px 5px}
+.tag{display:inline-block;font-size:11px;font-family:var(--mono);border-radius:5px;padding:1px 8px}
+.tag.ok{background:var(--okbg);color:var(--ok)}
+.tag.warn{background:var(--warnbg);color:var(--warn)}
+.tag.bad{background:var(--badbg);color:var(--bad)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card .top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.card h3{font-size:15px}
+.card p{font-size:13.5px;color:var(--ink)}
+.card p.was{color:var(--muted);font-size:12.5px;margin-top:6px}
+.callout{border-left:4px solid var(--warn);background:var(--warnbg);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:14px}
+.callout .lb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--warn);display:block;margin-bottom:4px}
+.gates{display:grid;gap:10px;margin-bottom:16px}
+.gate{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;align-items:flex-start}
+.gate .num{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);min-width:28px}
+.gate h3{font-size:14.5px;margin-bottom:4px}
+.gate p{font-size:13px;color:var(--muted)}
+footer{margin-top:36px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<main>
+<div class="masthead">
+  <div class="kicker">执行报告 · 对抗式审查驱动 · 2026-10-23</div>
+  <h1>助手整改 v2：深钻证伪干净 ＋ HTTP 卫生三件实测落地</h1>
+  <div class="meta">分支 <code>codex/assistant-state-guard-20261023</code> @ <code>66cbb30e</code>（隔离工作树，develop 未动）｜审查对象＝自己上一轮的 <code>01ee489e</code>｜Owner 令「继续钻到最深处，然后按方案执行」</div>
+</div>
+
+<div class="verdict">
+  <span class="lb">本轮结论</span>
+  <p>四路独立证伪：自己上一轮的配置写盘闸代码<b>没有新增缺陷</b>；v2 第 6 步（本机 HTTP 卫生三件）已落地并<b>真实起服务逐条实测</b>，六条断言全绿。分支现有 3 笔提交，等 Owner 拍是否推 GitHub 合 develop。</p>
+</div>
+
+<div class="stats">
+  <div class="stat ok"><span class="n">4/4</span><span class="k">深钻探针 全部证伪/存量</span></div>
+  <div class="stat ok"><span class="n">6/6</span><span class="k">HTTP 实测断言 全绿</span></div>
+  <div class="stat ok"><span class="n">+25/−1</span><span class="k">66cbb30e 改动量（server.js）</span></div>
+  <div class="stat warn"><span class="n">3</span><span class="k">分支提交 待 Owner 拍合流</span></div>
+</div>
+
+<section>
+  <h2><span class="sn">01</span>深钻证伪：审自己刚写的代码</h2>
+  <p class="lede">审查立场＝找"会出错的地方"。四路探针全部有命令证据，无一凭推理定罪。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>怀疑点</th><th>判定</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td>旧版明文配置迁移会不会在读失败期把默认配置写进去</td><td><span class="tag ok">证伪</span></td><td>migrateOldConfig 第一行"新格式文件存在即 return"（server.js:828）——文件读不出来≠不存在，走不到迁移</td></tr>
+        <tr><td class="mono">2</td><td>会话文件被权限锁死时，journal 写盘的归档分支会不会抛异常逃逸</td><td><span class="tag warn">存量</span></td><td>旧实现同样抛 EPERM；新实现把"顶掉好备份"改成"整份挪走留证"，反而更好。记 Pre-existing</td></tr>
+        <tr><td class="mono">3</td><td>旧 ACL 代码删掉后有没有残留引用（有＝运行时 ReferenceError）</td><td><span class="tag ok">证伪</span></td><td>全目录 grep rc=1＝0 命中</td></tr>
+        <tr><td class="mono">4</td><td>状态持久化 smoke 会不会被破坏</td><td><span class="tag ok">证伪</span></td><td>复跑 rc=0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">补充证伪（设计层）</span>
+    v2 原案的"首跑分级"（未配对机器读不到就按首次启动走）被判不可实现——文件读不出来时无法知道里面原来有没有 token。执行版用"只读降级＋一律拒写"替代；未配对机器的常见形态是文件根本不存在（MISSING），照常首次启动，不受影响。
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>v2 第 6 步：本机 HTTP 卫生三件（66cbb30e）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">已落地</span><h3>Vary: Origin</h3></div>
+      <p>跨域许可随请求来源变化，但之前没告诉中间缓存"按来源分开存"。补上这一行头，防代理串缓存。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">已落地</span><h3>私有网络预检应答</h3></div>
+      <p>Chrome 新策略下，公网页面调 127.0.0.1 前会先问"允不允许"。现在只在对方明确问时应答——不答会被拦掉云工作台的本地调用。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">已落地</span><h3>Host 回环白名单</h3></div>
+      <p>防 DNS 重绑定（恶意网页把域名解析到 127.0.0.1 打本机端口）。只接受 127.0.0.1 / localhost，违规 421；端口取实际配置不写死 49152。</p>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">诚实边界</span>
+    本机其他进程仍可伪造任意请求头直连本机端口（MAJ-1，记接受风险）。这道闸只挡浏览器侧域名重绑定，不对外称"安全修复"。
+  </div>
+  <p class="lede">实测方式：隔离工作树＋测试端口 49999 真实启动（已确认零外呼、不触真实安装目录），curl 六条：</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>断言</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>/ping 响应带 <code>Vary: Origin</code></td><td><span class="tag ok">✅</span></td></tr>
+        <tr><td>预检带私有网络询问 → 应答头在</td><td><span class="tag ok">✅</span></td></tr>
+        <tr><td>预检不带询问 → 应答头 0 命中</td><td><span class="tag ok">✅</span></td></tr>
+        <tr><td>Host 伪装 evil.com → 421 ＋ 日志现 <code>[security] 拒绝非回环 Host：evil.com</code></td><td><span class="tag ok">✅</span></td></tr>
+        <tr><td>Host localhost:49999 → 200</td><td><span class="tag ok">✅</span></td></tr>
+        <tr><td>常规请求 → 200</td><td><span class="tag ok">✅</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">误伤排查：托盘健康检查（TrayHost.cs:174，127.0.0.1:49152）与白名单兼容；7 个打包脚本 HTTP 直调 0 处。语法门通过；smoke 复跑 rc=0；实测后按 PID 结束进程、清理临时文件，工作树恢复干净。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>还剩什么、什么卡着</h2>
+  <div class="gates">
+    <div class="gate"><div class="num">1</div><div><h3>TrayHost 致命闭锁 → 随 3.7.25 bump 包</h3><p>需真建 exe 才能验收，不单独做半成品。</p></div></div>
+    <div class="gate"><div class="num">2</div><div><h3>回执最小证据闸（第 4①）→ 暂不动</h3><p>两道合同守卫测试在本树跑不了＋"行排除"同族改动在飞。纪律：门跑不了就不动回执语义。</p></div></div>
+    <div class="gate"><div class="num">3</div><div><h3>第一指标读数恢复（第 0 步）→ 等 Owner</h3><p>等你定在哪台宿主挂定时任务。</p></div></div>
+    <div class="gate"><div class="num">4</div><div><h3>等你一句：3 笔推 GitHub 合 develop 吗</h3><p>3a220b9c 配置写盘闸 / 01ee489e 恢复提示一次成文 / 66cbb30e HTTP 卫生。合流要走预演（行排除在别的会话手里）。</p></div></div>
+  </div>
+</section>
+
+<footer>图译工坊 · 执行报告 2026-10-23 22:1x · 分支 codex/assistant-state-guard-20261023 @ 66cbb30e · 台账 ASSISTANT-STATE-GUARD（待复验，到期 2026-10-27）</footer>
+</main>
+</body>
+</html>

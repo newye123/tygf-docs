@@ -1,0 +1,222 @@
+<!doctype html>
+<title>执行方案 · 文件夹导入：子文件夹单元与审查层</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:62ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:70ch}
+table.rule{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.rule th{background:var(--sunk);font-size:.72rem;padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-weight:600}
+table.rule td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);line-height:1.7}
+table.rule tr:last-child td{border-bottom:none}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);background:var(--surface);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.gate b{color:var(--ink)}
+.notes{display:flex;flex-direction:column;gap:9px}
+.note{font-size:.86rem;color:var(--ink-2);line-height:1.75;padding-left:14px;position:relative}
+.note::before{content:"—";position:absolute;left:0;color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>文件夹导入 · 子文件夹单元与审查层</span><span class="sep">/</span><span>2026-10-17</span></div>
+    <h1>一个子文件夹 = 一个任务单元：PSD 配自己的表格，放错在替换前被接住</h1>
+    <p class="standfirst">按 Owner 拍板与建议：递归读取默认含子文件夹（不设勾选）；每个直接含 PSD 的文件夹成为一个「任务单元」，表格与它服务的 PSD 同级；导入做结构审＋表格体检（秒级、不开 PSD），扫描后做近似点名＋覆盖率闸（扫描只读）。三道审查全部在「替换」之前。</p>
+    <div class="meta">
+      <span>状态：待 Owner 批（3 条待拍板）</span>
+      <span>基线：develop <code>2a44d55</code></span>
+      <span>性质：方案与模拟件（未动业务代码、未动两站）</span>
+      <span>配套模拟：单元配对与审查层 v2（已真机实测全绿）</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>先回答三个问题</h2>
+    <div class="cards">
+      <div class="card hot"><div class="top"><h3>Q1 · 表格是怎么"上传"的？</h3></div>
+        <p><b>现在</b>：第 2 步选择/拖入 .xlsx/.csv/.tsv/.txt → <b>浏览器纯前端解析</b>（<code>csv.ts:1-2</code> 红线：不上传表格内容到任何 API）→ 原文列＋每语言一列；按语言分件的多个文件按归一化原文合并（<code>merge-tables.ts:103</code>），对不上的行点名、绝不硬拼。<br>
+        <b>以后（文件夹导入）</b>：字节由<b>本机助手</b>从文件夹读出 → 经 localhost 本机桥 → 交给<b>同一条纯前端解析管线</b>。表格不出您的电脑、不上云、不进我们的服务器。模拟件里有"表格是这样进来的"四格数据流图。</p>
+      </div>
+      <div class="card"><div class="top"><h3>Q2 · PSD 跟表格怎么对齐？</h3></div>
+        <p>不靠文件名、不靠行号：执行时按<b>内容配对</b>——图层文字与表格「原文列」<b>规范化后完全相等</b>才算命中（<code>match.ts:41</code>；服务端权威绑定核心 <code>binding-core.ts:132</code> 同口径），命中图层替换为对应语言译文；同句多图层→全替换并警告；表格有、PSD 无→未命中清单如实报告。<br>
+        <b>最危险的放错</b>：给错表格时多数句子对不上（覆盖率低会被闸拦），但通用短句（如"了解更多"）碰巧合上会被替换成错译文——所以必须从"放文件的姿势"上防，这就是单元模型的价值。</p>
+      </div>
+      <div class="card"><div class="top"><h3>Q3 · 您的建议怎么落地？</h3></div>
+        <p><b>采纳为导入骨架规则</b>：一个子文件夹 = 一个任务单元 = 该单元的 PSD ＋ 它要用的表格（同级）。导入时按单元逐个清点，哪个单元缺表格、哪个表格没配稿、哪个单元混进别的项目的稿，在扫描与替换发生前就被点名拦下或警告。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>调研：GitHub 与网上别人怎么做（实测摘录）</h2>
+    <div class="cards">
+      <div class="card"><div class="top"><h3>配对必须先声明，对不上就报错</h3></div>
+        <p><b>Adobe 官方「数据驱动图形」</b>：CSV 列名＝变量名＝绑定到具体图层，"变量数必须与 PSD 一致"，对不上直接报错拒绝——配对不明确就报错是行业常规。<br>
+        <b>Mars Premedia「Variable Images Advanced」</b>（2024 仍在更新的商业脚本）：多模板用「模板＋数据文件」配对清单驱动，结果按模板分子文件夹——"一单元一表、按单元产出"的先例。<br>
+        <b>plantprojects/batch-image-generator</b>：约定"图层名＝CSV 列名"，隐藏 id 图层负责输出命名——约定命名＋会说话的报错是这个领域的通用套路。</p>
+      </div>
+      <div class="card"><div class="top"><h3>表格自身要体检：本地化 QA 谱系</h3></div>
+        <p><b>Crowdin QA Checks</b>：重复译文（恒开为错误）、空译文、数字不一致、标签不一致……<br>
+        <b>i18nlint</b>：主打"同一句原文译成两种样子"或"同一译文复用到不同原文"的重复检测。<br>
+        <b>translate-toolkit pofilter</b>：40+ 项检查。<br>
+        → 抄最适合 PSD 场景的几条构成 R2 体检（重复原文冲突、空译文、非语言列说明）。</p>
+      </div>
+      <div class="card"><div class="top"><h3>孤儿检测模式与本地解析器物</h3></div>
+        <p>业界脚本普遍对"图片没有配对标注 / 标注没有配对图片"做 orphan（孤儿）检测并分级报告（警告 vs 错误）——R1 的形态来源（缺表拦下、多余表提示、按严重度分级）。<br>
+        <b>psd-tools ★1480 / webtoon/psd ★1352 / ag-psd ★730</b>：PSD 读字都是本地器物的活——印证"扫描在本机助手、审查内容不上云"。<br>
+        <b>预检/干跑传统</b>（rsync --dry-run、terraform plan、dbt test）：先算"将要发生什么"再放行——覆盖率矩阵＋D5 闸就是这个思想，本方案把它前移到导入那一刻。</p>
+      </div>
+    </div>
+    <div class="callout"><span class="lb">三句话结论</span>
+      <p>① 配对不同就点名，绝不含糊照做；② 能自动解决的（多语言文件合并）先自动解决、只在有疑点时打扰；③ 分两段审——不打开 PSD 就能审的先审（秒级），必须打开 PSD 的放在扫描后、替换前审。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>方案：单元模型 ＋ 三段式审查层</h2>
+    <div class="notes">
+      <div class="note"><b>单元规则</b>：递归扫整个文件夹（默认含子文件夹）；<b>单元＝任何"直接含有 PSD/PSB 的文件夹"</b>，其表格＝同级表格文件；根目录散稿自成"根单元"，同样需同级表格。单元内多个表格先走现有合并管线（多语言分件、多数结构合同 <code>merge-tables.ts:65-94</code>）：成功＝一张表放行（附诚实说明），失败＝拦下点名。</div>
+      <div class="note"><b>载入姿势</b>：一次载入一个单元进工作台（PSD ≤12、表格＝该单元合并后的那张）——"一个工作台一张表"的执行与计费模型<b>零改动</b>；跑完一个点下一个。多单元一次全进＝改执行合同（L2），列 OUT OF SCOPE。</div>
+      <div class="note"><b>表格同级</b>：放上一层/下一层都算"没找到"并明确提示（备选：允许向上就近找表，见待拍板①）。</div>
+    </div>
+    <div class="gates">
+      <div class="gate"><b>R1 结构审（导入时 · 秒级 · 不开 PSD）</b>有稿没表 → 拦下点名；有表没稿 → 提示；一单元多表 → 先 dry-run 合并，成则放行、败则拦（<code>CSV_MERGE_STRUCTURE_MISMATCH</code> 原样呈上）；同名稿跨单元 → 警告（内容不同才提醒）；跳过点开头目录 / $RECYCLE.BIN / System Volume Information。</div>
+      <div class="gate"><b>R2 表格体检（导入时 · 浏览器本机）</b>解析硬错（编码/行数/记录编号重复/超 12 语言列）→ 拦；<b>同一句原文两种译文 → 警告点名</b>（执行时命中不确定；只警告不拦，待拍板③）；空译文分语言统计 → 提示（沿用 <code>merge-tables.ts:217-221</code> 口径）；合并缺行、重复语言、非语言列等说明原样呈现。</div>
+      <div class="gate"><b>R3 执行风险点名（扫描后 · 替换前）</b>覆盖率矩阵＋D5 闸照旧（低于 95% 必须显式勾选放行）；新增「近似点名」——矩阵"空白等价/部分包含"档的行执行引擎<b>不会替换</b>（<code>coverage.ts:3-7</code> 已写明这道差异），逐条点名（换行位置、全角空格等）；任何一稿覆盖率骤低（如 &lt;50%）红标"疑似不属于本单元"，接住"张冠李戴"。</div>
+    </div>
+    <h3 style="margin-top:6px">六种"放错"分别被谁接住</h3>
+    <table class="rule">
+      <thead><tr><th style="width:42%">放错场景</th><th>接住它的闸</th></tr></thead>
+      <tbody>
+        <tr><td>表格没放进来</td><td>R1 拦下点名</td></tr>
+        <tr><td>表格放进隔壁单元（张冠李戴）</td><td>R3 覆盖率骤低红标 + D5 闸 + 近似点名三连</td></tr>
+        <tr><td>一张表里同一句原文两种译文</td><td>R2 警告点名</td></tr>
+        <tr><td>表格混进别的项目的行</td><td>扫描后"未命中"清单 + 覆盖率如实报告</td></tr>
+        <tr><td>PSD 放错单元</td><td>R3 红标 + 覆盖率骤低</td></tr>
+        <tr><td>表格漏了某些句子的译文（空译文）</td><td>R2 空译文统计提示</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>对抗式审查（自己先骂一遍 · 摘要）</h2>
+    <div class="notes">
+      <div class="note"><b>F-1</b> 不打开 PSD 不可能知道里面有什么字——"张冠李戴"扫描前无法 100% 拦截；R1/R2 秒级结构审、R3 扫描后兜底审，三道闸都在替换前，但没有一闸敢称零漏网；最可靠的第一道防线仍是"放对文件夹"本身——如实写进方案。</div>
+      <div class="note"><b>F-2</b> 一次一单元＝操作次数变多；换来执行合同零改动＋错配隔离。自动串联（跑完自动载入下一个）可后加。</div>
+      <div class="note"><b>F-3</b> 同名稿跨单元警告防烦扰：只在"同名且内容不同"（大小/修改时间）时提醒。</div>
+      <div class="note"><b>F-4</b> R2"重复原文冲突"只警告不拦——执行语义当前无法按场景区分，拦下会堵正常用法（即待拍板③）。</div>
+      <div class="note"><b>F-5</b> 近似点名只点名不拦，且分级（"部分包含"很常见，仅提示）。</div>
+      <div class="note"><b>F-6</b> 表格层级死板风险 → 待拍板①给了备选（向上就近＋标注来源）。</div>
+      <div class="note"><b>F-7</b> 素材子文件夹里的 PSD 也会成为单元——应拦下点名（不静默略过），文案说清。</div>
+      <div class="note"><b>F-8</b> 二进制表格体积：单文件 ≤5MB＋只读选中单元的表格，不预读全目录。</div>
+      <div class="note"><b>F-9</b> 手动拖入逃生门保留，审查层只对"文件夹导入"的单元负责，文案说清。</div>
+      <div class="note"><b>F-10</b> 助手须动版 3.7.16＋装机包；验收必须含助手端证据（read-table-file 实读样本、表格不出本机的网络核验）。</div>
+      <div class="note"><b>F-11</b> 单元多时列表折叠：有问题的展开、正常的折叠计数（实现细节）。</div>
+      <div class="note"><b>F-12</b> 根散稿＋子单元并存：根散稿成"根单元"需同级表，否则拦下提示（模拟件已演示）。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>实现层面与验收（概览）</h2>
+    <div class="notes">
+      <div class="note">助手端：<code>/v1.5/select-folder</code> 扩 <code>purpose=import_units</code>（返回文件清单含相对路径与元数据）；新增 <code>/v1.5/read-table-file</code>（白名单、单文件 ≤5MB、登记到既有票据 operation=select_file，服务端票务零改动）。助手版本 3.7.16。</div>
+      <div class="note">浏览器端：新增纯函数 <code>planFolderImport(rootListing)</code>（单元划分＋R1＋R2 结论，可 smoke）；<code>design-file-card.tsx</code> 增加"从文件夹导入"入口；<code>csv-step.tsx</code> 接受导入的表格字节（走既有 parseCsv / mergeParsedTables）；审查卡 UI。</div>
+      <div class="note">运行时不动的：解析器、合并器、覆盖率三档、D5 闸、信任链、计费模型。</div>
+      <div class="note"><b>验收</b>：纯函数 smoke（单元划分、R1/R2 分支、同名跨单元、根单元、跳过目录、上限）；真机走完"导入→单元卡→载入 01→扫描→替换→载入 02→红标→拦"全流程，抽查错放稿没有被替换成错误译文；助手端证据；D5 闸与两个合同 smoke 回归全绿。</div>
+    </div>
+    <div class="panel no" style="margin-top:4px">
+      <h3>OUT OF SCOPE（本轮不做）</h3>
+      <ul>
+        <li>多单元一次全进工作台、自动串联跑完所有单元（改执行合同，L2）</li>
+        <li>自动猜"这表属于哪个单元"（不可靠，坚决不做）</li>
+        <li>监视文件夹自动重导入（watch 模式）</li>
+        <li>表格格式体检的完整 QA 清单（先上 R2 四类，其余按需再加）</li>
+        <li>审查层扩展到手动拖入的散件（保留逃生门，只加"未成套"提示，不拦）</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">06</span>待您拍板（三条）</h2>
+    <div class="gates">
+      <div class="gate"><b>① 表格只认"同级"</b>：表格必须和它服务的 PSD 放同一个文件夹；放上一层/下一层都算"没找到"并明确提示。备选：允许向上就近找表＋标"表格来自上一层"。默认取"同级"——最直观、最防错。</div>
+      <div class="gate"><b>② 一次载入一个单元</b>：导入后列出所有单元及审查结论，用户逐个"载入"进工作台（现有单表模型零改动）；跑多个单元手动点下一步。备选：多单元一次全进——属于大改，默认不做。</div>
+      <div class="gate"><b>③ R2"重复原文冲突"只警告不拦</b>：执行语义当前无法按场景区分；拦下来会堵住正常用法。默认：警告点名，决定权留给用户。</div>
+    </div>
+    <div class="callout"><span class="lb">拍板后</span><p>按"助手 3.7.16 → 浏览器纯函数＋入口 → 审查卡 UI → 测试站验收"一趟执行。</p></div>
+  </section>
+
+  <footer>
+    <p>本件与同名 md《执行方案_20261017_文件夹导入_子文件夹单元与审查层.md》同源；配套可点模拟《模拟方案_20261017_文件夹导入_单元配对与审查层_v2.html》已通过真实浏览器全流程实测（25s、控制台零错误）。</p>
+    <p>图译工坊 · 执行方案 · 文件夹导入（子文件夹单元与审查层）· 2026-10-17 · 基线 develop 2a44d55</p>
+  </footer>
+
+</div>
+</body>
+</html>

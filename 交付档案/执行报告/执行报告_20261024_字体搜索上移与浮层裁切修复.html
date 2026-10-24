@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行报告：字体搜索上移与浮层裁切修复（2026-10-24）</title>
+<style>
+  :root{
+    --bg:#f5f6f7; --card:#fff; --border:#e3e6ea; --fg:#161c22; --muted:#5d6874;
+    --teal:#0d7d6c; --teal-soft:#e6f4f1; --amber-bg:#fff7e6; --amber-bd:#f0c36d; --amber-fg:#7a5410;
+    --shadow:0 6px 24px rgba(15,30,40,.10); --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f151b; --card:#18212a; --border:#2a3641; --fg:#e9eef3; --muted:#93a1af;
+      --teal:#2fbfa5; --teal-soft:#12332e; --amber-bg:#2a2210; --amber-bd:#8a6b25; --amber-fg:#f0cf8f;
+      --shadow:0 6px 24px rgba(0,0,0,.45); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;line-height:1.75;font-size:15px}
+  main{max-width:940px;margin:0 auto;padding:28px 20px 60px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:25px;margin:6px 0 4px;letter-spacing:-.01em}
+  h2{font-size:18px;margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  p{margin:10px 0}
+  code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;background:var(--teal-soft);color:var(--teal);padding:1px 5px;border-radius:4px}
+  .verdict{margin-top:18px;padding:16px 18px;border:1px solid var(--teal);border-left-width:5px;background:var(--teal-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .verdict b{color:var(--teal)}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin:14px 0}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card p{margin:0;font-size:14px;color:var(--muted)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+  .stat .n{font-size:20px;font-weight:800;font-family:"IBM Plex Mono",monospace}
+  .stat .l{font-size:12.5px;color:var(--muted)}
+  .gates{list-style:none;padding:0;margin:12px 0;display:grid;gap:7px}
+  .gates li{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);font-size:14px}
+  .pass::before{content:"通过 ";font-weight:800;color:#0f7b3f}
+  .note::before{content:"卡点 ";font-weight:800;color:var(--amber-fg)}
+  .callout{margin:14px 0;padding:13px 15px;border:1px solid var(--amber-bd);background:var(--amber-bg);color:var(--amber-fg);border-radius:var(--radius);font-size:14.5px}
+  .footer{margin-top:32px;padding-top:14px;border-top:1px dashed var(--border);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">执行报告 · 2026-10-24 · 图译工坊</div>
+  <h1>字体搜索已经放到上面了</h1>
+  <p style="color:var(--muted);margin-top:0">测试站现在跑这一版（<code>c194853e</code>）</p>
+
+  <div class="verdict">
+    <b>你说得对。</b>搜索口之前一直埋在下面「高级与结算明细」里，要点开折叠才看得见——上一轮"顶部好用化"我只做了撤格子，没做挪搜索。
+    现在它在<b>语言页签正下方</b>，打开面板第一眼就是它，脸名读数跟在下面一行。刷新测试站就能看到。
+  </div>
+
+  <h2>这对你意味着什么</h2>
+  <div class="split">
+    <div class="card"><h3>换字体不用往下翻</h3><p>打开面板 → 选语言 → 直接点「搜索字体（N 款）」。当前用的是哪张脸就在下面一行；没定到唯一脸时直说「还没定到唯一脸 ⇒ 不发字体」。</p></div>
+    <div class="card"><h3>不摆两个搜索口</h3><p>折叠里那份撤掉了——同一面板两个入口会让人搞不清改的是哪个。手输脸名、未匹配警告、预览示意、逐项结算仍在折叠里，一条没删。</p></div>
+  </div>
+
+  <h2>顺手抓到一个老毛病</h2>
+  <p>搜索挪上来后在真浏览器里量了浮层：它写死 320 像素宽，而新面板只有 300 像素、内容区 275 像素——<b>浮层右半边被面板裁掉</b>。这毛病在搜索埋在折叠里时就存在，只是不容易看到。改法是让浮层跟着所在行收宽。</p>
+  <div class="stats">
+    <div class="stat"><div class="n">275 px</div><div class="l">修复后浮层实测宽度</div></div>
+    <div class="stat"><div class="n">13 px</div><div class="l">浮层右缘距容器内壁（不再被裁）</div></div>
+    <div class="stat"><div class="n">1 份</div><div class="l">全面板搜索口数量（不重复摆）</div></div>
+    <div class="stat"><div class="n">17</div><div class="l">出包预检门全过</div></div>
+  </div>
+
+  <h2>实测证据</h2>
+  <ul class="gates">
+    <li class="pass">真浏览器（本地挂真实组件量，临时验证件验毕已删）：搜索口不在折叠体内、紧跟语言页签之后；浮层不裁、点选项能落脸名并自动收起</li>
+    <li class="pass">类型检查 0 错；lint 0 error；单元测试 16 项全过（含新增「搜索不藏在高级折叠里」）；冒烟门 235 / 109 / 49 条断言全绿</li>
+    <li class="pass">包 54,083,297 字节，6 块上传后服务器拼接 SHA-256 与本地逐位一致；部署退出码 0</li>
+    <li class="pass">线上绑定 <code>c194853e5988</code>，助手版本仍 3.7.24（没动助手）；首页／英文站／英文工作台／下载页全 200；三条进程 online、重启计数 0</li>
+    <li class="pass">回滚备份 <code>deploy-20261024_075647-c194853e5988</code>；数据库未触碰；部署前核过线上是上一笔 <code>19bfd8dc</code>（本包祖先）＝往前推不覆盖别人上线</li>
+    <li class="note">飞书<b>台账</b>那行的状态更新没推上去：投影脚本有个已立案的老问题（新建行不回写比对快照 ⇒ 第二次改起被自家对账闸以"没有快照"拦下）。我没用强推口子——同批被拦的行里有一条是你手改过的，强推会盖掉它；改脚本属中台写面且另有会话待批方案。<b>这条报告为准。</b></li>
+  </ul>
+
+  <div class="callout">
+    守卫这次是<b>改口径带理由</b>，不是放宽：原先那条「浮层按视口兜底（不随按钮宽度收缩）」的前提是包裹层会缩到按钮宽，现在由 <code>relative w-full</code> 挡掉，视口兜底在 300px 面板里反而等于不封顶——换成「行宽兜底＋视口兜底不得回潮＋浮层自带滚动」三条。
+  </div>
+
+  <h2>还没做的</h2>
+  <ul>
+    <li>手机端拖动手感要你真机试一次才算数。</li>
+    <li>刀二（逐层配脸＋撤掉会违约的"体"下拉）还在等你一句话。</li>
+    <li>生产站没动：按三段轨，测试站先跑，你点头后才随整条线进生产。</li>
+  </ul>
+
+  <div class="footer">
+    代码 <code>c194853e</code>（已在 <code>origin/develop</code>）；面板 <code>worktrees/develop/src/components/workbench/typography-panel.tsx:1001</code>、浮层 <code>.../font-picker.tsx:172</code>。
+    记账 <code>AI_MEMORY/TASK_LOG.md</code> 置顶一条（提交 <code>18e0846d</code>）；台账行 <code>TYPO-PANEL-FLOAT-BD</code> 本机已更新、飞书端被上述卡点拦住。
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>多稿工作台 · 第 1 步 文案减负与引导（模拟 2026-10-23）</title>
+<style>
+  :root{
+    --bg:#f6f7f4; --card:#ffffff; --ink:#161a16; --muted:#62685f; --line:#e1e4dc;
+    --line2:#eef0e9; --teal:#12694f; --teal-soft:rgba(18,105,79,.12);
+    --amber:#a8641a; --amber-soft:rgba(168,100,26,.10);
+    --rose:#a63333; --rose-soft:rgba(166,51,51,.09);
+    --vio:#6b4ea8;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12140f; --card:#1a1d17; --ink:#eceee7; --muted:#a3a99d; --line:#2c302a;
+      --line2:#22261f; --teal:#8fc9ac; --teal-soft:rgba(143,201,172,.14);
+      --amber:#e2b07a; --amber-soft:rgba(226,176,122,.12);
+      --rose:#e79b96; --rose-soft:rgba(231,155,150,.10); --vio:#b8a3e8;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .shell{max-width:1180px;margin:0 auto;padding:0 18px 70px}
+  /* ── 模拟工具条（只在模拟里出现，不属产品界面） ── */
+  .mockbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px dashed var(--line);border-radius:8px;
+    padding:6px 9px;margin:10px 0 0;font-size:11.5px;color:var(--muted);background:transparent}
+  .mockbar b{color:var(--ink);font-weight:700}
+  .mockbar .sp{flex:1}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{border:0;background:var(--card);padding:3px 9px;font-size:11.5px}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+  /* ── 产品界面 ── */
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{font-weight:800;letter-spacing:-.01em}
+  .pill{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted)}
+  .rail{display:flex;gap:6px;margin:12px 0 14px;flex-wrap:wrap}
+  .rail span{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--card)}
+  .rail span.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:7px;padding:6px 11px;font-size:12px}
+  .btn:hover{background:var(--line2)}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+  .btn.sm{padding:4px 9px;font-size:11.5px}
+  .btn.ghost{color:var(--muted)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .iconbtn{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:12px;
+    font-weight:800;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;line-height:1}
+  .iconbtn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;border:1px solid var(--line);padding:1px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;color:var(--muted)}
+  .tag.ok{color:var(--teal);border-color:rgba(18,105,79,.35);background:var(--teal-soft)}
+  .tag.warn{color:var(--amber);border-color:rgba(168,100,26,.35);background:var(--amber-soft)}
+  .tag.bad{color:var(--rose);border-color:rgba(166,51,51,.35);background:var(--rose-soft)}
+  .tag.info{color:var(--vio);border-color:rgba(107,78,168,.3)}
+  .note{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:5px;padding:7px 9px;font-size:12px;background:var(--card)}
+  .note.warn{border-left-color:var(--amber);background:var(--amber-soft)}
+  .note.ok{border-left-color:var(--teal);background:var(--teal-soft)}
+  .note.bad{border-left-color:var(--rose);background:var(--rose-soft)}
+  .mono{font-family:var(--mono);font-size:11.5px}
+  .muted{color:var(--muted)}
+  .pghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:19px;margin:0;display:flex;align-items:center;gap:7px}
+  .tools{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .folderbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 10px}
+  .folderbar .p{font-family:var(--mono);font-size:11.5px;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .folderbar .m{font-size:11px;color:var(--muted);white-space:nowrap}
+  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:9px 0}
+  .stat{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 11px}
+  .stat .v{font-size:23px;font-weight:900;line-height:1;letter-spacing:-.02em}
+  .stat .v.teal{color:var(--teal)} .stat .v.warn{color:var(--amber)} .stat .v.bad{color:var(--rose)}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:5px}
+  .stat .hint{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .two1{display:grid;grid-template-columns:318px minmax(0,1fr);gap:9px;align-items:start;margin-top:9px}
+  .queue{border:1px solid var(--line);background:var(--card);border-radius:9px;overflow:hidden}
+  .qh{display:flex;align-items:center;gap:7px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:800}
+  .qh .r{margin-left:auto;font-size:11px;font-weight:400;color:var(--muted)}
+  .qsec{display:flex;align-items:center;font-size:10.5px;font-weight:800;color:var(--muted);padding:7px 10px 3px}
+  .qsec .r{margin-left:auto;font-weight:400}
+  .qitem{display:flex;align-items:flex-start;gap:7px;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line2);padding:7px 10px}
+  .qitem:hover{background:var(--line2)}
+  .qitem[aria-current="true"]{background:var(--teal-soft);box-shadow:inset 3px 0 0 var(--teal)}
+  .qitem .st{width:15px;height:15px;border-radius:50%;flex:0 0 15px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:900;color:#fff;margin-top:3px}
+  .qitem.att .st{background:var(--amber)} .qitem.done .st{background:var(--teal)}
+  .qitem .bb{min-width:0;flex:1}
+  .qitem .n{display:block;font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qitem .m{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+  .pane{border:1px solid var(--line);background:var(--card);border-radius:9px;min-height:330px;display:flex;flex-direction:column;overflow:hidden}
+  .ehead{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 11px;border-bottom:1px solid var(--line)}
+  .ehead .ttl{font-size:12.5px;font-weight:800}
+  .ehead .r{margin-left:auto;font-size:11px;color:var(--muted)}
+  .bd{padding:10px 11px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .pgfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 11px;border-top:1px solid var(--line)}
+  .pgfoot .hint{font-size:11px;color:var(--muted);flex:1;min-width:120px}
+  .er{display:flex;gap:9px;padding:5px 0;border-bottom:1px solid var(--line2);font-size:12px}
+  .er:last-child{border-bottom:0}
+  .er .k{width:86px;flex:0 0 86px;color:var(--muted)}
+  .er .v{min-width:0;flex:1}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .opt{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:7px;padding:8px 9px}
+  .opt:hover{background:var(--line2)}
+  .opt[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);box-shadow:inset 0 0 0 1px var(--teal)}
+  .opt .ol{display:block;font-size:12px;font-weight:800}
+  .opt .od{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+  .drow{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line2);font-size:12px;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left}
+  .drow:hover{background:var(--line2)}
+  .drow .kind{flex:0 0 auto;border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:10px;color:var(--muted)}
+  .drow .fn{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .drow .w{display:block;font-size:10px;color:var(--muted)}
+  .card{border:1px solid var(--line);background:var(--card);border-radius:9px;overflow:hidden;margin-top:9px}
+  .hd{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 11px;border-bottom:1px solid var(--line)}
+  .hd h2{font-size:12.5px;margin:0}
+  .hd .r{margin-left:auto;display:flex;gap:5px;align-items:center}
+  .mxwrap{overflow-x:auto}
+  table.mx{width:100%;border-collapse:collapse;min-width:700px}
+  table.mx th,table.mx td{padding:0;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2)}
+  table.mx thead th{font-size:10.5px;font-weight:800;color:var(--muted);padding:5px 4px;text-align:center;white-space:nowrap;background:var(--card);min-width:34px}
+  table.mx thead th:first-child{text-align:left;padding-left:9px;min-width:156px}
+  table.mx tbody th{text-align:left;padding:5px 9px;font-weight:700;font-size:11.5px;white-space:nowrap}
+  table.mx tbody th .k{color:var(--muted);font-weight:400;font-size:10px;margin-left:4px}
+  table.mx td.c{padding:3px}
+  .cell{display:block;width:100%;height:20px;border-radius:3px;border:1px solid transparent;background:transparent}
+  .c-full{background:var(--teal);border-color:var(--teal);opacity:.88}
+  .c-pend{border:1.5px dashed var(--amber);background:var(--amber-soft)}
+  .c-miss{border:1.5px solid var(--rose)}
+  .c-na{background:var(--line2)}
+  .cell:hover{outline:2px solid var(--ink);outline-offset:1px}
+  /* 浮层 */
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(430px,94vw);background:var(--card);border-left:1px solid var(--line);
+    box-shadow:-18px 0 40px rgba(0,0,0,.12);transform:translateX(102%);transition:transform .18s ease;z-index:40;display:flex;flex-direction:column}
+  .drawer.open{transform:none}
+  .dhead{padding:11px 13px;border-bottom:1px solid var(--line)}
+  .dhead .t{font-size:13.5px;font-weight:800}
+  .dhead .p{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px;word-break:break-all}
+  .dbody{padding:11px 13px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:9px}
+  .dfoot{padding:9px 13px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .kv{display:grid;grid-template-columns:66px minmax(0,1fr);gap:5px 8px;font-size:12px}
+  .kv dt{color:var(--muted);margin:0} .kv dd{margin:0;word-break:break-all}
+  .step{display:flex;gap:9px;font-size:12.5px}
+  .step .n{width:20px;height:20px;border-radius:50%;background:var(--teal-soft);color:var(--teal);font-weight:900;font-size:11px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 20px;margin-top:1px}
+  /* 弹窗 */
+  .modal{position:fixed;inset:0;background:rgba(10,12,10,.42);z-index:50;display:none;align-items:center;justify-content:center;padding:18px}
+  .modal.open{display:flex}
+  .mbox{width:min(600px,96vw);max-height:86vh;background:var(--card);border-radius:11px;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  .mhead{display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--line)}
+  .mhead .t{font-weight:800;font-size:13.5px}
+  .mbody{padding:11px 13px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+  .mfoot{padding:9px 13px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+  .pathinput{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-family:var(--mono);font-size:11.5px;background:var(--bg);color:var(--ink)}
+  .flist{border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .fitem{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:0;border-bottom:1px solid var(--line2);padding:6px 9px;text-align:left;font-size:12px}
+  .fitem:last-child{border-bottom:0}
+  .fitem:hover{background:var(--line2)}
+  .fitem .nm{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fitem .meta{font-size:10px;color:var(--muted);white-space:nowrap}
+  /* 引导 */
+  .spot{position:fixed;border-radius:10px;box-shadow:0 0 0 9999px rgba(8,10,8,.55);pointer-events:none;z-index:70;transition:all .16s ease}
+  .coach{position:fixed;z-index:71;width:min(330px,92vw);background:var(--card);border:1px solid var(--line);border-radius:11px;
+    box-shadow:0 18px 44px rgba(0,0,0,.28);padding:13px 14px;display:flex;flex-direction:column;gap:8px}
+  .coach .k{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);font-family:var(--mono);font-weight:700}
+  .coach .t{font-size:14px;font-weight:800}
+  .coach .b{font-size:12.5px;color:var(--muted)}
+  .coach .f{display:flex;align-items:center;gap:6px;margin-top:2px}
+  .coach .dots{display:flex;gap:4px;margin-right:auto}
+  .coach .dots i{width:5px;height:5px;border-radius:50%;background:var(--line);display:block}
+  .coach .dots i.on{background:var(--teal)}
+  .pop{position:fixed;z-index:60;width:min(280px,90vw);background:var(--card);border:1px solid var(--line);border-radius:9px;
+    box-shadow:0 12px 30px rgba(0,0,0,.18);padding:10px 11px;font-size:12px;color:var(--ink)}
+  .toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .toast{background:var(--ink);color:var(--bg);border-radius:999px;padding:7px 14px;font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+  .loadbox{border:1px dashed var(--line);border-radius:9px;background:var(--card);padding:20px;text-align:center}
+  .loadbox .bar{height:6px;border-radius:3px;background:var(--line2);overflow:hidden;margin:11px auto 0;max-width:340px}
+  .loadbox .bar i{display:block;height:100%;background:var(--teal);width:0;transition:width .12s linear}
+  @media (max-width:720px){
+    .two1{grid-template-columns:1fr}
+    .statgrid{grid-template-columns:1fr 1fr}
+    .opts{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <span class="brand">图译工坊 · 多稿工作台</span>
+    <span class="pill">模拟 · 2026-10-23 · 文案减负与引导</span>
+    <span style="margin-left:auto"></span>
+  </div>
+
+  <div class="mockbar">
+    <b>模拟开关</b>
+    <span class="seg" role="group" aria-label="对照">
+      <button id="mBefore" aria-pressed="false" onclick="setMode('before')">改前（文字多）</button>
+      <button id="mAfter" aria-pressed="true" onclick="setMode('after')">改后（文字少）</button>
+    </span>
+    <button class="btn sm" onclick="openGuide(0)">重看首次引导</button>
+    <button class="btn sm" onclick="openLedger()">文案账本（删掉的话去哪了）</button>
+    <span class="sp"></span>
+    <span>这一条虚线框只在模拟里出现，真站不会有</span>
+  </div>
+
+  <div class="rail">
+    <span class="on">① 准备素材</span><span>② 逐稿校对</span><span>③ 语言覆盖</span><span>④ 出活</span>
+  </div>
+
+  <main id="root"></main>
+</div>
+
+<div id="drawer" class="drawer">
+  <div class="dhead"><div class="t" id="dt"></div><div class="p" id="dp"></div></div>
+  <div class="dbody" id="db"></div>
+  <div class="dfoot" id="df"></div>
+</div>
+
+<div id="modal" class="modal">
+  <div class="mbox">
+    <div class="mhead"><span class="t">选择工作文件夹</span><span class="muted" style="font-size:11px">只读</span>
+      <button class="btn sm" style="margin-left:auto" onclick="closePicker()">关闭</button></div>
+    <div class="mbody" id="mb"></div>
+    <div class="mfoot" id="mf"></div>
+  </div>
+</div>
+
+<div id="spot" class="spot" hidden></div>
+<div id="coach" class="coach" hidden></div>
+<div id="pop" class="pop" hidden></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ═════════ 数据：2026-10-22 真实目录快照（与上一版模拟同一份） ═════════ */
+const ROOT='F:\\\\工具开发\\\\自动改语言\\\\批量改语言测试';
+const LANGS=[{c:'ES',zh:'西班牙'},{c:'FR',zh:'法国'},{c:'ID',zh:'印尼'},{c:'IT',zh:'意大利'},{c:'JP',zh:'日本'},{c:'MS',zh:'马来西亚'},{c:'NL',zh:'荷兰'},{c:'PL',zh:'波兰'},{c:'RU',zh:'俄罗斯'},{c:'TH',zh:'泰国'},{c:'TL',zh:'菲律宾'},{c:'VI',zh:'越南'}];
+const ALL=LANGS.map(l=>l.c);
+
+const DRAFTS=[
+  {id:'a5857',sku:'5857',kind:'A+图',ch:'Amazon',file:'(B级)Amazon-5857-A+图-8-祝叶子.psb',where:'根目录',langs:ALL,sheet:'A+',rows:45,tset:'pending'},
+  {id:'b5857',sku:'5857',kind:'主副图',ch:'Amazon',file:'(B级)Amazon-5857-主副图-8-祝叶子.psb',where:'根目录',langs:ALL,sheet:'主图',rows:35,tset:'pending'},
+  {id:'c6877',sku:'6877',kind:'A+详情页',ch:'Amazon',file:'6877-亚马逊A+详情页-140289f40dbb.psb',where:'根目录',langs:['JP'],table:'JP A+ 6877-a477b47edf84.xlsx',rows:40},
+  {id:'d6877',sku:'6877',kind:'主副图',ch:'Amazon',file:'6877主副图-73662f90bdca.psb',where:'根目录',langs:['JP'],table:'JP 日本主图 -6877-f28fee330e95.xlsx',rows:22},
+  {id:'e6896',sku:'6896',kind:'A+',ch:'Amazon',file:'6896亚马逊A+(英文）.psb',where:'根目录',langs:['JP'],table:'JP 日本-6896.xlsx',rows:38,merged:'2 份重复稿 + 2 张重复表，已合并'},
+  {id:'f6897',sku:'6897',kind:'A+',ch:'Amazon',file:'6897亚马逊A+(英文）.psb',where:'根目录',langs:['JP'],table:'JP 日本-6897.xlsx',rows:36},
+  {id:'g6897',sku:'6897',kind:'独立站主图',ch:'独立站',file:'6897 独立站主图.psb',where:'根目录',langs:[],table:null,rows:0},
+  {id:'h5294',sku:'5294',kind:'主图',ch:'Amazon',file:'Amazon-美国站-5294-主图 -20251211.psb',where:'5294 文件夹',langs:ALL,table:'11国语言 5294主图+A+改语言-金娜.xlsx',wide:true,rows:52},
+  {id:'i5477',sku:'5477',kind:'高级A+',ch:'Amazon',file:'绿急-Amazon-SR美国站-5477-高级A+（汪丹枫）-(设计x9）-11.11.psb',where:'5477 文件夹',langs:['JP'],table:'JP 日本-5477.csv',rows:112},
+  {id:'p5857a',sku:'5857',kind:'A+图',ch:'Amazon',file:'(B级)Amazon-5857-A+图-8-祝叶子.psb',where:'5857 文件夹',langs:ALL,paused:true,tset:'pending'},
+  {id:'p5857b',sku:'5857',kind:'主副图',ch:'Amazon',file:'(B级)Amazon-5857-主副图-8-祝叶子.psb',where:'5857 文件夹',langs:ALL,paused:true,tset:'pending'}
+];
+
+const CONFLICTS=[
+  {id:'C1',short:'5857 · 两套表',title:'5857 有两套表，结构不一样',affect:2,
+   one:'同一个 SKU、同一种语言，有两个内容不同的版本。',
+   full:[['摆在面前','5857\\\\ 里一套（按 sheet 分主图/A+），完整表-20261003 里另一套（合并成单 sheet）'],['差别','一种语言的行怎么切给两个交付物，两套切法不一样'],['后果','切错了行数对不上，整批图要重做'],['为什么问你','这件事只有你知道该用哪套']],
+   opts:[{id:'A',label:'用 5857 文件夹里那 12 张',meta:'主图 36 行 / A+ 46 行'},{id:'B',label:'用 完整表-20261003 那 12 张',meta:'单 sheet 68 行'}],chosen:null},
+  {id:'C2',short:'5857 · 两份同名稿',title:'5857 的设计稿同名，内容不同',affect:2,
+   one:'根目录和 5857 文件夹里那两份 MD5 不同，确实是两份稿。',
+   full:[['两份都在这','文件名一模一样，内容不一样'],['根目录那份','MD5 AD4A0B9C…'],['5857\\\\ 那份','MD5 A01B7C0C…'],['对比过的','6896 那两份 MD5 完全一致 → 已静默合并，不拿来烦你']],
+   opts:[{id:'A',label:'两份都做',meta:'本批多 2 稿、24 格'},{id:'B',label:'只留根目录那份',meta:'同名牌不再做'}],chosen:null},
+  {id:'C3',short:'6897 · 独立站没表',title:'6897 独立站主图没有自己的表',affect:1,
+   one:'同目录只有 Amazon A+ 的 JP 表，渠道不一样。',
+   full:[['这稿','6897 独立站主图.psb（独立站）'],['同目录的表','JP 日本-6897.xlsx，属于 Amazon A+，36 行'],['为什么先不借','两个渠道文案位置不一样，借错字会跑到图外']],
+   opts:[{id:'A',label:'不借（先跳过这稿）',meta:'留个“无表”标记'},{id:'B',label:'借用 Amazon 的 JP 表',meta:'一直标“借用的表”'}],chosen:null}
+];
+const ORPHANS=['5366','5472','5478','5566','5596','5623','5633','5660','5661'];
+const FS={[ROOT]:[['5857',2,12],['完整表-20261003',0,12],['5294',1,1],['5477',1,1],['5366',0,1],['5472',0,1],['5478',0,1],['5566',0,1],['5596',0,1],['5623',0,1],['5633',0,1],['5660',0,1],['5661',0,1],['测试2',0,4],['批量的',0,7]]};
+
+const S={mode:'after',folder:ROOT,scanning:false,progress:0,sel1:null,drawer:null,picker:null,
+  guide:{open:false,step:0,seen:false},pop:null};
+
+/* ═════════ 派生 ═════════ */
+const conf=id=>CONFLICTS.find(c=>c.id===id);
+const c2=()=>conf('C2').chosen;
+const active=()=>DRAFTS.filter(d=>!d.paused||c2()==='A');
+const pendingConf=()=>CONFLICTS.filter(c=>!c.chosen).length;
+const cellTotal=()=>active().reduce((a,d)=>a+d.langs.length,0);
+const pendingCells=()=>conf('C1').chosen?0:active().filter(d=>d.sku==='5857'&&d.langs.length).reduce((a,d)=>a+d.langs.length,0);
+const optName=(c,id)=>{const o=c.opts.find(x=>x.id===id);return o?o.label:'—'};
+const langName=c=>{const l=LANGS.find(x=>x.c===c);return l?l.zh:c};
+function specOf(sku){
+  const ds=active().filter(d=>d.sku===sku);
+  if(ds.some(d=>!d.langs.length))return{t:'有稿没表',cls:'bad'};
+  if(ds.some(d=>d.tset==='pending')&&!conf('C1').chosen)return{t:'表套待定',cls:'warn'};
+  if(ds.some(d=>d.paused)&&!c2())return{t:'同名待定',cls:'warn'};
+  return{t:'已归位',cls:'ok'};
+}
+function items(){
+  const it=[];CONFLICTS.forEach(c=>it.push({id:'conf:'+c.id,type:'conf',c}));
+  [...new Set(active().map(d=>d.sku))].forEach(sku=>it.push({id:'sku:'+sku,type:'sku',sku}));
+  it.push({id:'orph',type:'orph'});return it;
+}
+function curSel(){
+  const its=items();
+  if(!S.sel1||!its.some(i=>i.id===S.sel1)){const c=CONFLICTS.find(x=>!x.chosen);S.sel1=c?'conf:'+c.id:'conf:'+CONFLICTS[0].id;}
+  return S.sel1;
+}
+
+/* ═════════ 渲染 ═════════ */
+function render(){
+  document.getElementById('root').innerHTML = S.scanning ? renderScanning() : renderStep1();
+  document.getElementById('mBefore').setAttribute('aria-pressed', String(S.mode==='before'));
+  document.getElementById('mAfter').setAttribute('aria-pressed', String(S.mode==='after'));
+  renderModal();
+  if(S.guide.open) placeGuide(); else hideGuide();
+}
+function setMode(m){S.mode=m;render();toast(m==='before'?'改前：说明文字常驻，一屏 700+ 字':'改后：说明只在需要时出现，一屏约 300 字');}
+
+function renderScanning(){
+  const total=51,done=Math.round(total*S.progress/100);
+  return `<div class="pghead"><h1>准备素材</h1></div>
+  <div class="folderbar" id="folderbar"><span>📁</span><span class="p">${S.folder}</span>
+    <button class="btn sm" onclick="openPicker()">换文件夹</button></div>
+  <div class="loadbox" style="margin-top:9px"><div style="font-weight:800">正在读表头…（${done}/${total}）</div>
+    <div class="bar"><i style="width:${S.progress}%"></i></div></div>`;
+}
+
+function renderStep1(){
+  const sel=curSel(), its=items(), confs=its.filter(i=>i.type==='conf'), skus=its.filter(i=>i.type==='sku');
+  const paused=DRAFTS.filter(d=>d.paused&&!c2());
+  const before=S.mode==='before';
+  return `
+  <div class="pghead">
+    <h1>准备素材 <button class="iconbtn" title="这一步怎么做" aria-label="这一步怎么做" onclick="openHelp()">?</button></h1>
+    <div class="tools">
+      <button class="btn" onclick="rescan()">重新扫描</button>
+      <button class="btn primary" id="nextBtn" onclick="goNext()">下一步 · 逐稿校对 →</button>
+    </div>
+  </div>
+  ${before?'<div class="muted" style="font-size:12px;margin:-4px 0 8px">左边是「要你处理的事」和素材清单，右边是选中那件的证据和选择。这里一件一件过的是<b>归属</b>，不是逐稿校对。</div>':''}
+
+  <div class="folderbar" id="folderbar">
+    <span>📁</span>
+    <span class="p" title="${S.folder}">${S.folder}</span>
+    <span class="m">12 稿 · 51 表 · 只读</span>
+    <button class="btn sm" onclick="openPicker()">换文件夹</button>
+    ${before?'<button class="btn sm ghost" onclick="toast(\'系统对话框入口还在\')">系统对话框…</button><button class="btn sm ghost" onclick="toast(\'逐稿手动导入是旧入口，保留\')">逐稿手动导入…</button>':''}
+  </div>
+
+  <div class="statgrid">
+    <div class="stat"><div class="v teal">${active().length}</div><div class="l">本批设计稿</div>${before?`<div class="hint">${paused.length?'另有 '+paused.length+' 份同名副本待定':'同名副本已定'}</div>`:''}</div>
+    <div class="stat"><div class="v ${pendingConf()?'warn':'teal'}">${cellTotal()}</div><div class="l">本批语言格</div>${before?`<div class="hint">${pendingCells()?'其中 '+pendingCells()+' 格等表套确定':'全部已归位'}</div>`:''}</div>
+    <div class="stat"><div class="v ${pendingConf()?'warn':'teal'}">${pendingConf()}</div><div class="l">处要你拍板</div>${before?'<div class="hint">其余已自动归位</div>':''}</div>
+    <div class="stat"><div class="v bad">${ORPHANS.length}</div><div class="l">个 SKU 有表无稿</div>${before?'<div class="hint">18 个表文件（含重复副本）</div>':''}</div>
+  </div>
+
+  <div class="two1">
+    <div class="queue" id="queue">
+      <div class="qh">要你处理的
+        <button class="iconbtn" title="左栏是什么" onclick="togglePop('queue',event)" style="width:18px;height:18px;font-size:10px">?</button>
+        <span class="r">${CONFLICTS.length-pendingConf()}/${CONFLICTS.length} 已定</span>
+      </div>
+      <div class="qsec">待你拍板 <span class="r">${pendingConf()}</span></div>
+      ${confs.map(it=>{const c=it.c,done=!!c.chosen;
+        return `<button class="qitem ${done?'done':'att'}" aria-current="${sel===it.id}" onclick="pick('${it.id}')">
+          <span class="st">${done?'✓':'!'}</span>
+          <span class="bb"><span class="n">${c.short}</span>
+          <span class="m">${done?'已定：'+optName(c,c.chosen):'牵着 '+c.affect+' 份稿'}</span></span>
+        </button>`}).join('')}
+      <div class="qsec">按 SKU 看 <span class="r">${skus.length} 组</span></div>
+      ${skus.map(it=>{const ds=active().filter(d=>d.sku===it.sku),sp=specOf(it.sku),lg=Math.max(...ds.map(d=>d.langs.length),0);
+        return `<button class="qitem" aria-current="${sel===it.id}" onclick="pick('${it.id}')">
+          <span class="st"></span>
+          <span class="bb"><span class="n">${it.sku} · ${[...new Set(ds.map(d=>d.kind))].join(' / ')}</span>
+          <span class="m">${ds.length} 份 · ${lg?lg+' 种语言':'没有表'}</span></span>
+          <span class="tag ${sp.cls}">${sp.t}</span>
+        </button>`}).join('')}
+      <div class="qsec">别漏掉 <span class="r">${ORPHANS.length}</span></div>
+      <button class="qitem" aria-current="${sel==='orph'}" onclick="pick('orph')">
+        <span class="st"></span>
+        <span class="bb"><span class="n">有表无稿</span><span class="m">${ORPHANS.length} 个 SKU</span></span>
+        <span class="tag bad">别吞掉</span>
+      </button>
+    </div>
+    <div class="pane" id="pane">${paneHtml(sel)}</div>
+  </div>
+
+  <div class="card" id="matrixFull">
+    <div class="hd"><h2>语言覆盖矩阵</h2>
+      <button class="iconbtn" title="矩阵怎么看" onclick="togglePop('matrix',event)" style="width:18px;height:18px;font-size:10px">?</button>
+      <span class="tag mute">稿 × 语言</span>
+      <div class="r"><span class="tag ok">有表</span><span class="tag warn">待定</span><span class="tag bad">缺表</span></div>
+    </div>
+    ${matrixHtml()}
+  </div>`;
+}
+
+/* ── 右栏 ── */
+function paneHtml(sel){
+  if(sel.startsWith('conf:'))return paneConf(sel.slice(5));
+  if(sel.startsWith('sku:'))return paneSku(sel.slice(4));
+  return paneOrph();
+}
+
+function paneConf(cid){
+  const c=conf(cid),done=!!c.chosen,pend=pendingConf(),before=S.mode==='before';
+  return `<div class="ehead">
+      <span class="tag ${done?'ok':'warn'}">${done?'已定':'待你拍板'}</span>
+      <span class="ttl">${c.title}</span>
+      <div class="r">${CONFLICTS.length-pend}/${CONFLICTS.length} 已定</div></div>
+    <div class="bd">
+      <div class="note ${done?'ok':'warn'}">${c.one}</div>
+      ${before?`<div class="ev">${c.full.map(([k,v])=>`<div class="er"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>`
+        :`<details><summary style="cursor:pointer;font-size:11.5px;color:var(--muted)">看证据（${c.full.length} 条）</summary>
+           <div style="margin-top:6px">${c.full.map(([k,v])=>`<div class="er"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div></details>`}
+      <div class="opts">${c.opts.map(o=>`<button class="opt" aria-pressed="${c.chosen===o.id}" onclick="pickConflict('${c.id}','${o.id}')">
+        <span class="ol">${o.label}</span><span class="od">${o.meta}</span></button>`).join('')}</div>
+    </div>
+    <div class="pgfoot">
+      ${before?`<span class="hint">${done?'已记下你的选择。':'不定就不往下走：我们不会按修改时间或目录排序替你猜。'}${pend?'　还有 '+pend+' 件待定，选完自动跳到下一件。':'　三件都定完了，可以进下一步。'}</span>`:''}
+      <span class="${before?'':'hint'}" style="${before?'':'margin-right:auto'}">${pend?pend+' 件待定':'全部已定'}</span>
+      <button class="btn" onclick="pick('sku:${active()[0].sku}')">看素材</button>
+      <button class="btn ${pend?'':'primary'}" onclick="goNext()">下一步 →</button>
+    </div>`;
+}
+
+function basisText(d){
+  if(d.sku==='5857')return d.tset==='pending'?'文件名 5857 → 同 SKU 的 12 张语言表 → 按 sheet 分「A+」「主图」。两套表结构不同，所以标待定。':'文件名 5857 → 同 SKU 的 12 张语言表 → 按 sheet 分「A+」「主图」。';
+  if(d.sku==='5294')return '文件名 5294 → 宽表（表头 12 列）→ 每个语言名展开成一格。';
+  if(d.sku==='6896')return '文件名 6896 → JP 日本-6896.xlsx；另有一份稿和一份表逐字节相同，已合并。';
+  if(d.sku==='6897')return 'Amazon A+ 稿对上 JP 日本-6897.xlsx；独立站主图没有同渠道的表。';
+  if(d.sku==='5477')return '文件名 5477 → JP 日本-5477.csv（首行是资源链接行，按表头跳过）。';
+  return '文件名 6877 → 主图对 JP 日本主图 -6877…，A+ 对 JP A+ 6877…';
+}
+
+function paneSku(sku){
+  const ds=active().filter(d=>d.sku===sku),langs=Math.max(...ds.map(d=>d.langs.length),0);
+  const chs=[...new Set(ds.map(d=>d.ch))],before=S.mode==='before';
+  return `<div class="ehead">
+      <span class="mono" style="font-weight:800;font-size:12.5px">${sku}</span>
+      <span class="ttl">${ds.length} 份稿</span>
+      <span class="tag ${langs?'info':'bad'}">${langs?langs+' 种语言':'没有表'}</span>
+      <span class="tag mute">${chs.join(' / ')}</span>
+      <div class="r"><button class="btn sm" onclick="openRule()">规则</button></div></div>
+    <div class="bd" style="padding:0">
+      ${ds.map(d=>{const noT=!d.langs.length,pendT=d.tset==='pending'&&!conf('C1').chosen;
+        return `<button class="drow" onclick="openCell('${d.id}','')">
+          <span class="kind">${d.kind}</span>
+          <span class="fn">${d.file}<span class="w">${d.where}</span></span>
+          <span class="muted" style="font-size:10.5px">${noT?'无表':d.langs.length+' 语'}</span>
+          <span>${noT?'<span class="tag bad">没有表</span>':pendT?'<span class="tag warn">待定</span>':'<span class="tag ok">✓</span>'}${d.merged?'<span class="tag info" style="margin-left:3px">已合并</span>':''}</span>
+        </button>`}).join('')}
+      ${before?`<div style="padding:9px 11px"><div class="note"><b>凭什么：</b>${basisText(ds[0])}</div></div>`:''}
+      ${langs?`<div style="padding:0 0 8px">${matrixHtml(ds)}</div>`:''}
+    </div>
+    <div class="pgfoot">
+      ${before?`<span class="hint">这个 SKU 合计 ${ds.reduce((a,d)=>a+d.langs.length,0)} 个语言格。</span>`:''}
+      <span class="hint">${ds.reduce((a,d)=>a+d.langs.length,0)} 格</span>
+      <button class="btn" onclick="scrollMatrix()">看整批矩阵 ↓</button>
+    </div>`;
+}
+
+function paneOrph(){
+  const before=S.mode==='before';
+  return `<div class="ehead"><span class="tag bad">有表无稿</span>
+      <span class="ttl">${ORPHANS.length} 个 SKU 有表、没有稿</span>
+      <div class="r">18 个表文件</div></div>
+    <div class="bd">
+      ${before?`<div class="note bad">这些表<b>不会丢</b>，也不会被乱配给别的 SKU。以前的界面把它们直接吞掉，所以你根本不知道自己这批少了哪几个。</div>`
+        :`<div class="note bad">这些表不会被丢，也不会配错稿。</div>`}
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${ORPHANS.map(s=>`<span class="mono" style="border:1px solid var(--line);border-radius:4px;padding:1px 5px">JP 日本-${s}.csv</span>`).join('')}</div>
+      ${before?`<div class="note">两种处理：① 这批本来就不做这 9 个 → 先不管；② 其实要做、只是设计稿还没放进文件夹 → 把稿丢进来点"重新扫描"，它们的表会自动接上。</div>`
+        :`<details><summary style="cursor:pointer;font-size:11.5px;color:var(--muted)">怎么处理</summary>
+           <div class="note" style="margin-top:6px">这批不做 → 不用管；要做 → 把稿放进文件夹点「重新扫描」，表会自动接上。</div></details>`}
+    </div>
+    <div class="pgfoot">
+      ${before?'<span class="hint">不管它不影响本批 '+active().length+' 稿的执行。</span>':''}
+      <button class="btn" onclick="pick('sku:${active()[0].sku}')">继续看素材 →</button>
+    </div>`;
+}
+
+/* ── 矩阵 ── */
+function matrixHtml(rows){
+  rows=rows||active();
+  return `<div class="mxwrap"><table class="mx">
+    <thead><tr><th>设计稿</th>${LANGS.map(l=>`<th title="${l.zh}">${l.c}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(d=>`<tr>
+      <th>${d.sku}<span class="k">${d.kind}</span>${d.langs.length===0?'<span class="tag bad" style="margin-left:4px">无表</span>':''}</th>
+      ${LANGS.map(l=>{
+        let k='c-na',t='不涉及';
+        if(d.langs.length===0){k='c-miss';t='没有表';}
+        else if(d.langs.includes(l.c)){ if(d.tset==='pending'&&!conf('C1').chosen){k='c-pend';t=l.zh+'：表套待定';} else {k='c-full';t=l.zh+'：已配好';} }
+        return `<td class="c"><button class="cell ${k}" title="${t}" aria-label="${d.sku} ${d.kind} ${l.zh}" onclick="openCell('${d.id}','${l.c}')"></button></td>`;
+      }).join('')}
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ═════════ 交互 ═════════ */
+function pick(id){S.sel1=id;render();}
+
+function pickConflict(cid,oid){
+  const c=conf(cid);c.chosen=oid;
+  if(cid==='C1')DRAFTS.forEach(d=>{if(d.sku==='5857')d.tset=oid});
+  if(cid==='C2')DRAFTS.forEach(d=>{if(d.sku==='5857'&&d.paused)d.paused=(oid!=='A')});
+  if(cid==='C3'&&oid==='B'){const d=DRAFTS.find(x=>x.id==='g6897');d.langs=['JP'];d.table='JP 日本-6897.xlsx（借用）';d.borrowed=true;}
+  if(cid==='C3'&&oid==='A'){const d=DRAFTS.find(x=>x.id==='g6897');d.langs=[];d.table=null;d.borrowed=false;}
+  const msg={C1:'表套已定：5857 的 24 格按这套走',C2:oid==='A'?'两份同名稿都留下：本批 11 稿 65 格':'只留根目录那份',C3:oid==='B'?'已借用 Amazon 的 JP 表':'这稿先跳过，标“无表”'}[cid];
+  const next=CONFLICTS.find(x=>!x.chosen);
+  S.sel1=next?'conf:'+next.id:'conf:'+cid;
+  toast(msg+(next?'　下一件：'+next.short:'　三件都定完了'));
+  render();
+}
+
+function openCell(did,lc){
+  const d=DRAFTS.find(x=>x.id===did);S.drawer={kind:'cell'};
+  document.getElementById('dt').textContent=`${d.sku} · ${d.kind}`;
+  document.getElementById('dp').textContent=d.file;
+  if(!d.langs.length){
+    document.getElementById('db').innerHTML=`<div class="note bad">这稿没有表：同目录只有 Amazon A+ 的 JP 表，独立站位置不一样。</div>
+      <div class="note">要借也行——在冲突卡里选「借用」，它会一直标着“借用的表”。</div>`;
+  }else{
+    const lang=lc||d.langs[0],is5857=d.sku==='5857';
+    const file=is5857?((d.tset==='B'?'完整表-20261003\\\\':'5857\\\\')+`${lang} ${langName(lang)}-5857.xlsx`):(d.wide?d.table:(d.table||`${lang} ${langName(lang)}-${d.sku}.xlsx`));
+    const sheet=is5857?(d.tset==='B'?'Sheet1':(d.sheet||'主图')):(d.wide?'Sheet1':(d.sheet||'主图'));
+    const col=d.wide?`第 ${LANGS.findIndex(x=>x.c===lang)+1} 列（${langName(lang)}）`:'第 2 列（译文）';
+    document.getElementById('db').innerHTML=`<div class="kv">
+        <dt>语言</dt><dd>${lang} ${langName(lang)}</dd>
+        <dt>文件</dt><dd class="mono">${file}</dd>
+        <dt>sheet</dt><dd class="mono">${sheet}</dd>
+        <dt>列</dt><dd>${col}</dd>
+        <dt>行</dt><dd class="mono">2 – ${d.rows||'—'}</dd>
+      </div>
+      <details><summary style="cursor:pointer;font-size:11.5px;color:var(--muted)">凭什么这么配</summary>
+        <div class="note" style="margin-top:6px">${basisText(d)}</div></details>
+      ${d.tset==='pending'&&!conf('C1').chosen?'<div class="note warn">表套还没定，这一格先按你选的那套算。</div>':''}`;
+  }
+  document.getElementById('df').innerHTML=`<button class="btn" onclick="toast('已在文件夹里定位')">在文件夹里看</button><button class="btn primary" style="margin-left:auto" onclick="closeDrawer()">好</button>`;
+  document.getElementById('drawer').classList.add('open');
+}
+
+function openRule(){
+  document.getElementById('dt').textContent='归属规则';
+  document.getElementById('dp').textContent='每一格都能追到文件 + sheet + 列 + 行';
+  document.getElementById('db').innerHTML=`<div class="note">一格 = <b>SKU × 交付物 × 语言</b>。SKU 从文件名 4 位数字认；交付物认 A+ / 主图 / 主副图 / 详情页；语言先看文件名前缀，再看宽表表头，最后看 sheet 名。</div>
+    <div class="note">唯一候选 → 自动配；靠 sheet 分交付物 → 自动配；定不了 → 冲突卡，默认不选。</div>
+    <div class="note ok">MD5 相同 = 内容一样 → 静默合并。</div>
+    <div class="note bad">MD5 不同 = 内容不同 → 一定问你。</div>`;
+  document.getElementById('df').innerHTML=`<button class="btn" style="margin-left:auto" onclick="closeDrawer()">知道了</button>`;
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');S.drawer=null;}
+
+/* ── 帮助（常驻 ?） ── */
+function openHelp(){
+  document.getElementById('dt').textContent='这一步怎么做';
+  document.getElementById('dp').textContent='准备素材 · 4 步';
+  document.getElementById('db').innerHTML=`
+    <div class="step"><span class="n">1</span><div><b>选文件夹</b><br><span class="muted">换文件夹就是换整批，不用再点“加入本批”。</span></div></div>
+    <div class="step"><span class="n">2</span><div><b>拍板冲突</b><br><span class="muted">左栏亮着的几件有歧义：选一个，自动跳下一件。</span></div></div>
+    <div class="step"><span class="n">3</span><div><b>看矩阵</b><br><span class="muted">一行一份稿，一格一门语言；点格子看来源。</span></div></div>
+    <div class="step"><span class="n">4</span><div><b>进下一步</b><br><span class="muted">读表我们自己做，不会再弹旧确认框。</span></div></div>
+    <div class="note">表头读不到、有表无稿、两份同名稿：点左上「?」或区块旁的小「?」，都有就地解释。</div>`;
+  document.getElementById('df').innerHTML=`<button class="btn" onclick="closeDrawer();openGuide(0)">带我看一遍</button>
+    <button class="btn primary" style="margin-left:auto" onclick="closeDrawer()">知道了</button>`;
+  document.getElementById('drawer').classList.add('open');
+}
+
+/* ── 文案账本 ── */
+function openLedger(){
+  document.getElementById('dt').textContent='文案账本';
+  document.getElementById('dp').textContent='删掉的每一句，都写了新落点（折叠不得删报）';
+  document.getElementById('db').innerHTML=`
+    <div class="note"><b>页头那段“左边是…右边是…不是逐稿校对”</b><br>删。它是写给我们自己的设计说明；用户要知道的“怎么用”放进首次引导第 1 步。</div>
+    <div class="note"><b>统计卡三行小字</b><br>默认收起，鼠标停在卡片上看；只有“还有 N 件待定”会留在页面上。</div>
+    <div class="note"><b>冲突卡 4–5 行证据</b><br>常驻只留 1 句冲突本身；其余进「看证据」折叠，点开就是原文。</div>
+    <div class="note"><b>冲突卡底部“不定就不往下走…”</b><br>删。按钮禁用＋“N 件待定”已经把话说完了。</div>
+    <div class="note"><b>“凭什么这么配”长句</b><br>进抽屉的折叠项，需要时才展开。</div>
+    <div class="note"><b>矩阵图例 4 条＋“点任意格子…”</b><br>常驻只留 3 个色块；怎么看进矩阵旁的「?」。</div>
+    <div class="note"><b>“有表无稿”整段解释</b><br>常驻 1 句“不会被丢，也不会配错稿”；处理办法进「怎么处理」。</div>
+    <div class="note ok"><b>“只读，不会动你的文件”</b><br>保留。它是安全感，不是说明。</div>
+    <div class="note warn"><b>不动的</b><br>表格格式说明、示例表下载、错误原因、Smart Review 的可见性——那些是 WF-002/003 的硬要求，不在这次减法范围内。</div>`;
+  document.getElementById('df').innerHTML=`<button class="btn primary" style="margin-left:auto" onclick="closeDrawer()">知道了</button>`;
+  document.getElementById('drawer').classList.add('open');
+}
+
+/* ── 引导 ── */
+const STEPS=[
+  {sel:'#folderbar',place:'bottom',k:'第 1 步 / 共 4 步',t:'文件夹就是这一批',b:'换文件夹等于换整批，不用再点“加入本批”。'},
+  {sel:'#queue',place:'right',k:'第 2 步 / 共 4 步',t:'有歧义才停你',b:'选一个方案会自动跳下一件；其余我们自己归位。'},
+  {sel:'#matrixFull',place:'top',k:'第 3 步 / 共 4 步',t:'一格 = 一份稿 × 一门语言',b:'点任意格子，看它从哪张表、哪个 sheet 来。'},
+  {sel:'#nextBtn',place:'bottom',k:'第 4 步 / 共 4 步',t:'定了就往下走',b:'读表在下一步自动做，不会再弹旧确认框。'}
+];
+function openGuide(i){
+  S.guide.open=true;S.guide.step=i||0;closeDrawer();
+  const s=STEPS[S.guide.step];
+  const el=document.querySelector(s.sel);
+  if(el)el.scrollIntoView({block:'center',behavior:'smooth'});
+  render();
+}
+function closeGuide(markSeen){
+  S.guide.open=false;if(markSeen)S.guide.seen=true;
+  hideGuide();
+  try{localStorage.setItem('tygf_step1_guide_seen','1')}catch(e){}
+}
+function hideGuide(){
+  document.getElementById('spot').hidden=true;
+  const c=document.getElementById('coach');c.hidden=true;c.innerHTML='';
+}
+function placeGuide(){
+  const s=STEPS[S.guide.step],el=document.querySelector(s.sel);
+  if(!el){hideGuide();return;}
+  const r=el.getBoundingClientRect();
+  const spot=document.getElementById('spot');
+  spot.hidden=false;
+  spot.style.left=(r.left-4)+'px';spot.style.top=(r.top-4)+'px';
+  spot.style.width=(r.width+8)+'px';spot.style.height=(r.height+8)+'px';
+  const coach=document.getElementById('coach');
+  coach.hidden=false;
+  coach.innerHTML=`<div class="k">${s.k}</div><div class="t">${s.t}</div><div class="b">${s.b}</div>
+    <div class="f">
+      <div class="dots">${STEPS.map((_,i)=>`<i class="${i===S.guide.step?'on':''}"></i>`).join('')}</div>
+      <button class="btn sm ghost" onclick="closeGuide(true)">跳过</button>
+      ${S.guide.step>0?`<button class="btn sm" onclick="openGuide(${S.guide.step-1})">上一步</button>`:''}
+      <button class="btn sm primary" onclick="${S.guide.step===STEPS.length-1?'closeGuide(true)':`openGuide(${S.guide.step+1})`}">${S.guide.step===STEPS.length-1?'开始用':'下一步'}</button>
+    </div>`;
+  const W=coach.offsetWidth||330,H=coach.offsetHeight||170;
+  let left=r.left,top=r.bottom+12;
+  if(s.place==='right'){left=r.right+12;top=r.top;}
+  if(s.place==='top'){left=r.left;top=r.top-H-12;}
+  left=Math.max(10,Math.min(left,window.innerWidth-W-10));
+  top=Math.max(10,Math.min(top,window.innerHeight-H-10));
+  coach.style.left=left+'px';coach.style.top=top+'px';
+}
+
+/* ── 小气泡（就地提示） ── */
+function togglePop(kind,ev){
+  const p=document.getElementById('pop');
+  if(!p.hidden&&S.pop===kind){p.hidden=true;S.pop=null;return;}
+  S.pop=kind;
+  p.innerHTML=kind==='queue'
+    ? '<b>左栏</b>：亮着的是有歧义、要你拍板的；灰的是已自动归位。点一件，右边看证据。'
+    : '<b>矩阵</b>：一行一份稿，12 格对应 12 种语言。实心=有表，虚线=表套待定，红框=缺表，灰=不涉及。';
+  p.hidden=false;
+  const r=ev.currentTarget.getBoundingClientRect();
+  p.style.left=Math.min(r.left,window.innerWidth-290)+'px';
+  p.style.top=(r.bottom+8)+'px';
+}
+document.addEventListener('click',e=>{
+  const p=document.getElementById('pop');
+  if(!p.hidden&&!e.target.closest('.pop')&&!e.target.closest('.iconbtn')){p.hidden=true;S.pop=null;}
+});
+
+/* ── 选文件夹 ── */
+function openPicker(){S.picker={path:S.folder};document.getElementById('modal').classList.add('open');renderModal();}
+function closePicker(){document.getElementById('modal').classList.remove('open');S.picker=null;}
+function renderModal(){
+  if(!S.picker)return;
+  const path=S.picker.path,entries=FS[path]||[];
+  document.getElementById('mb').innerHTML=`
+    <input class="pathinput" value="${path}" onchange="S.picker.path=this.value;renderModal()" aria-label="文件夹路径" />
+    <div class="muted" style="font-size:11px">这一层 ${entries.length} 个文件夹 · 单层浏览，不展开整棵树</div>
+    <div class="flist">${entries.map(([name,d,t])=>`<button class="fitem" onclick="S.picker.path='${path}\\\\\\\\${name}';renderModal()">
+      <span>📁</span><span class="nm">${name}</span><span class="meta">${d?'稿 '+d+' · ':''}表 ${t}</span></button>`).join('')}</div>`;
+  document.getElementById('mf').innerHTML=`
+    <button class="btn" onclick="S.picker.path='${ROOT}';renderModal()">回到工作目录</button>
+    <button class="btn" style="margin-left:auto" onclick="closePicker()">取消</button>
+    <button class="btn primary" onclick="confirmFolder()">用这个文件夹</button>`;
+}
+function confirmFolder(){
+  const path=S.picker.path;closePicker();
+  S.scanning=true;S.progress=0;render();
+  const timer=setInterval(()=>{
+    S.progress=Math.min(100,S.progress+7);render();
+    if(S.progress>=100){clearInterval(timer);S.scanning=false;S.folder=path;render();toast('已切换：12 稿 / 51 表（只读）');}
+  },70);
+}
+
+/* ── 其它 ── */
+function rescan(){toast('重新扫描：12 稿 / 51 表，已定的选择不丢');}
+function goNext(){toast('进第 2 步：自动读表并带 '+active().length+' 稿 / '+cellTotal()+' 格过去');}
+function scrollMatrix(){document.getElementById('matrixFull').scrollIntoView({behavior:'smooth',block:'start'});}
+function toast(msg){
+  const box=document.getElementById('toasts');const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  box.appendChild(el);setTimeout(()=>el.remove(),3800);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(S.guide.open){closeGuide(true);return;}
+    if(S.picker){closePicker();return;}
+    closeDrawer();
+  }
+  if(S.guide.open&&e.key==='ArrowRight'){S.guide.step<STEPS.length-1?openGuide(S.guide.step+1):closeGuide(true);}
+  if(S.guide.open&&e.key==='ArrowLeft'&&S.guide.step>0)openGuide(S.guide.step-1);
+});
+window.addEventListener('resize',()=>{if(S.guide.open)placeGuide();});
+
+/* 首次进入：模拟里默认自动弹一次（真站按同一规则，只有第一次） */
+render();
+if(!S.guide.seen)openGuide(0);
+</script>
+</body>
+</html>

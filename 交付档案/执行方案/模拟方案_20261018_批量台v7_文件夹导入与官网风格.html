@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量工作台 v7 · 文件夹导入 + 官网同款（模拟件）</title>
+<style>
+/* ============================================================
+   令牌单一源：src/components/site/home-v17.css
+   --ink:#111311  --muted:#6f746f  --line:#e0e3e0  --accent:#2d7356
+   --radius-sm:16px  --radius:26px  --shadow:0 22px 70px rgba(17,28,21,.07)
+   字族：Tuyigf Source Han Sans（本机无 woff2，退到同族系统字体）
+   ============================================================ */
+:root{
+  --bg:#ffffff;
+  --surface:#ffffff;
+  --surface-2:#fafbfa;
+  --surface-green:#f7faf8;
+  --ink:#111311;
+  --muted:#6f746f;
+  --muted-2:#8b918c;
+  --line:#e0e3e0;
+  --line-strong:#d2d7d3;
+  --accent:#2d7356;
+  --accent-2:#3d8065;
+  --accent-soft:#eef6f1;
+  --green-soft:#edf7f1;
+  --amber:#9a6505;
+  --amber-soft:#fff7e7;
+  --red:#c24b4b;
+  --red-soft:#fff1f1;
+  --shadow:0 22px 70px rgba(17,28,21,.07);
+  --radius:26px;
+  --radius-sm:16px;
+  --max:1240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Tuyigf Source Han Sans","Source Han Sans SC","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+  line-height:1.68;letter-spacing:-.012em;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  font-size:14px;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(calc(100% - 48px),var(--max));margin-inline:auto}
+.mono{font-family:"Cascadia Mono","SFMono-Regular",Consolas,monospace;letter-spacing:0;font-size:12.5px}
+
+/* ---------- 顶栏（与官网 v17 同构） ---------- */
+.nav{position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(224,227,224,.92);background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(130%)}
+.nav-inner{height:70px;display:flex;align-items:center;gap:26px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;white-space:nowrap}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;line-height:1}
+.nav-links{display:flex;align-items:center;gap:21px;color:#5f655f;font-size:14px;margin-left:auto}
+.nav-links a{padding:8px 0;position:relative;white-space:nowrap}
+.nav-links a.on{color:var(--ink);font-weight:700}
+.nav-links a.on::after{content:"";position:absolute;left:0;right:0;bottom:3px;height:2px;border-radius:999px;background:var(--accent)}
+.pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.avatar{width:30px;height:30px;border-radius:999px;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #cfe1d6}
+
+/* ---------- 页面 ---------- */
+.page{padding:34px 0 120px}
+.pghead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+.pghead h1{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.pghead .sub{margin-top:6px;font-size:14px;color:var(--muted)}
+.pghead .right{display:flex;align-items:center;gap:10px}
+
+/* ---------- 顶带 ---------- */
+.strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:14px 18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:18px}
+.strip .dot{width:8px;height:8px;border-radius:999px;background:var(--accent);flex:none}
+.strip .id{font-weight:700}
+.strip .dim{color:var(--muted);font-size:13px}
+.strip .sep{color:var(--line-strong)}
+
+/* ---------- 卡片 ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:24px;margin-bottom:18px}
+.card-h{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.card-h .ico{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;border:1px solid #cfe1d6}
+.card-h h2{font-size:16px;font-weight:700;letter-spacing:-.015em}
+.card-h p{margin-top:3px;font-size:13px;color:var(--muted)}
+.card-h .spacer{flex:1}
+
+/* ---------- 按钮 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;transition:.18s ease;white-space:nowrap}
+.btn-primary{background:#121412;color:#fff;box-shadow:0 10px 24px rgba(17,19,17,.10)}
+.btn-primary:hover{background:#000}
+.btn-accent{background:var(--accent);color:#fff;box-shadow:0 10px 24px rgba(45,115,86,.18)}
+.btn-accent:hover{background:var(--accent-2)}
+.btn-ghost{background:#fff;border-color:var(--line-strong);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--muted-2);background:var(--surface-2)}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+/* ---------- 选择区（未选态） ---------- */
+.picker{border:1.5px dashed var(--line-strong);border-radius:var(--radius-sm);background:var(--surface-2);padding:36px 24px;text-align:center;transition:.18s}
+.picker:hover{border-color:var(--accent);background:var(--surface-green)}
+.picker .big{width:52px;height:52px;border-radius:16px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;margin:0 auto 14px;color:var(--accent)}
+.picker h3{font-size:15px;font-weight:700}
+.picker p{margin-top:6px;font-size:13px;color:var(--muted);max-width:520px;margin-inline:auto}
+.picker .acts{margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- 结果摘要 ---------- */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:600}
+.stat .v{font-size:22px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.stat .v small{font-size:13px;font-weight:600;color:var(--muted-2)}
+.stat.accent{background:var(--accent-soft);border-color:#cfe1d6}
+.stat.accent .v{color:var(--accent)}
+
+/* ---------- 提示条 ---------- */
+.note{display:flex;gap:10px;padding:13px 15px;border-radius:12px;font-size:13px;line-height:1.6;margin-bottom:16px;border:1px solid}
+.note .ni{flex:none;margin-top:1px}
+.note-warn{background:var(--amber-soft);border-color:#f0dcae;color:#6d4a04}
+.note-ok{background:var(--green-soft);border-color:#cfe1d6;color:#1d5c43}
+.note-info{background:var(--surface-green);border-color:#d7e7dd;color:#33544a}
+.note b{font-weight:700}
+
+/* ---------- 列表 ---------- */
+.list{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line);background:#fff}
+.row:last-child{border-bottom:none}
+.row:hover{background:var(--surface-2)}
+.row .idx{width:22px;flex:none;text-align:right;font-size:12px;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.row .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.row .rel{font-size:11.5px;color:var(--muted-2);font-weight:500}
+.row .tag{flex:none;font-size:11.5px;padding:3px 9px;border-radius:999px;font-weight:700;border:1px solid}
+.tag-ok{background:var(--green-soft);color:var(--accent);border-color:#cfe1d6}
+.tag-wait{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+.tag-out{background:var(--amber-soft);color:var(--amber);border-color:#f0dcae}
+.row.dim{background:#fcfdfc;opacity:.92}
+.row.dim .fn{color:var(--muted)}
+
+/* 折叠的"未加入"块 */
+.cut{margin-top:14px;border:1px solid #f0dcae;background:var(--amber-soft);border-radius:12px;overflow:hidden}
+.cut-h{display:flex;align-items:center;gap:9px;padding:11px 15px;font-size:13px;font-weight:700;color:#6d4a04}
+.cut-body{border-top:1px solid #f0dcae;padding:4px 0;background:#fffdf7}
+.cut-body .row{background:transparent;border-bottom:1px solid #f6ecd4}
+.cut-body .row:last-child{border-bottom:none}
+
+/* ---------- 表格候选 ---------- */
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.tcard{border:1px solid var(--line);border-radius:12px;padding:14px 15px;background:#fff}
+.tcard .th{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;margin-bottom:4px}
+.tcard .th .ext{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent);border:1px solid #cfe1d6;font-weight:700}
+.tcard .tp{font-size:11.5px;color:var(--muted-2);margin-bottom:8px}
+.tcard .tb{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.unbound{font-size:11.5px;color:var(--amber);font-weight:700}
+
+/* ---------- 自检条 ---------- */
+.selfcheck{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#121412;color:#e8ece9;border-top:1px solid #2a302b;font-size:12.5px;letter-spacing:0}
+.selfcheck .in{width:min(calc(100% - 48px),var(--max));margin-inline:auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:11px 0}
+.selfcheck .ttl{font-weight:700;color:#fff;display:flex;align-items:center;gap:7px}
+.selfcheck .ok{color:#7fd3a8;font-weight:700}
+.selfcheck .bad{color:#ff9c9c;font-weight:700}
+.selfcheck .item{display:flex;align-items:center;gap:6px;color:#a9b2ac}
+.selfcheck .item b{color:#e8ece9;font-variant-numeric:tabular-nums}
+.selfcheck .spacer{flex:1}
+.selfcheck .hint{color:#6d766f}
+
+/* 分隔 */
+.hr{height:1px;background:var(--line);margin:20px 0}
+.label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.label .cnt{font-weight:600;color:var(--muted-2)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="brand-mark">图</span>图译工坊</div>
+    <div class="nav-links">
+      <a href="#">首页</a>
+      <a href="#">工作台</a>
+      <a href="#" class="on">批量工作台</a>
+      <a href="#">下载助手</a>
+      <span class="pill">积分 14,867</span>
+      <span class="avatar">Y</span>
+    </div>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pghead">
+      <div>
+        <h1>批量工作台</h1>
+        <p class="sub">选一个文件夹，子文件夹里的设计稿和译文表一次找出来；设计文件不上传。</p>
+      </div>
+      <div class="right">
+        <span class="pill">助手 3.7.15 · 已连接</span>
+        <button class="btn btn-ghost btn-sm">重置</button>
+      </div>
+    </div>
+
+    <!-- 顶带 -->
+    <div class="strip">
+      <span class="dot"></span>
+      <span class="id">2026秋季改版</span>
+      <span class="sep">·</span>
+      <span class="dim">12 个设计稿</span>
+      <span class="sep">·</span>
+      <span class="dim">3 种语言</span>
+      <span class="sep">·</span>
+      <span class="dim">已扫描 12 / 12</span>
+      <span class="sep">·</span>
+      <span class="dim">已对齐</span>
+    </div>
+
+    <!-- ============ 卡 1：文件夹导入 ============ -->
+    <section class="card">
+      <div class="card-h">
+        <div class="ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <div>
+          <h2>从文件夹导入</h2>
+          <p>连子文件夹一起找；按名称排序取前 12 个，超出会逐条列出来。</p>
+        </div>
+        <div class="spacer"></div>
+        <span class="pill" id="rootPill">尚未选择文件夹</span>
+      </div>
+
+      <!-- 未选态 -->
+      <div id="pickerIdle">
+        <div class="picker">
+          <div class="big">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v6M9 14h6"/></svg>
+          </div>
+          <h3>选一个项目文件夹</h3>
+          <p>会把里面所有子文件夹中的 PSD / PSB 找出来，同时列出可用的译文表。文件夹路径不会上传。</p>
+          <div class="acts">
+            <button class="btn btn-accent" id="btnPick">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              选择文件夹
+            </button>
+            <button class="btn btn-ghost" id="btnPaste">改用粘贴路径</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已扫描态 -->
+      <div id="resultIdle" hidden>
+        <div class="summary">
+          <div class="stat"><div class="k">找到设计稿</div><div class="v" id="sTotal">17 <small>个</small></div></div>
+          <div class="stat accent"><div class="k">已加入</div><div class="v" id="sKept">12 <small>个</small></div></div>
+          <div class="stat"><div class="k">未加入</div><div class="v" id="sCut">5 <small>个</small></div></div>
+          <div class="stat"><div class="k">译文表候选</div><div class="v" id="sTab">3 <small>张</small></div></div>
+        </div>
+
+        <div class="note note-warn">
+          <span class="ni">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          </span>
+          <div>
+            这个文件夹里有 <b>17 个</b>设计稿，超过单批上限 <b>12 个</b>。按名称顺序取了<b>前 12 个</b>，剩下的 <b>5 个未加入</b>，列在下面，你可以先做完这一批再来一次。
+          </div>
+        </div>
+
+        <div class="label">
+          已加入本批 <span class="cnt">（12 / 12 · 按名称自然排序）</span>
+        </div>
+        <div class="list" id="keptList"></div>
+
+        <div class="cut">
+          <div class="cut-h">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+            超出上限未加入的 5 个（点击展开）
+          </div>
+          <div class="cut-body" id="cutList" hidden></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="label">
+          译文表候选 <span class="cnt">（3 张 · 未自动绑定，需在语言区手动指定）</span>
+        </div>
+        <div class="tables" id="tableList"></div>
+        <div class="note note-info" style="margin-top:14px">
+          <span class="ni">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+          <div>这些表只是找出来了，<b>没有自动挂到任何一稿上</b>。子文件夹里的表该配哪一稿没有唯一答案，自动绑会错译，所以留给你在语言区指定。</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-accent" id="btnAddAll">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            全部加入（12 个）
+          </button>
+          <button class="btn btn-ghost" id="btnRepick">重选文件夹</button>
+          <button class="btn btn-ghost" id="btnCancel">取消</button>
+        </div>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">
+          加入后不会自动开始扫描 —— 回到「准备素材」点「全部扫描（按顺序）」才会启动。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 卡 2：已加入清单（加入后） ============ -->
+    <section class="card" id="stage2" hidden>
+      <div class="card-h">
+        <div class="ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div>
+          <h2>本批设计稿</h2>
+          <p>已加入 12 个 · 已扫描 0 个 · 待扫描 12 个</p>
+        </div>
+        <div class="spacer"></div>
+        <span class="pill" style="color:var(--amber);border-color:#f0dcae;background:var(--amber-soft)">待扫描</span>
+      </div>
+      <div class="list" id="stage2List"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-accent btn-sm" id="btnScanAll">全部扫描（按顺序）</button>
+        <button class="btn btn-ghost btn-sm">添加设计稿</button>
+        <button class="btn btn-ghost btn-sm">清除全部</button>
+      </div>
+      <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">
+        全部扫描完成后，下方「执行编排」才会放行 —— 未扫描的稿不会被跳过，也不会被静默略过。
+      </p>
+    </section>
+
+    <!-- ============ 卡 3：执行 ============ -->
+    <section class="card" id="stage3" hidden>
+      <div class="card-h">
+        <div class="ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+        </div>
+        <div>
+          <h2>执行编排</h2>
+          <p>12 个设计稿 × 3 种语言 = 36 格 · 按列表顺序串行，一个做完自动下一个</p>
+        </div>
+      </div>
+      <div class="note note-warn" id="runGate">
+        <span class="ni">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </span>
+        <div>还有 <b>12 个</b>设计稿没有扫描完成，暂不能开始。请回到上一张卡点「全部扫描（按顺序）」。<b>未扫描的稿不会被跳过，也不会被静默略过。</b></div>
+      </div>
+      <button class="btn btn-primary" id="btnRun" disabled>开始批量执行（12 个设计稿）</button>
+    </section>
+
+  </div>
+</main>
+
+<!-- ============ 自检条 ============ -->
+<div class="selfcheck">
+  <div class="in">
+    <span class="ttl">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      模拟件自检
+    </span>
+    <span class="item">青蓝用色 <b id="ck-teal">—</b></span>
+    <span class="item">字族 <b id="ck-font">—</b></span>
+    <span class="item">面板圆角 <b id="ck-radius">—</b></span>
+    <span class="item">自然排序 <b id="ck-sort">—</b></span>
+    <span class="item">超限明示 <b id="ck-cut">—</b></span>
+    <span class="item">表格未绑定 <b id="ck-bind">—</b></span>
+    <span class="spacer"></span>
+    <span class="hint">点「选择文件夹」看完整流程</span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   模拟数据：一个真实会遇到的目录形态
+   D:\项目\2026秋季
+     ├ 01_首页\1.psd  2.psd
+     ├ 02_详情\10.psd 11.psd  3.psd
+     ├ 03_活动\4.psd ... 12.psd
+     ├ 04_归档\13.psd ... 17.psd
+     └ 文案\主文案.xlsx  02_详情\详情文案.xlsx  01_首页\首页文案.csv
+   ============================================================ */
+const ROOT = 'D:\\项目\\2026秋季';
+
+const ALL_DESIGNS = [
+  { rel:'01_首页/1.psd',      size:'48.2 MB' },
+  { rel:'01_首页/2.psd',      size:'51.7 MB' },
+  { rel:'02_详情/3.psd',      size:'39.4 MB' },
+  { rel:'02_详情/10.psd',     size:'62.1 MB' },
+  { rel:'02_详情/11.psd',     size:'44.8 MB' },
+  { rel:'03_活动/4.psd',      size:'57.3 MB' },
+  { rel:'03_活动/5.psd',      size:'41.0 MB' },
+  { rel:'03_活动/6.psd',      size:'45.6 MB' },
+  { rel:'03_活动/7.psd',      size:'38.9 MB' },
+  { rel:'03_活动/8.psd',      size:'50.2 MB' },
+  { rel:'03_活动/9.psd',      size:'47.5 MB' },
+  { rel:'03_活动/12.psd',     size:'43.3 MB' },
+  { rel:'04_归档/13.psd',     size:'36.8 MB' },
+  { rel:'04_归档/14.psd',     size:'52.4 MB' },
+  { rel:'04_归档/15.psd',     size:'40.1 MB' },
+  { rel:'04_归档/16.psd',     size:'55.9 MB' },
+  { rel:'04_归档/17.psd',     size:'49.0 MB' },
+];
+
+const TABLES = [
+  { rel:'文案/主文案.xlsx',        ext:'XLSX', note:'全批共用候选' },
+  { rel:'01_首页/首页文案.csv',    ext:'CSV',  note:'与 01_首页 同目录' },
+  { rel:'02_详情/详情文案.xlsx',   ext:'XLSX', note:'与 02_详情 同目录' },
+];
+
+const MAX = 12;
+
+/* ---------- 自然排序（numeric-aware），与资源管理器一致 ---------- */
+const collator = new Intl.Collator('zh-Hans-CN', { numeric:true, sensitivity:'base' });
+function naturalSort(list){
+  return list.slice().sort((a,b)=>collator.compare(a.rel, b.rel));
+}
+
+/* ---------- 渲染 ---------- */
+function basename(p){ const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')); return p.slice(i+1); }
+function dirname(p){ const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')); return i < 0 ? '' : p.slice(0,i); }
+
+function renderKept(list){
+  const el = document.getElementById('keptList');
+  el.innerHTML = list.map((d,i)=>`
+    <div class="row">
+      <span class="idx">${i+1}</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2d7356" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="fn">${basename(d.rel)} <span class="rel">${dirname(d.rel) || '根目录'} · ${d.size}</span></span>
+      <span class="tag tag-wait">待扫描</span>
+    </div>`).join('');
+}
+
+function renderCut(list){
+  const el = document.getElementById('cutList');
+  el.innerHTML = list.map((d,i)=>`
+    <div class="row dim">
+      <span class="idx">${i+1}</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a6505" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="fn">${basename(d.rel)} <span class="rel">${dirname(d.rel)} · ${d.size}</span></span>
+      <span class="tag tag-out">未加入</span>
+    </div>`).join('');
+}
+
+function renderTables(list){
+  const el = document.getElementById('tableList');
+  el.innerHTML = list.map(t=>`
+    <div class="tcard">
+      <div class="th">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2d7356" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        ${basename(t.rel)}
+        <span class="ext">${t.ext}</span>
+      </div>
+      <div class="tp">${dirname(t.rel)} · ${t.note}</div>
+      <div class="tb">
+        <span>未绑定到任何设计稿</span>
+        <span class="unbound">需手动指定</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderStage2(list){
+  const el = document.getElementById('stage2List');
+  el.innerHTML = list.map((d,i)=>`
+    <div class="row">
+      <span class="idx">${i+1}</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2d7356" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="fn">${basename(d.rel)} <span class="rel">${dirname(d.rel)}</span></span>
+      <span class="tag tag-wait">待扫描</span>
+    </div>`).join('');
+}
+
+/* ---------- 交互 ---------- */
+const sorted = naturalSort(ALL_DESIGNS);
+const kept = sorted.slice(0, MAX);
+const cut  = sorted.slice(MAX);
+
+document.getElementById('btnPick').addEventListener('click', ()=>{
+  document.getElementById('pickerIdle').hidden = true;
+  document.getElementById('resultIdle').hidden = false;
+  document.getElementById('rootPill').textContent = ROOT;
+  document.getElementById('sTotal').innerHTML = `${sorted.length} <small>个</small>`;
+  document.getElementById('sKept').innerHTML  = `${kept.length} <small>个</small>`;
+  document.getElementById('sCut').innerHTML   = `${cut.length} <small>个</small>`;
+  document.getElementById('sTab').innerHTML   = `${TABLES.length} <small>张</small>`;
+  renderKept(kept);
+  renderCut(cut);
+  renderTables(TABLES);
+  runSelfCheck();
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+document.querySelector('.cut-h').addEventListener('click', ()=>{
+  const b = document.getElementById('cutList');
+  b.hidden = !b.hidden;
+  document.querySelector('.cut-h').lastChild.textContent =
+    (b.hidden ? '超出上限未加入的 ' + cut.length + ' 个（点击展开）'
+              : '超出上限未加入的 ' + cut.length + ' 个（点击收起）');
+});
+
+document.getElementById('btnAddAll').addEventListener('click', ()=>{
+  renderStage2(kept);
+  document.getElementById('stage2').hidden = false;
+  document.getElementById('stage3').hidden = false;
+  document.getElementById('stage2').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('btnRun').addEventListener('click', ()=>{
+  const b = document.getElementById('btnRun');
+  b.textContent = '正在执行第 1 / 12 个（1.psd）…';
+  b.disabled = true;
+});
+
+/* 模拟「全部扫描（按顺序）」：真的逐条改状态，扫完才放开执行闸 */
+document.getElementById('btnScanAll').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btnScanAll');
+  btn.disabled = true;
+  const rows = [...document.querySelectorAll('#stage2List .row')];
+  for (let i = 0; i < rows.length; i++){
+    const tag = rows[i].querySelector('.tag');
+    tag.textContent = '扫描中';
+    tag.className = 'tag tag-wait';
+    btn.textContent = `队列扫描中…（第 ${i+1}/${rows.length}）`;
+    await new Promise(r => setTimeout(r, 90));
+    tag.textContent = '已扫描';
+    tag.className = 'tag tag-ok';
+  }
+  btn.textContent = '全部扫描（按顺序）';
+  btn.disabled = false;
+  const sub = document.querySelector('#stage2 .card-h p');
+  sub.textContent = '已加入 12 个 · 已扫描 12 个 · 待扫描 0 个';
+  const pill = document.querySelector('#stage2 .card-h .pill');
+  pill.textContent = '全部已扫描';
+  pill.style.cssText = 'color:var(--accent);border-color:#cfe1d6;background:var(--green-soft)';
+  const gate = document.getElementById('runGate');
+  gate.className = 'note note-ok';
+  gate.querySelector('svg').outerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  gate.querySelector('div').innerHTML = '本批 36 格（12 稿 × 3 语言）全部扫描完成，可以开始执行。';
+  const run = document.getElementById('btnRun');
+  run.disabled = false;
+  run.textContent = '开始批量执行（12 个设计稿）';
+});
+
+document.getElementById('btnRepick').addEventListener('click', ()=>{
+  document.getElementById('resultIdle').hidden = true;
+  document.getElementById('pickerIdle').hidden = false;
+  document.getElementById('rootPill').textContent = '尚未选择文件夹';
+  document.getElementById('stage2').hidden = true;
+  document.getElementById('stage3').hidden = true;
+});
+
+document.getElementById('btnCancel').addEventListener('click', ()=>{
+  document.getElementById('btnRepick').click();
+});
+
+document.getElementById('btnPaste').addEventListener('click', ()=>{
+  alert('（模拟件）这里会切到「粘贴路径」输入框，与现有实现一致。');
+});
+
+/* ---------- 自检：读真实 DOM 与真实变量，不写死 ---------- */
+function runSelfCheck(){
+  const cs = getComputedStyle(document.documentElement);
+
+  // 1. 青蓝用色：扫描全部样式表里是否有 teal/sky 系色值
+  let tealHits = 0;
+  for (const sheet of document.styleSheets){
+    let rules; try { rules = sheet.cssRules } catch { continue }
+    for (const r of rules){
+      const t = r.cssText || '';
+      if (/#0d9488|#14b8a6|#0284c7|#0ea5e9|teal|sky-/i.test(t)) tealHits++;
+    }
+  }
+  setCk('ck-teal', tealHits === 0 ? '0 处' : tealHits + ' 处', tealHits === 0);
+
+  // 2. 字族：body 实际算出来的第一个字族
+  const fam = getComputedStyle(document.body).fontFamily.split(',')[0].replace(/"/g,'');
+  setCk('ck-font', fam, /Source Han Sans|思源/i.test(fam));
+
+  // 3. 面板圆角：读真实卡片的 computed border-radius
+  const card = document.querySelector('.card');
+  const rad = card ? getComputedStyle(card).borderTopLeftRadius : '—';
+  setCk('ck-radius', rad, rad === '16px');
+
+  // 4. 自然排序：真实数组排序结果前 4 个
+  //    期望 1 2 3 10（数字感知）；若退化成字典序会是 1 2 10 11 —— 这条能把它抓出来
+  const head = kept.slice(0,4).map(d=>basename(d.rel)).join(' ');
+  setCk('ck-sort', head, head === '1.psd 2.psd 3.psd 10.psd');
+
+  // 5. 超限明示：未加入清单必须逐条渲染出来
+  const cutRows = document.querySelectorAll('#cutList .row').length;
+  const cutText = document.querySelector('.note-warn').textContent;
+  const okCut = cutRows === cut.length && cutText.includes(String(cut.length)) && cutText.includes(String(sorted.length));
+  setCk('ck-cut', cutRows + ' 条', okCut);
+
+  // 6. 表格未绑定：不得出现"已绑定"字样
+  const tabText = document.getElementById('tableList').textContent;
+  setCk('ck-bind', /未绑定/.test(tabText) && !/已绑定/.test(tabText) ? '未绑定' : '有绑定', /未绑定/.test(tabText) && !/已绑定/.test(tabText));
+}
+
+function setCk(id, text, pass){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  if (pass === null) { el.className = ''; el.style.color = '#a9b2ac'; el.title = '待点选后自检'; return; }
+  el.style.color = '';
+  el.className = pass ? 'ok' : 'bad';
+  el.title = pass ? 'PASS' : 'FAIL';
+}
+
+function resetCk(){
+  ['ck-teal','ck-font','ck-radius','ck-sort','ck-cut','ck-bind'].forEach(id => setCk(id, '待运行', null));
+}
+
+resetCk();
+</script>
+</body>
+</html>

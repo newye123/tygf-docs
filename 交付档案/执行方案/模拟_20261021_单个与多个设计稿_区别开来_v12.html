@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工作台 · 单个设计稿 / 多个设计稿 · 区别开来（v12 可点模拟）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f2f2ef;--ink:#141614;--ink2:#3b433d;--muted:#6b746d;--faint:#9aa19b;
+  --line:#e5e5e0;--line2:#d4d4ce;--teal:#0f766e;--teal-soft:#e3f2f0;--emerald:#047857;--emerald-soft:#e4f4ec;
+  --amber:#92610a;--amber-soft:#fff5e2;--rose:#b3261e;--rose-soft:#fcecea;
+  --r:14px;--r2:10px;--r3:8px;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --sh:0 1px 2px rgba(20,22,20,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.mono{font-family:var(--mono)}
+.top{height:54px;display:flex;align-items:center;gap:14px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px}
+.brand .mk{width:25px;height:25px;border-radius:7px;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:12.5px}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:13px;font-size:12.5px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot.ok{background:var(--emerald)}
+.wrap{max-width:1060px;margin:0 auto;padding:22px 20px 70px}
+.phead{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 14px}
+.h1row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:21px;font-weight:700;letter-spacing:-.01em}
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r2)}
+.seg button{height:27px;padding:0 12px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted);transition:.13s}
+.seg button[aria-selected="true"]{background:var(--teal);color:#fff;box-shadow:var(--sh)}
+.scope{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;box-shadow:var(--sh);white-space:nowrap}
+.scope b{font-weight:700}
+.sub{margin:2px 0 0;font-size:13px;color:var(--muted);max-width:78ch;width:100%}
+.mkToggle{margin-left:auto;font-size:12px;color:var(--muted);border:1px dashed var(--line2);border-radius:8px;padding:4px 10px}
+.mkToggle[aria-pressed="true"]{background:var(--amber-soft);border-color:#e9cd8f;color:#7a5206;font-weight:600}
+.rail{display:flex;align-items:center;gap:4px;margin:16px 0 14px;flex-wrap:wrap}
+.sband{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--r3);padding:9px 13px;margin-top:15px;font-size:12.8px;box-shadow:var(--sh)}
+.sband .lead{display:flex;align-items:center;gap:8px;font-weight:700}
+.sband .mut{color:var(--muted);font-size:12.3px}
+.sband .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rail button{display:flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;border-radius:999px;font-size:12.8px;color:var(--muted);font-weight:500;border:1px solid transparent}
+.rail button .n{width:20px;height:20px;border-radius:50%;background:var(--sunk);color:var(--ink2);display:grid;place-items:center;font-size:11px;font-family:var(--mono);flex:none}
+.rail button[aria-current="true"]{background:var(--surface);border-color:var(--line2);color:var(--ink);font-weight:700;box-shadow:var(--sh)}
+.rail button[aria-current="true"] .n{background:var(--teal);color:#fff}
+.rail .sep{color:var(--line2);font-size:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.card>.hd{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.card>.hd h2{margin:0;font-size:14.5px;font-weight:700}
+.card>.hd .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card>.bd{padding:14px 16px}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:12.8px;font-weight:600;transition:.13s}
+.btn:hover{border-color:var(--ink2);background:var(--sunk)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:#0b5f58}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn.ghost{border-style:dashed;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.tag.ok{background:var(--emerald-soft);border-color:#bfe3d0;color:#0a5c41}
+.tag.warn{background:var(--amber-soft);border-color:#ecd298;color:#7a5206}
+.tag.bad{background:var(--rose-soft);border-color:#f1c9c5;color:#8d1f17}
+.tag.mute{background:var(--sunk);color:var(--muted)}
+.tag.acc{background:var(--teal-soft);border-color:#bfe0dc;color:#0a625b}
+input[type=text]{border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-size:12.8px;font-family:var(--mono);width:100%;color:var(--ink2);background:var(--surface)}
+.filecard{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:var(--r2);padding:11px 13px;background:var(--sunk)}
+.filecard .t{font-family:var(--mono);font-size:13px;font-weight:600}
+.filecard .s{font-size:12px;color:var(--muted)}
+.filecard .r{margin-left:auto;display:flex;gap:7px}
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:7px 9px;border-bottom:1px solid var(--line);background:var(--sunk);white-space:nowrap}
+td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+td.m,th.m{font-family:var(--mono);font-size:12.3px}
+.grp{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--line);border-radius:var(--r2);background:var(--surface);flex-wrap:wrap}
+.grp+.grp{margin-top:7px}
+.grp .nm{font-weight:700;font-size:13.5px}
+.grp .meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.grp .r{margin-left:auto;display:flex;align-items:center;gap:9px}
+.bar{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden;width:90px}
+.bar i{display:block;height:100%;background:var(--emerald)}
+.bar i.warn{background:#cfa14a}
+.check{width:15px;height:15px;accent-color:var(--teal)}
+.langs{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lang{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);background:var(--surface)}
+.lang.on{background:var(--teal-soft);border-color:#bfe0dc;color:#0a625b;font-weight:600}
+.note{font-size:12.5px;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:var(--r3);padding:9px 12px}
+.note.warn{background:var(--amber-soft);border-color:#ecd298;color:#7a5206}
+.scrim{position:fixed;inset:0;background:rgba(20,22,20,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:22px}
+.scrim.on{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);width:100%;max-width:540px;box-shadow:0 28px 64px -22px rgba(0,0,0,.45);overflow:auto}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 17px;border-bottom:1px solid var(--line)}
+.modal header h3{margin:0;font-size:15px;font-weight:700}
+.modal .body{padding:15px 17px;display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--ink2)}
+.modal footer{display:flex;gap:9px;justify-content:flex-end;padding:12px 17px;border-top:1px solid var(--line);background:var(--sunk)}
+.btn.danger{border-color:#e3b1ac;color:#8d1f17;background:var(--rose-soft)}
+.btn.danger:hover{background:#f8dcd9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.rowplan{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:5px 0;border-bottom:1px dotted var(--line)}
+.rowplan:last-child{border-bottom:none}
+.rowplan .st{margin-left:auto;font-size:11.5px}
+.note.ok{background:var(--emerald-soft);border-color:#bfe3d0;color:#0a5c41}
+.fold{border:1px dashed var(--line2);border-radius:var(--r3);padding:8px 12px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;margin-top:9px;cursor:pointer}
+.fold:hover{background:var(--sunk);color:var(--ink2)}
+.kv{display:flex;gap:18px;flex-wrap:wrap;font-size:12.8px;color:var(--ink2)}
+.kv b{font-weight:700}
+.actionbar{margin-top:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.actionbar .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cmp{margin-top:22px}
+.cmp h2{font-size:15px;font-weight:700;margin:0 0 10px}
+.cmp .sub2{font-size:12.5px;color:var(--muted);margin:-4px 0 10px}
+table.cmpt td:first-child{width:34px;text-align:center;font-family:var(--mono);color:var(--teal);font-weight:600}
+table.cmpt td:nth-child(2){width:88px;color:var(--ink2);font-size:12.3px}
+table.cmpt td:nth-child(3),table.cmpt td:nth-child(4){font-size:12.5px}
+.mkr{display:none;font-size:10.5px;font-family:var(--mono);background:var(--amber);color:#fff;border-radius:4px;padding:0 4px;margin-left:5px;vertical-align:1px;line-height:1.6}
+body.mks .mkr{display:inline-block}
+.legend{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px}
+.lg{display:flex;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);padding:9px 11px;font-size:12.5px;color:var(--ink2)}
+.lg .n{font-family:var(--mono);color:var(--amber);font-weight:600;flex:none}
+.lg b{color:var(--ink)}
+footer{margin-top:22px;border-top:1px solid var(--line);padding-top:12px;font-size:12.3px;color:var(--muted);line-height:1.7}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mk">图</span><span>图译工坊</span></div>
+  <div class="right"><span><i class="dot ok"></i> 本地助手已连接</span><span>Photoshop 2021 · 就绪</span></div>
+</header>
+
+<div class="wrap">
+  <div class="phead">
+    <div class="h1row">
+      <h1>工作台</h1>
+      <div class="seg" role="tablist" aria-label="设计稿数量">
+        <button type="button" role="tab" data-mode="single" aria-selected="true">单个设计稿</button>
+        <button type="button" role="tab" data-mode="multi" aria-selected="false">多个设计稿</button>
+      </div>
+      <div class="scope" id="scope"></div>
+    </div>
+    <p class="sub" id="sub"></p>
+    <button class="mkToggle" id="mkToggle" aria-pressed="false" style="order:9">显示差异标注</button>
+  </div>
+
+  <div class="sband" id="sband"></div>
+  <nav class="rail" id="rail" aria-label="四个步骤"></nav>
+  <div id="content"></div>
+
+  <section class="cmp">
+    <h2>这两档的区别，一共 6 处</h2>
+    <p class="sub2">同一个工作台、同一套四步。区别只落在「数量、结构、默认密度、动作词」上——<b>不换配色、不换布局、不加第五步</b>。</p>
+    <div class="card"><table class="cmpt">
+      <thead><tr><th></th><th>位置</th><th>单个设计稿</th><th>多个设计稿</th></tr></thead>
+      <tbody>
+        <tr><td>①</td><td>副标题</td><td>扫描设计稿、导入译文并在本机生成多语言文件</td><td>一次处理多个设计稿：每个稿各自对账、各自生成，互不影响</td></tr>
+        <tr><td>②</td><td>范围条</td><td><span class="tag">这份稿：SKU-AX1001_主图.psd</span></td><td><span class="tag">这一批：12 个设计稿 · 已扫描 9 · 3 个要处理</span></td></tr>
+        <tr><td>③</td><td>顶部状态带</td><td>文件名的扫描状态 ＋ 3 个语言 ＋ 已对齐</td><td><b>集合语义</b>：12 个设计稿 · 9 已扫描 · 3 待扫描，带「全部扫描」＋「3 项待处理」</td></tr>
+        <tr><td>④</td><td>第 1 步主体</td><td>一张文件卡（选择文件… / 扫描 / 重新扫描 / 移除）</td><td>工作文件夹 ＋ 组卡片 ＋ 稿表（文件名 / 图层 / 状态 / 用哪张表 / 覆盖率）</td></tr>
+        <tr><td>⑤</td><td>第 2·3 步默认密度</td><td><b>细节全摊开</b>：12 个图层、5 行译文都在眼前</td><td><b>只摊开"要处理的"</b>，其余折起来（"查看其余 9 个"）</td></tr>
+        <tr><td>⑥</td><td>第 4 步动作词</td><td><span class="tag mute">确认并生成</span></td><td><span class="tag acc">确认并生成（本批 12 份）</span> ＋ 第 7 / 12 份</td></tr>
+      </tbody>
+    </table></div>
+    <div class="legend">
+      <div class="lg"><span class="n">一句话</span><div><b>单稿台把细节摊开，多稿台把问题推到面前。</b>两档不是"外观不同"，是"工作方式不同"：单份＝逐份精修，多份＝例外处理。</div></div>
+      <div class="lg"><span class="n">不做</span><div>不换配色／布局（会像两个产品）｜不加第五步（流程仍是四步）｜不恢复两个并列导航入口（已否）｜不用"一对多 / 多对多 / 批量"这类关系词。</div></div>
+      <div class="lg"><span class="n">用词</span><div>线上现在是 <b>单个设计稿 / 多个设计稿</b>（硬编码在 workbench-view.tsx:2654 / 2668）。若改成"单份 / 多份"，三处文案要同改，否则"改了不生效"。</div></div>
+    </div>
+  </section>
+
+  <footer>
+    v12 可点模拟 · 只为看"两档怎么区别开来"，不是成品界面。<br>
+    四步名取自 siteContent.ts:430-434（准备素材 / 智能检测 / 设计稿校对 / 生成交付）；分段切换器取自 workbench-view.tsx:2637-2670；副标题取自 :2672-2676。<br>
+    第 4 步额外演示一条可点的取消链（确认层 → 取消并退回 → 停止 → 已停止）：那是方案 §4.5 的边界演示，<b>不是已上线能力</b>——服务端目前只有单个任务号级的取消，没有按整批的。<br>
+    数据都是举例，不代表真实扫描结果。
+  </footer>
+</div>
+
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal">
+    <header><h3 id="mTitle">确认生成</h3></header>
+    <div class="body" id="mBody"></div>
+    <footer>
+      <button class="btn" id="mNo">取消，什么都不做</button>
+      <button class="btn primary" id="mYes">确认生成</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+const STEPS=[{k:'prep',n:'准备素材'},{k:'review',n:'智能检测'},{k:'reconcile',n:'设计稿校对'},{k:'delivery',n:'生成交付'}];
+const COPY={
+  single:{sub:'扫描设计稿、导入译文并在本机生成多语言文件；设计文件不会上传。'},
+  multi:{sub:'一次处理多个设计稿：每个稿各自对账、各自生成，互不影响。设计文件不会上传。'}
+};
+const G=[{d:'主图',psd:4,tbl:1,scanned:4,issues:0},
+         {d:'详情页',psd:4,tbl:4,scanned:3,issues:1},
+         {d:'长尾',psd:4,tbl:4,scanned:2,issues:2}];
+const BAD=[{f:'SKU-BX2079_详情页.psd',g:'详情页',why:'没配上表（表里有 BX2079_八语.xlsx，但文件名对不上）',ly:14,cov:'—'},
+           {f:'SKU-DX4408_详情页.psd',g:'长尾',why:'覆盖率 71%，低于 80%',ly:31,cov:'71%'},
+           {f:'SKU-DX4409_长尾页.psd',g:'长尾',why:'还没扫描',ly:10,cov:'—'}];
+let mode='single', step='prep';
+const $=s=>document.querySelector(s);
+
+function renderScope(){
+  const el=$('#scope');
+  if(mode==='single'){ el.innerHTML='这份稿：<b>SKU-AX1001_主图.psd</b>'; }
+  else { el.innerHTML='这一批：<b>12 个设计稿</b> · 已扫描 9 · <b>3 个要处理</b>'; }
+  $('#sub').innerHTML=(mode==='single'?COPY.single.sub:COPY.multi.sub)+'<span class="mkr">①</span>';
+}
+function renderRail(){
+  $('#rail').innerHTML=STEPS.map((s,i)=>
+    `<button type="button" data-step="${s.k}" aria-current="${s.k===step}"><span class="n">${i+1}</span>${s.n}</button>`+
+    (i<3?'<span class="sep">›</span>':'')).join('');
+  $('#rail').querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>{step=b.dataset.step;render();}));
+}
+const mk=n=>`<span class="mkr">${n}</span>`;
+
+function prepSingle(){
+  return `<div class="card">
+    <div class="hd"><h2>选择设计文件 · 只读预扫描</h2><div class="r"><span class="tag mute">1 个文件</span></div></div>
+    <div class="bd">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1 1 300px"><input type="text" value="D:\\项目\\2026Q4_秋季新品\\主图\\SKU-AX1001_主图.psd" readonly></div>
+        <button class="btn">选择文件…</button><button class="btn primary">扫描</button>
+      </div>
+      <div style="margin-top:11px" class="filecard">
+        <span style="font-size:17px">📄</span>
+        <div><div class="t">SKU-AX1001_主图.psd</div><div class="s">已扫描 · 12 个文字图层 · 12.4 MB</div></div>
+        <div class="r"><button class="btn sm">重新扫描</button><button class="btn sm">移除</button></div>
+      </div>
+      ${mk('④')}
+      <div style="margin-top:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap" class="langs">
+        <span class="lang on">原文</span><span class="lang">德语</span><span class="lang">法语</span><span class="lang">日语</span>
+        <button class="btn sm" style="margin-left:4px">选择语言</button>
+        <button class="btn sm">重选译文表</button>
+      </div>
+      <div class="note" style="margin-top:11px">译文表：<span class="mono">AX1001-AX1004_文案主表.xlsx</span> · 3 个语言列 · 5 行</div>
+    </div>
+    <div class="actionbar"><span style="font-size:12.3px;color:var(--muted)">下一步：智能检测</span>
+      <div class="r"><button class="btn primary" onclick="document.querySelector('#rail [data-step=review]').click()">下一步</button></div></div>
+  </div>`;
+}
+function prepMulti(){
+  return `<div class="card">
+    <div class="hd"><h2>工作文件夹</h2><div class="r">
+      <span class="tag ok">已读取 3 个子文件夹</span>
+      <button class="btn sm">重新读取</button><button class="btn primary sm">选择文件夹</button></div></div>
+    <div class="bd">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1 1 300px"><input type="text" value="D:\\项目\\2026Q4_秋季新品" readonly></div>
+      </div>
+      <div class="note" style="margin-top:9px">每个子文件夹＝一套要改的 SKU：里面的 PSD 和它的表就地配对。<b>组内 1 张表 ⇒ 全组共用；多张 ⇒ 按同名一对一；配不上的逐条点名。</b></div>
+      <div style="margin-top:12px">
+        ${G.map(g=>`<div class="grp">
+          <input type="checkbox" class="check" checked>
+          <span class="nm">${g.d}</span>
+          <span class="meta"><span>${g.psd} 个设计稿</span><span>${g.tbl} 张表</span><span>已扫描 ${g.scanned}/${g.psd}</span></span>
+          <div class="r">
+            ${g.issues?`<span class="tag warn">${g.issues} 处要处理</span>`:`<span class="tag ok">都配上了</span>`}
+            <div class="bar"><i style="width:${Math.round(g.scanned/g.psd*100)}%"></i></div>
+            <button class="btn sm">看这一组</button>
+          </div></div>`).join('')}
+      </div>
+      ${mk('④')}
+      <div style="margin-top:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <b style="font-size:13px">要处理的 3 个</b><span class="tag warn">先看这些</span>
+        </div>
+        <table><thead><tr><th>设计稿</th><th class="m" style="width:70px">图层</th><th style="width:86px">状态</th><th>为什么在这里</th><th class="m" style="width:74px">覆盖率</th></tr></thead>
+          <tbody>${BAD.map(b=>`<tr><td class="m">${b.f}</td><td class="m">${b.ly}</td>
+            <td><span class="tag ${b.why.includes('未扫描')||b.why.includes('还没扫描')?'mute':'bad'}">${b.why.includes('扫描')?'未扫描':'要处理'}</span></td>
+            <td style="font-size:12.3px;color:var(--ink2)">${b.why}</td><td class="m">${b.cov}</td></tr>`).join('')}</tbody></table>
+      </div>
+      <div class="fold" id="foldAll">▸ 查看其余 9 个（都已对齐，不占你的注意力）</div>
+      <div id="allNine" hidden></div>
+    </div>
+    <div class="actionbar"><span style="font-size:12.3px;color:var(--muted)">处理完这 3 个再往下走；不处理的会如实计入交付报告</span>
+      <div class="r"><button class="btn" id="btnScanAll">全部扫描（9 个待扫描里的 3 个）</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=review]').click()">下一步</button></div></div>
+  </div>`;
+}
+function reviewSingle(){
+  return `<div class="card">
+    <div class="hd"><h2>智能检测 · 当前语言 德语</h2><div class="r">
+      <span class="tag">德语</span><span class="tag mute">法语 未检测</span><span class="tag mute">日语 未检测</span>
+      <button class="btn sm primary">检测全部语言</button><button class="btn sm">编辑译表</button></div></div>
+    <div class="bd">
+      <table><thead><tr><th style="width:30px">#</th><th>原文</th><th>译文</th><th style="width:100px">状态</th></tr></thead><tbody>
+        <tr><td class="m">1</td><td>Buy Now</td><td>Jetzt kaufen</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">2</td><td>Free Shipping</td><td>Versand kostenlos</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">3</td><td>30-Day Money-Back Guarantee</td><td></td><td><span class="tag bad">译文为空</span></td></tr>
+        <tr><td class="m">4</td><td>In stock — ships in 24h</td><td>Auf Lager</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">5</td><td>View the Collection</td><td>Die Kollektion ansehen</td><td><span class="tag warn">重复原文</span></td></tr>
+      </tbody></table>
+      <div class="note" style="margin-top:10px">5 行全部摊开——<b>只有一份稿，细节看不完就不该往下走。</b>${mk('⑤')}</div>
+    </div>
+    <div class="actionbar"><div class="r"><button class="btn" onclick="document.querySelector('#rail [data-step=prep]').click()">上一步</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=reconcile]').click()">下一步</button></div></div>
+  </div>`;
+}
+function reviewMulti(){
+  return `<div class="card">
+    <div class="hd"><h2>智能检测 · 本批 12 个设计稿 × 3 个语言</h2><div class="r">
+      <span class="tag ok">9 个已检测</span><span class="tag warn">2 个有建议</span><span class="tag mute">1 个未检测</span>
+      <button class="btn sm primary">检测全部（本批 12 个）</button></div></div>
+    <div class="bd">
+      <table><thead><tr><th>设计稿</th><th class="m" style="width:64px">语言</th><th style="width:96px">检测</th><th>要看的</th></tr></thead><tbody>
+        <tr><td class="m">SKU-BX2077_详情页.psd</td><td class="m">3</td><td><span class="tag warn">2 条建议</span></td><td style="font-size:12.3px">「View the Collection」重复原文 × 2</td></tr>
+        <tr><td class="m">SKU-CX3302_长尾页.psd</td><td class="m">3</td><td><span class="tag bad">译文为空</span></td><td style="font-size:12.3px">德语第 3 行缺译文</td></tr>
+      </tbody></table>
+      <div class="fold" id="foldRest">▸ 其余 10 个都已通过，折起来</div>
+      <div class="note" style="margin-top:10px">只把"要看的 2 个"推到你面前——<b>12 份稿的每一行都摊开是看不完的</b>，多稿台的工作方式是"只处理例外"。${mk('⑤')}</div>
+    </div>
+    <div class="actionbar"><div class="r"><button class="btn" onclick="document.querySelector('#rail [data-step=prep]').click()">上一步</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=reconcile]').click()">下一步</button></div></div>
+  </div>`;
+}
+function recoSingle(){
+  return `<div class="card">
+    <div class="hd"><h2>设计稿校对 · 这份稿</h2><div class="r"><span class="tag ok">已连接 · Photoshop 就绪</span></div></div>
+    <div class="bd">
+      <div class="kv"><span>文字图层 <b>12</b></span><span>可自动替换 <b>10</b></span><span>需人工处理 <b>2</b></span><span>与译表对账 <b>已对齐</b></span></div>
+      <table style="margin-top:11px"><thead><tr><th style="width:30px">#</th><th>图层</th><th>原文</th><th style="width:110px">处置</th></tr></thead><tbody>
+        <tr><td class="m">1</td><td class="m">Hero/Title</td><td>Buy Now</td><td><span class="tag ok">可替换</span></td></tr>
+        <tr><td class="m">2</td><td class="m">Hero/Sub</td><td>Free Shipping</td><td><span class="tag ok">可替换</span></td></tr>
+        <tr><td class="m">3</td><td class="m">Badge/Guarantee</td><td>30-Day Money-Back Guarantee</td><td><span class="tag warn">预计超宽</span></td></tr>
+        <tr><td class="m">4</td><td class="m">Footer/Legal</td><td>…</td><td><span class="tag bad">结构缺陷</span></td></tr>
+      </tbody></table>
+      <div style="margin-top:9px;font-size:12.3px;color:var(--muted)">详细图层默认展开 —— 一份稿的 12 层，值得逐层看一眼。${mk('⑤')}</div>
+    </div>
+    <div class="actionbar"><div class="r"><button class="btn" onclick="document.querySelector('#rail [data-step=review]').click()">上一步</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=delivery]').click()">下一步</button></div></div>
+  </div>`;
+}
+function recoMulti(){
+  return `<div class="card">
+    <div class="hd"><h2>设计稿校对 · 本批 12 个</h2><div class="r"><span class="tag ok">已连接 · Photoshop 就绪</span><span class="tag mute">10 个可生成</span><span class="tag warn">2 个要人工</span></div></div>
+    <div class="bd">
+      <table><thead><tr><th>设计稿</th><th class="m" style="width:70px">图层</th><th class="m" style="width:72px">可替换</th><th style="width:110px">结论</th></tr></thead><tbody>
+        <tr><td class="m">SKU-CX3302_长尾页.psd</td><td class="m">18</td><td class="m">17</td><td><span class="tag warn">1 处预计超宽</span></td></tr>
+        <tr><td class="m">SKU-DX4408_详情页.psd</td><td class="m">31</td><td class="m">28</td><td><span class="tag bad">3 处结构缺陷</span></td></tr>
+      </tbody></table>
+      <div class="fold">▸ 其余 10 个：全部可生成，折起来</div>
+      <div class="note" style="margin-top:10px">同样只摊开"要人工的 2 个"。${mk('⑤')}</div>
+    </div>
+    <div class="actionbar"><div class="r"><button class="btn" onclick="document.querySelector('#rail [data-step=review]').click()">上一步</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=delivery]').click()">下一步</button></div></div>
+  </div>`;
+}
+let gs='idle', gp=0, gTick=null;
+function scopeInfo(){
+  return mode==='single'
+    ? {n:1, rows:5, credits:15}
+    : {n:12, rows:58, credits:174};
+}
+function clearTick(){ if(gTick){clearInterval(gTick); gTick=null;} }
+function startTick(){
+  clearTick();
+  const n=scopeInfo().n;
+  let first=true;
+  gTick=setInterval(()=>{
+    // 第一拍空转：给「取消并退回」留一个真实可点的窗口（演示用 ~2.4 秒）
+    if(first){ first=false; return; }
+    gp+=1;
+    if(gp>=n){ gp=n; clearTick(); gs='finished'; }
+    render();
+  },1200);
+}
+function deliveryCard(){
+  const s=scopeInfo(), isM=mode==='multi';
+  const hd=(right)=>`<div class="hd"><h2>生成交付${isM?' · 本批 12 个设计稿':''}</h2><div class="r">${right}</div></div>`;
+  const kv=`<div class="kv"><span>保存位置 <b class="mono">D:\\输出\\2026Q4</b></span>${isM?'<span>设计稿 <b>12</b></span>':''}<span>语言 <b>3</b></span><span>替换行数 <b>${s.rows}</b></span><span>预计费用 <b>${s.credits} 积分</b></span></div>`;
+
+  if(gs==='idle'){
+    return `<div class="card">${hd('<span class="tag ok">可生成</span>')}
+      <div class="bd">${kv}
+        <div class="note ok" style="margin-top:11px">点击开始替换后将在本机生成，设计文件不会上传。</div>
+        ${isM?'<div class="note warn" style="margin-top:9px">2 个要人工处理的稿<b>不会静默跳过</b>：会写进交付报告，标为"未生成 + 原因"。</div>':''}
+        <div class="note" style="margin-top:9px">按下去会先弹一次确认（范围、行数、积分），<b>确认之前什么都没发生</b>；确认后还有一次"取消并退回"的窗口，等第一份稿开始写入就没有了。</div>
+      </div>
+      <div class="actionbar"><div class="r">
+        <button class="btn" onclick="document.querySelector('#rail [data-step=reconcile]').click()">上一步</button>
+        <button class="btn primary" id="btnGen">确认并生成${isM?'（本批 12 份）':''}${mk('⑥')}</button>
+      </div></div></div>`;
+  }
+
+  if(gs==='running'||gs==='stopping'){
+    const rows=[];
+    for(let i=0;i<s.n;i++){
+      const st = i<gp ? '<span class="tag ok">已写入</span>' : (i===gp ? '<span class="tag acc">正在写</span>' : '<span class="tag mute">排队</span>');
+      rows.push(`<div class="rowplan"><span class="mono">${isM?('SKU-'+String(1001+i)+'_'+(i<4?'主图':i<8?'详情页':'长尾')+'.psd'):'SKU-AX1001_主图.psd'}</span><span class="st">${st}</span></div>`);
+    }
+    return `<div class="card">${hd(gs==='stopping'?'<span class="tag warn">正在停止…</span>':`<span class="tag acc">执行中 ${gp}/${s.n}</span>`)}
+      <div class="bd">
+        <div style="display:flex;align-items:center;gap:11px;font-size:12.8px">
+          <span>进度</span><div class="bar" style="flex:1;max-width:260px"><i style="width:${Math.round(gp/s.n*100)}%"></i></div>
+          <span class="mono">第 ${gp} / ${s.n} 份</span>
+        </div>
+        <div style="margin-top:10px;max-height:210px;overflow:auto">${rows.join('')}</div>
+        <div class="note warn" style="margin-top:10px"><b>停止不等于撤销。</b>停止后：还没开始写的 ${s.n-gp} 份不扣费；<b>已经写进 PSD 的 ${gp} 份不会自动还原</b>——需要还原请用你自己的源文件覆盖。</div>
+      </div>
+      <div class="actionbar"><div class="r">
+        ${gp===0?`<button class="btn" id="btnCancelRun">取消并退回 ${s.credits} 积分</button>`:''}
+        <button class="btn danger" id="btnStop" ${gs==='stopping'?'disabled':''}>${gs==='stopping'?'正在停止…':`停止${isM?`这一批（已完成 ${gp} / ${s.n}）`:'这一份'}`}</button>
+      </div></div></div>`;
+  }
+
+  if(gs==='stopped'){
+    const done=gp, rest=s.n-gp, credit=Math.round(s.credits*done/s.n);
+    return `<div class="card">${hd('<span class="tag warn">已停止</span>')}
+      <div class="bd">
+        <div class="kv"><span>已写入 <b>${done}</b> 份</span><span>未执行 <b>${rest}</b> 份</span><span>已结算 <b>${credit} 积分</b></span><span>未扣费 <b>${s.credits-credit} 积分</b></span></div>
+        <div class="note warn" style="margin-top:11px">已写入的 ${done} 份<b>没有自动还原</b>：请用你自己的源文件覆盖，或另存为你想要的样子。交付报告会如实写"${done} 份已生成 / ${rest} 份未生成（用户停止）"。</div>
+      </div>
+      <div class="actionbar"><div class="r"><button class="btn">查看已生成的 ${done} 份</button>
+        <button class="btn primary" onclick="document.querySelector('#rail [data-step=prep]').click()">回到准备素材</button></div></div></div>`;
+  }
+
+  if(gs==='cancelled'){
+    return `<div class="card">${hd('<span class="tag ok">已取消</span>')}
+      <div class="bd">
+        <div class="note ok"><b>已全额退回 ${s.credits} 积分，一个文件都没写。</b>取消发生在第一份稿开始写入之前，所以不存在"已写入怎么办"的问题。</div>
+      </div>
+      <div class="actionbar"><div class="r"><button class="btn primary" onclick="document.querySelector('#rail [data-step=prep]').click()">回到准备素材</button></div></div></div>`;
+  }
+
+  return `<div class="card">${hd('<span class="tag ok">已完成</span>')}
+    <div class="bd">
+      <div class="kv"><span>已生成 <b>${s.n}</b> 份</span><span>语言 <b>3</b></span><span>结算 <b>${s.credits} 积分</b></span></div>
+      <div class="note ok" style="margin-top:11px">全部 ${s.n} 份已生成，交付报告已就绪。</div>
+    </div>
+    <div class="actionbar"><div class="r"><button class="btn">打开交付报告</button>
+      <button class="btn primary" onclick="document.querySelector('#rail [data-step=prep]').click()">回到准备素材</button></div></div></div>`;
+}
+function deliverySingle(){ return deliveryCard(); }
+function deliveryMulti(){ return deliveryCard(); }
+function wireDelivery(){
+  const g=$('#btnGen'); if(g) g.addEventListener('click',openConfirm);
+  const st=$('#btnStop'); if(st) st.addEventListener('click',()=>{clearTick();gs='stopping';render();setTimeout(()=>{gs='stopped';render();},950);});
+  const cr=$('#btnCancelRun'); if(cr) cr.addEventListener('click',()=>{clearTick();gp=0;gs='cancelled';render();});
+}
+function openConfirm(){
+  const s=scopeInfo(), isM=mode==='multi';
+  $('#mTitle').textContent=isM?'确认生成这一批':'确认生成这一份';
+  $('#mBody').innerHTML=`
+    <div class="kv" style="font-size:12.8px"><span>设计稿 <b>${s.n}</b></span><span>语言 <b>3</b></span><span>替换行数 <b>${s.rows}</b></span><span>预计 <b>${s.credits} 积分</b></span></div>
+    <div class="note"><b>点「确认生成」之前，什么都没发生</b>——不冻结积分、不写文件。这一步就是为了挡住"不小心按到"。</div>
+    ${isM?'<div class="note warn">本批 12 份会<b>按列表顺序逐份写入</b>，不是一次全写。第一份开始写入后，就只剩「停止」（不还原已写的）。</div>':'<div class="note warn">开始写入后只剩「停止」；已写入的内容不会自动还原。</div>'}`;
+  $('#scrim').classList.add('on');
+}
+
+function renderSband(){
+  const el=$('#sband');
+  if(mode==='single'){
+    el.innerHTML=`<span class="lead"><i class="dot ok"></i> SKU-AX1001_主图.psd</span>
+      <span class="mut">· 主图-AX1001</span><span class="mut">· 3 个语言</span>
+      <div class="r"><span class="tag ok">已对齐</span><span class="mkr">③</span></div>`;
+  } else {
+    el.innerHTML=`<span class="lead"><i class="dot ok"></i> 12 个设计稿</span>
+      <span class="mut">· 9 个已扫描</span><span class="mut">· 3 个待扫描</span><span class="mut">· 3 个语言</span>
+      <div class="r"><span class="tag warn">3 项待处理 ▾</span><button class="btn sm">全部扫描</button><span class="mkr">③</span></div>`;
+  }
+}
+function render(){
+  renderScope(); renderSband(); renderRail();
+  const map={single:{prep:prepSingle,review:reviewSingle,reconcile:recoSingle,delivery:deliverySingle},
+             multi:{prep:prepMulti,review:reviewMulti,reconcile:recoMulti,delivery:deliveryMulti}};
+  $('#content').innerHTML=map[mode][step]();
+  const f=$('#foldAll');
+  if(f){f.addEventListener('click',()=>{
+    const box=$('#allNine'); const on=box.hidden;
+    box.hidden=!on;
+    f.textContent=on?'▾ 收起':'▸ 查看其余 9 个（都已对齐，不占你的注意力）';
+    if(on){box.innerHTML='<table style="margin-top:8px"><thead><tr><th>设计稿</th><th class="m" style="width:70px">图层</th><th style="width:86px">状态</th><th>用哪张表</th><th class="m" style="width:74px">覆盖率</th></tr></thead><tbody>'+
+      ['SKU-AX1001_主图.psd','SKU-AX1002_主图.psd','SKU-AX1003_主图.psd','SKU-AX1004_主图.psd','SKU-AX1005_详情页.psd','SKU-BX2077_详情页.psd','SKU-BX2078_详情页.psd','SKU-CX3301_长尾页.psd','SKU-CX3303_长尾页.psd']
+      .map(n=>`<tr><td class="m">${n}</td><td class="m">12</td><td><span class="tag ok">已对齐</span></td><td class="m">${n.includes('AX10')?'AX1001-AX1004_文案主表.xlsx':'按同名一对一'}</td><td class="m">96%</td></tr>`).join('')+
+      '</tbody></table>';}
+  });}
+  const fr=$('#foldRest'); if(fr){fr.addEventListener('click',()=>{fr.textContent='▾ 已收起（其余 10 个都已通过）';setTimeout(()=>{fr.textContent='▸ 其余 10 个都已通过，折起来';},1200);});}
+  const bs=$('#btnScanAll'); if(bs){bs.addEventListener('click',()=>{bs.textContent='正在扫描…';bs.disabled=true;setTimeout(()=>{bs.textContent='已全部扫描';},900);});}
+  wireDelivery();
+}
+
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  mode=b.dataset.mode;
+  clearTick(); gs='idle'; gp=0;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+  render();
+}));
+$('#mkToggle').addEventListener('click',e=>{
+  const on=e.currentTarget.getAttribute('aria-pressed')!=='true';
+  e.currentTarget.setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('mks',on);
+  e.currentTarget.textContent=on?'隐藏差异标注':'显示差异标注';
+});
+$('#mNo').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') $('#scrim').classList.remove('on'); });
+$('#mYes').addEventListener('click',()=>{
+  $('#scrim').classList.remove('on');
+  gs='running'; gp=0; render();
+  startTick();
+});
+render();
+</script>
+</body>
+</html>

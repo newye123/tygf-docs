@@ -1,0 +1,592 @@
+<title>运营台与流量数据线 · 对抗式审查 Round 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>运营台 · 流量数据线 · Round 1</span><span class="sep">/</span>
+    <span>2026-10-21 09:2x</span>
+  </p>
+  <h1>没有"真的好了"：查出 13 条，当场修掉 9 条</h1>
+  <p class="standfirst">四路并行取证（正确性·契约·安全·布局）＋主审逐条证伪。结论是 <strong>有条件放行</strong>：代码侧本轮没有已知阻塞缺陷，条件只有两条——上线要交给能到服务器的那只手，动生产前 Owner 再确认一句。最要紧的一条：<strong>任何人一发请求就能把这条数据线卡死</strong>，而失败信息读起来像隐私保护在立功。</p>
+  <div class="meta">
+    <span>范围 99baaf6^..670f7cb</span>
+    <span>已证实 13（Important 9）</span>
+    <span>本轮已修 9</span>
+    <span>未决 4 · 未修 9 条入 #208</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">VERDICT：有条件放行</span>
+    <p>风险档 High（改动跨后台面板·发布产物追踪·systemd 部署·外部 API 取数四个子系统）。<br>修完之后我能说"这块板子的数是真的、不会被外部单方打断"；<strong>不能说</strong>的是"它已经在服务器上跑起来了"——那需要一只到得了服务器的眼。</p>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">1 发请求</span><span class="k">就能让当天数据全部不落<br>旧写盘闸是"整批否决"</span></div>
+    <div class="stat bad"><span class="n">100 个</span><span class="k">伪 Host 可挤掉"本站"口径<br>CF 结果集是硬截断</span></div>
+    <div class="stat ok"><span class="n">9 条</span><span class="k">本轮已修并复验<br>提交 670f7cb</span></div>
+    <div class="stat warn"><span class="n">9 条</span><span class="k">未修，登记根账 #208<br>其中 4 条是后台存量债</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">这对你意味着什么</span>
+    <p>后台那两块板上的数字，之前有三个地方会"看着正常但是错的"：一是分站的两条序列差一天（并排就不是同一个窗口）；二是"近 7 天环比"在数据有洞时会拿 7 天对 1 天算出一个假涨跌；三是一次手工离线补数就能永久盖掉真数，而且每天自动跑的那次永远不会把它纠正回来。现在这三条都堵住了，并且各有一条测试盯着。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>已证实并已修（每条都有复现命令）</h2>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>失效场景</th><th>证据（命令＋读数）</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">F-01</td>
+          <td class="was">写盘闸"任一行命中即整批拒绝"。Host 头是外部可控输入 ⇒ 一发扫描器请求让当天全部数据不落</td>
+          <td><span class="now">A/B 对照实测</span><br><span class="was" style="font-size:.92em">喂 <code>clientRequestHTTPHost:"154.8.1.2"</code>：旧 rc=1／0 行；修后 rc=0／2 行＋诊断行。隐私不变量不降级：坏行仍一行不写，只是不再株连。</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-06</td>
+          <td>按主机名取数无白名单＋结果集硬截断 ⇒ 100 个伪 Host 就能把"本站"挤没；Host 即计数维度，可被刷高</td>
+          <td><span class="now">真拉复核</span><br><span class="was" style="font-size:.92em">CF 返回 45 组 → 留 16 行，丢"非本站"26 条、形状可疑 0 条。</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-02</td>
+          <td>分站序列用 <code>date_lt</code>、整站用 <code>date_leq</code> ⇒ 两块并排是两个窗口</td>
+          <td><span class="now">修前 zone=10-19／host=10-18；修后真拉两者同为 10-20</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-03</td>
+          <td>同日只按物理顺序取末条 ⇒ 一次离线补数（文档还推荐它）写入的行会<strong>永久</strong>盖掉真数，日采幂等永不补正</td>
+          <td><span class="now">node 复算：真值 70 被夹具 1 覆盖；修后正序倒序都真数赢</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-07</td>
+          <td>"近 7 天"按数组下标切 ⇒ 数据有洞时跨 N 天，8 行能算出"7 对 1"的假环比，面板还写着"近 7 天环比"</td>
+          <td><span class="now">改为日历日窗口，两侧满 7 天才给数，否则显示"—"并注明窗口内有数天数</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-08</td>
+          <td>读侧"按字节切尾部"的前提是最新数据在尾部——被自家台账否证 ⇒ 文件变大后静默丢掉最新几天</td>
+          <td><span class="now">实测本机台账第 31 行＝10-19、第 32 行起＝回填的 7—9 月（逆序对 1）</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-04</td>
+          <td>安装器建议的台账路径落在单元可写面之外 ⇒ 照建议配就天天只读报错</td>
+          <td><span class="now">两行对读命中；统一到 <code>traffic/</code> 子目录并随之收紧校验</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-05</td>
+          <td>台账含站点标识与全量流量历史，却没进忽略清单 ⇒ 任何一只手全量暂存就会把它提交进库</td>
+          <td><span class="now"><code>git check-ignore</code> rc=1（未忽略）→ 补规则后 rc=0</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <p>另有 D-02／D-04 部分修：顶栏"刷新"此前只重跑"数据统计"一块（<code>refreshKey</code> 全仓只有它用），本轮把两块新板接上；用户旅程行宽在 375px 视口溢出，已改。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>没修的（登记 #208，不装作修完了）</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>本轮引入、暂留 4 条</h3>
+      <p>① 生产回滚到旧版会让单元因脚本缺失而红，且路径校验只在安装时跑一次；② 冒烟排在"启用"之后，失败时残留一枚 live 单元＋一个误导的退出码；③ 定时器不带时区，服务器时区<strong>未核实</strong>；④ 整站行的 <code>hosts</code> 标签写死默认值，换站点复用时出处失真。前三条都要动共享安装器语义，等 Owner 判。</p>
+    </div>
+    <div class="card">
+      <h3>后台存量债 5 条</h3>
+      <p>① <strong>反馈面板在界面上永远进不去</strong>（有面板、无导航项，深链也被拒）；② 顶栏刷新对 10 块面板无效；③ 三处"人数"是三把尺（事件内去重设备／90 天账号同期群／流量人次），同一事件链三套叫法；④ 状态件零共用（加载中文本 5 份、重试 6 处、错误态 3 套）；⑤ 7 张裸表无横向滚动，4 个面板窄屏适配为 0。</p>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">被证伪的怀疑（记下来免得重复查）</span>
+    <p>"测试站 .env 不在应用目录"——证伪（发布脚本会把候选目录改名成正式目录）；"两站共用一枚 root-only 令牌会读不到"——证伪（systemd 在降权前以 root 读）；"两站定时器撞接口限流"——证伪（错开 5 分钟、合计 4 次查询）；"面板泄露服务器绝对路径或站点标识"——证伪（响应里都没有）。<strong>但"台账里遗留一行 IP 形状的主机名会让面板 500"是真的</strong>，已由 F-01／F-06 从源头堵住。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>后台布局：要优化，但先拍口径再动版式</h2>
+  <p class="lede">事实底座（实测计数）：<strong>14 个标签页 / 13 个导航项</strong>，12 块面板各自拉数据、只有"数据统计"由父级喂；owner 门控在壳层手写 9 处。</p>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>让能力可见可达（1—20 行，收益即时）</h3>
+        <p>导航补"反馈"一项；把 9 处手写门控改由一份"按角色派生"的导航函数生成——消掉两份权限真相。风险＝须实测运营角色看不到 owner-only 板。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>让"刷新"真刷新（改动面最小）</h3>
+        <p>把刷新信号下发到各标签页（本轮只接了两块新板，剩 10 块）。你的第一个动作就见效。风险＝并发请求变多。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>概览归一＋共用件（6—8 文件，纯展示层）</h3>
+        <p>抽一套面板基元（状态件／KPI 卡／口径脚注），把"人数"三把尺与七步事件链的命名和时间窗统一，顺带给裸表加横向滚动。<strong>前置是你先拍一句口径</strong>：对内对外留哪一把"人数"尺（建议以去重账号为主尺，流量人次只作参考并明确标注）。口径不统一比没数更危险——这些板子是拿去做投放和产品决策的。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>不建议现在做</h3>
+        <p>整站后台重写。当前问题是可发现性、一致性和口径，不是信息量或技术栈；重写会把已验证的数据合同再暴露一遍。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>更正：本轮推翻我自己上一轮的说法</h2>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>原说法</th><th>反证</th><th>新结论</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">"同日同站多形状先求和"</td><td>求和只做了分站侧；读侧同日仍按物理顺序取末条</td><td>改为出处优先，真数据不被离线夹具覆盖</td></tr>
+        <tr><td class="mono">"台账追加型，最新在尾部"</td><td>本机台账第 31 行是 10-19，第 32 行起是回填的 7—9 月</td><td>删掉按字节切尾部，裁剪按日期</td></tr>
+        <tr><td class="mono">"面板显示近 7 天环比"</td><td>按下标切窗，有洞时不是 7 天</td><td>两侧满窗才给数，否则"—"</td></tr>
+        <tr><td class="mono">"写盘闸命中即拒绝＝隐私在生效"</td><td>Host 外部可控 ⇒ 一发请求卡死当天全部落盘</td><td>只丢坏行，全丢才算失败</td></tr>
+        <tr><td class="mono">"两站共用机制已自洽"</td><td>安装器建议路径落在单元可写面之外</td><td>统一到 traffic/ 子目录</td></tr>
+        <tr><td class="mono">"台账故意不入库所以不会进提交"</td><td>它没被忽略清单覆盖，全量暂存就会带走</td><td>补忽略规则并复测 rc=0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>覆盖缺口与风险门</h2>
+  <div class="notes">
+    <p><strong>没检查的</strong>：整条出包链未重跑（退出码 0 的实测仍绑 <code>e93b81f</code>）；两站 systemd 真机未装未跑（日志、排程、只读报错、回滚窗口四类行为全部未观测）；界面层无真人读数（字号／间距／暗色／图表在 375px 的实际重排静态定不了）；Cloudflare 是否原样把外部 Host 头记进维度、结果集是否真会静默截断，都缺一次真响应样本；未审运营设置面板内部、旅程板 SQL 口径、上一轮的 nginx 改法。</p>
+    <p><strong>要人的部分</strong>：部署脚本、安装器、忽略清单、nginx 属发布与密钥相邻面，无论档位都要人。本轮全部改动只提交到 develop，<strong>未推送、未部署、未动生产</strong>；结论绑定 <code>670f7cb</code>，其后任何新提交使本批准失效。</p>
+    <p><strong>三账净增</strong>：待投递队列 3,190 B、问题账本 3,925 B（只追加，未改写他人条目）。</p>
+  </div>
+</section>
+
+<footer>
+  <p>方法：四路并行只读取证（正确性／契约部署／安全隐私／布局一致性），子代理返回一律当线索，主审逐条开文件＋跑命令证伪；能跑的都留了命令与读数。测试：面板断言 42→47、采集自测 15→18、安装闸沙箱 10→12、五门 rc=0、关增量全量类型检查 rc=0、eslint rc=0（09:04—09:13 逐条取码）。</p>
+  <p>2026-10-21 09:2x · 文中不含令牌值、客户名称与素材内容；修复提交 develop@670f7cb。</p>
+</footer>
+
+</div>
+

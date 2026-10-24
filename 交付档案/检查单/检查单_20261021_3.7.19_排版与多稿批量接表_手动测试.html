@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3.7.19 手动测试检查单 · 排版写回与多稿批量接表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#fff; --sunk:#eef1f5; --ink:#131820; --ink-2:#3d4757;
+  --muted:#657084; --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec; --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark; --bg:#0d1015; --surface:#151a22; --sunk:#1b212b; --ink:#e8ecf3;
+    --ink-2:#c2cad7; --muted:#8d97a8; --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a; --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614; --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(14px,4vw,32px) 90px;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--font-display);font-size:clamp(1.5rem,3.6vw,2rem);margin:0;line-height:1.25;letter-spacing:-.01em}
+.eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lede{margin:0;color:var(--ink-2);max-width:70ch}
+
+.bar{position:sticky;top:0;z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;box-shadow:0 6px 20px -18px rgba(0,0,0,.5)}
+.bar .num{font-family:var(--font-mono);font-size:.82rem;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.bar .num b{color:var(--ink);font-weight:600}
+.meter{flex:1 1 180px;height:7px;background:var(--sunk);border-radius:999px;overflow:hidden;min-width:120px}
+.meter i{display:block;height:100%;background:var(--ok);width:0;transition:width .25s}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button,.tools button{font:inherit;font-size:.78rem;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg button:hover,.tools button:hover{border-color:var(--line-strong)}
+
+section{display:flex;flex-direction:column;gap:8px}
+h2{font-family:var(--font-display);font-size:1.02rem;margin:14px 0 0;padding-bottom:8px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 .sn{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.1em;color:var(--accent)}
+h2 .t{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-left:auto}
+
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:52px 1fr auto;gap:10px 12px;align-items:start}
+.item[data-s=pass]{border-left:3px solid var(--ok)}
+.item[data-s=fail]{border-left:3px solid var(--bad);background:linear-gradient(0deg,var(--bad-soft),var(--surface) 42%)}
+.item .id{font-family:var(--font-mono);font-size:.86rem;font-weight:500;color:var(--muted);padding-top:2px}
+.item[data-s=fail] .id{color:var(--bad)}
+.item .txt p{margin:0}
+.item .txt .do{font-weight:500}
+.item .txt .exp{margin-top:4px;font-size:.9rem;color:var(--ink-2)}
+.item .txt .exp em{font-style:normal;background:var(--accent-soft);color:var(--accent);padding:0 4px;border-radius:4px;font-family:var(--font-mono);font-size:.84em}
+.item .txt .star{color:var(--warn);font-size:.76rem;font-family:var(--font-mono);margin-left:6px}
+.item textarea{grid-column:2/4;width:100%;margin-top:8px;font:inherit;font-size:.84rem;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);resize:vertical;min-height:34px;display:none}
+.item[data-s=fail] textarea,.item.note-open textarea{display:block}
+.states{display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.states button{font:inherit;font-size:.76rem;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;white-space:nowrap}
+.states button[aria-pressed=true]{color:#fff;border-color:transparent}
+.states button[data-v=todo][aria-pressed=true]{background:var(--muted)}
+.states button[data-v=pass][aria-pressed=true]{background:var(--ok)}
+.states button[data-v=fail][aria-pressed=true]{background:var(--bad)}
+
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.tools .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.hint{font-size:.8rem;color:var(--muted)}
+.foot{border-top:1px solid var(--line);padding-top:14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+.foot code{font-family:var(--font-mono);background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (max-width:640px){.item{grid-template-columns:40px 1fr}.states{grid-column:2/3;flex-direction:row;flex-wrap:wrap}.item textarea{grid-column:2/3}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">图译工坊 · 手动测试 · 2026-10-21 · 测试站 3.7.19</div>
+    <h1>排版写回 与 多稿一次接表</h1>
+    <p class="lede">每条点一下切换状态；「不通过」会展开一个备注框，把界面提示原文粘进去就够。<strong>★ 的 21 条是最小可跑集，约 30 分钟</strong>；全跑 40 条约 55 分钟。进度存在这台电脑的这个浏览器里，关掉再打开不会丢。</p>
+  </header>
+
+  <div class="bar">
+    <span class="num">通过 <b id="c-pass">0</b>／<span id="c-total">39</span></span>
+    <span class="num">不通过 <b id="c-fail">0</b></span>
+    <span class="num">必测 <b id="c-star">0</b>／<span id="c-star-total">21</span></span>
+    <span class="meter"><i id="meter"></i></span>
+    <div class="seg" id="filters">
+      <button data-f="all" aria-pressed="true">全部</button>
+      <button data-f="star">只看必测★</button>
+      <button data-f="open">只看未完成</button>
+      <button data-f="fail">只看未通过</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="tools">
+    <button class="primary" id="copy">复制反馈清单</button>
+    <button id="notes">显示所有备注框</button>
+    <button id="reset">清空重来</button>
+    <span class="hint" id="toast"></span>
+  </div>
+
+  <pre id="out" style="display:none;white-space:pre-wrap;font-family:var(--font-mono);font-size:.8rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:0;color:var(--ink-2)"></pre>
+
+  <div class="foot">
+    <p>判不合格请一并给：<code>编号 + 界面原文</code>、<code>http://127.0.0.1:49152/ping</code> 的完整返回、涉及的文件名（不用给内容）、以及"每次都这样"还是"偶发一次"。</p>
+    <p>未覆盖：云端账务正确性、多机并发、生产站行为；<code>.lnk</code>／目录联接这类路径形态；标「本版写不进」「未实测」的排版字段本轮不承诺生效。</p>
+    <p>同源文字件：<code>交付档案/检查单/检查单_20261021_3.7.19_排版与多稿批量接表_手动测试.md</code></p>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  ['A','准备','约 5 分钟'],
+  ['B','排版写回','约 10 分钟'],
+  ['C','多稿一次导入多张表（浏览器直读）','约 8 分钟'],
+  ['D','文件夹扫描 + 配对导入','约 6 分钟'],
+  ['E','该拦住的要拦住','约 5 分钟'],
+  ['F','单稿回归','约 5 分钟'],
+  ['G','多稿执行链','约 20 分钟'],
+]
+
+const ITEMS = [
+  ['A1',1,'地址栏输入 <em>http://127.0.0.1:49152/ping</em> 回车','返回里含 <em>"version":"3.7.19"</em>。不是 3.7.19 或打不开＝助手没装上，后面全测不了'],
+  ['A2',1,'打开测试站工作台并登录','是你平时测的测试站，不是正式站'],
+  ['A3',1,'备料：两个稿（PSD 或 PSB）+ 两张同名表（稿叫「首页」「详情」，表同名），每表≥3 行、2 个语种列','两表内容有明显差别，方便看出错配'],
+  ['A4',0,'再备两张"不该被接受"的：一个 <em>.docx</em>/图片、一张 &gt;5MB 的表','E 组用'],
+  ['A5',0,'建一个 <code>批量测试</code> 文件夹：放这两个稿 + 两张同名表','D 组用'],
+
+  ['B1',1,'选/扫一稿，找「排版」入口','入口出现（能力位没开时它是隐藏的；出现＝助手已回报写回开放）'],
+  ['B2',1,'打开排版面板，看顶部状态行','显示「本机助手清单已读取：N 款」（N&gt;0）。停在「正在探测本机助手字体清单…」或出现「排版定制暂不可用：未检测到本地助手，请先启动它。」＝不通过'],
+  ['B2b',0,'清单读不到时（状态行显示「字体清单还在本机读取」或「未检测到本地助手在线」）','状态行旁出现「重试读取字体清单」按钮，点一下能重读；此时排版仍可保存并写回（字体名可手填），界面不再说「暂不可用」'],
+  ['B3',1,'搜并选中本机真实字体，改字号，行距固定值/百分比各试一次','你改的字段标签显示「可写」；标「本版写不进」「未实测」的不指望生效（设计如此）'],
+  ['B4',0,'关掉面板再打开','刚才的值还在。出现「这台电脑的浏览器不允许保存（隐私模式或存储已满）…」＝浏览器隐私模式，记不通过'],
+  ['B5',0,'故意填不合法（行距留空或超大）后保存','提示「这份定制有填得不合法的地方，没有保存。请照下面的范围改一下。」且输入未被清空'],
+  ['B6',1,'带着这套排版设置执行这一稿','跑完不报错'],
+  ['B7',1,'在 Photoshop 里打开交付产物，核对文字层','字体、字号、行距＝你选的值。这是"写回真的生效"的唯一判据，界面成功不算过'],
+  ['B8',0,'另开一稿，完全不设排版直接跑','产物与不设排版一致（不会拿别的稿的值蒙这一批）'],
+
+  ['C1',1,'顶部切到「多个设计稿」，加入 A3 两个稿','出现逐稿清单与「译文表 · 每个设计稿一张」面板'],
+  ['C2',1,'看该面板右上角','出现「一次导入多张表」按钮（只在批量模式且已有稿件时出现）'],
+  ['C3',1,'点它，一次框选两张表','弹出「确认每一稿用哪张译文表」，下一行显示「已选 2 张表（浏览器直接读取）」'],
+  ['C4',1,'逐行看建议与下拉','每稿一行带理由，如「同名配对」「整个文件夹只找到这一张表」；下拉可改选别的表'],
+  ['C5',0,'把某行改成「不导入（保持空表）」','该行右侧变「未选择」，按钮里的张数跟着减'],
+  ['C6',1,'点「导入选中的 N 张表」','出现「正在读表：x / 2」，随后提示「已为 2 稿导入译文表。」'],
+  ['C7',1,'核对落位与切稿','顶部计数「2 / 2 稿已导入」；点「下一稿 →」时表、语言、审查确认一起切，互不共用'],
+
+  ['D1',1,'用 A5 的 <em>批量测试/</em> 走「选文件夹」扫描','出现「译文表配对建议：2 / 2 稿已配上」并逐行列出'],
+  ['D2',0,'展开「全部 2 张候选表」','列全，带「与 xx 同目录」说明；被截断时显示「候选表只列了前 N 张，共 M 张」'],
+  ['D3',1,'点「加入并导入表格（2 稿）」','弹出同一确认框，标题下方一行显示所选文件夹绝对路径'],
+  ['D4',1,'点「导入选中的 2 张表」','不弹文件选择框（由本机助手按路径读），进度与完成提示同 C6，逐稿槽位都有表'],
+  ['D5',0,'核对确认框下拉候选范围','只有你选的那个文件夹里的表，不出现别处文件'],
+
+  ['E1',0,'C3 那步顺手多选一个 <em>.docx</em>/图片','提示「已跳过 1 个文件：xxx（不是表格）」，其余表照常进确认框'],
+  ['E2',0,'多选那张 &gt;5MB 的表','提示「已跳过 1 个文件：xxx（超过 5MB）」，不卡住、不静默吃掉'],
+  ['E3',0,'只选非表格文件','提示「选中的文件都不是可用的译文表：…」，且不打开确认框'],
+  ['E4',0,'工作台一个稿都没有时点批量导入','提示「先把设计稿加入工作台，再批量导入译文表。」'],
+  ['E5',0,'打开确认框后把所有行改成「不导入」再点导入','提示「还没有为任何一稿选择译文表。可以逐行选一张，或先关闭这个窗口。」'],
+  ['E6',0,'准备一张"有表头但没有译文行"的表导进去','该稿报「表里没有可用的译文行。」并列在下方；其他稿照常成功（提示变「已为 N 稿导入译文表；M 稿失败，原因见下」）'],
+
+  ['F1',1,'切回单稿模式，按原方式选稿、导一张表、跑通','与升级前完全一致'],
+  ['F2',0,'在单稿模式里找批量入口','看不到「一次导入多张表」（设计如此，不是 bug）'],
+  ['F3',0,'单稿四步：扫描 → 设计稿校对 → 执行 → 交付门','都正常，无新增报错'],
+  ['F4',0,'单稿带排版设置跑一稿','同 B7，PS 里核对生效'],
+
+  ['G1',1,'故意留一稿不导表，点开始','拦住并点名「还有 1 个设计稿没有导入译文表，暂不能开始：xxx。请回到「准备素材」为每个稿分别导入译文表（每稿一张表，互不共用）。」'],
+  ['G2',1,'补齐表、各稿语言审查确认后开始批量执行','逐稿推进并显示「第 N/M 个」，不中途乱停'],
+  ['G3',0,'执行中让某稿必然失败（如把该稿在 PS 里关掉）','提示形如「第 N 个设计稿…批量执行已暂停」，已完成稿的产物仍在、不丢'],
+  ['G4',1,'全部跑完','每稿各自生成报告；扣分＝实际跑的量（不重复扣、不少扣），有异议把结算数字截图'],
+]
+
+const KEY = 'tygf-checklist-20261021-3719'
+const state = (() => {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {} } catch { return {} }
+})()
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch {} }
+
+const list = document.getElementById('list')
+const esc = (s) => s
+
+function render(filter) {
+  list.innerHTML = ''
+  for (const [g, title, time] of GROUPS) {
+    const rows = ITEMS.filter((it) => it[0][0] === g)
+    const visible = rows.filter((it) => show(it, filter))
+    if (visible.length === 0) continue
+    const sec = document.createElement('section')
+    const done = rows.filter((it) => state[it[0]] && state[it[0]].s === 'pass').length
+    sec.innerHTML = '<h2><span class="sn">' + g + '</span>' + title + '<span class="t">' + time + ' · 通过 ' + done + '/' + rows.length + '</span></h2>'
+    for (const it of visible) sec.appendChild(node(it))
+    list.appendChild(sec)
+  }
+  counts()
+}
+
+function show(it, filter) {
+  const st = state[it[0]] ? state[it[0]].s : 'todo'
+  if (filter === 'star') return it[1] === 1
+  if (filter === 'open') return st !== 'pass'
+  if (filter === 'fail') return st === 'fail'
+  return true
+}
+
+function node(it) {
+  const [id, star, doStr, expStr] = it
+  const cur = state[id] ? state[id].s : 'todo'
+  const el = document.createElement('article')
+  el.className = 'item'
+  el.dataset.s = cur
+  el.innerHTML =
+    '<div class="id">' + id + '</div>' +
+    '<div class="txt"><p class="do">' + doStr + (star ? '<span class="star">★必测</span>' : '') + '</p>' +
+    '<p class="exp">期望：' + expStr + '</p></div>' +
+    '<div class="states">' +
+    ['todo:未做', 'pass:通过', 'fail:不通过'].map((kv) => {
+      const [v, label] = kv.split(':')
+      return '<button data-v="' + v + '" aria-pressed="' + (cur === v) + '">' + label + '</button>'
+    }).join('') +
+    '</div>' +
+    '<textarea placeholder="界面原文／发生了什么（只给不通过用）"></textarea>'
+  const ta = el.querySelector('textarea')
+  ta.value = state[id] && state[id].n ? state[id].n : ''
+  ta.addEventListener('input', () => {
+    state[id] = state[id] || { s: 'todo', n: '' }
+    state[id].n = ta.value
+    save()
+  })
+  el.querySelectorAll('.states button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const v = b.dataset.v
+      state[id] = state[id] || { s: 'todo', n: '' }
+      state[id].s = state[id].s === v && v !== 'todo' ? 'todo' : v
+      save()
+      render(currentFilter)
+    })
+  })
+  if (cur === 'fail') el.classList.add('note-open')
+  return el
+}
+
+function counts() {
+  const all = Object.entries(state)
+  const pass = all.filter(([, v]) => v.s === 'pass').length
+  const fail = all.filter(([, v]) => v.s === 'fail').length
+  const starPass = ITEMS.filter((it) => it[1] === 1 && state[it[0]] && state[it[0]].s === 'pass').length
+  document.getElementById('c-pass').textContent = pass
+  document.getElementById('c-fail').textContent = fail
+  document.getElementById('c-total').textContent = ITEMS.length
+  document.getElementById('c-star-total').textContent = ITEMS.filter((it) => it[1] === 1).length
+  document.getElementById('c-star').textContent = starPass
+  document.getElementById('meter').style.width = Math.round((pass / ITEMS.length) * 100) + '%'
+}
+
+let currentFilter = 'all'
+document.getElementById('filters').addEventListener('click', (e) => {
+  const b = e.target.closest('button')
+  if (!b) return
+  currentFilter = b.dataset.f
+  document.querySelectorAll('#filters button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+  render(currentFilter)
+})
+
+document.getElementById('notes').addEventListener('click', () => {
+  document.querySelectorAll('.item').forEach((el) => el.classList.toggle('note-open'))
+})
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('清空这台浏览器里的勾选与备注？')) return
+  for (const k of Object.keys(state)) delete state[k]
+  save()
+  const out = document.getElementById('out')
+  out.textContent = ''
+  out.style.display = 'none'
+  render(currentFilter)
+})
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const lines = ['3.7.19 手动测试反馈（' + new Date().toISOString().slice(0, 10) + '）', '']
+  const fails = ITEMS.filter((it) => state[it[0]] && state[it[0]].s === 'fail')
+  const openStar = ITEMS.filter((it) => it[1] === 1 && !(state[it[0]] && state[it[0]].s === 'pass'))
+  const passed = ITEMS.filter((it) => state[it[0]] && state[it[0]].s === 'pass').map((it) => it[0])
+  lines.push('通过 ' + passed.length + '/' + ITEMS.length + '：' + (passed.join('、') || '无'))
+  lines.push('不通过 ' + fails.length + ' 条：')
+  for (const it of fails) {
+    const note = state[it[0]] && state[it[0]].n ? state[it[0]].n.trim() : '（未填备注）'
+    lines.push('- ' + it[0] + '｜' + it[2].replace(/<[^>]+>/g, '') + '｜期望：' + it[3].replace(/<[^>]+>/g, '') + '｜实况：' + note)
+  }
+  lines.push('')
+  lines.push('必测项还没过的 ' + openStar.length + ' 条：' + (openStar.map((it) => it[0]).join('、') || '无'))
+  lines.push('')
+  lines.push('助手 ping：请补上 http://127.0.0.1:49152/ping 的完整返回')
+  const text = lines.join('\n')
+  const out = document.getElementById('out')
+  let how = ''
+  try {
+    await navigator.clipboard.writeText(text)
+    how = '已复制到剪贴板，直接粘给我'
+    out.style.display = 'none'
+  } catch {
+    out.textContent = text
+    out.style.display = 'block'
+    out.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    const range = document.createRange()
+    range.selectNodeContents(out)
+    const sel = window.getSelection()
+    sel.removeAllRanges()
+    sel.addRange(range)
+    how = '这个浏览器不让页面写剪贴板——反馈已显示在下方并选好，按 Ctrl+C 复制即可'
+  }
+  toast(how)
+})
+
+function toast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  setTimeout(() => { if (t.textContent === msg) t.textContent = '' }, 4000)
+}
+
+render('all')
+</script>
+</body>
+</html>

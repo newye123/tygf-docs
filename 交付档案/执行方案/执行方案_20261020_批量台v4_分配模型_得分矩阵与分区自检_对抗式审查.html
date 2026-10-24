@@ -1,0 +1,256 @@
+<title>批量台 v4 · 对抗式审查第三轮：绑定不是配对，是划分</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--blue:#1b5bd0;--blue-soft:#e8effc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.55rem,4vw,2.15rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:60ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.blue{background:var(--blue-soft);color:var(--blue)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate h3{margin:0;font-size:.96rem;font-weight:600}
+.gate p{font-size:.89rem;color:var(--ink-2);max-width:70ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.blue{background:var(--blue-soft);border-color:var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:5px}
+.card .n{font-family:var(--font-mono);font-size:.7rem;color:var(--blue);letter-spacing:.08em}
+.card h3{margin:0;font-size:.93rem;font-weight:600}
+.card p{font-size:.83rem;color:var(--ink-2);max-width:none}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500;min-width:38px}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查 · 第三轮</span><span class="sep">/</span><span>批量台 v4</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>绑定不是「配对」，是「划分」</h1>
+  <p class="standfirst">上一版把「归属」当成表的属性。这一轮继续往下推，发现<strong>归属是行的属性</strong>：表本身不归属任何文件，<strong>要归属的是「哪些行属于哪个文件」</strong>。于是绑定问题从配对升级成<strong>分配问题</strong>——可以出得分、可以自检、而且<strong>把上一版排在 P2 的合同变更整条删掉了</strong>。</p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>事实核 Y1–Y7</span><span>本轮审查 T1–T12</span><span>净减风险面</span><span>待拍板 O1″–O3″</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 方案更硬，风险面更小；一个取舍要 Owner 点头</span>
+    <p>v4 相对 v3 是<strong>净减</strong>：多了得分矩阵／分区自检／歧义早报／哈希指纹，<strong>少了「行身份升级改匹配键」那条合同变更</strong>（切片到位就不需要改键）。⇒ <strong>v4 不需要跑 <code>test:batch-row-contract</code>／<code>test:trust-chain</code></strong>，不改执行语义。</p>
+    <ul>
+      <li><strong>本轮最硬的推进：绑定＝行集合的划分（分配问题）。</strong>「宽表」不再是特例——<strong>一张表对多少稿高分，它就是宽表</strong>，这是可计算的判据，不是配置项。</li>
+      <li><strong>证据从四档枚举改成「一个数」。</strong>档位只是这个数的人话投影（对得上／说不清／对不上），判据必须走 <code>coverage.ts</code> 已有三档口径，<strong>不许另起一套</strong>（<code>coverage.ts:106-110</code> 的明文教训）。</li>
+      <li><strong>D17 的风险结构性消失</strong>：记录编号改成哈希短码 <code>L</code>+sha256 前 16 位 ⇒ 十六进制<strong>天然过助手 ID 白名单</strong>，不再需要"中文路径转码"这条靠纪律维持的约束。</li>
+      <li><strong>T11 必须让 Owner 知道：P0 不是纯前端。</strong>得分矩阵要助手新增<strong>只读</strong>接口（回传命中得分）。不做的话，"说不清/对不上"永远判不出来，错绑风险只能靠"推定档"兜。</li>
+      <li><strong>T1 自我更正：</strong>不宣称"全局最优分配"——容量规则是产品决策不是算法能推出来的，指派永远是人的动作。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>阶段一 · Critical Thinking（再往下一层）</h2>
+  <p>v3 说「表＝数据集，文件＝按归属切出的一片」。<strong>再问一层</strong>：归属是<strong>表的属性</strong>吗？把一张表切成片，片有归属；<strong>表本身没有归属</strong>——它是很多行的容器。一行译文属于哪个文件，取决于这一行是哪一稿的文案。</p>
+  <div class="callout blue">
+    <span class="lb">推论 1 · 绑定不是配对，是分配</span>
+    <p>绑定单元从「表 → 文件（整张）」变成「<strong>行 → 文件</strong>」。差别是实质的：一个表能给几稿用，<strong>由表里内容决定</strong>，而不是由产品配置决定；12 SKU 一张合表从此<strong>天然可表达</strong>。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th></th><th>v3（配对）</th><th>v4（分配）</th></tr></thead>
+      <tbody>
+        <tr><td>绑定单元</td><td>表 → 文件（整张）</td><td><strong>行 → 文件</strong>（可切）</td></tr>
+        <tr><td>一个表能服务几稿</td><td>要么独占、要么"组"（另立一个对象）</td><td><strong>任意</strong>，由内容决定</td></tr>
+        <tr><td>12 SKU 一张合表</td><td>表达不了（v3 的 E1 已认）</td><td><strong>天然可表达</strong>：它就是"要分区的一张表"</td></tr>
+        <tr><td>证据</td><td>规则级联</td><td><strong>逐对得分</strong>（可排序、可比较）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout blue">
+    <span class="lb">推论 2 · 宽表不是特例，是可计算的判据</span>
+    <p>一个表是不是宽表，不需要人来声明：<strong>它对多少个文件高分，它就是宽表</strong>。一行只有一格高分＝这一稿的独占表；一列在很多行都高分＝这一列是宽表 ⇒ 要分区，不是直接绑定。</p>
+  </div>
+  <div class="callout blue">
+    <span class="lb">推论 3 · 证据是一个数，不是四档</span>
+    <p>证据的真实含义只有一个：<strong>这张表的行，能对上这一稿的几层</strong>。档位只是这个数的人话投影：强正（≥阈值且明显高于次高）＝「对得上」；强负（对任何表都无交集）＝「对不上」；中间＝「说不清」。判据必须是<strong>覆盖率这一套口径</strong>，不许另起一套。</p>
+  </div>
+  <div class="callout blue">
+    <span class="lb">推论 4 · 物理约束：得分只能助手侧算</span>
+    <p>浏览器<strong>拿不到逐层正文</strong>（扫描摘要里只有指纹与层计数）⇒ 得分矩阵必须助手算、浏览器只收分；助手可回传<strong>逐层哈希</strong>而非正文（更脱敏、跨次可比、hex 天然合规）。</p>
+  </div>
+  <div class="callout ok">
+    <span class="lb">推论 5 · 本轮最重要的减法</span>
+    <p>若先把表切成片，<strong>片内行只属于一个文件</strong>，同原文多行就是数据错误（现有 <code>V15_DUPLICATE_SOURCE_ROW</code> 已拦）⇒ <strong>不需要改匹配键</strong>。⇒ v3 排在 P2 的「行身份升级（改匹配键）」<strong>整条删掉</strong>，方案风险面从「要动执行合同」降到「纯绑定与展示层」。</p>
+  </div>
+  <div class="cards">
+    <div class="card"><span class="n">公理 A</span><h3>交付物的键 = (文件, 语种)</h3><p>证伪：若计费单位不是 (文件, 语种)。</p></div>
+    <div class="card"><span class="n">公理 B</span><h3>译文的键 = (归属, 原文, 序号)</h3><p>文件不是原语。</p></div>
+    <div class="card"><span class="n">公理 C</span><h3>归属是行的属性</h3><p>证伪：若"表属于文件"是必需语义。</p></div>
+    <div class="card"><span class="n">公理 D</span><h3>绑定＝行集合的划分</h3><p>证伪：若任意表必须整体绑定且不可切。</p></div>
+    <div class="card"><span class="n">公理 E</span><h3>证据＝匹配得分</h3><p>证伪：若证据必须是不可比较的枚举。</p></div>
+    <div class="card"><span class="n">公理 F</span><h3>切片到位 ⇒ 不改匹配键</h3><p>证伪：若歧义无法靠划分消除。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>阶段二 · Fetch（本轮新增硬事实）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>事实</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Y1</td><td>扫描摘要<strong>不含逐层正文</strong>，只含 <code>fingerprint</code>（SHA-256）＋层计数＋排版白名单</td><td class="mono">preparation-contract.ts:305-319</td></tr>
+        <tr><td class="mono">Y2</td><td><code>fingerprint</code> 被<strong>强制为小写 SHA-256</strong></td><td class="mono">preparation-contract.ts:328-330</td></tr>
+        <tr><td class="mono">Y3</td><td>指纹已是一等公民：扫描摘要／决策持久化／执行清单三处都在用</td><td class="mono">preparation-contract.ts:311；decision-persistence.ts:25/44/99；execution-manifest.ts:252</td></tr>
+        <tr><td class="mono">Y4</td><td>稿改版 ⇒ 已有现成的失效机制（指纹变 ⇒ <code>INVALIDATED</code> / <code>STALE</code>）</td><td class="mono">preparation-contract.ts:466-473</td></tr>
+        <tr><td class="mono">Y5</td><td>覆盖率已能按「稿 × 语种」跑，分母＝该稿可翻译文本条数，且有三档 modes</td><td class="mono">coverage.ts:43-96</td></tr>
+        <tr><td class="mono">Y6</td><td>行标识取自表的「记录编号」，无则回落 <code>row-N</code>；表内重复即抛</td><td class="mono">binding-core.ts:598-603</td></tr>
+        <tr><td class="mono">Y7</td><td>助手对行标识的纯 ASCII 白名单与拒绝码</td><td class="mono">execution-manifest.js:9、:168</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>阶段三 · Deep Thinking（v4 方案）</h2>
+  <pre>Dataset（译库）   { id, name, rows[], langColumns[] }
+  └─ Slice（片） { datasetId, ownerValue?, rowIds[] }      ← 划分结果
+       └─ Binding { draftKey → { datasetId, sliceId, languageScope } }
+            └─ Evidence { hitRate: 0..100, runnerUp: number, tier: 对得上|说不清|对不上 }</pre>
+  <h3>得分矩阵（助手侧算，浏览器只收分）</h3>
+  <p>行＝12 个稿，列＝M 张表，格＝<strong>该表对本稿的命中率</strong>。算子：该表的行（按语种切片后）能命中该稿多少个文字图层，分母＝该稿可翻译图层数，口径＝<code>coverage.ts</code> 三档之一。成本 ≈ 50 万次归一化比较（一次性），<strong>按「表指纹 × 稿指纹」缓存</strong>（Y3/Y4 提供稳定键）。</p>
+  <h3>分区自检（新增安全闸，三条任一不过就不给执行）</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>自检</th><th>判据</th><th>失败时</th></tr></thead>
+      <tbody>
+        <tr><td><strong>互斥</strong></td><td>每行 id 恰好属于一片（无行落进两片）</td><td>拦批并点名重叠行</td></tr>
+        <tr><td><strong>命中</strong></td><td>每片对本稿命中率 ≥ 阈值</td><td>该片拦批，其余片照跑</td></tr>
+        <tr><td><strong>有据</strong></td><td>每片都有归属证据（得分达标）</td><td>该片拦批</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>歧义早报（把执行期的硬错提前到绑定期）</h3>
+  <p>今天「同原文不同译文」在<strong>执行期</strong>炸 <code>V15_DUPLICATE_SOURCE_ROW</code>（<code>binding-core.ts:930-939</code>），代价是整批拒、孤儿 attempt（#195 的形态）。⇒ v4 在<strong>绑定期</strong>就问：「这 2 行原文相同、译文不同，分别属于哪一稿？」</p>
+  <h3>记录编号：哈希短码 ⇒ D17 结构性消失</h3>
+  <p>v3 需要靠纪律维持「编号必须过助手白名单」；v4 改为 <code>记录编号 = "L" + sha256(层级路径+出现序号).slice(0,16)</code> —— <strong>十六进制 ⇒ 天然纯 ASCII、天然 ≤128、天然匹配白名单</strong>，不再需要"转码"这套纪律，也不可能踩 #195。（#195 治的是<strong>用户表</strong>里的编号，仍要治，两条并存。）</p>
+  <h3>界面：2 个界面 ＋ 1 个检查器（比 v3 少一个）</h3>
+  <p><strong>① 批次总览</strong>（常驻、跨 4 步）：交付物矩阵，按交付包折叠，行头人话徽章　→　<strong>② 单稿详情</strong>＝图二那一行　→　<strong>③ 绑定检查器</strong>：得分矩阵 ＋ 候选排名 ＋ 分区自检 ＋ 歧义早报。</p>
+  <h3>减法清单（v4 明确少做的事）</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>少做</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td><strong>P2「行身份升级（改匹配键）」整条</strong></td><td>切片到位就不需要改键 ⇒ <strong>合同变更这条风险整条消失</strong></td></tr>
+        <tr><td>「共享表组」作为一等数据对象</td><td>它只是"一个库切成多片"的一个参数</td></tr>
+        <tr><td>「交付包」作为一等数据对象</td><td>先做<strong>视图层折叠</strong>即可，不进数据模型</td></tr>
+        <tr><td>逐层哈希的默认回传</td><td>见 T4：默认只回传<strong>聚合得分</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>阶段四 · Review（第三轮 12 条）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">T1</td><td><span class="tag warn">🟠</span></td><td><strong>「全局最优分配」说过头了</strong>：逐对打分＋贪心是错的（94/91 接近时贪心随便挑）；「一张表能服务几稿」是<strong>容量约束</strong>，是产品决策不是算法能推出来的</td><td><strong>诚实改写</strong>：得分矩阵只做<strong>证据与排序</strong>，<strong>不做自动指派</strong>；指派永远是人的动作，除非唯一且明显（与次高差 ≥ 阈值）。<strong>不宣称"全局最优"</strong></td></tr>
+        <tr><td class="mono">T2</td><td><span class="tag warn">🟠</span></td><td><strong>得分与覆盖率分母不同</strong>（层 vs 语种）⇒ 同一行两个不同含义的 "%"，用户会混</td><td><strong>同源同分母</strong>：两者都以「这一稿的文字图层」为分母，语种覆盖率是它的子集；命名区分：<strong>对稿命中率</strong> vs <strong>该语种命中率</strong>，界面标注分母</td></tr>
+        <tr><td class="mono">T3</td><td><span class="tag ok">🟡</span></td><td>回传逐层哈希会不会把隐私现状搞复杂</td><td>哈希是<strong>从正文派生的不可逆摘要</strong>，不新增正文外泄面；评分阶段<strong>不需要正文</strong> ⇒ 反而减少上传。但<strong>隐私口径要加一项并经 Owner 过目</strong></td></tr>
+        <tr><td class="mono">T4</td><td><span class="tag warn">🟠</span></td><td><strong>逐层哈希不是完美脱敏</strong>：常见营销语（"Free Shipping"）的哈希可能被字典反查</td><td><strong>默认只回传聚合得分</strong>（"12 层里对上 12 层"）；逐层哈希降级为<strong>可选加强模式</strong>，需带盐哈希（盐来自 scanId，不落盘）并单独论证</td></tr>
+        <tr><td class="mono">T5</td><td><span class="tag ok">🟡</span></td><td>108 次匹配会不会太贵</td><td>≈50 万次归一化比较，一次性可接受；<strong>按「表指纹 × 稿指纹」缓存</strong></td></tr>
+        <tr><td class="mono">T6</td><td><span class="tag warn">🟠</span></td><td><strong>指纹稳不稳定</strong></td><td><strong>两级指纹</strong>：① 文件级（现有 <code>fingerprint</code>，判"稿有没有变"）② 行级（判"这一行属于哪一稿"，<strong>允许随内容变</strong>）。<strong>跨版本凭证只能靠①＋覆盖关系</strong></td></tr>
+        <tr><td class="mono">T7</td><td><span class="tag ok">🟡</span></td><td>「两两不相交」怎么验</td><td>表解析后按行 id 分片 ⇒ 不相交是<strong>可计算的不变量</strong>。补两条：<strong>每片非空</strong>、<strong>片数 ≤ 表里出现的归属值数</strong></td></tr>
+        <tr><td class="mono">T8</td><td><span class="tag warn">🟠</span></td><td>「版本一致」会不会天天误报（设计稿小改很常见）</td><td><strong>降级为「需复核」而非「作废」</strong>：fingerprint 变 ⇒ 重算得分；新得分仍高 ⇒ 保留绑定并提示「稿已更新，表可能需要更新」</td></tr>
+        <tr><td class="mono">T9</td><td><span class="tag ok">🟡</span></td><td>「交付包」是谁定义的</td><td><strong>不进数据模型</strong>：只做矩阵的<strong>视图折叠</strong>，分组是视图状态</td></tr>
+        <tr><td class="mono">T10</td><td><span class="tag acc">✅</span></td><td>v4 相对 v3 是净减还是净增</td><td><strong>净减风险面</strong>：多了得分矩阵/自检/歧义早报/哈希指纹；<strong>少了合同变更整条、共享组对象、包对象、默认逐层哈希</strong></td></tr>
+        <tr><td class="mono">T11</td><td><span class="tag bad">🔴</span></td><td><strong>本轮推得太远了吗</strong>：P0 的得分矩阵<strong>要动助手</strong>（新增只读接口），这是方案里唯一动助手的部分</td><td><strong>诚实说清：P0 不是纯前端。</strong>若 Owner 要求本轮全在前端，得分矩阵降级为"名字规则提案"，证据退到"推定档"。<strong>建议做助手接口</strong>——它一次解决"错绑"这个唯一不可逆风险，且不改执行语义（只读）</td></tr>
+        <tr><td class="mono">T12</td><td><span class="tag ok">🟡</span></td><td>「144 份交付物」是不是比用户脑子里的单位更细</td><td>Owner 脑子里的单位可能是"一个 SKU 的一次交付（12 个文件一起交）"⇒ 144 格<strong>保留</strong>（细粒度不亏），但<strong>必须有包级滚降</strong>（包行＝"12 份里 8 份完成"）——与 T9 的折叠是同一件事</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>阶段五 · 落地与门</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>P0-1 · 交付物矩阵 ＋ 单稿详情</h3><p>144 格真矩阵、粘性表头、按交付包折叠、行头人话徽章；详情＝图二那一行。<code>tsc</code> rc=0 ／ <code>lint</code> rc=0 ／ 浏览器实拍 12×144。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>P0-2 · 绑定状态人话化 ＋ 缺列体检</h3><p>不依赖助手：把「对得上 / 说不清 / 对不上 / 没配表」算出来并挂在行头；本稿要做但库里没有的列 ⇒ 红框 ＋ 拦批。手工 3 例逐一验。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>P0-3 · 助手只读接口：回传命中得分</h3><p>聚合得分（不回传正文）；可选带盐逐层哈希。浏览器侧新增纯函数 <code>binding-evidence.ts</code> 消费。<strong>口径必须与 <code>coverage.ts</code> 三档一致</strong>；<strong>新助手版本拿不到得分时要能降级</strong>（退「推定档」，不崩不骗）。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>P0-4 · 分区自检 ＋ 歧义早报</h3><p>新增 <code>partition-check.ts</code>。单测四种：重叠行 / 空片 / 命中率不足 / 同原文不同译文。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>P1-1 · 模板带出处（哈希短码）</h3><p><code>translation-template.ts</code>：记录编号＝<code>"L"+sha256(...).slice(0,16)</code>。单测：匹配助手白名单；<strong>不再需要"中文路径转码"纪律</strong>。</p></div></div>
+    <div class="gate"><span class="num">6</span><div class="body"><h3>P1-2 · 宽表分区</h3><p>按「模块」值切，或按得分边界切；切前预览行数。单测：合表切 12 片 / 模块值不命中 ⇒ 不切。</p></div></div>
+    <div class="gate"><span class="num">7</span><div class="body"><h3>P1-3 · 批量导入表 ＋ 候选提案</h3><p>一次拖 N 张表进来 ⇒ 立刻给候选提案（得分排序 ＋ 歧义点名）；宽表/一对多/零命中三类都必须要人确认。</p></div></div>
+    <div class="gate"><span class="num">8</span><div class="body"><h3>P2 · 绑定持久化 ＋ 包级视图</h3><p>只存 <code>稿→库+片</code>（不存表内容）。<strong>P2 不再触碰执行语义 ⇒ 不触发合同变更门。</strong></p></div></div>
+  </div>
+  <div class="callout ok">
+    <span class="lb">v4 相对 v3 最重要的一句话</span>
+    <p>不动执行链、报价、结算闸、助手协议、支付 flag、<code>binding-core</code> 的匹配键。⇒ <strong>v4 不需要跑 <code>test:batch-row-contract</code> ／ <code>test:trust-chain</code></strong>——上一版那道门被这条减法消掉了。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>阶段六 · 待 Owner 拍板（两件半）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>选项</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O1″</td><td><strong>要不要为了「有证据」让助手回传命中得分？</strong></td><td>① 做（P0-3，纯只读接口，不改执行语义） ② 不做（退回名字规则提案，证据只有"推定档"）</td><td><strong>①</strong>。这是唯一能根治错绑（唯一不可逆风险）的东西；不做则"说不清/对不上"永远判不出来</td></tr>
+        <tr><td class="mono">O2″</td><td><strong>模板加不加「记录编号 / 模块」两列？</strong></td><td>① 加 ② 不加</td><td><strong>①</strong>，但 v4 改成<strong>哈希短码</strong> ⇒ 上一版那条"编号转码纪律"<strong>不再是风险点</strong>；模块列仍为可选（可由得分分区替代）</td></tr>
+        <tr><td class="mono">O3″</td><td><strong>逐层哈希要不要回传？</strong></td><td>① 默认只回聚合得分 ② 也回传带盐逐层哈希</td><td><strong>①</strong>。哈希可被字典反查（常见营销语），默认不给；需要更强证据时再开 ②（带盐、不落盘）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">旧的 O1′「组成员怎么声明」被 v4 消解（组＝切片参数）；旧的 O3′「绑定持久化」仍在 P2。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>附 · 模拟件走法</h2>
+  <p class="note">文件：<code>交付档案/执行方案/模拟_20261020_批量台v4_分配模型_得分矩阵与分区自检.html</code>（单文件，双击即开；实测 0 console error：12 行 / 144 格 / 3 个交付包 / 108 个得分格）。</p>
+  <ul class="notes">
+    <li><span class="n">1</span><div><strong>批次总览</strong>：3 个交付包分组、144 格、行头人话徽章；点格跳详情。</div></li>
+    <li><span class="n">2</span><div><strong>绑定检查器</strong>（本轮新增的核心）：<strong>文件 × 表 得分矩阵</strong>（12×9=108 格）——一行只有一格高分＝独占表；<strong>一列多行高分＝宽表（蓝框）</strong>；一行两格接近＝说不清。右侧给候选排名、<strong>分区自检三条</strong>、<strong>歧义早报</strong>。</div></li>
+    <li><span class="n">3</span><div><strong>单稿详情</strong>＝图二那一行。</div></li>
+    <li><span class="n">4</span><div><strong>指纹与模板</strong>：今天 vs 改后（记录编号＝<code>L</code>+sha256 前 16 位），以及"为什么得分只能助手侧算"（Y1–Y4）。</div></li>
+    <li><span class="n">5</span><div><strong>文档：现状对照</strong>（非产品面）。</div></li>
+  </ul>
+</section>
+
+<footer>
+  <p>2026-10-20 · 只读取证＋方案设计（未改业务代码）· 基线 worktrees/develop@99baaf6 · 事实核 Y1–Y7 · 本轮审查 T1–T12 · 相对 v3 净减：合同变更整条、共享组对象、包对象、默认逐层哈希。</p>
+</footer>
+</div>

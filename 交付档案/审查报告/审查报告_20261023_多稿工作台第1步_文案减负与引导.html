@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多稿工作台第 1 步 · 文案减负与引导</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:44ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.panel li::marker{color:var(--line-strong)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate .steps{margin:0;padding-left:1.1em;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>多稿工作台 · 第 1 步</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>文案减负与引导</h1>
+  <p class="standfirst">页面上的字，大部分不是用户文案，是写给我们自己的设计说明。这份报告给出一句话结论、实测字数账、开源库许可对比、三层引导方案，以及"删掉的每句话都去了哪"的文案账本。全部只读，未改业务代码、未上站。</p>
+  <div class="meta">
+    <span>实测：常驻 716 → 357 汉字</span>
+    <span>解释性段落 23 → 1</span>
+    <span>0 能力删除</span>
+    <span>附可点模拟</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>那些字回答的是"我们为什么这样设计"，不是"你现在该做什么"。<br>所以不该改短，该<b>退出常驻层</b>：设计理由删掉，操作说明改成"首登 4 步 + 常驻问号 + 就地提示"。</p>
+  </div>
+  <div class="split">
+    <div class="panel no">
+      <h3>该退出常驻的</h3>
+      <ul>
+        <li><strong>设计说明</strong>：页头"左边是…右边是…不是逐稿校对"（<code>attribution-stage.tsx:194-196</code>）。用户不需要知道布局理由。</li>
+        <li><strong>设计说明</strong>："矩阵留在整宽，是因为塞进右栏只能横着拖"（<code>:632</code>）。这是评审会上说的话。</li>
+        <li><strong>机制解释</strong>：归属顺序整段（<code>:636-642</code>）、统计卡三行小字（<code>:161-186</code>）。收进「规则」抽屉与悬停。</li>
+        <li><strong>重复提示</strong>：页脚"不定就不往下走…替你猜"，按钮禁用和"N 件待定"已经说完了。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>该留下的</h3>
+      <ul>
+        <li><strong>安全感</strong>："只读，不会动你的文件"——唯一值得常驻的非动作文字。</li>
+        <li><strong>硬要求</strong>：错误原因、Smart Review 可见性、表格格式说明、示例表下载——删了就是静默降级。</li>
+        <li><strong>能力</strong>：逐稿手动导入、系统对话框、点格子看来源——一个都不删。</li>
+        <li><strong>数字与状态</strong>：稿数、格数、待定数、已定/无表——这些是结论，不是解释。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>字数账</h2>
+  <p class="lede">同一视口、同一数据、同一测量方法：对渲染后的页面取 <code>innerText</code>，用汉字正则计数。</p>
+  <div class="stats">
+    <div class="stat bad"><span class="n">716</span><span class="k">改前常驻汉字<br>上一版模拟 = 现状外壳</span></div>
+    <div class="stat ok"><span class="n">357</span><span class="k">改后常驻汉字<br>引导关闭时</span></div>
+    <div class="stat warn"><span class="n">−50%</span><span class="k">常驻字数降幅<br>0 能力删除</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">拆开看</span>
+    <p>页头说明 43 字、统计小字 48 字、冲突证据 106 字、图例 49 字、页脚提示 38 字、左栏副文案 50 字——删掉的全是"解释"，留下的是"标签 + 状态 + 按钮"。按需拉取层：引导每步 34 字，帮助抽屉 112 字，只在点开时出现。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>病根：五类文字挤在常驻层</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>类型</th><th>典型句子</th><th>它其实在回答</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag bad">A 设计说明</span></td><td class="was">左边是「要你处理的事」和素材清单，右边是选中那件的证据和选择……不是逐稿校对。</td><td>我们为什么这样布局</td><td class="fix">删除</td></tr>
+        <tr><td><span class="tag bad">A 设计说明</span></td><td class="was">矩阵留在整宽，是因为塞进右栏只能横着拖。</td><td>我们为什么放整宽</td><td class="fix">删除</td></tr>
+        <tr><td><span class="tag warn">B 机制解释</span></td><td class="was">归属顺序：A+ · 主图 · 主副图……不跨交付物借表。</td><td>系统怎么算归属</td><td>收进「规则」抽屉</td></tr>
+        <tr><td><span class="tag warn">B 机制解释</span></td><td class="was">文件夹里共 51 个，本批 12 个 / 按 3 份已配表的稿加总</td><td>数字怎么来的</td><td>悬停 + 引导</td></tr>
+        <tr><td><span class="tag warn">C 重复提示</span></td><td class="was">不定就不往下走：我们不会按修改时间或目录排序替你猜。</td><td>已经说了三遍</td><td class="fix">删除</td></tr>
+        <tr><td><span class="tag bad">D 防御性解释</span></td><td class="was">以前的界面把它们直接吞掉，所以你根本不知道自己少了哪几个。</td><td>我们在为旧版道歉</td><td>压成一句结论</td></tr>
+        <tr><td><span class="tag ok">E 安全感</span></td><td>只读，不会动你的文件。</td><td>我会不会弄坏素材</td><td class="fix">保留</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">判据不是我们拍的</span>
+    <p>项目已批准的两条（<code>changes/active/20260923-quiet-ui.md</code> §0）：<strong>展示结论和动作，不展示机制；只有"用户能改变业务结果"的决定才展示。</strong>以及<strong>折叠不得删报</strong>——移出常驻层的信息必须在新位置原样可见。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>开源参考：星最多的两个，许可最危险</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项目</th><th class="mono">星数</th><th>许可</th><th class="mono">最近推送</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td><code>nilbuild/driver.js</code></td><td class="mono">26,940</td><td><span class="tag ok">MIT</span></td><td class="mono">2026-10-18</td><td>可用。零依赖、框架无关</td></tr>
+        <tr><td><code>usablica/intro.js</code></td><td class="mono">23,452</td><td><span class="tag bad">AGPL-3.0 + 商业</span></td><td class="mono">2026-09-21</td><td class="now">不建议。商用要么开源，要么买授权</td></tr>
+        <tr><td><code>shipshapecode/shepherd</code></td><td class="mono">13,829</td><td><span class="tag bad">AGPL-3.0 + 商业</span></td><td class="mono">2026-10-22</td><td class="now">不建议，同上（LICENSE.md 原文实测）</td></tr>
+        <tr><td><code>gilbarbara/react-joyride</code></td><td class="mono">7,880</td><td><span class="tag ok">MIT</span></td><td class="mono">2026-07-09</td><td>可用。React 原生，带 6 个依赖</td></tr>
+        <tr><td><code>elrumordelaluz/reactour</code></td><td class="mono">4,090</td><td><span class="tag ok">MIT</span></td><td class="mono">2026-05-19</td><td>可用。体量更小</td></tr>
+        <tr><td><code>usertour/usertour</code></td><td class="mono">2,325</td><td><span class="tag warn">待核</span></td><td class="mono">2026-10-22</td><td>是引导平台，要自建服务，不是组件库</td></tr>
+        <tr><td><code>uixmat/onborda</code></td><td class="mono">1,408</td><td><span class="tag warn">未标注</span></td><td class="mono">2026-06-08</td><td>Next.js + framer-motion，绑死技术栈</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>本项目怎么选</h3>
+      <ul>
+        <li><strong>首选自研</strong>：项目已有 Radix（popover / tooltip / dialog 全在依赖里），遮罩 + 卡片约 200 行，样式统一、零新依赖。</li>
+        <li><strong>备选 driver.js</strong>：MIT 干净，26.9k 星，遮罩聚光就是它带火的；以后要跨页面复用可以换。</li>
+        <li><strong>不碰 intro.js / Shepherd</strong>：AGPL 会传染。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>业界的三条硬结论</h3>
+      <ul>
+        <li><strong>NN/g</strong>：一次性长导览的问题不是不好看，是<strong>用户记不住</strong>；更有效的是"拉取式"帮助——动作发生时，帮助就在那儿。</li>
+        <li><strong>Appcues</strong>：有效引导通常<strong>组合 2–4 种模式</strong>；最常见的错误是第一天塞太多。</li>
+        <li><strong>Trevor Calabro</strong>：别把关键帮助只放进 tooltip——悬停不可发现、触屏不可用。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>方案：三层引导，一条文案预算</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>首次进入的 4 步引导（只弹一次）</h3>
+        <ul class="steps">
+          <li><strong>文件夹就是这一批</strong>：换文件夹等于换整批，不用再点"加入本批"。</li>
+          <li><strong>有歧义才停你</strong>：选一个方案会自动跳下一件；其余我们自己归位。</li>
+          <li><strong>一格 = 一份稿 × 一门语言</strong>：点任意格子，看它从哪张表、哪个 sheet 来。</li>
+          <li><strong>定了就往下走</strong>：读表在下一步自动做，不会再弹旧确认框。</li>
+        </ul>
+        <p>可跳过、Esc 可关、只弹一次、可重看、不锁页面、窄屏变底部卡片、无数据不弹。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>常驻「?」：这一步怎么做</h3>
+        <p>位置在<strong>页头标题右侧</strong>，不是全站顶栏。理由：用户问的是"这一步"，不是"这个产品"；放页头内容才能跟着步骤换。点开是 4 步清单 + 异常入口 + "带我看一遍"。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>就地提示：只在需要时出现</h3>
+        <p>左栏、矩阵标题旁各一个小「?」（可点，不做 hover-only）；空态、表头读不到、有表无稿各一句原因 + 一个动作；统计卡数字来源进悬停 <code>title</code>。</p>
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">文案预算（写进验收，防反弹）</span>
+    <p>页头说明 0 句 · 统计卡 ≤5 字标签 · 左栏 ≤2 行 · 右栏 1 句结论 + 折叠 · 图例 ≤3 项 · <strong>整屏 ≤360 汉字</strong>（本次 357）· 引导每步 ≤35 字（本次 34）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>文案账本：删掉的每一句，都去哪了</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>被移出的句子</th><th>位置</th><th>处置</th><th>新落点</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td class="was">左边是…右边是…不是逐稿校对</td><td class="mono">194-196</td><td class="fix">删</td><td>引导第 1 步</td></tr>
+        <tr><td class="mono">2</td><td class="was">矩阵留在整宽，是因为…只能横着拖</td><td class="mono">632</td><td class="fix">删</td><td>无（设计理由）</td></tr>
+        <tr><td class="mono">3</td><td class="was">归属顺序：…不跨交付物借表</td><td class="mono">636-642</td><td>移出常驻</td><td>「规则」抽屉</td></tr>
+        <tr><td class="mono">4</td><td class="was">统计卡三行小字</td><td class="mono">161-186</td><td>收起</td><td>悬停 + 引导第 3 步</td></tr>
+        <tr><td class="mono">5</td><td class="was">冲突卡 4–5 行证据</td><td class="mono">右栏</td><td>折叠</td><td>「看证据（4 条）」</td></tr>
+        <tr><td class="mono">6</td><td class="was">不定就不往下走…替你猜</td><td class="mono">页脚</td><td class="fix">删</td><td>禁用 + "N 件待定"</td></tr>
+        <tr><td class="mono">7</td><td class="was">以前的界面把它们直接吞掉…</td><td class="mono">528-530</td><td>压缩</td><td>"不会被丢，也不会配错稿"</td></tr>
+        <tr><td class="mono">8</td><td class="was">图例括注（格子里是…几份稿…）</td><td class="mono">619-632</td><td>压缩</td><td>3 个色块 + 矩阵「?」</td></tr>
+        <tr><td class="mono">9</td><td class="was">凭什么这么配（整段）</td><td class="mono">抽屉</td><td>折叠</td><td><code>&lt;details&gt;</code> 展开即原文</td></tr>
+        <tr><td class="mono">10</td><td>只读，不会动你的文件</td><td class="mono">文件夹栏</td><td class="fix">保留</td><td>原处</td></tr>
+        <tr><td class="mono">11</td><td>表格格式说明 / 示例表 / 空态短提示</td><td class="mono">WF-002</td><td>不动</td><td>原处（不在减法范围）</td></tr>
+        <tr><td class="mono">12</td><td>错误原因 / Smart Review 可见性</td><td class="mono">WF-003</td><td>不动</td><td>原处（硬要求）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">第 11、12 条是边界：这次减的是"解释我们怎么设计"，不是"解释系统出了什么事"。后者删了就是静默降级。</p>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>落地与验收</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">P0</div>
+      <div class="body">
+        <h3>文案减负（约半天）</h3>
+        <p>删页头说明、删设计理由、归属口径移入「规则」；统计卡 hint 改 <code>title</code>；证据默认折叠；图例压到 3 个色块；页头加「?」+ 帮助抽屉。文案走 <code>site-copy.ts</code> 文案键，禁止硬编码（WF-010 的教训：库里覆盖赢）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">P1</div>
+      <div class="body">
+        <h3>首次引导（约 1 天）</h3>
+        <p>新增 <code>step-guide.tsx</code>：<code>box-shadow</code> 挖洞遮罩 + 卡片；<code>useStepGuide('step1')</code> 读 <code>localStorage</code>、滚动目标入视口、resize/scroll 重算、Esc/←/→；版本号 <code>tygf.step1.guide.v1</code>，文案大改升 v2。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">P2</div>
+      <div class="body">
+        <h3>就地提示（可选，约半天）</h3>
+        <p>左栏/矩阵小「?」、空态、表头读不到、有表无稿三类异常各一句 + 一个动作；统一走同一个气泡组件。</p>
+      </div>
+    </div>
+  </div>
+  <h3>验收（真跑，不看代码）</h3>
+  <ol class="notes">
+    <li>清 <code>localStorage</code> 冷启动 → 4 步引导自动出现，可走完、可跳过，<code>seen=1</code>；</li>
+    <li>刷新 → 不再自动弹；点页头「?」→ 抽屉出现，"带我看一遍"能重走；</li>
+    <li>常驻汉字 ≤360（<code>innerText</code> 汉字正则，方法同 §02）；</li>
+    <li>0 能力删除：逐稿手动导入、系统对话框、表格格式说明、示例表下载、错误原因、Smart Review、点格子看来源——逐项勾选；</li>
+    <li>键盘：Esc 关、Tab 可达「?」、引导按钮可 Tab；</li>
+    <li>375px 窄屏：引导变底部卡片，不遮被指元素；</li>
+    <li><code>npx tsc --noEmit</code>、<code>npm run lint</code> 通过；已有 e2e 则补"首登引导只出现一次"。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>反方九问</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="loc">Q1</span><strong>删了说明，新手不是更懵？</strong></div><p>如果只删不加，是。所以核心不是删，是把说明搬到动作发生的地方。每一条都有落点；没有落点的（设计理由）本来就不该给用户看。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q2</span><strong>首次引导不也是噪音？</strong></div><p>是，所以有硬约束：4 步、每步 34 字、可跳过、只弹一次、不锁页面。超过这个量就是每次都要关的广告。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q3</span><strong>为什么不做视频/文档？</strong></div><p>用户正在流程里，不想离开页面。文档链接放抽屉底部，给需要深入的人。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q4</span><strong>为什么帮助入口不放顶栏？</strong></div><p>顶栏是全局的，放上去内容就得覆盖四步，又变成一篇说明书。页头跟着步骤走，才能一句话说清。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q5</span><strong>为什么不用 intro.js？星最多。</strong></div><p>AGPL-3.0 + 商业双许可。商用嵌入要么开源整个产品，要么买授权。星多不等于能用。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q6</span><strong>为什么不直接用 driver.js？</strong></div><p>可以，MIT 很干净。但项目已有 Radix，自研 200 行能把样式、键盘、窄屏都控在手里，也少一个依赖。driver.js 作为备选写进方案，不是否决。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q7</span><strong>360 字是不是拍脑袋？</strong></div><p>不是。716 字里能删的是解释句（约 359 字），剩下标签、状态、按钮是 357 字。360 是自然量，不是硬凑。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q8</span><strong>会不会把错误原因也删了？</strong></div><p>不会。§06 第 11、12 条明确保留：错误原因、Smart Review 可见性、表格格式说明都是硬要求。</p></div>
+    <div class="card"><div class="top"><span class="loc">Q9</span><strong>窄屏怎么办？</strong></div><p>引导卡片改底部固定，矩阵横向滚动不变；小「?」保持可点，不做 hover-only。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>治理归类与待拍板</h2>
+  <div class="callout">
+    <span class="lb">L2 变更建议</span>
+    <p>新增 <code>changes/active/20261023-workbench-guidance.md</code>。<strong>IN SCOPE</strong>：第 1 步常驻文案减负、页头「?」与帮助抽屉、首次 4 步引导、区块小「?」。<strong>OUT OF SCOPE</strong>：四步流程、归属算法、读表逻辑、计费/回执/冻结语义、表格格式说明与示例表下载、错误原因与 Smart Review 可见性。<strong>Acceptance</strong>：§07 验收 7 条。</p>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>待拍板 ①：首登要不要自动弹？</h3>
+      <ul>
+        <li><strong>A（推荐）</strong>：自动弹一次，4 步，可跳过，之后靠「?」重看。</li>
+        <li><strong>B</strong>：不自动弹，只在页头放「?」，用户点才看。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>待拍板 ②：是否按此方案施工？</h3>
+      <ul>
+        <li>纯前端，不动助手、不动计费；</li>
+        <li>先测试站，验收后再谈生产。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>实测口径：1180px 视口、同一份 2026-10-22 目录快照；汉字数取 <code>document.body.innerText</code> 正则计数。上一版模拟 716 字 / 23 个解释块；本版 357 字 / 1 个解释块；引导每步 34 字；帮助抽屉 112 字。</p>
+  <p>证据索引：<code>attribution-stage.tsx:161-186 / 194-196 / 528-530 / 619-642</code>；<code>changes/active/20260923-quiet-ui.md</code> §0；<code>changes/active/20261003-workbench-reduction.md</code>；<code>product-specs/workbench-flow.md:12-17 / 62-70</code>。外部读数：2026-10-23 GitHub API 与许可文件实测。</p>
+</footer>
+
+</div>
+</body>
+</html>

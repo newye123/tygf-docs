@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地助手整改 v2：按首跑优先重排的执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:64ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre.cmd{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  line-height:1.65;
+  margin:0;
+  color:var(--ink-2);
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:5px}
+.gate li{font-size:.9rem;color:var(--ink-2);line-height:1.65}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案 v2</span><span class="sep">/</span>
+    <span>本地助手整改 · 首跑优先</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>先把指标恢复成能读数，再谈整改</h1>
+  <p class="standfirst">据两轮对抗式审查重写的可执行版本，替代被打回的《本地助手整改：开源参考、对抗式复核与执行方案》。加了一件事：从项目全局看这次整改会碰到哪些面——结论是排序要换。本文件只写方案，未动代码、未出包、未部署。</p>
+  <div class="meta">
+    <span>基线 develop@558384c9</span>
+    <span>八步 ＋ 五条影响面</span>
+    <span>需 Owner 拍 4 件</span>
+    <span>新签单数 2（受治理配额约束）</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话</h2>
+
+  <div class="verdict">
+    <span class="lb">待 Owner 拍 · 顺序与原版不同</span>
+    <p>原方案把工程预算放在"让服务端能证明活真的干过"上。从项目全局看，现阶段真正的瓶颈不是这个：收钱链还没开闸（支付族开关按红线必须为 false），而第一指标"首跑成功率"<strong>已经 28 天没有读数</strong>。<br>v2 的排序因此是：先让指标能读数 → 再修会让客户丢授权的两处 → 账务只做零客户端那两件 → 全量对象证据等开闸后再谈。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">28 天</span><span class="k">第一指标无新读数（台账末行与文件 mtime 同为 09-25 22:40）</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">本机定时任务条数</span></div>
+    <div class="stat warn"><span class="n">15</span><span class="k">已跟踪文件带当前助手版本号（其中 9 个是代码／配置／构建面，2 个是别条线今天正在改的组件）</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">需 Owner 拍的数与选择</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>上帝视角：这次整改会碰到项目的哪些面</h2>
+  <p class="lede">每条都带实测出处。这五条决定 v2 为什么这样排序。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">A · 最重</span><h3>第一指标没读数，而整改有一条会压低它</h3></div>
+      <p>读数台账 <code>总控/工具/northstar-ledger.jsonl</code> 全文 4 行，末行 <code>recordedAt 2026-09-25T14:40Z</code>，文件 mtime 同为 09-25 22:40；采集脚本 mtime 09-25 05:24；本机定时任务表返回 0 条。从 09-25 到现在 28 天没有新读数。</p>
+      <p class="was">而原方案"读不到就退出"正好落在首跑路径上：新装机首次配对撞上文件被占用，现在能回落默认配置继续跑，改完是退出且产品内没有出口。没有读数，就没人能证明这次改动是净收益还是净伤害。所以 v2 把"恢复读数"排在一切整改之前。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag bad">B</span><h3>收钱链还没开闸，"防白拿"今天没有现值</h3></div>
+      <p>支付族开关（支付宝、手工入账、积分包、内测加成）在漂移对账工具里被定义为：任一环境为真即记违规（<code>scripts/flags-drift.mjs:81</code>、<code>:139-140</code>），项目红线同样是未批准不得翻转。</p>
+      <p class="was">原方案最贵那件的动机是"被改的客户端能不能白拿钱"。在支付未开闸、内测按积分跑的阶段它没有当期收益；第二轮深钻还证明：就算开闸，它也挡不住真正的漏——结算基数来自客户端上报，少报即少付。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">C</span><h3>助手侧正被另一条线高频改，版本 bump 会撞车</h3></div>
+      <p>当前助手版本号出现在 9 个代码／配置／构建面文件里（身份配置、引擎、包描述、安装脚本、部署脚本、工作台客户端，以及两个工作台组件文件、一个 UI 契约守卫）。其中两个组件正是今天"多稿工作台第 1 步"在改的；台账今天有 4 条多稿第 1 步待复验、1 条排版面板进行中、1 条英文站工作台待复验。</p>
+      <p class="was">更严的读数（用 <code>git grep -l</code> 在已跟踪文件上重数）：全仓带该版本号的已跟踪文件共 <strong>15 个</strong>——那 9 个 ＋ 已发布清单 ＋ 三处记账与交接 ＋ <code>.env.example</code> ＋ <code>.gitattributes</code>。宽扫多出的 <code>.next</code> 产物是派生件，不算手工同步面。bump 时要一起改的是 15 个，不是 9 个。</p>
+      <p class="was">两个后果：整改的助手侧改动应并成同一支 3.7.25，不要单独插一次 bump；而原方案的发布闸若删掉未签名开关，测试站就出不了新包，今天这些待复验项的后续迭代一起被卡死。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">D</span><h3>隐私合同不是"加个字段"，它牵动法务页与两道守卫</h3></div>
+      <p>回执只收 7 个白名单键，明令禁止上传原文、译文、路径、图层名、对象正文（<code>execution-batch.ts:2317-2342</code>）；发版门里还有法律页漂移守卫。</p>
+      <p class="was">上传逐对象标识等于把文档层结构送到云端，隐私页与对外主张要同批改写，并按合同变更纪律同步四层加测试夹具。成本远高于方案里写的"加一个字段"。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag">E</span><h3>治理配额：别把一次整改拆成六张单</h3></div>
+      <p>项目纪律限每周新签任务书不超过 7 张、三账净增不超过 30 KB。</p>
+      <p class="was">v2 只签两张单：热修单、账务与证据单。其余并进这两张的条目里，不另立。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行方案（八步，顺序不能换）</h2>
+
+  <div class="gates">
+    <div class="gate first"><div class="num">0</div><div class="body"><h3>先把第一指标恢复成能读数</h3><p>确认采集脚本还能跑通（交付根两处挂载），出一次当日读数；再定调度载体——挂本机定时任务或明确挂服务器侧，不再挂进程内定时器。验收：台账出现一行今天的记录，或如实记"取不到数、原因"。<strong>需 Owner 一句</strong>：挂哪台机、哪个调度口。</p></div></div>
+    <div class="gate"><div class="num">1</div><div class="body"><h3>身份核对（1 分钟，判据换对象）</h3><p>客户机 <code>/ping</code> 的版本与构建号，比<strong>客户所连站点</strong>的 <code>/api/runtime-provenance</code> 期望值，不再比出厂清单——清单不是拦人的那道闸，那道闸要求构建号等四项逐字相等。对不上即判发布不同步，先修发布。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>3.7.25 热修（与多稿第 2 步并成同一支 bump，五件一包）</h3><p>① 停写自定义权限项；② 读不了时启动跑一次 <code>icacls /reset</code> 恢复继承（不引入 SID 那一整套）；③ 写盘闸下沉到配置写入函数，拿不到"读成功或本就不存在"就抛错；④ <strong>首跑分级</strong>——从未配对成功的机器允许回落默认值（没东西可丢），已配对机器的读不到才停；⑤ 自带离线恢复出口：托盘致命闭锁 ＋ 把"该删哪个文件"写进不脱敏的本机明文诊断并在托盘点名（日志会把路径抹成 <code>[path]</code>，普通输出还不进日志）。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>发布闸：这轮只加约束，不动开关</h3><p>保留未签名开关与生产清单，但要求带原因与到期日，到期自动失效，调用参数留进发布记录；下载页如实标注"当前版本未签名"。beta 目录要么完整做（清单名按渠道解析 ＋ 身份闸按渠道取值），要么这轮不做。验收必须包含"测试站还能出包"这条正向断言。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>账务两件（服务端，零客户端改动）</h3><p>目标写清楚：不是防白拿，是让少报要付解释成本。① 最小证据闸——摘要补 64 位十六进制形状校验，有完成行时拒空数组摘要；② 少报收口——实扣取"报价乘下限比例"与"按上报算出的值"里较大的那个，完成率低于阈值才退款且必须逐行带原因码，按设备统计低完成率占比、超常进人工对账。两个数待 Owner 定。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>回执墓碑 2 行版 ＋ journal 明文面</h3><p>墓碑只在服务端确认已结算的成功路径写，被拒收的写"拒绝"并单独计数，绝不写进共用清理函数。历史样本只做只读分类并豁免于清理。journal 明文面（原方案没看见）：派生输入文件存整份清单含原文译文、回执文件存本机绝对路径，两者都不加密不收 ACL；原方案假设的 30 天清理<strong>没有执行体</strong>。处置二选一：加权限收紧，或真建保留期清理——不许只在文档里写。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><h3>本地 HTTP 卫生三件</h3><p>缓存分隔头、私有网络预检、Host 白名单（端口从变量取，别写死）。本机进程可伪造来源这条<strong>显式记为接受风险</strong>，不写"已修复"。</p></div></div>
+    <div class="gate"><div class="num">7</div><div class="body"><h3>证书与四处签名位（排最后）</h3><p>安装脚本配置覆盖四件 ＋ 时间戳。询价与主体资格未核实前不对外承诺时间。</p></div></div>
+    <div class="gate"><div class="num">8</div><div class="body"><h3>全量对象证据：四件前置齐了再开工</h3><p>对象清单表（表建了但全仓 0 引用）＋ 行映射 ＋ 请求体上限方案（500 对象单独就 79,513 字节，上限 65,536）＋ 隐私合同变更四层同步。<strong>并且要等支付开闸</strong>——在那之前没有当期收益。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>明确不做 ＋ 待拍 ＋ 未核实</h2>
+
+  <h3>不做清单（v2 口径）</h3>
+  <ul class="notes">
+    <li>不引入取 SID、缓存、脚本兜底那一整套身份子系统。</li>
+    <li>不把"解密失败"做成独立状态机分支——只影响文案，不影响处置。</li>
+    <li>不做防破解、不加壳、不上凭据管理器与双向证书。</li>
+    <li>不在本轮做全量对象上传（原版排第一，v2 排第八）。</li>
+    <li>不拆六张单，只签两张（热修单、账务与证据单）。</li>
+  </ul>
+
+  <h3>需要 Owner 拍的四件事</h3>
+  <ol class="notes">
+    <li><strong>第 0 步的调度载体</strong>：挂哪台机、用哪个调度口（本机定时任务表当前 0 条）。</li>
+    <li><strong>第 2 步是否与多稿工作台第 2 步并成同一支 3.7.25</strong>：我建议并，理由是版本号同步面 9 个文件里有 2 个是那条线今天正在改的组件。</li>
+    <li><strong>第 4 步的两个数</strong>：批次保底比例、完成率阈值。</li>
+    <li><strong>第 5 步 journal 明文</strong>：走权限收紧，还是真建保留期清理。</li>
+  </ol>
+
+  <h3>未核实（不假装已解决）</h3>
+  <ul class="notes">
+    <li>第一指标原先挂在哪个调度载体上、为什么 28 天没跑：未核实。本机定时任务 0 条是实测，但那条链可能挂在别处。</li>
+    <li>客户机是否"域账号加同名本地账号"（权限缺陷的触发条件）：缺原始输出。</li>
+    <li>干净 Windows 上本机目录的真实继承权限：本机测到当前用户加系统加管理员，另挂一个沙箱组继承只读；缺一台没装过沙箱类软件的机器读数。</li>
+    <li>证书价格、周期、个人主体资格：未向机构询价。</li>
+    <li>"少报"在现网的真实规模：数不出来，缺交付件存在性的云端可见证据。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>方案基线：<code>worktrees/develop@558384c9</code>（2026-10-23 20:39 现读）。被替代件为 <code>执行方案_20261023_本地助手整改_开源参考与沙盘.md</code>（26,403 B，sha256 <code>26c1c80e…9011cec6</code>）。</p>
+  <p>依据：必要性复审（16 条）与第二轮深钻（14 条，含对第一轮 3 条更正）两份审查报告。本文件只写方案：未动任何代码、未出包、未部署、未改动任何账号或线上配置。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>双工作台并列 + 批量上传 UI/UX 执行方案（对抗式审查版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:18px 20px}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.verdict p{margin:0;color:var(--ink-2);font-size:.98rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .n{font-family:var(--font-display);font-size:1.55rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;margin:0;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+h2 .no{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 7px}
+p{margin:0}
+.small{font-size:.86rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.chip{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+.card .title{font-weight:600;font-size:.98rem}
+.card p{color:var(--ink-2);font-size:.92rem}
+.card .ref{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 18px;font-size:.92rem;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+.callout.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.ref{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);overflow-wrap:anywhere}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.92rem}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
+.gate .k{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.gate .v{font-size:.92rem;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>图译工坊内测版</span><span class="sep">/</span>
+      <span>执行方案</span><span class="sep">/</span>
+      <span>对抗式审查版</span>
+    </div>
+    <h1>双工作台并列 + 批量上传 UI/UX 执行方案</h1>
+    <p class="standfirst">对象：多 PSD 批量能力「就地改造原工作台」的现状纠正。方法：直读源码取证 + 部署实况核对 + GitHub 开源对照 + 六路反方自审。<b>2026-10-16 更新：Owner 已授权，第 1 层（纯前端骨架）已落地，未提交未推送，develop 主干零改动——见 §08。</b></p>
+    <div class="meta">
+      <span>2026-10-16</span>
+      <span>对象分支 develop@aefc8a8</span>
+      <span>测试站 aefc8a8 / 生产站 ba62ba0</span>
+      <span>结论：方案待批（7 项待决策）</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <span class="tag">待批</span>
+    <p>三句话：① 批量功能是「就地改造原工作台」，不是「多一个工作台」——这正是被顶替的技术形态；② 文件对话框一次只能选一个 PSD，写死在助手端，要一次多选必须改助手并重新发版；③ 建议分三步走，每步可独立回滚：先做并列骨架（纯前端）→ 再改助手多选（需发版）→ 最后上批量队列。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat warn"><div class="n">1 → 2</div><div class="l">工作台数量（需扩视图类型）</div></div>
+    <div class="stat bad"><div class="n">0</div><div class="l">当前可一次多选的文件数</div></div>
+    <div class="stat warn"><div class="n">6</div><div class="l">被改造的原组件文件</div></div>
+    <div class="stat ok"><div class="n">3</div><div class="l">可独立回滚的实施步</div></div>
+  </div>
+
+  <section>
+    <h2><span class="no">01</span>现状与根因（实测证据）</h2>
+    <div class="card">
+      <div class="head"><span class="chip bad">根因</span><span class="title">批量是「同一组件内的分支替换」，不是并列视图</span></div>
+      <p>多 PSD 实验（<b>cde98a7</b>）改的是原工作台两个核心组件：开关一开，<code>design-file-card.tsx:606</code> 直接 <code>return</code> 一整套多选 UI，把原单选 UI 整个替换掉。工作台视图类型当前只有 <code>'home' | 'workbench'</code> 两个值，架构上不存在「第二个工作台」。</p>
+      <div class="ref">view-context.tsx:5 · app-shell.tsx:40 · design-file-card.tsx:66,606 · workbench-view.tsx:261-263</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip bad">Q3 答案</span><span class="title">现在不能一次选多个文件——单选写死在助手端</span></div>
+      <p>助手端用 PowerShell <code>OpenFileDialog</code>，取 <code>$d.FileName</code>（单数）、<b>没有 Multiselect</b>；前端 <code>selectDesignFileDirect</code> 返回单个字符串。更糟的是：上一个还在扫描时，「添加」按钮直接禁用（<code>design-file-card.tsx:477,655</code>），实际体验是「选一个 → 等它扫完 → 才能选下一个」。</p>
+      <div class="ref">picker-dialogs.cjs:57-63 · local-assistant-client.ts:883-914 · design-file-card.tsx:573-601,594,477,655</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip bad">更正</span><span class="title">测试站上批量实验<b>确实是开着的</b>（初版结论错误，18:2x 更正）</span></div>
+      <p>初版只查了 <code>SiteSetting</code>（覆盖层）就下结论「关着」，<b>漏查代码默认值（基础层）</b>。合并规则是 <code>feature-flags-store.ts:37</code> 的 <code>{ ...featureFlags, ...覆盖 }</code>——站点设置没有该键时不覆盖、直接用代码默认值；而 <code>aefc8a8:src/config/featureFlags.ts:61</code> 是 <b><code>true</code></b>。⇒ <b>测试站上批量实验确实开着，Owner 看到的工作台确实被顶替了。</b></p>
+      <p>更严重：<code>aefc8a8</code> 提交信息写「默认关闭」，却在同一提交里把该开关从 <code>false</code> 改成 <code>true</code>——<b>提交信息与代码不符，且改动夹带在与 P0′ 无关的提交里</b>。生产分支 <code>origin/main</code> 无此字段，生产未受影响。</p>
+      <div class="ref">git show aefc8a8 -- src/config/featureFlags.ts · feature-flags-store.ts:37 · aefc8a8:src/config/featureFlags.ts:61</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip info">部署实况</span><span class="title">测试站 aefc8a8；生产站与主干未受影响</span></div>
+      <p>测试站 <code>.deploy-commit</code>=aefc8a8（10-16 08:59）；生产站跑 ba62ba0（10-16 11:52），main HEAD 3657a88 未上生产。批量代码 2 个提交仍为 develop 独有，未进 main。</p>
+      <div class="ref">/var/www/tygf-test/.deploy-commit · /var/www/tygf-current → tygf-releases/ba62ba09da04</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">02</span>开源参考（GitHub）</h2>
+    <p class="small">筛选标准：必须同时解决「多文件 + 本地执行 + 串行队列」——因为你的场景特殊在「浏览器工作台 + 本地 Windows 助手 + Photoshop 单实例串行」。</p>
+    <table>
+      <thead><tr><th>项目</th><th>为什么相关</th><th>可借鉴</th></tr></thead>
+      <tbody>
+        <tr><td>Uppy（transloadit/uppy, MIT）</td><td>最成熟的多文件列表 UI（Dashboard 插件）</td><td>每文件独立状态/进度/操作；批量暂停·重试·删除；<code>autoProceed:false</code> 选完不自动跑</td></tr>
+        <tr><td>Transloadit 最佳实践</td><td>专讲批量文件处理的工程与 UX 原则</td><td>上传/扫描优先、处理异步；结果按 ID 映射不靠顺序；输入设上限；<b>别静默吞失败</b></td></tr>
+        <tr><td>handbrake-web</td><td>自托管 Web + 单一队列 + 多设备共享处理，与你几乎同构</td><td>队列是一等公民：独立页面、可增删、逐项状态</td></tr>
+        <tr><td>HandBrake GUI</td><td>桌面批处理标杆</td><td>「加入队列」与「开始」解耦：先攒够再统一跑</td></tr>
+        <tr><td>Crowdin 源文件上传</td><td>翻译平台批量上传</td><td>批量上传带选项面板，而不是传完才配</td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad"><b>要避开的反模式：</b>① 静默吞掉部分失败（Transloadit 明确警告失败会「less visible」）② 让用户等完整处理 ③ 结果靠位置对齐 ④ 把「选文件」和「开始执行」耦死——你现状四条全中。</div>
+  </section>
+
+  <section>
+    <h2><span class="no">03</span>方案：并列双工作台</h2>
+    <div class="gates">
+      <div class="gate"><span class="k">信息架构</span><span class="v">首页 <code>#home</code> / 工作台 <code>#workbench</code>（<b>一行不动</b>）/ 批量工作台 <code>#batch</code>（新增，独立视图、动态加载、独立开关）</span></div>
+      <div class="gate"><span class="k">批量四区</span><span class="v">① 文件区（增删/重排/状态/单文件重扫）② 语言区 ③ 覆盖率矩阵（升级为执行前必过闸）④ 执行区（队列/总进度/失败分层/结果）</span></div>
+      <div class="gate"><span class="k">一次多选</span><span class="v">三层递进：<b>第1层</b> 前端先行（拖拽/粘贴多路径兜底，不需发版）→ <b>第2层</b> 助手端加 Multiselect（<b>需发版+重装</b>，前端做能力探测自动降级）→ <b>第3层</b> 入列后串行扫描，不再「加一个扫一个」</span></div>
+      <div class="gate"><span class="k">失败处理</span><span class="v">行级（矩阵格标红+悬停原因）/ 批次级（只重试失败）/ 整批级（可下载失败报告，可移植生产站已有 failure-report.ts）</span></div>
+      <div class="gate"><span class="k">合同边界</span><span class="v"><b>不动</b>计费/回执/行排除语义；每个 PSD 仍独立一个 ExecutionBatch</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">04</span>改造清单（文件级）</h2>
+    <table>
+      <thead><tr><th>层</th><th>文件</th><th>动作</th></tr></thead>
+      <tbody>
+        <tr><td>前端<br>（不需发版）</td><td class="ref">view-context.tsx · app-shell.tsx · site-header.tsx · featureFlags.ts</td><td>扩 AppView 加 <code>'batch'</code>；加批量视图动态加载与导航项；加开关 <code>batchWorkbenchEnabled: false</code></td></tr>
+        <tr><td>前端</td><td class="ref">batch-workbench-view.tsx · batch-file-list.tsx（新建）</td><td>批量视图容器与文件列表</td></tr>
+        <tr><td>前端</td><td class="ref">local-assistant-client.ts:883 · psd-selection.ts:57</td><td>加 <code>selectDesignFilesDirect</code>（保留原单值函数）；删单个/重排</td></tr>
+        <tr><td>助手端<br>（<b>需发版+重装</b>）</td><td class="ref">picker-dialogs.cjs:57-62 · server.js</td><td>加 <code>$d.Multiselect=$true</code>；输出 <code>$d.FileNames</code>；<code>/v1.5/select-file</code> 增 <code>filePaths[]</code>（保留旧字段）</td></tr>
+        <tr><td>契约与闸</td><td class="ref">coverage-matrix.tsx:7,102-119</td><td>覆盖率从「提示」升级为执行前必过闸；矩阵格从「按下标」改「按 masterPath」</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>唯一的破坏性成本：</b>改助手端意味着老版本助手用户在网页端点「一次多选」拿不到数组。所以前端<b>必须做版本能力探测</b>：助手不支持时自动降级为「逐个添加」（现状行为），不能报错。</div>
+  </section>
+
+  <section>
+    <h2><span class="no">05</span>对抗式审查（六路反方）</h2>
+    <div class="notes">
+      <ol>
+        <li><b>反方1｜并列是过度设计，加开关更省事</b> → 省事但<b>不可回滚</b>。现状已证明代价：开关一开原工作台整体被替换，用户没有「继续用旧的」这个选项。并列只多约 100 行骨架，换来两视图独立开关/回滚/验收。</li>
+        <li><b>反方2｜改助手端风险高（历史踩过版本纪律坑）</b> → 成立。故助手端改动放第 2 层，且要求能力探测+自动降级；即使永远不发版，第 1 层也能提供「一次录入多个」。</li>
+        <li><b>反方3｜覆盖率不拦截是既有设计不是新问题</b> → 是既有问题（#140/#153），但批量把它放大了：12×3 时没人会逐格检查。故列为必须一并处理。</li>
+        <li><b>反方4｜结果按 ID 映射是过度工程</b> → 批量下用户<b>一定会删文件</b>（选 12 个、扫完发现 2 个不对），下标必然错位。不是理论风险，是必然路径。</li>
+        <li><b>反方5｜万一测试站开关真是开的</b> → <b>已查实：就是开的，初版判断错了</b>。错因是只查了覆盖层没查代码默认值。<b>教训：判断开关真实状态必须同时查两层</b>——① 代码默认值 ② 站点设置覆盖值；只查一层就是假绿。</li>
+        <li><b>反方6｜批量代码已合进 develop，怎么保证不动原工作台</b> → 该 6 文件改动<b>未进 main</b>。两条路：回滚重建（倾向）或锁死保留。保留会持续制造「两套渲染分支」维护成本。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">06</span>灰度与部署纪律</h2>
+    <div class="callout bad"><b>根因不只是技术：</b>批量代码<b>在开关被打开的状态下</b>随 aefc8a8 一起上了测试站，而该次部署的执行者一度不明（ISSUES #154 记录消息未留存）。</div>
+    <div class="notes">
+      <ol>
+        <li><b>部署前必须点名</b>：任何上测试站的部署，TASK_LOG 必须写清「谁批准、谁执行、部署了哪个 commit」。</li>
+        <li><b>批量代码不进 develop 主干</b>：方案批准前，批量能力只在独立分支开发。</li>
+        <li><b>探针加白名单</b>：当前部署探针条件满足即自动部署；建议只部署白名单内的 commit/分支，否则「自动」会绕过第 1 条。</li>
+        <li><b>开关改动不得夹带（本次新增）</b>：提交信息必须与代码里的开关取值一致；开关值的变更不得夹带在与主题无关的提交里。建议发布门禁加断言：<code>featureFlags.ts</code> 默认值若与上一 commit 不同，提交信息必须显式提及。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">07</span>待你决策（D1–D7）</h2>
+    <table>
+      <thead><tr><th>#</th><th>决策</th><th>我的建议</th></tr></thead>
+      <tbody>
+        <tr><td>D1</td><td>批量走「并列新视图」还是「继续改造原工作台」</td><td>并列</td></tr>
+        <tr><td>D2</td><td>第 1 层（纯前端，不需发版）是否先做</td><td>先做</td></tr>
+        <tr><td>D3</td><td>助手端多选改造做不做、何时做</td><td>单独评估</td></tr>
+        <tr><td>D4</td><td>cde98a7 那 6 个文件：回滚 or 锁死保留</td><td>回滚</td></tr>
+        <tr><td>D5</td><td>覆盖率矩阵是否升级为执行前必过闸</td><td>升级</td></tr>
+        <tr><td>D6</td><td>测试站 multiPsdExperimentEnabled</td><td><b>已查实：是开着的</b>（建议立即关闭，但翻 flag 是你的决定）</td></tr>
+        <tr><td>D7</td><td>部署探针是否加白名单</td><td>加</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">08</span>执行进度（2026-10-16 追加：第 1 层已落地）</h2>
+    <div class="card">
+      <p><b>Owner 已授权</b>（「按你的开始吧」）⇒ 按 §03 的「第 1 层」开工：纯前端，不需发版。</p>
+      <ul>
+        <li><b>位置</b>：工作树 <code>worktrees/batch-workbench</code>，分支 <code>feat/batch-workbench</code>，基线 = <code>develop</code> HEAD <code>aefc8a87dac3</code>。<b>未提交、未推送</b>；<code>develop</code> 主干一行未动。</li>
+        <li><b>规模</b>：新增 2 文件 + 修改 10 文件（+197 / −19）。</li>
+        <li><b>验证</b>：<code>tsc --noEmit</code> 0 错误；<code>eslint</code> 改动文件 0 错误 0 告警；<code>smoke-workbench-ui-contract</code>、<code>smoke-batch-entry-modes</code> 通过。</li>
+      </ul>
+      <table>
+        <thead><tr><th>项</th><th>文件</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>视图类型扩 <code>'batch'</code> + 未开放回落</td><td class="ref">src/components/site/view-context.tsx</td><td>✅</td></tr>
+          <tr><td>批量视图动态分包 + AppShell 传开关</td><td class="ref">src/components/site/app-shell.tsx</td><td>✅</td></tr>
+          <tr><td>顶栏「批量工作台」入口（受开关）</td><td class="ref">src/components/site/site-header.tsx</td><td>✅</td></tr>
+          <tr><td>新开关 <code>batchWorkbenchEnabled: false</code></td><td class="ref">src/config/featureFlags.ts</td><td>✅</td></tr>
+          <tr><td>首页传服务端合并开关</td><td class="ref">src/app/(zh)/page.tsx</td><td>✅</td></tr>
+          <tr><td>批量视图骨架（01 区可用，02/03/04 占位）</td><td class="ref">src/components/workbench/batch-workbench-view.tsx</td><td>✅ 新建</td></tr>
+          <tr><td>设计稿列表（上移/下移/移除）</td><td class="ref">src/components/workbench/batch-file-list.tsx</td><td>✅ 新建</td></tr>
+          <tr><td><code>selectDesignFilesDirect</code>（原单值函数未动）</td><td class="ref">src/lib/workbench/local-assistant-client.ts</td><td>✅</td></tr>
+          <tr><td><b>运营台开关入口</b>（见下①）</td><td class="ref">feature-flags-store.ts / api/admin/feature-flags/route.ts / admin/client.ts / admin/settings-panel.tsx</td><td>✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <p><b>执行中发现的三件事（原方案未覆盖）</b></p>
+      <ol>
+        <li><b>运营台对普通布尔开关是「只读」的——这是 flag 事故的结构性成因。</b><code>settings-panel.tsx:887-919</code> 的「模块开关」面板只渲染徽标（自述「本面板只读」）；<code>admin/client.ts:552</code> 的通用 <code>saveFeatureFlags</code> 无任何 UI 调用。⇒ 此前 Owner 想开普通布尔开关<b>只能改代码</b>，这正是 <code>multiPsdExperimentEnabled</code> 在 <code>aefc8a8</code> 被夹带提交的机制。<b>已补</b>：按 <code>saveSiteCopyInlineEditOverride</code> 同款新增原子覆盖函数 + API 分支 + 面板开关卡。<b>由此得纪律</b>：任何新增布尔开关必须同时补「原子覆盖函数 + API 分支 + 面板入口」，否则等于「默认 false 且无人能开」。</li>
+        <li><b>浏览器拖拽文件拿不到绝对路径 ⇒ 第 1 层的多路径入口只能是「粘贴」。</b><code>File.path</code> 是 Electron 专有；Chrome 出于安全只给文件名，而助手链路需要绝对路径 <code>masterPath</code>。故「拖拽区」在纯 Web 页是死路；可靠入口是<b>粘贴多行路径</b>（与 <code>design-file-card.tsx:687</code>「粘贴即扫描」同源）。⇒ 原方案第 1 层的「拖拽」应降级为「不做」或「仅接受路径文本」。</li>
+        <li><b><code>PreparationClientState</code> 无「已录入未扫描」态，且不能加。</b>加新值会破坏 <code>design-file-card.tsx:878</code> 的 <code>Record&lt;PsdSelection['state'], …&gt;</code> 穷尽性检查，而原工作台组件树必须零改动。⇒ 第 1 层批量列表用 <code>string[]</code> 路径（不用 <code>MultiPsdEntry</code>）；<code>MultiPsdEntry</code> + 串行扫描 + 队列语义留到第 3 层。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <p><b>新增待决策</b></p>
+      <table>
+        <thead><tr><th>#</th><th>决策</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>D8</td><td>是否接受「第 1 层只做粘贴、不做拖拽」</td><td>技术所限，见上②</td></tr>
+          <tr><td>D9</td><td><code>worktrees/develop</code> 工作区 12 个未提交改动怎么处置</td><td><b>非本次改动</b>：英文站首版 + <code>multiPsdExperimentEnabled</code> 改回 false + 多 PSD 轮询 state→ref 修复（<code>design-file-card.tsx</code>）。开关三态 = <b>提交态开 / 工作区态关 / 均未部署</b>。悬空改动有丢失风险，建议明确「提交 or 丢弃」</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">09</span>证据索引</h2>
+    <table>
+      <thead><tr><th>面</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>视图架构</td><td class="ref">src/components/site/view-context.tsx:5；src/components/site/app-shell.tsx:13-16,40</td></tr>
+        <tr><td>就地顶替</td><td class="ref">src/components/workbench/design-file-card.tsx:66,606；workbench-view.tsx:261-263</td></tr>
+        <tr><td>文件选择器</td><td class="ref">download/local-assistant/picker-dialogs.cjs:57-63；src/lib/workbench/local-assistant-client.ts:883-914</td></tr>
+        <tr><td>多选与队列</td><td class="ref">design-file-card.tsx:573-601,594,477,655；multi-psd-flow.ts:54-55,88-95</td></tr>
+        <tr><td>覆盖率</td><td class="ref">coverage-matrix.tsx:7,102-119,124,137-142</td></tr>
+        <tr><td>部署实况</td><td class="ref">/var/www/tygf-test/.deploy-commit=aefc8a8；/var/www/tygf-current → tygf-releases/ba62ba09da04；main HEAD 3657a88</td></tr>
+        <tr><td>开源参考</td><td class="ref">uppy.io/docs/dashboard；transloadit.com/docs/best-practices；github.com/TheNickOfTime/handbrake-web；support.crowdin.com/uploading-files</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>图译工坊内测版 · 双工作台并列与批量上传 UI/UX</span>
+    <span>2026-10-16 · 对抗式审查版</span>
+    <span>md 同名文件：执行方案_20261016_双工作台并列与批量上传UIUX_对抗式审查版.md</span>
+  </footer>
+
+</div>
+</body>
+</html>

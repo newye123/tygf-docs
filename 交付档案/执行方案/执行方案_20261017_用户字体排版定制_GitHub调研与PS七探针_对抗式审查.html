@@ -1,0 +1,139 @@
+<title>字体排版定制 · GitHub 调研与 PS 七探针 · 对抗式审查</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;
+--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;
+--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,5vw,48px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:.2em 0 .1em;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.0rem}
+h2{font-family:var(--font-display);font-size:1.16rem;margin:0 0 4px}
+.lede{color:var(--muted);font-size:.86rem;margin:0 0 14px}
+section{display:flex;flex-direction:column;gap:14px}
+.verdict{border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:18px 20px}
+.verdict b{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px}
+.stat .num{font-family:var(--font-mono);font-size:1.4rem;display:block;line-height:1.2}
+.stat .lb{font-size:.74rem;color:var(--muted)}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:8px}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr))}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;background:var(--sunk);position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+.mono{font-family:var(--font-mono);font-size:.8em}
+.sn{display:inline-block;font-family:var(--mono);font-size:.68rem;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:var(--sunk);color:var(--ink-2)}
+.sn.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.sn.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.sn.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:8px}
+.gate{display:flex;gap:10px;align-items:flex-start;border-left:3px solid var(--line-strong);padding:8px 0 8px 13px}
+.gate.ok{border-color:var(--ok)} .gate.bad{border-color:var(--bad)} .gate.warn{border-color:var(--warn)}
+.gate .t{font-weight:600;font-size:.9rem}
+.gate .d{font-size:.83rem;color:var(--muted)}
+.callout{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:var(--radius);padding:13px 15px;font-size:.9rem}
+.notes{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+ol,ul{margin:0;padding-left:1.3em}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:.76rem;padding-top:16px}
+a{color:var(--accent)}
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span>对抗式审查 + 本机实测</span><span class="sep">·</span><span>2026-10-17</span><span class="sep">·</span><span>基线 develop <span class="mono">2367950</span> / 网页侧 <span class="mono">d8f507c</span></span></div>
+    <h1>用户字体排版定制：GitHub 上有没有现成的，以及 Photoshop 到底肯不肯听</h1>
+    <p class="standfirst">Owner 令：先看现状、再上 GitHub 与全网看人家怎么做、能复用最好、用对抗式审查、给一份模拟 HTML。调研三路并行回收；<b>更要紧的是你要的那个 P0 spike 我在本机 PS 22 上直接跑完了</b>——七个探针，14:58—15:12，只碰新建空白稿，结束时打开文档数 0，母版未动，一行产品代码没改。</p>
+  </header>
+
+  <section>
+    <div class="verdict"><b>判定：开源仍然 0 件可直接装；但功能从"能不能做＝未知"变成"三个字段各有一条已验证的通路"。</b> 字体只认 PostScript 脸名（喂显示名会被静默换脸），字距直接可用，行距必须先关自动行距。我下午一度判"行距不可用、建议撤字段"——<b>那是我错的</b>（审查条目 A1）。把握度：三条写入＝高（写入→读回→包围盒真变三条腿齐全）；run 级混排＝低（三种 ActionDescriptor 写法今天全抛错）。</div>
+    <div class="stats">
+      <div class="stat"><span class="num">7</span><span class="lb">PS 22 探针（A—G）</span></div>
+      <div class="stat"><span class="num">1605 / 1319</span><span class="lb">本机脸数 / 不同显示名</span></div>
+      <div class="stat"><span class="num">0</span><span class="lb">可直接装的开源件</span></div>
+      <div class="stat"><span class="num">36</span><span class="lb">现有 smoke 断言（全在纸面层）</span></div>
+      <div class="stat"><span class="num">0</span><span class="lb">助手侧字体相关代码行</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>① 现状对号</h2>
+    <p class="lede">网页侧真上线了，写回侧真的一行都没有——两句都是实测，不是读台账。</p>
+    <div class="scrollx"><table><tbody>
+      <tr><td>面板与挂载</td><td class="mono">typography-panel.tsx（287 行）· photoshop-step.tsx:189-191</td><td><span class="sn ok">已上测试站</span></td></tr>
+      <tr><td>开关与白名单</td><td class="mono">feature-flags-store.ts:152-236（typographyCustomizationEnabled 默认 false）</td><td><span class="sn ok">三件套已补</span></td></tr>
+      <tr><td>助手字体端点</td><td class="mono">grep -c "v1.5/fonts" download/local-assistant/server.js ⇒ 0（rc=1）</td><td><span class="sn bad">不存在</span></td></tr>
+      <tr><td>执行器碰不碰字体</td><td class="mono">grep -ci "font" TYGF_V15_Thin_Executor.jsx ⇒ 0（rc=1），全文只有 :114 一行 contents=</td><td><span class="sn bad">一字未碰</span></td></tr>
+      <tr><td>闸门</td><td class="mono">smoke-typography-customization: 36 assertions passed</td><td><span class="sn warn">全为形状校验+源码文案，0 条 PS 语义</span></td></tr>
+      <tr><td>台账</td><td class="mono">ledger.jsonl:75 FONT-CUSTOM=待复验，next 写"前置＝P0 spike"</td><td><span class="sn ok">该前置今日已闭</span></td></tr>
+      <tr><td>能力清单</td><td class="mono">grep -c -E "排版|字体" 总控/产品功能全景_20261003.md ⇒ 0（rc=1）</td><td><span class="sn warn">清单基线停在 10-03，这条待补行（不是"没这个能力"）</span></td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section>
+    <h2>② GitHub / 全网调研：能抄形状，不能搬代码</h2>
+    <div class="scrollx"><table><thead><tr><th>件</th><th>license / 活动</th><th>它做到哪</th><th>我们的用法</th></tr></thead><tbody>
+      <tr><td class="mono">EmilDohne/PhotoshopAPI</td><td>BSD-3 ／ 384★</td><td>run 级 set_tracking / set_leading / set_faux_bold + 读回单测</td><td>字段名与单位口径的<b>权威参照</b>；无 Node 绑定，不装</td></tr>
+      <tr><td class="mono">Agamnentzar/ag-psd</td><td>MIT ／ 730★，pushed 10-07</td><td>engineData 的 Tracking/Leading/FauxBold 可读写，作者自陈不完整</td><td>只做<b>离线取证/读回校验</b>；不当写回主链路</td></tr>
+      <tr><td class="mono">ogkalu2/comic-translate</td><td>Apache-2.0 ／ 2975★</td><td>psd_exporter 里读 nameID 6 解析 PostScript 名 + faux 判定</td><td><b>抄解析形状</b>；它的 _set_if_exists 静默跳过与自造 -Bold 名＝红线反面教材</td></tr>
+      <tr><td class="mono">oldj/font-list</td><td>MIT ／ 151★</td><td>Windows 走 WPF FamilyNames，取 FontFamily.Source</td><td><b>不能用</b>：那是族名不是 PS 名，还优先返回中文本地化名、每族只取第一张脸</td></tr>
+      <tr><td class="mono">devongovett/font-manager</td><td>MIT ／ 2019 停更</td><td>DirectWrite POSTSCRIPT_NAME（正确姿势）</td><td>思路对；要 node-gyp 编 nan，Node 24 可编性<b>未核实</b></td></tr>
+      <tr><td class="mono">浏览器 queryLocalFonts()</td><td>Chrome/Edge 103 桌面独占</td><td>family/fullName/postscriptName/style</td><td>权限弹窗 + Firefox/Safari 不支持 ⇒ 只当<b>降级</b>，不作权威源</td></tr>
+      <tr><td class="mono">manga-image-translator / BalloonsTranslator</td><td>GPL-3</td><td>freetype/Qt 自绘字形，绕开 Photoshop</td><td>不适用（我们必须在真 PS 落字层才有交付件与取证）；且<b>都没有按语言配字体</b>＝我们的差异点</td></tr>
+    </tbody></table></div>
+    <div class="cards">
+      <div class="card"><span class="sn">已证实的外部坑</span><div>ag-psd 改文字层不重绘位图 ⇒ 打开必弹"更新文字图层"（README:26/:479-481）；<b>竖排</b>可造出连 PS 都打不开的文件（README:485）；FontSet 是 <span class="mono">// TODO</span>（src/text.ts:170-172）；issue #251 建出的文字层 bounds 0×0 不可见；issue #55 缺字体时弹替换对话框打断流程。</div></div>
+      <div class="card"><span class="sn">已证实的外部坑</span><div>PhotoshopAPI：改盘上读来的 PSD 文字必须先 <span class="mono">invalidate_text_cache()</span>；<span class="mono">start/end</span> 是 UTF-16 code unit 下标（混排/emoji 会错位）；写出的文件不含有效 merged image。psd-tools README 明列不支持编辑文字层；<span class="mono">photopea</span> 主仓库无 LICENSE 且无源码。</div></div>
+      <div class="card"><span class="sn">业界产品形态</span><div>档位而非数字：Android fonts.xml 按文种只给 elegant/compact；Google Slides 三档 AutoFit 且 fontScale 只读；InDesign 缩放后字号显示成 <span class="mono">20 pt (40)</span>。竞品没做：Canva 翻译只有三条勾选（默认"缩小字号适应页面"）、DeepL 只承诺保持版面。<b>我们现在 4 个输入框比这两家都重。</b></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>③ Photoshop 22 七探针台账</h2>
+    <div class="scrollx"><table><thead><tr><th>探针</th><th>问什么</th><th>实测回显（原文截取）</th></tr></thead><tbody>
+      <tr><td class="mono">A 只读清单</td><td>app.fonts 的名字口径</td><td>1605 张脸；<span class="mono">postScriptName</span> 存在且逐脸唯一，<span class="mono">familyName</span> UNDEF；<span class="mono">fonts.getByName</span> 存在；当时打开文档数 0</td></tr>
+      <tr><td class="mono">B 写回</td><td>可写性/读回/缺字体/顺序</td><td><span class="mono">Arial-BoldMT</span> 往返相等、宽 122→129；<span class="mono">'Arial'</span>⇒读回 <span class="mono">MyriadPro-Regular</span>；<span class="mono">'Noto Sans SC'</span>⇒<span class="mono">AdobeHeitiStd-Regular</span>；不存在的名字⇒不抛错、静默回退 <span class="mono">MyriadPro-Regular</span>；<span class="mono">tracking=500</span>⇒宽 122→242；先设字体再写 contents⇒字体存活</td></tr>
+      <tr><td class="mono">C 属性普查</td><td>TextItem 到底有几个旋钮</td><td>可读：<span class="mono">contents/font/size/color/position/autoKerning/baselineShift/fauxBold/fauxItalic/justification/tracking/warpStyle/useAutoLeading/autoLeadingAmount</span>；<span class="mono">textStyleRange/orientation/vertical/autoLeading</span> 不存在；<span class="mono">language</span> 读抛"内部错误"</td></tr>
+      <tr><td class="mono">D / E / F 行距救场</td><td>ActionDescriptor 能不能写 leading</td><td><span class="mono">Cmnd/Ldng</span>、<span class="mono">Prpr+stringID leading</span>、<span class="mono">TText&gt;TxtS</span> 三种写法全部抛错 ⇒ AD 路线<b>今日未跑通</b>；但 F0 普查到 <span class="mono">useAutoLeading/autoLeadingAmount</span> 真存在（这条线索救了行距）</td></tr>
+      <tr><td class="mono">G 关自动再写</td><td>leading 到底能不能落</td><td><span class="mono">useAutoLeading</span> 默认 true、amount 175；置 false 后 <span class="mono">leading=60pt</span>⇒读回 <span class="mono">60 pt</span>、高 <b>55→133</b>；纯数字 24 也收（55→61）；<span class="mono">autoLeadingAmount=300</span>⇒55→85；关自动后重写 contents/换字体，leading 仍存活</td></tr>
+    </tbody></table></div>
+    <div class="callout"><b>顺手钉死两条闭式（六个独立点我自己复算，逐位对上）</b> ① <span class="mono">h = (n−1)×leading + h₁</span>（12pt 单行 h₁=13 ⇒ 自动175%→55 ✓、60pt→133 ✓、300%→85 ✓、24→61 ✓、50pt 三行113/四行163 ✓）。这给了 <b>#75「渲染行数」的正解</b>：n = (h−h₁)/leading + 1，leading 现在有可靠读法，不必再拿 size×1.2 猜。② <span class="mono">Δw = 间隙数 × tracking ÷ 1000 × size</span>（20 间隙@12pt：500⇒+120 对上 122→242；−100⇒−24 对上 122→98）⇒ tracking 的 1/1000 em 口径实锤，还能改前预测会不会顶破原稿行宽。</div>
+  </section>
+
+  <section>
+    <h2>④ 对抗式审查（第一刀砍我自己）</h2>
+    <div class="gates">
+      <div class="gate bad"><div><div class="t">A1 我一度判"行距写了不变 ⇒ 撤掉这个字段"——错的</div><div class="d">真因是没先关自动行距。outC（不关 55→55）对 outG（关了 55→133）。病根＝把"我没试对"读成"它不行"。规矩补齐：否定式结论必须穷举开关位。</div></div></div>
+      <div class="gate bad"><div><div class="t">A2 面板存的口径 ≠ PS 认的口径</div><div class="d">面板存"族显示名+样式名"，PS 只认 PostScript 脸名；1605 脸只有 1319 个显示名，Noto Sans SC 一名挂七张脸。照现状接线必出静默换脸（实测 Arial→MyriadPro-Regular）。推翻 10-14 方案的"族+样式"字段设计。</div></div></div>
+      <div class="gate bad"><div><div class="t">A3 假保存（真缺陷，登记 #157）</div><div class="d">不填字体名而只填行距/字距 ⇒ 校验整份拒绝、save 直接 return、localStorage 字节一字未变，界面照样回显"已保存到本机浏览器"。探针回显 <span class="mono">ok=false / returnValue=undefined / bytes_unchanged=true</span>；码 typography-persistence.ts:42,87-100 + typography-panel.tsx:103-106。</div></div></div>
+      <div class="gate warn"><div><div class="t">A4 徽标语义错 · A5 闸门只量纸面 · A6 探测函数丢列 · A7 前瞻假可供性 · A8 隐私边界</div><div class="d">A4「有未保存改动」按"有没有值"判（UI 实跑未做 ⇒ 待确认）；A5 36 断言 0 条 PS 语义；A6 fetchLocalFontList 只回字符串数组、按 name 去重、2000 截断；A7 <span class="mono">fontsState==='ok'</span> 那支文案"执行时将按此定制写回译文层"——端点与执行器若分批发就变新谎；A8 字体清单＝机器画像，禁入学习证据（learning-evidence.js:33 已禁 fontName|fullFontName）。</div></div></div>
+      <div class="gate"><div><div class="t">A9 未核实（不写成"没有"）</div><div class="d">AD 抛错的确切原因、CS6→2026 属性谱、Chrome 是否按族裁剪清单、run 级混排写入、font-manager 在 Node 24 可否编译、稿定/美图能否指定字体。</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>⑤ 建议路径与等你三句话</h2>
+    <div class="cards">
+      <div class="card"><span class="sn ok">P0 已闭 · 可开工</span><div>助手侧六件：字体端点回 <b>三列</b>（fontkit 读 nameID 6，.ttc 走 fonts[]）→ prepare 收 profile（<span class="mono">facePostScriptName / tracking −1000…9999 / leadingMode follow|fixed|autoPercent / fauxBold 默认 false</span>）→ envelope 顶层旁路（不进摘要）→ 执行器固定顺序 <span class="mono">contents → font → useAutoLeading=false → leading → tracking</span>，每项 try+读回 → 失败码 <span class="mono">FONT_UNAVAILABLE / FONT_FALLBACK_APPLIED / TYPOGRAPHY_INVALID / LEADING_NOT_APPLIED</span> → 版本 bump 四件 + 装完核 5 个脚本 sha8。</div></div>
+      <div class="card"><span class="sn warn">面板改造（要开 L2）</span><div>字体降到<b>脸级单值</b>并按"含不含这门语言的字形"过滤（hasGlyphForCodePoint 只查 cmap，禁用宽度/layout 反推）；行距撤数字框改<b>四档</b>（背后落 autoLeadingAmount）；字距滑块；撤"保存到本机"按钮改即时生效；告知文案两态、不写"请补"。</div></div>
+      <div class="card"><span class="sn">等 Owner 拍</span><div><ol><li>班车六件要不要我直接开工（开工就要 bump 助手版本，装包+真机三语需你在场）？</li><li>面板改造（少两个输入框）认不认？认的话按 L2 开 changes/active。</li><li>#157 假保存随不随这班车（建议必修）。</li></ol></div></div>
+    </div>
+    <div class="notes">
+      <div>模拟件：<a href="file:///F:/工具开发/图译工坊内测版/交付档案/执行方案/模拟方案_20261017_字体排版定制_现状与PS实测反应.html">模拟方案_20261017_字体排版定制_现状与PS实测反应.html</a>（四页签：现状面板复刻＋PS 回读模拟／提案面板／执行回执／实测台账与真数基线）</div>
+      <div>本报告：<span class="mono">交付档案/执行方案/执行方案_20261017_用户字体排版定制_GitHub调研与PS七探针_对抗式审查.md</span>（同目录同名 HTML）</div>
+    </div>
+  </section>
+
+  <footer>
+    验证现场：本轮为只读审查＋本机真机探针，<b>无产品代码改动</b> ⇒ tsc / lint / test:* 一律 NOT RUN（不标 PASS）。探针与读数在 <span class="mono">tmp/ps-spike-20261017/</span>（outA…outG.json），保存缺陷探针在 <span class="mono">tmp/typo-adversarial-20261017/probe-save-silent.mjs</span>。PS 现场：只在新建空白稿 <span class="mono">TYGF_SPIKE_*</span> 上写，全部 <span class="mono">close(SaveOptions.DONOTSAVECHANGES)</span>，后三个探针回显 <span class="mono">docCountFinal=0</span>，母版与用户文档未打开未修改。探针自身一坑留痕：<span class="mono">DocumentSaveMode</span> 在 PS 22 未定义，正解 <span class="mono">SaveOptions.DONOTSAVECHANGES</span>（产品 JSX 一直用的后者，非产品缺陷）。外部件证据 URL 见报告 §03。
+  </footer>
+</div>

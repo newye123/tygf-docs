@@ -1,0 +1,202 @@
+<meta charset="utf-8">
+<title>执行报告：PhotoCraft 集成 v2 · 本地执行全绿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b; --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f; --accent:#78a8ff; --accent-soft:#17233a; --ok:#54cf96;
+    --ok-soft:#12291f; --bad:#ff8d80; --bad-soft:#2c1614; --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b; --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f; --accent:#78a8ff; --accent-soft:#17233a; --ok:#54cf96;
+  --ok-soft:#12291f; --bad:#ff8d80; --bad-soft:#2c1614; --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.22rem);line-height:1.6;max-width:56ch;font-weight:500;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:68ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.warn{border-left:3px solid var(--warn)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:72ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>opencode · 执行报告</span><span class="sep">/</span><span>PhotoCraft 集成 v2</span><span class="sep">/</span><span>2026-10-15</span></div>
+  <h1>PhotoCraft 集成 v2 · Phase 0/1 本地执行全绿</h1>
+  <p class="standfirst">免 PS 兜底执行器落地 v1.5 worktree：四钉实测、冒烟 12/12、trust-chain 21/22（1 项环境阻塞，与本改动零交集）、真机 E2E 两产物读回一致（含中文）。<strong>未推 · 未部署 · 未碰两站；开关默认关闭（行为零变化）。</strong></p>
+  <div class="meta">
+    <span>范围 v1.5-trust-chain worktree（未提交）</span>
+    <span>开关 pcExecutorEnabled = false</span>
+    <span>执行器版本 photocraft-cli f0e8d404</span>
+    <span>依据 对抗审查重修方案 v2（十闸闭环）</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <span class="lb">结论</span>
+  <p>按「按你的最新方案执行」指令执行完毕：四钉钉死协议细节、执行器与接线全部落地、本地全测绿、真机两产物一致；其余（灰度接入与部署闸）保持停在本地方案边界内，等您复验。</p>
+</div>
+
+<div class="stats">
+  <div class="stat ok"><span class="n">4/4</span><span class="k">Phase 0 四钉（真机 spike）</span></div>
+  <div class="stat ok"><span class="n">12/12</span><span class="k">pc-executor 冒烟 EXIT=0</span></div>
+  <div class="stat warn"><span class="n">21/22</span><span class="k">trust-chain 逐脚本（1 项环境阻塞 #145）</span></div>
+  <div class="stat ok"><span class="n">EXIT=0</span><span class="k">真机 E2E exec→reopen 全链</span></div>
+  <div class="stat ok"><span class="n">0</span><span class="k">提交 / 推送 / 部署 / 两站接触</span></div>
+</div>
+
+<section>
+  <h2><span class="sn">01</span>Phase 0 四钉（仓外真机 spike，全绿）</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><h3>type.edit 的 layer 只认整数层 id</h3><span class="tag ok">钉死</span></div><p>字符串写法会被数值强转，实测报错「layer 119 is a Group layer, not a type layer」；实现层锁定仅整数（与 assignment.layer_id 直通）。</p></div>
+    <div class="card"><div class="top"><h3>doc.save{} 回写成立</h3><span class="tag ok">钉死</span></div><p>工作副本 sha256 前后变化：<code>4a339a55…</code> → <code>67e9d64d…</code>（spike 素材）；真机 E2E 再次验证 <code>4a339a55…</code> → <code>059323dd…</code>。</p></div>
+    <div class="card"><div class="top"><h3>doc.close{} 只关「活动」文档</h3><span class="tag ok">钉死</span></div><p>执行器每会话只开一篇规避多文档歧义；关闭后新会话重开，改动持久（读回一致）。</p></div>
+    <div class="card"><div class="top"><h3>回复无 timestamp、错误为英文自由句</h3><span class="tag ok">钉死</span></div><p>回执时间戳本地生成；错误归类不解析英文文本，改用「编辑前 doc.inspect 预检 id→kind」。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>Phase 1 落地（v1.5 worktree，共 6 件，未提交）</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><h3>pc-executor.js（新）</h3><span class="loc">download/local-assistant/</span></div><p>PhotoCraft CLI serve 行协议；两相位（执行 / 重开验证）；预检归类、进度心跳（对齐 3 分钟 stalled 闸）、整体+静默双超时、任何结局必先落结果文件再返回。</p></div>
+    <div class="card"><div class="top"><h3>server.js 9 处接线</h3><span class="loc">本地 + 云端</span></div><p>无 Photoshop 且开关开 → 本地自动切 pc（PS 握手失败也兜底）；云批次同构；组件检查与错误映射同步两码（PHOTOCRAFT_EXECUTOR_MISSING / PHOTOCRAFT_TIMEOUT）；DEFAULT_CONFIG 三键默认关。</p></div>
+    <div class="card"><div class="top"><h3>冒烟 + 假 serve 夹具（新）</h3><span class="loc">scripts/</span></div><p>smoke-pc-executor.mjs 12 用例；fixtures/fake-photocraft-serve.cjs 8 场景（含超时/早退/篡改读回等故障注入）。</p></div>
+    <div class="card"><div class="top"><h3>package.json</h3><span class="loc">测试入口</span></div><p>加 <code>test:pc-executor</code>，并挂进 <code>test:trust-chain</code> 链尾。</p></div>
+    <div class="card"><div class="top"><h3>结果通道归位</h3><span class="loc">v15-runner 零改动</span></div><p>回执写 executor-result.json / reopen-result.json；预览为可选（PC 跳过安全——发布链两侧已判空）。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>验证证据（全部实跑）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>验证</th><th class="mono">结果</th><th>要点</th></tr></thead>
+      <tbody>
+        <tr><td>冒烟 12 用例</td><td class="mono">12/12 EXIT=0</td><td>happy 全链（真 parseExecutorResult）+ 五类终端码 + 静默超时 + 进程早退 + exe 缺失/哈希不符 + reopen 收集器 + runV15Execution 双集成（含 REOPEN_READBACK_MISMATCH 回执）</td></tr>
+        <tr><td>trust-chain 逐脚本</td><td class="mono">21/21 绿（21/22）</td><td>按 npm 原式逐条：thin-executor / v15-runner / execution-manifest / receipt-privacy 等，0.1–19.4s；例外 1 项=prisma 环境阻塞 #145</td></tr>
+        <tr><td>batch-row-contract</td><td class="mono">EXIT=0</td><td>合同测试零回归</td></tr>
+        <tr><td>真机 E2E</td><td class="mono">EXIT=0</td><td>真 exe + src2.psd 副本：30 层实读 → 118/117 写中文 → SAVE_SUCCEEDED 2/2 → 哈希变化 → REOPEN_VERIFIED 读回逐条一致 → 真产物过真解析器</td></tr>
+        <tr><td>node --check</td><td class="mono">双过</td><td>pc-executor.js 与 server.js</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>环境问题（与本次改动无关 · 已登记 #145）</h2>
+  <div class="callout warn">
+    <span class="lb">ISSUES #145</span>
+    <p><code>smoke-batch-failure-settlement.mjs</code> 挂起 &gt;150s：进程树显示真正卡死的是其子进程 <code>prisma db push</code>；仓内最小复现（空 SQLite + 裸 prisma db push）90s 无进展。该测试不加载本次任何改动模块。嫌疑：执行期间非本会话的 <code>npm ci</code> 并发重装 node_modules（疑损坏 prisma 引擎），或杀软拦截。建议：重装 prisma 引擎后复跑；修复前该链按「21/22 + 1 环境阻塞」记录。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>红线遵守</h2>
+  <ul class="notes">
+    <li>未推（v1.5 worktree 零提交零推送）、未部署、未碰两站、未碰支付 flag。</li>
+    <li>新开关默认 false = 默认行为与今天之前一致（物理断路）。</li>
+    <li>真机测试全部在仓外 work 目录或 worktree 临时目录；零生产配置改动。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>下一步（等您）</h2>
+  <div class="gates">
+    <div class="gate first"><div class="num">1</div><div class="body"><h3>复验本报告与方案附录 A</h3><p>执行主件：worktrees/v1.5-trust-chain/changes/active/20261015-photocraft-integration-plan-v2.md（执行序 1–4 已勾）。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>B 组部署闸（默认不做，等批准）</h3><p>灰度白名单接入（与 GRAY-P0 的 SiteSetting 层合流——默认 false、服务端判定、永不随部署生效）+ 部署前双合同全绿。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>#145 环境修复</h3><p>重装 prisma 引擎后补跑那 1 个 DB 测试（可顺手做）。</p></div></div>
+  </div>
+</section>
+
+<div class="callout">
+  <span class="lb">追记 · 2026-10-16 08:1x（Owner 令「推吧」）</span>
+  <p>已提交并推送 <code>origin/codex/v1.5-trust-chain</code>：<code>fc287fb</code>（执行器+接线+测试）、<code>ea12c47</code>（方案留档+AI_MEMORY）、<code>308bdb9</code>（追记）。<strong>仍未部署、未碰两站</strong>。lint 说明：本机 eslint 两次实跑超时（300s/180s，环境级），<code>download/local-assistant/**</code> 本在 eslint ignores；既有验证全绿。</p>
+</div>
+
+<footer>
+  <p>交付物：本报告（md+html）· 执行主件方案 v2（含实测附录）· 代码与测试 6 件（已推 308bdb9）。</p>
+  <p>报告人：opencode ｜ 2026-10-15 初版 / 2026-10-16 追记 ｜ 未获批准前保持不部署、不碰两站。</p>
+</footer>
+
+</div>

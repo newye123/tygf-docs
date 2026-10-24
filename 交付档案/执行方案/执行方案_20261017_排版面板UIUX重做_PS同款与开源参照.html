@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案 · 排版面板 UI/UX 重做（PS 同款版式与开源参照）· 2026-10-17</title>
+<style>
+:root{
+  --ink:#14171a;--ink2:#3d434a;--mut:#6b7379;--line:#dfe3e7;--bg:#f6f7f8;--card:#fff;
+  --ok:#0a7d5a;--warn:#a76b00;--bad:#b3261e;--teal:#0f766e;--accent:#1d4ed8;
+  --font-display:'IBM Plex Serif','Noto Serif SC',Georgia,serif;
+  --font-body:'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{--ink:#e8eaed;--ink2:#b9c0c7;--mut:#8b939b;--line:#33383f;--bg:#15181c;--card:#1d2126;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--teal:#2dd4bf;--accent:#93c5fd}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.68}
+.wrap{max-width:960px;margin:0 auto;padding:0 22px 72px}
+.masthead{border-bottom:3px solid var(--ink);padding:34px 0 16px;margin-bottom:22px}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+h1{font-family:var(--font-display);font-size:31px;line-height:1.22;margin:8px 0 6px;font-weight:600}
+.lede{font-size:16px;color:var(--ink2);max-width:70ch}
+.meta{font-family:var(--font-mono);font-size:11.5px;color:var(--mut);margin-top:12px}
+h2{font-family:var(--font-display);font-size:21px;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:22px 0 6px}
+p{margin:9px 0}
+ul,ol{margin:9px 0;padding-left:22px}
+li{margin:5px 0}
+code,.mono{font-family:var(--font-mono);font-size:12.5px;background:rgba(127,127,127,.14);padding:1px 5px;border-radius:4px;word-break:break-word}
+.verdict{border:1px solid var(--ink);border-left:6px solid var(--ok);background:var(--card);padding:16px 18px;margin:18px 0}
+.verdict .lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.verdict .hd{font-family:var(--font-display);font-size:20px;font-weight:600;margin:6px 0 8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:18px 0}
+.stat{background:var(--card);padding:12px 14px}
+.stat .n{font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.1}
+.stat .k{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+td.mono,th.mono{text-transform:none;letter-spacing:0;font-family:var(--font-mono);font-size:12px}
+.cards{display:grid;gap:12px;grid-template-columns:1fr;margin:14px 0}
+@media (min-width:760px){.cards.two{grid-template-columns:1fr 1fr}}
+.card{border:1px solid var(--line);background:var(--card);padding:14px 16px;border-radius:8px}
+.card .hd{font-weight:600;margin-bottom:4px}
+.card .loc{font-family:var(--font-mono);font-size:11.5px;color:var(--accent);word-break:break-all}
+.gates{margin:14px 0;display:grid;gap:8px}
+.gate{display:grid;grid-template-columns:112px 1fr;gap:10px;border:1px solid var(--line);background:var(--card);padding:10px 12px;border-radius:7px}
+.gate .sn{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+.gate .fix{font-size:13.5px}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+.p-ok{border-color:var(--ok);color:var(--ok)}.p-warn{border-color:var(--warn);color:var(--warn)}
+.p-bad{border-color:var(--bad);color:var(--bad)}.p-teal{border-color:var(--teal);color:var(--teal)}
+.callout{border:1px solid var(--warn);border-left:6px solid var(--warn);background:var(--card);padding:12px 15px;margin:16px 0;font-size:14px}
+.notes{font-size:13px;color:var(--ink2)}
+.split{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:820px){.split{grid-template-columns:1fr 1fr}}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11px;color:var(--mut)}
+a{color:var(--accent)}
+.now{color:var(--ok);font-weight:600}.was{color:var(--bad);text-decoration:line-through}
+</style></head>
+<body><div class="wrap">
+
+<header class="masthead">
+<div class="eyebrow">Execution Plan · Workbench Typography Panel</div>
+<h1>排版面板 UI/UX 重做 —— PS 同款版式、开源参照与执行方案</h1>
+<p class="lede">Owner 判"这个 UIUX 不行"。本会话去 GitHub 实读四家开源实现的真实代码，做对抗式审查，然后<b>把推荐方案渲染成可运行的真件</b>（真清单 1587 款＋产品函数本体＋产品令牌），并给出带判据与负控的落地步骤。结论先说：这不只是不好看，是<b>现状那个字体框按人话填根本填不中</b>。</p>
+<div class="meta">2026-10-17 夜 · 图译工坊内测版 · 主线 worktrees/develop @ 9a2feb7 · 参照件 9 份全部 curl 实取（http 200）</div>
+</header>
+
+<div class="verdict">
+<div class="lb">Verdict</div>
+<div class="hd">能做成 PS 那套，而且它是最优解 —— 把握度：版式与交互高，工作量中（纯前端）</div>
+<p>关键理由：<b>PS 自己对"这一版写不进的属性"就是就地灰化而不是删掉</b>。这条规矩恰好等于我们的能力边界，用户看到灰框天然理解"这里不能填"，我们不必再往界面上写取证文（那正是上一轮被批的东西）。段落页因此不是"不见了"，而是<b>整页保留、逐格灰化＋一行原因</b>。</p>
+<p class="notes">一句话根因：面板字体一格走 <code>resolveFace(字族框文本, 样式框文本)</code>，而实测 <code>resolveFace</code> 只认 PostScript 脸名 —— <code>'Noto Sans SC' + 'Bold'</code> → <code>{face:'', exact:false}</code>。用户按人话填 100% 落到"不发"，只有手输内部名 <code>NotoSansSC-Bold</code> 才发得出去。</p>
+</div>
+
+<div class="stats">
+<div class="stat"><div class="n">4</div><div class="k">开源实现实读（Penpot / Excalidraw / CKEditor 5 / tldraw）</div></div>
+<div class="stat"><div class="n">9</div><div class="k">参照文件（附行号与字节数，可复跑）</div></div>
+<div class="stat"><div class="n">2</div><div class="k">渲染件（v3 结算式 / v4 PS 同款）</div></div>
+<div class="stat"><div class="n">1587</div><div class="k">真字体条目（本机 PS 快照）</div></div>
+<div class="stat"><div class="n">4</div><div class="k">实跑发现的问题（2 个是产品缺陷）</div></div>
+</div>
+
+<h2>一 · 两份真件（可直接点开）</h2>
+<div class="cards two">
+<div class="card"><div class="hd">v4 · Photoshop 字符/段落同款 <span class="pill p-ok">推荐</span></div>
+<div class="loc">交付档案/执行方案/模拟方案_20261017_排版面板UIUX_PS字符段落同款_v4.html</div>
+<p class="notes">双页签＋<code>»</code> <code>☰</code>；12 个字符格按实测分四态；段落页 14 格整页灰；字体族 1314 项真下拉、样式格只列该字族本机真实存在的样式；搜索浮层 1587 款、每行用该字体本体渲染；底部结算条显示"本次会发 N 项"＋ envelope 实际带走的那份 JSON。</p></div>
+<div class="card"><div class="hd">v3 · 结算优先分节式 <span class="pill p-teal">备选</span></div>
+<div class="loc">交付档案/执行方案/模拟方案_20261017_排版面板UIUX重做_v3真清单真函数.html</div>
+<p class="notes">分节（字体／间距／段落／下发内容／预览）＋逐字段"发／不发＋原因"表＋能力边界页＋助手三态模拟＋A/B/C 三视图对照。方向键移动即预览、Enter 应用、Esc 撤销预览。</p></div>
+</div>
+<p class="notes">两份共用同一套真材实料：1587 条真 faces（<code>tmp/typo-adversarial-20261017/mock-w2-data.json</code>）、产品模块用产品自己的 typescript 转译后整段注入、CSS 令牌取自 <code>src/app/globals.css</code> 与 <code>tailwindcss/theme.css</code> 真值。页顶有自检条，跑不过直接写 FAIL。</p>
+
+<h2>二 · 实跑读数（本会话在浏览器里真点真跑）</h2>
+<table><thead><tr><th>项</th><th>读数</th></tr></thead><tbody>
+<tr><td>v4 自检</td><td class="mono">PASS · 脸名可命中=NotoSansSC-Light · 族+样式走 resolveFace 命中=(no) · 校验器 ok=true · 结算会发 3 项 == 下发体字段 3 项：一致</td></tr>
+<tr><td>v4 搜索</td><td class="mono">"Source Han" → 120 行缩到 21 行；点选后 face=SourceHanSansKR-ExtraLight，结算条随之更新</td></tr>
+<tr><td>v4 段落页</td><td class="mono">14 格 data-st 全 = grey；页内一行"整页灰化＝本版 Photoshop 写不进（不是没做）"</td></tr>
+<tr><td>v4 宽度</td><td class="mono">420 / 380 / 360 / 340px 四档 scrollWidth-clientWidth = 0 / 0 / 0 / 0（修前 420px 溢出 123px）</td></tr>
+<tr><td>v3 键盘</td><td class="mono">ArrowDown 移动焦点 → Enter 应用 → Esc 撤销；助手切"不在线"后字体格自动转"不发"并给原因</td></tr>
+<tr><td>v3 保存</td><td class="mono">走产品真校验器 validateTypographyProfilesByLanguage → ok=true</td></tr>
+<tr><td>resolveFace 五连</td><td class="mono">NotoKufiArabic-Bold→命中 · Noto Kufi Arabic+Bold→{face:'',exact:false} · NotoSansSC-Bold→命中 · 小写→命中（大小写不敏感）</td></tr>
+</tbody></table>
+
+<h2>三 · 开源参照（每条都是本会话 curl 实取，行号可复跑）</h2>
+<table><thead><tr><th>实现</th><th>文件（字节）</th><th>我们从中拿走的那一条</th></tr></thead><tbody>
+<tr><td>Penpot</td><td class="mono">menus/typography.cljs（45,743）</td><td>选字族时<b>一次性原子写五字段</b>且 <code>when (some? family)</code> 才写 <span class="mono">:571-576</span>；勾＝打开时原值、绿框＝Enter 将应用、Esc 撤销预览 <span class="mono">:340-352</span>；预览 100ms 防抖 <span class="mono">:408-418</span>；字号档位表 <code>[8 9 10 11 12 14 16 18 24 36 48 72]</code> <span class="mono">:657</span>；行距/字距＝图标＋数字框＋aria-label，多值 placeholder <code>--</code>，写入前两位定点归一 <span class="mono">:701-744</span>；清单里查不到的"最近"必须隐藏，否则 nil 字族写进文本炸后端 schema <span class="mono">:385-388</span></td></tr>
+<tr><td>Penpot</td><td class="mono">menus/text.cljs（25,247）</td><td>对齐／方向／垂直对齐／增长方式／装饰线一律同一个"图标单选组"件 <span class="mono">:64-224</span>；memo 只比五个值 <span class="mono">:263-264</span></td></tr>
+<tr><td>Penpot</td><td class="mono">shared/searchable_options_dropdown.cljs（5,642）</td><td>option schema 把 <code>name</code>（给人看）与 <code>value/resolved-value</code>（写入值）<b>分成两个字段</b> <span class="mono">:29-39</span>；搜索后重算可聚焦集合 <span class="mono">:74-76</span>；<code>role="listbox"</code> <span class="mono">:119</span></td></tr>
+<tr><td>Excalidraw</td><td class="mono">FontPicker/FontPickerList.tsx（12,778）</td><td>场景内用到的字体<b>即使废弃也一律显示</b> <span class="mono">:165</span>；分两组"场景内／可用" <span class="mono">:284-290,357-371</span>；拖拽掠过不做实时预览 <span class="mono">:329</span></td></tr>
+<tr><td>Excalidraw</td><td class="mono">common/font-metadata.ts（4,710）</td><td>每款字体一条元数据带 <code>deprecated/private/local/fallback</code> 标志 ⇒ <b>可见性由数据决定，不硬编码名单</b> <span class="mono">:11-32</span></td></tr>
+<tr><td>CKEditor 5</td><td class="mono">fontfamily/fontfamilyui.ts（5,595）</td><td><code>dropdownView.bind('isEnabled').to(command)</code> ⇒ 可用性绑到命令自报 <span class="mono">:82</span>；字体名一律不翻译，只译 "Default" <span class="mono">:150-152</span>；每个选项用该字体本体渲染 <span class="mono">:197</span></td></tr>
+<tr><td>tldraw</td><td class="mono">StylePanelDropdownPicker.tsx（5,576）</td><td>mixed 用专门图标 <span class="mono">:75-76</span>；当前值不在候选里时<b>标题只描述控件、不假装显示该值</b> <span class="mono">:82-93</span></td></tr>
+<tr><td>tldraw</td><td class="mono">StylePanelDoubleDropdownPicker.tsx（5,252）</td><td>整组不适用直接 <code>return null</code> <span class="mono">:66</span>；双联＝"类别＋具体档"（对应行距模式＋数值）</td></tr>
+<tr><td>tldraw</td><td class="mono">DefaultStylePanelContent.tsx（11,241）</td><td>值不在档位内时 <code>minBy(|supported-value|)</code> 吸附最近档 <span class="mono">:118-126</span>；小标题只在增强无障碍模式下渲染（默认密度优先）<span class="mono">:157</span></td></tr>
+</tbody></table>
+<p class="notes"><b>参照结论：</b>四家没有一个用自由文本框选字体；字体一律是"可搜索、分组、按本体预览的选择器"；显示名与写入值是两个字段；不可用项要么绑能力位要么整组不渲染；"档位表＋数字框"是间距类控件的标准形。<b>未取到不引的：</b>VS Code 设置编辑器的禁用原因文案（拉了 114,984 B 未命中关键字，按未核实处理）；W3C APG combobox 页只回两句（<code>Selection follows focus in the listbox</code>、焦点用 <code>aria-activedescendant</code> 留在 combobox），够定键盘模型，其余不引。</p>
+
+<h2>四 · 实跑发现的四个问题</h2>
+<div class="gates">
+<div class="gate"><div class="sn" style="color:var(--bad)">F-1 P0 功能</div><div class="fix"><b>字体一格基本填不中。</b><code>typography-panel.tsx:236</code> 与 <code>:256</code> 用「字族框文本＋样式框文本」去解 <code>resolveFace</code>，而它只按 PostScript 脸名唯一命中。按人话填的用户 100% 落"不发"。</div></div>
+<div class="gate"><div class="sn" style="color:var(--bad)">F-2 P0 会吹</div><div class="fix"><b>自动字距／伪粗／伪斜会被算成"会发"。</b>助手 A2 白名单收 <code>{face,tracking,leading,autoKerning,fauxBold,fauxItalic}</code>，但 <code>toAssistantTypographyProfile()</code>（<code>typography-persistence.ts:121-133</code>）只产 <code>face/tracking/leading</code>。v4 第一版照白名单标"会发 4 项"，实际下发体只有 3 个字段 ⇒ 已改为按下发体真值判，并在页面自检里加硬断言"会发项数 == 下发体字段数"。</div></div>
+<div class="gate"><div class="sn" style="color:var(--teal)">F-3 已修</div><div class="fix"><b>模拟件键盘导航整条失效。</b>v3 取"第二个分组"当列表（<code>popOptions()[1]</code>），没有"当前使用"分组时是 undefined ⇒ 方向键不动。静态看代码看不出来，是真点出来的 ⇒ 判据加一条：模拟件的键盘路径必须用事件真跑。</div></div>
+<div class="gate"><div class="sn" style="color:var(--teal)">F-4 已修</div><div class="fix"><b>1314 项 <code>&lt;select&gt;</code> 把 420px 容器撑溢出 123px。</b>最小内容宽 404px 所致 ⇒ <code>minmax(0,1fr)</code> ＋ <code>min-width:0</code> ＋ <code>select{width:0;flex:1;text-overflow:ellipsis}</code>，四档宽度溢出归零。产品实现同一处必须带 360/420 两档断言。</div></div>
+</div>
+
+<h2>五 · 对抗式审查（审我自己这套方案，六面）</h2>
+<div class="split">
+<div class="card"><div class="hd">重复建设？ <span class="pill p-ok">过</span></div><p class="notes">不新建展示面，改既有 <code>typography-panel.tsx</code>；要抽只抽一个 <code>font-picker.tsx</code>。风险是又造一个模拟台 —— v3/v4 定位是设计面，落地后不再增件。</p></div>
+<div class="card"><div class="hd">写侧强制力？ <span class="pill p-warn">过，但须进门禁</span></div><p class="notes">灰化只挡界面，真强制在助手 A2（<code>unknown-field</code> 直接拒）。所以界面可选集合必须 ⊆ A2 白名单，且 ⊆ 映射函数产出集合 —— F-2 就是后半条没成立。</p></div>
+<div class="card"><div class="hd">外泄面？ <span class="pill p-ok">过</span></div><p class="notes">界面上不出现 AM 键名、<code>tygf.*</code>、<code>executeAsModal</code>、JSON 结构、探针文件名（Owner 明令）。能力边界页只写用户可验证的话。PostScript 脸名允许出现 —— PS 自己的字体框就显示它。</p></div>
+<div class="card"><div class="hd">并发？ <span class="pill p-warn">需按 hunk 提交</span></div><p class="notes">只碰面板三个文件＋守卫脚本；<code>home-view.tsx</code> 改挂载点一行。实测 develop 现有别的会话在写 <code>siteContent</code>／<code>home-view</code>（5 个 M），禁止整档重写。</p></div>
+<div class="card"><div class="hd">更便宜的反方案？ <span class="pill p-ok">都不如按 v4</span></div><p class="notes">①只把两个框改一个下拉：省一半工，但灰化规矩、结算条、单位口径全丢，Owner 上轮问的两件事一件没答；②整块藏进"高级"：等于承认功能不可用，触"静默降级"红线；③照抄 PS 全部控件不灰化：就是现在被驳的样子。</p></div>
+<div class="card"><div class="hd">可证伪判据？ <span class="pill p-ok">每条配负控</span></div><p class="notes">F-1 的判据是行为测试不是快照：拿真清单喂"字族＋样式"，断言 <code>face</code> 为空 —— 这条今天就能红。</p></div>
+</div>
+
+<h2>六 · 执行方案（W4，前端一步到位）</h2>
+<div class="gates">
+<div class="gate"><div class="sn">W4-1</div><div class="fix"><b>字体格改选择器（修 F-1）。</b>两个 <code>&lt;input&gt;</code> → 「字体族」下拉（1314 项真清单）＋「样式」下拉（只列该字族本机真实存在的样式，含 Regular），合起来定到唯一 <code>postscriptName</code> 存进 <code>profile.face</code>；保留"搜索 1587 款"浮层（本体预览、方向键预览、Enter 应用、Esc 撤销）。<br><span class="notes">判据：新增 <code>scripts/smoke-typography-picker.mjs</code> 行为测试，断言"点任一行 ⇒ face ∈ psNames 且唯一"且 <code>toAssistantTypographyProfile(profile).face === 该行 postscriptName</code>。负控：把任一行改回"字族＋样式各填一半"的旧形状 ⇒ 必红（今天它就是红的）。</span></div></div>
+<div class="gate"><div class="sn">W4-2</div><div class="fix"><b>结算条与硬断言（修 F-2）。</b>底部一行"本次会发 N 项"，N 由 <code>Object.keys(toAssistantTypographyProfile(profile)).length</code> 现算；逐字段标 发／不发＋原因。<br><span class="notes">判据：守卫断言"界面声称会发的字段集合 == 下发体字段集合"。负控：给 autoKerning 加一个"会发"标签而不补映射 ⇒ 必红。</span></div></div>
+<div class="gate"><div class="sn">W4-3</div><div class="fix"><b>灰化四态与同源能力表。</b>控件状态从一张表派生（writable / todo / grey / untested），该表与助手 A2 白名单、与映射函数产出集合同源；灰化格保留位置（PS 规矩）＋ <code>title</code> 一行原因，不出现内部术语。<br><span class="notes">判据：静态守卫扫面板源码，出现 <code>horizontalAlignment</code>／<code>leftIndent</code>／<code>rightIndent</code>／<code>firstLineIndent</code>／<code>spaceBefore</code>／<code>spaceAfter</code>／<code>language</code>／<code>textCase</code> 任一写入 ⇒ 红（这条正是上一轮记下的缺闸）。负控：临时塞一行 <code>profile.language='zh'</code> ⇒ 必红。</span></div></div>
+<div class="gate"><div class="sn">W4-4</div><div class="fix"><b>字距单位口径。</b>‰em ⇄ % 显示切换（1% = 10‰em），<b>下发恒为 ‰em</b>；行距＝mode（沿用／自动／固定 pt）＋数值，档位照 Penpot 形。<br><span class="notes">判据：切换单位后 <code>profile.tracking</code> 不变；写入前两位定点归一（对齐 Penpot <code>format-precision 2</code>，同时避开我们踩过的回执浮点摘要坑）。负控：把切换做成"显示什么就发什么" ⇒ 切一次 ‰em→% 后 tracking 变 1/10，必红。</span></div></div>
+<div class="gate"><div class="sn">W4-5</div><div class="fix"><b>段落页保留但整页灰。</b>照 PS 版式渲染 14 格，全灰＋逐格一行原因＋底部"永远锁死"四项（noBreak / kind / composer / warp）。<br><span class="notes">判据：段落页任何控件不得进入 profile（W4-3 守卫覆盖）；界面文案不得出现"不支持／没做"式否认已有能力的句子。负控：把对齐做成可点 ⇒ 必红。</span></div></div>
+<div class="gate"><div class="sn">W4-6</div><div class="fix"><b>宽度与令牌。</b>360px 与 420px 两档 <code>scrollWidth == clientWidth</code>；输入/下拉背景一律 <code>bg-background</code>（空类令牌已有守卫盯着）。</div></div>
+</div>
+<div class="callout"><b>W5 另开一单（需先评审）：</b>把 <code>autoKerning / fauxBold / fauxItalic</code> 接进映射函数（A2 已收、助手 A4 已实测会应用）；基线偏移实测可写但连白名单都还没进，先评审再进。<b>W4 不等 W5</b> —— 这期间这些格子就是虚线"可写待接"。</div>
+
+<h2>七 · 等 Owner 拍的两项</h2>
+<ol>
+<li><b>走 v4（PS 字符/段落同款）还是 v3（结算优先分节式）？</b>我推荐 <b>v4</b>：与用户在 PS 里的肌肉记忆一致，灰化自带解释，段落页"整页灰"比"没这页"更好交代；代价是密度高、首次使用需要一句引导。v3 胜在"发／不发"最醒目，适合放报价页旁做说明。也可以 <b>v4 做面板 ＋ 把 v3 的结算表并进执行前确认弹层</b>。</li>
+<li><b>W4 现在动不动产品代码？</b>develop 现有别的会话在写 <code>home-view</code>／<code>siteContent</code> 一族；W4 只碰排版面板三个文件，可并行，但提交必须按 hunk 取差集、不整档重写。</li>
+</ol>
+
+<h2>八 · 验收门禁</h2>
+<p class="notes">W4 合入前必须绿：<code>npx tsc --noEmit</code>、<code>npm run lint</code>、<code>test:typography-picker</code>（新）、<code>test:typography-wiring</code>、<code>test:typography-customization</code>、<code>test:typography-faces</code>、<code>test:feature-flag-whitelist</code>、<code>test:batch-row-contract</code>、<code>test:trust-chain</code>、<code>release:preflight:test</code>。合同四层与 manifest digest 不得因界面改动而变（排版仍走 <code>execution-envelope.json</code> 兄弟字段）。</p>
+
+<h2>九 · 证据清单（本会话真跑）</h2>
+<ul class="notes">
+<li><code>node tmp/typo-adversarial-20261017/build-mock-v3.mjs</code> → <code>WROTE ... bytes=257867</code>，rc=0</li>
+<li><code>node tmp/typo-adversarial-20261017/build-mock-v4-ps.mjs</code> → <code>WROTE ... bytes=239906</code>；<code>faces=1587 families=1314 charFields=12 toggles=8 paraFields=14</code></li>
+<li><code>node tmp/typo-adversarial-20261017/check-mock-syntax.mjs &lt;v4.html&gt;</code> → <code>SYNTAX OK chars=223658</code></li>
+<li>浏览器实测（chrome-devtools）：§二 表内全部读数，含四档宽度溢出 0、搜索行数变化、点选后 face 与结算条、段落页 14 格全灰、v3 键盘三键与助手三态</li>
+<li>参照件 9 份 curl 的 http 码与字节数见 §三；未取到的两项在 §三末明列为未核实</li>
+</ul>
+
+<footer>图译工坊内测版 · 交付档案/执行方案 · 2026-10-17 · 本件为方案与设计面，未改产品代码、未碰下发链 · 同名 md 为真相层，本 HTML 为版式件</footer>
+</div></body></html>

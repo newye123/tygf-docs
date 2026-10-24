@@ -1,0 +1,56 @@
+
+
+1. 使用最新发布包：
+`release/tygf-online-20260712.zip`
+
+SHA256：
+`EA7C850122C4279C07998C4BDF9CF8C4BBFF3FEAFA643B0D235F3C62B515401F`
+
+2. 上传并覆盖服务器代码，但不要覆盖服务器现有 `.env` 和数据库。
+
+3. 检查生产环境变量：
+- `NEXT_PUBLIC_ASSISTANT_DIRECT=1`
+- `NEXT_PUBLIC_LOCAL_ASSISTANT_DOWNLOAD_URL=/downloads/tygf-engine-setup-3.2.1.exe`
+- 填写有效的 `DEEPSEEK_API_KEY`
+- 填写有效的 `PADDLEOCR_API_TOKEN`
+- 更换正式的管理员密码及三个生产密钥
+
+4. 执行部署：
+
+```bash
+npm ci
+npm run release:check
+npx prisma generate
+npx prisma db push
+npm run build
+pm2 restart tygf
+```
+
+5. 验证运行码接口：
+`POST /api/local-assistant/redeem`
+
+空参数应返回 JSON 400，不能返回 HTML 404。
+
+6. 验证 OCR 接口：
+`POST /api/workbench/ocr/paddleocr`
+
+空参数应返回 JSON 400。再上传一张小于 20 MB 的真实图片，确认 PaddleOCR 能返回识别结果。
+
+7. 验证表格、文本清洗和 AI 审查。接口异常时应显示中文错误，不能再出现：
+`Unexpected token '<'`
+
+8. 确认线上可以下载：
+`/downloads/tygf-engine-setup-3.2.1.exe`
+
+9. 最后完成一次完整流程：
+生成运行码 → 工作台激活本地助手 → 上传表格/图片 → AI 审查 → 执行 Photoshop → 查看报告。
+
+https://api.deepseek.com
+DeepSeek API
+（密钥不再写入文档。原明文密钥已泄露，必须在 DeepSeek 控制台吊销并重新生成；新密钥只放服务器环境变量或后台 ApiCredential 配置。）
+
+https://aistudio.baidu.com/paddleocr
+
+PaddleOCR API
+（密钥不再写入文档。原明文密钥已泄露，必须在百度 AI Studio 吊销并重新生成；新密钥只放服务器环境变量或后台 ApiCredential 配置。）
+

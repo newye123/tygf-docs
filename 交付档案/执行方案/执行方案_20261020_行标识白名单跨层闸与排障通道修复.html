@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行方案 · 行标识白名单跨层闸与排障通道修复 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#14181f;--mut:#5b6572;--line:#dfe2e6;--acc:#0b57d0;--ok:#0f7b45;--bad:#c0392b;--warn:#a06a00;--mono:'IBM Plex Mono',monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--card:#171b21;--ink:#e8eaed;--mut:#9aa5b1;--line:#2a3038;--acc:#78a9ff;--ok:#57d38a;--bad:#ff8a80;--warn:#e0b264}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.62 'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif}
+.wrap{max-width:1020px;margin:0 auto;padding:36px 22px 70px}
+h1{font-size:26px;line-height:1.3;margin:0 0 6px;letter-spacing:-.2px}
+.sub{color:var(--mut);font-size:13.5px;margin-bottom:20px}
+.verdict{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:12px;padding:18px 21px;margin:0 0 20px}
+.verdict b{font-size:17.5px}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 22px}
+.stats{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stats .n{font:600 24px/1.1 var(--mono);color:var(--acc)}
+.stats .l{font-size:12.8px;color:var(--mut);margin-top:5px}
+h2{font-size:14.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin:32px 0 12px;font-weight:600}
+h3{font-size:16px;margin:20px 0 8px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13.4px}
+th{text-align:left;background:rgba(11,87,208,.07);color:var(--mut);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+code{font:500 12.6px var(--mono);background:rgba(11,87,208,.09);padding:1px 5px;border-radius:5px;word-break:break-all}
+pre{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font:400 12.4px/1.6 var(--mono);white-space:pre-wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.card h4{margin:0 0 7px;font-size:14.5px}
+.card p{margin:0;font-size:13.6px;color:var(--mut)}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+.tag{font:600 11.5px var(--mono);letter-spacing:.5px;text-align:center;padding:4px 0;border-radius:5px}
+.tag.own{color:var(--warn)}.tag.done{color:var(--ok)}.tag.no{color:var(--bad)}
+.gate p{margin:0;font-size:13.8px}
+.callout{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:12px;padding:15px 18px;font-size:13.8px}
+.callout.bad{border-left-color:var(--bad)}
+ol,ul{margin:0;padding-left:20px}
+li{margin:6px 0;font-size:13.8px}
+.note{font-size:12.8px;color:var(--mut)}
+.sev{font:600 11.5px var(--mono);padding:2px 6px;border-radius:4px}
+.sev.i{color:var(--bad)}.sev.n{color:var(--warn)}.sev.p{color:var(--mut)}
+footer{margin-top:32px;padding-top:15px;border-top:1px solid var(--line);color:var(--mut);font:400 12.2px/1.7 var(--mono)}
+@media (max-width:660px){.wrap{padding:22px 13px 50px}h1{font-size:21px}.gate{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>执行方案：行标识白名单跨层闸 ＋ 排障通道修复</h1>
+<div class="sub">起因：生产 2026-10-20 事故3 复发（<code>MANIFEST_FRAGMENT_ROWS_INVALID</code>）· 代码落点 <code>worktrees/develop</code>（起点 <code>bd2c860</code>）· 状态：已实施＋本机验证全绿，<b>未 push、未打包、未部署</b></div>
+
+<div class="verdict"><b>一句话本质：</b>凡是本机助手将来会拒的行标识，浏览器必须在冻结积分之前自己先拒掉或先提示；执行链任何一环失败时，云端必须拿得到那条现场。<br>
+<span class="note">本轮把这两句都做成了可复跑的门：白名单单源＋三道闸＋一道跨层一致性门＋排障通道恢复。</span></div>
+
+<div class="split">
+  <div class="stats"><div class="n">11</div><div class="l">个文件改动（2 个新增：守卫脚本＋白名单单源模块）</div></div>
+  <div class="stats"><div class="n">0/9 → 5/5</div><div class="l">改前浏览器侧拦 0 处；改后派发入口全接闸</div></div>
+  <div class="stats"><div class="n">18</div><div class="l">条语料两侧逐条同判（新门锁死）</div></div>
+  <div class="stats"><div class="n">12</div><div class="l">项验证 rc=0（含 tsc、lint、合同门）</div></div>
+</div>
+
+<h2>0 · 对抗式审查结论</h2>
+<pre>VERDICT: 有条件放行
+范围: worktrees/develop HEAD bd2c860 → 本轮 11 文件（含新增守卫）｜Round 1/3
+改动: 10 个已跟踪文件 +166/−6 行 ＋ 新增 scripts/smoke-row-id-whitelist.mjs（145 行）＋ 新增 src/lib/workbench/row-identifier.ts（73 行）｜风险档 Medium（行身份属清单合同邻面，未动计费/回执/冻结语义）
+已证实: 9 条（Important 5 / Nit 2 / Pre-existing 2）  未决: 3 条
+覆盖缺口: 未跑真机用户表；未比对安装包内脚本哈希；两站 nginx 混日志未解（另单）</pre>
+
+<table>
+<tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>等级/归属</th></tr>
+<tr><td>F-001</td><td><span class="sev i">Important</span></td><td><code>workbench-revision.ts:28</code>＋<code>csv.ts:751-772</code></td><td>「记录编号」含中文/空格/全角/超长 → 一路送到助手才在 <code>execution-manifest.js:168</code> 抛 → 整批拒、attempt 悬挂</td><td>本机 18 条语料复现；生产 17:12:01 message=<code>MANIFEST_FRAGMENT_ROWS_INVALID</code></td><td>A｜存量</td></tr>
+<tr><td>F-002</td><td><span class="sev i">Important</span></td><td><code>scripts/</code> 全目录</td><td>无任何门断言"浏览器产出的行标识满足助手白名单"→ 两侧各自演化，故障必复发</td><td><code>grep -rl "A-Za-z0-9\._:-" scripts</code> → 0 文件（<code>src/</code> 命中 12）</td><td>A｜存量</td></tr>
+<tr><td>F-003</td><td><span class="sev i">Important</span></td><td><code>deploy-release.sh:244</code>＋现网 <code>tygf.service:21,27</code></td><td><code>ProtectSystem=strict</code> 只放行 <code>${STATE_DIR}/db</code> → 快照目录在沙箱内只读 → <code>mkdirSync</code> 抛 EROFS → 上传恒 503、目录零文件</td><td><code>systemctl show</code> 实读；目录 <code>tygf:tygf drwxr-xr-x</code>（手工可写、服务不可写）；文件数 0（自 09-17）</td><td>A｜存量</td></tr>
+<tr><td>F-004</td><td><span class="sev i">Important</span></td><td><code>attempt-diagnostics.ts:133-136</code></td><td>一条坏诊断条目抛错 → 同批 ≤120 条全丢；今天丢的 23 次正是现场那几条</td><td>journal 23 条 <code>rejected invalid diagTail</code>；落库 <code>code</code> 实测 <code>TUESDAY_</code>／<code>2026_10_20T09</code>／<code>_</code></td><td>A｜存量</td></tr>
+<tr><td>F-005</td><td><span class="sev i">Important</span></td><td><code>attempt-diagnostic-buffer.cjs:33-38</code>＋<code>server.js:2459/3289</code></td><td>上传前不按 <code>ALLOWED_KEYS</code> 投影 → 多一键毒整批；兜底 <code>'-'</code> 过不了 code 正则</td><td>源码级；助手表达式实测复现三个观测值</td><td>A 源码级／助手未跑｜存量</td></tr>
+<tr><td>F-006</td><td><span class="sev p">Pre-existing</span></td><td><code>batch-binding-plan.js:50-60</code></td><td>跨语言并集 <code>fragmentRowIds</code> 可能超助手上限 6 → 另一类整批拒</td><td>未证；今天这批每对象 5 片，未越线</td><td>C｜待证</td></tr>
+<tr><td>F-007</td><td><span class="sev p">Pre-existing</span></td><td><code>nginx.conf:40</code></td><td>两站共用一份 access.log 且无 <code>$host</code> → 错误码无法按站归属</td><td><code>log_format</code>/<code>access_log</code> 实读</td><td>A｜存量</td></tr>
+<tr><td>F-008</td><td><span class="sev n">Nit</span></td><td><code>support-bundles/route.ts:77-79</code></td><td>死支（<code>file</code> 非空必伴 stored/deduped）</td><td>逐 return 读函数体</td><td>A｜存量，本轮未动</td></tr>
+<tr><td>F-009</td><td><span class="sev n">Nit</span></td><td><code>csv.ts:420</code></td><td>表头 <code>记录编号（唯一）</code> 经清洗也命中 → 文案不能只说"ID 列"</td><td>别名集合＋归一函数实读</td><td>A｜存量（文案已按「记录编号」讲）</td></tr>
+</table>
+
+<h3>更正（推翻我 18:0x 那份报告）</h3>
+<div class="callout bad">
+<ul>
+<li><b>「用户已换表成功」＝错。</b>17:37 那批归属 <code>principalId cmv6ipvna0…</code>／<code>installId 7e20f19d-0…</code>／<code>doc 7b869b0b2c…</code>，两笔失败批是 <code>cms5jcpfh0…</code>／<code>4219aaaa-f…</code>／<code>a933b86a6e…</code>——三处全不同 ⇒ 成功那单是 <b>Owner 自测</b>，种子用户今日两批全败、此后无新批次 ⇒ <b>他现在仍然用不了</b>。</li>
+<li><b>「70 行的表」＝描述不准。</b><code>rowCount=70</code> 是 14 行 × 5 语种的展平数（实测 <code>json_each</code>：5 个 language、14 个 distinct rowIndex）。用户表实际 14 行；根因不变。</li>
+</ul>
+</div>
+
+<h2>1 · 本轮做完的（三道闸＋两条通道＋一道防复发门）</h2>
+<div class="cards">
+  <div class="card"><h4>① 白名单单源</h4><p>新增 <code>src/lib/workbench/row-identifier.ts</code>：模式、上限 128、违规分类（空/超长/非法字符）、中文说明、<code>ExecutionRowIdError</code>。此前 <code>trust-chain/execution-manifest.ts:21</code> 有同一正则但从不用于行标识。</p></div>
+  <div class="card"><h4>② 导入面点名（不拦表）</h4><p><code>csv.ts</code> 把不合形的「记录编号」写进 <code>warnings</code> 并点行号。<b>不硬拦的理由</b>：这种表在没有多行拼接、没有排除行时今天能跑通，硬拦会打断一条可用路径（Product Drift Guard 默认保留能力）。</p></div>
+  <div class="card"><h4>③ 派发前硬闸（关键）</h4><p><code>local-assistant-client.ts</code> 新增 <code>assertDispatchRowIdentifiers()</code>，接在 5 个派发入口第一行，位置在<b>冻结积分与建批次之前</b> ⇒ 拦下即不冻分、不留 DISPATCHING 孤儿。</p></div>
+  <div class="card"><h4>④ 清单组装同源校验</h4><p><code>assertExecutionManifest</code> 现逐个校验 <code>assignments[].fragmentRowIds</code> 与 <code>bindingDecisions.ignoredTranslationRowIds</code>（助手 :168 的同形镜像）。</p></div>
+  <div class="card"><h4>⑤ 停派与归因</h4><p>新码 <code>EXECUTION_ROW_ID_UNSUPPORTED</code> 同时进 <code>SYSTEMIC_PRE_EXECUTION_CODES</code>（首拒即停）与两侧漏斗可报集合（跨层断言绿）——"我们拦住了"和"助手拒了"从此是两条可数的线。</p></div>
+  <div class="card"><h4>⑥ 文案单源</h4><p><code>error-messages.ts</code> 新 spec：明说"执行没开始、没扣分"＋两条出路；登记进 <code>smoke-error-message-contract</code> 并加 3 条专项断言。</p></div>
+  <div class="card"><h4>⑦ 排障通道恢复</h4><p><code>deploy-release.sh</code>：建目录、托管 <code>TYGF_SUPPORT_BUNDLE_DIR</code>、chown＋0750、<b>只给 Web 单元</b>加 <code>ReadWritePaths=${STATE_DIR}/db ${STATE_DIR}/support-bundles</code>。与测试站逐字同法，生产此前漏了，所以 09-17 至今零文件。</p></div>
+  <div class="card"><h4>⑧ 诊断摄取降级</h4><p>新增 <code>parseAttemptDiagnosticTailLenient()</code>，云端入口改用：<b>单条坏只丢那一条</b>，warn 带 <code>skipped=</code>；结构非法照旧整批拒；<code>/diagnostics</code> 严格面（400）不动。</p></div>
+  <div class="card"><h4>⑨ 防复发门</h4><p><code>scripts/smoke-row-id-whitelist.mjs</code>：18 条语料两侧逐条同判＋两侧正则<b>字面必须相同</b>＋派发闸 5/5。已挂进 <code>test:trust-chain</code> ⇒ 不跑全链出不了包。</p></div>
+</div>
+
+<h2>2 · 真实验证读数</h2>
+<pre>改前复现  18 条语料：浏览器侧拒 0/9，助手侧拒 6/9（中文/空格/全角/超长/空/null）
+npm run test:row-id-whitelist      → 语料 18 条两侧对齐；派发闸 5/5        rc=0
+npm run test:error-message-contract→ 含新码专项断言                        rc=0
+npm run test:attempt-diagnostics   → 严格面不变；warn 现带 skipped=0        rc=0
+npm run test:batch-limits / test:batch-row-contract / test:v3-batch-flow / test:execute-step-reset  rc=0
+smoke-execution-manifest / smoke-local-assistant-errors（两侧码集同）        rc=0
+npx tsc --noEmit                                                              rc=0
+npm run lint                                                                  rc=0（0 errors，35 条既有 a11y warning，本轮改动文件未被点名）
+bash -n deploy/deploy-release.sh                                              rc=0
+npm run test:trust-chain  全量，新门已入链并打印 pass                          rc=0（链内 91 项通过）
+git numstat：除被替换行外全部纯增（deploy 8/2、package 2/1、diagnostics 47/2、其余 +N/0）</pre>
+<p class="note">全量 trust-chain 已过 ⇒ 部署测试站的两条前置门（<code>test:batch-row-contract</code>＋<code>test:trust-chain</code>）满足；部署本身仍等 Owner 一句。未跑的只有发布门（preflight/出包）与真机端到端。</p>
+
+<h2>8 · Round 2：审自己的补丁，然后走发布链（Owner 令"按方案执行"）</h2>
+<div class="cards">
+  <div class="card"><h4>F-010 我的第一版闸会误伤（已修）</h4><p>第一版把 <code>translations</code> 类字段的 <code>rowId</code> 一起拦。复核助手三处校验面：<code>server.js:6467/6478</code> 只做形状与 <code>length&lt;=160</code> 过滤、<code>generated/binding-core.js:269</code> 只校 <code>ignoredTranslationRowId</code>、<code>execution-manifest.js:168</code> 只校 <code>fragment_row_ids</code> ⇒ <b>没有任何一处校 translations 的 rowId</b>。跨文档共用表多出来的行、空译文行今天带着不合形编号照跑，我那版会砍掉这条可用路径。闸已收窄，并做成两条负控 (18)(19) 进门。</p></div>
+  <div class="card"><h4>F-011 存量语义坑（只登记，不改）</h4><p>助手 intake 把 <b>length&gt;160 的排除行标识静默丢弃</b>（<code>server.js:6467</code> 的 filter）⇒ 用户以为那行被排除，实际没排除，比报错更坏。闸同样跳过这批 id，避免在浏览器侧造新失败；语义修复另立单。</p></div>
+  <div class="card"><h4>F-012 文案门不在发布门里（已补）</h4><p>实测：<code>test:error-message-contract</code> 既不在 <code>RELEASE_GATES</code> 也不在 <code>test:contracts</code> ⇒ 错误码没中文文案也能出厂。按仓库自写的 #92 教训"守卫不在门里等于没有"补进 <code>release-preflight.cjs</code>。</p></div>
+  <div class="card"><h4>tsc 抓到一条真错</h4><p>批量原子检查的决策在 <code>params.decisions</code> 下且键名叫 <code>ignoredRowIds</code>，我原先 <code>assertDispatchRowIdentifiers(params)</code> 在那处<b>等于没校</b>（TS2559）。改为显式取三字段；门里 (16) 的计数也从"数字面量"改成"逐个入口函数体真调了闸"。</p></div>
+  <div class="card"><h4>路上撞到一枚 10-19 起就假红的门</h4><p><code>test:trust-chain</code> 在<b>已提交状态</b>就红，红点 <code>smoke-pc-readiness.mjs:72</code>。三拍定性：只含我提交的干净树红；父提交 <code>3ec8a4b</code>（不含我改动）同样红；读产品代码 <code>server.js:5856-5872</code> 证实就绪分流<b>确实在</b> ⇒ 断言字符串还写着旧形参 <code>cfg</code>。<b>只把两条 needle 对齐真实代码</b>，意图一字未放宽，门内留勘误注记。改前 rc=1 → 改后 7/7 rc=0。差点为了迎合过期断言去改产品代码，靠先证伪归属避免。</p></div>
+  <div class="card"><h4>发布链纪律读数</h4><p><code>release-preflight.cjs:60</code> 要求全树 porcelain 为空、<code>package-release.cjs</code> 用 <code>git archive HEAD</code> ⇒ 未提交根本进不了包。我只暂存自己 13 个文件（提交 <code>7af4230</code>，+436/−6），<b>并行会话 8 个在飞文件保持未暂存</b>；清障单独一笔 <code>c3e3247</code>。干净 detached 树 <code>worktrees/pack-c3e3247</code>（porcelain=0；node_modules 走 junction——<code>cmd mklink</code> 被非 ASCII 路径咬住，改 <code>fs.symlinkSync(...,'junction')</code>）。</p></div>
+</div>
+<pre>npm run release:preflight:test -- --allow-detached-head c3e3247d4fd8068f438f89b091d1727378c03fc3   （干净树实跑）
+  gate acceptance-record        PASS (0s)    [target=test 打印跳过：验收记录本就靠部署产出]
+  gate release-identity         PASS (0s)
+  gate batch-row-contract       PASS (0s)
+  gate error-message-contract   PASS (0s)    ← 本轮新加进门
+  gate test:contracts           PASS (317s)  ← vitest 那段慢，不是挂死
+  gate test:v3-batch-flow       PASS (0s)
+  gate test:trust-chain         运行中（链内含新门 smoke-row-id-whitelist）→ 最终读数见汇报</pre>
+<p class="note">提醒：测试站现 BOUND <code>3d85a2a</code>，部署到 <code>c3e3247</code> 会一并带上并行会话已提交的 6 笔（免 PS 随包、运营台流量板、内存闸从版本线摘除等）。这是 develop→测试站的既有做法，但部署后若出红灯，先按提交切分归属再判，别算到这条线头上。生产仍不碰。</p>
+
+<h2>3 · 还等 Owner 点的四件事</h2>
+<div class="gates">
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>部署链</b>：本轮未 push、未打包、未上站（红线）。测试站建议顺序：<code>test:trust-chain</code> 全量 → 部署测试站 → provenance 回读 → 用一份"中文记录编号"的表实测「导入出提示、执行被拦、且不冻结积分」。</p></div>
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>给种子用户的止血话术</b>（现在就能发，不必等发版）：把「记录编号」<b>整列删掉</b>（系统按行内容自动生成可用编号）或改成 <code>row-01</code> 这类英文编号再跑；今天两笔的 70+70 单位已自动退回，重跑不重复扣。</p></div>
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>助手侧归一（F-005）</b>：上传前按 <code>ALLOWED_KEYS</code> 投影＋ps 类 code 改取阶段枚举。要发新版（runtime 身份＋安装包＋发布声明四件套，本机无 makensis）⇒ 另立一单；本轮先用服务端降级止住"整批丢弃"。</p></div>
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>nginx 加 <code>$host</code>（F-007）</b>：改 <code>log_format</code> 并 reload 生产 nginx。运维面，一句话我就动。</p></div>
+</div>
+
+<h2>4 · 为什么不采纳"放宽服务端白名单"</h2>
+<p style="font-size:14px">审查有一条线索建议放宽以少丢诊断。驳回：服务端白名单是 <code>attempt-diagnostics.ts:6</code> 声明的信任模型（对不可信客户端输入的形状闸）。放宽只会让垃圾更顺地入库，而真凶"一条坏条目毒掉整批"仍在（未知键照样毒化）。逐条降级＋记数既保住现场又保住闸，代价只是服务端一处。</p>
+
+<h2>5 · 本轮故意没碰的</h2>
+<p style="font-size:14px"><code>support-bundles/route.ts:74-79</code> 的 400/503 分支形状与那条死支（F-008）：通道恢复靠部署脚本那一刀，不是这里，留到下次连同日志改造一起做。<code>ignored_translation_row_ids</code> 在助手侧会更早抛 <code>BINDING_COMPILE_FAILED</code>（另一条码），不混改。</p>
+
+<h2>6 · 以后怎么避免（机制）</h2>
+<ul>
+<li><b>门</b>：<code>test:row-id-whitelist</code> 入 <code>test:trust-chain</code> ⇒ 两侧判定不一致或字面漂移，构建当场红。</li>
+<li><b>归因</b>：新码进漏斗可报集合 ⇒ "多少人卡在行标识"变成能数的事，不再靠现场猜。</li>
+<li><b>现场</b>：排障通道恢复后，同类故障第一条证据就是用户那份表的真实 id（今天缺的正是这一环）。</li>
+<li><b>账务面</b>：闸在冻结积分之前 ⇒ 拦下即零冻结、零孤儿 attempt，不会再出现"取消/完成都 409"那种卡死观感。</li>
+</ul>
+
+<h2>7 · 未核实与覆盖缺口</h2>
+<div class="callout">
+<ul>
+<li>用户表里<b>具体哪个字符</b>踩线：仍未核实。库里 0 处 <code>recordId</code> 字样（<code>grep -c</code> 实测 0），唯一带回现场的通道坏了。</li>
+<li>F-006（跨语言并集是否越 6 片上限）：需要"同一对象绑 ≥7 行"的真用例。</li>
+<li>助手 3.7.15 实装校验器与本仓副本是否逐字节一致：未比安装包哈希。</li>
+<li>真机端到端：本轮没改助手，理论不涉及，但测试站仍按 §3 顺序实测一遍。</li>
+<li><b>共用树现场</b>：<code>worktrees/develop</code> 内另有两处<b>不是本轮改的</b>未提交改动（<code>execute-step.tsx</code> +30/−1、<code>smoke-v3-batch-flow.mjs</code> +27/0，属并行会话在飞工作）。上述所有 rc=0 读数含这两处；将来提交必须按 hunk 选择性暂存，禁止整文件 <code>git add</code>。</li>
+</ul>
+</div>
+
+<p class="note">纪律：只读结论均带 file:line 或命令 rc；服务器侧未做任何写操作；本轮代码改动全部留在 <code>worktrees/develop</code> 未提交，等待 Owner 部署授权。</p>
+<h2>9 · 部署执行读数（2026-10-20 23:21，测试站已上线 c3e3247）</h2>
+<pre>release:package:test 内嵌重跑 17 道门全 PASS（contracts 254s／trust-chain 含新门／partial-index-guard 96s／script-distribution 73s）
+产物 tygf-test-c3e3247d4fd8.zip 41,144,956 B  SHA-256 CB3904A4…C361 ＝ 收据内 SHA（逐字符相同才继续）
+第一次部署被两道 fail-closed 挡住（都是我的操作形态）：① 只解 deploy/* ⇒ 脚本找不到 prisma/migrations 基线，报"migrations not approved"；② 那次失败留下 /var/www/tygf-test-next 残骸 ⇒ 下次 blocked: stale next directory
+处置：残骸改名不删 tygf-test-next.stale-20261020_231641（现役进程在 /var/www/tygf-test，未受影响）；整包解出再跑包内脚本
+[test-release-deploy] deployed commit c3e3247d4fd8068f438f89b091d1727378c03fc3；备份 deploy-20261020_231644-c3e3247d4fd8；缺省未动 nginx；数据库未改（脚本自印 skipping database mutation）</pre>
+<ul>
+<li>部署后同拍实测：内网 <code>:3001/api/runtime-provenance</code> ⇒ BOUND <code>c3e3247</code>、200/415 B/0.04 s；首页 200/96,139 B；pm2 三进程 online、restarts 0；公网 200/415 B（16.5 s＝本机出口慢、满字节，不升格为不可用）。</li>
+<li><b>交付件里真带上新代码</b>：<code>grep -rl EXECUTION_ROW_ID_UNSUPPORTED .next/static/chunks/</code> ⇒ 命中 3 个 chunk ⇒ 守卫与文案确实出厂，不是"源码有、包里没"。</li>
+<li>生产未碰：<code>tygf.service</code> active，provenance 仍 BOUND <code>6ff5c3c</code>／environment=production。</li>
+<li>还等 Owner：① 测试站登录态两击验收（导中文「记录编号」表→点名提示、点执行被拦且不冻分）② 是否推生产（红线）。</li>
+</ul>
+<footer>图译工坊内测版 · 执行方案 · 2026-10-20 晚 · 同名 md＋飞书版同目录</footer>
+</div>
+</body>
+</html>

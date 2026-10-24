@@ -1,0 +1,542 @@
+diff --git a/download/local-assistant/server.js b/download/local-assistant/server.js
+index e86b862..ab0aef2 100644
+--- a/download/local-assistant/server.js
++++ b/download/local-assistant/server.js
+@@ -42,7 +42,46 @@ const { canonicalizeJson } = require('./canonical-json')
+ const { buildRuntimeProvenance } = require('./runtime-provenance')
+ // 2026-09-17 批次C（切片1）：本机失败快照（ring buffer）+ 元数据包上传。
+ const failureSnapshot = require('./failure-snapshot')
+-const postJson = require('./post-json.cjs')
++const postJsonRaw = require('./post-json.cjs')
++
++// 2026-10-12 观测补丁：保住故障现场唯一的诊断证据。
++// postJson 的超时错误其实带着 phase / transportCode / attempts / elapsedMs（post-json.cjs:171-204），
++// 但恢复锁只收下 errorCode 一个字符串，其余在 catch 里被丢掉：
++// /v1.5/batch/execute:6983 取 `error.code || error.message`，而超时错误**刻意不带 code**
++// （post-json.cjs:24 的 smoke-post-json-hard-timeout 断言：超时错误不得带泛化 code）
++// ⇒ 落盘只剩 "server request timeout (60s total)"，判不出卡在 TLS 握手还是云端不答。
++// 这里包一层：所有 postJson 调用点自动经过记录，不必逐个改调用点（逐个改一定会漏）。
++// 只记录，不改写、不重试、不改变任何控制流——异常原样重抛。
++const TRANSPORT_FAILURE_TTL_MS = 120000
++let lastTransportFailure = null
++function recordTransportFailure(error) {
++  if (!error || typeof error !== 'object') return
++  const detail = { at: new Date().toISOString() }
++  if (typeof error.phase === 'string') detail.phase = error.phase
++  if (typeof error.transportCode === 'string') detail.transportCode = error.transportCode
++  // statusCode 只在**拿到过 HTTP 响应**时才有（post-json.cjs:258 是唯一赋值点）
++  // ⇒ 有它＝云端在说话，没它＝链路没通。这正是要留住的判据。
++  if (typeof error.statusCode === 'number') detail.statusCode = error.statusCode
++  if (error.timedOut === true) detail.timedOut = true
++  if (typeof error.attempts === 'number') detail.attempts = error.attempts
++  if (Array.isArray(error.attemptLatenciesMs)) detail.attemptLatenciesMs = error.attemptLatenciesMs.slice(0, 8)
++  if (typeof error.elapsedMs === 'number') detail.elapsedMs = error.elapsedMs
++  lastTransportFailure = { atMs: Date.now(), detail }
++}
++// 只在故障时间窗内回报，避免把很久以前一次无关失败粘到本次恢复锁上。
++function lastTransportFailureDetail(nowMs = Date.now()) {
++  if (!lastTransportFailure) return null
++  if (nowMs - lastTransportFailure.atMs > TRANSPORT_FAILURE_TTL_MS) return null
++  return lastTransportFailure.detail
++}
++const postJson = async (...args) => {
++  try {
++    return await postJsonRaw(...args)
++  } catch (error) {
++    recordTransportFailure(error)
++    throw error
++  }
++}
+ const { reconcileActivationSource } = require('./authorization-source.cjs')
+ const { createSupportUploadStateRegistry } = require('./support-upload-state.cjs')
+ const { normalizeScanErrorCode, describeCodeType } = require('./scan-error-code.cjs')
+@@ -2067,12 +2106,17 @@ function markBusyRecoveryRequired(attemptId, errorCode, message) {
+     else attemptRuntime.requireRecovery(recoveryOwner, { errorCode })
+   }
+   let latchPersisted = false
++  // 2026-10-12 观测补丁：把最近一次传输失败的现场一并落盘（见 postJson 包装处注释）。
++  // 纯附加字段：读取方 readExecutorRecoveryLatch 只校验 schemaVersion/state/owner，
++  // 不校验字段集合 ⇒ 旧锁文件与旧读取路径都不受影响，也不改变任何状态转换。
++  const transport = lastTransportFailureDetail()
+   try {
+     atomicWriteJsonFile(EXECUTOR_RECOVERY_FILE, {
+       schemaVersion: 1,
+       state: 'RECOVERY_REQUIRED',
+       owner: recoveryOwner,
+       errorCode: String(errorCode || 'EXECUTOR_EXIT_UNCONFIRMED').slice(0, 128),
++      ...(transport ? { transport } : {}),
+       updatedAt: new Date().toISOString(),
+     })
+     latchPersisted = true
+@@ -2096,7 +2140,10 @@ function markBusyRecoveryRequired(attemptId, errorCode, message) {
+   }
+   if (busyTimer) { clearInterval(busyTimer); busyTimer = null }
+   try {
+-    appendEngineLog(`${new Date().toISOString()} [busy] recovery_required code=${status.errorCode} attempt=${String(status.busyOwner || '-').slice(0, 32)}`)
++    appendEngineLog(
++      `${new Date().toISOString()} [busy] recovery_required code=${status.errorCode} attempt=${String(status.busyOwner || '-').slice(0, 32)}` +
++      (transport ? ` transport=${JSON.stringify(transport)}` : ''),
++    )
+     pushDiag({ kind: 'busy', code: 'RECOVERY_REQUIRED', errorCode: status.errorCode }, recoveryOwner)
+   } catch {}
+ }
+@@ -2278,10 +2325,46 @@ const TICKET_VERIFY_ATTEMPT_TIMEOUT_MS = 10000
+ // 预算取 12s：留 3s 给助手事件循环和响应写出，保证"原因"赶在 abort 之前送达上层。
+ const AUTHORIZATION_CHECK_VERIFY_BUDGET_MS = 12000
+ 
++// 2026-10-12：执行类路由的单跳验票上限（默认 10s 口径的**唯一**例外）。
++// 只给浏览器侧**不传 signal 或上界远超验票耗时**的执行路由用：
++//   /v1.5/execute/prepare      （local-assistant-client.ts:1193 直连 fetch，无 signal）
++//   /v1.5/attempt/create|authorize（local-assistant-client.ts:1255 直连 fetch，无 signal）
++//   /v1.5/execute/run          （local-assistant-client.ts:1273 直连 fetch，无 signal；
++//                                 服务端编排路径 /api/local-assistant/v15/execute 的
++//                                 浏览器 fetch 同样无 signal，服务端 maxDuration=120s）
++//   /v1.5/batch/execute        （local-assistant-client.ts:1682 直连 fetch，无 signal）
++//   /v1.5/batch/evidence       （local-assistant-client.ts:1771，上界 330s 的 LOCAL_DIALOG_TIMEOUT_MS）
++// 刻意**不抬**（各有更紧上界、或只读/取件、重试便宜、或当前无在树调用方）：
++//   /v1.5/authorization/check（12s 预算 + 15s 浏览器中断，必须继续被 10s 单跳收口）
++//   /v1.5/config（15s）、/v1.5/diagnostic、/v1.5/select-file|select-folder、/v1.5/readiness、
++//   /replace（经典执行已下线）、prepare/check 族（另有合同与逐字断言）。
++// 因此这五条不存在"助手答得比浏览器等得久"的越界风险，可以离开 10s 口径。
++// 为什么必须抬：执行类票据是严格一次性的（src/lib/server/ticket-replay-window.ts:8-9 把
++// execution_batch_v3 显式排除在只读幂等窗口外，"一行不放宽"），单次尝试超时即整条链中断，
++// 没有第二次机会；而云端验票**成功的那一刻就已原子 claim job / 把 attempt 置 TICKET_CONSUMED**
++// （src/app/api/local-assistant/ticket/verify/route.ts:329-367）——超时不是"什么都没发生"，
++// 而是"可能已经发生、只是答不上来"，只会留下需要人工核对的悬挂预留。
++// 实测成功验票 1.5–8.7s（10s 只剩 1.1× 余量）；传输尾部实测 TLS 握手
++// p90 2.81s / max 18.4s，加成功样本 ttfb max 5.45s ≈ 23.9s ⇒ 取 25s（第一个能整段盖住
++// 实测尾部组合的档位）。上界依据：票据自身 TTL 是 5 分钟（src/lib/invite/execution-ticket.ts:23），
++// 25s 有 12× 余量；raise 只加宽**单次尝试**的墙钟，不引入任何尝试/重放（verifyTicket
++// 仍然只有一次 postJson）。
++const EXECUTION_VERIFY_ATTEMPT_TIMEOUT_MS = 25000
++// 执行类路由共用的验票预算对象。票据一次性 ⇒ 只有一次尝试，整次墙钟与单次上限同值。
++const EXECUTION_VERIFY_BUDGET = {
++  budgetMs: EXECUTION_VERIFY_ATTEMPT_TIMEOUT_MS,
++  attemptCapMs: EXECUTION_VERIFY_ATTEMPT_TIMEOUT_MS,
++}
++
+ // budgetMs 是整次验票的墙钟上限，postJson 会执行同样的硬截止时间。
+-function ticketAttemptBudgetMs(budgetMs, elapsedMs) {
+-  if (!(budgetMs > 0)) return TICKET_VERIFY_ATTEMPT_TIMEOUT_MS
+-  return Math.min(TICKET_VERIFY_ATTEMPT_TIMEOUT_MS, budgetMs - elapsedMs)
++// attemptCapMs 是**单次尝试**的硬上限（省略或 <=0 时沿用既有 10s 口径）。
++// 两者刻意分开、不许合并：/v1.5/authorization/check 的 budgetMs=12s 必须继续被 10s 单跳
++// 上限收口——否则单次尝试会吃光 12s、响应写出越过浏览器 15s 中断线（local-assistant-client.ts:106），
++// 诊断原因就送不回上层了。这正是本次不"一刀切"抬常量的原因。
++function ticketAttemptBudgetMs(budgetMs, elapsedMs, attemptCapMs) {
++  const capMs = attemptCapMs > 0 ? attemptCapMs : TICKET_VERIFY_ATTEMPT_TIMEOUT_MS
++  if (!(budgetMs > 0)) return capMs
++  return Math.min(capMs, budgetMs - elapsedMs)
+ }
+ 
+ async function verifyTicket(cfg, req, ticket, manifestHash, executionManifestDigest, options) {
+@@ -2289,6 +2372,10 @@ async function verifyTicket(cfg, req, ticket, manifestHash, executionManifestDig
+   const budgetMs = options && Number.isFinite(options.budgetMs) && options.budgetMs > 0
+     ? options.budgetMs
+     : 0
++  // attemptCapMs 省略或 <=0 时同为 10s 口径（见 ticketAttemptBudgetMs 注释）。
++  const attemptCapMs = options && Number.isFinite(options.attemptCapMs) && options.attemptCapMs > 0
++    ? options.attemptCapMs
++    : 0
+   const startedAt = Date.now()
+   const attemptLatenciesMs = []
+   const hopDiagnostics = () => ({
+@@ -2296,10 +2383,11 @@ async function verifyTicket(cfg, req, ticket, manifestHash, executionManifestDig
+     attempts: attemptLatenciesMs.length,
+     attemptLatenciesMs: attemptLatenciesMs.slice(),
+     budgetMs,
++    attemptCapMs: attemptCapMs > 0 ? attemptCapMs : TICKET_VERIFY_ATTEMPT_TIMEOUT_MS,
+   })
+   if (!ticket) return { valid: false, reason: 'TICKET_MISSING', ...hopDiagnostics() }
+   const cloudBase = requestCloudBase(cfg, req)
+-  const remainingMs = ticketAttemptBudgetMs(budgetMs, Date.now() - startedAt)
++  const remainingMs = ticketAttemptBudgetMs(budgetMs, Date.now() - startedAt, attemptCapMs)
+   if (!(remainingMs > 0)) {
+     return { valid: false, reason: 'VERIFY_BUDGET_EXHAUSTED', budgetExhausted: true, ...hopDiagnostics() }
+   }
+@@ -2388,11 +2476,15 @@ async function verifyTicket(cfg, req, ticket, manifestHash, executionManifestDig
+  *   2. 无票 && serverUrl 是本机 → 兼容旧的 beta 旁路（本地一体化开发）
+  *   3. 其他 → 拒绝
+  */
+-async function authorizeByTicket(cfg, req, body) {
++// verifyBudget（可选）：只给"浏览器侧不传 signal"的执行链调用点用（见 EXECUTION_VERIFY_BUDGET
++// 注释）；省略即维持 10s 单跳口径，与改动前逐字等价。本函数是共享的——/v1.5/config（15s 上界）、
++// /v1.5/readiness、/replace、/v1.5/diagnostic 四个调用点一律不传。
++async function authorizeByTicket(cfg, req, body, verifyBudget) {
+   const ticket = req.headers['x-tygf-ticket'] || ''
+   if (ticket) {
+     const manifestHash = manifestHashFromRowsByLang(body && body.rowsByLang)
+-    return verifyTicket(cfg, req, ticket, manifestHash)
++    // 第 5 参必须显式占位：verifyTicket 的第 6 参才是 options。
++    return verifyTicket(cfg, req, ticket, manifestHash, undefined, verifyBudget)
+   }
+   if (isDevelopmentBypass(cfg, body && body.executionToken)) {
+     return { valid: true, installId: 'local-dev' }
+@@ -2400,13 +2492,16 @@ async function authorizeByTicket(cfg, req, body) {
+   return { valid: false, reason: 'TICKET_REQUIRED' }
+ }
+ 
+-async function authorizeV15ByTicket(cfg, req, manifest) {
++// verifyBudget（可选）：同上；唯一调用点是 runExecuteFlow（/v1.5/execute/run 与经典
++// /v1.5/execute 共用）。后者的在树调用方 submitV15ExecutionJob 已无上游、且它自己也不传
++// signal ⇒ 这里统一抬不会撞上任何更紧的浏览器侧上界。
++async function authorizeV15ByTicket(cfg, req, manifest, verifyBudget) {
+   const ticket = req.headers['x-tygf-ticket'] || ''
+   if (!ticket) return { valid: false, reason: 'TICKET_REQUIRED' }
+   let digest
+   try { digest = computeExecutionManifestDigest(validateExecutionManifest(manifest)) }
+   catch (error) { return { valid: false, reason: String(error && error.message || 'MANIFEST_INVALID') } }
+-  return verifyTicket(cfg, req, ticket, '', digest)
++  return verifyTicket(cfg, req, ticket, '', digest, verifyBudget)
+ }
+ 
+ function isPreparationObservationStale(observation) {
+@@ -2562,10 +2657,12 @@ function browserPreparationSummary(observation) {
+   }
+ }
+ 
+-async function authorizePreparationScan(cfg, req, operation = 'preparation_scan') {
++// verifyBudget（可选）：{ budgetMs, attemptCapMs }，只给"浏览器侧无超时/上界极宽"的执行类
++// 路由用（见 EXECUTION_VERIFY_BUDGET 注释）；省略即维持 10s 单跳口径，与改动前等价。
++async function authorizePreparationScan(cfg, req, operation = 'preparation_scan', verifyBudget) {
+   const ticket = req.headers['x-tygf-ticket'] || ''
+   if (ticket) {
+-    const result = await verifyTicket(cfg, req, ticket, '', '')
++    const result = await verifyTicket(cfg, req, ticket, '', '', verifyBudget)
+     if (!result.valid) return result
+     if (result.operation !== operation) {
+       return { valid: false, reason: 'TICKET_OPERATION_NOT_AUTHORIZED' }
+@@ -3426,11 +3523,13 @@ function internalTokenValid(cfg, req) {
+  * - 浏览器直连（带 Origin）：精确 Origin + 短期票据（绑定 installId/operation/origin）
+  * - 本机内部调用（无 Origin）：assistant token；或开发旁路
+  */
+-async function authorizePreparationState(cfg, req, operation = 'preparation_scan') {
++// verifyBudget 只透传给验票；无 Origin 的内部调用分支（assistant token / 开发旁路）不验票，
++// 因此不受它影响。
++async function authorizePreparationState(cfg, req, operation = 'preparation_scan', verifyBudget) {
+   const origin = req.headers['origin'] || ''
+   if (origin) {
+     if (!isAllowedOrigin(req)) return { valid: false, reason: 'ORIGIN_NOT_ALLOWED' }
+-    const result = await authorizePreparationScan(cfg, req, operation)
++    const result = await authorizePreparationScan(cfg, req, operation, verifyBudget)
+     if (!result.valid) return result
+     if (result.operation !== operation) {
+       return { valid: false, reason: 'TICKET_OPERATION_NOT_AUTHORIZED' }
+@@ -3806,6 +3905,40 @@ function isSuspectReceiptBase(item, cfg) {
+   const configured = serverBase(cfg)
+   return isLoopbackCloudBase(stored) && !isLoopbackCloudBase(configured)
+ }
++
++// 2026-10-12：回环基址自愈。回执重放**不带 Origin**（见 retryPendingAttemptReceipts），
++// 因此走 serverBase(cfg)。配置里若存的是 http://localhost:3000，Node 会把它解析到 ::1，
++// 而本机没有服务端在听 ⇒ 每轮都是连接层 ECONNREFUSED，回执永不出队
++// （实测 receipts-pending 里 4 条卡住回执的 replayCount=8228，保存于 2026-09-11）。
++// 判据取"连接层拒绝"＝一次 HTTP 响应都没拿到：post-json.cjs 在非 2xx 分支必带 statusCode，
++// 所以"没有 statusCode"就是"链路没通"，而 HTTP 层拒绝是云端在说话，绝不在此跳过。
++// 状态只放内存（key → 上次复探时刻）：进程重启后本机再探一次（回环拒连是瞬时返回，代价可忽略），
++// 既不新增持久化文件，也不改回执本体。serverBase(cfg) 一旦改成非回环地址，cloudBase 随之改变、
++// key 不再命中 ⇒ 立刻恢复投递（这条与"每天一次的复探"是两条独立的恢复路径）。
++const LOOPBACK_REFUSAL_REPROBE_INTERVAL_MS = 24 * 60 * 60 * 1000
++const loopbackRefusedBases = new Map()
++function loopbackBaseKey(value) {
++  return String(value || '').replace(/\/+$/, '').toLowerCase()
++}
++function isConnectionLayerRefusal(error) {
++  const status = error && typeof error.statusCode === 'number' ? error.statusCode : 0
++  return !(status > 0)
++}
++function isLoopbackBaseRefused(value) {
++  return loopbackRefusedBases.has(loopbackBaseKey(value))
++}
++function markLoopbackBaseRefused(value, nowMs = Date.now()) {
++  const key = loopbackBaseKey(value)
++  if (!key) return
++  loopbackRefusedBases.set(key, nowMs)
++}
++// true = 本轮该真发 POST（也即该打这一条告警）：既是每天一次的告警节流，也是
++// "回环基址是否已恢复投递"的唯一探针。false = 本轮不发请求，回执原样保留。
++function shouldReprobeLoopbackBase(value, nowMs = Date.now()) {
++  const lastProbeAtMs = loopbackRefusedBases.get(loopbackBaseKey(value))
++  if (lastProbeAtMs === undefined) return true
++  return nowMs - lastProbeAtMs >= LOOPBACK_REFUSAL_REPROBE_INTERVAL_MS
++}
+ function markPendingReceiptReplayFailure(item, error) {
+   try {
+     const filePath = path.join(RECEIPTS_PENDING_DIR, `${item.attemptId}.json`)
+@@ -3838,14 +3971,20 @@ function pendingReceiptSummary(cfg) {
+       lastErrorCode = typeof item.lastErrorCode === 'string' ? item.lastErrorCode : lastErrorCode
+     }
+   }
++  // 2026-10-12：配置的 serverUrl 本身就是回环地址时，isSuspectReceiptBase 恒为 0
++  // （它只数"存量基址回环、而当前配置不回环"的条目）⇒ 下面的 hint 为 null、界面无人被提示，
++  // 而这恰恰是回执送不出去的直接原因。这里补上这一形（同等口径：只提示，不自动改投）。
++  const configuredLoopbackBase = isLoopbackCloudBase(serverBase(cfg)) ? serverBase(cfg) : ''
+   return {
+     count: items.length,
+     suspectBase,
+     oldestAgeSeconds: oldestAt ? Math.max(0, Math.round((Date.now() - oldestAt) / 1000)) : 0,
+     lastErrorCode,
+-    hint: suspectBase > 0
+-      ? `检测到 ${suspectBase} 条回执的目标地址是本机地址，无法投递；请检查工作台地址或联系作者处理。`
+-      : null,
++    hint: configuredLoopbackBase
++      ? `本机助手的服务器地址配置为本机地址（${configuredLoopbackBase}），${items.length} 条回执无法投递到云端；请修正服务器地址或联系作者处理。`
++      : suspectBase > 0
++        ? `检测到 ${suspectBase} 条回执的目标地址是本机地址，无法投递；请检查工作台地址或联系作者处理。`
++        : null,
+   }
+ }
+ 
+@@ -3859,6 +3998,12 @@ async function retryPendingAttemptReceipts() {
+     const storedCloudBase = typeof item.cloudBase === 'string' && item.cloudBase ? item.cloudBase : ''
+     const suspectStoredBase = storedCloudBase && isLoopbackCloudBase(storedCloudBase) && !isLoopbackCloudBase(serverBase(cfg))
+     const cloudBase = suspectStoredBase ? serverBase(cfg) : storedCloudBase || serverBase(cfg)
++    // 2026-10-12：该基址已实证是回环且连接层拒连 ⇒ 本轮**不发 POST**、回执原样保留。
++    // 只跳过"确定送不到"这一类，绝不因此出队（出队＝静默丢弃回执，违反 :3045 红线）；
++    // 也不写回执文件（replayCount 不再无意义增长）。每天仍复探一次，见 shouldReprobeLoopbackBase。
++    if (isLoopbackCloudBase(cloudBase) && !shouldReprobeLoopbackBase(cloudBase)) {
++      continue
++    }
+     try {
+       const assistant = authorizationForOrigin(cfg, cloudBase)
+       const result = await postJson(
+@@ -3899,6 +4044,9 @@ async function retryPendingAttemptReceipts() {
+         markPendingReceiptReplayFailure(item, error)
+         if (isLoopbackCloudBase(cloudBase)) {
+           // 仅当投递目标本身就是本机地址时才判“疑似无效”（重投已把遗留的回环基址换成当前配置）
++          // 连接层拒绝 ⇒ 登记该基址，其后每轮跳过 POST，只在每天一次的复探窗口才真发请求；
++          // HTTP 层拒绝（云端在说话）不登记，维持每轮重试与每轮告警。
++          if (isConnectionLayerRefusal(error)) markLoopbackBaseRefused(cloudBase)
+           console.warn(`  [batch] 回执目标地址疑似无效（本机地址，无法投递，已保留待人工处置）：${item.attemptId} ${code || 'NETWORK'}`)
+         } else {
+           console.warn(`  [batch] 回执重放失败（可重试，下轮再试）：${item.attemptId} ${error && error.message ? error.message : error}`)
+@@ -5150,7 +5298,10 @@ const server = http.createServer(async (req, res) => {
+       if (!isAllowedOrigin(req)) return json(res, req, 403, { ok: false, code: 'ORIGIN_NOT_ALLOWED' })
+       const body = await readBody(req)
+       const cfg = loadConfig()
+-      const browser = await authorizeByTicket(cfg, req, {})
++      // 单语种执行链的第 4 跳：浏览器侧是裸 fetch（local-assistant-client.ts:1255，无 signal）
++      // ⇒ 用执行级验票预算。此票是 diagnostic **只读票**：验票成功也不 claim job/attempt
++      // （ticket/verify/route.ts:342 只在 execution 票分支推进），超时失败不留下任何业务事实。
++      const browser = await authorizeByTicket(cfg, req, {}, EXECUTION_VERIFY_BUDGET)
+       if (!browser.valid || browser.operation !== 'diagnostic') {
+         return json(res, req, 403, { ok: false, code: browser.reason || 'BROWSER_TICKET_INVALID' })
+       }
+@@ -5502,7 +5653,15 @@ async function runExecuteFlow(res, req, cfg, ctx) {
+         const publicError = markExecutionFailure(error)
+         return json(res, req, 503, { ok: false, code: publicError.code, error: publicError.message })
+       }
+-      const authorization = await authorizeV15ByTicket(cfg, req, manifest)
++      // 单语种执行链的第 5 跳，也是**真正驱动 Photoshop** 的那一跳。
++      // 浏览器侧无 signal（local-assistant-client.ts:1273 裸 fetch；服务端编排路径
++      // /api/local-assistant/v15/execute 的浏览器 fetch 同样无 signal，服务端 maxDuration=120s）。
++      // 本跳的特殊性：**验票本身就是不可逆边界**——云端在验票成功的那一刻就原子 claim job
++      // 并把 attempt 置 TICKET_CONSUMED（src/app/api/local-assistant/ticket/verify/route.ts:329-367）。
++      // 因此抬预算不是"把边界往后挪"（边界一步没动），而是让这一次 POST 有更长的等待，
++      // 把"云端已 claim、本地却超时答不上来"的悬挂预留概率压低（那类结局只能人工核对）。
++      // 验票失败分支只释放内存执行权、置 busy=false 并 403，不启动 PS、不写回执 outbox。
++      const authorization = await authorizeV15ByTicket(cfg, req, manifest, EXECUTION_VERIFY_BUDGET)
+       if (!authorization.valid) {
+         setBusy(false, { phase: 'failed' })
+         attemptRuntime.release(manifest.attempt_id)
+@@ -5754,7 +5913,8 @@ if (req.method === 'POST' && p === '/v1.5/execute') {
+       if (!bindingCore) {
+         return json(res, req, 503, { ok: false, code: 'BINDING_CORE_MISSING', message: '绑定编译核心不可用，请重新构建本地助手组件。' })
+       }
+-      const authorization = await authorizePreparationState(cfg, req, 'preparation_scan')
++      // 执行类：浏览器侧无 signal（local-assistant-client.ts:1193）⇒ 用执行级验票预算。
++      const authorization = await authorizePreparationState(cfg, req, 'preparation_scan', EXECUTION_VERIFY_BUDGET)
+       if (!authorization.valid) {
+         return json(res, req, 403, { ok: false, code: authorization.reason, message: 'execute/prepare 未授权。' })
+       }
+@@ -6064,7 +6224,8 @@ if (req.method === 'POST' && p === '/v1.5/execute') {
+       const body = await readBody(req)
+       const cfg = loadConfig()
+       if (!bindingCore) return json(res, req, 503, { ok: false, code: 'BINDING_CORE_MISSING', message: '绑定编译核心不可用。' })
+-      const authorization = await authorizePreparationState(cfg, req, 'preparation_scan')
++      // 证据冻结类：浏览器侧上界 330s（local-assistant-client.ts:1771）⇒ 用执行级验票预算。
++      const authorization = await authorizePreparationState(cfg, req, 'preparation_scan', EXECUTION_VERIFY_BUDGET)
+       if (!authorization.valid) {
+         captureFailureSnapshot(req, {
+           kind: 'evidence',
+@@ -6318,7 +6479,10 @@ if (req.method === 'POST' && p === '/v1.5/execute') {
+       if (!bindingCore) {
+         return json(res, req, 503, { ok: false, code: 'BINDING_CORE_MISSING', message: '绑定编译核心不可用，请重新构建本地助手组件。' })
+       }
+-      const authorization = await authorizePreparationState(cfg, req, 'execution_batch_v3')
++      // 产出决定路径：浏览器侧无 signal（local-assistant-client.ts:1682）⇒ 用执行级验票预算。
++      // 2026-10-12 现场：这一步 10s 超时（VERIFY_TIMEOUT）被 batch-error-policy 判为系统性故障，
++      // 整批中断，12 个语种只产出 4 个。
++      const authorization = await authorizePreparationState(cfg, req, 'execution_batch_v3', EXECUTION_VERIFY_BUDGET)
+       if (!authorization.valid) {
+         return json(res, req, 403, { ok: false, code: authorization.reason, message: 'batch/execute 未授权。' })
+       }
+diff --git a/src/components/workbench/execute-step.tsx b/src/components/workbench/execute-step.tsx
+index 6c9ddac..3a19901 100644
+--- a/src/components/workbench/execute-step.tsx
++++ b/src/components/workbench/execute-step.tsx
+@@ -91,6 +91,11 @@ import {
+ import { basenameOnly } from '@/lib/report/sanitize'
+ import { submitFunnelEvent, trackFunnelEvent, workbenchAuthHeaders, readWorkbenchActivation } from '@/lib/workbench/funnel-client'
+ import { formatLanguageCode } from '@/lib/workbench/lang-display'
++import {
++  buildUnproducedReportHtml,
++  collectUnproducedLanguages,
++  unproducedReportFileName,
++} from '@/lib/workbench/failure-report'
+ import {
+   preparationFreshness,
+   preExecutionNotice,
+@@ -409,6 +414,17 @@ export function ExecuteStep({
+   const v3AbortCodeRef = useRef<string | null>(null)
+   // E2b：本次批次的忙碌重试统计（失败事件富字段；派发尝试次数含初始一次）。
+   const busyRetryInfoRef = useRef({ attempts: 0, waitedMs: 0 })
++  // W 补丁（2026-10-12，纯展示层）：逐语言失败事实留存，只供「本次未产出」报告展示。
++  // 只写不断言——不参与任何执行、授权、计费、回执分支；唯一读取点是下面报告组装处。
++  const languageFailureFactsRef = useRef(
++    new Map<string, { code: string | null; attemptId: string | null }>(),
++  )
++  // W 补丁：零产出批次的可下载报告（落在浏览器下载目录，不是交付目录）。
++  const [unproducedReport, setUnproducedReport] = useState<{
++    html: string
++    fileName: string
++    outputDirectory: string
++  } | null>(null)
+   // 当前已受理任务（用于失败后立即退回积分，对抗式审查修复）
+   const [lastOperationId, setLastOperationId] = useState<string | null>(null)
+   const [lastJobId, setLastJobId] = useState<string | null>(null)
+@@ -1035,6 +1051,7 @@ export function ExecuteStep({
+       }
+       busyRetryInfoRef.current = { attempts: 0, waitedMs: 0 }
+       v3AbortCodeRef.current = null
++      languageFailureFactsRef.current = new Map()
+       setEvidenceFailures(null)
+       const v3Result = await runV3BatchFlow(v3Plan, {
+         issueChallenge: async () => {
+@@ -1204,6 +1221,11 @@ export function ExecuteStep({
+             )
+           } catch (error) {
+             const code = error instanceof LocalAssistantRequestError ? error.code : null
++            // W 补丁（纯展示）：留存本语言失败事实，供「本次未产出」报告逐语言展示。
++            languageFailureFactsRef.current.set(opts.languageCode, {
++              code,
++              attemptId: opts.attemptId ?? null,
++            })
+             // 2026-09-14 事故3：语言级拒绝的精确原因（助手 code + 脱敏 message）随漏斗事件上云。
+             // 此前未知码被收敛成通用码（LOCAL_ASSISTANT_EXECUTE_FAILED），导致 MANIFEST 阶段
+             // 5 连拒无法定案、只能反复向用户取报错原文。
+@@ -1262,6 +1284,11 @@ export function ExecuteStep({
+               )
+             }
+             const errorCode = completion.errorCode ?? null
++            // W 补丁（纯展示）：终态失败同样留存，供「本次未产出」报告展示。
++            languageFailureFactsRef.current.set(opts.languageCode, {
++              code: errorCode,
++              attemptId: opts.attemptId ?? null,
++            })
+             const detail = errorCode ? (V15_ERROR_CODE_ZH[errorCode] ?? fallbackErrorDetail(errorCode)) : '任务返回未成功终态。'
+             // T-0117 M1：系统性故障（助手断连/未知 attempt）→ 短路整批，继续只会接连失败。
+             if (errorCode && SYSTEMIC_BATCH_ERROR_CODES.has(errorCode)) {
+@@ -1401,6 +1428,42 @@ export function ExecuteStep({
+             dedupeKey: 'batch-failed',
+           })
+         }
++        // W 补丁（2026-10-12，纯展示层新增）：本批次零产出时，生成一份「本次未产出」报告
++        // 供用户下载。浏览器写不了交付目录，所以它落下载目录——报告正文已把这点写死。
++        // 只投影上面已经算好的结果：不创建任务、不改判定、不改计费/回执、不调用 Photoshop。
++        if (completedCount === 0) {
++          const generatedAt = new Date()
++          const observedAttemptId =
++            [...languageFailureFactsRef.current.values()]
++              .map((facts) => facts.attemptId)
++              .find((attemptId) => Boolean(attemptId)) ?? lastAttemptId
++          setUnproducedReport({
++            html: buildUnproducedReportHtml({
++              generatedAt,
++              batchId: v3Result.batchId ?? null,
++              attemptId: observedAttemptId,
++              operationId,
++              masterFileName: basenameOnly(psdSelection.masterPath),
++              plannedOutputDirectory: batchSharedOutputDirectory,
++              batchFailureCode,
++              batchFailureMessage: v3Result.message ?? null,
++              settlementUnconfirmed: Boolean(v3Result.finishNotice),
++              finishNotice: v3Result.finishNotice ?? null,
++              quotedCredits: v3Result.quotedCredits ?? 0,
++              committedCredits: v3Result.committedCredits ?? 0,
++              releasedCredits: v3Result.releasedCredits ?? 0,
++              languages: collectUnproducedLanguages({
++                executionLanguages,
++                completedLanguages: v3Result.completedLanguages,
++                failedLanguages: v3Result.failedLanguages,
++                unresolvedLanguages,
++                languageFailureFacts: languageFailureFactsRef.current,
++              }),
++            }),
++            fileName: unproducedReportFileName(generatedAt),
++            outputDirectory: batchSharedOutputDirectory,
++          })
++        }
+         notifyCreditsChanged()
+         return
+       }
+@@ -1787,6 +1850,7 @@ export function ExecuteStep({
+     setReport(null)
+     setReportJson(null)
+     setReportHtml(null)
++    setUnproducedReport(null)
+     setLocalReportStatus(v15ExecutionEnabled ? 'pending' : 'unknown')
+ 
+     if (psState.adapterMode !== 'local_assistant') {
+@@ -1911,6 +1975,7 @@ export function ExecuteStep({
+     setReport(null)
+     setReportJson(null)
+     setReportHtml(null)
++    setUnproducedReport(null)
+     setLocalReportStatus('unknown')
+     setOutputBaseName('')
+     setOutputLocation(null)
+@@ -1976,6 +2041,13 @@ export function ExecuteStep({
+     downloadBlob(reportHtml, `${outputBaseName}.html`, 'text/html')
+   }
+ 
++  // W 补丁（纯展示）：下载「本次未产出」报告。由用户手势触发，不自动下载
++  // （自动下载会被浏览器弹窗策略拦截，且会在非失败路径上意外触发）。
++  const downloadUnproducedReport = () => {
++    if (!unproducedReport) return
++    downloadBlob(unproducedReport.html, unproducedReport.fileName, 'text/html')
++  }
++
+   const copyOutputPath = async () => {
+     if (!outputLocation) return
+     try {
+@@ -2343,6 +2415,29 @@ export function ExecuteStep({
+               </Alert>
+             )}
+ 
++          {/* W 补丁（2026-10-12，纯展示层新增）：「本次未产出」报告下载。
++              独立成块，不复用上面的失败提示——那条要求 errorMsg 非空，而批次路径不写 errorMsg。 */}
++          {failed && unproducedReport && (
++            <div className="rounded-lg border-2 border-destructive/60 bg-destructive/5 px-3 py-2.5 text-xs">
++              <p className="font-semibold">本次未产出任何文件</p>
++              <p className="mt-1 text-muted-foreground">
++                计划交付目录：
++                <span className="font-mono break-all">{unproducedReport.outputDirectory}</span>
++                　其中 0 个文件、无报告。本报告由网页端生成，未调用 Photoshop。
++              </p>
++              <Button
++                type="button"
++                variant="outline"
++                size="sm"
++                onClick={downloadUnproducedReport}
++                className="mt-2 bg-background"
++              >
++                <FileText className="h-4 w-4" />
++                下载「本次未产出」执行报告
++              </Button>
++            </div>
++          )}
++
+           {failed && evidenceFailures && (
+             <div className="rounded-lg border-2 border-amber-400 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
+               <p className="font-semibold">以下语言未通过绑定检查（本次未执行、未扣费）：</p>

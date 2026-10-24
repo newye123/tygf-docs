@@ -1,0 +1,413 @@
+<title>执行方案 v13 · 多稿工作台组卡片与默认密度</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:48ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)} .panel.no h3{color:var(--bad)} .panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.gate .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.gate .hd strong{font-size:.96rem}
+.gate p{font-size:.9rem;color:var(--ink-2)}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.callout .hd{font-weight:700;font-size:.94rem;color:var(--warn)}
+.callout p{font-size:.9rem;color:var(--ink-2);max-width:none}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:5px}
+.note .hd{font-weight:700;font-size:.92rem}
+.note p{font-size:.89rem;color:var(--ink-2)}
+.footer{color:var(--muted);font-size:.82rem;font-family:var(--font-mono);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+ul.plain{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px;color:var(--ink-2);font-size:.93rem}
+ul.plain li::marker{color:var(--line-strong)}
+ol.plain{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:9px;color:var(--ink-2);font-size:.93rem}
+ol.plain li::marker{color:var(--accent);font-family:var(--font-mono);font-size:.82rem}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>图译工坊 · 执行方案 v13</span><span class="sep">/</span>
+    <span>2026-10-21</span><span class="sep">/</span>
+    <span>多稿工作台收口</span>
+  </div>
+  <h1>多稿工作台收口：组卡片（子文件夹＝一组）＋ 默认密度（先摊开要处理的）</h1>
+  <p class="standfirst">
+    Owner：「多稿工作台按这个来，现在的还不是这样子的，你使用对抗式审查后给个方案，然后按方案执行」
+    ＋「（排版方案）这个也可以看看，先给个执行方案吧」。
+    本稿把 v12 的六处差异逐条对到 <code>file:line</code>，指出**真正没落地的是两处**，
+    再给出六段可执行方案与九条对抗式审查发现。
+  </p>
+  <div class="meta">
+    <span>基线 worktrees/develop@51581e3</span>
+    <span>参照 v12 方案 + 排版方案</span>
+    <span>状态：方案已出，待执行</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">一句话结论</span>
+    <p>
+      v12 六处差异里，①②③⑥ 四处<strong>已落地</strong>，<strong>④组卡片</strong>与<strong>⑤默认密度</strong>两处没有落地。
+      Owner 说「现在的还不是这样子的」＝指的就是这两处。
+    </p>
+    <p style="font-size:.98rem;max-width:64ch;font-weight:400;color:var(--ink-2)">
+      本轮做三件事：把稿按子文件夹分组显示（组卡片）、多稿档只先摊开「要处理的」、补一条「还有 N 稿未审 · 审下一稿」队列；
+      外加补建 v12 阶段 0 一直欠着的<strong>渲染级回归闸</strong>——本轮实测发现 vitest＋jsdom 已具备条件。
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先对账：v12 六处差异现在的真实状态</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">4</span><span class="k">①副标题 ②范围条 ③状态带 ⑥按钮范围 —— 已落地</span></div>
+    <div class="stat bad"><span class="n">2</span><span class="k">④组卡片 ⑤默认密度 —— 未落地</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">追加缺口：审稿队列、渲染级闸</span></div>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>位置</th><th>v12 要求</th><th>实测状态</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">①</td><td>副标题</td><td>按档变</td><td><span class="tag ok">已落地</span></td><td class="mono">workbench-view.tsx:2904-2906</td></tr>
+        <tr><td class="mono">②</td><td>范围条</td><td>常驻「这份稿 / 这一批 N 个」</td><td><span class="tag ok">已落地</span></td><td class="mono">workbench-view.tsx:2880-2901</td></tr>
+        <tr><td class="mono">③</td><td>顶部状态带</td><td>多稿改集合语义，单稿原样</td><td><span class="tag ok">已落地</span></td><td class="mono">workbench-view.tsx:2918-2942 / 单稿 :2943-2988</td></tr>
+        <tr><td class="mono">⑥</td><td>生成按钮范围</td><td>确认并生成（本批 12 份）</td><td><span class="tag ok">已落地</span></td><td class="mono">execute-step.tsx:2432 / :2452 / :2459</td></tr>
+        <tr><td class="mono">④</td><td><strong>第 1 步主体</strong></td><td><strong>工作文件夹 ＋ 组卡片 ＋ 稿表</strong></td><td><span class="tag bad">组卡片不存在</span></td><td class="mono">全仓「组卡片/目录即绑定/组级」0 命中；MultiPsdSelection 无 group 字段（psd-selection.ts:41-43）；多稿列表平铺（design-file-card.tsx:988-1017）</td></tr>
+        <tr><td class="mono">⑤</td><td><strong>第 2·3 步默认密度</strong></td><td><strong>多稿只摊开「要处理的」</strong></td><td><span class="tag bad">未落地</span></td><td class="mono">review-step.tsx 零 batch 感知；changes/active/20261021-workbench-scope-preflight-confirm.md:28 明列为 OUT OF SCOPE</td></tr>
+        <tr><td class="mono">⑦</td><td>审稿队列</td><td>一次导入 12 张表后不用自己找下一稿</td><td><span class="tag warn">只有无脑轮转</span></td><td class="mono">workbench-view.tsx:3269「下一稿 →」＝ entries[(index+1)%length]</td></tr>
+        <tr><td class="mono">⑧</td><td>v12 阶段 0 快照闸</td><td>渲染级回归</td><td><span class="tag info">本轮可补</span></td><td class="mono">vitest ^5.0.3 / @testing-library/react ^16.3.3 / jsdom ^29.1.1 已装；在飞的 workbench-scope-runtime.test.tsx 实跑 4/4 通过</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>对抗式审查：我自己被打掉的九条</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">F1</span><strong>组卡片＝把 12 行稿藏起来＝撞 Drift Guard #2/#3</strong></div>
+      <p>折叠若没有出口、组内不逐稿列出，就是「以分组之名删能力」。</p>
+      <p class="lede"><strong>处置：</strong>两级出口 —— 每张组卡可展开逐稿列出；顶部常驻「平铺全部 N 个」开关，两个视图共用同一份逐稿行渲染逻辑（不复制第二套 DOM 与口径）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">F2</span><strong>「组」不能有两套真值</strong></div>
+      <p>组键若从 relPath（相对路径）算、执行链按 masterPath（绝对路径）算，就会出现「组里 3 稿、执行跑 2 稿」。</p>
+      <p class="lede"><strong>处置：</strong>组键只从 masterPath 推导（立即上级目录名）；不新增 MultiPsdEntry.group 字段；不依赖扫描根目录。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">F3</span><strong>加了分组就多一套计数</strong></div>
+      <p>必须与 v12 ②③ 口径完全一致，否则又是「状态带说 9 个已扫描、组卡说 10 个」。</p>
+      <p class="lede"><strong>处置：</strong>组卡「已扫描」必须调 isMultiPsdEntryScanned；新增 DOM 断言：各组稿数之和 == 范围条的 N。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">F4</span><strong>组级开关是「假开关」高发区</strong></div>
+      <p>只做视觉折叠＝骗人；做成「排除整组」＝改执行范围，进而改范围条、覆盖率矩阵、D1 确认框的份数与计费口径。</p>
+      <p class="lede"><strong>处置：</strong>本轮不做组级开关 —— Owner 要的是「定位」不是「排除」；排除已有等价路径（逐稿移除）；假开关比没有开关更坏。登记 ISSUES。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">F5</span><strong>「要处理的」若自己发明口径，就会出现两套数</strong></div>
+      <p>v12 F11 已经打掉过同一个病。</p>
+      <p class="lede"><strong>处置：</strong>建唯一纯函数 classifyDraftAttention()，输入用可空字段（某处不知道就传 null），输出 ready / needs_attention / blocked；口径写死在纯函数里并被单测钉死，UI 只渲染不判断。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">F6</span><strong>折叠「要处理的」会让人以为可以开始</strong></div>
+      <p>但执行门仍在（覆盖率闸 coverageReleaseAck），属误解不是绕过。</p>
+      <p class="lede"><strong>处置：</strong>折叠层第一行必须写总数（house style：折叠不得删报）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">F7</span><strong>改 review-step.tsx 的行级密度＝改单稿共用路径</strong></div>
+      <p>review-step.tsx:1130「只列出需要处理的行」在两档共用。</p>
+      <p class="lede"><strong>处置：</strong>本轮密度只作用在「稿」这一层，不进 review-step.tsx。多稿「先摊开要处理的」＝稿列表层面的分组与折叠，不改单稿内部任何一行。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">F8</span><strong>抽组件会碰到他人在飞的未提交改动</strong></div>
+      <p>工作树：11 个已改文件 ＋ 10 个未跟踪文件（含 tests/unit/workbench-scope-runtime.test.tsx）。</p>
+      <p class="lede"><strong>处置：</strong>只 git add 自己的路径；不覆盖、不删除、不改 workbench-scope-runtime.test.tsx，另起新文件写本轮测试。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">F9</span><strong>渲染闸若只测静态源码，等价改写会放过</strong></div>
+      <p>v12 落地报告 §07 自述的同一缺口。</p>
+      <p class="lede"><strong>处置：</strong>把两个新展示组件独立成文件（纯 props、无 IO），使真 DOM 测试可行：直接渲染组件、断言可见文本与折叠行为，不 mock 整个 WorkbenchView。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行方案：六段，每段自带判据</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag info">S1</span><strong>纯函数模块 src/lib/workbench/draft-groups.ts（新增）</strong></div>
+      <ul class="plain">
+        <li><code>deriveDraftGroups(entries)</code> —— 组键＝masterPath 的立即上级目录名；无上级目录⇒未分组；分隔符归一＋大小写不敏感（沿用 psd-selection.ts:183 的 pathKey 口径）；组内保持原顺序，组间按名排序。</li>
+        <li><code>classifyDraftAttention(input)</code> —— 优先级：blockedItems&gt;0 ⇒ blocked；否则命中 not_scanned / scan_error / stale / no_table / unconfirmed_languages / coverage_below 任一 ⇒ needs_attention；全空 ⇒ ready。<strong>未知字段传 null 即不参与判定。</strong></li>
+        <li><code>summarizeGroups(groups, attentionByKey)</code> —— 组级进度：稿数 / 已扫描数 / 要处理数 / 挡住执行的数。</li>
+      </ul>
+      <p class="lede"><strong>为什么组键不用「根下第一层」：</strong>Owner 的结构是「每个子文件夹单独放着要改的 SKU 的 PSD 和表格」⇒ PSD 直接躺在 SKU 子文件夹里 ⇒ 立即上级目录名就是 SKU 名。深一层嵌套按直接上级目录分组，是本方案的<strong>已知边界</strong>，如实登记，不假装覆盖。</p>
+      <p class="lede"><strong>判据：</strong>tests/unit/draft-groups.test.ts 单测覆盖 —— 同组/异组/未分组/归一/顺序稳定/阻断优先/未知字段不误判。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">S2</span><strong>组卡片组件 src/components/workbench/draft-group-cards.tsx（新增）</strong></div>
+      <ul class="plain">
+        <li>纯展示组件，props 全是普通数据（groups / attention / 扫描回调 / 当前稿键）。</li>
+        <li>每张组卡：组名（即子文件夹名）＋「N 个稿 · 已扫描 X · 要处理 Y」＋ 组内明细（可展开，逐稿一行：文件名 / 状态 / 层数 / 扫描按钮）。</li>
+        <li>逐稿行渲染与平铺视图<strong>共用同一份函数</strong>，避免两个视图两套口径。</li>
+        <li>顶部常驻「分组 / 平铺」开关（默认分组）＋「平铺全部 N 个」出口。</li>
+        <li><strong>保留逐稿扫描/重扫能力</strong>（v12 F9：状态带换集合语义后，单稿那颗「重新扫描」不能消失）。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">S3</span><strong>第 1 步接入 design-file-card.tsx</strong></div>
+      <p>多稿分支（design-file-card.tsx:968 的 <code>batchMode &amp;&amp; multiSelection</code> 之内）改为渲染 DraftGroupCards；单稿分支（:965 之前）一字不动；folderPath / folderScan / 配对建议 / 批量导入那一整块（:1040-1225）不动。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">S4</span><strong>稿表面板：分组 ＋ 默认密度 ＋ 审稿队列</strong></div>
+      <ul class="plain">
+        <li>抽出 src/components/workbench/draft-table-list.tsx（新增），承接 workbench-view.tsx:3284-3361 的逐稿列表 ＋ 新增审稿队列条。</li>
+        <li><strong>默认密度（⑤）：</strong>多稿档按 classifyDraftAttention 分两段 ——「要处理的 N 个」默认摊开；「其余 M 个」默认折叠，折叠层第一行带总数，必须给「查看其余 M 个」出口。</li>
+        <li><strong>审稿队列（⑦）：</strong>面板上方一条「还有 N 稿未审 · 审下一稿 →」。「未审」＝该稿存在未确认的语言（口径＝现有 reviewedCount / languages.length，workbench-view.tsx:3296-3308）。</li>
+        <li><strong>原有「下一稿 →」（:3269）保留不动</strong>（Drift Guard #3：不得删用户能力）。两按钮职责不同、措辞不同。</li>
+        <li>该整块本来就在 batchMode &amp;&amp; 里（:3224），单稿档零影响。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">S5</span><strong>L2 变更单 changes/active/20261021-workbench-group-cards-density.md（新增）</strong></div>
+      <p>上份 L2 把 P1 默认密度明确列为 OUT OF SCOPE；本轮 Owner 重新拍板 ⇒ 须另开记录，不得在旧记录里改写。内容：IN SCOPE / OUT OF SCOPE / Acceptance 逐条真跑结果。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag info">S6</span><strong>验证与记忆</strong></div>
+      <div class="scrollx">
+        <table>
+          <thead><tr><th>项</th><th>判据</th></tr></thead>
+          <tbody>
+            <tr><td>类型</td><td class="mono">npx tsc --noEmit --incremental false → rc=0</td></tr>
+            <tr><td>Lint</td><td class="mono">npx eslint &lt;改动文件&gt; → 0 error</td></tr>
+            <tr><td>新单测</td><td class="mono">npx vitest run tests/unit/draft-groups.test.ts → 全绿</td></tr>
+            <tr><td>新渲染测试</td><td class="mono">npx vitest run tests/unit/workbench-batch-groups.test.tsx → 全绿</td></tr>
+            <tr><td>既有门</td><td class="mono">test:workbench-scope / ui-contract / batch-workbench-guards / -logic / -flag / workbench-flow / execute-step-reset / batch-progress-count-contract → 全 rc=0</td></tr>
+            <tr><td>合同门</td><td class="mono">npm run test:contracts → rc=0</td></tr>
+            <tr><td>记忆</td><td class="mono">TASK_LOG 置顶追加；ISSUES 登记新发现；CHANGELOG 记行为级变化</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>用户看到的变化（单稿档零变化）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>位置</th><th>单个设计稿</th><th>多个设计稿（改前）</th><th>多个设计稿（改后）</th></tr></thead>
+      <tbody>
+        <tr><td>第 1 步稿列表</td><td>原样</td><td>12 行平铺</td><td><strong>按子文件夹分组卡片</strong>（组名 ＋ N 个稿 · 已扫描 X · 要处理 Y），组内可展开逐稿；顶部「分组/平铺」开关</td></tr>
+        <tr><td>第 2 步稿表面板</td><td>原样</td><td>12 行平铺、全部摊开</td><td><strong>「要处理的 N 个」先摊开</strong>；「其余 M 个」折叠（带总数与「查看其余」出口）；上方一条<strong>「还有 K 稿未审 · 审下一稿 →」</strong></td></tr>
+        <tr><td>其余一切</td><td>原样</td><td>不变</td><td>不变</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>门禁判定</h2>
+  <div class="gates">
+    <div class="gate">
+      <div class="hd"><span class="tag ok">不触发</span><strong>合同变更门</strong></div>
+      <p>本轮只改 batchMode 内的<strong>展示层</strong>：不碰执行链、报价、结算闸、助手协议、支付 flag、binding-core 匹配键，不新增 API 路由。</p>
+    </div>
+    <div class="gate">
+      <div class="hd"><span class="tag ok">不触发</span><strong>高风险状态机门禁</strong></div>
+      <p>不改 Job / Attempt / Ticket / Reservation / Settlement / Ledger / Recovery / Local Assistant / Photoshop 的执行、授权、计费、回执或恢复语义。</p>
+    </div>
+    <div class="gate">
+      <div class="hd"><span class="tag warn">触发</span><strong>L2 Product Change</strong></div>
+      <p>用户可见行为变化 ⇒ S5 另开 changes/active/*（上份记录把 P1 密度列为 OUT OF SCOPE，不得就地改写）。</p>
+    </div>
+    <div class="gate">
+      <div class="hd"><span class="tag info">加严</span><strong>单稿档不变式</strong></div>
+      <p>v12 已有「单稿分支既有节点逐字不变」；本轮再加「<strong>单稿档渲染快照不变</strong>」—— 现在有真 DOM 闸可钉。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>本轮明确不做（附理由）</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>不做</h3>
+      <ul>
+        <li><strong>组级开关（排除整组）</strong> —— 假开关风险（F4）；Owner 要「定位」不要「排除」；触及执行范围与份数口径。</li>
+        <li><strong>C1 停止 / C2 取消并退回 / C3 撤销已写入</strong> —— 批次级后端取消 ＋ 高风险状态机门禁 ＋ 合同变更四层同步；另立项。</li>
+        <li><strong>改 review-step.tsx 的行级密度</strong> —— 单稿共用路径（F7）；本轮密度只作用在「稿」层。</li>
+        <li><strong>换配色 / 换布局 / 加第五步 / 恢复两个并列入口</strong> —— v12 §5 三条「不做」。</li>
+        <li><strong>组键按「根下第一层」</strong> —— 需引入扫描根目录跨组件状态，与 F2 单真值原则相斥。</li>
+        <li><strong>动计费、结算、执行链、支付 flag、生产部署</strong> —— 治理红线。</li>
+      </ul>
+    </div>
+    <div class="panel warn">
+      <h3>已知边界与残留</h3>
+      <ul>
+        <li>深一层嵌套（root/SKU-A/sub/x.psd）按 sub 分组，不按 SKU-A。真遇到再改 —— 改组键是纯函数一处的事。</li>
+        <li>仍无浏览器真机实测：dev server 需共享开发库与登录态，本轮不开。可见性证据＝真 DOM 测试 ＋ 静态合同门。</li>
+        <li>他人在飞改动未提交：只提交自己的路径，不整树提交。</li>
+        <li>默认密度是「折叠」不是「隐藏」：全部条目仍在 DOM（&lt;details&gt;），只是默认收起，且有「查看其余」出口。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>与权威 Spec 的关系（Product Convergence Review）</h2>
+  <div class="notes">
+    <div class="note"><div class="hd">MISSING：无</div><p>不新增步骤，仍是四步（workbench-flow.md:64）。</p></div>
+    <div class="note"><div class="hd">PARTIAL：组级开关未做</div><p>§6 明确列出，不是假装做完。</p></div>
+    <div class="note"><div class="hd">CONTRADICTS：无</div><p>WF-003「NEEDS_CONFIRMATION 必须明确确认后才能继续」不受影响 —— 本轮折叠的是「稿」不是「行」，行级确认门原样保留。</p></div>
+    <div class="note"><div class="hd">UNREQUESTED：无</div><p>组卡片与审稿队列来自 Owner 原话「每个子文件夹都单独放着要改的 SKU 的 PSD 和表格，直接对子文件夹做定位」与排版方案 F6；默认密度来自 v12 §3 P1（Owner 已重新拍板）。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>待 Owner 拍板（一条，不阻塞执行）</h2>
+  <div class="callout">
+    <div class="hd">组名用「子文件夹名」还是另起名词？</div>
+    <p>本方案直接用<strong>子文件夹名</strong>（就是 Owner 说的那套结构，不发明新词）。若 Owner 想换措辞，只改一处文案键即可。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>执行结果（2026-10-21，已执行并提交）</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>
+      方案六段全部落地并提交：<code>worktrees/develop</code> → <code>16ed125</code>（15 文件，1786 增 / 152 删）。
+      <strong>未部署、未出包、未 push、未动支付 flag / 执行链 / 结算闸。</strong>
+    </p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">32</span><span class="k">新门静态合同断言</span></div>
+    <div class="stat ok"><span class="n">36</span><span class="k">真 DOM 运行时断言</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">tsc 错误（本轮改动文件）· eslint 0 error</span></div>
+    <div class="stat ok"><span class="n">74/74</span><span class="k">test:unit 全绿</span></div>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>门</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>npx tsc --noEmit --incremental false</code></td><td><strong>本轮改动文件 0 错误</strong>；整树仅剩 4 处，全在<strong>另一会话在飞的未跟踪文件</strong> <code>tests/unit/workbench-scope-runtime.test.tsx</code>（未触碰、未提交）⇒ 登记 ISSUES #163</td></tr>
+        <tr><td><code>npx eslint</code>（6 个改动文件）</td><td><strong>0 error</strong> / 3 warning（既有 a11y label 告警，非本轮引入）</td></tr>
+        <tr><td><code>npm run test:workbench-batch-groups</code>（<strong>新门</strong>）</td><td>静态合同 <strong>32 条</strong> ＋ 真 DOM 运行时 <strong>36 断言</strong> ⇒ rc=0</td></tr>
+        <tr><td><code>npm run test:workbench-scope</code></td><td>52 assertions ⇒ rc=0</td></tr>
+        <tr><td><code>npm run test:batch-workbench-guards</code></td><td>38 checks ⇒ rc=0（原 37，<strong>净增强</strong>）</td></tr>
+        <tr><td>ui-contract / batch-workbench-logic / -flag / workbench-flow / execute-step-reset / batch-progress-count-contract</td><td>全 rc=0</td></tr>
+        <tr><td><strong><code>npm run test:contracts</code></strong>（新门已接进）</td><td><strong>rc=0</strong></td></tr>
+        <tr><td><code>npm run test:unit</code></td><td><strong>74/74 通过</strong>，rc=0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>对既有守卫的处置（不删断言、不放宽判据）</h3>
+      <p><code>smoke-batch-workbench-guards.mjs</code> 原要求 <code>design-file-card.tsx</code> 里出现字面量 <code>disabled={multiScanningIdx !== null || multiQueueRunning}</code>。v13 把逐行渲染搬进组件后，改为<strong>两头都查</strong>：① 调用点算出并传下去 ② 组件真的把它接到按钮的 <code>disabled</code> 上。<strong>断言从 1 条变 2 条，净增强</strong>（37 → 38）。</p>
+    </div>
+    <div class="panel warn">
+      <h3>提交时的现场纪律</h3>
+      <p>工作树里混着<strong>另一会话的在飞改动</strong>（11 改 ＋ 10 未跟踪，含英文站字体子集与 <code>workbench-scope-runtime.test.tsx</code>）。本轮<strong>只 stage 自己的 15 个文件</strong>；<code>package.json</code> 与 <code>TASK_LOG.md</code> 的改动<strong>落在同一行</strong>、<code>git add -p</code> 拆不开 ⇒ 改用「构造 staged blob ＝ HEAD ＋ 只有我的改动」精确落库，<strong>别人的改动原样留在工作树里</strong>。</p>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="note"><div class="hd">门禁判定（执行后复核）</div><p><strong>合同变更门：不触发</strong>（只改 batchMode 内展示层，未碰执行链/报价/结算闸/助手协议/支付 flag/binding-core，未新增 API 路由）·<strong>高风险状态机门禁：不触发</strong> · <strong>L2 Product Change：触发并已建单</strong>（<code>changes/active/20261021-workbench-group-cards-density.md</code>）</p></div>
+    <div class="note"><div class="hd">仍然遗留</div><p>① <strong>仍无浏览器真机实测</strong>（dev server 需共享开发库与登录态，本轮不开）；② <strong>组键已知边界</strong>：深一层嵌套按 <code>sub</code> 分组，不按 <code>SKU-A</code>；③ 默认密度是「折叠」不是「隐藏」（条目仍在 DOM，标题行写清总数，有出口）；④ <strong>组级开关按 F4 不做</strong>（ISSUES #162）；⑤ <strong>未部署</strong>——改动只在 develop 提交，Owner 眼下在测试站上还看不到。</p></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <span>交付件：交付档案/执行方案/执行方案_20261021_多稿工作台v13_组卡片与默认密度_对抗式审查与执行.md（同目录同名 .html）</span>
+  <span>基线 worktrees/develop@51581e3 · 未提交、未部署、未碰支付 flag / 执行链 / 结算闸</span>
+</footer>
+
+</div>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>免 PS 写回 · Txt2 根因独立复核与版本勘误</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.26rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0}
+p{margin:0;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.04rem,2.2vw,1.2rem);line-height:1.62;max-width:52ch;font-weight:500;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .k{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.3;font-variant-numeric:tabular-nums}
+.stat .n{font-size:.82rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.72rem;padding:1px 7px;border-radius:999px;border:1px solid}
+.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok)}
+.bad{color:var(--bad);background:var(--bad-soft);border-color:var(--bad)}
+.warn{color:var(--warn);background:var(--warn-soft);border-color:var(--warn)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px}
+.card .h{font-family:var(--font-display);font-weight:600;font-size:.98rem}
+.card p{font-size:.92rem;color:var(--ink-2)}
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.callout p{font-size:.95rem}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{display:flex;gap:12px;align-items:flex-start}
+.note .n{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);flex:none;padding-top:2px}
+.note p{font-size:.94rem;color:var(--ink-2)}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:.82rem;line-height:1.7}
+footer{border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-family:var(--font-mono);font-size:.75rem;display:flex;flex-wrap:wrap;gap:8px 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>独立复核</span><span>·</span><span>2026-10-20</span><span>·</span><span>免 PS 写回 / Txt2</span></div>
+  <h1>根因成立，版本不成立：Txt2 独立复核与环境勘误</h1>
+  <p class="standfirst">四个夹具在 Photoshop 上完成了「打不开 → 摘掉 Txt2 → 能打开且显示新文」的完整闭环；同时发现两份报告把 22.0 写成了 2026 27.10。</p>
+  <div class="meta">
+    <span>opencode</span><span>基线 develop@6ff5c3c</span><span>引擎 0.7.0 (792616159)</span><span>未改产品代码 · 未部署 · 未推</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">判决</span>
+    <p>引擎多写的全局 <code>Txt2</code> 块，就是「PS 打不开」与「文字仍旧」的共同根因。摘掉它之后，4 个夹具全部可打开、137 个文字层齐全、改过的层显示新文本，且 PS 能正常另存并再次打开。</p>
+    <p>但本机唯一的 Photoshop 是 <strong>22.0（2021）</strong>，没有 2026；「PS 2026 27.10 真机复验」这句必须撤回，直到在真正的 2026 上测得 <code>app.Version</code>。</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">夹具</div><div class="v">4 / 4</div><div class="n">摘块后全部可打开</div></div>
+    <div class="stat"><div class="k">文字层</div><div class="v">137</div><div class="n">原件 / 产物 / 另存件一致</div></div>
+    <div class="stat"><div class="k">Txt2</div><div class="v">38,191 B</div><div class="n">块总长 38,204（含补齐）</div></div>
+    <div class="stat"><div class="k">自测</div><div class="v">8 / 8</div><div class="n">离线，rc=0</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>复现矩阵（Photoshop 22.0）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>文件</th><th>处理</th><th>打开</th><th class="mono">文字层</th><th>目标层内容</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td class="mono">in.psd</td><td>原件</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><code>79.6mm</code>（旧）</td></tr>
+        <tr><td class="mono">2</td><td class="mono">out.psd</td><td>引擎直出</td><td><span class="tag bad">0x80042260</span></td><td class="mono">—</td><td>—</td></tr>
+        <tr><td class="mono">3</td><td class="mono">out-no-txt2.psd</td><td>摘 Txt2</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><strong><code>TYGF-PROBE-99</code>（新）</strong></td></tr>
+        <tr><td class="mono">4</td><td class="mono">min-edit-out.psd</td><td>改另一层</td><td><span class="tag bad">0x80042260</span></td><td class="mono">—</td><td>—</td></tr>
+        <tr><td class="mono">5</td><td class="mono">min-edit-out-no-txt2.psd</td><td>摘 Txt2</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><code>PROBE-MIN</code>（新）</td></tr>
+        <tr><td class="mono">6</td><td class="mono">resave-out.psd</td><td>纯往返未改</td><td><span class="tag bad">0x80042260</span></td><td class="mono">—</td><td>—</td></tr>
+        <tr><td class="mono">7</td><td class="mono">resave-out-no-txt2.psd</td><td>摘 Txt2</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><code>79.6mm</code>（旧，符合未改）</td></tr>
+        <tr><td class="mono">8</td><td class="mono">out-tool.psd</td><td>新工具摘</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><strong><code>TYGF-PROBE-99</code></strong></td></tr>
+        <tr><td class="mono">9</td><td class="mono">out-resaved-by-ps.psd</td><td>PS 另存后重开</td><td><span class="tag ok">OK</span></td><td class="mono">137</td><td><strong><code>TYGF-PROBE-99</code></strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="n">A</span><p><code>Txt2</code> 块内：旧串 UTF-16 命中 1 次、新串 0 次 —— 这是 <code>#6971</code>「PS 以文档级 Txt2 为准」的字节级支撑。</p></div>
+    <div class="note"><span class="n">B</span><p>PS 22.0 自己另存出来的文件里<strong>没有 Txt2</strong>（只有 Patt / FMsk / artd / cinf）⇒ 至少 22.0 不依赖它。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>版本勘误：为什么不能写 PS 2026</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>读法</th><th>实测</th></tr></thead>
+      <tbody>
+        <tr><td>运行进程</td><td><code>E:\Adobe\Adobe Photoshop 2021\Photoshop.exe</code>，FileVersion <strong>22.0 (20201006.r.35)</strong></td></tr>
+        <tr><td>COM 上报</td><td><code>app.Version = "22.0.0"</code></td></tr>
+        <tr><td>注册表卸载项</td><td>只有 <strong>Adobe Photoshop 2021 / 22.0.0.35</strong>（HKLM 32/64 位）</td></tr>
+        <tr><td>安装目录</td><td>2024 目录只剩 Plug-ins；(Beta) 的 <code>Photoshop.exe.bak</code>＝25.0；C/D/E/F 无 2026</td></tr>
+        <tr><td>探针脚本</td><td><code>ps-open-probe4.ps1</code> 等<strong>不读 app.Version</strong>（grep 0 命中）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <h3>结论</h3>
+    <p>10-19 与 10-20 两份报告的「PS 2026 27.10」都没有现场读数，<code>27.10</code> 更像来自上游 issue 报告者的 macOS 版本。若据此说「已在 2026 验证」，是把 22.0 冒充 2026 —— 与「假 0 / 假绿」同族。<strong>版本必须被测出来。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>增量交付：可复用清洗器</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="h"><code>scripts/psd-sanitize-txt2.mjs</code></div>
+      <p>零依赖。列块 / 摘块；拒绝 PSB、坏签名、越界块；改后重解析自校验。无 Txt2 时退出码 3 且不写盘。</p>
+    </div>
+    <div class="card">
+      <div class="h"><code>scripts/test-psd-sanitize-txt2.mjs</code></div>
+      <p>合成夹具 7 条 + 真实夹具交叉 1 条：<strong>8/8 passed</strong>。工具输出与已验证产物<strong>逐字节一致</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="h">与并行线原型的差别</div>
+      <p>原型无版本闸（PSB 会按 PSD 错算长度）、无自校验、无「无 Txt2 不写盘」。落地以本工具为准或合并。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>对 A 档方案的三处修订</h2>
+  <div class="notes">
+    <div class="note"><span class="n">1</span><p><strong>清洗放到 <code>doc.close</code> 之后。</strong> <code>pc-executor.js:360</code> 保存、<code>:364</code> 关闭；句柄未释放时改盘会撞占用。顺序：save → close → sanitize → 写回执。</p></div>
+    <div class="note"><span class="n">2</span><p><strong>fail-closed 且留痕。</strong> 摘不掉 / 结构不符 / PSB ⇒ <code>PSD_SANITIZE_FAILED</code> / <code>PSD_SANITIZE_UNSUPPORTED_PSB</code>，本次执行失败、不产出交付物；成功则报告写明「已移除 Txt2（N 字节）」。</p></div>
+    <div class="note"><span class="n">3</span><p><strong>Gate 补两条判据。</strong> 每次 PS 复验必须记录 <code>app.Version</code>；补「PS 另存后重开」——本轮已验证补丁件可另存（6,231,713 B）并再次打开、新文保留。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>这个判决不能推到哪</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>不能得出的结论</th><th>原因</th><th>现状</th></tr></thead>
+      <tbody>
+        <tr><td>「免 PS 写回已验证可用」</td><td>PS 22.0 / 1 台机器 / 引擎 0.7.0</td><td><span class="tag ok">2021 为验收基线</span></td></tr>
+        <tr><td>「样式无损」</td><td>AutoKerning 1→2、TextComposer 丢失；#6129 未逐项对表</td><td><span class="tag warn">阻塞级未解</span></td></tr>
+        <tr><td>「PSB 也能救」</td><td>工具明确拒绝 PSB；#2717 未测</td><td><span class="tag bad">不支持</span></td></tr>
+        <tr><td>「12 语种都行」</td><td>只测中英数字串；shaping / 换行未测</td><td><span class="tag warn">未验</span></td></tr>
+        <tr><td>「多稿并发安全」</td><td>单次单稿；批量链路未接</td><td><span class="tag warn">未验</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <h3>本轮自己踩的两个读数坑</h3>
+    <p>① 用 <code>$l.Layers.Count</code> 判组，在 22.0 下文字层全部漏读（<code>textLayers=0</code>），差点得出「产物没有文字层」的假结论；改用 <code>ArtLayers</code>＋<code>LayerSets</code> 后 137 与 ag-psd 一致。② 文件列表用 <code>;</code> 拼成单参数传给嵌套 PowerShell，被拆成非法路径 —— 命令能跑不代表参数传对了。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>复跑</h2>
+  <pre>Get-Process Photoshop | ForEach-Object { $_.Path; $_.MainModule.FileVersionInfo.FileVersion }
+node scripts/test-psd-sanitize-txt2.mjs
+node scripts/psd-sanitize-txt2.mjs strip "$env:TEMP\tygf-typeedit-probe\out.psd" "$env:TEMP\tygf-typeedit-probe\out-tool.psd"
+&amp; .\tmp\research-1020\ps-open-batch.ps1 -Files @("$env:TEMP\tygf-typeedit-probe\out-tool.psd")</pre>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>红线</h2>
+  <div class="notes">
+    <div class="note"><span class="n">·</span><p>未改产品代码、未接线、未出包、未部署、未推、未碰生产；三键仍全关。</p></div>
+    <div class="note"><span class="n">·</span><p>不在本轮解冻 <code>smoke-pc-wiring-freeze.mjs</code>；不抬 <code>assistantVersion</code> / <code>assistantBuildId</code>。</p></div>
+    <div class="note"><span class="n">·</span><p>不把「PS 22.0 能开」写成「PS 2026 已验证」，也不把「0.7.0 直出不可用」写成「免 PS 做不到」。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>执行方案（Gate 制）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Gate</th><th>内容</th><th>成本</th><th>通过判据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">G0</td><td>判决 + 清洗器 + 自测（<strong>已完成</strong>）</td><td>本轮</td><td>4 夹具复现；8/8；PS 另存后重开</td></tr>
+        <tr><td class="mono">G1</td><td>保存后摘 Txt2（A 档）</td><td>半天 / ~80 行</td><td>下面 5 条全过</td></tr>
+        <tr><td class="mono">G2</td><td>精准修补 AutoKerning / TextComposer（B 档）</td><td>+1–2 天</td><td>样式逐项与原件一致</td></tr>
+        <tr><td class="mono">G3</td><td>跟上游 #7482 / 下一版（C 档）</td><td>+1 周</td><td>同套夹具全过</td></tr>
+        <tr><td class="mono">G4</td><td>解冻接线 + 灰度 + 对外口径</td><td>—</td><td><strong>Owner 明文批准</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="n">S1</span><p>把清洗器移入 <code>download/local-assistant/psd-sanitize.js</code>；在 <code>pc-executor.js</code> 的 save（<code>:360</code>）→ close（<code>:364</code>）<strong>之后</strong>清洗，再写回执。失败码 <code>PSD_SANITIZE_FAILED</code> / <code>PSD_SANITIZE_UNSUPPORTED_PSB</code>，本次执行失败、不产出交付物。</p></div>
+    <div class="note"><span class="n">S2</span><p>离线 smoke：无 Txt2、长度自洽、文字层与目标文本不变；负控（截断/伪长度/PSB）必须拒；无 Txt2 不写盘。</p></div>
+    <div class="note"><span class="n">S3</span><p>真机复验：4 夹具 + 2 份真实稿，证据必须含 <code>app.Version</code>。</p></div>
+    <div class="note"><span class="n">S4</span><p>留痕：成功写「已移除 Txt2（N 字节）」，失败如实报，不静默降级。</p></div>
+  </div>
+  <div class="callout">
+    <h3>G1 判据（全过才算过）</h3>
+    <p>① PS 能开；② 目标层是新串；③ 触碰重排后仍是新串；④ 字号/字体/对齐/缩放逐项不变（AutoKerning / TextComposer 差异必须登记）；⑤ PS 另存后重开仍是新串。</p>
+    <p><strong>明确不做</strong>：PSB 支持（拒绝并报错）、多稿并发写回、新建文字层、对外宣称「免 PS 写回可用」。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>A 档已落地（基线＝你的 PS 2021）</h2>
+  <div class="callout">
+    <h3>Owner 决定</h3>
+    <p>就用这台机器的 PS 2021（22.0）当验收基线；2024 / 2026 降为兼容性观察，不再当门禁。理由很直接：<strong>这台就是真实使用环境，2021 能开＝你能开。</strong></p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>改动</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">psd-sanitize.js（新）</td><td>解析 / 摘 Txt2 / 文件级清洗；PSB 与坏结构直接报错；写盘前自校验，临时文件 + rename</td></tr>
+        <tr><td class="mono">pc-executor.js</td><td>保存 → 关闭 → 清洗；失败即整次失败、不写成功回执；成功回执记录移除字节数</td></tr>
+        <tr><td class="mono">smoke-pc-txt2-sanitize.mjs（新）</td><td>12 条：结构 / 长度 / 多条 / 无块 / PSB / 截断 / 幂等 / 执行器集成 / 真实夹具</td></tr>
+        <tr><td class="mono">smoke-pc-executor.mjs</td><td>夹具改成真 PSD，发布件上断言「没有 Txt2」</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">test:pc-txt2</div><div class="v">12</div><div class="n">passed · rc=0</div></div>
+    <div class="stat"><div class="k">test:pc-executor</div><div class="v">17/17</div><div class="n">PASS · rc=0</div></div>
+    <div class="stat"><div class="k">test:pc-wiring-freeze</div><div class="v">9/9</div><div class="n">PASS · 冻结未破</div></div>
+    <div class="stat"><div class="k">真实夹具</div><div class="v">逐字节</div><div class="n">与已验证产物一致</div></div>
+  </div>
+  <div class="callout">
+    <h3>边界</h3>
+    <p>三个开关仍然全关，写回仍未接线；没出包、没部署、没推。要让用户真正用上，还需要你明确点头（解冻 + 灰度）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>下一步验收清单</h2>
+  <div class="notes">
+    <div class="note"><span class="n">A</span><p><strong>PSB：</strong>取 3 份真实 PSB，先看是不是同一个 Txt2 问题；若是，把清洗器扩到 PSB（8 字节段长度），并补截断/伪长度负控。</p></div>
+    <div class="note"><span class="n">B</span><p><strong>多语种：</strong>中英德日韩阿希泰印地各 1 稿；看新文、换行、对齐，阿拉伯/印地单独列风险。</p></div>
+    <div class="note"><span class="n">C</span><p><strong>样式字段（#6129）：</strong>字号/字体/字距/行距/对齐/缩放/合成器/AutoKerning 逐项对表；差异必须写白名单，不许"差不多"。</p></div>
+    <div class="note"><span class="n">D</span><p><strong>真实客户稿：</strong>3–5 份（智能对象 / 图层效果 / 复合段落），可接受性由你确认；不通过就不放开写回。</p></div>
+  </div>
+</section>
+
+<footer>
+  <span>证据：tmp/research-1020/ + %TEMP%\tygf-typeedit-probe\</span>
+  <span>自测 8 passed</span>
+  <span>ISSUES #186</span>
+</footer>
+
+</div>
+</body>
+</html>

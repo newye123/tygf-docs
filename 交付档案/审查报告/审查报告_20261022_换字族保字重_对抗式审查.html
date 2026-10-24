@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>只换字族、不改字重 · 对抗式审查 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:1.6rem;line-height:1.1}
+.stat .v.bad{color:var(--bad)}.stat .v.ok{color:var(--ok)}.stat .v.warn{color:var(--warn)}
+.stat .s{font-size:.78rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span><span>Round 1 of 3</span><span class="sep">/</span><span>2026-10-22 12:25 校核</span>
+  </div>
+  <h1>只换字族、不改字重——这个方案能不能立</h1>
+  <p class="standfirst">Owner 的想法是：字体排版里只让用户选"换到哪一款字体"，原本的字重一律不动，别给那么多选择。审查结论：<b>方向对，界面确实能减一格</b>；但"字重不动"不是一句承诺，它要求逐层做一次"同字重配脸"，而这一步今天的四个依据里有两个是坏的、还有一个结构性做不到。四个依据未核实之前，不能对外写"字重不受影响"。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT</span>
+  <p><b>有条件放行</b>：方案成立（把握度中→高，取决于 S0 真机探针的 4 个未决项）。放行的条件是执行顺序不许换——<b>先做 S0 只读探针，探针没回来的四条不许写进对外文案，也不许开工 S3</b>。</p>
+  <div class="contract">
+    <span>范围：只读审查，无代码改动</span>
+    <span>基线：root <b>f17b9cc</b> ／ develop <b>ad38603f</b>（2026-10-22 12:08）</span>
+    <span>工作树：7 文件 <b>+97</b> 行未提交 ⇒ 本文行号为<b>工作树实测</b></span>
+    <span>风险档：<b>Medium</b>（触达执行器＋助手白名单＋面板三层）</span>
+    <span>已证实：<b>10</b> 条（Important 6／Medium 3／Nit 1，全部存量）</span>
+    <span>未决：<b>4</b> 条（均需真机只读探针）</span>
+  </div>
+</div>
+
+<section>
+  <h2><span class="num">一</span>先把"换字体不改字重"这件事的本质说清</h2>
+  <p>Photoshop 里没有独立的"字重开关"。字重藏在<b>脸名</b>里：<span class="mono">HarmonyOS_Sans_SC_Bold</span> 和 <span class="mono">HarmonyOS_Sans_SC</span> 是两张不同的脸。所以"只换字体、不动字重"在实现上等价于：</p>
+  <div class="callout"><strong>逐层做三件事</strong>：① 读出这一层原来用的哪张脸 → ② 从那张脸推出它的字重（和是否斜体）→ ③ 到用户指定的那款字族里，找<b>同一档字重</b>的脸写回去。找不到、或推不出字重时，必须点名，不许猜。</div>
+  <p>这跟现在的做法差在哪：现在整批只带<b>一张脸</b>走，所以"全稿变成一个粗细"。你要的简化是对的——用户那一格从"字族×样式"两格变一格；代价是把"选样式"这个动作从界面搬进了机器，搬进去的那一步必须可靠。</p>
+</section>
+
+<section>
+  <h2><span class="num">二</span>本机实测的四个数（2026-10-22 12:2x 我亲自跑的）</h2>
+  <p class="muted">取数方式：直接 require 助手自带的 <span class="mono">download/local-assistant/font-catalog.js</span> 的 <span class="mono">buildFontCatalog()</span>，读本机两个 Windows 字体根。脚本落在 <span class="mono">tmp/font-catalog-measure.cjs</span>、<span class="mono">tmp/font-style-measure.cjs</span>，可重跑。</p>
+  <div class="stats">
+    <div class="stat"><span class="k">本机唯一脸</span><span class="v">1 293</span><span class="s">1 287 个文件、1 314 条 name 记录</span></div>
+    <div class="stat"><span class="k">字族数</span><span class="v">552</span><span class="s">按 name 表 family 归并</span></div>
+    <div class="stat"><span class="k">只有 1 张脸的字族</span><span class="v bad">349</span><span class="s">＝63.2%，这些款结构上做不到"保字重"</span></div>
+    <div class="stat"><span class="k">style 字符串种类</span><span class="v warn">162</span><span class="s">同一档字重的写法不统一</span></div>
+    <div class="stat"><span class="k">PS 清单缺目录元数据</span><span class="v bad">352</span><span class="s">1 587 张 PS 脸 vs 目录 1 293 张，只重合 1 235（server.js:1356）</span></div>
+    <div class="stat"><span class="k">每字族脸数</span><span class="v">中位 1 ／ P90 4 ／ 最多 51</span><span class="s">分布极长尾</span></div>
+  </div>
+  <p>style 字符串这一条最要命，举一个你天天在用的字体：<b>微软雅黑 UI 的粗体，name 表里的 style 写的是法语「Gras」</b>，而它的 PostScript 脸名是 <span class="mono">MicrosoftYaHeiUI-Bold</span>。本机实测：<span class="mono">Gras|MicrosoftYaHeiUI-Bold</span>。<span class="mono">gras</span> 系 46 张、<span class="mono">italique</span> 系 34 张、<span class="mono">gras italique</span> 19 张、中文「常规」6 张、「標準」3 张、还有 <span class="mono">w3</span>／<span class="mono">w6</span> 各 7 张。⇒ 只要按 style 字符串做等值匹配，这些脸的字重一律判不出来。</p>
+</section>
+
+<section>
+  <h2><span class="num">三</span>已证实的缺陷（10 条，全部为存量）</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>级</th></tr></thead>
+    <tbody>
+      <tr><td class="code">F-01</td><td>Important</td><td class="code">typography-capabilities.ts:442-452<br>TYGF_V15_Thin_Executor.jsx:221 / :65</td><td>整批只解析出<b>一张脸</b>并写满全稿 ⇒ 全稿同粗细。这就是你看到的现象</td><td class="code">pickFaceForFamily 返回单张脸；执行器对每层写同一个 envelope.typography.face</td><td>A</td></tr>
+      <tr><td class="code">F-02</td><td>Important</td><td class="code">font-catalog.js:94-95<br>typography-capabilities.ts:416</td><td>用 style 字符串配字重：雅黑粗体读成「Gras」，跟目标族的「Bold」不相等 ⇒ 判定"没有同字重"，全档走降级</td><td>本机实测 1 293 张脸里 162 种 style 写法；<span class="code">Gras|MicrosoftYaHeiUI-Bold</span> 原样取出</td><td>A</td></tr>
+      <tr><td class="code">F-03</td><td>Important</td><td class="code">本机字体清单（上表数）</td><td>349/552 个字族只有 1 张脸。用户选到这类款时，"字重不动"<b>结构上做不到</b>，只能变常规或不换</td><td class="code">tmp/font-catalog-measure.cjs 回显 familiesSingleFace=349 / families=552</td><td>A</td></tr>
+      <tr><td class="code">F-04</td><td>Important</td><td class="code">pc-scanner.js:207<br>TYGF_V15_Preparation_Scanner.jsx:143</td><td>两条扫描通道给的 font 不同形：PS 通道给 PostScript 全名，引擎通道 <span class="code">.replace(/^.*\./,'').toLowerCase()</span> 贪婪切到<b>最后一个点</b> ⇒ <span class="code">Adobe.Inter.Regular</span> 变成 <span class="code">regular</span>，族和字重一起丢</td><td>形状由夹具实证 <span class="code">scripts/fixtures/fake-photocraft-scan.cjs:29</span>；引擎通道仅在 PS 未运行且旗标开时启用（server.js:5233-5250）</td><td>A</td></tr>
+      <tr><td class="code">F-05</td><td>Important</td><td class="code">server.js:1356 / :1541<br>typography-capabilities.ts:416</td><td>352 张 PS 脸（Adobe Fonts／可变实例）目录里查不到 ⇒ style 空 ⇒ 面板一律标成「Regular」，同族多张脸看起来同名 ⇒ 配脸依据失明</td><td class="code">grep 到回落链 (meta && meta.style) || f.style || ''，与 faceStyleLabel 的 || 'Regular'</td><td>A</td></tr>
+      <tr><td class="code">F-06</td><td>Important</td><td class="code">TYGF_V15_Thin_Executor.jsx:259<br>v15-runner.js:219 / :325<br>report-renderer.js</td><td><b>改完无法验收</b>：执行器已经产了 typographyIssues，但全仓没有读取点；报告模板 typography 命中 0、layoutGeometry 命中 0；成功路径随后清理输出根删掉执行结果</td><td class="code">grep -c typography report-renderer.js = 0；grep -c layoutGeometry = 0；runner 仅在 :219 转递 typography 本体</td><td>A</td></tr>
+      <tr><td class="code">F-07</td><td>Medium</td><td class="code">pc-scanner.js:180<br>TYGF_V15_Thin_Executor.jsx:221</td><td>同一个图层里前半句常规、后半句粗体：扫描只取 <span class="code">runs[0]</span>，执行只写整层 ⇒ 段级字重一定被抹平</td><td>代码单点 A；"PS 支持段级样式"取 Adobe 社区段级 setd/Txtt 写法为 B，本机未实测</td><td>A+B</td></tr>
+      <tr><td class="code">F-08</td><td>Medium</td><td class="code">typography-panel.tsx:246 / :393<br>对照 :744 / :754</td><td>注释承诺"清单读不到时用户仍可手填脸名写回"，实现却是清单为空时禁用搜索、且整块手输框不渲染 ⇒ PS 无响应那一路径没有退路</td><td class="code">disabled={faces.length === 0}、{faces.length > 0 && ( 手输块 }</td><td>A</td></tr>
+      <tr><td class="code">F-09</td><td>Medium</td><td class="code">v15-runner.js:842 / :891 / :955<br>report-renderer.js</td><td>换字族必然改字宽 ⇒ 行数与溢出跟着变；版式几何其实测了，只写进 meta，两处渲染都不传 ⇒ 用户只看到"版式莫名其妙散了"</td><td class="code">renderer 对 layoutGeometry 0 命中（同 F-06 一次扫描）</td><td>A</td></tr>
+      <tr><td class="code">F-10</td><td>Nit</td><td class="code">typography-panel.tsx:469</td><td>「自动%」行距选项只有在<b>已经是 percent</b> 时才出现在下拉里 ⇒ 新用户永远选不到，而 percent 本来也不发给助手。属死选项</td><td class="code">{leadingMode === 'percent' && <option …>}</td><td>A</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout warn"><strong>更正一条我自己先前的说法</strong>：我上一轮讲"界面只能整批一个粗细、没得选字重"。准确的说法是——界面<b>已经有</b>字族格和样式格（<span class="code">font-picker.tsx:37-108</span>），缺陷在两格合成的那<b>一张脸</b>被整批共用（F-01），不是缺样式选择器。这条差别会影响修法：不是"加选择"，而是"撤选择＋把匹配搬进机器"。</div>
+</section>
+
+<section>
+  <h2><span class="num">四</span>未决（4 条，都不许在没有读数时下结论）</h2>
+  <div class="cards">
+    <div class="card"><div class="head"><span class="tag info">U-1</span><span class="title">PS 22 的 Font 对象到底暴不暴露 family / style</span></div><p>现在的探针只取了 <span class="mono">postScriptName</span> 和 <span class="mono">name</span>，family 直接抄显示名、style 恒空（<span class="mono">TYGF_Fonts_Probe.jsx:34-36</span>）。如果 PS 自己给得出 family/style，F-02/F-05 两条大半能消掉；给不出，就必须走"多语言字重词典＋脸名后缀"双通道。<b>缺的证据</b>：本机 PS 22 一次只读枚举。</p></div>
+    <div class="card"><div class="head"><span class="tag info">U-2</span><span class="title">图层内段级样式能不能读、能不能写</span></div><p>决定 F-07 是"本刀修"还是"本刀如实说做不到"。DOM 上有没有 <span class="mono">textStyleRange(s)</span> 通路、还是要走 ActionDescriptor 的段级 <span class="mono">Txtt/FntN</span>，我只有 B 级线索，没有本机读数。<b>缺的证据</b>：一个含两种字重的层，跑一次只读回显。</p></div>
+    <div class="card"><div class="head"><span class="tag info">U-3</span><span class="title">换新脸后 fauxBold / fauxItalic 会不会丢</span></div><p>现在助手侧只有显式 true 才写这两个字段（<span class="mono">typography-profile.js:100-105</span>）。若写 font 会把原稿的"伪粗体"重置，那"字重不动"这句话就漏了一半——因为有些稿子的粗是伪粗。<b>缺的证据</b>：写前后各读一次。</p></div>
+    <div class="card"><div class="head"><span class="tag info">U-4</span><span class="title">客户机上目标字族到底有几档字重</span></div><p>我这 349/552 是<b>本机</b>数，客户机不一样；而字体清单按现有隐私句不上云（<span class="mono">server.js:1563</span> privacy 文案）。所以"有多少用户会遇到降级"目前<b>数不出来</b>。<b>缺的证据</b>：要么允许上传"字族→字重档数"的计数摘要（不含脸名清单），要么从交付件报告回传。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">五</span>这个方向真正的收益与代价（说人话）</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>维度</th><th>现在</th><th>按你的方案改完</th></tr></thead>
+    <tbody>
+      <tr><td>用户要点几次</td><td>字族＋样式（＋行距／字距）</td><td>字族 1 次；样式格撤掉</td></tr>
+      <tr><td>全稿粗细</td><td>统一变成所选那一张脸的粗细</td><td>逐层沿用原稿粗细（配不上时点名）</td></tr>
+      <tr><td>能不能证明"字重真没变"</td><td><b>不能</b>（F-06：留痕零消费者、结果件被删）</td><td>能——报告逐层列「原脸 → 新脸 / 沿用 / 原因码」</td></tr>
+      <tr><td>主要风险</td><td>静默把全稿改粗/改细，用户事后才发现</td><td>目标款缺字重时的降级；字宽变化引起的散版（两者都必须点名）</td></tr>
+      <tr><td>结构做不到面</td><td>不存在（因为全改成一样）</td><td>本机 63.2% 的款只有 1 档字重，选这些款＝必然改粗细，需在选定那一刻预警</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">依据：<span class="mono">product-specs/typography-fit.md</span> §1「不改动设计意图」、§2 I2「只换行，不改字号/字距/行距/颜色/位置/对齐」、I5「做不到就上报，不得静默降级或静默改写」。你的方案（换字族、保字重）与这份 Spec <b>不冲突</b>——Spec 的不变量清单里没有"字族"，而 I5 正好是降级必须点名的授权依据。另注意 I6「同（原稿+译文+排版+求解器版本）重跑逐字节一致、结果进 digest」：现状是排版<b>根本不进清单/digest</b>（信封旁路，<span class="mono">v15-runner.js:219</span>），这是既有冲突，本刀不擅自放宽，登记见方案 S6。</p>
+</section>
+
+<section>
+  <h2><span class="num">六</span>覆盖缺口（本次明确没检查的部分）</h2>
+  <ul class="plain">
+    <li>没有跑真机 Photoshop 探针：U-1／U-2／U-3 全部未证，本报告的"能不能做到"上限因此只到中把握度。</li>
+    <li>没有跑批量台（v3）与单语台的真实执行；F-06 的结论来自静态消费者穷举，不来自一次真跑。</li>
+    <li>只读 <span class="mono">font-catalog.js</span> 的解析结果，没审引擎 exe 内部（<span class="mono">runs[].style</span> 还有哪些字段、有没有 PostScript 名）——F-04 的修法要看它给不给得出全名。</li>
+    <li>没测 macOS 与非中文系统；<span class="mono">gras</span>／<span class="mono">italique</span> 这类串来自本机目录里带多语言 name 表的字体。</li>
+    <li>没核客户机字体分布（U-4），因此无法量化"多少用户会撞上单档字重的款"。</li>
+    <li>没审可变字体（variable fonts）的轴值：PS 探针注释已记录 Cascadia 可变字体重复 18 行（<span class="mono">TYGF_Fonts_Probe.jsx:31</span>），这类脸"一档都不选"还是"取默认实例"，本次没有结论。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">九</span>Round 2 追加（12:3x，只审新命题及其直接调用方，不回改上文）</h2>
+  <div class="callout"><strong>新命题（Owner 口径）</strong>：扫描时就知道每层用哪款字、什么字重、什么字号 ⇒ 扫完把「本稿排版一览」列出来，用户看一眼决定要不要换字体，字重不用他管。</div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>三态</th><th>结论与证据</th></tr></thead>
+    <tbody>
+      <tr><td><b>已有</b>（不用新建采集）</td><td>PS 通道每层已读到 PostScript 脸名／字号／行距／字距／伪粗伪斜（<span class="code">Preparation_Scanner.jsx:143-160</span>），且已进浏览器并按对象 id 建好索引（<span class="code">workbench-view.tsx:770-785</span> 的 <span class="mono">typographyByObjectId</span>）。⇒ 这块是"露出来"，不是"从零建"。</td></tr>
+      <tr><td><b>真缺</b>（三件）</td><td>①「本稿一览」视图——概念在代码里不存在：原式 <span class="mono">grep -rn -E "原稿字体|本稿字体|用到的字体|使用到的字体|fontInventory|usedFonts" src/components src/lib download/local-assistant</span> → <b>0 命中，GREP_RC=1</b>；② 把脸名归一成字重档的函数（＝S1）；③ 执行时点的字体复核（见 F-11）。</td></tr>
+      <tr><td><b>别抄</b>（对抗点）</td><td>不要做成逐层可滚动的表——那等于把选择负担从"选字重"搬到"逐层核对"，与"别给用户太多选择"的初衷相反。收成一行摘要＋可展开的档位计数。</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>级</th></tr></thead>
+    <tbody>
+      <tr><td class="code">F-11</td><td>Important</td><td class="code">server.js:370<br>TYGF_V15_Readiness_Scanner.jsx:36-40</td><td>把扫描清单当<b>配脸依据</b>＝架在过期数据上：清单有效期 <b>24 小时</b>，而执行前复核<b>只比图层文本、从不读字体</b>。期间用户在 PS 里手改字重 ⇒ 照旧清单配脸会换错档，且因 F-06 看不见</td><td class="code">24*60*60*1000 实测；观察体只 push actualSource，无 font 字段；SCANNER_VERSION 1.0.0</td><td>A</td></tr>
+      <tr><td class="code">F-12</td><td>Medium</td><td class="code">typography-persistence.ts:3-5</td><td>排版偏好<b>有意不绑 scanId/指纹</b>（作者自陈："绑 scanId 会『换个文件就丢』，与『我的排版偏好』语义冲突"）。为 A 稿看的一览、选的款，对 B 稿照样生效 ⇒ 用户会以为清单与选择一一对应</td><td>文件头注释原文</td><td>A</td></tr>
+      <tr><td class="code">F-07 延伸</td><td>不另立案</td><td class="code">pc-scanner.js:180；Preparation_Scanner.jsx:143</td><td>一览的"档数"可能少报：两支通道都只到层（引擎取 <span class="mono">runs[0]</span>，PS 通道读整层），层内混排看不见</td><td>引 F-07，不重复计</td><td>A</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cards">
+    <div class="card"><div class="head"><span class="tag info">P-5 新增未决</span><span class="title">真稿里"能定档的层占比"——这条思路的可证伪判据</span></div><p>拿一份真稿扫一次，统计每层脸名经 S1 归一后 <span class="mono">weight != null</span> 的层数／总层数。<b>判据</b>：达不到 <b>95%</b> 就不许对外写"字重自动沿用"，改为"未知档默认不动那一层＋报告点名"。本机无真稿扫描读数 ⇒ 本条现为<b>未实测</b>，不许当结论引。</p></div>
+  </div>
+  <p class="muted">覆盖缺口追加：没在任何真稿上跑过一次扫描来数"能定档占比"；没测多稿批量下"偏好跨稿复用"是否符合用户预期（F-12 只给了代码事实）。更正：无——Round 2 不改写 Round 1 任何结论，只追加。</p>
+</section>
+
+<section>
+  <h2><span class="num">十</span>Round 3 追加（12:58 校核；本轮为最后一轮，只审新命题与剩余缺口）</h2>
+  <div class="contract">
+    <span>基线重取：root <b>f17b9cc</b> ／ develop <b>d8c96948</b>（12:58:36）</span>
+    <span>工作树 <b>6 文件 +84 行</b>（Round 1/2 记的 ad38603f／+97 为当时读数，不回改）</span>
+    <span>本轮行号已在 d8c96948 工作树<b>逐条重跑</b></span>
+    <span>新命题：给默认选项，让用户选"以后是否都按现在调整后的去执行"</span>
+  </div>
+  <div class="callout bad"><strong>先说结论：这件事已经是现状，缺的不是开关。</strong>每次执行都无条件从本机偏好取该语言那一份发出去（单语 <span class="code">local-assistant-client.ts:1500</span>→<span class="code">:1525</span>，批量 <span class="code">:2005</span>→<span class="code">:2030</span>），偏好有意跨任务永久（<span class="code">typography-persistence.ts:3-5</span>）。所以再加一个"以后都这样"的勾选＝重复建设。真正缺的是<b>说出来、能例外、执行前看得见</b>。</div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>级</th></tr></thead>
+    <tbody>
+      <tr><td class="code">F-13</td><td>Important</td><td class="code">local-assistant-client.ts:1500 / :1525 / :2005 / :2030<br>typography-panel.tsx:583、:713<br>typography-persistence.ts:3-5</td><td>"以后每次都按这套"已生效但<b>没有一处说出来</b>，也没有"仅本次"档 ⇒ A 稿调的字族静默作用到 B 稿；叠加"保字重"＝B 稿整批换字族、可能整批降级而用户不知道（F-12 的产品面后果）</td><td>四处取值/发出逐行命中；面板文案只写"保存后仅在本机执行时应用"，无"跨稿/永久"字样；唯一撤销是"清空全部"</td><td>A</td></tr>
+      <tr><td class="code">F-14</td><td>Important</td><td class="code">typography-persistence.ts:149-166（:155/:162/:165）<br>typography-profile.js:24<br>Thin_Executor.jsx:93-96、:73-88、:122-131<br>ISSUES.md:687</td><td><b>三层集合差</b>＝{leading.percent, autoKerning, fauxBold, fauxItalic}：白名单收、执行器实现、浏览器映射不发。要命的是 percent——执行器里 <b>percent 保留自动行距</b>（:93-94），<b>fixed 关掉自动</b>（:96）；而自动行距是本项目常态：<b>真作业 39 层里 34 层</b>。⇒ 今天每改一次行距，都把那层的行距<b>机制</b>从自动翻成固定，且报告不点名（引 F-06／F-09）</td><td class="code">grep autoKerning|fauxBold|fauxItalic 于界面与工具层 → 只命中能力表与注释，无发送路径；映射函数体只产 fixed（:158-159 自陈 percent 不发）</td><td>A</td></tr>
+      <tr><td class="code">F-15</td><td>Medium</td><td class="code">docs/records/20260920_排版普查_实测基线.md:41、:43</td><td>Round 1 拍 2 说"层内混字重本刀跳过"——<b>读侧早有通路</b>：逐 run 能拿 font.name(PostScript)／autoLeading／autoKerning，且记过一次坑「多 run 层必须回 <span class="mono">styleRuns</span>（普查 v1 因此把 KO/TH 漏成 9 层）」。⇒ "档数少报"不是无解；<b>写侧</b>仍未证（U-2 不变）</td><td>盘上实测记录原文</td><td>A</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout ok"><strong>已证伪、不立案（只登记）</strong>：「面板把未接入字段装作会发」不成立——能力表明写"本版尚未接入：现在点了也不会发送"（<span class="code">typography-capabilities.ts:164-174</span>、<span class="code">:363-376</span> 自陈"白名单收了、映射没接，绝不能混进'会发'"），T／I 开关在非 writable 时 <span class="mono">disabled</span>、<span class="mono">aria-pressed=false</span>（<span class="code">typography-panel.tsx:654</span>）。所以 F-14 是<b>悬空能力</b>，不是欺骗。</div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>新增未决</th><th>还缺什么</th></tr></thead>
+    <tbody>
+      <tr><td class="code">U-5</td><td>Owner 真实意图要不要"跨稿永久"；本次话里暗示要，但无真实使用观察；偏好只存浏览器 localStorage，<b>多设备不同步</b>无人核实</td></tr>
+      <tr><td class="code">U-6</td><td>percent 打通后在自动行距层的真机效果（<span class="mono">autoLeadingAmount</span> 读回、层高按比例变、与 fixed 的语义差能否被报告分开点名）</td></tr>
+      <tr><td class="code">U-7</td><td>批量台一批发多语言时，各语言一份 profile 是否真的互不顶（理论按语言独立，未实测）</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><strong>收敛声明（技能硬规则：Round 上限 3）</strong>三轮到此为止。U-1…U-7 全部依赖真机读数，不再追加审查轮次——再加一轮只会多出没法验证的句子。<b>下一次动作＝一次真机探针</b>（把 U-1／U-2／U-3／U-6／P-5 一次问掉）。读数回来后：真稿"能定档层占比"≥95% 走 S1→S2→S3→S4→S4a→S5a→S5b→S7→S6；不足 95% 则把对外承诺降级为"未知档不动＋点名"，并按技能规则<b>重新考虑方案本身</b>（例如把换字族限定为只作用于单一字重的稿子），而不是继续补刀。</div>
+  <p class="muted">更正：无推翻性更正。需说明的是<b>基线搬动</b>（ad38603f → d8c96948；工作树 +97 → +84 行，另有 6 文件在飞），属他槽提交所致，不影响 Round 1/2 的判定形状。</p>
+</section>
+
+<footer class="footer">
+  <span>审查者只出 findings，不出 approval。本档结论只对 root <b>f17b9cc</b> 下的 develop <b>ad38603f</b>（Round 1/2）与 <b>d8c96948</b>（Round 3）这两对工作树有效；后续再有提交即失效，须重取行号。</span>
+  <span>取数命令可重跑：node tmp/font-catalog-measure.cjs &lt;路径&gt;；node tmp/font-style-measure.cjs &lt;路径&gt;。</span>
+  <span class="mono">交付档案/审查报告/审查报告_20261022_换字族保字重_对抗式审查.md · 2026-10-22 12:2x</span>
+</footer>
+
+</main>
+</body>
+</html>

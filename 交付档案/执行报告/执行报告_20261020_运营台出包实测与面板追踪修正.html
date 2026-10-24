@@ -1,0 +1,580 @@
+<title>运营台出包实测 · 执行报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>运营台两块板 · 出包实测</span><span class="sep">/</span>
+    <span>2026-10-20 22:1x</span>
+  </p>
+  <h1>能不能出包：已实测，能</h1>
+  <p class="standfirst">Owner 说"部署吧"之后，先回答真正卡住的那一步——这两块板能不能打成可部署的包。答案是能。过程中查出<strong>一个我自己引入的发布产物泄漏</strong>，已修并复验；上线动作仍卡在"本会话到不了服务器"，命令与判据已写进交接件。</p>
+  <div class="meta">
+    <span>七步出包链 rc=0</span>
+    <span>产物起服取到运行时读数</span>
+    <span>新问题登记 #206 #207</span>
+    <span>未推送、未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">给 Owner 的一句话</span>
+    <p>代码这边没有拦路石了：干净树上跑仓库自己的出包链，退出码 0，产物能起服务，两个新页面接口和老板的门禁形状一致（无身份 403）。<br>剩下的堵点只有一个——<strong>这个会话到不了服务器</strong>，所以上线要交给能到服务器的那只手。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">rc=0</span><span class="k">七步出包链全绿<br>22:00:09—22:01:55</span></div>
+    <div class="stat ok"><span class="n">403 ×3</span><span class="k">两个新接口＋既有 stats<br>无身份一律拒</span></div>
+    <div class="stat bad"><span class="n">1508</span><span class="k">修复前面板追踪的文件数<br>含 8 份内部账本</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k">浏览器真人点开页签<br>本轮唯一证据缺口</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">这对你意味着什么</span>
+    <p>面板本身不会把客户数据带出去，但它在构建阶段把我们的<strong>内部治理账本</strong>（任务台账、问题登记、现状册）整个抄进了发布产物里。这类东西一旦随包落到别处，等于把家底翻给对方看。现在这条路被两道闸堵住了：构建阶段不抄，产物阶段点名拦截。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>出包实测：逐条读数</h2>
+  <p class="lede">在干净分离树 <code>worktrees/tmp-ops-build</code>（提交 <code>e93b81f</code>）上跑仓库自己的 <code>npm run build</code>。依赖必须是树内实体：用 <code>cp -al</code> 硬链接复制 <code>node_modules</code>，21:55:27 完成、条目数 653 与兄弟树一致。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>检查项</th><th>怎么测的</th><th>读数</th><th>性质</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">七步出包链</td>
+          <td class="was"><code>npm run build</code> 退出码</td>
+          <td><span class="now">BUILD_RC=0</span><br><span class="was" style="font-size:.92em">链尾两行：<code>standalone-boundary passed</code>、<code>verified proxy build and dormant direct ticket contract</code></span></td>
+          <td><span class="tag bad">已修后</span></td>
+        </tr>
+        <tr>
+          <td class="mono">产物齐备性</td>
+          <td>逐条查存在五项</td>
+          <td><span class="now">5 / 5 OK</span><br><span class="was" style="font-size:.92em"><code>standalone/server.js</code>、<code>required-server-files.json</code>、<code>BUILD_ID</code>、两份 manifest</span></td>
+          <td><span class="tag bad">此前"缺失"是构建没跑完</span></td>
+        </tr>
+        <tr>
+          <td class="mono">运行时直调</td>
+          <td>用这份产物起服务再打接口</td>
+          <td><span class="now">403 ×3 ＋ 首页 200／93,650 B／0.14 s</span></td>
+          <td><span class="tag bad">新板与既有板同形</span></td>
+        </tr>
+        <tr>
+          <td class="mono">五道静态门</td>
+          <td>22:09:15—22:09:21 连扫</td>
+          <td><span class="now">全部 rc=0</span><br><span class="was" style="font-size:.92em"><code>admin-traffic</code>／<code>site-traffic</code>／<code>admin-journey</code>／<code>ops-logging</code>／<code>admin-security</code></span></td>
+          <td><span class="tag warn">面板断言 13→17 条</span></td>
+        </tr>
+        <tr>
+          <td class="mono">全量类型检查</td>
+          <td>关掉增量缓存重跑</td>
+          <td><span class="now">干净树 rc=0 ／ develop rc=0，各 0 条错误</span></td>
+          <td><span class="tag warn">增量缓存会造假绿</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>查出来的真问题：面板把整棵树抄进了发布产物</h2>
+  <p class="lede">第一次跑链时红在 <code>[standalone-boundary] blocked</code>。顺着它去数每个接口的"运行时依赖清单"，形状立刻分出来了。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>接口</th><th>追踪文件数</th><th>含 <code>src/**</code></th><th>含 <code>AI_MEMORY/</code></th><th>判定</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">/api/admin/traffic（本轮新增）</td><td>1508</td><td>528</td><td><span class="now">修复前 8 → 修复后 0</span></td><td><span class="tag bad">我引入的，已闭</span></td></tr>
+        <tr><td class="mono">/api/admin/journey（本轮新增）</td><td>194</td><td>0</td><td>0</td><td><span class="tag bad">干净</span></td></tr>
+        <tr><td class="mono">/api/admin/stats（既有）</td><td>194</td><td>0</td><td>0</td><td><span class="tag bad">基准</span></td></tr>
+        <tr><td class="mono">/api/admin/support-bundles（既有）</td><td>1507</td><td>528</td><td>0</td><td><span class="tag warn">既有形状，非本轮引入</span></td></tr>
+        <tr><td class="mono">/api/local-assistant/scripts/distribute（既有）</td><td>1507</td><td>528</td><td>0</td><td><span class="tag warn">既有形状</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="split">
+    <div class="card">
+      <h3>我引入的那一条（已修并复验）</h3>
+      <p>面板按应用目录拼台账路径，读文件用了四五种系统调用，构建期追踪认不出边界，就把内部账本整目录抄进发布产物。改法三处：<code>site-traffic.ts</code> 只留一处带 <code>turbopackIgnore</code> 的读取；<code>next.config.ts</code> 把 <code>./AI_MEMORY/**</code> 排出追踪；边界闸的禁止目录名补上 <code>ai_memory</code>。复验：<code>AI_MEMORY</code> 引用 0、产物内该目录 0。</p>
+    </div>
+    <div class="card">
+      <h3>既有那一条（没被我修掉，说实话）</h3>
+      <p>只要服务端"按变量拼路径读文件"，这版 Next 就把 <code>src/**</code> 整片纳入追踪——仓库里已有三条路由同形（1507／528），我的面板只是第四条。风险不是泄漏，是产物变胖，且 <code>standalone</code> 里随时可能出现某个后台接口的源目录，一旦撞上闸内点名的目录名（<code>backup</code>／<code>db</code>／<code>release</code>／<code>copyright</code>／<code>ai_memory</code>），出包链当场红。</p>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">我自己也要勘一条</span>
+    <p>第一次判红里那句"<code>admin\backup</code> 进了发布产物"，<strong>不是面板代码造成的</strong>，是我为了绕开共用依赖把构建根抬到了父目录，害得产物整棵拷进了隔壁 <code>develop/</code>。那种读数一律不能当"能否出包"的依据——已按正确形状重跑并写进 #206 的勘补段。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>顺手撞到的两条坑</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>#207　<code>.env.local</code> 会让出包链假红</h3>
+      <p>同一提交、同一棵树：带 <code>.env.local</code> ⇒ <code>rc=1</code>，报错只说"代理构建里找不到服务端诊断路由"；把它改名 ⇒ <code>rc=0</code>。根因是 <code>.env.local</code> 里 <code>NEXT_PUBLIC_ASSISTANT_DIRECT=1</code> 覆盖了 <code>.env</code> 的 <code>0</code>，把浏览器端那段调用摇掉了；而出包闸只读 <code>.env</code>（<code>verify-client-assistant-contract.cjs:6-8</code>），看不见覆盖，于是红在错误的分支、文案指向错误的方向。服务器侧不受影响（部署脚本只写 <code>.env</code>）。建议改法已写在 #207，动的是共享闸门，没擅自改。</p>
+    </div>
+    <div class="card">
+      <h3>全量类型检查前先看 <code>ls -d pack-*</code></h3>
+      <p>22:09:51 那次全量检查报了几十条 TS 错，逐条读完发现<strong>全部</strong>落在别的手当时留在树里的发布快照目录 <code>pack-7af42303f233/copyright/v1.0/source/**</code>（旧代码快照，且不被 gitignore），与本轮文件相关的 0 条。二十分钟后该目录消失，复跑即绿。另一条：增量缓存会让 <code>tsc</code> 的 rc 变成假绿，本轮两条读数都关增量重跑过。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>下一步（按顺序）</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>由能到服务器的那只手部署测试站</h3>
+        <p>靶子 <code>e93b81f</code>（只含这两块板＋出包链修复）。打包前先去掉 <code>.env.local</code>，先确认树里没有 <code>pack-*</code> 残留。步骤与判据在 <span class="loc">交付档案/交接/交接_20261020_运营台两块板如何上线.md</span>。若改从当前 HEAD <code>7af4230</code> 出包，会多带两笔别人的提交（助手内置寻址、行标识白名单单源化），那两笔我没复验。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>部署后必做的四件真取</h3>
+        <p>两个页签不得 500；<code>/api/admin/traffic</code> 无身份回 403；「用户旅程」应直接出真数（只读库、不依赖文件）；「站点流量」第一屏<strong>预期是空态</strong>，那不是故障。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>流量板要出数，得在服务器配每日采集</h3>
+        <p>台账只在开发机、故意不入库。A 案：服务器上放只读令牌进 root-only 环境文件，配 <code>CF_ANALYTICS_API_TOKEN</code>／<code>CF_ZONE_ID</code>，把 <code>npm run ops:site-traffic</code> 挂成每天早上一条，台账路径用 <code>TYGF_TRAFFIC_LEDGER</code> 指到应用状态目录。B 案：先 scp 这 100 行看一眼，不做常态。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>等 Owner 三句</h3>
+        <p>① <code>origin/develop</code> 落后 <strong>15 笔</strong>（22:12:58 现读），要不要推；② #207 那条闸的改法批不批；③ 生产机 <code>~/.ssh/check_full_nginx.py</code> 里的明文口令要不要立案处置。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>本轮实测：干净分离树出包链（七步，rc=0）、产物起服直调三接口＋首页、五道静态门连扫、两棵树各一次关增量的全量类型检查、逐枚 187 份追踪清单计数。全部为本地读数，未推送、未部署。</p>
+  <p>2026-10-20 22:1x · 文中不含客户名称、密钥与素材内容；令牌仍只在本机 gitignored 文件里，未进任何文档或提交。</p>
+</footer>
+
+</div>
+

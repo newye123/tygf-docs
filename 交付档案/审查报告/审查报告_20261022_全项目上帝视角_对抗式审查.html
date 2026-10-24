@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全项目上帝视角 · 对抗式审查 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:.82rem;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.node b{font-size:.86rem;color:var(--ink)}
+.node.ok{border-left:3px solid var(--ok)}.node.bad{border-left:3px solid var(--bad)}.node.warn{border-left:3px solid var(--warn)}
+.node .st{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.arrow{align-self:center;color:var(--line-strong);font-family:var(--font-mono);font-size:.8rem;text-align:center;display:none}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-22 11:30 +0800</span><span class="sep">/</span><span>全项目六条链</span><span class="sep">/</span><span>风险档 High</span><span class="sep">/</span><span>Round 1/3</span></div>
+  <h1>每个器官都活着，但血液循环没接上</h1>
+  <p class="standfirst">学习有九张表、执行有票据链、计费有报价与结算、发布有门禁与报告、治理有台账——单独看每一段都像有主。把它们首尾接起来，<strong>六条链里没有一条是全程绿的</strong>。最要命的是三处：学习信号在落库但学不出任何东西；助手在跑但批次停在半路；订单建了 14 笔但没有一笔真实的钱走通过。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：打回 ｜ 不接受"项目已能端到端跑通"</span>
+  <p><strong>一句话：</strong>采集活着，学习没开始；助手在跑，账没结完；支付开关开着，收入是 0。这不是某一段代码写坏了，是六条链各有一段"看起来在跑、其实没闭合"。<strong>修复顺序必须先接断点，再谈优化。</strong></p>
+</div>
+
+<div class="contract">
+  <div><b>审查对象</b>：学习 / 执行 / 钱 / 信任 / 发布 / 治理 六条链及其接口</div>
+  <div><b>基线</b>：develop <span class="mono">cad83e4f</span>；生产 <span class="mono">319bc138</span>；测试 <span class="mono">31bed477</span></div>
+  <div><b>改动</b>：0 个文件；只读审查，未跑构建，未动两站</div>
+  <div><b>已证实</b>：12 条（Important 10 / Medium 2）＋ Nit 3</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>六条链，一张总表</h2>
+  <div class="tablewrap"><table>
+    <tr><th>链</th><th>入口</th><th>出口</th><th>状态</th><th>断点</th></tr>
+    <tr><td><strong>学习</strong></td><td>采集在写（24 条）</td><td>用户看不到、规则不生效</td><td><span class="tag bad">红</span></td><td>缺 <span class="mono">finalCode</span>、无聚合调度、无消费方</td></tr>
+    <tr><td><strong>执行</strong></td><td>报价 / 派发在跑</td><td>46 个批次已结算</td><td><span class="tag warn">黄</span></td><td>部分失败回执被拒、停摆批次无人扫</td></tr>
+    <tr><td><strong>钱</strong></td><td>14 笔订单已创建</td><td>0 笔已付</td><td><span class="tag bad">红</span></td><td>支付从未真实走通、开关与红线冲突</td></tr>
+    <tr><td><strong>信任</strong></td><td>票据 / 回执 / 清单门都在</td><td>校验点分散在客户端</td><td><span class="tag warn">黄</span></td><td>批量服务端跳过助手检查、票据失败返 200</td></tr>
+    <tr><td><strong>发布</strong></td><td>门禁与部署报告齐全</td><td>测试站跑错版本</td><td><span class="tag bad">红</span></td><td>测试站 <span class="mono">31bed477</span>，正确修复 <span class="mono">478bae42</span> 未部署</td></tr>
+    <tr><td><strong>治理</strong></td><td>台账 / 全景 / ledger 都在</td><td>指针过期、在办超限</td><td><span class="tag warn">黄</span></td><td>状态文件落后、全景落后 324 笔、wip 3&gt;2</td></tr>
+  </table></div>
+  <div class="callout bad"><strong>为什么用"上帝视角"审：</strong>每段都有自己的本地测试和本地负责人，所以"局部绿"是常态；但没有任何一个测试断言"从用户动作到最终结果"这条完整路径是绿的。这正是"每个点都要连起来"的意义。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>链一 · 学习：采集活着，学习没开始</h2>
+  <div class="chain">
+    <div class="node ok"><b>浏览器采集</b><span class="st">green</span>5 个点静默上报</div>
+    <div class="node ok"><b>同意门</b><span class="st">green</span>fail-closed，事务内复核</div>
+    <div class="node ok"><b>信号落库</b><span class="st">green</span>两站 24 条，最新 08:36</div>
+    <div class="node bad"><b>最终选择</b><span class="st">red</span>24/24 为空</div>
+    <div class="node bad"><b>聚合</b><span class="st">red</span>只 dry-run、无调度</div>
+    <div class="node bad"><b>候选 / 部署</b><span class="st">red</span>0 / 0</div>
+    <div class="node bad"><b>规则解析</b><span class="st">red</span>恒返回空</div>
+    <div class="node bad"><b>用户可见</b><span class="st">red</span>0 个调用者</div>
+  </div>
+  <p><strong>通的这一段要记功：</strong>浏览器缓冲 → <span class="mono">/api/workbench/learning/signals</span> → 归属校验 → 同意门 → <span class="mono">LearningEvidenceSignal</span>，这条路是通的。测试站 16 条、生产 8 条，测试站最新一条落在 10-22 08:36，其中 9 条是 <span class="mono">manifest_bound</span>（10-07 修断链补丁才有的状态）。排版采集也在写：测试 18 次运行 / 863 层，生产 3 次 / 108 层。</p>
+  <p><strong>断的第一刀：采集不带"最终选择"。</strong>聚合器把用户最终选定的码当作唯一学习目标（<span class="mono">src/lib/learning/candidate-aggregator.ts:209</span>、<span class="mono">:262</span>），跑批脚本更硬：<span class="mono">scripts/aggregate-learning-candidates.mjs:120</span> 是 <span class="mono">if (!recommendation.finalCode) continue</span>。而客户端五个采集点（<span class="mono">workbench-view.tsx:1356/1385/1413/2768/3705</span>）没有一个传它；封装 <span class="mono">learning-signal-client.ts:96</span> 只把它默认成 <span class="mono">null</span>。实测两站 24 条信号，<span class="mono">finalCode</span> <strong>24/24 全空</strong>。</p>
+  <p><strong>断的第二刀：就算有值，也没人跑、没人用。</strong>唯一入口 <span class="mono">package.json:146</span> 把 <span class="mono">--dry-run</span> 写死在命令里；<span class="mono">--apply</span> 全仓无调用者；部署机 10 个 tygf systemd 单元里没有聚合任务。<span class="mono">rule-resolver.ts:19-20</span> 恒返回空建议；<span class="mono">LearningRuleDeployment</span> 在非管理端路径 0 引用；<span class="mono">rule-pack/status</span> 前端 0 调用者。六个学习开关只有管理端总览在读（<span class="mono">admin/learning/overview/route.ts:30</span>），不控制任何放行——<strong>"关掉开关就安全"不成立</strong>。</p>
+  <p><strong>断的第三刀：同意面。</strong>门是 fail-closed（<span class="mono">consent-gate.ts:10-14</span>），只在注册时自动授予（<span class="mono">register/route.ts:45-70</span>）；用户侧自助关闭已移除（<span class="mono">consent/route.ts:5</span> 明写"用户侧不允许自助关闭"）。两站 106 个账号只有 14 条同意记录（生产 10/68、测试 4/38），存量账号没人补过。现在没炸，是因为那 34 个测试账号还没做到触发采集的动作；一旦做到，就是静默 403。</p>
+  <div class="callout warn"><strong>修复顺序不能反：</strong><span class="mono">finalCode</span> → 手动聚合入口 → 用户可见的只读成果 → 再谈自动应用。反过来做全是空转。</div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>链二 · 执行：助手在跑，账没结完</h2>
+  <div class="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+    <div class="card"><div class="head"><span class="title">测试站终态率</span><span class="tag bad">28%</span></div><p>112 批：结算 31 / 停摆 52 / 过期 20 / 报价中 9</p></div>
+    <div class="card"><div class="head"><span class="title">生产终态率</span><span class="tag warn">56%</span></div><p>27 批：结算 15 / 停摆 11 / 报价中 1</p></div>
+    <div class="card"><div class="head"><span class="title">停摆批次报价量</span><span class="tag bad">18,574</span></div><p>测试 16,727 / 生产 1,847（未换算成钱）</p></div>
+    <div class="card"><div class="head"><span class="title">部分失败回执被拒</span><span class="tag bad">37 条</span></div><p>测试 37 条语言尝试 / 811 个指派；生产 0</p></div>
+  </div>
+  <p><strong>通的这一段：</strong>生产 157 条语言尝试 <span class="mono">VERIFIED</span>、18 条 <span class="mono">FAILED</span>（89.7%）；测试 407 条 <span class="mono">VERIFIED</span>、3 条 <span class="mono">PARTIAL_VERIFIED</span>、210 条 <span class="mono">FAILED</span>。两站 46 个批次已结算，说明"派发 → 助手执行 → 回执 → 结算"能走通。</p>
+  <p><strong>断的第二刀：部分失败回执被白名单拒收。</strong>助手在多语批次"部分完成"时发 <span class="mono">verificationLevel: 'TEXT_READBACK_VERIFIED'</span>（<span class="mono">v15-runner.js:229/243/249/258</span>；<span class="mono">receipts.js:66</span>；<span class="mono">:1115-1135</span> 进云端载荷）。服务端白名单 <span class="mono">execution-batch.ts:2327</span> 只认 <span class="mono">NONE / PARTIAL / REOPEN_VERIFIED / FAILED</span>，<span class="mono">parseBatchReceipt</span>（<span class="mono">:2363</span>）遇到白名单外字段返回 null，回执路由返 400（<span class="mono">receipt/route.ts:56-58</span>）。</p>
+  <p><strong>断的第三刀：停摆批次没有扫尾的人。</strong><span class="mono">settleExpiredExecutionBatches</span>（<span class="mono">execution-batch.ts:2288</span>）在仓库里只有两个 smoke 脚本调用，没有 timer、没有路由、没有启动钩子。批次一旦停摆，就永远停在那里。</p>
+  <p><strong>另外两处夹缝：</strong>5 分钟放弃围栏（<span class="mono">:949</span>）与多语派发窗口（<span class="mono">:951-974</span>）不一致，晚到回执会被"attempt 已回收"的围栏挡掉（<span class="mono">:1341-1348</span>）；v15 回执 outbox 只把四个 <span class="mono">JOB_*</span> 当永久拒绝（<span class="mono">report-outbox.js:7-12</span>），而服务端会返 <span class="mono">SETTLEMENT_*</span> 409——不在终态集合里，重试 10 天后静默丢弃。</p>
+  <div class="callout"><strong>止血顺序：</strong>先把 <span class="mono">TEXT_READBACK_VERIFIED</span> 加进白名单（一个常量），再重投测试站那 37 条回执，最后给停摆批次做一次只读盘点。否则每多跑一批，就多几笔"助手说完成了、云端说没收到"的账。</div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>链三 · 钱：没有一笔真实的钱走通过</h2>
+  <div class="tablewrap"><table>
+    <tr><th>项目</th><th>实测</th><th>含义</th></tr>
+    <tr><td>生产订单</td><td class="code">14 笔</td><td>5 笔取消（¥25,950 / 30,200 积分）、9 笔已创建（¥23,910 / 25,000 积分）</td></tr>
+    <tr><td>已付 / 已确认</td><td class="code">0 笔</td><td>报价 → 支付 → 回调 → 入账 → 结算，没有一笔真钱验证过</td></tr>
+    <tr><td>积分账户</td><td class="code">授予 32,000 / 已用 2,995 / reserved 0</td><td>手工授予为主；预留与 63 个未终态批次对不上（未决）</td></tr>
+    <tr><td>生产支付开关</td><td class="code">3 个 true</td><td><span class="mono">creditPacksEnabled</span>、<span class="mono">manualQrFallbackEnabled</span>、<span class="mono">manualPaymentConfirmationEnabled</span></td></tr>
+    <tr><td>代码默认</td><td class="code">3 个 false</td><td><span class="mono">src/config/featureFlags.ts:26/29/35</span>；AGENTS 红线也要求 false</td></tr>
+  </table></div>
+  <div class="callout bad"><strong>这是本次最需要 Owner 一句话的地方：</strong>生产三个支付开关是开着的，但代码默认是关的、红线也要求关，而且本次没找到明批记录。<strong>若未明批，按红线应立即回 false；若已批，请说一句，并把批准写进台账。</strong>否则下一个人会把它当事故处理。</div>
+  <p><strong>另一个对不上的数（未决）：</strong>账户表 <span class="mono">reserved</span> 全为 0，可两站还有 63 个未终态批次、挂着 18,574 的报价量。预留到底记在哪张表、有没有释放，本次没对清。不排除"预留根本没落账户表"，也不排除"释放了但批次没结算"——这两种对用户的含义完全不同。</p>
+</section>
+
+<section>
+  <h2><span class="num">05</span>链四 · 信任：合同很全，强制点分散</h2>
+  <p><strong>已经做对的：</strong>执行清单 digest、行标识白名单、回执 digest、脚本 digest、运行时来源这些门都在，相关 smoke 也在跑；两站 <span class="mono">/api/runtime-provenance</span> 都能报出 BOUND 与版本。这是整个项目里做得最扎实的一段。</p>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">F-11a</span><span class="tag warn">Medium</span><span class="tag warn">服务端跳过</span></div>
+      <p><strong>批量门控在 canary/production 跳过助手检查。</strong><span class="mono">batch-execution-mode.ts:211-215</span> 直接返回 enabled，不做 ping、不比版本、不比构建 / 报告合同；这些检查只在 <span class="mono">local_test</span> 分支（<span class="mono">:218-235</span>）和单语执行入口（<span class="mono">execute/route.ts:68-92</span>）做。注释给的理由"服务端访问不到用户回环地址"成立，但结果是：<strong>服务端没有替代判据，旧客户端或绕过浏览器的请求只能靠客户端自己守。</strong></p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-11b</span><span class="tag warn">Medium</span><span class="tag info">设计如此</span></div>
+      <p><strong>票据校验失败返 200。</strong><span class="mono">ticket/verify/route.ts</span> 大多数失败分支返回 HTTP 200 + <span class="mono">valid:false</span>（<span class="mono">:56/63/72/86/97/125/134/174/179/191/219/228/245/269/276/283/311/314/317/321/393/396/419/422</span>）。这本身是设计，但任何把"HTTP 200"当"通过"的下游都会误判。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-11c</span><span class="tag warn">Medium</span><span class="tag warn">版本缺口</span></div>
+      <p><strong>回执与票据路由不看助手版本。</strong>本次 grep 只在单语 execute 路由看到 <span class="mono">compareAssistantVersions</span>，票据与回执路由没有版本判据。助手 3.7.20 与 3.7.21 的载荷形状差异，服务端只能靠白名单兜底。</p>
+    </div>
+  </div>
+  <p class="muted">自动更新仍未实现（仓内没有签名私钥接入点，升级仍是换安装包）。这是已知项，不算本次新发现，但它让"版本门"更依赖用户手动升级。</p>
+</section>
+
+<section>
+  <h2><span class="num">06</span>链五 · 发布：测试站验的不是要发的版本</h2>
+  <div class="tablewrap"><table>
+    <tr><th>位置</th><th>SHA</th><th>时间</th><th>状态</th></tr>
+    <tr><td>生产 <span class="mono">main</span></td><td class="code">319bc138</td><td>10-21 10:25</td><td>已挂号（TASK_LOG:321 + 部署报告）；落后 develop 45 笔</td></tr>
+    <tr><td>开发 <span class="mono">develop</span></td><td class="code">cad83e4f</td><td>10-22 10:58</td><td>最新；含正确字体修复 <span class="mono">478bae42</span></td></tr>
+    <tr><td>测试站</td><td class="code">31bed477</td><td>10-22 10:53</td><td><strong>台账判为"反过来的处置"</strong>：改文案绕过字体子集门</td></tr>
+    <tr><td>正确修复</td><td class="code">478bae42</td><td>10-22 10:57</td><td>在 develop，<strong>未部署</strong></td></tr>
+  </table></div>
+  <p><strong>后果：</strong>测试站现在验的是一个"用改文案绕过生成物检查"的版本，而生产验的是 45 笔之前的版本。<strong>测试站上绿的，不等于要发的那版绿；生产上跑的，也不是 develop 的最新。</strong>这条链目前没有"哪一版是候选发布版"的单一答案。</p>
+  <p><strong>回滚与备份：</strong>生产部署目录里没有 <span class="mono">restore-release.sh</span>，部署脚本自己写 "database rollback is manual"（<span class="mono">deploy/deploy-release.sh:521</span>）；<span class="mono">/var/www/tygf-backups</span> 最新一份是 9-18；没有备份 timer。好消息是 pre-schema 备份在：<span class="mono">pre-schema-20261021-111708-...db</span>，12,996,608 B。<strong>有备份，但没有演练过的恢复路径。</strong></p>
+  <div class="callout warn"><strong>测试站对账 timer 已死 15 天：</strong><span class="mono">tygf-test-photoshop-reconcile</span> 每 10 分钟跑一次，从 <strong>10-07 21:11</strong> 起持续 403 <span class="mono">INVALID_RESPONSE</span>，7 天 1000 次失败；30 天里只有 202 次成功。nginx 测试站 key 门认 <span class="mono">$arg_key</span> 或 <span class="mono">$cookie_tygf_gate</span>，timer 的请求没带对凭证。这条 timer 负责的对账，15 天没真正跑过。</div>
+</section>
+
+<section>
+  <h2><span class="num">07</span>链六 · 治理：现状没有单一可信来源</h2>
+  <ul class="plain">
+    <li><strong>状态指针过期。</strong>根 <span class="mono">AI_MEMORY/CURRENT_STATUS.md:1</span> 还写着 10-20：测试 <span class="mono">6a268fe</span>、生产 <span class="mono">6ff5c3c</span>、develop <span class="mono">f98818f</span>——现为 <span class="mono">31bed477 / 319bc138 / cad83e4f</span>。</li>
+    <li><strong>能力全景过期。</strong><span class="mono">总控/产品功能全景_20261003.md</span> 是最新一份，基线 <span class="mono">7b5355e</span>，距当前 HEAD <strong>324 笔</strong>；它自己的页眉写着"每工作日首巡必核"，已经三周没核。</li>
+    <li><strong>ISSUES 标题没回写。</strong>#216 的 <span class="mono">auth/me</span> 返回面在代码里已收窄（<span class="mono">auth/me/route.ts:22-27</span>），标题仍按未修写，下一个人会重复立案。</li>
+    <li><strong>在办超限。</strong><span class="mono">ledger.jsonl</span> 在办 3 条，超过自定上限 2；<span class="mono">BATCH-CHAIN-V4</span> 到期日 10-21 已过，仍在"进行中"。</li>
+  </ul>
+  <div class="callout"><strong>后果：</strong>上面五条链的"现状"没有一处能只读一个文件就答对。这也是为什么同一个问题会在不同会话里被反复重新发现。</div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>已证实的缺陷（12 条 + Nit 3）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>归属</th></tr>
+    <tr><td>F-1</td><td><span class="tag bad">Important</span></td><td class="code">workbench-view.tsx:1356/1385/1413/2768/3705；learning-signal-client.ts:96</td><td>五个采集点都不传 <span class="mono">finalCode</span>，聚合器恒无目标值，候选规则永远 0</td><td>两站 24 条信号 <span class="mono">finalCode</span> 24/24 空；候选/版本/部署三表 0 行</td><td>存量</td></tr>
+    <tr><td>F-2</td><td><span class="tag bad">Important</span></td><td class="code">package.json:146；rule-resolver.ts:19-20；admin/learning/overview/route.ts:30</td><td>聚合只跑 dry-run、无 timer；解析器恒空；6 个开关不控制放行</td><td>全仓 <span class="mono">--apply</span> 0 调用者；10 个 systemd 单元无聚合</td><td>存量</td></tr>
+    <tr><td>F-3</td><td><span class="tag bad">Important</span></td><td class="code">register/route.ts:45-70；consent/route.ts:5；consent-gate.ts:10-14</td><td>注册即同意、用户不能自助撤回、存量 92/106 账号无同意记录</td><td>两站 14 条同意 / 106 账号；审计 4 行全 register</td><td>存量（产品决策）</td></tr>
+    <tr><td>F-4</td><td><span class="tag bad">Important</span></td><td class="code">execution-batch.ts:2288</td><td>停摆批次无人扫尾，终态率测试 28% / 生产 56%</td><td>测试 52 停摆 / 20 过期；生产 11 停摆；63 个未终态</td><td>存量</td></tr>
+    <tr><td>F-5</td><td><span class="tag bad">Important</span></td><td class="code">execution-batch.ts:2327；v15-runner.js:229/243/249/258；receipt/route.ts:56-58</td><td>部分失败回执带 <span class="mono">TEXT_READBACK_VERIFIED</span>，被白名单拒收返 400，批次因此停摆</td><td>测试 37 条尝试 / 811 个指派命中；生产 0</td><td>存量</td></tr>
+    <tr><td>F-6</td><td><span class="tag bad">Important</span></td><td class="code">report-outbox.js:7-12；attempt/report/route.ts</td><td><span class="mono">SETTLEMENT_*</span> 409 不在终态集合，outbox 重试 10 天后静默丢弃</td><td>服务端返回码与 outbox 集合逐项比对</td><td>存量</td></tr>
+    <tr><td>F-7</td><td><span class="tag bad">Important</span></td><td class="code">featureFlags.ts:26/29/35；生产 SiteSetting</td><td>生产三个支付开关为 true，代码默认 false，红线要求 false；0 笔已付</td><td><span class="mono">valueJson</span> 实读；14 单 0 已付</td><td>存量（是否明批未核实）</td></tr>
+    <tr><td>F-8</td><td><span class="tag bad">Important</span></td><td class="code">部署机 systemd / nginx</td><td>测试站对账 timer 自 10-07 21:11 起 403，15 天未真正对账</td><td>7 天 1000 次 <span class="mono">INVALID_RESPONSE</span>；30 天 202 次成功</td><td>存量</td></tr>
+    <tr><td>F-9</td><td><span class="tag bad">Important</span></td><td class="code">31bed477 vs 478bae42；CHANGELOG.md:7；ISSUES.md:1636</td><td>测试站部署了台账判为"错误处置"的绕行版；正确修复未部署；生产落后 45 笔</td><td><span class="mono">git log</span> 两支；<span class="mono">rev-list main..HEAD</span>=45</td><td>本次引入（10-22 10:53）</td></tr>
+    <tr><td>F-10</td><td><span class="tag warn">Medium</span></td><td class="code">execute-step.tsx:786</td><td>报价单位 &gt;1500 时 <span class="mono">quoteCreditsForBatch</span> 抛错，<span class="mono">useMemo</span> 无 catch，页面崩溃而非提示</td><td>调用点实读；<span class="mono">rules.ts:153</span> 抛 <span class="mono">BILLING_STANDARD_ROWS_EXCEEDED</span></td><td>存量（#222）</td></tr>
+    <tr><td>F-11</td><td><span class="tag warn">Medium</span></td><td class="code">batch-execution-mode.ts:211-215；ticket/verify/route.ts；execute/route.ts:68-92</td><td>批量服务端跳过助手 ping / 版本；票据失败返 200；票据/回执无版本判据</td><td>分支实读；24 处 200 返回点</td><td>存量</td></tr>
+    <tr><td>F-12</td><td><span class="tag bad">Important</span></td><td class="code">deploy-release.sh:521；部署机备份目录</td><td>生产无恢复脚本、无备份 timer，回滚靠人手；最近全量备份目录停在 9-18</td><td><span class="mono">ls</span> / <span class="mono">systemctl</span> 只读</td><td>存量</td></tr>
+    <tr><td>N-1</td><td><span class="tag info">Nit</span></td><td class="code">CURRENT_STATUS.md:1；产品功能全景_20261003.md</td><td>状态指针落后两代，全景落后 324 笔</td><td>三处 HEAD 实读</td><td>存量</td></tr>
+    <tr><td>N-2</td><td><span class="tag info">Nit</span></td><td class="code">ISSUES.md #216</td><td>代码已修，标题仍按未修写，容易被重复立案</td><td><span class="mono">auth/me/route.ts:22-27</span></td><td>存量</td></tr>
+    <tr><td>N-3</td><td><span class="tag info">Nit</span></td><td class="code">ledger.jsonl</td><td>在办 3 条超上限 2，<span class="mono">BATCH-CHAIN-V4</span> 已过到期日</td><td>逐条取最后状态</td><td>存量</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">09</span>更正（本轮推翻了此前的说法）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>原说法</th><th>反证</th><th>新结论</th></tr>
+    <tr><td>本会话早前：生产 <span class="mono">319bc138</span> 在治理台账 0 命中，属未挂号</td><td><span class="mono">grep -rn 319bc138 AI_MEMORY 总控 交付档案</span> 命中 <span class="mono">TASK_LOG.md:321</span> 与部署报告；该提交就是 <span class="mono">main</span> tip</td><td><strong>已挂号，原判断作废。</strong>发布链问题收窄为 F-9</td></tr>
+    <tr><td>10-22 10:2x 学习报告：测试站 BOUND <span class="mono">8d81d877</span></td><td>11:0x 复读公网＋回环＋pm2，均为 <span class="mono">31bed477</span></td><td>第一次读发生在新部署之前；<strong>以 31bed477 为准</strong></td></tr>
+    <tr><td>早前：v1.5 全程没有版本门</td><td>单语执行入口 <span class="mono">execute/route.ts:68-92</span> 有 ping＋版本比较</td><td><strong>不成立。</strong>缺口只在批量 canary/production 跳过检查</td></tr>
+    <tr><td>早前：批量回执 10 天后静默丢弃</td><td><span class="mono">server.js:4350-4405</span> 已对批量回执做永久拒绝分类</td><td><strong>只适用于 v15 report-outbox</strong>（F-6），批量回执那一路已缓解</td></tr>
+    <tr><td>ISSUES #216 标题暗示未修</td><td><span class="mono">auth/me/route.ts:22-27</span> 已只返回三个字段</td><td><strong>代码已修</strong>，只剩标题回写（N-2）→ <strong>14:4x 已回写</strong>（拆成"按 develop 代码算已修、按运行态算未修"，因两站未部署）</td></tr>
+    <tr><td><strong>F-9</strong>「测试站部署了被判为错误处置的绕行版 <code>31bed477</code>」</td><td><code>git merge-base --is-ancestor 478bae42 ad38603f</code> ⇒ <strong>rc=0</strong>；测试站 13:46 实测 <code>BOUND@ad38603f</code> ⇒ 正确修复已在<strong>现役构建</strong>内</td><td><strong>已闭环</strong>，本条结案</td></tr>
+    <tr><td><strong>F-11</strong>「批量服务端跳过助手 ping／版本校验」</td><td>路径不存在（实际 <code>src/lib/server/batch-execution-mode.ts</code>）；批量浏览器链 <code>batch-execution-client.ts:189-191</code> 调 <code>detectAssistant()</code>，两分支都执行 <code>assertAssistantCompatible</code>（<code>local-assistant-client.ts:621/628</code>），不匹配即禁用批量（<code>:231-236</code>）；服务端对 canary/production 不 ping 是 <code>:208-210</code> 注释言明的分工</td><td><strong>证伪</strong> ⇒ 建议动作 7 的该项<strong>取消</strong>，不修不存在的问题</td></tr>
+    <tr><td><strong>F-12</strong>「生产无恢复脚本、无备份 timer」</td><td><code>find /var/www/tygf* -name restore-release.sh</code> ⇒ 现役与上一版各一枚；唯一 <code>*backup*</code> 定时是系统自带 <code>dpkg-db-backup.timer</code>；<code>db-backup/</code> 最新为 <code>pre-schema-…</code>＝部署时手动快照</td><td><strong>半句证伪</strong>：缺的是<strong>定时备份</strong>与<strong>演练过的恢复</strong>（→ T-6）</td></tr>
+    <tr><td><strong>F-6</strong>「终态码丢弃无持久留痕」</td><td><code>server.js:196-207</code> 把 warn/error 镜像进 <code>logs/engine.log</code> ⇒ 那行<strong>有</strong>日志。但实测更严重：排水函数 catch（<code>:4497</code>）引用 try 内 <code>const authorization</code>（<code>:4469</code>）⇒ <strong>命中终态码即抛 ReferenceError</strong>，末尾写盘（<code>:4503</code>）永不执行、整轮中止；调用点用 <code>void</code> 且 <code>unhandledRejection</code>／<code>uncaughtException</code> 钩子各 <strong>0 处</strong>；全仓<strong>零测试</strong>触达</td><td><strong>加重</strong>：从"无声丢弃"升级为"<strong>一条终态码就让排水永久停摆且无信号</strong>"，另立 <strong>#247</strong></td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">10</span>未决与覆盖缺口</h2>
+  <p><strong>未决（还缺什么证据）：</strong></p>
+  <ul class="plain">
+    <li><strong>U-1 生产三个支付开关是谁开的、是否 Owner 明批。</strong>缺批准记录或 Owner 一句话。未明批即按红线回 false。</li>
+    <li><strong>U-2 63 个停摆批次的逐批直接根因。</strong>本次只把其中一类归到回执白名单（测试 37 条尝试）；其余 26 个测试批次、11 个生产批次没有逐批读 attempt 与回执时间线。</li>
+    <li><strong>U-3 报价预留在哪张表。</strong>账户 <span class="mono">reserved</span> 全 0，与 63 个未终态批次、18,574 报价量对不上。缺预留写入面与释放面的实读。</li>
+    <li><strong>U-4 生产 319bc138 的部署操作者与审批链。</strong>有 TASK_LOG 与报告，但谁执行、谁批准未核。</li>
+    <li><strong>U-5 助手 exe 二进制未审计。</strong>只看了 <span class="mono">server.js</span> / <span class="mono">v15-runner.js</span> 明文层；3.7.21 安装包未做二进制比对。</li>
+    <li><strong>U-6 测试站 nginx 对账 key 应该配哪个。</strong>只确认 403 与 key 门有关，未确认正确凭证的来源与轮换方式。</li>
+    <li><strong>U-7 用户侧学习成果展示要做到什么程度。</strong>产品决策，需要 Owner 定。</li>
+  </ul>
+  <p><strong>覆盖缺口（本次明确没检查的）：</strong></p>
+  <ul class="plain">
+    <li>只读审查：没跑 <span class="mono">tsc</span>、lint、任何 <span class="mono">test:*</span>，也没做浏览器端到端或真机 Photoshop 执行。</li>
+    <li>没有逐条审法务文本与隐私政策原文；同意部分只引代码语义与库内记录。</li>
+    <li>没有审计支付渠道回调日志（因为 0 笔已付，没有样本可审）。</li>
+    <li>生产库只取了聚合计数与少量原行，没有全量导出；测试站库同样。</li>
+    <li>没有审 45 笔 develop 领先提交的逐笔内容，只看了与六条链直接相关的几笔。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">11</span>建议动作（按依赖顺序）</h2>
+  <div class="callout ok"><strong>如果只能做三件事：</strong></div>
+  <ol class="plan">
+    <li><strong>给 <span class="mono">finalCode</span> 接线</strong>（五个采集点 + 新增"用户改译"采集点），再给聚合一个手动 dry-run 入口。这是学习链从"记录"变"学习"的唯一前提。</li>
+    <li><strong>把 <span class="mono">TEXT_READBACK_VERIFIED</span> 加进服务端白名单</strong>（<span class="mono">execution-batch.ts:2327</span> 一个常量），部署后重投测试站那 37 条回执；同时给停摆批次做一次只读盘点，按"回执未落 / 结算未扫 / 助手超时"三分类。</li>
+    <li><strong>确认三个支付开关</strong>；未明批就回 false。0 笔已付之前，对外不能说"可支付"。</li>
+  </ol>
+  <p><strong>然后按这个顺序：</strong></p>
+  <ol class="plan" start="4">
+    <li>部署 <span class="mono">478bae42</span>（正确字体修复）到测试站，替换 <span class="mono">31bed477</span> 的绕行版；生产等下一次窗口，并把"候选发布版"写成一个明确的 SHA。</li>
+    <li>修测试站对账 timer 的 key/403；补备份 timer 与一份演练过的 restore 脚本（先测试站演练）。</li>
+    <li>学习出口：<span class="mono">rule-pack/status</span> 接到 UI（只读展示，不碰执行权），并让 Owner 定用户自助开关的产品语义。</li>
+    <li>信任链：把版本/构建合同检查补到批量服务端，或明确记录"由浏览器强制"并加守卫；票据/回执路由加版本判据。</li>
+    <li>治理：更新 <span class="mono">CURRENT_STATUS</span> 与全景基线，把 wip 压到 2，回写 ISSUES 标题。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">12</span>本次审查自身的失误</h2>
+  <div class="callout bad">
+    <p><strong>一条只读 grep 在读取两站环境配置时，把本机 <span class="mono">.env</span> 里的支付签名密钥值打印到了本机会话记录里。</strong>该值没有写入任何文件、没有进本报告、没有发送飞书、没有提交。<strong>建议轮换该密钥</strong>；后续所有密钥探针只按变量名与存在性检查，不读值。</p>
+  </div>
+  <div class="footer">
+    <div>证据说明：代码与提交类为本会话在 <span class="mono">worktrees/develop</span> 实读的 <span class="mono">file:line</span> 与 git 输出（等级 A）；运行态类为 2026-10-22 09:40—11:30 对两站的只读查询（等级 A）。</div>
+    <div>本报告不含任何密钥、口令、webhook、客户素材内容或域名；服务器路径只保留判断所必需的目录名。审查者不占人类批准名额。</div>
+    <div>图译工坊内测版 · 全项目上帝视角对抗式审查 · Round 1/3 · 2026-10-22</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>中文 SERP 前排形态与百度收录在场性</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{color-scheme:light dark}
+hr.rule{border:0;border-top:1px solid rgba(127,127,127,.35);margin:26px 0}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid rgba(127,127,127,.28);padding:9px 10px;text-align:left;vertical-align:top;font-size:14px}
+h3{margin-top:22px}
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style></head><body><div class="wrap"><div class="masthead"><div class="eyebrow">测量记录 · 2026-10-17 夜（含二次更正）</div><div class="standfirst">四词 76 条前排读数：产品/工具落地页只占 1.3%；site:tuyigf.com 双次复采 0 条；品牌词 20 条 0 条本站</div><div class="meta"><span class="sn">引擎＝百度 · 载体＝Tabbit 已登录浏览器</span><span class="sn">分类器 tmp/serp-classify.js 可复跑</span><span class="sn">Google/Bing/360/搜狗 未测（未核实）</span></div></div><div class="verdict"><div class="lb">结论</div><p>更正：#131 指针本是对的，我拿 develop 账同号案去对才判错——这正是根账 #137 立案的现象</p></div><ul class="notes">
+<li>测量人：本会话（GEO / 对外文案线）</li>
+<li>取数时刻：2026-10-17 23:03—23:1x（本地钟点，命令回显见文末）</li>
+<li>载体：Tabbit 已登录浏览器（<code>tabbit-cli.exe</code>，任务名 <code>serp-probe</code>），引擎＝百度网页搜索（www.baidu.com）</li>
+<li>原始件：<code>tmp/serp_r1.json</code>、<code>tmp/serp_r4.json</code>、<code>tmp/serp_r5.json</code>、<code>tmp/serp_r6</code>（复采）；分类器 <code>tmp/serp-classify.js</code></li>
+</ul>
+<h2>一、为什么做这次测量</h2>
+<p>Owner 今夜给的两个链接（X 帖 + bysocket.com/saas-seo-playbook）指向同一本册子《AI 工具站 SEO 小册子：图解入门》。册子第 1、2、3、5、6 章反复只讲一件事：<strong>页面形态不是你决定的，是 SERP 前排决定的</strong>（第 1 章 <code>chapters/01-seo-is-a-system.md:104</code> 原文「这个不是你决定的，是谷歌 SERP 决定的」；第 3 章 <code>:70-76</code>「不要自己脑补页面类型，先看 SERP 前排结果」）。</p>
+<p>我们此前所有对外动作都缺这一层读数——词表有（<code>交付档案/宣传与运营/答复_20261014_SEO-GEO关键词与自查词表.md</code> 第二/三档），但从未实测过"这些词在搜索结果里由什么形态的页面承接"。所以本轮学完第一件事就是把它量出来。</p>
+<h2>二、读数一：四个中文词的 76 条前排结果由什么形态承接</h2>
+<p>分类脚本 <code>tmp/serp-classify.js</code>，按标题尾缀与站点名归桶，两种算法各数一遍（逐桶相加＝逐词相加＝76）。</p>
+<div class="scrollx"><table><thead><tr><th>词</th><th>条数</th><th>形态分布（本词内）</th></tr></thead><tbody>
+<tr><td>PSD 批量改语言</td><td>18</td><td>其他 4 / 问答 3 / 技术博客 3 / 教程资讯站 3 / 官方帮助 2 / 文库·精选笔记 2 / 产品工具落地页 1</td></tr>
+<tr><td>PSD 批量替换文字</td><td>20</td><td>官方帮助 4 / 教程资讯站 3 / 视频 3 / 文库·精选笔记 3 / 其他 2 / 问答 2 / 技术博客 2 / 广告 1</td></tr>
+<tr><td>多语言 PSD 设计稿</td><td>20</td><td><strong>素材下载站 14</strong> / 技术博客 3 / 其他 2 / 问答 1</td></tr>
+<tr><td>psd 批量改文字 电商</td><td>18</td><td>问答 5 / 技术博客 4 / 官方帮助 3 / 文库·精选笔记 2 / 教程资讯站 2 / 其他 2</td></tr>
+</tbody></table></div>
+<p>跨词合计（76 条）：</p>
+<ul class="notes">
+<li>素材下载站 14（18.4%）</li>
+<li>技术博客（CSDN / 51CTO）12（15.8%）</li>
+<li>问答（知道 / 经验 / 贴吧）11（14.5%）</li>
+<li>其他未归类 10（13.2%）</li>
+<li>Adobe 官方帮助 9（11.8%）</li>
+<li>教程资讯站（PHP 中文 / ZOL / 太平洋）8（10.5%）</li>
+<li>文库·精选笔记（百度自有）7（9.2%）</li>
+<li>视频 3（3.9%）</li>
+<li><strong>产品／工具落地页 1（1.3%）</strong></li>
+<li>广告 1（1.3%）</li>
+</ul>
+<p>四条判定，每条对得上读数：</p>
+<ul class="notes">
+<li><strong>「批量改文字」这组词由教程式内容承接，不由产品页承接。</strong> 教程形态（博客＋问答＋文库＋资讯站）合计 38/76＝50%；产品／工具落地页全表只有 1 条（「在线PS网页版」，出现在 <code>PSD 批量改语言</code> 第 10 位）。</li>
+<li><strong>我们首页 title 改得再准，也接不到这组词</strong>——前排没有任何一个产品首页形态的赢家可以去模仿。这一条把「改了白改」从"写面被覆盖"（<code>src/lib/server/site-settings.ts:255-271</code> deepMerge 数组整替＋生产 Content Studio 写锁 <code>:360-366</code>）往下又压了一层：白改的第二重原因是<strong>承接形态不存在</strong>。</li>
+<li><strong>「多语言 PSD 设计稿」不是我们的词。</strong> 20 条里 14 条是素材站（我图网／千图网／觅知网／千库网），用户要的是可下载模板。册子第 5 章「我不覆盖什么」（<code>chapters/05-keyword-research-to-topic-map.md:47</code>「第四个问题很重要」）在这里正好用得上：这条应当写进 Entity 排除项，不该再为它做任何页面。</li>
+<li><strong>PS 原生路线（变量／数据组／批处理）确实在前排赢着。</strong> <code>PSD 批量替换文字</code> 第 11 位标题＝「Photoshop批量替换PSD文件中的文字并转成JPEG图片…多变量+文字数据组替换+批处理」，<code>psd 批量改文字 电商</code> 第 12 位＝「用"变量",1分钟生成100张电商主图」。这条与昨日独立发现的 Data-Driven Graphics 竞争轴对上，现在有了 SERP 侧证据，不再只是推断。</li>
+</ul>
+<h2>三、读数二：百度对本站的收录在场性</h2>
+<ul class="notes">
+<li><code>site:tuyigf.com</code>：<strong>0 条</strong>。双次采样同值（首次与强刷后各一次），两次都拿到完整页面（HTML 668,015 / 658,548 字符）、正文含「没有找到相关结果」、结果节点 0、无安全验证页。所以这不是空白页假读数。</li>
+<li>品牌词 <code>图译工坊</code>：20 条前排结果，<strong>0 条是本站</strong>（脚本计数 <code>OWN_BRAND_MENTIONS=0</code>）。</li>
+</ul>
+<p>品牌词前排被谁占着（原样抄标题）：</p>
+<ul class="notes">
+<li>美译工坊（<code>ios.lbgpmb.cn</code>）</li>
+<li><strong>智图工坊 - 跨境电商内容工作台（<code>www.zhitugf.com</code>）</strong></li>
+</ul>
+<p>其余为图片翻译类：Easy Translator / PicChat / 易可图 / 福昕在线翻译 / 百度翻译 / Figma Image Translator，加 2 条 GitHub 截图翻译小工具。</p>
+<p>两点必须点名：</p>
+<ul class="notes">
+<li><strong>同名邻居是真的</strong>：<code>https://www.zhitugf.com/</code> 实测 HTTP 200、正文 97,070 字节，title「智图工坊 - 跨境电商内容工作台」，description「翻译、修图、标题、套图、视频一站完成」。域名构词（<code>zhitugf.com</code>）与品牌名（「X图工坊」）都与本站同构，且它已被百度收录、在<strong>我们的品牌词</strong>结果里排第 8。这是品牌混淆敞口，不是 SEO 优化项。</li>
+<li><strong>品牌词被语义邻居占领</strong>＝豆包把「图译工坊」讲成 ImageTrans 的同一件事在搜索侧的形态：站外没有任何"我们是谁"的语料时，引擎按字面把「图／译／工坊」拆给图片翻译类。这条把昨天 GEO 的结论从"AI 答案错"扩展到"搜索引擎也错，且错法一致"。</li>
+</ul>
+<h2>四、诚实边界（未核实项，不写成结论）</h2>
+<ul class="notes">
+<li>Google／Bing／360／搜狗侧的收录与形态<strong>未测</strong>，本轮只测百度。</li>
+<li><code>site:</code> 返回 0 不等于"站点无法被收录"——百度站长验证文件在仓库里是存在的（<code>public/baidu_verify_codeva-eNLQKp1jN0.html</code>），但站长后台的收录/推送状态本机无只读手段可查。</li>
+<li>仓库里<strong>没有</strong>百度主动推送脚本（<code>ls scripts</code> 只有 <code>submit-indexnow.mjs</code>，<code>package.json:144</code> 只有 <code>seo:indexnow</code> 一个 SEO 入口），<code>grep -rn "BAIDU" scripts src .env.example</code> 0 命中 ⇒ 百度推送通道从未接入，不是断了，是没建。</li>
+<li>旧记录纠偏（<strong>本条为二次更正，第一次更正本身是错的</strong>）：<code>答复_20261014_SEO-GEO关键词与自查词表.md</code> 写「百度入口 #131 链路间歇不通」——<strong>这个指针是对的</strong>，指根账 <code>AI_MEMORY/ISSUES.md:127</code>（百度站长验证持续失败）。我先前判它"指向错件"，是因为我用 <code>worktrees/develop/AI_MEMORY/ISSUES.md:235</code> 去对号，而那一本的 #131 是「<code>worktrees/develop/tmp</code> 藏 10 GB 导致 develop build 不可用」。<strong>同一个编号在两本账里是两个案子</strong>，这正是根账 #137（<code>AI_MEMORY/ISSUES.md:80-85</code>「双账本记忆断裂致对外误判」）立案的现象，本轮由我自己复现了一次。⇒ 引 <code>#NNN</code> 必须带账本名（根账／develop 账），单写编号不可判。</li>
+<li>册子正文只到第 6 章（GitHub 树 61 个文件，<code>chapters/</code> 下只有 00-01、00-02、01、02、03、04、05、06 八个 md）；第 24 章「AI 搜索时代的 SEO 与 GEO」<strong>只在目录里</strong>（<code>OUTLINE.md:226-232</code>），正文未发布。所以"这本册子教了 GEO"不成立，本轮从它那里拿到的 GEO 增量只有目录级一句「品牌、实体与一致的事实信号」，引用时不得当作正文。</li>
+</ul>
+<h2>五、复现命令</h2>
+<p>```</p>
+<p>TAB="C:/Users/ivan/AppData/Local/Tabbit/LocalAgent/bin/tabbit-cli.exe"</p>
+<p>cd 本仓库/tmp</p>
+<p>"$TAB" nodejs --task serp-probe --request-id r4 --timeout-ms 180000 &lt; serp-probe3.js &gt; serp_r4.json</p>
+<p>"$TAB" nodejs --task serp-probe --request-id r5 --timeout-ms 120000 &lt; serp-index-presence.js &gt; serp_r5.json</p>
+<p>node tmp/serp-classify.js "F:/工具开发/图译工坊内测版/tmp"</p>
+<p>```</p>
+<p>分类器是纯字符串归桶，不联网；重跑只依赖上面三个 json 是否在位。词表写在 <code>serp-probe3.js</code> 第 2 行的 <code>terms</code> 数组里，改词即复用。</p><div class="notes"><p>由同目录 md 生成 · 面向 Owner 的阅读件 · 数字与状态以平台回显及代码 file:line 为准</p></div></div></body></html>

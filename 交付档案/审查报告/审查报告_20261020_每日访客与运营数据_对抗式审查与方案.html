@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日访客与运营数据 · 现状盘点与方案 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.05rem;color:var(--ink)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.28rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1.02rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-size:1.28rem;font-weight:600;line-height:1.3}
+.stat .n{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.85em;overflow-wrap:anywhere}
+.tablewrap{max-width:100%}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .id{font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.card .title{font-weight:600}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.card p{font-size:.94rem;color:var(--ink-2)}
+.card .fix{font-size:.9rem;color:var(--ink)}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.gate{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:.9rem}
+.gate .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.gate.bad .dot{background:var(--bad)}
+.gate code{margin-left:auto;font-family:var(--font-mono);font-size:.78rem;color:var(--muted)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout strong{color:var(--ink)}
+ol.plan{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px}
+ol.plan li{color:var(--ink-2)}
+ol.plan li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 运营数据审查</span><span class="sep">/</span><span>2026-10-20 11:2x</span><span class="sep">/</span><span>master@2120d62 · develop@c96bc25</span></div>
+  <h1>每日访客与运营数据：现状盘点与方案</h1>
+  <p class="standfirst">GitHub 上的现成方案逐个核到官方前置条件，站内五条数据面逐条实测到 <span class="mono">file:line</span>。结论与既有草案 OBS-2 冲突，冲突处给证据不给面子。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">结论</span>
+  <p><strong>今天没有任何地方能看到「每天的访客」。</strong>官网一行统计代码都没埋（全仓埋点关键词 <span class="mono">0 命中</span>）；服务器日志有原始行但在 Cloudflare 后面去不了重；Cloudflare 其实每天都在算访客，只是没人把它接出来。我不建议现在上 Umami / Plausible / Matomo——Plausible 与 Matomo 官方前置都要 2 GB 内存起，等于独占你这台 1 核 2G 的生产机；<strong>既有 Umami 草案里「复用一个 Postgres 库」这句是事实错误，全仓根本没有 Postgres（生产是 SQLite 单文件库）</strong>。最短路径是零改动的 1 小时：用 Cloudflare 只读分析接口每天拉一行账。</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span>本会话实测到的硬事实</h2>
+  <div class="stats">
+    <div class="stat bad"><span class="k">前端埋点</span><span class="v">0 命中</span><span class="n">umami/gtag/plausible/cloudflareinsights</span></div>
+    <div class="stat"><span class="k">生产站在</span><span class="v">Cloudflare</span><span class="n">curl -I 实测 Server: cloudflare</span></div>
+    <div class="stat bad"><span class="k">生产数据库</span><span class="v">SQLite</span><span class="n">schema.prisma:13 · server-setup.sh:62</span></div>
+    <div class="stat warn"><span class="k">生产机要求</span><span class="v">1 核 / 2 G</span><span class="n">deploy/部署三步走.md:5</span></div>
+    <div class="stat bad"><span class="k">现格式</span><span class="v">无 $host</span><span class="n">两站日志混在一卷 · ?key 明文</span></div>
+    <div class="stat ok"><span class="k">CF 分析保留</span><span class="v">≥30 天</span><span class="n">2026-10-13 起含免费套餐</span></div>
+  </div>
+  <div class="callout"><strong>取数时刻与出处：</strong>埋点复跑＝<span class="mono">grep -rniE "umami|plausible|googletagmanager|gtag|dataLayer|microsoftclarity|hotjar|51\.la|cnzz|cloudflareinsights" --include=*.ts --include=*.tsx --include=*.js --include=*.mjs --include=*.json src public config next.config.ts package.json</span> → 0 行输出；响应头与 CSP 同拍 <span class="mono">curl -I https://tuyigf.com/</span>（实测 <span class="mono">script-src 'self' 'unsafe-inline'</span>、<span class="mono">CF-RAY …-LAX</span>）；漏斗 90 天复跑 <span class="mono">src/app/api/workbench/funnel/event/route.ts:152</span>。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>五张数据面：有什么、在哪看、能不能当访客</h2>
+  <div class="tablewrap"><table>
+    <tr><th>数据面</th><th>现状</th><th>在哪看</th><th>能算每日访客？</th><th>证据</th></tr>
+    <tr><td>官网前端埋点</td><td>零。无任何第三方统计依赖，CSP 也只放 <span class="code">'self'</span></td><td>—</td><td><span class="tag bad">不能</span></td><td class="code">本会话 grep 0 命中 · next.config.ts:17</td></tr>
+    <tr><td>服务器访问日志</td><td>有原始行（时间/IP/UA/完整 URI 含 query），按卷轮转</td><td>SSH 上机 grep，无聚合器</td><td><span class="tag bad">去不了重</span> IP 全在 CF 段、无 <span class="code">$host</span>、<span class="code">?key=</span> 明文未修</td><td class="code">deploy/nginx/security-logging.patch.md:8-15</td></tr>
+    <tr><td>Cloudflare 边缘</td><td>每天都在采（站点头实测在 CF 后）</td><td>CF 控制台；GraphQL Analytics API</td><td><span class="tag warn">有数但口径待定</span> 按天、含爬虫、不按路径分</td><td class="code">curl -I 回显 · 字段形状待实测</td></tr>
+    <tr><td>站内业务事实</td><td>申请/发码/激活/登录会话/漏斗/批次/订单齐全</td><td><span class="code">/admin</span> 看板＋收入面板</td><td><span class="tag bad">不是访客</span> 只有注册过的人，面板无 UV/PV 字段</td><td class="code">schema.prisma:249/:417/:179 · api/admin/stats</td></tr>
+    <tr><td>搜索与 AI 爬虫</td><td>半成品脚本，需人工喂日志</td><td>手动跑 <span class="code">ai-crawler-log-report.mjs</span></td><td><span class="tag bad">不是访客</span></td><td class="code">脚本:3-4 自陈「JS 统计对爬虫读数恒为 0」</td></tr>
+  </table></div>
+  <div class="callout"><strong>顺带查出两个真缺口：</strong><span class="mono">BetaApplication</span> 没有 <span class="mono">source / utm / referrer</span> 列（<span class="mono">schema.prisma:249-278</span>），官网表单也不写来源（本会话 grep <span class="mono">utm|referrer|landing_page</span> 对 schema 与该路由 0 命中）。⇒ <strong>即使明天有了访客数，也答不出"这人从知乎还是小红书来"</strong>。这是获客归因的地基，比选哪个统计工具更值钱。</div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>对抗式审查：四道硬闸（任一不过即出局）</h2>
+  <div class="gates">
+    <div class="gate"><span class="dot"></span>G1 隐私：不新增境外处理方；改目的须登记清单<code>observability/README §1</code></div>
+    <div class="gate bad"><span class="dot"></span>G2 资源：1 核 2G ＋ SQLite 单库，新增常驻服务要自证内存<code>部署三步走.md:5</code></div>
+    <div class="gate bad"><span class="dot"></span>G3 泄漏面：<span class="code">?key=</span> 明文进日志已卡正式发布，不许复制到新存储<code>ISSUES #120 / F061</code></div>
+    <div class="gate"><span class="dot"></span>G4 口径可证伪：UV 去重键必须说清，不许把 API/助手轮询算成访客<code>本次自加</code></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>九个候选，逐个判</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>方案</th><th>G1</th><th>G2</th><th>G3</th><th>G4</th><th>F×E×C</th><th>判定</th></tr>
+    <tr><td>A</td><td>只看现有 <span class="code">/admin</span></td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>3×5×5</td><td><span class="tag info">保留</span> 但它不回答本题</td></tr>
+    <tr><td>B</td><td>手工登 CF 控制台看</td><td>⚠️</td><td>✅</td><td>✅</td><td>⚠️</td><td>3×5×3</td><td><span class="tag warn">今天可看</span> 手工、不可回溯</td></tr>
+    <tr><td>C</td><td><strong>CF GraphQL API 每日拉一行</strong></td><td>⚠️ 目的待定</td><td>✅ 无常驻服务</td><td>✅ 不回写不存 IP</td><td>⚠️ 需实测去重键</td><td>4×5×3.5</td><td><span class="tag ok">首选</span> 最便宜，直接接现有飞书日报</td></tr>
+    <tr><td>D</td><td>CF Web Analytics（beacon）</td><td>❌ 需你拍</td><td>✅</td><td>✅ 不记 query</td><td>✅</td><td>4×3×4</td><td><span class="tag warn">次选</span> 代价＝CSP 一行＋政策一行；且<strong>拿不到 UTM</strong></td></tr>
+    <tr><td>E</td><td>自托管 Umami（既有草案 OBS-2）</td><td>✅</td><td>❌ <strong>不过闸</strong></td><td>⚠️</td><td>✅</td><td>4.5×2×4</td><td><span class="tag bad">暂缓</span> v3 只支持 PostgreSQL ≥12.14，不支持 SQLite/MySQL；草案「复用 Postgres」＝事实错误</td></tr>
+    <tr><td>F</td><td>自托管 Plausible CE</td><td>✅</td><td>❌ 官方要求 ≥2 GB RAM</td><td>✅</td><td>✅</td><td>—</td><td><span class="tag bad">出局</span> 独占整机</td></tr>
+    <tr><td>G</td><td>自托管 Matomo</td><td>✅</td><td>❌ 官方最低 2 核 2G＋PHP＋MySQL</td><td>✅</td><td>✅</td><td>—</td><td><span class="tag bad">出局</span></td></tr>
+    <tr><td>H</td><td>自建 PageView 表写进现有 SQLite</td><td>✅</td><td>⚠️ 写锁面扩大</td><td>❌ 脱敏要自己实现</td><td>⚠️ 去重/bot/保留期全重造</td><td>3.5×2.5×3</td><td><span class="tag bad">否</span> 本仓已在保留期上踩出六种失效形态</td></tr>
+    <tr><td>I</td><td>本地跑 nginx 日志聚合</td><td>✅</td><td>✅</td><td>❌ 前置未清</td><td>❌ IP 归属不可判</td><td>3×3×2</td><td><span class="tag warn">另归类</span> 它是必须先修的基建，不是分析工具</td></tr>
+  </table></div>
+  <p class="muted">F＝契合度 E＝上线省力 C＝数据可信度，各 1–5。评分只用于排序，四道硬闸才是淘汰依据。</p>
+</section>
+
+<section>
+  <h2><span class="num">05</span>先砍我自己：两版被推翻的初稿</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="id">初稿一</span><span class="title">「照既有 OBS-2 草案上 Umami」</span><span class="tag bad">已推翻</span></div>
+      <p>理由看着最硬——它是盘上已写好的批准件，看起来最省事。三个口子砍穿：① 前提错，全仓没有 Postgres 可复用；② 1 核 2G 上新增一个数据库引擎＝给主站新增一种死法（备份/磁盘/OOM 各多一笔）；③ JS 类统计对 AI 爬虫恒为 0，而我们正在做 GEO 与出海——脚本自己的注释就写了这句。</p>
+      <div class="fix"><strong>处置：</strong>草案 §3 那句必须更正，§0 表格补标 v3 的 DB 前置。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">初稿二</span><span class="title">「自建一张 PageView 表，最省依赖」</span><span class="tag bad">已推翻</span></div>
+      <p>被 G3＋写锁面砍掉：访客写流并进生产主库会扩大写锁面（本仓刚吃过"生产写锁 5 入口 403"的亏），而 query 脱敏、UV 去重、bot 过滤、保留期治理全要自己重造一遍——所谓"顺手"就是把别人踩过的坑再踩一次。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">审查留下的判断</span><span class="title">真正的阻塞不是缺工具，是缺一条按日落账的账</span><span class="tag info">核心</span></div>
+      <p>本仓已经证明过这件事两次：快照面画不出曲线（<span class="code">UserActivityProjection</span> 只有 <span class="code">lastActivityAt/lastRunAt</span>，schema:100-121），而真正跑得动的东西都是"一天一行 jsonl"那种形态（<span class="code">northstar-ledger.jsonl</span>）。⇒ 正确产物形状是<strong>一张每日运营账 ＋ 每天早上飞书一句话</strong>，不是一块 Grafana 大屏。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>运营还要看哪些数据：七层（标出真缺）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>层</th><th>要看什么</th><th>回答的问题</th><th>现状</th><th>数据源</th></tr>
+    <tr><td>L1 在场性</td><td>每日访客/浏览、来源、着陆页、热门页、地域、设备、新老访客</td><td>有没有人来、从哪来、看哪页</td><td><span class="tag bad">真缺</span></td><td>无埋点；CF 有原始数未接</td></tr>
+    <tr><td>L2 获客归因</td><td>渠道/UTM → 表单 → 发码 → 激活</td><td>哪个渠道带来可用用户</td><td><span class="tag bad">真缺（两层都缺）</span></td><td>需给申请表补一列</td></tr>
+    <tr><td>L3 激活漏斗</td><td>申请→发码→激活→下载→首次跑通，逐日分渠道</td><td>卡在第几步</td><td><span class="tag warn">只有快照</span> 事件 90 天保留、看板只读最近 1000 条</td><td><span class="code">/api/admin/stats</span></td></tr>
+    <tr><td>L4 产品健康</td><td>首跑成功率（第一指标）、批次失败/STALLED、助手版本分布</td><td>装上去能不能用</td><td><span class="tag ok">已有·半手工</span></td><td><span class="code">总控/工具/northstar-*</span></td></tr>
+    <tr><td>L5 留存回访</td><td>次日/7 日回访、活跃周趋势、流失前最后动作</td><td>来人会不会再来</td><td><span class="tag warn">半有</span> 能算但没人落每日行</td><td><span class="code">LoginSession</span> :179-195</td></tr>
+    <tr><td>L6 收入成本</td><td>订单/GMV/客单/退款/套餐构成（含同期）、积分消耗、AI 调用成本</td><td>有没有人付钱、每单多少钱</td><td><span class="tag ok">已有</span></td><td><span class="code">/api/admin/revenue-stats</span> · <span class="code">AiTokenUsage</span></td></tr>
+    <tr><td>L7 稳定防伪</td><td>5xx 与慢请求、bot 占比、共机去重、收录与在场性</td><td>数据能不能信、服务在不在</td><td><span class="tag warn">半有</span> 现日志格式无 <span class="code">$request_time</span> ⇒ 时延一直测不了</td><td>探针在跑、爬虫月报需喂日志</td></tr>
+  </table></div>
+  <p class="muted">口径纪律：UV 与 PV 不许混称"访问量"；环比必须写明对比区间；百分比变化必须同时给绝对值；每个数标取数时刻。</p>
+</section>
+
+<section>
+  <h2><span class="num">07</span>建议动作：三档，按代价排</h2>
+  <ol class="plan">
+    <li><strong>档一 · 今天，0 改动，约 1 小时可验收。</strong>你自己在 CF 控制台把时间范围拉到 30 天看一眼（今天唯一零成本能看到的一类访客读数——站内从没存过它，我无凭据）。或者给我一个<strong>只读 Analytics Token</strong>（只进服务器 root-only 环境文件，禁进仓库），我做 <span class="mono">scripts/site-traffic-daily.mjs</span>：按 hostname 拉每日 <span class="mono">uniques / pageViews / requests</span> 落一行到账本，并每天早上推飞书一句人话——「昨天官网 X 个访客、Y 次浏览，申请 N 条，激活 M 台」。<strong>验收：</strong>同窗两次幂等；没实测到的字段不写进口径；脚本只出聚合计数，不打印 IP/UA 原文。</li>
+    <li><strong>档二 · 本周，与发布闸同一批。</strong>nginx 日志三件事：格式加 <span class="mono">$host</span> 与 <span class="mono">$request_time</span>、<span class="mono">?key=</span> 类参数脱敏（含 Referer 第二泄漏面）、<span class="mono">set_real_ip_from</span> CF 段＋<span class="mono">real_ip_header CF-Connecting-IP</span>。这件事本来就已卡正式发布，不该为统计单独立项；做完才有分站、真实 IP（UV 才成立）、AI 爬虫事实源、可测时延。<strong>判据：</strong>单行测得 host 非空、key 值为 REDACTED、出现非 CF 网段 IP，<span class="mono">nginx -t</span> rc=0 且两站首页都过。<strong>注意该补丁动 http 块会同时影响两站日志 ⇒ 需你授权。</strong></li>
+    <li><strong>档三 · 等你拍过合规再动。</strong>CF Web Analytics beacon（CSP 加一行放行、Next.js 客户端路由要手动补 <span class="mono">track()</span>、<strong>拿不到 UTM、暂不支持自定义事件</strong>）；Umami 若要上，先把"生产引入 Postgres"当独立立项（备份/保留期/监控/内存），并更正草案那句"复用 Postgres"。Plausible / Matomo / 自建 PageView 表本方案判死，不建议再排期。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">08</span>需要你一句话的两件事（我不自行放宽）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="id">决策 1</span><span class="title">把访问行为数据交给 Cloudflare 分析，算不算要重新告知的"目的变更"？</span><span class="tag warn">阻塞档一与档三</span></div>
+      <p>现红线写的是"只自托管、不接任何第三方 SaaS"。但这条红线当时<strong>没有考虑一个事实</strong>：Cloudflare 早已作为"网络加速与安全防护"登记在《第三方处理方清单》里（<span class="code">subprocessors/page.tsx:52-57</span>，EN 版 <span class="code">:61-66</span>），请求本来就已经过它。</p>
+      <div class="fix">若你判「补一行用途说明即可」⇒ 档一今天可走、beacon 一周内可上。若你判「行为数据一律不出服务器」⇒ 唯一出路是先解决 Postgres 再上 Umami，代价按档三重算。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">决策 2</span><span class="title">授权动生产 nginx 吗？</span><span class="tag warn">阻塞档二</span></div>
+      <p>同机会影响生产与测试两站日志格式；且这项改动本身就与"卡正式发布"的那件案子同源。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">09</span>未核实清单（不当依据）</h2>
+  <div class="cards">
+    <div class="card"><p>CF 是否已为 <span class="code">tuyigf.com</span> 开启分析、免费额度下 <span class="code">uniques</span> 的确切去重键、是否把爬虫计入 ⇒ <strong>未核实</strong>（本会话无凭据）。</p></div>
+    <div class="card"><p><span class="code">httpRequests1dGroups</span> 字段形状与可回溯长度：取自 2026-06 第三方实操帖，<strong>非官方 schema</strong> ⇒ 落地前必须实测一次再定口径。</p></div>
+    <div class="card"><p>Caddyfile 与 nginx 谁在生效：仓内两套配置都在，现场证据指向 nginx ⇒ Caddy 状态<strong>未核实</strong>。</p></div>
+    <div class="card"><p>生产机当前剩余内存/磁盘：<span class="code">1 核 2G</span> 是部署文档要求值，非本会话实测读数。</p></div>
+    <div class="card"><p>本次只按 0 命中 grep 判定"当前无埋点"，未追溯历史上是否曾以其他方式接过统计。</p></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div>取数会话：2026-10-20 11:2x，容器根 <span class="mono">master@2120d62</span> ／ <span class="mono">worktrees/develop@c96bc25</span>。</div>
+  <div>外部依据：Umami 官方安装文档（PostgreSQL ≥12.14，无 SQLite/MySQL）、Plausible Community Edition 仓库前置（≥2 GB RAM）、Matomo 官方 requirements（2 CPU / 2 GB / PHP 8.1+）、Cloudflare Web Analytics 文档与 FAQ（beacon 采集、免费全套餐、不记 query string、无自定义事件）、Cloudflare 2026-10-13 changelog（所有套餐 ≥30 天域名分析数据）。</div>
+  <div>纪律：结论均带本会话实测出处；未取到数的一律写「未核实」，不当派工判据。</div>
+</footer>
+
+</div>
+</body>
+</html>

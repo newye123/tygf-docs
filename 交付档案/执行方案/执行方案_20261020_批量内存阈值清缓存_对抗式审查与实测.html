@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量内存阈值清缓存：GitHub 参考与对抗式审查（2026-10-20）</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#16181d; --muted:#5b6472; --line:#e3e6ea;
+    --accent:#2f6feb; --ok:#177245; --warn:#9a6a00; --bad:#b3261e;
+    --ok-bg:#eaf6ef; --warn-bg:#fdf5e3; --bad-bg:#fdeceb; --code:#f1f3f6;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1216; --panel:#151a20; --ink:#e8eaee; --muted:#9aa4b2; --line:#252b33;
+      --accent:#7aa2ff; --ok:#4cc38a; --warn:#e0b252; --bad:#ff7b72;
+      --ok-bg:#13251c; --warn-bg:#2a2312; --bad-bg:#2b1716; --code:#1b222a;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 64px}
+  header.top{margin-bottom:28px}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{font-size:28px;line-height:1.3;margin:10px 0 8px;font-weight:700}
+  .sub{color:var(--muted);font-size:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin:18px 0}
+  h2{font-size:17px;margin:0 0 12px;font-weight:700}
+  h3{font-size:14px;margin:18px 0 8px;font-weight:650;color:var(--muted);letter-spacing:.02em}
+  p{margin:10px 0}
+  .verdict{display:grid;grid-template-columns:1fr;gap:12px}
+  .verdict .headline{font-size:20px;font-weight:700;line-height:1.45}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;vertical-align:middle;margin:0 6px 4px 0}
+  .pill.ok{background:var(--ok-bg);color:var(--ok)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn)}
+  .pill.bad{background:var(--bad-bg);color:var(--bad)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .stat{background:var(--code);border-radius:10px;padding:12px 14px}
+  .stat .n{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;letter-spacing:.04em;color:var(--muted);font-weight:650;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  code{background:var(--code);border-radius:5px;padding:1px 6px;font-size:12.5px;
+    font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+  .gates{display:grid;gap:10px}
+  .gate{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:start;
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--code)}
+  .gate .tag{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+  .callout{border-left:3px solid var(--accent);background:var(--code);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout.bad{border-left-color:var(--bad)}
+  .notes{font-size:13px;color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  footer.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  @media (max-width:760px){ .stats{grid-template-columns:repeat(2,1fr)} .two{grid-template-columns:1fr} h1{font-size:23px} .wrap{padding:26px 16px 48px} .gate{grid-template-columns:1fr} table{font-size:12.5px} th,td{padding:8px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">图译工坊 · 执行方案 · 对抗式审查</div>
+    <h1>批量内存到阈值后清缓存：行不行？</h1>
+    <div class="sub">GitHub 参考 + Photoshop 22 真机实测（20 稿小稿 + 2 GB 级大稿）+ 六面审查 · 2026-10-20 · 产品代码零改动</div>
+  </header>
+
+  <section class="card verdict">
+    <div class="headline">结论：打回。2 GB 大稿也一样：历史 19→2，私有内存 12,795.7→12,796.7 MB，0 释放；ALLCACHES 也 0。大稿确实把 PS 水池从 8.4 GB 抬到 12.4 GB，但后续大稿复用、不按稿累加。清缓存依旧无效。</div>
+    <div>
+      <span class="pill bad">VERDICT 打回</span>
+      <span class="pill bad">大稿 purge 后 0 变化</span>
+      <span class="pill ok">20 / 20 未衰减</span>
+      <span class="pill warn">未提交 / 未部署</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">0 MB</div><div class="l">大稿清历史前后私有内存变化</div></div>
+      <div class="stat"><div class="n">19 → 2</div><div class="l">大稿历史条数（清是执行了的）</div></div>
+      <div class="stat"><div class="n">12.4 GB</div><div class="l">大稿抬高的常驻水位；关稿只回 368.6 MB</div></div>
+      <div class="stat"><div class="n">+0 / +36.8 MB</div><div class="l">后续大稿复用池子（3 开 2 稿）</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>审查头部</h2>
+    <table>
+      <tbody>
+        <tr><th>VERDICT</th><td>打回</td></tr>
+        <tr><th>范围</th><td>非 git 提案审查（产品代码 0 改动）｜小稿 20 稿 + 2.53 / 2.78 GB 大稿实测｜Round 1/3；证据与源文件指纹见 md 附录 A</td></tr>
+        <tr><th>改动</th><td>产品 0 文件；新增探针脚本 5 个、证据 14 份（复制到交付档案，均不接入产品）</td></tr>
+        <tr><th>风险档</th><td>High（若实施，会触碰共享 Photoshop 的用户撤销、剪贴板与批次时序）</td></tr>
+        <tr><th>已证实</th><td>10 条（Important 8 / Nit 1 / Pre-existing 1）</td></tr>
+        <tr><th>未决</th><td>4 条（PS 2023/2024；CLIPBOARDCACHE；176 MB 全像素母版与 20 稿大稿批；GitHub 全量检索）</td></tr>
+        <tr><th>覆盖缺口</th><td>无产品集成测试；单一 PS 22.0.0 / Windows / 一台机器；大稿只测 2 份、3 次开/关、未跑完整执行器；未测 100 稿以上或多批并发</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>0 · 先回答「行不行」：不行，不是阈值没调好</h2>
+    <p>不是「阈值调高一点就能用」，是<strong>动作本身不产生想要的效果</strong>。PS 22 的 <code>HISTORYCACHES</code>/<code>UNDOCACHES</code> 清的是撤销/历史记录条目，不是进程内存池；<code>ALLCACHES</code> 还会清剪贴板。</p>
+    <table>
+      <thead><tr><th>时点</th><th>文档</th><th>动作</th><th>工作集</th><th>私有内存</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>0</td><td>基线（上一批跑完、无文档）</td><td>3,983.8 MB</td><td>8,407.9 MB</td></tr>
+        <tr><td>1</td><td>0</td><td>清历史 <code>HISTORYCACHES</code>，42 ms</td><td>3,983.8 MB</td><td>8,407.9 MB</td></tr>
+        <tr><td>2</td><td>0</td><td>清撤销 <code>UNDOCACHES</code>，0 ms</td><td>3,983.8 MB</td><td>8,407.9 MB</td></tr>
+        <tr><td>3</td><td>1</td><td>打开测试稿 ag_out.psd</td><td>3,988.9 MB</td><td>8,411.8 MB</td></tr>
+        <tr><td>4</td><td>1</td><td>改 30 个文字层，历史 32 条</td><td>3,994.2 MB</td><td>8,481.4 MB</td></tr>
+        <tr><td>5</td><td>1</td><td>清历史，45 ms，历史 32→2</td><td>3,994.2 MB</td><td>8,481.4 MB</td></tr>
+        <tr><td>6</td><td>0</td><td>关闭测试稿（不保存）</td><td>3,990.5 MB</td><td>8,411.4 MB</td></tr>
+        <tr><td>7</td><td>0</td><td>再清历史，41 ms</td><td>3,990.5 MB</td><td>8,411.4 MB</td></tr>
+        <tr><td>8</td><td>0</td><td>再清撤销，0 ms</td><td>3,990.5 MB</td><td>8,411.4 MB</td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad">
+      <strong>内对照：</strong>历史记录确实从 32 条清到 2 条，证明 purge 执行了；但私有内存 8,481.4 MB 一位没降。真正降内存的是「关闭文档」：−70 MB。而每稿执行器在 <code>TYGF_V15_Thin_Executor.jsx:262</code> 已经关文档了。
+    </div>
+    <p class="notes">另做了一轮无文档延迟观察：清一次历史后 0/5/15/30 秒四个时点，工作集都是 3,990.5 MB、私有内存都是 8,411.5 MB，没有「等一会儿才降」。</p>
+  </section>
+
+  <section class="card">
+    <h2>1 · 2 GB 级大稿补测：清缓存还是 0，但水池确实变高了</h2>
+    <p>Owner 指出「现在文件都比较小，2 GB 一份会不一样」。这个质疑成立一半：大稿确实把 PS 常驻水位抬高，但清缓存依然一分不还。</p>
+    <p class="notes">测试稿 A：2.53 GB PSB，2161×5239，16 个顶层图层，打开 74 秒。新建透明层后对左上角 2000×2000 连续填色 5 次，历史 2→19（真实像素历史），再清历史 / ALLCACHES。</p>
+    <table>
+      <thead><tr><th>时点</th><th>文档</th><th>动作</th><th>工作集</th><th>私有内存</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>0</td><td>基线（小稿测试后）</td><td>7,634.6 MB</td><td>12,097.2 MB</td></tr>
+        <tr><td>1</td><td>1</td><td>打开 2.53 GB PSB（74 s）</td><td>7,989.0 MB</td><td>12,433.8 MB</td></tr>
+        <tr><td>2</td><td>1</td><td>新建层 + 5 次 2000×2000 填色，历史 2→19</td><td>8,182.4 MB</td><td>12,795.7 MB</td></tr>
+        <tr><td>3</td><td>1</td><td><code>HISTORYCACHES</code>，87 ms，历史 19→2</td><td>8,182.4 MB</td><td>12,796.7 MB</td></tr>
+        <tr><td>4</td><td>1</td><td>3 号之后 30 秒</td><td>8,181.5 MB</td><td>12,794.6 MB</td></tr>
+        <tr><td>5</td><td>1</td><td><code>ALLCACHES</code>，49 ms</td><td>8,181.5 MB</td><td>12,794.6 MB</td></tr>
+        <tr><td>6</td><td>1</td><td>5 号之后 30 秒</td><td>8,181.5 MB</td><td>12,794.7 MB</td></tr>
+        <tr><td>7</td><td>0</td><td>关闭文档（不保存）</td><td>7,817.9 MB</td><td>12,426.0 MB</td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad">
+      <strong>四条读数：</strong>① 清历史 19→2，私有内存 0 释放；<code>ALLCACHES</code> 也 0。② 大稿把无文档水位从 8.4 GB 抬到 12.4 GB。③ 同稿两轮、不同稿一轮都复用池子（+0 / +36.8 MB），未见按稿累加。④ 关文档只归还 368.6 MB 工作集，不归还 12.4 GB 水池。
+    </div>
+    <p class="notes"><strong>安全边界：</strong>大稿轮只在剪贴板为纯文本时调用 <code>ALLCACHES</code>，先备份、后还原并回读校验（<code>clipboardPreserved=true</code>）；<code>CLIPBOARDCACHE</code> 仍未调用；全程不保存、<code>DONOTSAVECHANGES</code> 关闭、不杀进程。大稿 A 的 SHA-256 跑前跑后一致，大稿 B 的 mtime 未被写。</p>
+    <p class="notes"><strong>限定：</strong>只测了 2 份大稿、3 次开/关，不是 20 稿大稿批，也没在 2 GB 稿上跑完整文字替换/保存链。它能回答「purge 在大稿上是否有效」，不能回答「20 份 2 GB 稿连跑是否衰减」。</p>
+  </section>
+
+  <section class="card">
+    <h2>2 · GitHub 开源参考：找到什么，为什么不能直接用</h2>
+    <table>
+      <thead><tr><th>项目 / 来源</th><th>它实际做什么</th><th>对本问题</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/IgorMundstein/WinMemoryCleaner">WinMemoryCleaner</a></td><td>Windows 系统级内存清理；空闲物理内存低于阈值时自动清理；需要管理员</td><td>不适用：系统级、管理员、非 PS 专用；不改 PS 私有内存</td><td>B</td></tr>
+        <tr><td><a href="https://github.com/henrypp/memreduct">memreduct</a></td><td>系统级实时内存管理，监控并清理整个系统</td><td>不适用：权限与副作用不可控</td><td>B</td></tr>
+        <tr><td><a href="https://github.com/MisakaCirno/photoshop_deep_cleaner_plus">photoshop_deep_cleaner_plus</a></td><td>清 PSD 元数据、智能对象、文件体积</td><td>语义不同：它清文件，不清内存</td><td>B</td></tr>
+        <tr><td><a href="https://community.adobe.com/t5/photoshop-ecosystem-discussions/how-to-accelerate-speed-reduce-runtime-of-gigantic-photoshop-batches-scripts/m-p/13913869">Adobe Community 批处理脚本</a></td><td>循环末尾调用 <code>app.purge(ALLCACHES/CLIPBOARDCACHE/HISTORYCACHES/UNDOCACHES)</code></td><td>只有代码，没有前后内存读数；<code>ALLCACHES</code> 还会清剪贴板</td><td>C</td></tr>
+        <tr><td><a href="https://gist.github.com/laryn/0a1f6bf0dab5b713395a835f9bfa805c?permalink_comment_id=3576802">laryn gist 评论</a></td><td>约 20 张图后内存 90%，建议关历史记录</td><td>只是线索；我们的执行器每稿关文档，历史随文档释放</td><td>C</td></tr>
+        <tr><td>本仓 20 稿真机</td><td>20/20 成功，末 5 稿中位耗时 −4.6%，失败率不升</td><td>直接证据：这批负载没有衰减</td><td>A</td></tr>
+        <tr><td>本仓 2 GB 级大稿</td><td>历史 19→2，私有内存 0 释放；池子复用不累加</td><td>直接证据：大稿上 purge 仍无效</td><td>A</td></tr>
+      </tbody>
+    </table>
+    <p class="notes">没有找到成熟的「Photoshop 内存到阈值 → 自动清缓存」开源实现；找到的两类都不对口（系统级清理器、PSD 文件清理器）。GitHub 代码搜索需登录、API 也遇到限流，因此本次检索<strong>不是穷尽式的</strong>；但本机小稿 + 大稿实测已经足以判死这个动作。</p>
+  </section>
+
+  <section class="card">
+    <h2>3 · 六面对抗式审查</h2>
+    <table>
+      <thead><tr><th>面</th><th>会怎么失败</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td>重复建设 / 安慰剂</td><td>PS 每稿已经关文档；purge 只是把已随文档释放的历史再删一遍</td><td>打回：小稿无文档零变化；大稿 19→2 仍 0 释放，<code>ALLCACHES</code> 也 0</td></tr>
+        <tr><td>写侧强制力</td><td>清缓存失败/卡住会不会把「这稿失败」放大成「整批失败」</td><td>动作本身无效，不必讨论挂载点；若硬挂，必须 try/catch + 超时，不能影响回执</td></tr>
+        <tr><td>危险动作</td><td>文档开着清历史＝毁用户撤销；<code>ALLCACHES</code>＝清剪贴板；自动重启＝关未保存文档</td><td>三条都不可接受。purge 是 Application 级方法，没有「只清当前文档」参数</td></tr>
+        <tr><td>外泄面</td><td>日志写内存读数、attemptId、文档名、路径</td><td>沿用现有脱敏口径：只写 attemptId/batchId + 数字，不写文档名/路径</td></tr>
+        <tr><td>并发 / 时序</td><td>批量串行、用户同时用 PS、两枚 PS 实例、COM 连错实例</td><td>批量虽串行，但用户仍可能开文档；purge 无法只清自己的稿；多实例下连到哪枚不可控</td></tr>
+        <tr><td>更便宜反方案 / 判据</td><td>什么都不做也行；或只暂停 + 请用户手动重启</td><td>小稿 20 稿 + 大稿 3 次开/关都支持「什么都不做」；判据「清后内存降 ≥100 MB」实测 0 MB，不成立</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <strong>两个工程事实：</strong>purge 不慢（0–87 ms），问题是无效；工作集少报（小稿 3,990 vs 私有 8,411 MB；大稿 8,182 vs 12,795 MB），以后做任何内存告警都不能只看任务管理器。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4 · Findings（只列有证据的缺陷）</h2>
+    <table>
+      <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>证据等级</th></tr></thead>
+      <tbody>
+        <tr><td>F-01</td><td>Important</td><td><code>probe-purge.cjs:239</code></td><td>文档开着清历史：32→2，私有内存 8,481.4 MB 不变；用户丢了撤销，也没换回内存</td><td>A</td></tr>
+        <tr><td>F-02</td><td>Important</td><td><code>probe-purge-wait.cjs:90</code></td><td>无文档清历史/撤销是空操作；0/5/15/30 秒四个时点内存全不变</td><td>A</td></tr>
+        <tr><td>F-03</td><td>Important</td><td><code>TYGF_V15_Thin_Executor.jsx:262</code></td><td>执行器每稿已关文档；关文档实测释放 70 MB。提案动作发生在唯一有效动作之后</td><td>A</td></tr>
+        <tr><td>F-04</td><td>Important</td><td>Adobe Application.purge 文档</td><td>purge 是 Application 级、无文档参数；共享 PS 上会连用户撤销一起删</td><td>B + A</td></tr>
+        <tr><td>F-05</td><td>Important</td><td>Adobe PurgeTarget 文档</td><td>若用 <code>ALLCACHES</code>，会连剪贴板一起清；<code>CLIPBOARDCACHE</code> 明确「CLEAR THE CLIPBOARD」</td><td>B</td></tr>
+        <tr><td>F-06</td><td>Important</td><td><code>analysis.json:44</code></td><td>阈值无依据：20 稿工作集 +0.5%、失败率 0→0；4 GB 每稿触发，6 GB 永不触发</td><td>A</td></tr>
+        <tr><td>F-07</td><td>Pre-existing</td><td>第 2 节三个 GitHub 链接</td><td>开源参考不对口：系统级清理器要管理员；PSD 清理器清文件；社区片段没有前后读数</td><td>B / C</td></tr>
+        <tr><td>F-08</td><td>Nit</td><td><code>memory-probe.cjs:193-197</code></td><td>现有读数只记工作集，不记私有内存；同一时刻少报约一半</td><td>A</td></tr>
+        <tr><td>F-09</td><td>Important</td><td><code>probe-large-purge.cjs</code></td><td>2.53 GB PSB、5 次真实像素历史（2→19）后清 <code>HISTORYCACHES</code>（19→2）与 <code>ALLCACHES</code>，私有内存 0 释放；关文档只回落 368.6 MB</td><td>A</td></tr>
+        <tr><td>F-10</td><td>Important</td><td><code>probe-large-cycle.cjs</code></td><td>大稿把无文档水位从 8,408 MB 抬到 12,060–12,426 MB 后不随关稿退回；旧的 12 GB 私有内存阈值会在每个大稿边界误触发。但池子复用（+0 / +36.8 MB），未见按稿累加</td><td>A</td></tr>
+      </tbody>
+    </table>
+    <div class="two">
+      <div>
+        <h3>未决</h3>
+        <p class="notes">PS 2023/2024 未测；<code>CLIPBOARDCACHE</code> 因会清剪贴板仍未测（<code>ALLCACHES</code> 已带剪贴板备份补测，仍 0）；176 MB 全像素母版与 20 稿大稿批未测；GitHub 代码检索不完整。</p>
+      </div>
+      <div>
+        <h3>覆盖缺口</h3>
+        <p class="notes">没有产品代码改动，所以没有集成测试；只有 PS 22.0.0 + Windows + 一台机器；大稿只测 2 份、3 次开/关，未跑完整执行器；没有在用户文档开着时清历史（刻意避免）；没有测 100 稿以上或多批并发。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>5 · 如果仍要一个「值」：只暂停，不清缓存</h2>
+    <div class="gates">
+      <div class="gate"><div class="tag">主触发</div><div><strong>系统可用内存 ≤ 1,500 MB</strong>，连续 2 个稿件边界都满足。大稿空闲时 PS 私有内存就有 12.4 GB，单看 PS 会误判。</div></div>
+      <div class="gate"><div class="tag">辅助确认</div><div>Photoshop <strong>私有内存</strong> ≥ <code>min(20,000 MB, 70% × 系统总内存)</code> <strong>且</strong> 系统可用 ≤ 2,500 MB，连续 2 个边界。本机 31.8 GB → 20,000 MB；16 GB 机器 → 11,200 MB。</div></div>
+      <div class="gate"><div class="tag">持续性</div><div>连续 2 个稿件边界都满足才动作，单次抖动不动作。</div></div>
+      <div class="gate"><div class="tag">动作</div><div>暂停投放新稿，提示「建议保存工作后手动重启 Photoshop；本批已暂停，可继续」。<strong>不 purge、不 kill、不关文档、不清剪贴板。</strong></div></div>
+      <div class="gate"><div class="tag">恢复</div><div>用户手动重启 PS 后点「继续」；内存没回落则保持暂停。同一批最多提示 1 次。</div></div>
+    </div>
+    <div class="callout warn">
+      <strong>为什么默认仍不建：</strong>当前批量执行是 <code>server.js:7389</code> 起的单个 async 循环，<strong>没有批量暂停/恢复状态机</strong>（只有准备扫描有取消接口 <code>server.js:5518-5541</code>）。要做「暂停 → 用户重启 → 继续」，得新增状态持久化、前端入口、重连与回执重放边界，成本远大于收益；小稿 20 稿与大稿池子复用数据也不支持这个收益。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6 · 建议处置与更正</h2>
+    <ol>
+      <li><strong>不实现「阈值 → 清缓存」。</strong>代码、配置、UI 都不加；本轮小稿 + 大稿实测已证伪。</li>
+      <li><strong>保留只读读数与 20 稿判据。</strong>旧方案结论继续有效：未衰减，不建自动重启/清缓存保护闸。</li>
+      <li><strong>不提交、不部署、不出包。</strong>测试脚本只在 <code>tmp/real-batch/</code>，证据在 <code>交付档案/执行方案/证据_20261020_PS清缓存实测/</code>；产品代码零改动。</li>
+      <li><strong>阈值不要再用旧的 12 GB 私有内存线。</strong>大稿空闲就 12.4 GB，会每稿误触发；若将来要保险丝，按第 5 节只做「暂停 + 手动重启提示」，并先补 20 稿大稿批证据。</li>
+      <li><strong>不建议嵌入</strong> WinMemoryCleaner / memreduct；也不建议删 PS 暂存文件。</li>
+    </ol>
+    <div class="callout">
+      <strong>更正（限定，不推翻 VERDICT）：</strong>原说法「真正释放内存的是关文档，−70 MB」只对小稿成立。大稿关闭释放 368.6 MB 工作集，但不归还 12.4 GB 常驻池；后续大稿复用池子（+0 / +36.8 MB），未见按稿累加。另：原「<code>ALLCACHES</code> 未测」已补测，结果仍 0 释放。结论不变：purge 无效，不建该保护闸。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>7 · 复跑命令</h2>
+    <p><code>cd worktrees/develop/tmp/real-batch &amp;&amp; node probe-purge.cjs</code></p>
+    <p><code>node probe-purge-wait.cjs</code></p>
+    <p><code>node probe-large-purge.cjs "&lt;2.5GB .psb&gt;" A253</code></p>
+    <p><code>node probe-large-retained.cjs</code></p>
+    <p><code>node probe-large-cycle.cjs "&lt;2.5GB .psb&gt;" A253 2</code>　<code>node probe-large-cycle.cjs "&lt;2.8GB .psb&gt;" B278 1</code></p>
+    <p><code>cd download/local-assistant &amp;&amp; node scripts/analyze-batch-memory.mjs --json</code></p>
+    <p class="notes">安全前提：运行前确认 <code>app.documents.length = 0</code>；脚本每步自检，发现用户文档立即中止；大稿只读打开、不保存、跑后核对原稿 SHA-256/mtime 未变。<code>ALLCACHES</code> 仅在本轮一次性实测里带剪贴板备份/还原与核验才调用；<code>CLIPBOARDCACHE</code> 仍未调用，产品代码不得引入这两个目标。</p>
+  </section>
+
+  <footer class="foot">
+    <span>图译工坊 · 批量内存保护线 · 对抗式审查</span>
+    <span>2026-10-20 · PS 22.0.0 真机 · 小稿 20 稿 + 2 GB 级大稿 · 产品零改动</span>
+  </footer>
+
+</div>
+</body>
+</html>

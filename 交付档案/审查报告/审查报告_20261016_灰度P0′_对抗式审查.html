@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>灰度 P0′ 对抗式审查报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--radius);padding:18px 20px}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.verdict p{margin:0;color:var(--ink-2);font-size:.98rem}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .n{font-family:var(--font-display);font-size:1.55rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)}
+
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;margin:0;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+h2 .no{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 7px}
+p{margin:0}
+.small{font-size:.86rem;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.chip{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+.card .title{font-weight:600;font-size:.98rem}
+.card p{color:var(--ink-2);font-size:.92rem}
+.card .ref{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 18px;font-size:.92rem;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.ref{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);overflow-wrap:anywhere}
+
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.92rem}
+
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>图译工坊内测版</span><span class="sep">/</span>
+      <span>对抗式审查</span><span class="sep">/</span>
+      <span>灰度 P0′</span>
+    </div>
+    <h1>灰度 P0′ 对抗式审查报告</h1>
+    <p class="standfirst">对象：字体排版定制「按人白名单灰度」P0′（develop@aefc8a8，已推 origin）。方法：12 个审查面逐面直读源码 + 现场验证（主库副本差分、登录/登出路径实读、验收证据链复核）。未发现可被外部利用的越权、数据泄漏或静默降级。</p>
+    <div class="meta">
+      <span>2026-10-16 12:20–12:55</span>
+      <span>opencode</span>
+      <span>对象分支 HEAD aefc8a8</span>
+      <span>结论：通过（2 注记不阻塞）</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <span class="tag">通过</span>
+    <p>12 面复核：判决权威、门禁、校验、存储、审计、默认关、主库隔离全部成立；发现 F2（跨账号 ≤30 秒有界旧值）与 F1（总开关无界面按钮）两项注记，另有 F3/F4 轻微备案。测试站部署与人工四验无阻塞（待树净）。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><div class="n">12/12</div><div class="l">审查面复核通过</div></div>
+    <div class="stat ok"><div class="n">0</div><div class="l">可被利用的越权/泄漏</div></div>
+    <div class="stat warn"><div class="n">F2</div><div class="l">跨账号 ≤30 秒旧值（有界）</div></div>
+    <div class="stat warn"><div class="n">F1</div><div class="l">总开关无界面按钮（运维注记）</div></div>
+  </div>
+
+  <section>
+    <h2><span class="no">01</span>逐面结论（摘要）</h2>
+    <div class="card">
+      <div class="head"><span class="chip ok">通过</span><span class="title">1–5 面：判定权威与泄漏面 · 后台门禁 · 输入校验 · 存储并发 · 数据一致性</span></div>
+      <p>用户侧只回一个布尔、未登录一律 200+false 零泄漏；名单与开关 owner-only（宿主白名单+同源+CF Access+会话+DB 态+密码戳+邮箱匹配）；非法形状三类显式 400、不截断不吞错；白名单独立键原子 upsert，旧标签页整包保存不覆盖；读取损坏 fail-closed 为空名单；未知 ID 点名 400。</p>
+      <div class="ref">feature-access/route.ts:12-24 · require-admin.ts:29-48 · admin/feature-flags/route.ts:49-76 · feature-flags-store.ts:115-212</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip warn">F2</span><span class="title">6 面：客户端时效与身份切换——30 秒收敛成立，跨账号有界旧值</span></div>
+      <p>模块缓存 TTL 内直接返回；登出/登录均客户端跳转不重载文档；A 登出 30 秒内 B 登录最多再约 30 秒内可见占位块（惰性、无能力、无泄漏）。:6 注释与实现不符。</p>
+      <div class="ref">use-feature-access.ts:6、:14、:17-23、:40 · user-account-menu.tsx:58-72 · login/page.tsx:132-133</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip ok">通过</span><span class="title">7–8 面：审计（F4 备案）· 响应缓存头（F3 硬化）</span></div>
+      <p>审计记录人/动作/IP 哈希；本次无前后值（F4）。json() 无 Cache-Control，但 fetch no-store + force-dynamic 已覆盖，建议顺手补（F3，非阻塞）。</p>
+      <div class="ref">audit.ts:9-28 · http.ts:4-6 · route.ts:71/85/97/107</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip warn">F1</span><span class="title">9–10 面：运营台交互 · API 契约边界（F5）</span></div>
+      <p>名单卡解析/回显/toast 正确；总开关无界面按钮（走管理 API）。组合 body 时后续字段静默忽略（F5 备案，UI 不会这样发）。</p>
+      <div class="ref">settings-panel.tsx:374-398、:893、:921-954 · client.ts:552 · admin/feature-flags/route.ts:49-76</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip ok">通过</span><span class="title">11–12 面：生产安全默认 · 主库零写入复核 · 部署就绪</span></div>
+      <p>默认 false，无覆盖即全关；判定在服务端，占位块惰性无能力。develop 库差分：B 用户不存在、p0-b/「验收」0 行——验收全落副本。HEAD aefc8a8=origin/develop；树脏 4 文件（并行会话），树净即可打包。</p>
+      <div class="ref">featureFlags.ts:65 · photoshop-step.tsx:188-194 · Temp\opencode\dbcheck\</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">02</span>发现与建议</h2>
+    <div class="callout"><b>F2 修法（一行级，择一）：</b>①登出改整页跳转（window.location）②导出缓存清理函数并在登出时调用 ③接受现状并修正注释。需 Owner 一句话。</div>
+    <div class="callout"><b>验收操作提示：</b>人工四验「换号不可见」若 30 秒内连续「A 登出→B 登录」，可能因 F2 看到假 FAIL——换号后先整页刷新（F5）或先从不在名单的账号验起即可规避。</div>
+    <div class="notes">
+      <ol>
+        <li><b>F2（低危·有界）</b>：跨账号 ≤30 秒旧值；触发者还需同浏览器连续换号并走到 PS 步骤。</li>
+        <li><b>F1（运维注记）</b>：总开关走 POST /api/admin/feature-flags（owner 会话）；建议后续加小按钮或写进运维手册。</li>
+        <li><b>F3（硬化·可选）</b>：feature-access 响应补 Cache-Control: no-store。</li>
+        <li><b>F4（轻微）</b>：审计 meta 记名单变更前后值。</li>
+        <li><b>F5（轻微）</b>：组合 body 字段忽略行为备案，无需改动。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">03</span>对人工四验的影响</h2>
+    <table>
+      <thead><tr><th>验收项</th><th>结论</th><th>要点</th></tr></thead>
+      <tbody>
+        <tr><td>加名单可见</td><td>无影响</td><td>服务端即时，客户端首取即到</td></tr>
+        <tr><td>换号不可见</td><td>受 F2 提示约束</td><td>换号后先整页刷新，或调整顺序</td></tr>
+        <tr><td>移除名单 ≤30 秒消失</td><td>成立</td><td>服务端即时 + 客户端 TTL 30s</td></tr>
+        <tr><td>关总开关 ≤30 秒消失</td><td>成立</td><td>切换动作走管理 API（F1）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">04</span>证据索引</h2>
+    <table>
+      <thead><tr><th>面</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>判定与路由</td><td class="ref">src/app/api/workbench/feature-access/route.ts:12-24；src/lib/server/feature-flag-gating.ts（全 24 行）</td></tr>
+        <tr><td>门禁与审计</td><td class="ref">src/lib/admin/require-admin.ts:29-48；src/lib/admin/audit.ts:9-28</td></tr>
+        <tr><td>校验与存储</td><td class="ref">src/app/api/admin/feature-flags/route.ts:49-76；src/lib/server/feature-flags-store.ts:115-212</td></tr>
+        <tr><td>客户端</td><td class="ref">src/lib/workbench/use-feature-access.ts:6、:14、:17-23、:40、:51-55</td></tr>
+        <tr><td>交互面</td><td class="ref">src/components/admin/settings-panel.tsx:374-398、:893、:921-954；src/components/workbench/photoshop-step.tsx:188-194</td></tr>
+        <tr><td>登录/登出</td><td class="ref">src/app/(zh)/auth/login/page.tsx:132-133；src/components/workbench/user-account-menu.tsx:58-72</td></tr>
+        <tr><td>默认值</td><td class="ref">src/config/featureFlags.ts:65（false）</td></tr>
+        <tr><td>主库差分</td><td class="ref">C:\Users\ivan\AppData\Local\Temp\opencode\dbcheck\（develop 副本 + 查询脚本）</td></tr>
+        <tr><td>本地验收</td><td class="ref">交付档案/现状与验收/验收记录_20261016_灰度P0_本地隔离验收.md（附 HTML）；tmp/p0-local-acceptance-20261016/</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>图译工坊内测版 · 内有测版切割</span>
+    <span>灰度 P0′ 对抗式审查 · 2026-10-16</span>
+    <span>md 同名文件：审查报告_20261016_灰度P0′_对抗式审查.md</span>
+  </footer>
+
+</div>
+</body>
+</html>

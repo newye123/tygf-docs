@@ -1,0 +1,88 @@
+<title>七道门执行方案 · 对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,54px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.3rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+p{margin:0;max-width:68ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.3vw,1.14rem);line-height:1.6;max-width:52ch;font-weight:500}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-size:.8rem;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate p{font-size:.91rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>七道门执行方案</span><span class="sep">/</span><span>2026-10-14</span></p>
+  <h1>七道门执行方案 · 对抗式审查：先审，后执行</h1>
+  <p class="standfirst">对象＝同日《SEO/GEO 全链路对抗式审查》所列七道门。手法：git 分叉实况 / 门禁链组成 / 修复目标在位性 / 账号与浏览器面 / 自我论点复核 / 红线核验。</p>
+  <div class="meta"><span>发现 A1–A6</span><span>修正 4 处前置</span><span>推翻 1 个手段</span><span>O1 单点授权</span></div>
+</header>
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 有条件通过</span>
+    <p>门 2–6 执行链经对抗后<strong>修正 4 处前置、推翻 1 个手段</strong>；可立即执行子集（前置代码修复＋浏览器门＋对账）全部就位；<strong>O1 生产部署链按铁律不自动执行，单点授权</strong>。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">02</span>发现 A1–A6</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>发现</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">A1</td><td><span class="tag bad">🔴</span></td><td><strong>门 2 前置比方案写的多</strong>：①#133/#134（＋#136）自家审查已判「上生产前必修」，直接开窗＝带病上生产；② main 独有 6 笔<strong>全 docs</strong> × develop 独有 20 笔（含账本大改）⇒ 合并必撞账本冲突＝门 6 同一件事；③ 20 笔改了 <code>release-preflight.cjs</code>/beta-application smoke/发布门禁组成 ⇒ 开窗必跑 preflight 全门；admin-security 不在 preflight（#132 不挡包但仍红）；④ 支付 flag 红线核过未动</td><td class="mono">git log/diff；preflight gateFor 清单；ISSUES #133-136</td></tr>
+        <tr><td class="mono">A2</td><td><span class="tag warn">🟠</span></td><td><strong>公网 B4 探针被反爬污染，手段作废</strong>：Bing 直连 <code>site:</code> 返回无关诱饵（hu-berlin.de），引号域名查询结果与查询完全无关；百度直连安全验证墙 ⇒ 无登录公网探针不可采信，B4 改浏览器会话内拍（GSC 覆盖报告权威）</td><td class="mono">webfetch 三发实测</td></tr>
+        <tr><td class="mono">A3</td><td><span class="tag warn">🟡</span></td><td><strong>分叉数字过时</strong>：实测 <code>main..develop=20</code>（develop 今日 +961cc49）／<code>develop..main=6</code>——昨日报告 19/6 须带时点读</td><td class="mono">git rev-list</td></tr>
+        <tr><td class="mono">A4</td><td><span class="tag ok">✅</span></td><td><strong>可立即执行子集全部就位</strong>：#133 目标＝smoke EN 段无披露断言（ZH 有 :367）、EN token 在 siteContentEn:57；#134 目标＝deploy 注入 0 命中、镜像源 set_env_key:380-388＋production.origin 在位、check-production-env 无未知键拒绝；#136＝两 layout 缺 og:url；浏览器面＝chrome-debug-profile 存在＋tabbit-cli 在位</td><td class="mono">逐项实测</td></tr>
+        <tr><td class="mono">A5</td><td><span class="tag ok">✅</span></td><td><strong>自我论点复核通过</strong>：「覆盖报告从未打开」rg 命中均为今日自引；AI 复测逾期 12 天成立；IndexNow key 不在 main/prod 404 成立</td><td class="mono">rg 复核</td></tr>
+        <tr><td class="mono">A6</td><td><span class="tag bad">🔴</span></td><td><strong>O1 生产链＝铁律红线</strong>：合 20 笔入 main→preflight 全门→打包→部署→IndexNow。「然后执行」按治理铁律不自动覆盖生产部署，单点确认后执行</td><td class="mono">AGENTS.md 治理规则</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">03</span>修正后的执行序（本报告后即执行）</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>前置修复（A1①）</h3><p>#133 EN 披露断言镜像 ＋ #134 deploy 注入 NEXT_PUBLIC_SITE_URL ＋ #136 og:url/alternateLocale → tsc＋lint＋本地 dev 全量 test:seo-consistency 复跑 → commit develop。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>浏览器门（A2 改判）</h3><p>Tabbit 会话内拍 B4 权威件：GSC 覆盖报告＋Bing Webmaster 索引页；百度验证重试（选项①）；知乎文状态顺查。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>门 6 对账</h3><p>容器根账本补指针＋ISSUES 注记（develop 侧有他窗未提交改动，不写入）。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>O1 单点授权（A6）</h3><p>获批后合 main（账本冲突对账合并）→ preflight 全门 → 打包 → 部署生产 → <code>npm run seo:indexnow</code> → Bing sitemap 重提。</p></div></div>
+  </div>
+</section>
+<footer>
+  <p>2026-10-14 · 只读取证＋执行面核验 · 发现 A1–A6 · 本报告后即进入执行段 · 业务测试随执行段记录。</p>
+</footer>
+</div>

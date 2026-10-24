@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案 C：排版面板 · 可拖 + 可缩放大面板（2026-10-23）</title>
+<style>
+  :root{
+    --bg:#f6f7f8; --card:#ffffff; --border:#e4e7ea; --fg:#1a2129; --muted:#5f6b78;
+    --teal:#0d7d6c; --teal-soft:#e6f4f1; --amber-bg:#fff7e6; --amber-bd:#f0c36d; --amber-fg:#7a5410;
+    --shadow:0 8px 28px rgba(15,30,40,.16); --radius:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#10161c; --card:#18212a; --border:#2a3641; --fg:#e8edf2; --muted:#93a1af;
+      --teal:#2fbfa5; --teal-soft:#12332e; --amber-bg:#2a2210; --amber-bd:#8a6b25; --amber-fg:#f0cf8f;
+      --shadow:0 8px 28px rgba(0,0,0,.5); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
+  header.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:5}
+  header.top h1{font-size:15px;margin:0;margin-right:auto}
+  .btn{border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer}
+  .btn:hover{border-color:var(--teal)}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+  .note{padding:12px 20px;font-size:12.5px;color:var(--muted);line-height:1.7}
+  .note b{color:var(--fg)}
+  kbd{border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;background:var(--card)}
+  .stage{padding:18px 20px 40px;max-width:1100px;margin:0 auto}
+  .fakecard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .fakecard h3{margin:0 0 8px;font-size:13px}
+  .fakecard p{margin:0;font-size:12px;color:var(--muted);line-height:1.7}
+  .fakegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .fakegrid div{height:52px;border:1px dashed var(--border);border-radius:8px;background:var(--bg)}
+  /* ---- 方案 C：可拖 + 可缩放 ---- */
+  #panel{position:fixed;z-index:60;width:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden}
+  #pHead{cursor:grab;touch-action:none;user-select:none;display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);outline:none}
+  #pHead:focus-visible{box-shadow:inset 0 0 0 2px var(--teal)}
+  #pHead.dragging{cursor:grabbing}
+  #pHead .ttl{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;margin-right:auto}
+  .badge{font-size:10px;font-weight:700;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:1px 6px}
+  .iconbtn{border:1px solid var(--border);background:var(--card);border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
+  .iconbtn:hover{color:var(--fg);border-color:var(--teal)}
+  #pBody{padding:10px 12px 12px;font-size:12px;line-height:1.6;flex:1;overflow:auto}
+  #sizeTag{font-size:10.5px;color:var(--muted)}
+  .hint{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--amber-fg);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+  .hint .dot{width:7px;height:7px;border-radius:99px;background:#f0a13c;margin-top:5px;flex:none}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;background:var(--card)}
+  .pill.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .grid6{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+  .cell{border:1px solid var(--border);border-radius:6px;height:26px;display:flex;align-items:center;gap:6px;padding:0 7px;font-size:12px}
+  .cell .g{width:16px;height:16px;flex:none;border-radius:4px;background:var(--teal-soft);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+  .cell .v{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell.todo{border-style:dashed}
+  .settle{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px;font-size:12px;color:var(--muted)}
+  .settle b{color:var(--teal)}
+  .tip{margin-top:8px;font-size:11.5px;color:var(--muted)}
+  #resize{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;touch-action:none;
+    background:linear-gradient(135deg,transparent 50%,var(--border) 50%,var(--border) 60%,transparent 60%,transparent 70%,var(--border) 70%,var(--border) 80%,transparent 80%)}
+  #resize:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+  body.panel-dragging{user-select:none}
+  body.panel-dragging *{cursor:grabbing !important}
+  body.panel-resizing{user-select:none}
+  body.panel-resizing *{cursor:nwse-resize !important}
+  .log{font-size:11.5px;color:var(--muted);padding:0 20px 30px;line-height:1.8}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>方案 C · 可拖 + 可缩放（右下角拉大小）</h1>
+  <button class="btn primary" id="btnOpen">打开面板</button>
+  <button class="btn" id="btnReset">清除记住的状态</button>
+</header>
+<div class="note">
+  <b>方案 C 的玩法：</b>① 拖标题栏移动（同 A）；② 拖<b>右下角斜纹角标</b>改宽高（260px 起，最大到屏幕八成）；③ <kbd>Tab</kbd> 到角标后也可用 <kbd>方向键</kbd> 缩放；④ 宽高和位置都记在本机；⑤ 背景全程可点。<b>代价提示：</b>缩放比 A 多约 60 行代码（角标拖拽+双维度夹取+键盘缩放+持久化字段翻倍），且字段是双列布局，缩太窄会换行——这也是为什么不默认给缩放。
+</div>
+<div class="stage">
+  <div class="fakecard"><h3>第一步 · 准备素材（示意）</h3><p>把面板拉大后字段还是双列，说明长一些。</p>
+    <div class="fakegrid"><div></div><div></div><div></div><div></div></div></div>
+  <div class="fakecard"><h3>第二步 · 审校译文（示意）</h3><p>面板可以拉到很大，但内测版内容不多，拉大主要是留白——这也是真实的边界。</p></div>
+</div>
+<div class="log" id="log"></div>
+
+<div id="panel" role="dialog" aria-modal="false" aria-label="排版定制">
+  <div id="pHead" tabindex="0" aria-label="排版面板标题栏：按住拖动移动面板，或聚焦后用方向键移动">
+    <span class="ttl">✥ 排版定制</span>
+    <span class="badge">内测预览</span>
+    <span id="sizeTag">420 × ?</span>
+    <button class="iconbtn" id="btnClose" aria-label="关闭排版面板" data-no-drag>✕</button>
+  </div>
+  <div id="pBody">
+    <div class="hint"><span class="dot"></span><span>排版定制暂不可用（示意告警条）：内容与 A 相同，区别只在能拉大小。</span></div>
+    <div class="pills">
+      <button class="pill on">日语</button><button class="pill">韩语</button><button class="pill">英语</button><button class="pill">＋</button>
+    </div>
+    <div class="grid6">
+      <div class="cell"><span class="g">字</span>字体族<span class="v">思源黑体</span></div>
+      <div class="cell"><span class="g">体</span>样式<span class="v">Bold</span></div>
+      <div class="cell"><span class="g">行</span>行距<span class="v">18 pt</span></div>
+      <div class="cell"><span class="g">距</span>自动字距<span class="v">度量标准</span></div>
+      <div class="cell"><span class="g">字</span>字距<span class="v">25 ‰em</span></div>
+      <div class="cell todo"><span class="g">基</span>基线偏移<span class="v">待接</span></div>
+    </div>
+    <div class="settle">本次会发 <b>4</b> 项：字体 · 行距 · 自动字距 · 字距</div>
+    <div class="tip">适合：将来字段变多（逐层配脸、预览图）时预留弹性。现在拉大只是留白。</div>
+  </div>
+  <div id="resize" tabindex="0" role="slider" aria-label="调整面板大小：聚焦后用方向键缩放" aria-valuemin="260" aria-valuemax="1600"></div>
+</div>
+
+<script>
+(function(){
+  var KEY='tygf.sim.typographyPanelC.v1';
+  var panel=document.getElementById('panel'), head=document.getElementById('pHead'),
+      handle=document.getElementById('resize'), sizeTag=document.getElementById('sizeTag'), log=document.getElementById('log');
+  var MINW=260, MINH=180;
+  var open=false, pos=null, size=null;
+
+  function say(m){ log.innerHTML='<div>· '+m+'</div>'+log.innerHTML; }
+  function vw(){ return window.innerWidth } function vh(){ return window.innerHeight }
+  function maxW(){ return Math.floor(vw()*0.8) } function maxH(){ return Math.floor(vh()*0.85) }
+  function rect(){ return panel.getBoundingClientRect() }
+  function clampPos(x,y,w,h){
+    var xMin=-(w-48), xMax=vw()-48, yMin=0, yMax=vh()-48;
+    return {x:Math.min(Math.max(x,xMin),xMax), y:Math.min(Math.max(y,yMin),yMax)};
+  }
+  function applySize(){ panel.style.width=size.w+'px'; panel.style.height=size.h+'px'; sizeTag.textContent=size.w+' × '+size.h; }
+  function apply(){ if(pos){ panel.style.left=pos.x+'px'; panel.style.top=pos.y+'px'; } }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify({pos:pos,size:size})) }catch(e){} }
+  function load(){
+    try{ var raw=localStorage.getItem(KEY); if(!raw) return null; var p=JSON.parse(raw);
+      if(!p||!isFinite(p.pos&&p.pos.x)||!isFinite(p.pos&&p.pos.y)||!isFinite(p.size&&p.size.w)||!isFinite(p.size&&p.size.h)) return null; return p;
+    }catch(e){ return null }
+  }
+  function defaults(){ return {pos:clampPos(vw()-420-24,72,420,320), size:{w:420,h:320}} }
+  function openPanel(){
+    open=true; panel.style.display='flex';
+    var st=load();
+    if(st){ pos={x:st.pos.x,y:st.pos.y}; size={w:st.size.w,h:st.size.h}; say('已恢复上次的位置和大小'); }
+    else { var d=defaults(); pos=d.pos; size=d.size; }
+    var c=clampPos(pos.x,pos.y,size.w,size.h); pos={x:c.x,y:c.y}; apply(); applySize(); save();
+    document.getElementById('btnOpen').textContent='关闭面板';
+    say('打开面板：可拖 + 右下角可缩放（aria-modal=false，不锁背景）');
+  }
+  function closePanel(){
+    open=false; panel.style.display='none';
+    document.getElementById('btnOpen').textContent='打开面板';
+    say('关闭面板');
+  }
+  document.getElementById('btnOpen').onclick=function(){ open?closePanel():openPanel() };
+  document.getElementById('btnClose').onclick=closePanel;
+
+  var dragging=false, ds=null;
+  head.addEventListener('pointerdown',function(e){
+    if(e.target.closest('[data-no-drag]')) return;
+    if(e.button!==undefined && e.button!==0) return;
+    dragging=true; ds={mx:e.clientX,my:e.clientY,x:pos.x,y:pos.y};
+    head.setPointerCapture(e.pointerId); head.classList.add('dragging');
+    document.body.classList.add('panel-dragging');
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove',function(e){
+    if(!dragging) return;
+    var c=clampPos(ds.x+e.clientX-ds.mx, ds.y+e.clientY-ds.my, size.w, size.h);
+    pos={x:c.x,y:c.y}; apply();
+  });
+  function endDrag(){
+    if(!dragging) return; dragging=false;
+    head.classList.remove('dragging'); document.body.classList.remove('panel-dragging');
+    var c=clampPos(pos.x,pos.y,size.w,size.h); pos=c; apply(); save();
+    say('拖动结束：位置已记住');
+  }
+  head.addEventListener('pointerup',endDrag);
+  head.addEventListener('pointercancel',endDrag);
+
+  var resizing=false, rs=null;
+  handle.addEventListener('pointerdown',function(e){
+    if(e.button!==undefined && e.button!==0) return;
+    resizing=true; rs={mx:e.clientX,my:e.clientY,w:size.w,h:size.h};
+    handle.setPointerCapture(e.pointerId);
+    document.body.classList.add('panel-resizing');
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove',function(e){
+    if(!resizing) return;
+    size={ w:Math.min(Math.max(MINW, rs.w+e.clientX-rs.mx), maxW()),
+           h:Math.min(Math.max(MINH, rs.h+e.clientY-rs.my), maxH()) };
+    applySize();
+  });
+  function endResize(){
+    if(!resizing) return; resizing=false;
+    document.body.classList.remove('panel-resizing');
+    var c=clampPos(pos.x,pos.y,size.w,size.h); pos=c; apply(); applySize(); save();
+    say('缩放结束：'+size.w+' × '+size.h+' 已记住');
+  }
+  handle.addEventListener('pointerup',endResize);
+  handle.addEventListener('pointercancel',endResize);
+  handle.addEventListener('keydown',function(e){
+    var s=e.shiftKey?32:16;
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ size={w:Math.max(MINW,size.w-s),h:Math.max(MINH,size.h-s)}; applySize(); save(); e.preventDefault(); say('键盘缩放：'+size.w+' × '+size.h); }
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'){ size={w:Math.min(maxW(),size.w+s),h:Math.min(maxH(),size.h+s)}; applySize(); save(); e.preventDefault(); say('键盘缩放：'+size.w+' × '+size.h); }
+  });
+
+  head.addEventListener('keydown',function(e){
+    var step=e.shiftKey?32:8, d={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
+    if(d){ var c=clampPos(pos.x+d[0],pos.y+d[1],size.w,size.h); pos=c; apply(); save(); e.preventDefault(); say('方向键移动到 ('+Math.round(pos.x)+','+Math.round(pos.y)+')'); }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape'||!open) return;
+    if(panel.contains(document.activeElement)){ closePanel(); say('Esc 关闭（焦点在面板内）'); }
+    else { say('焦点不在面板内：Esc 被忽略'); }
+  });
+  window.addEventListener('resize',function(){
+    if(!open) return;
+    size={w:Math.min(size.w,maxW()),h:Math.min(size.h,maxH())}; applySize();
+    var c=clampPos(pos.x,pos.y,size.w,size.h);
+    if(c.x!==pos.x||c.y!==pos.y){ pos=c; apply(); save(); say('窗口变了：大小与位置都夹回视口内'); }
+  });
+  document.getElementById('btnReset').onclick=function(){ try{localStorage.removeItem(KEY)}catch(e){}; if(open){ var d=defaults(); pos=d.pos; size=d.size; apply(); applySize(); } say('已清除位置与大小'); };
+  document.querySelectorAll('.pill').forEach(function(p){ p.onclick=function(){ document.querySelectorAll('.pill').forEach(function(q){q.classList.remove('on')}); p.classList.add('on'); } });
+  document.querySelectorAll('.fakegrid div').forEach(function(d){ d.onclick=function(){ d.style.background=d.style.background?'':'var(--teal-soft)' } });
+  say('就绪。点右上「打开面板」，试试右下角斜纹角标。');
+})();
+</script>
+</body>
+</html>

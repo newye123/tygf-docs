@@ -1,0 +1,167 @@
+<title>批量台 v12 落地自审 Round 2 · 我承诺了一个没做的功能</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:62ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:720px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.gray{background:var(--sunk);color:var(--muted)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.warn{background:var(--warn-soft);border-color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px}
+.gate .num{font-family:var(--font-mono);font-size:.95rem;font-weight:500;color:var(--accent);background:var(--accent-soft);min-width:34px;height:32px;padding:0 8px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate h3{margin:0;font-size:.95rem;font-weight:600}
+.gate p{font-size:.88rem;color:var(--ink-2);max-width:72ch}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>Round 2 · 审我自己</span><span class="sep">/</span><span>2026-10-21</span></p>
+  <h1>我在界面上承诺了一个没做的功能</h1>
+  <p class="standfirst">审的不是别人，是我一小时前刚落地的 v12。最严重的一条不是代码写错，是<strong>同一份交付件里我自己打架</strong>：一边写「C1 停止本轮不做」，一边在确认框里告诉用户「中途只能『停止』」。</p>
+  <div class="meta"><span>9 条发现</span><span>8 条已改 · 1 条判定保留</span><span>tsc rc=0</span><span>eslint 0 error</span><span>门 44 → 52 条</span><span>未提交 · 未部署</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>一句话结论</h2>
+  <div class="verdict">
+    <span class="lb">Critical</span>
+    <p><strong>用户看到「中途只能停止」会去找停止按钮——找不到。这比没有确认框更坏：它让人以为有退路。</strong></p>
+    <ul>
+      <li>已改：确认框现在如实写「<b>这一版还没有「停止」按钮</b>——跑到一半想停下来，目前只能联系支持处理；没执行的部分会按实际交付核对退回」。</li>
+      <li>并加反向断言：<b>凡声明「本轮不做」的能力，界面源码里不许出现它的说法</b>，不是只断言按钮不存在。</li>
+      <li>另外补了 spec 要求的「文件名」「保存位置」，修了切档残留、指纹只记个数、一条恒真断言。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>九条发现与处置</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级别</th><th>发现</th><th>证据</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F1</td><td><span class="tag bad">Critical</span></td><td><b>界面承诺没做的能力</b>：确认框写「中途只能『停止』」，而 C1 停止本轮明确未做</td><td class="mono">execution-scope-dialog.tsx 上一版 :80；对照交付件 §06</td><td>改成如实版＋反向断言</td></tr>
+        <tr><td class="mono">F2</td><td><span class="tag warn">Important</span></td><td><b>缺「文件名」「保存位置」</b>：spec 要求第 4 步确认四项，实现只给两项</td><td class="mono">product-specs/workbench-flow.md:10</td><td>两档各补两行，按真实产物规则写</td></tr>
+        <tr><td class="mono">F3</td><td><span class="tag warn">Important</span></td><td><b>预估为 0 时写「0 积分」</b>，会被读成免费</td><td class="mono">execute-step.tsx:783-793</td><td>0 时改「按受理时报价并冻结」</td></tr>
+        <tr><td class="mono">F4</td><td><span class="tag gray">Minor</span></td><td><b>切档残留</b>：切回来会弹出一个「范围已变」的框</td><td>上一版无清理</td><td>切档清空 <code>scopeConfirm</code></td></tr>
+        <tr><td class="mono">F5</td><td><span class="tag gray">Minor</span></td><td><b>指纹只含语言个数</b>：同数量换语言（EN+JP→EN+KO）指纹不变</td><td>上一版 <code>allLanguages.length</code></td><td>改 <code>join(',')</code></td></tr>
+        <tr><td class="mono">F6</td><td><span class="tag gray">Minor</span></td><td><b>一条恒真断言</b>：检查源码里不存在的字面量，等于没测</td><td class="mono">smoke-workbench-scope.mjs C 组</td><td>换成真实正则断言</td></tr>
+        <tr><td class="mono">F7</td><td><span class="tag gray">Minor</span></td><td><b>批量确认框没写失败会怎样</b></td><td class="mono">workbench-view.tsx:2222 / :2233</td><td>加「失败处理」一行</td></tr>
+        <tr><td class="mono">F8</td><td><span class="tag gray">Nit</span></td><td>React key 用 label，同 label 会冲突</td><td class="mono">execution-scope-dialog.tsx</td><td>key 改 <code>${label}-${index}</code></td></tr>
+        <tr><td class="mono">F9</td><td><span class="tag ok">保留</span></td><td>多稿档 chip 与状态带数值重复</td><td class="mono">:2681-2706 vs :2721-2746</td><td>保留：chip 答「在哪一档」，状态带答「该做什么」，同源不打架</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>为什么 F1 是 Critical 而不是文案瑕疵</h2>
+  <div class="callout bad">
+    <span class="lb">判据只有一条</span>
+    <p><b>用户会不会照它去做，然后扑空。</b></p>
+  </div>
+  <div class="gates">
+    <div class="gate"><div class="num">1</div><div class="body"><h3>它是一句动作指令</h3><p>用户跑到第 5 份想停，会去找停止按钮——找不到，然后开始怀疑「是不是我点错了」，接着可能关页面或重复点开始。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>后果不只是文案</h3><p><code>submittingRef</code> 挡住双击，但跨页面重开可能撞上「结算未确认」锁，用户会看到「执行已锁定」却不知道在等什么。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>它违反两条铁律</h3><p>Product Drift Guard #2（未知意图保留）＋「不得静默降级 / 不得承诺做不到的事」。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行方案（按这个做的）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>阶段</th><th>做什么</th><th>判据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">R0</td><td>只读核对 <code>runExecution</code> 全部调用点、确认框实际文本、spec 四项</td><td>先证明没有别的派发路径绕过确认</td></tr>
+        <tr><td class="mono">R1</td><td>把交付件「不做项」逐条对照界面文案</td><td>每条「不做」都不许被说成「有」</td></tr>
+        <tr><td class="mono">R2</td><td>spec 四项对齐（文件名 / 保存位置）</td><td>默认路径与真实产物同规则</td></tr>
+        <tr><td class="mono">R3</td><td>状态残留与指纹</td><td>切档不残留；指纹含语言名单</td></tr>
+        <tr><td class="mono">R4</td><td>门收紧</td><td>恒真断言换真断言，新增 8 条</td></tr>
+        <tr><td class="mono">R5</td><td>验证</td><td>tsc / eslint / 新门 / 既有 7 个 smoke</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">为什么先 R1 再 R2</span><p>R1 找「说错话」，R2 找「少说话」。说错话的代价更高（用户会照着做），先修。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>验证（真实命令与真实 rc）</h2>
+<pre>npx tsc --noEmit --incremental false      → rc=0
+npx eslint（三个改动文件）                 → 0 error / 7 warning（既有 a11y label）
+npm run test:workbench-scope              → ok (52 assertions)  rc=0   ← 44 → 52
+npm run test:workbench-ui-contract        → ok                   rc=0
+npm run test:batch-workbench-guards       → 37 checks            rc=0
+npm run test:batch-workbench-logic        → 108 checks           rc=0
+npm run test:batch-workbench-flag         → 9 checks             rc=0
+npm run test:workbench-flow               → ok                   rc=0
+npm run test:execute-step-reset           → PASS                 rc=0
+npm run test:batch-progress-count-contract → all invariants passed rc=0</pre>
+  <div class="callout warn"><span class="lb">一次红（如实记）</span><p>tsc 首跑报 <code>preferredOutputBaseName</code> 未定义——它原来声明在提交闭包里，不在组件顶层。修法不是把闭包变量提出来（会动执行路径），而是在顶层按同一条回退顺序重算 <code>scopeOutputBaseName</code>。这也说明确认框里的文件名是<b>预览</b>，与提交值同规则但非同一变量。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>仍未做（与上一轮一致）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>C1 停止 / C2 取消并退回</td><td><span class="tag bad">未做</span> 需批次级 cancel＋状态机门禁＋合同变更四层同步；界面说法已改成「没有」</td></tr>
+        <tr><td>C3 撤销已写入</td><td><span class="tag bad">不做</span> 无 PSD 备份</td></tr>
+        <tr><td>P1 默认密度</td><td><span class="tag gray">未做</span> 折叠会隐藏条目，需单独验收</td></tr>
+        <tr><td>渲染级回归</td><td><span class="tag gray">未做</span> 门仍是静态源码断言</td></tr>
+        <tr><td>浏览器实测</td><td><span class="tag gray">未做</span> 未启动 dev server（共享库 + 登录态）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>写进后续检查表的一条</h2>
+  <div class="callout ok">
+    <span class="lb">教训</span>
+    <p><b>「不做项」清单必须与「界面文案」逐条互查。</b>同一份交付件里，一边写「X 没做」，一边对用户说「可以 X」——这种自相矛盾不需要写错代码就能发生，静态门也测不出来，因为它测的是「有没有这个按钮」，不是「文案有没有说这个按钮存在」。</p>
+    <p>具体做法（已落进新门 D2 组）：凡声明「本轮不做」的能力，<b>在界面源码里反向断言它的说法不出现</b>，而不是只断言按钮不存在。</p>
+  </div>
+</section>
+
+<footer>
+  <span>改动：<code>execution-scope-dialog.tsx</code>（如实文案 / key）、<code>execute-step.tsx</code>（指纹 / 切档清理 / 文件名与保存位置 / 0 预估口径）、<code>smoke-workbench-scope.mjs</code>（44 → 52 条）。</span>
+  <span>未提交 · 未推 · 未部署 · 支付 flag 未动。</span>
+</footer>
+</div>

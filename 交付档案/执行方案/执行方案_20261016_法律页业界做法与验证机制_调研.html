@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>法律条文怎么写、怎么验证 · 业界调研与本次落地</title>
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 20px}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.verdict p{margin:0;color:var(--ink-2);font-size:.98rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .n{font-family:var(--font-display);font-size:1.55rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;margin:0;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+h2 .no{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 7px}
+h3{font-family:var(--font-display);font-size:.98rem;font-weight:600;margin:4px 0 0}
+p{margin:0}
+.small{font-size:.86rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.chip{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+.card .title{font-weight:600;font-size:.98rem}
+.card p{color:var(--ink-2);font-size:.92rem}
+.card .ref{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 18px;font-size:.92rem;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+.callout.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+.callout.info{background:var(--accent-soft);border-left-color:var(--accent)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.ref{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);overflow-wrap:anywhere}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.notes ol,.notes ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.92rem}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:0;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 22px}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>图译工坊 · 内测版</span><span class="sep">/</span>
+    <span>法律页 · 业界调研</span><span class="sep">/</span>
+    <span>2026-10-16</span>
+  </div>
+  <h1>法律条文怎么写、怎么验证 · 业界调研与本次落地</h1>
+  <p class="standfirst">Owner：「没有法律的你到 GitHub 上看看人家这些法律条文是怎么写，怎么验证的，看看有没有开源的 studio 可以参考一下，然后再去面对这个事实」</p>
+  <div class="meta">
+    <span>调研来源：SSPU-AllinOne commit 4b62dea · payloadcms/payload</span>
+    <span>新增门禁断言：46 条</span>
+    <span>生效日期：2026-10-16</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <span class="tag">结论</span>
+  <p><b>业界的答案不是「写得更漂亮」，而是「单一来源 + 负向断言 + 同笔同步」。</b>我们这次照这个改。</p>
+</div>
+
+<section>
+  <h2><span class="no">01</span>调研到的两个直接可用的先例</h2>
+
+  <div class="card">
+    <div class="head"><span class="chip info">有测试的法律页</span><span class="title">Qintsg/SSPU-AllinOne · commit 4b62dea</span></div>
+    <p class="ref">github.com/Qintsg/SSPU-AllinOne</p>
+    <p>一个 Flutter 项目，把免责声明、用户协议、隐私协议、开源许可、第三方协议整合成<b>一份统一法律说明</b>，并让首启弹窗和 Windows 安装器<b>共享同一份确认事实</b>。提交说明里两条直接有用的东西：</p>
+    <pre>Rejected：继续维护分离的使用协议/隐私协议入口
+  —— 会让一次确认、重新同意策略和安装器许可文本长期分叉。
+
+Directive：修改法律文本、第三方清单或安装器许可页时
+  必须同步 assets/legal、协议确认键、关于页入口、文档与测试。
+
+Tested：flutter test test/privacy_policy_page_test.dart;
+         flutter test test/windows_installer_legal_test.dart</pre>
+    <p>我读了 <code>test/windows_installer_legal_test.dart</code> 全文，断言长这样：</p>
+<pre>test('Windows x64 和 arm64 安装器引用同一份合并协议文件', () {
+  const expected = r'LicenseFile={#WorkspaceDir}\assets\legal\legal_zh.txt';
+  for (final script in _installerScripts) {
+    expect(File(script).readAsStringSync(), contains(expected));
+  }                       // ↑ 每个消费方都指向单一来源
+  expect(File('assets/legal/legal_zh.txt').existsSync(), isTrue);
+});</pre>
+    <p><b>三个要点</b>：① 法律文本只有一个文件，安装器和页面都<b>引用</b>它，不各存一份；② 断言的是「每个消费方都指向同一处」，而不是「内容看起来对」——这样任何一处想偷偷改文案，测试就红；③ 有<b>负向断言</b>（<code>isNot(contains(...))</code>），把「不该出现的东西」钉死。</p>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="chip info">开源内容 studio</span><span class="title">payloadcms/payload</span></div>
+    <p class="ref">github.com/payloadcms/payload</p>
+    <p>Next.js 原生、全 TypeScript 的开源全栈框架，自带管理后台。它的 Versions 机制：</p>
+    <div class="notes"><ul>
+      <li>每份文档自动生成独立版本集合 <code>&lt;slug&gt;_versions</code>，保留<b>完整副本 + 修改时间 + 修改者</b>（审计日志）</li>
+      <li><code>drafts</code> 模式：可以存比已发布版本<b>更新</b>的草稿，配合 Access Control 控制谁能看草稿</li>
+      <li><code>autosave</code>：边改边存草稿，不影响已发布版本</li>
+      <li><code>restoreVersion</code> / <code>findVersionByID</code>：按版本回滚、按 ID 取历史版本</li>
+      <li><code>maxPerDoc</code>：每份文档最多保留多少个版本</li>
+    </ul></div>
+    <p><b>对照我们自己的 Content Studio</b>：我们有 draft → diff → publish → revisions → rollback，<b>形状是对的</b>；缺的是<b>按版本的审计日志（谁改的）</b>、以及<b>「谁能读草稿」的访问控制</b>（我们现在是用环境锁一刀切挡在生产外）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="no">02</span>对照后，我们的问题是什么</h2>
+  <p>调研让我看清了 #130 的真正病根，也看清了法律页这一摊的问题：</p>
+  <div class="callout bad"><b>我们的法律文本是三处并存、各自独立的：</b>母本在 <code>docs/</code>（内部文件）、页面在 <code>src/app/(zh)/{privacy,terms}/page.tsx</code>（线上渲染面）、中文文案还在 <code>src/config/siteContent.ts</code>（代码单源，另有一层）。<b>三处之间没有任何机制保证一致。</b></div>
+  <p>#130 就是这么来的：代码单源改对了，但生产库读的是 <code>2026-09-17</code> 冻结的旧覆盖，两边各说各话，而且<b>没有任何一道门会红</b>。</p>
+  <p>业界的做法是把「一致」这件事<b>从纪律变成断言</b>：法律文本单一来源，每个消费方引用它，测试断言每个消费方都指向那一处，再加负向断言钉住不该出现的字样。</p>
+</section>
+
+<section>
+  <h2><span class="no">03</span>本次落地了什么</h2>
+
+  <h3>3.1 三个法律页定稿</h3>
+  <table>
+    <thead><tr><th>页面</th><th>改动</th></tr></thead>
+    <tbody>
+      <tr><td class="ref">/privacy</td><td>版本 <code>v0.3.7（草案）· 生效日期：待定</code> → <b>v1.0 · 生效日期：2026-10-16</b>；存储地点补齐云商＝腾讯云、可用区 ap-singapore-4；第五节表三处「未核实/待定稿」改为事实表述</td></tr>
+      <tr><td class="ref">/terms</td><td>版本 <code>v0.3.8（草案）· 生效日期：待定</code> → <b>v1.0 · 生效日期：2026-10-16</b>（正文零改动——v0.3.8 起正文已无待定项）</td></tr>
+      <tr><td class="ref">/privacy/subprocessors</td><td>版本行同上；<b>新增「取证依据」列</b>；5 行的「待取证/未核实」全部换成可复核事实；逐通道表 3 处同样处理</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 处理方清单（v1.0，逐行取证）</h3>
+  <table>
+    <thead><tr><th>处理方</th><th>托管地区</th><th>依据</th></tr></thead>
+    <tbody>
+      <tr><td>本站服务器</td><td>新加坡 · 腾讯云 CVM（ap-singapore-4）</td><td class="ref">dmidecode = Tencent Cloud / CVM；实例元数据 placement/region</td></tr>
+      <tr><td>DeepSeek</td><td>境外 API 端点</td><td class="ref">部署键位 DEEPSEEK_BASE_URL 实测</td></tr>
+      <tr><td>腾讯云 SES（国际站）</td><td>新加坡（ap-singapore）</td><td class="ref">TENCENT_SES_REGION + ses.intl.tencentcloudapi.com</td></tr>
+      <tr><td>CDN 与安全防护</td><td>全球边缘节点</td><td class="ref"><b>Cloudflare</b>：Server: cloudflare + /cdn-cgi/trace + CF_ACCESS_TEAM_DOMAIN</td></tr>
+      <tr><td>PaddleOCR</td><td>境外 API 端点</td><td class="ref">部署键位 PADDLEOCR_JOB_URL 实测</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><b>三条刻意的边界</b>
+    <ol class="notes" style="background:none;border:none;padding:0;margin-top:6px">
+      <li><b>「待取证」「未核实」不再作为发布态占位。</b>取证不到的事，要么写成事实（「该服务方公开政策未给出固定天数」），要么如实标注属谁的信息（「本服务运营主体未在本页公示」），不留待办占位。</li>
+      <li><b>不代第三方承诺。</b>第三方保留期与注册主体以其公开政策与合同为准，我方不代其承诺——这句写进了表注。</li>
+      <li><b>DNS 落某云网段只算观测，不算存储地结论。</b>api.deepseek.com 解析落 AWS、paddleocr.aistudio-app.com 落百度网段，这两条只记观测、不写进结论列。</li>
+    </ol>
+  </div>
+
+  <h3>3.3 母本同笔同步（并改名）</h3>
+  <p>三份母本 <code>git mv</code> 退役旧名（<code>_草案_20260818</code> 这类名字继续留着会持续误导），改为 <code>docs/隐私政策_v1.0_20261016.md</code>、<code>docs/用户协议_v1.0_20261016.md</code>、<code>docs/第三方处理方清单_v1.0_20261016.md</code>，状态改为「v1.0 定稿，2026-10-16 生效」，并<b>新增第五节「验证纪律」</b>，把上面三条边界和「改法律文本必须同笔同步」写成明文。</p>
+
+  <h3>3.4 新增一道发布门禁：test:legal-pages-drift</h3>
+  <div class="callout info"><b>这是本次最有价值的一步——把「一致」从纪律变成断言。</b>脚本 <code>scripts/smoke-legal-pages-drift.mjs</code>，<b>46 条断言</b>，已接进 <code>release-preflight.cjs</code> 的 <code>RELEASE_GATES</code>（第 17 道门）。</div>
+  <div class="stats">
+    <div class="stat ok"><div class="n">46</div><div class="l">源码层断言</div></div>
+    <div class="stat ok"><div class="n">2</div><div class="l">校验层（源码 + 线上渲染面）</div></div>
+    <div class="stat ok"><div class="n">17</div><div class="l">发布门禁序号</div></div>
+    <div class="stat warn"><div class="n">5</div><div class="l">被负向钉死的字样</div></div>
+  </div>
+  <table>
+    <thead><tr><th>层</th><th>跑在哪</th><th>断言什么</th></tr></thead>
+    <tbody>
+      <tr><td>源码层</td><td>本门（源码树）</td><td>三个页面源码<b>不得</b>出现「草案」「待取证」「未核实」「待定稿」「生效日期：待定」；<b>必须</b>出现生效日期；三份母本存在且已定稿；<b>旧「草案」文件名必须已退役</b>；清单页与母本必须列出同一批处理方；母本第五节「验证纪律」必须成文</td></tr>
+      <tr><td>线上渲染面</td><td>smoke-seo-consistency.mjs（对 SEO_TARGET）</td><td><code>/privacy</code>、<code>/terms</code>、<code>/privacy/subprocessors</code> <b>不得</b>出现上述五个字样；<b>必须</b>出现生效日期</td></tr>
+    </tbody>
+  </table>
+  <p class="small">两层分工：线上那道抓「生产真的没占位了」，源码那道抓「线上对了但源码留着占位、下次构建又带回来」。<b>#130 恰好是后一种。</b></p>
+</section>
+
+<section>
+  <h2><span class="no">04</span>没做的、和仍然成立的边界</h2>
+  <div class="notes"><ul>
+    <li><b>英文版法律页仍未建立。</b><code>/en/privacy</code>、<code>/en/terms</code> 不存在，<code>smoke-seo-consistency.mjs</code> 的双语活对列本就不含条款/隐私英页。这是下一件要做的事。</li>
+    <li><b>本服务运营主体名称仍未公示。</b>这不是取证能解决的问题——是 Owner 侧信息。页面如实写「主体信息未在本页公示，合规查询请通过文末邮箱联系」，<b>没有编一个名字</b>。</li>
+    <li><b>法律顾问过目</b>：Owner 已明确「没有法律的」，本次按业界做法把<b>可机械验证</b>的部分做扎实了；<b>不可机械验证</b>的部分（条款措辞的法定充分性）仍建议后续请专业人士过一遍。已写进母本遗留段。</li>
+    <li><b>Content Studio 的审计日志与草稿访问控制</b>（Payload 有、我们没有）未做——属独立工程项，不在本次范围。</li>
+  </ul></div>
+</section>
+
+<footer>
+  <span>图译工坊内测版 · GEO 线</span>
+  <span>调研记录 + 落地清单</span>
+  <span>第 1 项（域名信任 T1/T2）按 Owner 指示未做</span>
+</footer>
+
+</div>
+</body>
+</html>

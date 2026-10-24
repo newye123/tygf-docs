@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行方案：豆包纠偏内容与排期（头条 / 抖音）· 2026-10-16</title>
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:18px 20px}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.verdict p{margin:0;color:var(--ink-2);font-size:.98rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .n{font-family:var(--font-display);font-size:1.55rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;margin:0;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+h2 .no{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 7px}
+p{margin:0}
+.small{font-size:.86rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.chip{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+.card .title{font-weight:600;font-size:.98rem}
+.card p{color:var(--ink-2);font-size:.92rem}
+.card .ref{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 18px;font-size:.92rem;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+.callout.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.ref{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);overflow-wrap:anywhere}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.92rem}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
+.gate .k{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.gate .v{font-size:.92rem;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 22px}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border-radius:4px;padding:1px 5px}
+blockquote{margin:0;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:14px 18px;color:var(--ink-2);font-size:.94rem}
+blockquote p+p{margin-top:10px}
+ul{margin:0;padding-left:1.2em;color:var(--ink-2);font-size:.94rem}
+li+li{margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>执行方案</span><span class="sep">/</span>
+      <span>GEO · 豆包纠偏</span><span class="sep">/</span>
+      <span>2026-10-16</span>
+    </div>
+    <h1>豆包纠偏内容与排期（头条 / 抖音）</h1>
+    <p class="standfirst">
+      豆包把「图译工坊」误当成 ImageTrans 的俗称，稳定复现。本文给出纠偏用的三份内容稿与发布时间表——
+      <b>只处理误分类，不碰域名信任</b>（Owner 已定第 1 件不做）。
+    </p>
+    <div class="meta">
+      <span>授权：Owner「除了一不做，其他的都执行」</span>
+      <span>性质：内容稿 + 排期</span>
+      <span>状态：<b>未发布任何内容</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="verdict">
+      <span class="tag">要纠的是</span>
+      <p>
+        2026-10-16 19:3x 用 Owner 已登录会话（Tabbit）实跑，豆包给出两个独立错误：
+        <b>E1 误分类</b>——「一般是圈内对 ImageTrans 的俗称」；
+        <b>E2 域名判定为钓鱼站</b>——「不是正规合规网站…很可能是仿冒它的钓鱼站」。
+        <br><br>
+        <b>本文只处理 E1。</b>E2 的成因是无 ICP 备案 + 域名近似 <code>tuyigroup.com</code>，
+        属信任基础设施问题，内容层无法解决，本文不作任何相关宣称。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">01</span>纠偏策略：三句话定死</h2>
+    <p class="small">AI 引用内容时最先抓「可抽取的定义句」，所以三份稿子里埋同一组句子。</p>
+    <div class="gates">
+      <div class="gate"><span class="k">定义句</span><span class="v">图译工坊（tuyigf.com）是一个把<b>已有译文</b>批量写进 PSD/PSB 文字图层的设计交付工具。<b>它不做翻译。</b></span></div>
+      <div class="gate"><span class="k">反分类句</span><span class="v">图译工坊<b>不是</b> ImageTrans，也不是图片翻译工具——后两者解决「把图上的字翻成另一种语言」，图译工坊解决「把设计稿改成多语言版本」。</span></div>
+      <div class="gate"><span class="k">事实句</span><span class="v">单批最多 12 个目标语种；语言名称识别覆盖 54 种；PSD/PSB 源文件与导出件不出本机。</span></div>
+    </div>
+    <div class="callout bad">
+      <b>三处硬约束（不做就白做）：</b>
+      ① 不写「平均 3 分钟」——该承诺已于 <code>4ddfa59</code> 有意撤除（依据 <code>AI_MEMORY/ISSUES.md:80</code>），AR-22 裁定「无出处性能承诺…采纳（最高优先）」，保留需真机取证；
+      ② 不写「已备案」「国内合法运营」之类——事实不成立，写了反而给 E2 添燃料；
+      ③ 不写「最好/第一/领先」——审核会驳回，也降低 AI 采信度。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">02</span>头条长文（约 1600 字）</h2>
+    <div class="card">
+      <div class="head"><span class="chip info">长文</span><span class="title">已有译文的多语言 PSD，怎么批量写回设计稿？一份可执行的交付指南</span></div>
+      <p class="ref">骨架复用 2026-09-18 内容草稿包的长文底稿，已剔除全部时长承诺并前置反分类句。</p>
+    </div>
+    <table>
+      <thead><tr><th>段落</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td>开头：区分「把图翻译成另一种语言」与「把设计稿改成多语言版本」</td><td>直接命中 E1 的误分类点</td></tr>
+        <tr><td>一、三条路对比表（图片翻译 / 人工重排 / 源文件写回）</td><td>可抽取的结构化对比，AI 最爱引用</td></tr>
+        <tr><td>二、源文件写回的六个步骤</td><td>长结构化证据页</td></tr>
+        <tr><td>三、六个最容易踩的坑</td><td>专业度信号</td></tr>
+        <tr><td>四、自动化边界：可复查而非全自动</td><td>诚实口径</td></tr>
+        <tr><td>五、图译工坊在链路里的位置 + 常见问题</td><td>定义句与事实句落点</td></tr>
+      </tbody>
+    </table>
+    <div class="callout ok">
+      <b>五节里必须原样出现的一句：</b>「图译工坊（tuyigf.com）是一个把已有译文批量写进 PSD/PSB 文字图层的设计交付工具。它不做翻译。它不是 ImageTrans，也不是图片翻译工具。」
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">03</span>抖音文案与评论区置顶</h2>
+    <div class="card">
+      <div class="head"><span class="chip info">短视频</span><span class="title">标题（选一，均不含时长承诺）</span></div>
+      <p>① 图片翻译，救不了你的多语言详情页　② 设计师：别再一语言一版从头做了　③ 12 个语言的详情页，别一个个改</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="chip warn">必做</span><span class="title">评论区置顶（AI 抓评论区的权重不低）</span></div>
+      <p>「补一句免得误会：图译工坊不是 ImageTrans，也不是图片翻译工具。图片翻译是『把图上的字翻成另一种语言』，我们做的是『把 PSD 设计稿改成多语言版本』——输入是你<b>已有的译文</b>，输出是可继续编辑的源文件。」</p>
+    </div>
+    <p class="small">封面沿用 <code>outputs/geo-covers/douyin-cover-1.png</code>；标题含 PSD / 多语言 / 详情页关键词。</p>
+  </section>
+
+  <section>
+    <h2><span class="no">04</span>排期</h2>
+    <table>
+      <thead><tr><th>时点</th><th>动作</th><th>负责</th></tr></thead>
+      <tbody>
+        <tr><td>10-16 今晚</td><td>Owner 审阅本方案三份稿（重点看三条硬约束是否同意）</td><td>Owner</td></tr>
+        <tr><td>10-17（六）上午</td><td><b>头条长文发布</b>——给引擎一个可抽取的长文定义源</td><td>Owner</td></tr>
+        <tr><td>10-17（六）晚</td><td><b>抖音短视频 + 评论区置顶</b>——置顶必须发，它是反分类句的落点</td><td>Owner</td></tr>
+        <tr><td>10-18（日）</td><td>微头条 / 问答补发</td><td>Owner</td></tr>
+        <tr><td>10-19（一）</td><td>手动问豆包一次，观察是否改口</td><td>砚（可用 Tabbit）</td></tr>
+        <tr><td><b>10-23（五）</b></td><td><b>三引擎复测，对比 10-16 基线</b></td><td>砚（可用 Tabbit）</td></tr>
+      </tbody>
+    </table>
+    <div class="gates">
+      <div class="gate"><span class="k">通过</span><span class="v">问豆包「图译工坊是什么？」，回答中<b>不再出现 ImageTrans</b>，且能说出「已有译文 / 写回 PSD 文字图层 / 不做翻译」中至少两项。</span></div>
+      <div class="gate"><span class="k">未通过</span><span class="v">仍误分类 ⇒ 换更强信源（行业媒体稿、百科词条），而不是再加抖音条数。</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">05</span>与第 1 件（域名信任）的边界</h2>
+    <div class="callout">
+      本文<b>不触碰</b> E2。硬写「我们是正规网站」既无出处，又会被反诈逻辑当成「越是强调越是可疑」，反而有害。
+      E2 只能由 Owner 在两条路线中拍板（ICP 备案 / 第三方可验证信源），本文不作任何相关宣称。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">06</span>未做的事（如实登记）</h2>
+    <div class="notes">
+      <ol>
+        <li><b>未发布任何内容</b>：发布是公开外部动作，等 Owner 明确授权或亲自执行。</li>
+        <li><b>未联系任何媒体</b>：百度百科词条的前置（2 条以上权威媒体报道）本文未推进。</li>
+        <li><b>未改知乎旧文</b>：<code>zhuanlan.zhihu.com/p/2084042729051505095</code> 正文仍含「平均 3 分钟」（<code>AI_MEMORY/ISSUES.md:142</code> 已记），属 Owner 动作。</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <span>执行方案 · 豆包纠偏内容与排期</span>
+    <span>2026-10-16</span>
+    <span>关联：执行报告_20261016_AI引用复测复核_三引擎实跑</span>
+    <span>稿：执行方案_20261016_豆包纠偏内容与排期.md</span>
+  </footer>
+
+</div>
+</body>
+</html>

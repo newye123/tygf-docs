@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图译工坊全项目对抗式审查 · 2026-10-24</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffdf8; --panel-2:#f1eee6; --ink:#1f2421; --muted:#68706a;
+    --line:#ddd8cb; --accent:#2f6b55; --accent-2:#8b5e34; --red:#b23a34; --amber:#a86b16;
+    --green:#2f6b55; --blue:#355c7d; --shadow:0 12px 32px rgba(36,40,35,.08);
+    --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+    --sans:"Noto Sans SC","IBM Plex Sans","PingFang SC","Microsoft YaHei",sans-serif;
+    --serif:"Noto Serif SC","Songti SC",serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#151816; --panel:#1d211e; --panel-2:#242924; --ink:#ece9df; --muted:#a6ada5;
+      --line:#353b35; --accent:#7fbf9f; --accent-2:#d2a36b; --red:#e07a72; --amber:#e0ad5c;
+      --green:#7fbf9f; --blue:#8fb6d8; --shadow:0 12px 32px rgba(0,0,0,.28);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.75;font-size:15px}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  .page{max-width:1080px;margin:0 auto;padding:48px 26px 80px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  h1{font-family:var(--serif);font-size:clamp(30px,4.2vw,50px);line-height:1.2;margin:0 0 14px;font-weight:700;letter-spacing:-.02em}
+  .subtitle{font-size:17px;color:var(--muted);max-width:780px;margin:0 0 24px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 20px;font-size:12px;color:var(--muted);font-family:var(--mono);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin-bottom:28px}
+  .verdict{background:linear-gradient(135deg,color-mix(in srgb,var(--red) 10%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--red) 34%,var(--line));border-radius:18px;padding:26px 28px;box-shadow:var(--shadow);margin:0 0 34px;position:relative;overflow:hidden}
+  .verdict:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--red)}
+  .verdict .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--red);border:1px solid color-mix(in srgb,var(--red) 45%,var(--line));padding:4px 9px;border-radius:999px;margin-bottom:12px}
+  .verdict p{margin:0;font-size:18px;line-height:1.8}
+  .verdict strong{color:var(--red)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 38px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 15px;box-shadow:var(--shadow)}
+  .stat .n{font-family:var(--serif);font-size:30px;line-height:1;letter-spacing:-.03em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:9px}
+  .stat.red .n{color:var(--red)} .stat.amber .n{color:var(--amber)} .stat.green .n{color:var(--green)}
+  h2{font-family:var(--serif);font-size:26px;line-height:1.35;margin:48px 0 16px;padding-top:12px;border-top:2px solid var(--ink)}
+  h2 .num{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;display:block;margin-bottom:4px}
+  h3{font-size:18px;margin:26px 0 10px;line-height:1.5}
+  p{margin:0 0 14px}
+  .lead{font-size:16px;color:var(--muted);max-width:820px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:16px 0;box-shadow:var(--shadow)}
+  .card.p0{border-left:6px solid var(--red)}
+  .card.p1{border-left:6px solid var(--amber)}
+  .card.ok{border-left:6px solid var(--green)}
+  .card h3{margin-top:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill.p0{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,var(--line));background:color-mix(in srgb,var(--red) 8%,transparent)}
+  .pill.p1{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,var(--line));background:color-mix(in srgb,var(--amber) 8%,transparent)}
+  .pill.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,var(--line));background:color-mix(in srgb,var(--green) 8%,transparent)}
+  .card p:last-child{margin-bottom:0}
+  .impact{background:var(--panel-2);border-radius:10px;padding:12px 14px;margin:12px 0 0;font-size:14px}
+  .impact b{color:var(--ink)}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--shadow);margin:16px 0 24px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:620px}
+  th{background:var(--panel-2);text-align:left;font-weight:600;color:var(--muted);font-size:12px;letter-spacing:.04em;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 14px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  code,.mono{font-family:var(--mono);font-size:.9em;background:color-mix(in srgb,var(--ink) 6%,transparent);padding:1px 5px;border-radius:5px}
+  .green{color:var(--green);font-weight:600} .red{color:var(--red);font-weight:600} .amber{color:var(--amber);font-weight:600}
+  ul,ol{margin:8px 0 16px;padding-left:22px}
+  li{margin:6px 0}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .note{font-size:13px;color:var(--muted);background:var(--panel-2);border-radius:10px;padding:12px 14px;margin:14px 0}
+  .quote{border-left:3px solid var(--accent-2);padding:6px 0 6px 16px;color:var(--muted);font-family:var(--serif);font-size:15.5px;margin:16px 0}
+  .gates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .gate{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px}
+  .gate .g{font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+  .footer{margin-top:54px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+  @media (max-width:820px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .split,.gates{grid-template-columns:1fr}
+    .page{padding:30px 16px 60px}
+    .verdict{padding:20px}
+    .verdict p{font-size:16px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    .page{max-width:none;padding:0}
+    .card,.stat,.table-wrap,.verdict{box-shadow:none;break-inside:avoid}
+    h2{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">TYGF · Full Project Adversarial Review · 2026-10-24</div>
+  <h1>图译工坊全项目<br>对抗式审查</h1>
+  <p class="subtitle">工程产能和测试建设是真的；但当前还不是一个可以安全放量收费的生产版本。生产跑的是 10-21 的旧一代代码，开发线已领先 194 个提交；最值钱的计费修复只在开发线；免 PS 写回仍不可用；充值入口与支付能力不匹配；治理面已经超载。</p>
+  <div class="meta">
+    <span>审查时间：2026-10-24 13:00–13:25 GMT+8</span>
+    <span>方式：只读 · 未部署 · 未翻开关</span>
+    <span>业务 HEAD：develop 3a7cdbe7 / main 319bc138</span>
+  </div>
+
+  <div class="verdict">
+    <span class="tag">VERDICT · 不是“可安全放量收费的生产版本”</span>
+    <p>测试站很接近开发线，代码质量门也真的在跑；但<strong>生产与开发之间隔着一整代产品面</strong>，其中包含一项已经在开发线修好、生产还没上的计费正确性修复。当前最该做的不是继续加功能，而是把“生产到底跑哪一版、能不能收费、哪些能力可以对外讲”这三件事收口。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat red"><div class="n">194</div><div class="l">开发线领先生产的提交数（166 个非合并）</div></div>
+    <div class="stat amber"><div class="n">290</div><div class="l">未进生产的变更文件（+29,516 / −2,508）</div></div>
+    <div class="stat red"><div class="n">9 / 2</div><div class="l">治理在办 / 上限，已超载</div></div>
+    <div class="stat green"><div class="n">157</div><div class="l">本轮单测全过（19 个文件）</div></div>
+  </div>
+
+  <h2><span class="num">01 · 现场读数</span>先把“哪一版在跑”钉死</h2>
+  <p class="lead">这一节全部是现读，不是文档转述。版本判断以 <code>/api/runtime-provenance</code> 与服务器回环为准。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>实际读数</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>开发线</td><td><code>develop = origin/develop = 3a7cdbe7</code></td><td>2026-10-24 09:20 合并提交</td></tr>
+        <tr><td>生产主线</td><td><code>main = origin/main = 319bc138</code></td><td>2026-10-21 10:25</td></tr>
+        <tr><td>生产在跑</td><td><code>319bc1384a36</code>，provenance <span class="green">BOUND</span></td><td><code>/var/www/tygf-current</code> 也指向该版本</td></tr>
+        <tr><td>测试站在跑</td><td><code>ffab3b2ed270</code>，provenance <span class="green">BOUND</span></td><td>2026-10-24 08:53 部署</td></tr>
+        <tr><td>生产助手</td><td><strong>3.7.15</strong>（2026-10-11）</td><td>生产站 <code>/api/local-assistant/latest</code> 现读</td></tr>
+        <tr><td>测试站助手</td><td><strong>3.7.24</strong>（2026-10-23）</td><td>测试站同接口现读</td></tr>
+        <tr><td>生产与开发差距</td><td><strong>194 个提交</strong> / 166 个非合并</td><td>290 文件，+29,516 / −2,508</td></tr>
+        <tr><td>产品层差距</td><td><code>src/</code> 137 文件 +16,364 / −2,148；助手 14 文件 +1,284 / −119；Prisma 2 文件 +17 / −5</td><td>不是“差几笔小修”</td></tr>
+        <tr><td>测试站与开发差距</td><td>6 个源码文件，+131 / −22</td><td>主要是英文 i18n 与免 PS 字距修复</td></tr>
+        <tr><td>代码规模</td><td>164 条 API 路由、67 个 model、247 个 smoke、19 个单测文件、150 份 docs</td><td>当前 develop</td></tr>
+        <tr><td>工作树</td><td>32 个 worktree，11 个有未提交改动</td><td><code>v1.5-trust-chain</code> 有 136 项；<code>develop</code> 有 1 个页面 19 行未提交</td></tr>
+        <tr><td>问题台账</td><td>累计 277 条；红/橙且未写“已修”的 138 条</td><td>含历史存量，未逐条复核为仍活着</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>两站健康与关键路由</h3>
+  <div class="gates">
+    <div class="gate"><span class="g">生产 · 回环</span><span class="green">/ 200 · /en 200 · /en/terms 200 · /en/privacy 200 · /download 200</span></div>
+    <div class="gate"><span class="g">测试站 · 回环</span><span class="green">/ 200 · /en 200 · /en/terms 200 · /en/privacy 200 · /download 200</span></div>
+    <div class="gate"><span class="g">工作台</span><code>/workbench</code> 两站均 404；它是 hash 视图 <code>#workbench</code> / <code>#batch</code>，不是故障。</div>
+  </div>
+  <div class="note">本机到两站公网 443 出口超时，因此改用服务器 <code>127.0.0.1:3000/3001</code> 回环核验。两站回环都返回 200，<strong>不能据此判站点宕机</strong>；公网可用性本身未在本轮取证。</div>
+
+  <h2><span class="num">02 · 最重的发现</span>风险按“会不会伤到钱和信任”排序</h2>
+
+  <div class="card p0">
+    <h3><span class="pill p0">P0 · 资金正确性</span>生产仍在旧计费口径：多收风险已修在开发线，但没上生产</h3>
+    <p>生产 <code>BillingQuote</code> 表<strong>没有</strong> <code>billingScopeJson</code> / <code>billingScopeDigest</code> 两列；测试站两列都在。生产库当前 82 条报价，最近一条是 <strong>2026-09-19 14:29</strong>。</p>
+    <p>开发线新增迁移 <code>prisma/migrations/20261022120000_quote_billing_scope/migration.sql:6-7</code>，只加两个可空列；修复文件是 <code>src/lib/billing/billing-scope.ts:1-10</code>，接线点在 <code>src/lib/server/photoshop-billing.ts:160-222</code>。守卫 <code>test:v2-billing-scope</code> 实跑通过，输出明确是 <strong>“68→31、结算 31、明细可核算、旧口径仍 68”</strong>。</p>
+    <p>生产主线 <code>main:src/lib/server/credits.ts:40</code> 仍是 <code>DEFAULT_PLATFORM_DAILY_CAP = 10000</code>，且 <code>:121-123</code> 仍是“配置不大于 0 就回落 10000”；开发线 <code>src/lib/server/credits.ts:44</code> 已改成 <code>0</code>＝关闸。生产库没有 <code>platformDailyCreditCap</code> 配置行，所以按旧构建缺省 <strong>10000/日</strong> 生效。</p>
+    <div class="impact"><b>影响：</b>只要生产恢复单语执行，设计稿里没有对应对象的行仍会照旧进报价；12 稿 × 12 语会撞旧日熔断。当前生产近一个月没有新报价，所以<strong>不是正在发生的大面积多收</strong>；但一恢复使用就会命中。</div>
+    <div class="impact"><b>建议：</b>先把生产单语执行限流/暂停，或按三段轨把计费作用域修复 + 迁移送上生产并做一笔真实对账。不要只推前端、不推迁移。</div>
+  </div>
+
+  <div class="card p0">
+    <h3><span class="pill p0">P0 · 客户入口</span>对外联系邮箱仍可能“信有人发、没人管”</h3>
+    <p><code>tuyigf.com</code> 的 MX 现读仍指向 <code>route1/2/3.mx.cloudflare.net</code>，SPF 是 <code>include:_spf.mx.cloudflare.net</code>。Cloudflare Email Routing 的“目标地址 + 路由规则”是否已配，<strong>本轮仍无法核实</strong>：既有令牌只有读权限，读地址与规则都 403；本轮没有新的可写权限，也没有做真实发信测试。</p>
+    <p>现有登记 <code>AI_MEMORY/ISSUES.md:47</code>（#257）仍是 P0：英文站“申请试点”按钮是 <code>mailto:tuyi@tuyigf.com</code>，一旦没有路由，来信会静默丢失，发信人也不会收到退信提示。</p>
+    <div class="impact"><b>建议：</b>Owner 给令牌补 Email Routing 读写权限，或在 Cloudflare 后台手点“目标地址 + 路由规则”；配好后加一条每周测试邮件 + 飞书到达断言。配好前，不要对外把该邮箱当作可靠入口。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 发布</span>生产与开发代差 194 个提交，发布方式仍是“大爆炸”</h3>
+    <p>194 个提交里：29 个 <code>feat</code>、63 个 <code>fix</code>、16 个 <code>test</code>；主题集中在多稿工作台（26）、排版（23）、字体（20）、英文站（17）、批量（17）、助手（16）。生产助手 3.7.15，测试站助手 3.7.24；测试站已验的“排版入口、页内选文件夹、多表导入、临时目录迁移”，生产用户都还没有。</p>
+    <p>生产数据库比开发少两列，且生产没跑过对应迁移。一次性把 194 个提交合进 <code>main</code>，等于把产品面、助手面、数据库迁移、英文文案、计费口径一起压进一个发布窗，回滚面很大。</p>
+    <div class="impact"><b>建议：</b>拆成发布列车。第一列只带“计费作用域 + 迁移 + 生产对账”；第二列带助手 3.7.24 与排版/多稿；第三列带英文站剩余面。每列都按 <code>origin/main</code> 出包、独立验收、独立回滚。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 支付</span>生产充值入口开着，但自动支付必拒，且历史上没有一笔真正到账</h3>
+    <p>生产库 <code>SiteSetting.featureFlagsV1</code> 现读：<code>creditPacksEnabled=true</code>、<code>manualQrFallbackEnabled=true</code>、<code>manualPaymentConfirmationEnabled=true</code>、<code>batchWorkbenchEnabled=false</code>、<code>typographyCustomizationEnabled=true</code>、<code>siteCopyInlineEdit=true</code>；<strong><code>alipayPaymentsEnabled</code> 未出现</strong> ⇒ 走源码缺省 <code>false</code>。</p>
+    <p>支付路由 <code>src/app/api/workbench/credit-orders/[id]/pay/route.ts:26-30</code> 的顺序是：<code>creditPacksEnabled</code> 与 <code>alipayPaymentsEnabled</code> 任一不真，直接 409 <code>CREDIT_PACKS_DISABLED</code>。生产当前正是“入口开、支付宝关”，所以点自动支付必拒。</p>
+    <p>生产订单现读：<code>created 9</code>、<code>cancelled 5</code>、<code>credited 0</code>；<code>CreditLedger</code> 类型只有 <code>reserve / release / grant / commit / adjust / expire_release</code>，<strong>没有 purchase/recharge 类入账</strong>。自动充值链路在生产从未成功走完过一次。人工二维码/人工确认虽开着，但也没有留下“订单到账”的证据。</p>
+    <div class="impact"><b>建议：</b>二选一，不要维持“看起来能买、点下去失败”的中间态。要么关回 <code>creditPacksEnabled</code>、文案改“充值通道待开放”；要么配齐支付宝五件套、开 <code>alipayPaymentsEnabled</code>、做一笔真实回调验签与到账对账。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 能力</span>免 PS 写回：测试全绿，但用户完全用不到</h3>
+    <p>本轮实跑四条守卫：<code>test:pc-executor</code> <span class="green">18/18 PASS</span>；<code>test:pc-txt2</code> <span class="green">13 passed</span>；<code>test:pc-wiring-freeze</code> <span class="green">9/9 PASS</span>；<code>test:batch-row-contract</code> <span class="green">all assertions passed</span>。</p>
+    <p>但 <code>test:pc-wiring-freeze</code> 的通过项里明确包含：“三键缺省全关”“pc-executor 未接入 server.js（冻结态，负向断言）”“三个写回导出均未出现在 server.js”“站点文案无「免 PS」宣称”。</p>
+    <div class="quote">这些绿证明的是“代码在、闸门严、没有偷偷接线”，不是“用户能用”。</div>
+    <p><code>download/local-assistant/server.js:727-728</code> 仍是 <code>pcExecutorEnabled:false</code>、<code>pcExePath:''</code>；<code>pc-executor.js:466</code> 的字距失败码 <code>KERNING_FIDELITY_LOST</code> 只在执行器内部生效，执行器本身没有接进服务端。PS 2021 能否直接打开保留 <code>Txt2</code> 的产物，仍未人工目检；11/175 层混合字体被整层单一字体取代的问题也还在。</p>
+    <div class="impact"><b>建议：</b>继续冻结，不要对外称“免 PS 写回保真”。解冻前置不变：Owner 用 PS 2021 打开真实稿目检通过，再谈接线、灰度和话术。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 产品</span>多稿工作台只完成第 1 步，后面三步还在路上</h3>
+    <p>测试站已经是 <code>ffab3b2e</code>，批量模式 <code>canary</code>、白名单为空（对所有已激活用户开放），助手 3.7.24。第 1 步的壳、页内选文件夹、自动归属、语言矩阵点击修复都已上站。</p>
+    <p>但台账 <code>AI_MEMORY/ledger.jsonl:393</code> 写得很清楚：剩余是 ① 第 2 步把混在一张表里的多语言拆表；② 第 3 步语言覆盖率与“缺哪门”的处置；③ 第 4 步出活口径。</p>
+    <p><code>docs/HANDOFF.md:23</code> 还登记了三条真实边界：没有登录态真浏览器点验；按行“不翻译”的作用域仍是全部语言，<strong>逐语言排除今天仍没有原语</strong>；多稿模式下忽略表跨稿共用，一次排除会影响所有含同原文的稿，界面未加说明。R2-b 软删那一半也未做。</p>
+    <div class="impact"><b>建议：</b>对外只讲“第 1 步可用”，不要讲“多稿批量已收口”。真机验收要覆盖：选文件夹即整批、扫描条、5857 冲突、6896 同名、缺表跳过撤销、下一步拦未完成。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 治理</span>治理面已经超载，状态文件还在说旧话</h3>
+    <p><code>bash scripts/control-plane.sh</code> 本轮实跑：在办 <strong>9/2</strong>；待复验 <strong>71</strong> 条；等您定 <strong>78</strong> 条；到期未交 <strong>32</strong> 条；飞书回读表 205 行 / 台账 202 任务，机器列漂移 <strong>115 处</strong>，重复行 <strong>5 组</strong>，缺行 <strong>2</strong> 条；最终判定 <strong>ALARM，122 项</strong>。</p>
+    <p><code>AI_MEMORY/CURRENT_STATUS.md</code> 最后更新 2026-10-20，开头仍写“测试站 <code>6a268fe</code> / 生产 <code>6ff5c3c</code> / develop <code>f98818f</code>”，与今天实际（<code>ffab3b2e</code> / <code>319bc138</code> / <code>3a7cdbe7</code>）全部不符；它已经落后 <strong>219 个提交</strong>。<code>总控/产品功能全景_20261003.md</code> 的核验基线是 <code>7b5355e</code>，今天已落后 <strong>473 个提交</strong>。</p>
+    <p><code>develop</code> 工作树不是干净树：<code>src/app/(zh)/guide/ps-batch-replace-text/page.tsx</code> 有 19 行未提交的 SEO 正文，另有 <code>AI_MEMORY</code> 两处改动与未跟踪 <code>ledger.jsonl</code>。任何人现在跑 <code>release:preflight</code> 都会被“工作树必须干净”拦下。</p>
+    <div class="impact"><b>建议：</b>先冻结新 WIP，把在办压回 2 条以内；把 <code>CURRENT_STATUS</code> 改成“以 HANDOFF + Git + 运行证据为准”的短指针，不要再维护一份会过期的详细状态；把 develop 那 19 行交给属主提交或暂存。</div>
+  </div>
+
+  <div class="card p1">
+    <h3><span class="pill p1">P1 · 成本</span>AI 成本与报价没有金额级上限，属于经营敞口</h3>
+    <p><code>src/lib/server/credits.ts:26-32</code>：<code>ocr / ai_align / ai_review / review_unlock / ps_execute</code> 五项价格全是 <strong>0</strong>。<code>src/lib/server/ai-ops.ts:68</code>：<code>dailyTokenLimitPerUser: '0'</code>；<code>src/lib/server/ai-guard.ts:88-99</code> 只有在 <code>limit &gt; 0</code> 时才检查，0 等于不限制。</p>
+    <p><code>src/lib/billing/rules.ts:158-161</code>：撤掉 1500 上限后，<code>photoshopExecutionCredits</code> 直接 <code>Math.max(20, totalStandardRows)</code>，没有金额级上限；<code>ISSUES.md:98</code>（#248）登记的 <code>MAX_STANDARD_UNITS_PER_QUOTE</code> 在源码里仍不存在。</p>
+    <div class="impact"><b>影响：</b>AI 侧花的是真金（DeepSeek / PaddleOCR），但用户积分闸管不到它；报价侧如果助手或证据链出一个 bug，可能冻结天文数字。这是“成本敞口”，不是“已经在漏钱”；当前没有证据表明被利用。</div>
+    <div class="impact"><b>建议：</b>这是经营决定。要么给 token 日限走影子模式先告警，要么明确不治理并量出最坏成本；报价侧至少加一个“合法上界”的算术校验。</div>
+  </div>
+
+  <h2><span class="num">03 · 正面读数</span>别把“还没上线”误读成“什么都没做成”</h2>
+  <div class="split">
+    <div class="card ok">
+      <h3><span class="pill ok">已验证</span>代码质量门是真的</h3>
+      <ul>
+        <li><code>test:unit</code>：19 个文件 / 157 个测试全过。</li>
+        <li><code>npx tsc --noEmit</code>：rc=0。</li>
+        <li><code>npm run lint</code>：0 errors / 40 warnings。</li>
+        <li>5 条关键守卫全绿：pc-executor、pc-txt2、pc-wiring-freeze、v2-billing-scope、batch-row-contract。</li>
+      </ul>
+    </div>
+    <div class="card ok">
+      <h3><span class="pill ok">已验证</span>测试站很接近开发线</h3>
+      <ul>
+        <li>只差 6 个源码文件，+131 / −22。</li>
+        <li>多稿第 1 步、排版、英文站、R2-a 都已在站上。</li>
+        <li>两站 <code>/</code>、<code>/en</code>、<code>/en/terms</code>、<code>/en/privacy</code>、<code>/download</code> 全部 200。</li>
+        <li>PM2 三条 online、restarts 0。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="split">
+    <div class="card ok">
+      <h3><span class="pill ok">已验证</span>计费修复不是改注释</h3>
+      <p><code>test:v2-billing-scope</code> 用 68→31 的对照证明旧口径与新口径的差异；旧口径仍算 68，新口径按可执行行算 31。这说明开发线的修复是真实行为变化。</p>
+    </div>
+    <div class="card ok">
+      <h3><span class="pill ok">已验证</span>发布闸有真牙齿</h3>
+      <p><code>release-preflight.cjs:154-193</code> 有 17 道门，并会核“要出包的提交必须已在 <code>origin/&lt;目标分支&gt;</code> 上”；生产出包还有 14 天内的真机验收记录门。它不是“跑个 lint 就放行”。</p>
+    </div>
+  </div>
+  <div class="card ok">
+    <h3><span class="pill ok">已消解</span>PhotoCraft 许可文件已补齐</h3>
+    <p><code>download/local-assistant/build/dist/licenses/</code> 下有 <code>LICENSE-MIT</code>、<code>LICENSE-APACHE</code>、<code>NOTICE</code>、<code>ATTRIBUTION.md</code>，NOTICE 明确写了 ArtCraft 商标不在许可内。之前记的“安装目录两者皆无”已经过时；<strong>商标资产是否已从发行物移除，本轮未核</strong>。</p>
+  </div>
+
+  <h2><span class="num">04 · 能力矩阵</span>哪些能讲、哪些只能内部讲</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>能力面</th><th>生产</th><th>测试站</th><th>判断</th></tr></thead>
+      <tbody>
+        <tr><td>官网中文/英文、法律页</td><td>200</td><td>200</td><td>可用；生产 FAQ 7 条 vs 测试 6 条，内容是否同源待确认</td></tr>
+        <tr><td>单稿 PSD 扫描/翻译/PS 写回</td><td>3.7.15 可用</td><td>3.7.24 可用</td><td>核心可用，但生产计费口径旧</td></tr>
+        <tr><td>批量 v3 执行</td><td>入口关（<code>batchWorkbenchEnabled=false</code>）</td><td>入口开、canary 可执行</td><td>测试站可用；生产未开</td></tr>
+        <tr><td>多稿工作台</td><td>未开</td><td>第 1 步可用</td><td>第 2–4 步未完成</td></tr>
+        <tr><td>排版定制</td><td>开关 true，但助手 3.7.15 能力不足</td><td>助手 3.7.24 已支持</td><td>生产是否真的露出入口未核；不应据此宣传</td></tr>
+        <tr><td>英文站</td><td>首页/法律页可用</td><td>首页/法律页/会话页可用</td><td>注册、邮箱验证等仍有缺口（#270）</td></tr>
+        <tr><td>免 PS 写回</td><td>不可用</td><td>不可用</td><td>代码在、测试绿、执行器冻结</td></tr>
+        <tr><td>充值/支付</td><td>入口开、自动支付必拒</td><td>支付关，有 3 笔 credited 历史</td><td>生产不可对外称“可充值”</td></tr>
+        <tr><td>生产发布</td><td>319bc138</td><td>ffab3b2e</td><td>差 194 个提交，未形成发布列车</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="num">05 · 建议顺序</span>不替 Owner 拍板，只把先后关系排清</h2>
+  <ol>
+    <li><strong>今天先定生产单语执行怎么办</strong>：限流/暂停，还是立刻把计费作用域 + 迁移按三段轨送上生产。不要维持“旧口径继续跑”。</li>
+    <li><strong>处理充值入口</strong>：关掉，或配齐支付宝；不要保留“点得动、必失败”的假入口。</li>
+    <li><strong>处理对外邮箱</strong>：补 Cloudflare 权限或手配路由；配好前不要把它当可靠入口。</li>
+    <li><strong>拆发布列车</strong>：第一列只带计费修复 + 迁移 + 生产对账；第二列带助手 3.7.24 与排版/多稿；第三列带英文站剩余面。</li>
+    <li><strong>免 PS 写回继续冻结</strong>：等 PS 2021 真实稿目检通过，再谈接线。</li>
+    <li><strong>治理减负</strong>：在办压回 2 条以内；修 <code>CURRENT_STATUS</code> 的旧指针；把 develop 那 19 行交给属主提交或暂存。</li>
+  </ol>
+
+  <h2><span class="num">06 · 边界</span>这份报告不声称什么</h2>
+  <div class="card">
+    <ul>
+      <li>本轮没有部署、没有翻 flag、没有改业务代码、没有写生产库。</li>
+      <li>没有做真实登录态浏览器点验，也没有做 Photoshop 真机目检；这两类结论一律标“未核实”。</li>
+      <li>两站公网 443 从本机超时，健康结论来自服务器回环；不能据此判公网可用性。</li>
+      <li>138 条红/橙问题标题只是台账存量信号，<strong>不等于 138 个今天仍活着的问题</strong>；本报告只对逐条复核过的项下结论。</li>
+      <li>生产 <code>.deploy-commit</code> 是 2026-08-10 的 <code>13a4e48</code>，与真实运行版本 <code>319bc138</code> 不符；以后判生产版本请以 <code>/api/runtime-provenance</code> 和 <code>tygf-current</code> 软链为准，不要只读这个文件。</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    <span>审查者：砚（WorkBuddy AI） · 2026-10-24</span>
+    <span>结论有效期：到下一次 develop 合入或两站重新部署为止</span>
+  </div>
+
+</div>
+</body>
+</html>

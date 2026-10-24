@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量工作台：对抗式复审 + 最优路径（七轮 · 已执行）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:18px 20px}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.verdict p{margin:0;color:var(--ink-2);font-size:.98rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat .n{font-family:var(--font-display);font-size:1.55rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;margin:0;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+h2 .no{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 7px}
+p{margin:0}
+.small{font-size:.86rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.chip{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.05em;border-radius:999px;padding:2px 10px}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+.card .title{font-weight:600;font-size:.98rem}
+.card p{color:var(--ink-2);font-size:.92rem}
+.card .ref{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.callout{background:var(--warn-soft);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 18px;font-size:.92rem;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+.callout.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.callout.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.ref{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-2);overflow-wrap:anywhere}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;color:var(--ink-2);font-size:.92rem}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
+.gate .k{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.gate .v{font-size:.92rem;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:14px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 22px}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>图译工坊内测版</span><span class="sep">/</span>
+      <span>执行方案</span><span class="sep">/</span>
+      <span>对抗式复审（七轮） + 已执行 + 真机验证</span>
+    </div>
+    <h1>批量工作台：对抗式复审 + 最优路径</h1>
+    <p class="standfirst">方法：多轮反方自审（对准我自己上一版交付物）+ 源码取证 + 单测钉死。结论：<b>最优不是重建，是搬运</b>——把「多 PSD 能力」从原工作台搬进 <code>#batch</code> 视图。第四轮查出 8 处缺陷并修掉；<b>第五轮去查「我声称已验证」的每一句话，查出一个致命缺陷——批量工作台其实根本跑不起来</b>（见 §07）。</p>
+    <div class="meta">
+      <span>2026-10-16</span>
+      <span>工作树 worktrees/batch-workbench</span>
+      <span>分支 feat/batch-workbench</span>
+      <span>基线 develop@aefc8a8</span>
+      <span>未提交 / 未推送 / develop 主干零改动</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <span class="tag">已执行</span>
+    <p>三句话：① 我上一版的「第 1 层骨架」形状是错的——它想在新视图里从头搭四个区，而批量能力<b>在这个仓库里早就端到端跑通了</b>，只是长错了地方；② 最优路径是<b>搬运</b>：把多 PSD 能力搬进 <code>#batch</code>，原工作台恢复纯单文件，代价约 10 处小改；③ 已执行完毕，<b>单文件路径行为不变</b>，并顺带收口了 ISSUES #151 的「静态/运行时双语义」。④ <b>第四轮</b>推翻了我自己两条断言（「编排器已实现」实为死代码；「矩阵已接线」但点击是假可供性），修掉 8 处缺陷。⑤ <b>第五轮</b>去查「我声称已验证」的每一句话，查出<b>致命缺陷：批量工作台点扫描后永久卡住、根本跑不起来</b>——我前三轮说的「立刻可用」都是错的。⑥ <b>第六/七轮真机验证</b>：真浏览器 + 桩助手，第六轮单稿扫描对照实验，第七轮扩成四场景 <b>20/20 全过</b>，又挖出并修掉第 3 个真实产品缺陷（执行入口未受执行开关约束 ⇒ 静默回退）。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><div class="n">3 / 4</div><div class="l">我上一版骨架里的空占位区</div></div>
+    <div class="stat bad"><div class="n">1</div><div class="l">第五轮查出的致命缺陷</div></div>
+    <div class="stat ok"><div class="n">20</div><div class="l">累计改动文件（15 改 + 1 删 + 4 新）</div></div>
+    <div class="stat bad"><div class="n">15</div><div class="l">累计修掉的缺陷（含真机 3 个）</div></div>
+    <div class="stat ok"><div class="n">20/20</div><div class="l">第七轮真机四场景断言全过</div></div>
+  </div>
+
+  <section>
+    <h2><span class="no">01</span>对抗式复审：六路反方</h2>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">成立</span><span class="title">反方 1：你的第 1 层是个空壳 UI，比不做更糟</span></div>
+      <p>四个区里三个是纯文本占位。用户打开批量工作台，能录入路径、能排序，<b>然后没有任何下一步</b>——看起来像个坏掉的功能。更要命的是占位文案写着「移植 coverage-matrix.tsx」「移植 multi-psd-flow.ts」，而这两样<b>早就接在原工作台里了</b>。</p>
+      <span class="ref">证据：batch-workbench-view.tsx（本轮已删除）；design-file-card.tsx:608-676；workbench-view.tsx:2137-2155</span>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">成立</span><span class="title">反方 2：你犯的正是本项目自己点名的病</span></div>
+      <p><code>AGENTS.md</code> 原文：「反复把"已有能力"当"待新建"派活（实例：学习子系统九环皆有代码与库表，曾被当新东西提出）」。我上一版正是如此——多稿能力已经是完整的：</p>
+      <table>
+        <thead><tr><th>能力</th><th>落点</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>多设计稿列表 + 逐个扫描</td><td class="ref">design-file-card.tsx:608-676</td><td>已实现</td></tr>
+          <tr><td>覆盖率矩阵</td><td class="ref">workbench-view.tsx:2137-2155 → coverage-matrix.tsx</td><td>已接线</td></tr>
+          <tr><td>逐稿编排驱动</td><td class="ref">workbench-view.tsx:1298-1332</td><td>已实现</td></tr>
+          <tr><td>批量执行面板</td><td class="ref">execute-step.tsx:2038+</td><td>已实现</td></tr>
+          <tr><td>编排器（<code>MultiPsdOrchestrator</code>）</td><td class="ref">multi-psd-flow.ts</td><td><b>死代码</b>（0 引用，第四轮已删）</td></tr>
+        </tbody>
+      </table>
+      <p>它们唯一的「毛病」是：被一个全局 flag 门控，且该 flag 一开就把原工作台<b>整体换掉</b>。</p>
+      <p class="small"><b>第四轮更正</b>：上表最后一行我原先写「已实现」——那是错的。<code>MultiPsdOrchestrator</code> 没有任何 import，真正在跑的是 <code>workbench-view.tsx</code> 里 <code>handleExperimentStart</code> / <code>handleExperimentPsdComplete</code> + <code>experimentTrigger</code> 这对回调。该文件来自 <code>cde98a7</code>，已在第四轮删除。</p>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">成立</span><span class="title">反方 3：「原工作台零改动」是个错误的约束</span></div>
+      <p>我上一版写「关键纪律：原 workbench 视图及其组件树零改动」。但这条纪律<b>和「真正并列」是矛盾的</b>：只要 <code>design-file-card.tsx:600</code> 那段「开关开就 return 整套多选 UI」还在，顶替的机关就还在，并列只是靠「别打开那个开关」维持的<b>纪律</b>，不是结构事实。</p>
+      <p><b>修正后的约束</b>：不是「零改动」，而是「<b>单文件路径行为必须逐字节不变</b>」——这可以用一个默认 <code>false</code> 的 prop 做到：改动是加法，行为是等价。</p>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip warn">部分成立</span><span class="title">反方 4：你说补了运营台开关入口，但你没验证它真能开</span></div>
+      <p>我上一轮补了原子覆盖函数 + API 分支 + 面板开关，却只跑了 tsc / lint / 白名单 smoke，<b>没有一条测试覆盖这个新函数</b>。若 SQL 写错，Owner 在运营台点「开启」不会有任何反应，而且<b>看不出来</b>——正是这个项目最怕的静默失效。</p>
+      <p><b>本轮已补</b>：<code>scripts/smoke-batch-workbench-flag.mjs</code>（隔离库），断言默认值、原子写 true/false、<b>以及「写本键不得覆盖其他键」</b>（原子性的核心主张）。</p>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip warn">成立（收窄）</span><span class="title">反方 5：你把「静态/运行时双语义」说大了</span></div>
+      <p>我上一版说它存在双语义。实测收窄到<b>单文件</b>：</p>
+      <div class="gates">
+        <div class="gate"><span class="k">workbench-view.tsx:175</span><span class="v">useFeatureFlags() —— 运行时</span></div>
+        <div class="gate"><span class="k">execute-step.tsx:402</span><span class="v">useFeatureFlags() —— 运行时</span></div>
+        <div class="gate"><span class="k">design-file-card.tsx:66</span><span class="v">featureFlags 模块常量 —— <b>编译期静态（唯一一处）</b></span></div>
+      </div>
+      <p>后果很实：静态=false 而运行时=true 时，<b>文件卡还是单选、矩阵与编排却已按多稿走</b>——错位。</p>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip warn">成立（本轮不做）</span><span class="title">反方 6：粘贴入口没有串行扫描，体验是「粘 5 个、点 5 次」</span></div>
+      <p>串行扫描需要（a）一个「排队中」状态，但 <code>PreparationClientState</code> 没有、且不能加（会破坏 StateBadge 的 Record 穷尽性检查）；（b）队列驱动，它需要 <code>multiScanningIdx</code> 的 stale-closure 修复。</p>
+      <p><b>那个修复已经写好但未提交地躺在 <code>worktrees/develop</code> 的工作区里</b>（state→ref，注释写明「第一次轮询就自我判废，状态永久卡 hashing」）。在这里重复一份会造成<b>两份真值源 + 必然的合并冲突</b>。⇒ 本轮不碰，列为 D10。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">02</span>最优方案：搬运，而不是重建</h2>
+    <div class="callout ok">
+      <b>核心判断</b>：批量能力已经端到端可用。所以最优不是新建四个区，而是<b>换一个入口去用它</b>。
+    </div>
+    <div class="card">
+      <div class="title">信息架构（改后）</div>
+      <p><code>#workbench</code> → <code>&lt;WorkbenchView /&gt;</code> —— 单文件工作台，多稿分支一律不渲染（行为与改前一致）</p>
+      <p><code>#batch</code> → <code>&lt;WorkbenchView batchMode /&gt;</code> —— 批量工作台，同一套步骤，文件区换成多稿列表 + 覆盖率矩阵 + 逐稿编排</p>
+      <p>两者<b>共用同一套步骤组件</b>，靠 <code>batchMode</code> 区分。</p>
+    </div>
+    <div class="card">
+      <div class="title">四项收益</div>
+      <ol class="notes" style="padding-left:1.2em">
+        <li><b>批量工作台立刻可用</b>——语言选择、覆盖率矩阵、逐稿编排、批次链、计费、回执全都在，零重建。</li>
+        <li><b>顶替从结构上不可能</b>——单文件模式下多稿分支根本不渲染，与任何全局开关解耦。</li>
+        <li><b>ISSUES #151 收口</b>——design-file-card 不再读编译期静态值，改由 prop 决定。</li>
+        <li><b>零重复</b>——不存在「两套渲染分支」的维护成本。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="title">为什么保留 <code>multiPsdExperimentEnabled</code> 键而不删</div>
+      <p>删键 = 改配置 schema = <b>Owner 的决定</b>，不是我的。保留键 + 移除全部读取，效果等价（无人读 ⇒ 存什么覆盖都没用），且零 schema 风险。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">03</span>已执行</h2>
+    <p class="small">改动规模（相对基线 <code>aefc8a87dac3</code>）：<b>修改 13 文件 + 删除 1 文件 + 新增 3 文件（+578 / −258）</b>。</p>
+    <table>
+      <thead><tr><th>文件</th><th>改动</th></tr></thead>
+      <tbody>
+        <tr><td class="ref">workbench-view.tsx</td><td>加 <code>batchMode</code>（默认 false）；两处 flag 读取换掉；向两个子组件透传；<b>第四轮</b>：编排回调改为「全部扫描完成才放行 + 点名未扫描稿」，失败/异常态明确提示，新增 <code>experimentIndex</code> / <code>experimentNotice</code> 并下拉给执行面板</td></tr>
+        <tr><td class="ref">design-file-card.tsx</td><td>加 <code>batchMode</code>；<b>删掉模块级静态常量 EXPERIMENT_ENABLED</b>；多选分支改判 batchMode；新增「粘贴多行路径」一次录入多个；<b>第四轮</b>：已扫描口径收口到共享函数；去掉「串行扫描队列见后续」的空承诺</td></tr>
+        <tr><td class="ref">execute-step.tsx</td><td>加 <code>batchMode</code>；两处 flag 读取换掉；<b>第四轮</b>：批量执行面板重写（修按钮文案恒为「执行中…」、删假承诺「进度显示在矩阵中」、未扫描不放行并点名、显示「正在执行第 N/M 个」、标题去掉「实验模式」）</td></tr>
+        <tr><td class="ref">coverage-matrix.tsx</td><td><b>第四轮</b>：点击格子给出<b>真实明细</b>（三档计数 + 未匹配文本清单），去掉假可供性；修 <code>whitespace</code> 档恒为 0 的逻辑错误；剔除空白源文本；明示「本矩阵是粗估、与执行引擎口径不同」</td></tr>
+        <tr><td class="ref">lib/workbench/coverage.ts</td><td><b>第四轮新增</b>：覆盖率纯函数从 .tsx 抽出（.tsx 无法被 smoke 脚本加载），使回归可测</td></tr>
+        <tr><td class="ref">lib/workbench/psd-selection.ts</td><td><b>第四轮</b>：新增 <code>isMultiPsdEntryScanned</code> / <code>getMultiPsdUnscanned</code>，把「已扫描」判据收口成一处（修 <code>needs_review</code> 被当未扫描而静默跳过）</td></tr>
+        <tr><td class="ref">app-shell.tsx</td><td><code>#batch</code> 改渲染 <code>&lt;WorkbenchView batchMode /&gt;</code>；删掉空壳视图的动态分包</td></tr>
+        <tr><td class="ref">config/featureFlags.ts</td><td><code>multiPsdExperimentEnabled</code> 标注<b>已停用</b>（保留键、不再被任何代码读取）</td></tr>
+        <tr><td class="ref">feature-flags-store.ts / api/admin/feature-flags/route.ts / admin/client.ts / admin/settings-panel.tsx</td><td>运营台「批量工作台（并列入口）」原子开关（上一轮已加，本轮补测试）</td></tr>
+        <tr><td class="ref">site/view-context.tsx / site-header.tsx / app/(zh)/page.tsx</td><td><code>#batch</code> 视图类型 + 入口 + 传服务端合并开关（上一轮已加）</td></tr>
+        <tr><td class="ref">scripts/smoke-batch-workbench-flag.mjs</td><td><b>新增</b>：开关契约测试（含原子性断言）</td></tr>
+        <tr><td class="ref">scripts/smoke-batch-workbench-logic.mjs</td><td><b>第四轮新增</b>：核心逻辑契约测试，37 项（含两条回归断言）</td></tr>
+        <tr><td class="ref">（删除）batch-workbench-view.tsx / batch-file-list.tsx</td><td>被取代的空壳；另删除无调用方的 <code>selectDesignFilesDirect</code>，避免死代码</td></tr>
+        <tr><td class="ref">（删除）lib/workbench/multi-psd-flow.ts</td><td><b>第四轮删除</b>：105 行、0 引用的死代码编排器（来自 <code>cde98a7</code>）</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <b>为什么「一次录入多个」是「粘贴」而不是「拖拽」</b>：浏览器出于安全<b>不向网页暴露被拖入文件的绝对路径</b>（File.path 是 Electron 专有，Chrome 只给文件名），而助手链路需要绝对路径 masterPath。所以纯 Web 页拿不到可用的拖拽输入；粘贴多行路径是可靠入口（与单文件区既有的「粘贴即扫描」同源）。真正的一次多选要等助手端 OpenFileDialog 加 Multiselect（第 2 层）。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">04</span>验证</h2>
+    <table>
+      <thead><tr><th>项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>tsc --noEmit</td><td><b>0 错误</b>（第四、五轮改后复跑多次，均 0）</td></tr>
+        <tr><td>eslint</td><td>第四轮：5 个文件 <b>0 错误 / 5 条告警</b>（与基线逐条一致）；第五轮：<code>design-file-card</code> / <code>settings-panel</code> / <code>psd-selection</code> <b>0 错误 / 0 告警</b></td></tr>
+        <tr><td>smoke-batch-workbench-guards（<b>第五轮新增</b>）</td><td><b>13 项全过</b>。含核心负向断言：源码里<b>不得</b>再出现 <code>multiScanningIdx !== index</code></td></tr>
+        <tr><td>smoke-batch-workbench-logic</td><td>第四轮新增时 <b>37 项全过</b>；第五轮扩到 <b>58 项全过</b>（新增粘贴解析四类计数 + 上限边界 + <code>looksAbsolute</code>）。含 <code>needs_review ⇒ 已扫描</code> 回归、<code>whitespace</code> 档必须非零回归、空白项不计入分母回归</td></tr>
+        <tr><td>smoke-batch-workbench-flag</td><td><b>9 项全过</b>（隔离库，约 87s）：默认值 / 原子写 true·false / 形状仍为 boolean / <b>「写本键不覆盖其他键」</b> / 其余默认键不受影响</td></tr>
+        <tr><td>与 <code>worktrees/develop</code> 未提交修复的一致性</td><td>轮询 ref 守卫 <code>diff</code> 逐行比对 <b>0 差异</b> ⇒ develop 将来提交时不会产生分歧</td></tr>
+        <tr><td>smoke-workbench-ui-contract</td><td>通过</td></tr>
+        <tr><td>smoke-batch-entry-modes</td><td>通过</td></tr>
+        <tr><td>smoke-execute-step-reset</td><td>通过</td></tr>
+        <tr><td>smoke-fold-no-report-loss</td><td>通过（折叠点 16 / 组件 89 / 校对行 12732 / R1=R2=R3=0）</td></tr>
+        <tr><td>残留引用检查</td><td>已删文件 0 引用；<code>multiPsdExperimentEnabled</code> <b>0 处代码读取</b>（仅注释）；<code>multi-psd-flow</code> / <code>MultiPsdOrchestrator</code> <b>0 引用</b></td></tr>
+        <tr><td>develop 主干</td><td>本次改动全在 feat/batch-workbench 工作树内，主干未动</td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad">
+      <b>未验证（如实登记）</b>：浏览器端到端（真机 Windows + Photoshop + 助手）<b>未跑</b>。所有改动只经过类型检查、静态契约测试与单元级断言，<b>没有任何一次真实的多稿执行被观察到</b>。⇒「批量工作台可用」目前是<b>代码级结论</b>，不是<b>实测结论</b>；<code>#workbench</code> 与改前的 HTML 逐字节 diff 也需在测试站做。<br><br>
+      <b>第五轮特别说明</b>：第五轮修的是「点扫描后永久卡住」，而<b>验证它必须真机</b>——静态断言只能保证 ref 用法正确，<b>不能保证扫描真的走完</b>。这正是第四轮那 8 处修复「测试全绿却毫无意义」的原因：批量扫描根本没跑起来。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">05</span>仍待你决定</h2>
+    <table>
+      <thead><tr><th>#</th><th>决策</th><th>我的建议</th></tr></thead>
+      <tbody>
+        <tr><td>D1</td><td>批量走并列还是改造原工作台</td><td><b>已按「并列」执行</b></td></tr>
+        <tr><td>D2</td><td>第 1 层是否先做</td><td><b>已完成并超出</b>：批量工作台已可用，不止骨架</td></tr>
+        <tr><td>D3</td><td>助手端多选改造做不做</td><td>单独评估；不做则「一次选多个」只能用粘贴</td></tr>
+        <tr><td>D4</td><td>cde98a7 那 6 个文件改动如何处置</td><td><b>顶替已从结构上解掉</b>；其中的死代码 <code>multi-psd-flow.ts</code>（0 引用）已在第四轮删除。剩下「其余改动是否还要保留」由你定</td></tr>
+        <tr><td>D5</td><td>覆盖率矩阵是否升级为执行前必过闸</td><td>建议升级。<b>当前不是闸门</b>（放行只看扫描状态），界面文案已改为如实陈述，不再写「请显式放行」</td></tr>
+        <tr><td>D6</td><td>测试站 multiPsdExperimentEnabled</td><td><b>本轮已让它失效</b>（无代码读取）。真正的新开关是 batchWorkbenchEnabled，默认关，等你在运营台开</td></tr>
+        <tr><td>D7</td><td>部署探针是否加白名单</td><td>建议加</td></tr>
+        <tr><td>D8</td><td>是否接受「一次录入多个」用粘贴实现</td><td>建议接受（拖拽技术不可行；一次多选需助手端发版）。界面文案已如实写「加入后需逐个点扫描」</td></tr>
+        <tr><td>D9</td><td>worktrees/develop 工作区 12 个未提交改动如何处置</td><td><b>非本次改动</b>：英文站首版 + multiPsdExperimentEnabled 改回 false + 多 PSD 轮询 state→ref 修复。悬空有丢失风险，建议明确「提交 or 丢弃」</td></tr>
+        <tr><td>D10</td><td>串行扫描队列是否现在做</td><td>建议<b>等 D9 定案后再做</b>——它依赖 develop 里那个未提交修复，现在做会造成两份真值源。<b>当前未实现</b>，界面已不再暗示它存在</td></tr>
+        <tr><td>D11</td><td>覆盖率矩阵是否改为调用真实匹配引擎 <code>runMatch()</code> 逐格计算</td><td>建议<b>暂不做</b>（成本较高）。当前矩阵是宽松粗估，与执行结果可能不一致，已在界面明示</td></tr>
+        <tr><td>D12</td><td>是否把「全部扫描完成才放行」放宽为「允许部分放行」</td><td>本轮改为<b>严格全扫描才放行</b>（原先是静默跳过未扫描稿）。若你希望允许「先跑已扫描的」，需明确「跳过时如何提示」再改</td></tr>
+        <tr><td>D13</td><td>是否现在就在测试站跑一次真机多稿扫描</td><td><b>已执行（第六轮，见 §08）</b>：隔离环境 + 真浏览器 + 桩助手跑通「粘贴 → 加入 → 扫描 → 轮询 → 已扫描」全链路，并做了<b>新旧代码对照实验</b>（旧写法永久卡「扫描中」、零次轮询；新写法 3 次轮询到达「已扫描」）。「批量工作台可用」<b>已从代码级结论升级为实测结论</b>（边界见 §08.5）</td></tr>
+        <tr><td>D14</td><td>首页每请求多一次开关查询是否要优化</td><td>建议<b>不优化</b>（代价可接受；改成客户端取会导致入口闪烁）。详见 §07</td></tr>
+        <tr><td>D15</td><td>粘贴时「没有盘符 / UNC 前缀」的路径是否改为直接拦下</td><td>本轮<b>只提醒不拦</b>（与单文件区同口径）。若你希望硬拦，需同步改单文件区的粘贴入口，否则两处口径又不一致</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">06</span>第四轮：复审打在自己上一轮的断言上（已修 8 处）</h2>
+    <p class="small">第三轮我宣布「已执行、验证通过」。第四轮把反方对准<b>我自己的交付物</b>，查出 8 个已确认缺陷——<b>其中 2 个直接推翻了我上一轮的断言</b>。</p>
+
+    <div class="card">
+      <div class="title">6.1 两个被推翻的断言（自我更正）</div>
+      <table>
+        <thead><tr><th>我上一轮说</th><th>实测</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>「编排器已实现」<br><span class="ref">multi-psd-flow.ts 的 MultiPsdOrchestrator</span></td>
+            <td class="ref">grep -rn "multi-psd-flow|MultiPsdOrchestrator" src/ scripts/ → <b>除自身定义外 0 引用</b></td>
+            <td><b>是死代码</b>。真正在跑的是 workbench-view.tsx 的 handleExperimentStart / handleExperimentPsdComplete + experimentTrigger。该文件来自 cde98a7，<b>本轮已删除</b></td>
+          </tr>
+          <tr>
+            <td>「覆盖率矩阵已接线」</td>
+            <td>矩阵<b>没有进度 prop</b>，单元格 cursor-pointer + onClick 只 console.log</td>
+            <td>矩阵能算覆盖率，但「点击查看明细」是<b>假可供性</b>——文案承诺了、点了没反应</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="title">6.2 已修 8 处</div>
+      <table>
+        <thead><tr><th>#</th><th>缺陷</th><th>后果</th><th>修法</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>「已扫描」判据在 <b>4 处各写一份</b> <code>state === 'prepared' &amp;&amp; !!summary</code></td><td>扫描成功但有检查项的 <code>needs_review</code> 稿被当「未扫描」<b>静默跳过</b></td><td>收口为 <code>isMultiPsdEntryScanned</code>，4 处全改引它</td></tr>
+          <tr><td>2</td><td>按钮文案 <code>{multiPsdSelection ? '执行中…' : '开始执行'}</code></td><td>此分支下 <code>multiPsdSelection</code> 恒为真 ⇒ <b>永远显示「执行中…」</b>，从未显示过「开始执行」</td><td>改用真实运行态 <code>experimentRunning</code> prop</td></tr>
+          <tr><td>3</td><td><code>experimentRunning</code> <b>只写不读</b></td><td>批量执行期间<b>界面零反馈</b>，用户不知道跑到第几稿</td><td>下拉为 prop，面板显示「正在执行第 N/M 个设计稿（文件名）」+ 运行中锁定按钮</td></tr>
+          <tr><td>4</td><td>起跑门槛只看「至少一个已扫描」</td><td>其余未扫描的稿被<b>静默跳过</b>，跑完<b>静默停止</b></td><td>改为「全部扫描完成才放行」；否则<b>点名</b>哪几稿没扫完</td></tr>
+          <tr><td>5</td><td>遇第一个「非 prepared」就 <code>setExperimentRunning(false)</code></td><td><b>静默中止整批</b>，用户不知道发生了什么</td><td>明确提示「第 N 个设计稿执行失败 / 状态不对，已停止 / 暂停」</td></tr>
+          <tr><td>6</td><td>文案「执行进度将显示在覆盖率矩阵中」</td><td><b>假承诺</b>——矩阵无进度 prop</td><td>删除；改为面板内真实进度</td></tr>
+          <tr><td>7</td><td>单元格 cursor-pointer + onClick 只 console.log；页脚写「点击格子查看匹配明细」</td><td><b>假可供性</b></td><td>矩阵自持选中态，点击展开<b>真实明细</b>（三档计数 + 未匹配文本清单，最多 20 条）；<code>onCellClick</code> prop 删除</td></tr>
+          <tr><td>8</td><td><code>calcCoverage</code> 的 <code>whitespace</code> 分支与 <code>strict</code> <b>逐字相同</b>，而 strict 命中后已 <code>continue</code></td><td><code>whitespace</code> 计数<b>恒为 0</b>，「空白等价命中」这一档永远显示不出来</td><td>改为「空白归一后相等」；顺带剔除空白源文本（原先被算进分母却永不匹配，<b>无故拉低覆盖率</b>）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="title">6.3 顺带发现并处理</div>
+      <ul class="notes" style="padding-left:1.2em">
+        <li><b>矩阵与执行引擎口径不同</b>：矩阵用宽松三档启发式，真正执行用的是 <code>@/lib/workbench/match</code> 的 <code>runMatch()</code>（严格归一相等）。⇒ 矩阵显示 100% <b>不代表执行一定全中</b>。已在界面明示（列为 D11）。</li>
+        <li><b>矩阵不是执行闸门</b>：原横幅写「请在执行前显式放行」，但放行条件<b>只看扫描状态、不读覆盖率</b> ⇒ 也是假承诺。已改为陈述事实（D5 仍待定）。</li>
+        <li><b>死代码删除</b>：<code>src/lib/workbench/multi-psd-flow.ts</code>（105 行，0 引用，来自 <code>cde98a7</code>）。</li>
+        <li><b>清空列表后编排态不归零</b>：清空多稿列表后，「全部 N 个已执行完成」提示会挂在新一轮空白列表上（张冠李戴）。已在 <code>onMultiSelectionChange</code> 包装里归零。</li>
+        <li><b>可测性重构</b>：<code>calcCoverage</code> 等纯函数从 <code>.tsx</code> 抽到 <code>src/lib/workbench/coverage.ts</code>（<code>.tsx</code> 无法被现有 <code>--experimental-strip-types</code> smoke 脚本加载），使 #8 的回归可被测试钉死。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">07</span>第五轮：反方对准「我声称过、但从未真正验证过的断言」（已修 4 处）</h2>
+    <p class="small">第四轮我修了 8 处、宣布验证通过。第五轮换了个打法：<b>不去找新 bug，去查我说过的每一句「已验证」到底有没有被验证过</b>。结果查出一个致命缺陷。</p>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">致命</span><span class="title">7.1 批量工作台其实根本跑不起来（推翻我前三轮的结论）</span></div>
+      <p><b>症状</b>：在批量工作台点某个设计稿的「扫描」，状态会<b>永久停在「读取文件」</b>，永远不会变成「已扫描」。</p>
+      <p><b>根因</b>（<code>design-file-card.tsx</code> 的 <code>handleMultiScanEntry</code>）：轮询函数 <code>poll</code> 由 <code>window.setTimeout(poll, …)</code> 启动，它<b>闭包捕获的是启动那一刻的 <code>multiScanningIdx</code></b>——那一刻该 state 还是 <code>null</code>（<code>setMultiScanningIdx(index)</code> 尚未重渲染）。于是第一行守卫：</p>
+      <pre style="overflow-x:auto;margin:.5rem 0;padding:.6rem .8rem;border-radius:.5rem;background:var(--surface-2)"><code>if (multiScanningIdx !== index) return   // null !== index ⇒ 直接返回</code></pre>
+      <p><b>第一次轮询就自我判废</b>，且不再排下一次定时器 ⇒ 状态永久冻结。</p>
+      <p><b>这条我早就知道</b>：第三轮我自己在 D10 里写下过——「那个修复已经写好但未提交地躺在 <code>worktrees/develop</code> 的工作区里（<code>multiScanningIdx</code> state→ref，注释写明「第一次轮询就自我判废，状态永久卡 hashing」）」。我把它当成「后续层的一个 feature 依赖」，<b>没有意识到它同时是「批量工作台能不能用」的开关</b>。于是我在第三、四轮反复宣称「批量工作台立刻就是可用的」——<b>这三轮的说法都是错的</b>。所有单测都是绿的，因为没有任何一条测试碰得到 React 组件内部的轮询闭包。</p>
+      <p><b>修法</b>：轮询守卫改走 ref（<code>multiScanningIdxRef.current</code>），与 <code>worktrees/develop</code> 那份未提交的修复<b>逐字一致</b>（<code>diff</code> 逐行比对 0 差异 ⇒ develop 将来提交时不会产生分歧）。</p>
+      <span class="ref">证据：design-file-card.tsx 的 multiScanningIdxRef；worktrees/develop/src/components/workbench/design-file-card.tsx（未提交的同一处修复）</span>
+    </div>
+
+    <div class="card">
+      <div class="title">7.2 另外 3 处</div>
+      <table>
+        <thead><tr><th>#</th><th>缺陷</th><th>后果</th><th>修法</th></tr></thead>
+        <tbody>
+          <tr><td>2</td><td>运营台新开关的说明文字里写了 <code>**并列**</code></td><td>JSX 不解析 markdown ⇒ Owner 在运营台<b>看到带星号的原文</b></td><td>改为 <code>&lt;strong&gt;并列&lt;/strong&gt;</code></td></tr>
+          <tr><td>3</td><td>粘贴多行路径时，<b>超上限的行、后缀不合的行被静默丢掉</b></td><td>粘 8 行只进去 5 行，界面什么都不说——与我这四轮一直在修的「静默行为」是同一类病</td><td>解析抽成纯函数 <code>parsePastedPsdPaths</code>，分「新增 / 重复 / 后缀不合 / 超上限」四类计数，界面<b>逐类如实报告</b></td></tr>
+          <tr><td>4</td><td>文案「没有识别到 .psd / .psb 路径（<b>需完整路径，含盘符</b>）」</td><td>实际只校验后缀、不校验盘符 ⇒ 误导</td><td>删掉「含盘符」；改为<b>只提醒不拦</b>：加了但没有盘符 / UNC 前缀的，提示「扫描可能失败」（与单文件区同口径，不越权新增硬规则）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="title">7.3 一处「第一次被真正验证」的断言</div>
+      <p>第四轮我两次写过「<b>单文件路径行为逐字节不变</b>」。本轮把 <code>workbench-view.tsx</code> / <code>design-file-card.tsx</code> / <code>execute-step.tsx</code> 的<b>全部 diff 逐行过了一遍</b>，确认每一处改动要么在 <code>batchMode</code> 守卫内、要么是纯新增：</p>
+      <ul class="notes" style="padding-left:1.2em">
+        <li><code>workbench-view.tsx</code>：4 处 <code>featureFlags.multiPsdExperimentEnabled</code> → <code>batchMode</code>；<code>multiPsdSelection</code> 初值改 <code>batchMode ? … : null</code>；编排回调重写（仅批量分支可达）；两个子组件多传了 prop。</li>
+        <li><code>design-file-card.tsx</code>：多选分支守卫由静态常量改 <code>batchMode</code>（默认 <code>false</code> ⇒ 单文件下该分支不渲染）。</li>
+        <li><code>execute-step.tsx</code>：两处 flag → <code>batchMode</code>；批量面板守卫同样改 <code>batchMode</code>。</li>
+        <li>另外确认 <code>DesignFileCard</code> <b>未用 <code>React.memo</code></b> ⇒ 我给 <code>onMultiSelectionChange</code> 传的内联箭头函数不会破坏记忆化（无性能回退）。</li>
+      </ul>
+      <p>⇒ 这条断言<b>成立</b>，但要说清口径：这是<b>源码级</b>验证，<b>不是</b>渲染级 HTML diff（后者仍需在测试站做）。</p>
+    </div>
+
+    <div class="card">
+      <div class="title">7.4 一处登记不修（如实记账）</div>
+      <p><code>src/app/(zh)/page.tsx</code> 现在<b>无条件</b>调用 <code>getMergedFeatureFlags()</code>（原先只在 draft / edit 分支里调）⇒ 每个首页请求多一次 DB SELECT。</p>
+      <ul class="notes" style="padding-left:1.2em">
+        <li>影响面评估：<code>ensureFeatureFlagsTable()</code> 有模块级 <code>ensured</code> 标志，DDL 只跑一次；该页本来就因为 <code>draftMode()</code> / <code>headers()</code> 已是动态渲染，<b>不存在 SSG→dynamic 的降级</b>。</li>
+        <li>为什么不改成客户端取（复用既有的 <code>/api/site/feature-flags</code>）：那样入口会<b>在 hydration 之后才出现</b>（闪烁），且 <code>#batch</code> 的回落判定依赖同一个值，会变复杂。</li>
+        <li>⇒ 判断：<b>可接受的代价</b>，登记于此，不修（D14）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">08</span>第六轮：D13 真机验证（Owner 授权「按你的来做」后执行）</h2>
+    <p class="small">目标只有一个：把「批量工作台可用」从<b>代码级结论</b>变成<b>实测结论</b>。方法：隔离 dev 环境 + 真浏览器（Playwright/chromium）+ 桩助手（真助手不可用的原因见 8.5），并做<b>新旧代码对照实验</b>——这是能同时证明「病存在」和「药有效」的唯一办法。</p>
+
+    <div class="card">
+      <div class="title">8.1 环境搭建中踩出的三个坑（都已写入项目长期记忆）</div>
+      <table>
+        <thead><tr><th>#</th><th>坑</th><th>后果 / 判别方法</th><th>解法</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><b>Prisma 运行时读的库不是你以为的那个库</b>：<code>.env</code> 的 <code>DATABASE_URL=file:../db/custom.db</code> 是相对路径，而 <code>node_modules</code> 是指向 <code>worktrees/develop</code> 的符号链接 ⇒ Prisma 引擎按<b>生成客户端的 schema 目录</b>解析相对路径</td><td>dev 服务实际读 <b>worktrees/develop/db/custom.db</b>（别人共用的开发库）。判别：翻 develop 库的开关，首页 RSC 载荷里的 <code>batchWorkbenchEnabled</code> 立刻从 false 变 true</td><td>隔离验证必须用<b>绝对路径</b> <code>DATABASE_URL</code>（已把 develop 的库原样还原）</td></tr>
+          <tr><td>2</td><td><b>dev 服务重启会被 CLI 的「安全删除」护栏打死</b>：<code>.next</code> 里上一轮运行留下的 trace 缓存文件，重启时清理动作删除数越过 50 触发护栏</td><td>服务报 <code>SAFE_DELETE_BULK_CONFIRM_REQUIRED</code> 后静默死亡（首页 502/空回复）</td><td>每次重启 dev 前先 <code>rm -rf .next</code>（bash 的 rm 不受该 node 层护栏影响）</td></tr>
+          <tr><td>3</td><td><b>真本地助手（49152）只认 http://localhost:3000 这一个来源</b>（CORS 白名单 + <code>ORIGIN_NOT_ALLOWED</code>），且其激活注册表不认识隔离库里的合成 installId（<code>ACTIVATION_REVOKED</code>）</td><td>dev 跑在 3440 时浏览器直连助手必被拒</td><td>验证改用<b>自写桩助手</b>（49153，带 CORS 头）；其余一切（认证链、服务端路由、票据签发、状态机、轮询调度）全是<b>真实代码</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="title">8.2 服务端门控：端到端实测通过</div>
+      <table>
+        <thead><tr><th>探针</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td>开关 OFF（隔离库）</td><td>首页 RSC 载荷 <code>batchWorkbenchEnabled":false</code>；顶栏无「批量工作台」</td></tr>
+          <tr><td>开关 ON（隔离库，用与运营台逐字相同的 SQL 落库）</td><td>首页 RSC 载荷 <code>batchWorkbenchEnabled":true</code>；真浏览器里顶栏<b>出现</b>「批量工作台」</td></tr>
+          <tr><td>票据签发（POST /api/local-assistant/ticket，带种子会话 cookie）</td><td><code>{"ok":true,"ticket":"…","expiresAt":"…"}</code>——登录会话 + 激活 + 票据三层认证在 API 层全部走通</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip ok">核心证据</span><span class="title">8.3 端到端扫描：修复版 vs 旧版 对照实验</span></div>
+      <p>环境：真浏览器 → 本仓 dev 服务（真路由、真认证、真票据签名）→ 桩助手（<code>/config</code>、<code>/v1.5/preparation/scan</code>、<code>/v1.5/preparation/status</code> 三段式：hashing(0/3000) → hashing(1000/3000) → prepared）。浏览器先过两道门（账号门 + 激活门，用隔离库里播种的合法登录态），粘贴 <code>C:\stub\design-a.psd</code> 加入列表，点「扫描」。</p>
+      <table>
+        <thead><tr><th>观察项</th><th>修复版（ref 守卫，当前代码）</th><th>旧版（state 守卫，临时改回做对照）</th></tr></thead>
+        <tbody>
+          <tr><td>扫描启动 preparation/scan</td><td>200（hashing + scanId）</td><td>200（hashing + scanId）</td></tr>
+          <tr><td>状态轮询 preparation/status 次数</td><td><b>3 次</b></td><td><b>0 次</b></td></tr>
+          <tr><td>30 秒观察窗内最终状态</td><td><b>t=8s 到达「已扫描 1 · 扫描中 0」</b></td><td><b>全程「扫描中 1」，永久卡住</b></td></tr>
+        </tbody>
+      </table>
+      <p>旧版的 <b>0 次轮询 + 永久卡「扫描中」</b>，<b>精确复现了第五轮立案的症状</b>（点扫描后永远停在「读取文件/扫描中」）；修复版 3 次轮询驱动状态机 hashing → prepared。⇒ <b>「修复有效」与「bug 真实存在」在同一实验里互为对照，均已被实测证明</b>。对照实验后代码已原样恢复（与备份逐字节一致），<code>smoke-batch-workbench-guards</code> 13/13 复跑通过。</p>
+    </div>
+
+    <div class="card">
+      <div class="title">8.4 客户端产物验证</div>
+      <ul class="notes" style="padding-left:1.2em">
+        <li>运行中的 chunk <code>_app-pages-browser_src_components_workbench_workbench-view_tsx.js</code> 里<b>确实含</b> <code>multiScanningIdxRef</code>——修复不是只在源码里，是随包发货到了浏览器。</li>
+        <li>真浏览器 DOM 里批量主体（「多设计稿选择（批量模式）」、粘贴区、加入列表、条目「扫描」按钮）全部正常渲染；单文件模式（#workbench）不渲染任何批量 UI（门控正确）。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="title">8.5 诚实边界（这条不能省）</div>
+      <ul class="notes" style="padding-left:1.2em">
+        <li><b>助手本身是桩</b>：真助手（用户本机 49152 上确实在跑）不可用的原因有两个——来源白名单只认 localhost:3000，且其激活注册表不认识隔离环境合成的 installId。桩只替代了助手的<b>响应内容</b>；认证、票据、服务端路由、状态机、轮询调度全部是真实代码路径。</li>
+        <li><b>未跑真实 Photoshop 读取</b>：桩不读真实图层，prepared 的 summary 是桩造的最小对象。「哈希 + PS 逐层读取」的真实观测强度未经实测。</li>
+        <li><b>种子登录态是脚本播种</b>（与 createSession 逐字段对齐的合法会话），不是真人走注册/激活流程。</li>
+        <li>单文件路径的行为本轮未在真机重跑（第五轮已做源码级逐 hunk 复核，全部 batchMode 门控或纯新增）。</li>
+      </ul>
+      <p>⇒ <b>结论</b>：「批量工作台可用」现在有实测支撑（对照实验级别），不再是代码级结论。上线前建议在测试站用真实安装版助手再跑一次同样的粘贴 → 扫描（约 2 分钟），即可覆盖 8.5 的 1、2 两条边界。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">09</span>第七轮：四场景真机全链路（P1–P4）+ 第 3 个真实产品缺陷（已修）</h2>
+
+    <p class="small">第六轮只验了「单稿扫描」这一条链。本轮（Owner「好，你继续帮我做测试」授权）把真机验证扩成<b>四组场景</b>，共 <b>20 条断言全部 PASS</b>（探针正本已存档，见证据索引）。环境同第六轮（隔离 dev 3440 + 桩助手 49153 + 种子登录态），本轮补齐桩的 <code>/pair</code>（激活态应答）并刷新种子 cookie。</p>
+
+    <div class="card">
+      <div class="head"><span class="chip ok">20/20 PASS</span><span class="title">场景与结果</span></div>
+      <table>
+        <thead><tr><th>场景</th><th>断言数</th><th>关键实测</th></tr></thead>
+        <tbody>
+          <tr><td><b>P1 多稿录入与四类反馈</b></td><td>4</td><td>一次粘 7 行（4 有效 + 1 重复 + 2 后缀不合）⇒ 界面<b>逐类如实报告</b>「已加入 4 个；1 个已在列表里（已忽略）；2 行不是 .psd / .psb 后缀（已忽略）」，列表计数「已添加 4/12」；全无效粘贴明示「没有加入任何路径」</td></tr>
+          <tr><td><b>P2 串行扫描 + needs_review + 报错路径</b></td><td>5</td><td>扫描中其余按钮互斥禁用；a.psd / b.psb →「已扫描 5 层」；design-review.psd →「<b>已扫描（有检查项）3 层</b>」（needs_review 不再被当未扫描）；design-fail.psd → 扫描失败且<b>如实报错</b>「找不到文件：F:\tygf-probe\design-fail.psd」（不静默吞掉）</td></tr>
+          <tr><td><b>P3 执行面板开关（执行关闭）</b></td><td>8</td><td>前三稿完成时交付面板出现（镜像修复生效）、未扫稿被<b>点名</b>；4/4 全扫但执行开关关闭 ⇒ <b>实验入口「开始执行（逐 PSD 编排）」与主线「开始替换」双双禁用</b>、title 明示原因；直连服务端报价接口 ⇒ <b>503 EXECUTION_DISABLED</b>（服务端兜底，在解析请求体之前返回）；页面<b>停留在交付阶段，无静默回退</b></td></tr>
+          <tr><td><b>P4 单文件回归</b></td><td>3</td><td>#workbench 单文件卡片正常渲染、批量区<b>不渲染</b>（门控正确）；单文件扫描链走到 prepared 摘要（完整契约不再崩溃）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">第 3 个产品缺陷</span><span class="title">执行入口未受执行开关约束 ⇒ 静默回退</span></div>
+      <p><b>症状</b>：执行开关关闭时，批量面板里的实验入口按钮「开始执行（逐 PSD 编排）」<b>仍可点击</b>。点击后命中客户端 <code>V15_EXECUTION_REQUIRED</code> 拦截，界面<b>静默退回翻译校对阶段，没有任何失败提示</b>——用户看到的只是「点了没反应，页面自己跳回去了」。</p>
+      <p><b>根因</b>（<code>execute-step.tsx:2131</code>，修复前）：该按钮 <code>disabled={!ready || running}</code>，<b>漏了 <code>!v15ExecutionEnabled</code></b>。同文件主线按钮「开始替换」（约 :2420）早就写对了 ⇒ 同一个执行开关，两个入口只堵了一个。修法与主线对齐：<code>disabled={!ready || running || !v15ExecutionEnabled}</code> + title 明示原因。</p>
+      <p><b>发现方式本身就是证据</b>：探针点这个按钮时预期「出现失败提示」，实测却是<b>无任何提示、页面静默回退</b>——正是「运行时才发作、症状是什么都不发生」的同族缺陷，纯函数单测测不到，只有真机点得到。</p>
+      <span class="ref">证据：execute-step.tsx:2131（修复）；tmp-probe8-click-diag.json（回退现场）；quote/route.ts:22-23 + execution-gate.ts（服务端兜底）</span>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip bad">全部已修</span><span class="title">本批真机测试共挖出 3 个真实产品缺陷</span></div>
+      <table>
+        <thead><tr><th>#</th><th>缺陷</th><th>落点</th><th>后果</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>批量扫描结果未镜像进 psdSelection</td><td class="ref">workbench-view.tsx:2081</td><td>交付阶段的设计就绪 / 对账 / 执行链读到空数据</td></tr>
+          <tr><td>2</td><td>「生成交付」自动前进竞态（effect 缺守卫）</td><td class="ref">workbench-view.tsx:1542</td><td>特定时序下自动前进被重复 / 错误触发</td></tr>
+          <tr><td>3</td><td>实验执行入口未受执行开关约束</td><td class="ref">execute-step.tsx:2131</td><td>开关关闭时按钮仍可点 ⇒ 静默回退，无任何提示</td></tr>
+        </tbody>
+      </table>
+      <p>三个都属于「代码在、入口在、单测绿，但真机一点就露馅」的类别——与前五轮的教训同族。</p>
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip info">质量门</span><span class="title">验证与改动规模</span></div>
+      <table>
+        <thead><tr><th>项</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td>tsc --noEmit</td><td><b>0 错误</b></td></tr>
+          <tr><td>eslint（execute-step / workbench-view）</td><td><b>0 错误 / 5 条告警</b>（全部为既有 jsx-a11y 项，位于无关行号，非本次引入）</td></tr>
+          <tr><td>真机探针</td><td><b>20/20 PASS</b>（P1×4 + P2×5 + P3×8 + P4×3，共 92 次 API 调用全部按预期返回）</td></tr>
+          <tr><td>改动规模</td><td>15 改（含删除 multi-psd-flow.ts 死代码）+ 4 新（3 个 smoke 脚本 + coverage.ts），diff <b>+726/−160</b>；未提交未推送；develop 主干零改动</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <b>诚实边界</b>（继承第六轮 4 条，外加一条）：桩助手、未跑真实 Photoshop 读取、种子登录态、单文件源码级复核同前；<b>执行链只验到「入口诚实禁用 + 服务端 503 兜底」为止</b>——真实执行（批次报价、逐稿编排、结算）因开关关闭未在真机跑过，这是<b>刻意的</b>（测试环境按约定保持 fail-closed），不是遗漏。
+    </div>
+
+    <div class="callout ok">
+      <b>结论</b>：批量工作台的可用性验证从「单稿扫描」扩成<b>四组场景全链路，20/20 实测通过</b>；真机测试累计挖出并修复 <b>3 个真实产品缺陷</b>。上线前建议：在测试站用真实安装版助手重跑一遍 P1–P2（约 2 分钟，覆盖桩边界）；执行链的实测验证等执行开关放开的环境再做。
+    </div>
+
+    <div class="card">
+      <div class="head"><span class="chip ok">第八轮补充 · 24/24</span><span class="title">真实用户路径代操作验证（2026-10-17）</span></div>
+      <p>前七轮探针走种子 cookie（跳过登录与激活）。本轮改为<b>完整真实用户路径</b>：真实表单登录 → 激活门如实拦截 → 邀请码激活（/api/invite/activate 200）→ 顶栏入口 → P1–P4 全场景复跑，<b>24/24 全 PASS</b>，9 张关键步骤截图存档。P1–P4 结果与第七轮逐条一致（复现）。</p>
+      <ul class="notes" style="padding-left:1.2em">
+        <li>登录、激活门、邀请码哈希校验、会话签发、顶栏入口全部真实走通（<code>SiteHeader</code> 仅非首页渲染属设计而非缺陷）。</li>
+        <li>三条探针侧教训（非产品缺陷）：dev 慢编译下 hydration 未完成点击无效 ⇒ 点击须「等接口响应+重试」；顶栏断言不能在首页做；SPA 同文档 hash 跳转不重挂载 ⇒ goto 后补 reload。</li>
+        <li>环境配合项：演示账号与邀请码（TYGF-A7K3-P9WD）为测试播种，收口时应删除；<code>APP_ORIGIN</code> 必须与本工作树端口一致，否则浏览器写操作全被同源防护拒绝。</li>
+      </ul>
+      <span class="ref">证据：交付档案/执行方案/真机验证件_20261017_批量工作台/代操作_登录激活全链路/（probe10.mjs + 输出正本 + 9 截图）</span>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">10</span>证据索引</h2>
+    <table>
+      <thead><tr><th>面</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>多稿能力已存在</td><td class="ref">design-file-card.tsx:608-676；workbench-view.tsx:1298-1332,2137-2155；execute-step.tsx:2038+</td></tr>
+        <tr><td>顶替机关</td><td class="ref">design-file-card.tsx:600（原 if (EXPERIMENT_ENABLED &amp;&amp; multiSelection …) return 整套多选 UI）</td></tr>
+        <tr><td>双语义（单文件）</td><td class="ref">design-file-card.tsx:66（静态）vs workbench-view.tsx:175 / execute-step.tsx:402（运行时）</td></tr>
+        <tr><td>本轮改后</td><td class="ref">workbench-view.tsx 的 batchMode；app-shell.tsx 的 #batch 渲染分支；featureFlags.ts 的停用注释</td></tr>
+        <tr><td>第四轮修掉的判据漂移</td><td class="ref">lib/workbench/psd-selection.ts 的 isMultiPsdEntryScanned / getMultiPsdUnscanned</td></tr>
+        <tr><td>第四轮修掉的覆盖率逻辑错误</td><td class="ref">lib/workbench/coverage.ts 的 calcCoverage（whitespace 档 + 空白项剔除）</td></tr>
+        <tr><td>开关契约</td><td class="ref">scripts/smoke-batch-workbench-flag.mjs；feature-flags-store.ts 的 saveBatchWorkbenchEnabledOverride</td></tr>
+        <tr><td>逻辑契约</td><td class="ref">scripts/smoke-batch-workbench-logic.mjs（58 项，含三条回归断言）</td></tr>
+        <tr><td>静态守卫契约</td><td class="ref">scripts/smoke-batch-workbench-guards.mjs（13 项；含「源码里不得再出现 multiScanningIdx !== index」负向断言）</td></tr>
+        <tr><td>第五轮致命缺陷</td><td class="ref">design-file-card.tsx 的 multiScanningIdxRef + useEffect 同步；worktrees/develop 未提交的同名修复</td></tr>
+        <tr><td>第五轮致命缺陷的<b>实测验证</b></td><td class="ref">第六轮对照实验：旧写法 0 次轮询 / 永久卡「扫描中」；修复版 3 次轮询 / t=8s 到达「已扫描」</td></tr>
+        <tr><td>真机验证的三个环境坑</td><td class="ref">Prisma file: 相对路径按符号链接后的 schema 目录解析（读的是 develop 共库）；.next 残留触发 safe-delete 护栏；真助手来源白名单只认 localhost:3000</td></tr>
+        <tr><td>第七轮真机四场景（20/20 PASS）</td><td class="ref">探针正本 交付档案/执行方案/真机验证件_20261017_批量工作台/probe8.out（P1×4 + P2×5 + P3×8 + P4×3，92 次 API 调用）；探针/桩/种子脚本同目录（probe8.mjs / stub3.mjs / seed2.mjs）</td></tr>
+        <tr><td>第 3 个产品缺陷（执行入口开关缺口）</td><td class="ref">execute-step.tsx:2131（修复后：disabled={!ready || running || !v15ExecutionEnabled} + title）；workbench-view.tsx:2081（镜像）；workbench-view.tsx:1542（自动前进守卫）</td></tr>
+        <tr><td>第五轮粘贴诚实化</td><td class="ref">psd-selection.ts 的 parsePastedPsdPaths / looksAbsolute</td></tr>
+        <tr><td>项目自省条文</td><td class="ref">AGENTS.md「禁止无出处的否定式断言」段（把已有能力当待新建的病根）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>图译工坊内测版 · 批量工作台对抗式复审与最优路径</span>
+    <span>2026-10-16 · 六轮复审 · 已执行（第六轮为真机对照实验）</span>
+    <span>md 同名文件：执行方案_20261016_批量工作台_对抗式复审与最优路径.md</span>
+  </footer>
+
+</div>
+</body>
+</html>

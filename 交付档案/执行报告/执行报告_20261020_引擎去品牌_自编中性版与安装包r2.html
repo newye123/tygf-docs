@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>引擎去品牌 · 自编中性版与安装包 r2 · 2026-10-20</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 引擎去品牌</p>
+  <h1>你截图指出的品牌问题已真解决：引擎换成我们自编的中性版，安装包 r2 已出</h1>
+  <p class="standfirst">r1 装的是上游原件，属性里的名字与图标是它自带的，改名去不掉——我之前只把它记成"已知边界"，没当阻断项。Rust 装好后自己构建，可见面全部换成图译工坊。</p>
+  <p class="meta">2026-10-20 23:14 轮 · 提交 b99f706（补丁＋首份出厂构建清单＋新钉值）· 未 push、未 bump 版本号、未部署 · 交付 tmp/setup-3.7.16-r2-中性引擎/</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">结论</p>
+  <p class="lede">属性对话框、原始文件名、图标、<span class="mono">--version</span> 输出已全部改为图译工坊；版权行按许可义务保留上游署名，许可八件继续随包。功能与只读性用真稿复验通过。附带修掉一个会真出厂的坑：staging 目录残留上一代引擎会让安装包把<strong>两份引擎一起装给用户</strong>。</p>
+  <div class="stats">
+    <div class="stat ok"><span class="n">rc=0</span><span class="lb">自编引擎真稿扫描（全 PASS）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="lb">包内 photocraft 字样（压缩清单逐条核）</span></div>
+    <div class="stat ok"><span class="n">16/16</span><span class="lb">内置引擎门（含新负控）</span></div>
+    <div class="stat warn"><span class="n">19</span><span class="lb">develop 未推笔数（等你一句）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel yes">
+    <p class="hd">实测读数</p>
+    <ul class="tl">
+      <li class="tl-body"><span class="tag">1</span>新引擎属性：<span class="mono">ProductName=图译工坊排版引擎 · CompanyName=图译工坊 · FileDescription=图译工坊排版引擎（内置组件） · OriginalFilename=tygf-engine.exe · InternalName=tygf-engine · FileVersion=0.7.0</span>；图标换成助手图标</li>
+      <li class="tl-body"><span class="tag">2</span><span class="mono">--version</span> 输出 <span class="mono">tygf-engine 0.7.0 (dev build)</span>（这串会进本机日志与回执凭记，所以一并中性化）；<span class="mono">LegalCopyright</span> 故意保留上游署名行</li>
+      <li class="tl-body"><span class="tag">3</span>二进制内品牌残留计数：<span class="mono">PhotoCraft=12 · Photocraft=18 · photocraft=47 · ArtCraft=0 · Learning Machines=0</span> ⇒ 用户可见面干净，符号表仍能看到来源（要连符号都干净得改 crate 名，建议先不做）</li>
+      <li class="tl-body"><span class="tag">4</span>功能与只读性：<span class="mono">PARITY_RC=0</span> 全 PASS——<span class="mono">scan_status=SUCCESS · engineVersion=tygf-engine 0.7.0 (dev build) · psVersion=null · textLayers=3 · 母版前后同 a2da784116ed…</span></li>
+      <li class="tl-body"><span class="tag">5</span>安装包 r2：ISCC <span class="mono">rc=0 / 21.547 秒 / 25,503,329 B</span>（比 r1 小一半：自编产物 43,252,736 B vs 上游那份 67,313,528 B）；交付文件夹 11 文件、和值复算 0 处不符</li>
+      <li class="tl-body"><span class="tag">6</span>你这台机实况：<span class="mono">/ping → version=3.7.16 · assistantBuildId=bundled-engine-20261020-r1</span>，<span class="mono">bin</span> 内引擎与出厂钉值逐字节匹配；<span class="mono">--bundled --dry-run</span> rc=0 且一字节未写</li>
+    </ul>
+  </div>
+
+  <div class="panel no">
+    <p class="hd">改了什么、为什么之前会露出来</p>
+    <div class="card">
+      <p class="k">🟠 上游原件随包分发 ⇒ 属性里必然是别人的名字</p>
+      <p class="body">那几行字段是上游构建脚本写死的（其 <span class="mono">docs/releasing.md:127-129</span> 自述 ProductName=PhotoCraft、CompanyName=Learning Machines LLC）。改名只造成"文件名与内嵌身份不一致"，去不掉品牌——这正是你上次截图教我的。</p>
+      <p class="loc">tmp/photocraft-src/apps/photocraft-cli/build.rs（补丁后改中性）· worktrees/develop/download/local-assistant/build/vendor/photocraft/neutralize-brand.patch · 提交 b99f706</p>
+      <p class="fix">正解＝自己构建：Rust 1.99.1＋MSVC 14.44＋SDK rc.exe 已在本机备齐，<span class="mono">cargo build --release -p photocraft-cli --locked</span> 首次全量 rc=0、改资源后增量 2m18s。</p>
+    </div>
+    <div class="card">
+      <p class="k">🔴 会真出厂的坑：包里装着两份引擎</p>
+      <p class="body">重跑 staging 时发现 <span class="mono">dist\bin</span> 里还留着 r1 的 <span class="mono">photocraft-cli-0.7.0.exe</span>，而安装脚本是 <span class="mono">dist\bin\*</span> 全收 ⇒ 用户机器会同时装上新旧两个引擎，体积还翻倍。</p>
+      <p class="loc">download/local-assistant/build/vendor-engine.cjs（staging 前清空自有 dist\bin ＋ 复核目录恰为"引擎＋钉值"）· scripts/smoke-pc-bundled-engine.mjs 的 [B2b] 负控</p>
+      <p class="fix">已修并进门；重编后压缩清单只剩 <span class="mono">bin\tygf-engine.exe</span> 与 <span class="mono">bin\engine.sha256</span>。</p>
+    </div>
+    <div class="card">
+      <p class="k">🟡 你这台机现在测不到免 PS（两个原因）</p>
+      <p class="body">① Photoshop 正在运行（助手自报 PS 22.0、<span class="mono">photoshopRunningDetected=true</span>）⇒ 按设计走现役 PS 道；要验免 PS 得关掉 PS 或换那台没 PS 的电脑。② 助手自报服务器地址是 <span class="mono">http://localhost:3000</span>，有 4 条回执投不出去、最老一条约 39 天 ⇒ 早于今天，属遗留配置面，可单独修。</p>
+      <p class="loc">本机 /ping 回显（23:09 轮实测（同轮 date 回显 23:09:10 +0800））· pendingReceipts.count=4 · lastErrorCode=EXECUTION_DISABLED</p>
+      <p class="fix">r2 装完后：覆盖安装会保留授权；<strong>旧文件名要手动删</strong>（Inno 覆盖安装不删旧文件），再跑 <span class="mono">--bundled</span> 真开。</p>
+    </div>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">三步换到 r2</p>
+  <div class="gate first"><span class="num">1</span><div class="body">装 <span class="mono">tmp\setup-3.7.16-r2-中性引擎\tygf-engine-setup-3.7.16-r2.exe</span>（同 AppId 覆盖升级，保留授权与会话）。</div></div>
+  <div class="gate"><span class="num">2</span><div class="body">删掉 <span class="mono">E:\软件\图译工坊本地助手\bin\photocraft-cli-0.7.0.exe</span>（覆盖安装不会自动删旧名，留着就像"还在"）。</div></div>
+  <div class="gate"><span class="num">3</span><div class="body">只读演练 <span class="mono">node tools\scripts\pc-enable-on-machine.cjs --bundled --dry-run</span> ⇒ 期望"内置引擎可用：…\bin\tygf-engine.exe"＋钉值 <span class="mono">3cb06ed1…</span>；确认后由你本人去掉 <span class="mono">--dry-run</span> 真开并重启助手。</div></div>
+</section>
+
+<section class="notes">
+  <p class="hd">还欠的与红线</p>
+  <ul class="notes">
+    <li>首份<strong>出厂构建清单</strong>已入库（上游 commit／补丁 sha256／Cargo.lock sha256／exe sha256／许可 bundle 逐件 sha256／工具链／复现步骤／如实边界）——10-17 方案 §三第 4 条要的字段第一次凑齐，形状可直接搬去云 CI；但本次构建在本机，"云构建"仍是待办。</li>
+    <li><span class="mono">(dev build)</span> 字样因未走上游发布标签流程；正式发版需按 <span class="mono">docs/releasing.md</span> 的路径构建或自注入版本号。</li>
+    <li>开源许可页仍未建（口径已放宽：公司名不必写，上游名／许可／版权行／NOTICE／字体与词表声明必须写）。</li>
+    <li>红线自查：未 push、未改历史、未部署两站、未翻支付闸、未重启你的 PS 与助手；进程收尾只按 PID。r2 仍是内测件（未发布登记、未复验）。</li>
+  </ul>
+</section>
+
+<div class="callout"><span class="lb">给你的一句话</span>你截图挑出来的问题已经真修掉了：新包里的引擎是我们自己编的，属性里写的是"图译工坊排版引擎／图译工坊"，图标也是我们的，扫描功能实测没退化。装 r2、把那个旧文件删掉、再开一次 <span class="mono">--bundled</span> 就干净了。另外提醒一句：你这台机 PS 开着，所以它不会走免 PS 道——要验免 PS 得关 PS 或用那台没 PS 的电脑。</div>
+
+<footer>
+  <p>证据位置：worktrees/develop 提交 b99f706 · download/local-assistant/build/vendor/photocraft/{BUILD-MANIFEST.txt, neutralize-brand.patch, engine.sha256} · tmp/setup-3.7.16-r2-中性引擎/{说明.txt, SHA256SUMS.txt} · AI_MEMORY/TASK_LOG.md:1 · ledger 末行 PC-NEUTRAL-ENGINE（updatedAt 2026-10-20 23:14，投影 create=1）</p>
+  <p>取数方式：PowerShell VersionInfo 与 Get-FileHash、cargo/ISCC 单独取退出码（不经管道掩码）、node 双算和值；所有钟点抄自同轮回显。</p>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行方案 · 六条链断点第一批修复 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--ok);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+.gates{display:flex;flex-direction:column;gap:8px}
+.gate{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:.92rem;color:var(--ink-2)}
+.gate .mark{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);white-space:nowrap;padding-top:2px}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>2026-10-22 12:0x +0800</span><span class="sep">/</span><span>风险档 Medium</span><span class="sep">/</span><span>先审自己的方案</span></div>
+  <h1>第一批只修三处：让证据能落库、让学习有目标值、让超限不白屏</h1>
+  <p class="standfirst">上游是全项目上帝视角审查（六条链没有一条端到端绿）。本方案在动手前先证伪了自己上一轮的四条建议，其中<strong>三条被改窄或砍掉</strong>——因为照原样做会造出假规则、救不回历史批次、或撞进另一会话在飞的文件。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：条件放行 ｜ 四项执行，两轮建议被自我证伪</span>
+  <p><strong>可判定目标句：</strong>修完后同一次运行里要拿出两条证据——① 助手"部分完成"的真实回执形状，服务端 <span class="mono">parseBatchReceipt</span> 返回非 null；② 一条带 <span class="mono">finalCode</span> 的学习信号，能让聚合脚本产出<strong>有建议码的候选组</strong>。拿不到即视为未修。全程不部署、不翻闸、不动账务。</p>
+</div>
+
+<div class="contract">
+  <div><b>基线</b>：<span class="mono">worktrees/develop</span> HEAD <span class="mono">cad83e4f</span></div>
+  <div><b>现场</b>：porcelain 12 行，全属另一会话内存保护线；目标文件逐个实测为空</div>
+  <div><b>执行项</b>：4 项（回执白名单 / finalCode / 隔离库端到端 / 报价崩溃闸）</div>
+  <div><b>红线</b>：不动生产与测试站、不动支付开关、不动助手侧</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>对我自己上一轮方案的证伪（这一步改变了方案）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>上一轮我说</th><th>证伪过程</th><th>新方案</th></tr>
+    <tr>
+      <td>把 <span class="mono">TEXT_READBACK_VERIFIED</span> 加进白名单</td>
+      <td>读 <span class="mono">execution-batch.ts:2327</span> 与权威阶梯 <span class="mono">trust-chain/attempt-state.ts:15-22</span>：本地那份 4 元素集合里，<span class="mono">PARTIAL</span>/<span class="mono">FAILED</span> <strong>根本不在权威阶梯中</strong>，而阶梯里的 <span class="mono">WRITE_CONFIRMED</span>、<span class="mono">TEXT_READBACK_VERIFIED</span>、<span class="mono">SAVE_SUCCEEDED</span>、<span class="mono">DISK_OUTPUT_VERIFIED</span> 全被拒。这不是"少一个枚举值"，是<strong>两处词汇表各写一份、已经漂移</strong>。</td>
+      <td>改为<strong>收敛到单一权威源</strong>：白名单＝从 <span class="mono">attempt-state</span> 导入的阶梯 ＋ 显式保留 <span class="mono">PARTIAL</span>/<span class="mono">FAILED</span>（既有客户端与 6 个 smoke 在用，不能悄悄撤）。</td>
+    </tr>
+    <tr>
+      <td>五个采集点都补 <span class="mono">finalCode</span></td>
+      <td>其中四个点的 <span class="mono">actionCode</span> 已经是 <span class="mono">excluded</span>/<span class="mono">ignored</span>/<span class="mono">accepted</span>，<strong>不存在"系统提案 vs 用户终选"的区分</strong>。填进去只是把 actionCode 抄一遍，聚合会产出同义反复的规则候选，还会喂进管理端候选队列和将来的 Shadow 评估＝<strong>造数据</strong>。且 <span class="mono">candidate-aggregator.ts:206</span> 的 eligible 只算 accepted/modified/rejected，excluded/ignored 本就不进分母。</td>
+      <td><strong>本轮只补 source_binding 一个点</strong>（<span class="mono">workbench-view.tsx:2768</span>）——唯一同时带真实 <span class="mono">proposalCode</span> 与用户终选对象的采集点。其余三点与"新增改译采集点"列为<strong>待 Owner 定语义＋隐私评估</strong>。</td>
+    </tr>
+    <tr>
+      <td>修好后重投测试站那 37 条回执</td>
+      <td>读 <span class="mono">execution-batch.ts:1341-1350</span>：被 reaper 以 <span class="mono">ATTEMPT_ABANDONED</span> 等终态化的 attempt，迟到回执一律 <span class="mono">ATTEMPT_ALREADY_TERMINAL</span> 拒绝（T-0113 围栏，本身正确）。<strong>那 37 条救不回来。</strong></td>
+      <td>本轮只保证"<strong>以后不再新增</strong>"。历史停摆批次属"历史账务处置"，红线要求单独授权。</td>
+    </tr>
+    <tr>
+      <td>（隐含）加白名单会改变计费</td>
+      <td>读收费门 <span class="mono">:1384-1398</span>：唯一收费条件是 <span class="mono">REOPEN_VERIFIED</span> <strong>且</strong>带对象证据摘要；其余等级的 VERIFIED 行全部降级为 FAILED 并挂 <span class="mono">EVIDENCE_LEVEL_NOT_TRUSTED</span>。</td>
+      <td>扩大接受面<strong>不改钱口径</strong>，改的是"证据能否落库、批次能否终态"。写进提交信息与偏差登记，防后人误读。</td>
+    </tr>
+  </table></div>
+  <div class="callout bad"><strong>另外两条本轮否决：</strong>① v15 outbox 终态码（要动 <span class="mono">download/local-assistant/</span>，须真建 exe＋版本 bump，且那两个文件正被另一会话改）——不碰，避免同树并发写。② 测试站对账 timer 的 403——修法要往共享 VM 的 systemd 单元塞 nginx 门凭证，凭证来源与轮换我这次没核实，<strong>不能把凭据抄进单元文件</strong>；共享基础设施＋密钥落盘面，停手交 Owner。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>四项执行与各自判据</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">T-1 回执验证等级收敛到权威阶梯</span><span class="tag info">合同变更</span></div>
+      <p><span class="mono">execution-batch.ts</span> 的本地联合类型（<span class="mono">:36-40</span>）与 Set（<span class="mono">:2327</span>）改为「权威阶梯 ＋ PARTIAL ＋ FAILED」，注释写清收费门只认 REOPEN_VERIFIED；<span class="mono">prisma/schema.prisma:1465</span> 行内注释同步为真实取值域（只改注释⇒无迁移）。</p>
+      <p class="fix"><strong>契约测试补例</strong>（<span class="mono">smoke-batch-billing-routes.mjs</span> 已有 parseBatchReceipt 正负例集）：正控用助手真实载荷形状断言可解析；负控 <span class="mono">BOGUS</span> 仍拒、正文类字段仍拒（不许改绿）。</p>
+      <p class="fix"><strong>判据</strong>：<span class="mono">test:batch-row-contract</span>、<span class="mono">test:trust-chain</span>、该 smoke 三者 rc=0；<span class="mono">tsc --noEmit</span> 无新增错误。fixture 自查：实测 <span class="mono">smoke-batch-row-contract.mjs</span> 内 <span class="mono">verificationLevel</span> 命中 0，无该轴 ⇒ 无需改 fixture。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">T-2 source_binding 补"用户终选码"</span><span class="tag ok">不含正文</span></div>
+      <p>新增纯函数 <span class="mono">bindingFinalCode(item, resolution)</span>（放 <span class="mono">inspector-decisions.ts</span>），返回决策码而非内容：<span class="mono">candidate_rank_N</span>（按候选 ledgerEntryId 匹配）／<span class="mono">combined_rank_N</span>／<span class="mono">conflict_rank_N</span>（按去空格文本相等的下标）／<span class="mono">manual_entry</span>（用户自填，不在任何提案里）。</p>
+      <p class="fix"><strong>只在 </strong><span class="mono">workbench-view.tsx:2768</span> 填这一个点，其余四个采集点一字不动。服务端 <span class="mono">signal-validator.ts:139</span> 已有 64 字符截断。</p>
+      <p class="fix"><strong>判据</strong>：<span class="mono">test:learning-signal-client</span> rc=0 ＋ 新增 rank 可区分断言；<span class="mono">tsc</span>、<span class="mono">lint</span> 无新增错误。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">T-3 隔离库端到端证明</span><span class="tag warn">不碰两站</span></div>
+      <p>临时 SQLite 走<strong>绝对路径</strong> <span class="mono">DATABASE_URL=file:&lt;tmpdir&gt;/…</span>（相对 <span class="mono">file:</span> 会经 node_modules 符号链接静默读共享库，本项目已三次实证）；<span class="mono">prisma db push --skip-generate</span> 建库；灌 1 名用户＋同意记录＋6 条 <span class="mono">source_binding</span> 信号（两个模板指纹、<span class="mono">finalCode='candidate_rank_0'</span>）。</p>
+      <p class="fix"><strong>正控</strong>：聚合 dry-run 输出该组且 <span class="mono">proposal=candidate_rank_0</span>。<strong>负控</strong>：把 finalCode 全置 null 复跑，期望 <span class="mono">proposal=(无)</span>——证明断点在这个字段，不在聚合器。只清理本轮自建、路径含本轮随机串的文件。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">T-4 超 1500 单位的报价崩溃闸</span><span class="tag bad">#222</span></div>
+      <p><span class="mono">execute-step.tsx:784-793</span> 的 <span class="mono">useMemo</span> 包 try/catch，抛错返回 <span class="mono">null</span>；五个渲染点（<span class="mono">:2648/:2658/:2698/:2794/:2812</span>）对 null 给一句人话（规模超出可直接执行的上限，请拆分批次），不再白屏。</p>
+      <p class="fix"><strong>判据</strong>：<span class="mono">tsc</span>、<span class="mono">lint</span>、<span class="mono">test:batch-row-contract</span>（覆盖计价预览）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>状态机审查十项（本方案触及回执接受面）</h2>
+  <div class="gates">
+    <div class="gate"><span class="mark">事实</span><span>只新增/修改 <span class="mono">ExecutionAttemptRowResult</span> 与 attempt 终态；<strong>不新建任何账务事实</strong>。</span></div>
+    <div class="gate"><span class="mark">权威</span><span>行级结果由服务端收费门判定后落库，助手只是上报者；authority 归属未变。</span></div>
+    <div class="gate"><span class="mark">转换</span><span><span class="mono">RUNNING → SUCCEEDED/FAILED/PARTIAL_VERIFIED</span> 不变；变的只是"可被接受的验证等级集合"。</span></div>
+    <div class="gate"><span class="mark">不可逆</span><span>边界＝结算与扣费；收费门条件一字未动 ⇒ 未跨边界。</span></div>
+    <div class="gate"><span class="mark">幂等</span><span><span class="mono">attemptId + rowToken</span> upsert；"可信成功只增不减"逻辑未动。</span></div>
+    <div class="gate"><span class="mark">丢响应</span><span>既有重放路径（FAILED 自身回执走幂等重放）未动。</span></div>
+    <div class="gate"><span class="mark">崩溃窗口</span><span>事务边界未改。</span></div>
+    <div class="gate"><span class="mark">并发</span><span>仍由 <span class="mono">ATTEMPT_ALREADY_TERMINAL</span> 围栏与 CAS 决定，未放宽。</span></div>
+    <div class="gate"><span class="mark">cancel</span><span>未触及。</span></div>
+    <div class="gate"><span class="mark">迟到回执</span><span><strong>唯一改变的语义</strong>：非 reaper 终态的 attempt 现在能收下阶梯等级的回执（此前 400）；reaper 终态的仍然拒绝。</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>明确不做</h2>
+  <ul class="plain">
+    <li>不动生产、不动测试站、不动部署脚本。</li>
+    <li>不改任何支付开关（红线，等 Owner 一句话）。</li>
+    <li>不动助手侧文件（另一会话在飞，同树并发写风险）。</li>
+    <li>不给聚合挂服务器 cron／timer（共享基础设施＋Owner 决定）。</li>
+    <li>不回填或抢救历史停摆批次与账务（红线）。</li>
+    <li>不给 <span class="mono">excluded/ignored/accepted</span> 三个采集点填同义反复的 <span class="mono">finalCode</span>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">05</span>现场核验与记账</h2>
+  <p><strong>开工前实测</strong>：<span class="mono">git status --porcelain --</span> 七个目标文件路径输出为空 ⇒ 与 HEAD 同内容，不与别手冲突。提交一律<strong>逐文件显式 add</strong>，禁止 <span class="mono">-A</span>/<span class="mono">.</span>；提交前复跑 <span class="mono">git status --porcelain</span> 确认 staged 只含本轮文件。</p>
+  <p><strong>落地后记账</strong>：<span class="mono">AI_MEMORY/TASK_LOG.md</span> 置顶追加（含真实退出码）；<span class="mono">ISSUES.md</span> 追加新登记；<span class="mono">docs/HANDOFF.md</span> 偏差登记标【合同变更】；<span class="mono">ledger.jsonl</span> 追加一行并投影飞书；执行报告 md＋HTML 同目录产出并发飞书。</p>
+  <div class="footer">
+    <div>本方案由审查会话自行拟定并自行证伪；审查者不占人类批准名额。风险档 Medium（普通产品改动＋一处回执接受面合同变更），按治理规约需 1 人对账＝Owner 验收运行证据。</div>
+    <div>图译工坊内测版 · 执行方案 · 2026-10-22</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

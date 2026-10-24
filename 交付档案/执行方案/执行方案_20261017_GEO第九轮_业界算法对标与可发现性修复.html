@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<title>GEO 第九轮执行方案 · 业界算法对标与可发现性修复</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 + 执行方案</span><span class="sep">/</span>
+    <span>GEO 第九轮</span><span class="sep">/</span>
+    <span>2026-10-17</span>
+  </p>
+  <h1>业界算法对标：先修「抓不到」，再谈「写得好」</h1>
+  <p class="standfirst">去 GitHub 与全网看了别人怎么实现 GEO，结论是<strong>算法不必自己写</strong>——已有一份 MIT 许可、零依赖、25 项分档的公开量表；但它自己做的唯一一次预注册检验证明<strong>分数与被引用无关</strong>。于是我拿它对我们生产站实测跑了一遍，跑出来的两个真问题都不在文案上。</p>
+  <p class="standfirst"><strong>号界：</strong>本件原以「第七轮」落笔，grep 发现该号已被占（<code>AI_MEMORY/TASK_LOG.md:31</code>，llms 引擎面文件补平）后顺延为「第八轮」；再 grep 发现「第八轮」也已被另一只手用于英文面（<code>AI_MEMORY/TASK_LOG.md:25</code>「GEO 第八轮·英文面：四件英文件＋英文禁写闸＋dev.to/Medium 登录交接」）。<strong>故本件最终自称第九轮</strong>——三只手做的是三条不同的轴，引用请带后缀，不混读。</p>
+  <div class="meta">
+    <span>只读调研，未改业务代码</span>
+    <span>未部署 · 未翻闸</span>
+    <span>外部关键结论已自行复跑</span>
+    <span>载体：tuyigf.com 生产现读 + develop 源码</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>我们的 GEO 短板不是「文案不够 AI 味」。首页静态 HTML 里没有下载页与条款页的链接，全站零边缘缓存、<code>/download</code> 首字节 9.3 秒——引擎派出的爬虫很可能根本没把站内取全。先修可发现与可取回，分数只是体检。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat warn"><span class="n">58</span><span class="k">公开量表归一化分（就绪度 49／可观测满分 84，档位 Growing）</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">首页静态 HTML 中 <code>/download</code> 出现次数（<code>/terms</code> 同样为 0）</span></div>
+    <div class="stat bad"><span class="n">9.3 s</span><span class="k"><code>/download</code> 首字节；全部页面 <code>cf-cache-status: DYNAMIC</code></span></div>
+    <div class="stat"><span class="n">7.0 %</span><span class="k">95,308 B 首页里可见正文占比（4,546 字）</span></div>
+    <div class="stat ok"><span class="n">0 笔</span><span class="k">本轮业务代码改动（含 1 次对外部量表的首跑取证）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>本质上要成什么（先立可判定的一句）</h2>
+  <div class="callout">
+    <span class="lb">目标句</span>
+    <p>有人在生成式引擎里问「已有译文怎么批量写回 PSD／PSB 多语言版本」这类问题时，<strong>答案里出现图译工坊的名字或链接，且说的是真话</strong>。</p>
+    <p>判定面：固定 30 问 × ≥3 次复采 × 分端（网页／app）统计提及率、引用率、信息准确率。「GEO 分数」不作收益承诺——理由见 §03。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>调研结果：算法在哪、它自己怎么说</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>可直接抄的那份：geo-score 量表 v1.1</h3><span class="loc">github.com/jianruntech/geo-score</span><span class="tag ok">MIT</span></div>
+      <p>本会话实测 323★／Python／<strong>零第三方依赖</strong>／最近推送 2026-10-17T06:03:39Z。25 项分档检查＋3 道门槛（任一门槛 0 分则归一化封顶 40）＋五档分级，中英双语，带 CLI／GitHub Action／MCP 三种载体。</p>
+      <p>支柱分值：可被抓取 15・可被理解 22・<strong>内容可引用性 35</strong>・品牌可信度 18・答案适配 10・加分 6（封顶 +6）。它刻意把「就绪度」和「引用表现」<strong>两个数分开报、永不相加</strong>。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>但它自己否掉了自己的分数</h3><span class="loc">benchmark/prereg/round0/RESULTS-wave0.zh-CN.md:21-25</span><span class="tag bad">零结果</span></div>
+      <p>预注册检验：16 类别、83 站、1,280 个回答，就绪度分与引用率之间 Kendall τ_b 平均 <strong>T = 0.074（95% CI −0.19～0.34，重排检验 p = 0.513）</strong>，Holm 校正后无一显著；该设计可检出的最小 T 为 0.29。且只跑成一家引擎（<code>gpt-5.6-luna</code>），方案要求的第二家 Gemini 一个回答都没用上。</p>
+      <p>它写的是「没有检出关系」，不是「没有关系」——这是我在这个领域见过最干净的自我否证。<strong>所以分数只能当体检与回归护栏，不能当对外承诺。</strong></p>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>原始论文（KDD 2024）的策略清单教人造假</h3><span class="loc">GEO-optim/GEO/src/geo_functions.py:158,166,245</span><span class="tag bad">撞铁律</span></div>
+      <p>我 curl 取回该文件（14,077 B）后 <code>grep -n</code> 复现原文：<code>:166</code>「You may <strong>invent these sources</strong> but ensure they sound plausible」；<code>:158</code>「Add more quotes… <strong>even though fake and artificial</strong>」；<code>:245</code>「Add positive, compelling statistics (<strong>even if hypothetical</strong>)」。</p>
+      <p>这三条直接撞我们「不得失真／对外主张守卫／结论必须有出处」。<strong>凡加数据、加引语、加引用的改造，只接受当场能取到一手出处的内容。</strong>论文各策略的百分比两个探查会话给的数不一致、我没复算成表格原表 ⇒ 全文按待确认处理，不据其下结论。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>反向证据（这条决定我们怎么做）</h3><span class="loc">arXiv:2506.11097 C-SEO Bench, NeurIPS D&amp;B 2025</span><span class="tag warn">摘要已复跑</span></div>
+      <p>我取回摘要页原文：「most current C-SEO methods are <strong>not only largely ineffective but also frequently have a negative impact on document ranking</strong>, which is opposite to what is expected. Instead, traditional SEO strategies…」</p>
+      <p>⇒ 「改文案就涨引用」没有依据，且多方同时优化时收益零和。<strong>计划必须内置可证伪判据，不许按噪声改稿。</strong></p>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>两个我复现过的量化事实</h3><span class="loc">Vercel 1,079 KB 页面・Ahrefs 137K 域日志</span><span class="tag ok">已抽原句</span></div>
+      <p><strong>不执行 JS</strong>：Vercel《The rise of the AI crawler》——GPTBot 一个月在其网络 <strong>5.69 亿次</strong>请求、Claude 3.70 亿次（≈Googlebot 45 亿的 20%）；「ChatGPT: <strong>11.50%</strong>、Claude: <strong>23.84%</strong> of requests 抓了 JS 文件，但它们不执行，读不到客户端渲染内容」。</p>
+      <p><strong>llms.txt 基本没人读</strong>：Ahrefs 2026-06-15 对 137,210 个域 5 月日志——28% 发布了 llms.txt，其中 <strong>97% 全月零请求</strong>；请求里 96% 是 bot，<strong>真检索类 bot（OAI-SearchBot／PerplexityBot）只有 233 次 = 1.1%</strong>，SEO 审计工具占 21.7%。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>对抗式审查：外部方案 × 本站实测</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>候选动作</th><th>出处</th><th>判定</th><th>本会话实测理由</th></tr></thead>
+      <tbody>
+        <tr><td>自研 GEO 打分算法</td><td class="mono">geo-score v1.1 (MIT)</td><td><span class="tag bad">砍·改直接用</span></td><td>已机器可读、CJK/ICP 感知、带回归门 <code>--fail-on-drop</code>；再写一套是重复建设</td></tr>
+        <tr><td>把分数当收益指标对外说</td><td class="mono">wave-0: T=0.074 p=0.513</td><td><span class="tag bad">封驳</span></td><td>唯一预注册检验未检出关系；对外只说体检，不说涨幅</td></tr>
+        <tr><td>加数据／加引语／加引用</td><td class="mono">geo_functions.py:158,166,245</td><td><span class="tag warn">改造后才允许</span></td><td>原文允许编造 ⇒ 只收能当场取到一手出处的数，否则宁可不加</td></tr>
+        <tr><td>权威口吻、堆关键词、问句型标题灌水</td><td class="mono">论文自测：authoritative 不显著、stuffing 负</td><td><span class="tag bad">砍</span></td><td>无效或负向，且易触发对外主张守卫</td></tr>
+        <tr><td>llms.txt 继续加码</td><td class="mono">Ahrefs 97% 零请求・Google 指南</td><td><span class="tag warn">维持不加码</span></td><td>已有 3,534 B ＋ llms-full <strong>7,148 B</strong>（我第一遍报的 5,256 是传输侧读数，不作文件大小引用）；被证实有效的场景是编码 agent 读文档，我们用户是设计师</td></tr>
+        <tr><td>JSON-LD 当 GEO 杠杆</td><td class="mono">Ahrefs DiD（别手读数，我未复算）</td><td><span class="tag warn">降级为卫生项</span></td><td>schema 保留（首页实测 4 类），但不写「因 schema 涨引用」</td></tr>
+        <tr><td><strong>静态 HTML 里要有真链接</strong></td><td class="mono">生产 HTML grep＝0；home-view.tsx:114-135,739-740</td><td><span class="tag ok">第一优先</span></td><td>唯一 <code>&lt;a href&gt;</code> 11 枚、其中 7 枚锚点；审计器因此「8 页只抽到 4 页、sitemap 判不可达」</td></tr>
+        <tr><td><strong>边缘缓存与响应时长</strong></td><td class="mono">cf-cache DYNAMIC・age 0・TTFB 1.25–9.34 s</td><td><span class="tag ok">第一优先</span></td><td>审计器报的「logo 不可解析」「sitemap 不可达」「2 页报错」我逐个复测：<strong>都不是 404，是慢到超时</strong></td></tr>
+        <tr><td>问句长在标题上</td><td class="mono">p2.question-intent 0/7・home-view.tsx:429</td><td><span class="tag ok">抄（结构改文案不动）</span></td><td>问句在 <code>&lt;button class="faq-q"&gt;</code> 里，而 FAQPage 里已有 7 个 Question；抽取器按标题层走</td></tr>
+        <tr><td>首屏前 200 字自足答案句</td><td class="mono">可见正文 4,546 字＝7.0%</td><td><span class="tag warn">文案等 #163</span></td><td>前 200 字是标题＋导航＋口号；「Labrador 摘要截 200 字符」是二手说法 ⇒ 只作假设</td></tr>
+        <tr><td>手工问题面板（免费引擎、≥3 复采）</td><td class="mono">Dice-Roll 协议・--runs 5</td><td><span class="tag ok">抄（改良）</span></td><td>不需付费且能证伪；必须固定「端」为变量</td></tr>
+        <tr><td>买 Peec／Otterly／Profound</td><td class="mono">二手报价 $29–489/月</td><td><span class="tag bad">砍（本轮）</span></td><td>ROI 未证实，先用免费面板</td></tr>
+        <tr><td>把产品做成 MCP server 分发</td><td class="mono">Registry preview・52% 已停更</td><td><span class="tag bad">砍（本轮）</span></td><td>对设计师产品无分发证据；这是产品面不是 GEO 面</td></tr>
+        <tr><td>视频／YouTube 面</td><td class="mono">Ahrefs 相关性 ρ≈0.737（最强）</td><td><span class="tag warn">登记等 Owner</span></td><td>09-24 你令对外素材暂停 ⇒ 不本轮自派</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04b</span>与另一手「第七轮」（LLMS-ENGINE-FILES）逐条对齐——不同轴，不互斥</h2>
+  <p class="lede">那只手 18:2x–19:4x 做的是<strong>引擎面文本文件</strong>（把 <code>llms-full.txt</code> 补进 develop、<code>llms.txt</code> 加反分类句、「恢复原文」四处精度化、站外四道人工闸操卡）。本轮做的是<strong>量表面貌与可发现性／可取回性</strong>。列出对齐表是为了不让 Owner 读成翻案。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>别手读数（第七轮 §00）</th><th>本会话读数（第八轮）</th><th>关系</th></tr></thead>
+      <tbody>
+        <tr><td>「robots.txt 无缺陷」：AI 系 bot 逐条 <code>Allow: /</code> ＋ <code>Sitemap:</code> 行在位</td><td class="mono">同一文件 354 B、7 个具名 UA 全放行、Sitemap 行在位</td><td><span class="tag ok">一致</span> 同一条事实</td></tr>
+        <tr><td>「首页 HTML 现读：定义句 1、不做翻译 1、12 个目标语种 1」⇒「可抓取面本身没问题」</td><td class="mono">我测的是另外两面：首页<strong>出边</strong>（<code>/download</code>、<code>/terms</code> 各 0 次）与<strong>取回稳定性</strong>（全路径 DYNAMIC、<code>/download</code> 9.34 s）</td><td><span class="tag warn">不冲突</span> 它量「内容在不在」，我量「走不走得到其他页、按时取不取得回」。它的结论不能推广成「出边完整」，我的也不推翻它那一条</td></tr>
+        <tr><td><code>llms-full.txt</code> 7,148 B（main 有、develop 无）</td><td class="mono">我第一遍 5,256 B（传输侧）；复测落盘 7,148 B</td><td><span class="tag ok">我对齐别手的数</span> 并登记自己的错因：<code>-w size_download</code> 不带 <code>--compressed</code> 时是传输字节</td></tr>
+        <tr><td>D2「<code>llms.txt</code> 加反分类句」</td><td class="mono">本方案 §04 第 5 行「llms.txt 维持不加码」</td><td><span class="tag ok">不矛盾</span> 它是把已有事实补进已有文件；我反对的是再造新变体（<code>ai.txt</code>／<code>llms-ctx</code>／分语文件）</td></tr>
+        <tr><td>D3「两文件里『恢复原文』改精确句」</td><td class="mono">营销面同一事实仍等 Owner（#160）</td><td><span class="tag warn">同一件事两个面</span> 机器面它已动，营销面待你定句</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">需要提前告知别手的一条接口</span>
+    <p>本方案 A4（把公开量表 vendor 进 <code>scripts/geo/</code> 并固定 8 条页集合）落地后，<code>llms.txt</code>／<code>llms-full.txt</code> 的任何改动都会进周检 diff。<strong>两笔同期进行时，diff 掉分先查是不是页集合变了</strong>，别当内容回归。</p>
+    <p><strong>落笔后复测（20:34 实测 date，<code>develop@e9f639f</code>）</strong>：别手 D1（<code>400034f</code>）与 D2/D3（<code>5d90605</code>）<strong>已落 develop</strong>，<code>git ls-files | grep public/llms</code> 现计数 2；生产侧仍未部署（本轮未查线上内容，故不写线上读数）。这条只更新事实，不改上面任何判定。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>对我自己这份方案的六个口子</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>dateModified 会不会变成造时间戳</h3>
+        <p><code>src/app/sitemap.ts:4</code> 注释已明写「不写 lastModified：无真实内容时间时不伪造（Google 会忽略不实的 lastmod）」。量表要 <code>dateModified</code>（<code>p2.freshness</code> 3/6：「0 declare dateModified」）。</p>
+        <p><strong>处置</strong>：只允许写真实来源（文案后台发布记录的 <code>updatedAt</code>，或该页内容的 git 提交日期）；拿不到就继续不写，<strong>宁可丢这 3 分</strong>。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>「改了也白改」——本轮凡需改文案的一律后排</h3>
+        <p><code>src/lib/server/site-settings.ts:255-271</code> 的 <code>deepMerge</code> 只在双方都是非数组对象时逐键递归，其余 <code>return override</code>（合并点 <code>:324-328</code>）⇒ 数组型文案字段只要生产库存着，改代码单源＝没改（#163 未决）。</p>
+        <p><strong>处置</strong>：前 200 字重写、问句文本、数据带出处——全部排在 #163 之后；本轮只做不需改文案的结构性动作。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>补链接会不会动主流程</h3>
+        <p><strong>处置</strong>：只在页脚／导航增真链接，首屏层级与 CTA 一字不动 ⇒ 属展示面，不升 L2；符合 Product Drift Guard「不以优化为名删改用户可见能力」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>边缘缓存不是我能碰的东西</h3>
+        <p>站点在 Cloudflare 后，HTML 响应带 <code>Vary: rsc, next-router-state-tree…</code> 且 <code>Cache-Control: no-store</code>——no-store 很可能是为防后台改字后陈旧。<strong>我不擅自改缓存语义</strong>，只把可安全实施的形状（先只对 <code>/download /terms /privacy /llms*.txt /sitemap.xml</code> 试 60 s）与回退交 Owner。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>我一台机器一条网络，不能定案</h3>
+        <p><code>/terms</code> 15 s 未取完、<code>ai.txt</code> 探到 <code>http=000</code>（TLS 失败，<strong>不是 404</strong>）、<code>robots.txt</code> 首拍 8.0 s／次拍 1.0 s；本机 <code>curl</code> 还需 <code>--ssl-no-revoke</code> 才过得了部分站点。<strong>定案证据必须是服务器侧 nginx 日志</strong>（UA × 路径 × 状态 × 时长）。凡「慢／不可达」结论一律标「本机单点、待服务器侧复采」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>演示数字会被引擎当成产品统计</h3>
+        <p>首页「执行报告」示意卡的 <code>12 个 PSD／48 个目标位置／回读一致率 93.8%</code>（<code>src/config/siteContent.ts:252-278</code>）在<strong>可见文本里没有「示意」标注</strong>（该块 kicker/title/desc 均无；「示意界面」那句在另一分区 <code>:701</code>；<code>:669</code> 还把「示意卡内部演示数据」列为不改写范围）。抽取器与 LLM 分不清样例与实测。</p>
+        <p><strong>处置</strong>：做「数据带出处」之前，先给演示数字打文本层「示意」标识（A3）。这与论文 <code>:245</code>「哪怕是假设的数字也加」是同一个坑的反面。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>我主动放弃的分数（诚实清单）</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>放弃，并说明为什么</h3>
+      <ul>
+        <li><strong>b.ai-txt 2 分</strong>：与 llms.txt 同一条逻辑链，收益未证实，多一个维护面。</li>
+        <li><strong>b.speakable 1 分 / b.geo-link 1 分</strong>：消费方未知（speakable 富结果停用一说为待复核）。</li>
+        <li><strong>p3.video 3 分</strong>：依赖对外素材，Owner 09-24 已令暂停 ⇒ 不自派。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>拿不到，不是不做</h3>
+      <ul>
+        <li><strong>p2.named-author 6 分</strong>：具名作者＝对外身份，当前无主体、未批准公示 ⇒ Owner 决策。</li>
+        <li><strong>p4.cn-engines 满档 1 分</strong>：要求 ICP 备案与主体信息，我们没有备案 ⇒ <strong>结构封顶，不追</strong>。</li>
+        <li><strong>p3.knowledge-graph 4 分</strong>：本会话 12 次 Wikidata／Wikipedia 查询 7 次无响应 ⇒ 判「未测」，不判 0。</li>
+        <li><strong>p3.listings／mentions／question-coverage</strong>：量表自陈「不站外搜索不可观测」，留空不算分。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>执行方案：三档按谁能动手切</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>档</th><th>动作</th><th>落点</th><th>可复跑判据</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag ok">A 我做</span></td><td>页脚／导航补真实页面链接 <code>/download</code>、<code>/terms</code>、<code>/en</code>（中英各一份），只增不改层级</td><td class="mono">home-view.tsx:739-740 附近</td><td class="mono">grep -c 'href="/download"' 首页HTML 0 → ≥1；server_links.home_links ↑</td></tr>
+        <tr><td><span class="tag ok">A 我做</span></td><td>FAQ 问句由 <code>&lt;button&gt;</code> 升为 <code>&lt;h3&gt;&lt;button&gt;</code>（APG 正确形），<strong>问句文字一字不改</strong></td><td class="mono">home-view.tsx:428-433</td><td class="mono">p2.question-intent 0/7 → ≥3；tsc exit 0；lint 无新 error</td></tr>
+        <tr><td><span class="tag ok">A 我做</span></td><td>演示数字加文本层「示意」标识（先止血再加真数据）</td><td class="mono">siteContent.ts:248-252</td><td class="mono">生产可见文本含「示意」≥1 次；不触计费与能力语义</td></tr>
+        <tr><td><span class="tag ok">A 我做</span></td><td>把量表沉成仓内体检：<code>scripts/geo/</code>（vendor，MIT＋保留 LICENSE）＋ <code>npm run geo:audit</code>，<code>--urls</code> 固定 8 条与 IndexNow 同集合</td><td class="mono">package.json + scripts/geo/</td><td class="mono">首跑出 tmp/geo-audit/&lt;日期&gt;.json；二跑同页集合可 diff</td></tr>
+        <tr><td><span class="tag warn">A 只读取证</span></td><td>生产库 <code>SiteSetting</code> 那行键面（#163 前置）</td><td class="mono">sqlite3 只读 SELECT</td><td class="mono">只看有无／大小／更新时间，不打印正文（命令已在上轮写好，等你执行）</td></tr>
+        <tr><td><span class="tag bad">B 你拍</span></td><td>Cloudflare 营销只读路径边缘缓存（先 5 个路径试 60 s），或先开 AI Crawl Control 观测</td><td class="mono">控制台侧，我不碰</td><td class="mono">nginx 命中率 ↑、审计器「2 页报错」归零</td></tr>
+        <tr><td><span class="tag bad">B 你拍</span></td><td>部署待发三笔 <code>e000a69</code>／<code>8bec41e</code>／<code>e4b63a8</code></td><td class="mono">发布面</td><td class="mono">生产现读新句 ≥1 次</td></tr>
+        <tr><td><span class="tag bad">B 你拍</span></td><td>GSC 生成式 AI 报告 + GA4「AI Assistant」渠道取基线（窗口取 2026-08-20 之后）</td><td class="mono">你的账号</td><td class="mono">基线曝光数落盘</td></tr>
+        <tr><td><span class="tag bad">B 你拍</span></td><td>具名作者／主体公示；视频面是否重启</td><td class="mono">对外身份与素材</td><td class="mono">分别解锁 6 分与 3 分</td></tr>
+        <tr><td><span class="tag ok">C 防自欺</span></td><td>30 问四类冻结、每条 ≥3 复采、分端；前两周只量噪声、声明最小可检出变化后才读趋势</td><td class="mono">问题集与落盘格式</td><td class="mono">提及率／引用率／信息准确率三数带区间</td></tr>
+        <tr><td><span class="tag ok">C 防自欺</span></td><td>周检回归 <code>--baseline --fail-on-drop</code>；掉分即停其他 GEO 动作先查因</td><td class="mono">npm run geo:audit</td><td class="mono">exit 4 ＝ 有掉分</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="notes">
+    <li><strong>本轮明确不做</strong>：自研算法、llms.txt 加码、多语分文件、买监测工具、MCP 分发、为分数造时间戳或数字。</li>
+    <li><strong>crawl ≠ citation</strong>：业界量级抓取对引荐比 OpenAI 约 341:1、Perplexity 约 2,373:1（二手数），所以日志只回答「取到了什么」，不回答「会不会被引用」。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>把握度分级</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>结论</th><th>把握度</th><th>依据</th></tr></thead>
+      <tbody>
+        <tr><td>首页静态 HTML 缺 <code>/download</code>、<code>/terms</code> 链接</td><td><span class="tag ok">高・直接实测</span></td><td class="mono">生产 HTML grep＝0；develop 9 处 href 全为锚点／登录</td></tr>
+        <tr><td>营销页慢且边缘零缓存，正在让审计器误判</td><td><span class="tag warn">中高・本机单点</span></td><td class="mono">cf-cache DYNAMIC／age 0 全路径；TTFB 1.25–9.34 s；待 nginx 复采</td></tr>
+        <tr><td>量表分数不能当收益指标</td><td><span class="tag ok">高・作者自曝零结果</span></td><td class="mono">T=0.074、p=0.513、单引擎</td></tr>
+        <tr><td>llms.txt 对 AI 答案≈零收益</td><td><span class="tag ok">高・137K 域日志</span></td><td class="mono">97% 零请求；检索类 bot 1.1%</td></tr>
+        <tr><td>「ChatGPT 索引摘要截在前 200 字符」</td><td><span class="tag bad">低・二手未复现</span></td><td class="mono">仅中文转述 ⇒ 作假设，待面板验证</td></tr>
+        <tr><td>改造后引用率会涨</td><td><span class="tag bad">不承诺</span></td><td class="mono">C-SEO Bench：多数方法无效甚至负向且零和</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<section>
+  <h2><span class="sn">09</span>执行记录（2026-10-17 21:45，Owner 第五次「按方案执行」）</h2>
+
+  <div class="verdict">
+    <span class="lb">落点</span>
+    <p>已提交 <code>9bc1778</code>（快进推 origin/develop，未部署）。审查把方案改掉了三处：不 vendor 外部量表、页脚从"新设计"降为"补齐英文页脚已有形状"、主题页本笔不做。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">0</span><span class="k">tsc 退出码（--noEmit）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">eslint 退出码（四个改动文件）</span></div>
+    <div class="stat bad"><span class="n">3</span><span class="k">负控 FAIL 条数（缺链接的夹具首页）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">正控 FAIL 条数（补链接之后）</span></div>
+    <div class="stat warn"><span class="n">+51/−10</span><span class="k">5 个文件的行数，与 git show --stat 一致</span></div>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>原方案</th><th>现场证据</th><th>改后动作</th></tr></thead>
+      <tbody>
+        <tr><td>A4 把公开量表 vendor 进仓（269 KB 第三方代码）</td><td class="mono">仓内已有 scripts/ai-crawler-log-report.mjs（nginx AI-UA 聚合）与 smoke-seo-consistency.mjs（550 行）</td><td><span class="tag bad">砍掉 vendor</span> 改成给已有门补断言，避免我自己批评过的重复建设</td></tr>
+        <tr><td>A1 页脚"新增"四条链接</td><td class="mono">home-view-en.tsx:497-502 早有 /en/download、/terms、/privacy、/</td><td><span class="tag ok">降级为补齐</span> 只有中文页脚没跟上 ⇒ 风险与决策面同时缩小</td></tr>
+        <tr><td>新增：主题页 3-5 页（Owner 提的"定位页们"）</td><td class="mono">页面数与 AI 可见度 ρ≈0.194；可达性未修；信源未经面板验证；develop 落后生产</td><td><span class="tag warn">本笔不做</span> 等门绿＋面板出数再立项</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>改了啥</h3><span class="loc">9bc1778 · 5 文件</span></div>
+      <p>中文页脚四条真链接（含 <code>hrefLang</code> 与内联编辑键）；FAQ 问句由 <code>&lt;button&gt;</code> 升 <code>&lt;h3 class="faq-h"&gt;</code>（zh/en 同改，问句文字一字未动，CSS 只加语义层）；示意卡标题加「（示意数据，非实测统计）」；<code>smoke-seo-consistency.mjs</code> 新增「首页静态 HTML 必须出边到 sitemap 每个本站一级路径」。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>我自己当场抓到并修掉的两个洞</h3><span class="loc">负控逼出来的</span><span class="tag warn">自曝</span></div>
+      <p><strong>一、静默跳过</strong>：断言第一版写在 <code>if (home)</code> 里，而对生产首跑时 <code>/</code> 超时 20 s ⇒ 整条检查根本没执行。已补 <code>if (!home) check(false, …)</code>——"没验到"不能被下游读成"通过"。</p>
+      <p><strong>二、假读数</strong>：对照脚本第一版用 <code>execFileSync</code> 阻塞事件循环，夹具服务器永不回应，两跑全 SKIP。改 <code>spawn</code> 后才拿到真数。</p>
+      <p><strong>未跑的一项</strong>：本地真机渲染 <code>NOT RUN</code>——<code>npm run dev</code> 被 <code>dev-isolated</code> 挡（<code>workspace:init</code> 报「workspace name must contain 2-49 lowercase letters…」＝CJK 路径派生名不合法）。未绕闸、未进他人树改配置。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">顺带量到两件事</span>
+    <p><strong>#170 恶化</strong>：生产首页两次现读 <code>ttfb=14.74 s</code>、40 s 上限内只回 <strong>6,437 / 95,308 字节</strong>（同日早前 1.25 s／6.56 s）；对生产跑门时 <strong>7 枚 fetch failure</strong>，<code>robots.txt</code>、<code>sitemap.xml</code> 也超时。边缘缓存从"建议"升级为影响可发现性的实测主因。</p>
+    <p><strong>#172（别手已立，我补四件独立读数）</strong>：develop 缺 main 独有提交（我量 15 枚、别手 20:3x 量 19 枚），含三张<strong>已在服</strong>英文法律页、<strong>IndexNow key 文件</strong>（<code>git cat-file</code> develop=N／main=Y，线上 200 ⇒ develop 树跑 <code>--strict</code> 会 <code>KEY_MISSING</code> 退 2，这是第二条断链）、以及已上线的 GEO 内容卡（<code>97bcbd5</code>／<code>d1ed250</code>／<code>4fa9d4f</code>）＋下载页 JSON-LD＋og 六页守卫＋FAQ 漂移自愈。<strong>现有门的必需路径清单不含英法律页 ⇒ 拦不住这次回归。</strong>我未 merge、未动 main、未部署；已预告合流冲突面＝<code>home-view.tsx</code>／<code>siteContent.ts</code>。</p>
+  </div>
+
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>#172 合流归属，以及合流前是否冻结从 develop 出包</h3><p>我认为该冻。从 develop 出包会把已推送、已收录的英文法律页 URL 打成 404，并断掉 IndexNow 通知链。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>B1 边缘缓存</h3><p>本轮实测恶化到 40 秒取不完一页；我不擅自改 <code>no-store</code>。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>B3 GSC 生成式 AI 报告＋GA4 AI Assistant 取基线</h3></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>B4 具名作者／主体公示</h3></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>信源面板需要你的引擎登录态</h3><p>30 问已冻结在 §07 C 档，未跑。跑完才有"AI 到底采用哪些信源"的数，也才轮到主题页立项。</p></div></div>
+  </div>
+
+  <p class="formula">治理现状一句：台账 <code>wip:true 且非终态</code> 已到 <strong>10 条</strong>（上限 2）。我这两行都刻意 <code>wip:false</code>，没往里加。</p>
+</section>
+
+<footer>
+  <p><strong>本会话证据</strong>：量表体检 <code>tmp/geo-research/tu_report.json</code>（readiness 49／observable_max 84／normalised 58／band Growing／bonus 2／elapsed 88.8 s；notes 含「Scored on 2 of 4 sampled pages; 2 returned errors」「no sitemap reachable」）；首页原始 HTML 95,308 B（GPTBot UA 与浏览器 UA <strong>同字节</strong>，可见正文 4,546 字）；生产现读 <code>robots.txt</code> 354 B（7 个具名检索 UA 全 <code>Allow: /</code>、<code>Sitemap:</code> 行在位）、<code>sitemap.xml</code> 2,960 B／8 个 <code>&lt;loc&gt;</code>、<code>llms.txt</code> 3,534 B、<code>llms-full.txt</code> 7,148 B、<code>/app-icon-512.png</code> 200 image/png 16,494 B。</p>
+  <p><strong>外部复核</strong>：<code>arxiv.org/abs/2506.11097</code>（摘要原句已引）、<code>vercel.com/blog/the-rise-of-the-ai-crawler</code>、<code>ahrefs.com/blog/llmstxt-study/</code>、<code>GEO-optim/GEO/src/geo_functions.py:158/166/245</code>、<code>jianruntech/geo-score</code>（rubric v1.1 与 wave-0 结果文件）。</p>
+  <p><strong>红线遵守</strong>：未部署、未翻闸、未碰支付 flag、未 SSH 生产、未 force push、未改他人现场；对外部 CLI 只做了下载＋静态检查（0 处 subprocess/eval/exec）后在 <code>tmp/</code> 内运行，未 pip 安装任何包。</p>
+</footer>
+
+</div>

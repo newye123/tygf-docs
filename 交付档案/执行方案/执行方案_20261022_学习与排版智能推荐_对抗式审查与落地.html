@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>学习与排版智能推荐 · 对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* masthead */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* sections */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+pre{
+  margin:0;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  overflow-x:auto;
+  font-family:var(--font-mono);
+  font-size:.78rem;
+  line-height:1.7;
+  color:var(--ink-2);
+}
+pre b{color:var(--ink);font-weight:500}
+
+/* verdict */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+.verdict p.small{font-size:1rem;font-weight:400;color:var(--ink-2);max-width:68ch}
+.verdict .band{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  padding-top:12px;
+}
+
+/* split */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* stats */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* tags */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* tables */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.findings{min-width:660px}
+table.findings td:nth-child(1){white-space:nowrap;width:82px}
+table.findings td:nth-child(2){width:126px}
+table.findings td:nth-child(3){width:270px}
+table.findings td:nth-child(3) code{margin:1px 0}
+table.findings td:nth-child(4){min-width:220px}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* cards */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* timeline */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* gates */
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* notes / callout */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.callout.warn{background:var(--warn-soft);border-color:var(--warn-soft)}
+.callout.warn .lb{color:var(--warn)}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+.scrollx{min-width:0;max-width:100%}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (max-width:560px){
+  .card .loc{flex:1 1 100%;white-space:normal;overflow-wrap:anywhere}
+  table.findings{min-width:560px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>学习子系统 × 字体排版</span><span class="sep">/</span>
+    <span>2026-10-22</span>
+  </p>
+  <h1>学习完之后做智能推荐：先换模型，再谈学习</h1>
+  <p class="standfirst">现有学习系统学的是「原稿长什么样」，不是「你改成了什么」；排版模型又是一个语言只有一份设置。先把字号分档做出来，本机就能少填大半，不必等云端。</p>
+  <div class="meta">
+    <span>基线 develop@5d5d8147</span>
+    <span>2026-10-22 10:19 +0800</span>
+    <span>业务改动 0 文件</span>
+    <span>风险 Medium → High（Phase C）</span>
+    <span>Round 1 / 3</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论先说</h2>
+  <div class="verdict">
+    <span class="lb">VERDICT · 打回</span>
+    <p>打回的不是「智能推荐」这个目标，而是「现有学习数据已经能直接驱动推荐」这个前提。</p>
+    <p class="small">证据是三条硬事实：上报的是原稿排版；模型里没有字号档；三层链路都没有把建议送到用户面前的路径。顺序应该是——本机确定性推荐 → 本机历史 → 云端个人学习 → 模板/品牌。</p>
+    <div class="band">
+      <span>已证实 9 条</span>
+      <span>未决 3 条</span>
+      <span>覆盖缺口 5 项</span>
+      <span>不自动应用</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>这对你意味着什么</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>现在就能少做的</h3>
+      <ul>
+        <li>按原稿字号自动切三档，给出每档的字重、字距、行距，不用一格格手填。</li>
+        <li>在已经选好的字体族里挑粗细分级，不跨族乱替换。</li>
+        <li>下一次遇到字号结构相似的稿，沿用你上次改过的值。</li>
+        <li>每一档都能看到「会影响多少层」和「为什么这样建议」。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>现在还不能少做的</h3>
+      <ul>
+        <li>跨设备记住你的偏好——那要云端个人学习，必须先把隐私口径改对。</li>
+        <li>按模板/品牌复用——模板身份现在是文件哈希，同一稿另存一次就失效。</li>
+        <li>自动应用——Spec 的硬不变量是「只换行，不改字号/字距/行距」，推荐只能由你点。</li>
+        <li>推荐原稿字体本身——KO/TH 原稿字体常不可解析，推了也落不了地。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="n">4</span><span class="k">真正启用的决策族</span></div>
+    <div class="stat warn"><span class="n">6</span><span class="k">只定义、不产候选的排版族</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">运行时消费建议的路径</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="k">排版样本的真实上传点</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>三条根因</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><strong>学错了对象</strong><span class="loc">server.js:2963-2985 · typography-contract.ts:309-315</span></div>
+      <p>扫描器把原稿每一层的字体、字号、行距读上来，云端统计成「偏好画像」。这份画像回答「这份稿原来用了什么」，回答不了「你希望改成什么」。拿它训练推荐，推出来的是原稿复刻。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>没有分档的地方</strong><span class="loc">typography-persistence.ts:13-34 · Thin_Executor.jsx:221</span></div>
+      <p>一个语言只存一份排版设置，执行时这份设置套到该语言的每一个图层。哪怕算出「标题该粗、正文该常规」，也没有字段可存、没有协议可发、执行器也不会分层用。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>没有消费面</strong><span class="loc">rule-resolver.ts:16-21 · deploy/route.ts:22 · feature-flags.ts:36</span></div>
+      <p>规则解析器恒返回空建议；管理端「部署」只允许 shadow 模式；建议开关只在管理端概览里显示一次。三层加起来，等于「学到了，但没人用」。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>已证实缺陷</h2>
+  <div class="scrollx">
+    <table class="findings">
+      <thead>
+        <tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">F-01</td><td><span class="tag bad">Important</span></td><td><code>server.js:2963-2985</code><br><code>typography-contract.ts:309-315</code></td><td>上传的是扫描时的原稿排版；<code>userSignature</code> 由原稿字体/字号众数算出。当用户偏好训练，学到的是稿子原样。</td></tr>
+        <tr><td class="mono">F-02</td><td><span class="tag bad">Important</span></td><td><code>typography-persistence.ts:13-34</code><br><code>:232-240</code><br><code>Thin_Executor.jsx:221</code></td><td>模型只有每语言一份扁平 profile，没有字号维度；执行器对每层套同一份，分档推荐无处落地。</td></tr>
+        <tr><td class="mono">F-03</td><td><span class="tag bad">Important</span></td><td><code>contracts.ts:30-45</code><br><code>candidate-aggregator.ts:55-57</code></td><td>排版六族只在 ALL 里，不在 ACTIVE；聚合器跳过非 active 族，排版信号永远成不了候选。</td></tr>
+        <tr><td class="mono">F-04</td><td><span class="tag bad">Important</span></td><td><code>rule-resolver.ts:16-21</code><br><code>deploy/route.ts:22</code><br><code>overview/route.ts:42</code></td><td>解析器恒空、部署只允许 shadow、建议开关只被展示。没有一条路把建议送到用户面前。</td></tr>
+        <tr><td class="mono">F-05</td><td><span class="tag bad">Important</span></td><td><code>execute-step.tsx:1808-1814</code><br><code>:1437-1446</code></td><td>只有单语言成功才上传排版样本；批量路径只 flush 决策信号。真实使用以批量为主，样本结构天然偏斜。</td></tr>
+        <tr><td class="mono">F-06</td><td><span class="tag bad">Important</span></td><td><code>learning-signal-client.ts:97-112</code><br><code>learning-evidence.js:391-421</code><br><code>contracts.ts:289-307</code></td><td>verification 恒 <code>not_run</code>；layout 最多 <code>needs_review</code>。晋级门槛要 passed / human_confirmed，族开了也过不了。</td></tr>
+        <tr><td class="mono">F-07</td><td><span class="tag bad">Important</span></td><td><code>preparation-contract.ts:279-280</code><br><code>workbench-view.tsx:2777</code></td><td>模板指纹是 PSD 原始字节 SHA-256；改一个字、另存一次就是新模板，模板级学习不可用。</td></tr>
+        <tr><td class="mono">F-08</td><td><span class="tag bad">Important</span></td><td><code>privacy/page.tsx:63,67-69</code><br><code>consent/route.ts</code>（仅 GET）<br><code>register/route.ts:52-72</code></td><td>隐私页限定「字体名仅以 TopN 计数用于排版统计」；用字体名做推荐是新目的，且用户不能单独关闭。</td></tr>
+        <tr><td class="mono">F-09</td><td><span class="tag warn">约束</span></td><td><code>typography-fit.md:1-2</code><br><code>20260917-auto-wrap.md</code></td><td>自动适配的 I2 是「只换行，不改字号/字距/行距」。推荐一旦自动套用就违约，只能由用户点击。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>更正一条旧结论</h2>
+  <div class="callout warn">
+    <span class="lb">推翻 · 必须替换旧记忆</span>
+    <p><strong>旧说法：</strong>学习闭环断在「scanId / manifestDigest 没送」。</p>
+    <p><strong>反证：</strong><code>execute-step.tsx:1440-1445</code> 与 <code>:1819-1823</code> 都送 digest；<code>signal-validator.ts:186-204</code> 支持按 attempt 与批次归属。</p>
+    <p><strong>新结论：</strong>通道已经接上。断点在「采集对象错了 + 排版族未启用 + 没有消费面」。旧说法不再引用。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>执行路线</h2>
+  <div class="tl">
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase A0 · 网页侧最小版</strong><span class="tag ok">1–2 人日</span></div>
+        <p>用浏览器已有的原稿字号分布，算三档阈值，填现有的一份 profile（正文档的值）。不改助手、不动合同。</p>
+        <p class="after">价值：少填几个格。局限：仍是一语言一个粗细，必须写在按钮旁，不能假装已经分档。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase A1 · 真正的分档</strong><span class="tag ok">3–5 人日</span></div>
+        <p>profile 增加 <code>tierPolicy</code>（三档阈值 + 每档脸/字距/行距）；信封加兄弟字段 <code>tiers</code>，不进 manifest/digest；执行器按图层字号选档。</p>
+        <p class="after">字重只能从字体目录的 <code>style</code> 文本解析（没有数值 weight），解析不出就不推，绝不猜。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot partial"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase B · 本机历史</strong><span class="tag ok">2–3 人日</span></div>
+        <p>只存语言、字号结构签名、三档实际值、回读结果；上限 50 条，不存正文/图层名/路径/文件名。</p>
+        <p class="after">用结构相似度匹配，不用文件哈希；失败样本不参与推荐。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase C · 云端个人学习</strong><span class="tag warn">需 Owner 批准</span></div>
+        <p>新增 <code>typography_tier_choice</code>，只开 personal scope；只在成功执行 + 用户采用 + 回读通过后记 accepted。</p>
+        <p class="after">硬前置：隐私文案与同意范围先改；<code>LEARNING_AUTO_APPLY_ENABLED</code> 永远 false；合同四层同步。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase D · 模板 / 品牌</strong><span class="tag warn">后置</span></div>
+        <p>先建不含正文/路径的结构指纹；layout 验证必须有人工/视觉确认，机器坐标测不出压没压到图。</p>
+        <p class="after">公共推荐不在本轮范围。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>验收与硬边界</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body"><strong>分档纯函数可复跑</strong><p>同输入同输出；≥20 条断言；阈值等号边界有显式用例。证据不足（层 &lt; 6 或不同字号 &lt; 2）时按钮禁用并写明原因。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body"><strong>无分档时行为不变</strong><p>旧 v1/v2 profile 照常读；信封无 <code>tiers</code> 时执行结果与 HEAD 逐字节一致。manifest 键集与 digest 不变。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body"><strong>同族无线索就不推</strong><p>该字体族没有更粗/更细的脸时，明确说「没有可用字重」，不跨族替代、不猜脸名。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body"><strong>推荐永不自动应用</strong><p>点「应用」只写 localStorage；未点执行不产生助手请求；执行前仍显示这次真正会用的值。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body"><strong>合同门全绿</strong><p><code>npm run test:trust-chain</code> 与 <code>npm run test:batch-row-contract</code> 均 rc=0，才允许上测试站。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body"><strong>隐私先改再开云端</strong><p>Phase C 上线前，隐私文案与同意范围必须更新；未更新就不开启。用户要能有单独的关闭入口。</p></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">明确不做</span>
+    <p>不自动改 PSD；不把建议值当已应用值；不推荐原稿字体脸；不把排版证据塞进 manifest 或云端回执；不做跨用户公共推荐；不为了推荐去改结算与报价。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>边界与覆盖缺口</h2>
+  <ul class="notes">
+    <li><strong>样本量未知：</strong>本轮没有连数据库，无法判断 personal 门槛（≥5 任务、≥2 模板）今天有没有人能达到。</li>
+    <li><strong>批量入口未穷尽：</strong>只在 <code>src/</code> 内 grep 了上传调用点，助手侧是否另有入口未查。</li>
+    <li><strong>环境值未读：</strong>测试站/生产的 <code>LEARNING_*</code> 需要服务器权限，本轮未探。</li>
+    <li><strong>字号单位未决：</strong>扫描器读 <code>textItem.size.value</code> 未显式转 pt，阈值可能受文档标尺单位影响。</li>
+    <li><strong>无真机验证：</strong>没跑 Photoshop，没点排版面板，也没有用真实原稿试分档。</li>
+  </ul>
+</section>
+
+<div class="verdict">
+  <span class="lb">最后一句</span>
+  <p>不要再给旧面板加控件。旧模型一天不换，「按字号分字重」就一天表达不了；先让「三档 + 逐层选档 + 回读」跑通，再谈云端学习。</p>
+  <p class="small">Phase A 只在本机，不碰隐私、计费、manifest；这一步做完，用户已经能少填大半。云端个人化是下一步，不是第一步。</p>
+</div>
+
+<footer>
+  <p>对抗式审查（正确性 / 契约 / 数据与状态三镜头），只读，未改业务代码。审查基线：<code>worktrees/develop</code> HEAD <code>5d5d8147</code>（2026-10-22 10:19:34 +0800）。该工作树另有他手 13 个未提交修改与 7 个未跟踪文件；所引 <code>server.js</code> 行号以 HEAD 版本为准，<code>git diff</code> 未触及所引排版块与字体响应块。</p>
+  <p>覆盖缺口：无真机 Photoshop 运行、无浏览器 UI 交互、未连数据库统计样本与同意覆盖、未读两站环境变量。文中所有 <code>file:line</code> 均为本会话实际读到的位置；未核实项已显式标注。</p>
+</footer>
+
+</div>
+</body>
+</html>

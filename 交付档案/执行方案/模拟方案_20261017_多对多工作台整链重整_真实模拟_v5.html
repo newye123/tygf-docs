@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量工作台 · 真实模拟（多对多整链）</title>
+<style>
+/* 设计令牌取自产品 globals.css（oklch 原值） */
+:root{
+  --radius:.625rem;
+  --background:oklch(1 0 0);
+  --foreground:oklch(.145 0 0);
+  --card:oklch(1 0 0);
+  --card-foreground:oklch(.145 0 0);
+  --primary:oklch(.205 0 0);
+  --primary-foreground:oklch(.985 0 0);
+  --secondary:oklch(.97 0 0);
+  --secondary-foreground:oklch(.205 0 0);
+  --muted:oklch(.97 0 0);
+  --muted-foreground:oklch(.556 0 0);
+  --accent:oklch(.97 0 0);
+  --accent-foreground:oklch(.205 0 0);
+  --destructive:oklch(.577 0.245 27.325);
+  --border:oklch(.922 0 0);
+  --input:oklch(.922 0 0);
+  --ring:oklch(.708 0 0);
+  --font-sans:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --font-mono:"Cascadia Mono","SFMono-Regular",Consolas,monospace;
+  --ok:#059669; --ok-bg:#ecfdf5; --ok-line:#a7f3d0;
+  --amber:#92400e; --amber-bg:#fef3c7; --amber-line:#fde68a;
+  --rose:#be123c; --rose-bg:#fff1f2; --rose-line:#fecdd3;
+  --blue:#1d4ed8; --blue-bg:#eff6ff; --blue-line:#bfdbfe;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--background);color:var(--foreground);font-family:var(--font-sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+h1,h2,h3{text-wrap:balance}
+p,li,td{text-wrap:pretty}
+
+/* ===== 站点顶栏 ===== */
+.sitenav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;height:56px;padding:0 20px;background:oklch(1 0 0/.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.brand{font-weight:800;letter-spacing:-.01em}
+.sitenav nav{display:flex;gap:4px;margin-left:6px}
+.sitenav nav a{font-size:13px;color:var(--muted-foreground);text-decoration:none;padding:5px 10px;border-radius:8px}
+.sitenav nav a.on{color:var(--foreground);background:var(--muted);font-weight:600}
+.sitenav .sp{flex:1}
+.pill{font-size:12px;border:1px solid var(--border);border-radius:999px;padding:3px 10px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--primary);color:var(--primary-foreground);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+/* ===== 页面 ===== */
+.page{max-width:1024px;margin:0 auto;padding:24px 16px 96px}
+.pghead{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;padding:0 4px}
+.pghead h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.pghead .sub{margin-top:4px;font-size:13px;color:var(--muted-foreground)}
+.engine{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--font-mono);color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:999px;padding:3px 10px}
+
+/* 顶部状态带 */
+.strip{position:sticky;top:56px;z-index:40;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 6px;background:oklch(1 0 0/.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);margin:14px 0 0}
+.strip .dot{width:9px;height:9px;border-radius:999px;background:var(--ok);flex:none}
+.strip .id{font-size:13px;font-weight:700}
+.strip .dim{font-size:12px;color:var(--muted-foreground)}
+.chipstate{display:flex;flex-wrap:wrap;gap:6px}
+.chipst{font-size:11px;font-family:var(--font-mono);border:1px solid var(--border);border-radius:999px;padding:2px 9px;color:var(--muted-foreground);background:var(--card)}
+.chipst b{color:var(--foreground)}
+.issues{margin-left:auto}
+.issues .amberbtn,.aligned{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:8px;padding:5px 12px;border:0;cursor:pointer}
+.amberbtn{background:var(--amber-bg);color:var(--amber)}
+.amberbtn:hover{filter:brightness(.97)}
+.aligned{background:var(--ok-bg);color:var(--ok);cursor:default}
+
+/* ===== 壳层 ===== */
+.shell{display:flex;gap:16px;align-items:flex-start;margin-top:14px}
+.rail{width:180px;flex:none;display:flex;flex-direction:column;gap:4px}
+.rbtn{display:flex;gap:10px;align-items:flex-start;text-align:left;border:0;background:transparent;border-radius:10px;padding:9px 10px;cursor:pointer;width:100%}
+.rbtn:hover:not(.locked){background:var(--muted)}
+.rbtn.on{background:var(--foreground);color:var(--background)}
+.rbtn.locked{cursor:not-allowed;opacity:.55}
+.rnum{width:20px;height:20px;flex:none;margin-top:1px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:oklch(.556 0 0/.2);color:var(--muted-foreground)}
+.rbtn.done .rnum{background:#059669;color:#fff}
+.rbtn.on .rnum{background:var(--background);color:var(--foreground)}
+.rtx .rl{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.rtx .rh{margin-top:1px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted-foreground)}
+.rbtn.on .rtx .rh{color:oklch(1 0 0/.7)}
+.stagewrap{min-width:0;flex:1;display:flex;flex-direction:column;gap:12px}
+.stage{display:none;flex-direction:column;gap:12px}
+.stage.on{display:flex}
+
+/* 卡片 */
+.card{border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);background:var(--card);padding:18px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 2px oklch(0 0 0/.04)}
+.card-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.card-head .t{font-size:14px;font-weight:700}
+.card-head .meta{margin-left:auto;font-size:12px;color:var(--muted-foreground)}
+.inner{border-radius:calc(var(--radius) + 2px);background:oklch(.97 0 0/.55);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.sec-t{font-size:13px;font-weight:800}
+.desc{font-size:12.5px;color:var(--muted-foreground)}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border-radius:calc(var(--radius) - 2px);font-size:13.5px;font-weight:500;border:1px solid transparent;background:var(--primary);color:var(--primary-foreground);cursor:pointer;box-shadow:0 1px 2px oklch(0 0 0/.06)}
+.btn:hover:not(:disabled){background:oklch(.205 0 0/.9)}
+.btn:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
+.btn.outline{background:var(--card);color:var(--foreground);border-color:var(--border)}
+.btn.outline:hover:not(:disabled){background:var(--accent)}
+.btn.ghost{background:transparent;color:var(--foreground)}
+.btn.ghost:hover:not(:disabled){background:var(--accent)}
+.btn.sm{height:30px;padding:0 12px;font-size:12.5px;border-radius:8px}
+.btn.wait{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line);box-shadow:none}
+.btn.wait:hover:not(:disabled){filter:brightness(.97);background:var(--amber-bg)}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hint{font-size:12px;color:var(--muted-foreground)}
+
+/* 稿单 */
+.flist{display:flex;flex-direction:column;gap:6px}
+.frow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:8px 12px}
+.fdot{width:8px;height:8px;border-radius:999px;flex:none;background:oklch(.556 0 0/.4)}
+.fdot.ok{background:var(--ok)} .fdot.wait{background:#d97706} .fdot.run{background:#2563eb}
+.fname{font-size:13px;font-weight:600}
+.fsize{font-size:12px;color:var(--muted-foreground);font-family:var(--font-mono)}
+.fstat{margin-left:auto;font-size:12px;font-family:var(--font-mono);color:var(--muted-foreground)}
+.fstat.ok{color:var(--ok)} .fstat.bad{color:var(--rose)} .fstat.run{color:#2563eb}.fstat.wait{color:var(--amber)}
+
+/* 矩阵 */
+.mwrap{overflow-x:auto}
+table.mx{border-collapse:separate;border-spacing:6px;min-width:460px}
+table.mx th{font-size:12px;color:var(--muted-foreground);font-weight:600;text-align:left;padding:0 6px}
+table.mx td.mxfile{font-size:12px;color:var(--muted-foreground);font-family:var(--font-mono);white-space:nowrap;padding-right:6px}
+td.cell{min-width:88px;text-align:center;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:var(--font-mono);font-size:12.5px;color:var(--muted-foreground);transition:box-shadow .12s}
+td.cell.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line)}
+td.cell.warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line);font-weight:600}
+td.cell.none{color:oklch(.556 0 0/.7);cursor:default;font-style:italic}
+td.cell.sel{box-shadow:0 0 0 2px var(--ring)}
+td.cell .sub{display:block;font-size:10.5px;font-style:normal;opacity:.8}
+#cov-detail{font-size:12px;color:var(--muted-foreground);background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 12px;min-height:2.4em}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--muted-foreground);font-family:var(--font-mono)}
+.lg{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:3px;border:1px solid var(--border)}
+.sw.ok{background:var(--ok-bg);border-color:var(--ok-line)} .sw.warn{background:var(--amber-bg);border-color:var(--amber-line)}
+
+/* 检测行 */
+.dgrid{display:flex;flex-direction:column;gap:6px}
+.drow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:9px 12px}
+.dname{font-size:12.5px;font-weight:600;min-width:128px}
+.dchip{font-size:11.5px;font-family:var(--font-mono);border-radius:999px;padding:2px 10px;border:1px solid var(--border);color:var(--muted-foreground);background:var(--secondary)}
+.dchip[data-s="ok"]{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+.dchip[data-s="warn"]{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-line);font-weight:600}
+.dchip[data-s="wait"]{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-line)}
+.dconfirm{font-size:12.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* 对账 */
+.rlist{display:flex;flex-direction:column;gap:6px}
+.rvrow{border:1px solid var(--border);border-radius:10px;background:var(--card);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.rvmain{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.rvname{font-size:12.5px;font-weight:600}
+.rvstat{margin-left:auto;font-family:var(--font-mono);font-size:12px}
+.rvrow[data-s="ok"] .rvstat{color:var(--ok)}
+.rvrow[data-s="todo"] .rvstat{color:var(--amber);font-weight:600}
+.rvwhy{font-size:12px;color:var(--muted-foreground)}
+.enginebar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12px;color:var(--muted-foreground);font-family:var(--font-mono);border:1px dashed var(--border);border-radius:10px;padding:8px 12px}
+.enginebar .ok{color:var(--ok)}
+
+/* 交付 */
+.gatebar{font-size:12.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:3px}
+.ack{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:oklch(.3 0 0)}
+.ack input{margin-top:3px;accent-color:oklch(.205 0 0)}
+.qlist{display:flex;flex-direction:column;gap:6px}
+.qrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:9px 12px}
+.qname{font-size:12.5px;font-weight:600;min-width:128px}
+.qstat{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted-foreground)}
+.qrow[data-s="running"] .qstat{color:#2563eb}
+.qrow[data-s="done"] .qstat{color:var(--ok)}
+.qrow[data-s="fail"]{border-color:var(--rose-line);background:var(--rose-bg)}
+.qrow[data-s="fail"] .qstat{color:var(--rose)}
+.qchip{font-size:11px;font-family:var(--font-mono);border-radius:999px;padding:1px 8px;border:1px solid var(--border);color:var(--muted-foreground);background:var(--secondary)}
+.qchip[data-s="ok"]{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+.qchip[data-s="run"]{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-line)}
+.qchip[data-s="bad"]{color:var(--rose);background:var(--rose-bg);border-color:var(--rose-line)}
+.guard{font-size:11px;font-family:var(--font-mono);color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:999px;padding:1px 8px}
+#resume-panel{display:none}
+#resume-panel.show{display:flex;flex-direction:column;gap:8px;border:1px solid var(--rose-line);background:var(--rose-bg);border-radius:10px;padding:12px 14px;font-size:12.5px}
+#resume-panel b{color:var(--rose)}
+
+/* 回执 */
+#receipt{display:none;flex-direction:column;gap:12px;border-top:1px solid var(--border);padding-top:14px}
+#receipt.show{display:flex}
+.rcpt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.rcpt-head .t{font-size:14px;font-weight:700}
+table.rcpt{border-collapse:separate;border-spacing:6px;min-width:520px}
+table.rcpt th{font-size:11.5px;color:var(--muted-foreground);font-weight:600;text-align:left;padding:0 6px}
+table.rcpt td.rf{font-size:12px;color:var(--muted-foreground);font-family:var(--font-mono);white-space:nowrap;padding-right:6px}
+td.rcell{text-align:center;padding:6px 8px;border-radius:8px;background:var(--ok-bg);color:var(--ok);font-family:var(--font-mono);font-size:11.5px;border:1px solid var(--ok-line)}
+.rcpt-note{font-size:12px;color:var(--muted-foreground);display:flex;flex-direction:column;gap:3px}
+.rcpt-note b{color:var(--amber)}
+.rcpt-note .ok{color:var(--ok)}
+
+/* 底部操作条 */
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:45;background:oklch(1 0 0/.94);backdrop-filter:blur(8px);border-top:1px solid var(--border)}
+.bottombar .in{max-width:1024px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#bottom-status{font-size:12.5px;color:var(--muted-foreground)}
+.bottombar .btn{margin-left:auto}
+@media (max-width:900px){ .rail{display:none} }
+</style>
+</head>
+<body>
+
+<div class="sitenav">
+  <span class="brand">图译工坊</span>
+  <nav><a href="#" onclick="return false">工作台</a><a href="#" class="on" onclick="return false">批量工作台</a><a href="#" onclick="return false">记录</a></nav>
+  <span class="sp"></span>
+  <span class="pill">积分 3,200</span>
+  <span class="avatar">A</span>
+</div>
+
+<div class="page">
+  <div class="pghead">
+    <div>
+      <h1>批量工作台</h1>
+      <p class="sub">批量扫描多份设计稿、共用一张译文表生成多语言文件；设计文件不会上传。</p>
+    </div>
+    <span class="engine">● PhotoCraft 0.7.0 · 免 PS 就绪｜或 Photoshop 2024</span>
+  </div>
+
+  <div class="strip">
+    <span class="dot"></span>
+    <span class="id">4 稿 × 3 语言</span>
+    <span class="dim">01_首页 · 02_详情页 · 03_活动页 · 04_弹窗 ｜ 表：译文表_1017.xlsx（136 单元）</span>
+    <span class="chipstate">
+      <span class="chipst">已扫 <b id="st-scanned">3/4</b></span>
+      <span class="chipst">检测 <b id="st-detect">0/12</b></span>
+      <span class="chipst">对齐 <b id="st-aligned">0/4</b></span>
+      <span class="chipst">完成 <b id="st-done">0/12</b></span>
+    </span>
+    <span class="issues" id="strip-right"><span class="dim">本地助手已连接</span></span>
+  </div>
+
+  <div class="shell">
+    <aside class="rail" id="rail">
+      <button class="rbtn on" id="rail-materials" data-stage="materials">
+        <span class="rnum">1</span><span class="rtx"><span class="rl">准备素材</span><span class="rh">稿单 · 扫描 · 覆盖率</span></span>
+      </button>
+      <button class="rbtn locked" id="rail-review" data-stage="review">
+        <span class="rnum">2</span><span class="rtx"><span class="rl">智能检测</span><span class="rh" id="rail-review-h">扫描全部稿后开放</span></span>
+      </button>
+      <button class="rbtn locked" id="rail-reconcile" data-stage="reconcile">
+        <span class="rnum">3</span><span class="rtx"><span class="rl">设计稿校对</span><span class="rh" id="rail-reconcile-h">检测通过后开放</span></span>
+      </button>
+      <button class="rbtn locked" id="rail-delivery" data-stage="delivery">
+        <span class="rnum">4</span><span class="rtx"><span class="rl">生成交付</span><span class="rh" id="rail-delivery-h">全部稿对齐后开放</span></span>
+      </button>
+    </aside>
+
+    <div class="stagewrap">
+
+      <!-- ======================= 阶段 1 ======================= -->
+      <section class="stage on" id="stage-materials">
+        <div class="card">
+          <div class="card-head"><span class="t">准备素材</span><span class="meta">4 稿 · 3 语言 · 共用一张译文表</span></div>
+          <div class="inner">
+            <span class="sec-t">批量稿单</span>
+            <div class="flist" id="filelist">
+              <div class="frow" id="frow-f1"><span class="fdot ok"></span><span class="fname">01_首页.psd</span><span class="fsize">234 MB</span><span class="fstat ok" id="fstat-f1">已扫描 ✓</span></div>
+              <div class="frow" id="frow-f2"><span class="fdot ok"></span><span class="fname">02_详情页.psd</span><span class="fsize">188 MB</span><span class="fstat ok" id="fstat-f2">已扫描 ✓</span></div>
+              <div class="frow" id="frow-f3"><span class="fdot ok"></span><span class="fname">03_活动页.psd</span><span class="fsize">121 MB</span><span class="fstat ok" id="fstat-f3">已扫描 ✓</span></div>
+              <div class="frow" id="frow-f4"><span class="fdot wait"></span><span class="fname">04_弹窗.psd</span><span class="fsize">96 MB</span><span class="fstat wait" id="fstat-f4">待扫描</span></div>
+            </div>
+            <div class="rowbtns">
+              <button class="btn sm" id="scan-btn">全部扫描（1 稿待扫）</button>
+              <button class="btn sm outline" id="paste-btn">粘贴路径加入</button>
+              <button class="btn sm outline">添加 PSD 文件</button>
+              <button class="btn sm ghost">清空</button>
+            </div>
+          </div>
+          <div class="inner" id="mx-card">
+            <span class="sec-t">覆盖率矩阵 <span class="desc">（预检粗估 · 执行口径以引擎匹配为准）</span></span>
+            <div class="mwrap">
+              <table class="mx" id="mx">
+                <thead><tr><th></th><th>日语</th><th>韩语</th><th>泰语</th></tr></thead>
+                <tbody>
+                  <tr><td class="mxfile">01_首页.psd</td>
+                    <td class="cell ok" id="cell-f1-ja" data-f="f1" data-l="ja">100%</td>
+                    <td class="cell ok" id="cell-f1-ko" data-f="f1" data-l="ko">100%</td>
+                    <td class="cell ok" id="cell-f1-th" data-f="f1" data-l="th">100%</td></tr>
+                  <tr><td class="mxfile">02_详情页.psd</td>
+                    <td class="cell ok" id="cell-f2-ja" data-f="f2" data-l="ja">100%</td>
+                    <td class="cell warn" id="cell-f2-ko" data-f="f2" data-l="ko">92.5%</td>
+                    <td class="cell ok" id="cell-f2-th" data-f="f2" data-l="th">100%</td></tr>
+                  <tr><td class="mxfile">03_活动页.psd</td>
+                    <td class="cell ok" id="cell-f3-ja" data-f="f3" data-l="ja">100%</td>
+                    <td class="cell ok" id="cell-f3-ko" data-f="f3" data-l="ko">100%</td>
+                    <td class="cell ok" id="cell-f3-th" data-f="f3" data-l="th">100%</td></tr>
+                  <tr><td class="mxfile">04_弹窗.psd</td>
+                    <td class="cell none" id="cell-f4-ja" data-f="f4" data-l="ja">未扫描</td>
+                    <td class="cell none" id="cell-f4-ko" data-f="f4" data-l="ko">未扫描</td>
+                    <td class="cell none" id="cell-f4-th" data-f="f4" data-l="th">未扫描</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="cov-detail">点击任意格查看命中明细</div>
+            <div class="legend">
+              <span class="lg"><span class="sw ok"></span>≥95% 达标</span>
+              <span class="lg"><span class="sw warn"></span>&lt;95% 低于阈值（点击看未匹配条目）</span>
+              <span class="lg">阈值 95%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= 阶段 2 ======================= -->
+      <section class="stage" id="stage-review">
+        <div class="card">
+          <div class="card-head"><span class="t">智能检测</span><span class="meta">按稿逐批 AI 审查 · 结果汇入网格</span></div>
+          <div class="inner">
+            <p class="desc">一次点击＝对 4 稿分别开审查批（1 稿 × 3 语言 = 1 批）；需确认项可当场处理。</p>
+            <div class="rowbtns">
+              <button class="btn" id="detect-btn">开始检测全部（4 稿 × 3 语言）</button>
+              <span class="hint" id="detect-hint"></span>
+            </div>
+            <div class="dgrid" id="detect-grid">
+              <div class="drow"><span class="dname">01_首页.psd</span>
+                <span class="dchip" id="dchip-f1-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f1-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f1-th" data-s="wait">泰 待检</span></div>
+              <div class="drow"><span class="dname">02_详情页.psd</span>
+                <span class="dchip" id="dchip-f2-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f2-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f2-th" data-s="wait">泰 待检</span></div>
+              <div class="drow"><span class="dname">03_活动页.psd</span>
+                <span class="dchip" id="dchip-f3-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f3-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f3-th" data-s="wait">泰 待检</span></div>
+              <div class="drow"><span class="dname">04_弹窗.psd</span>
+                <span class="dchip" id="dchip-f4-ja" data-s="wait">日 待检</span><span class="dchip" id="dchip-f4-ko" data-s="wait">韩 待检</span><span class="dchip" id="dchip-f4-th" data-s="wait">泰 待检</span></div>
+            </div>
+            <div class="dconfirm" id="dconfirm" style="display:none">
+              <span>02_详情页 × 韩语：<b>1 项需确认</b> —— 术语「无忧退货」与术语表不一致（金色 vs 蓝色）</span>
+              <button class="btn sm" id="confirm-f2-ko">按术语表修正并重审</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= 阶段 3 ======================= -->
+      <section class="stage" id="stage-reconcile">
+        <div class="card">
+          <div class="card-head"><span class="t">设计稿校对</span><span class="meta">逐稿完整性对账 · 全部对齐后开放交付</span></div>
+          <div class="inner">
+            <div class="rlist" id="review-list">
+              <div class="rvrow" data-s="ok" id="revrow-f1">
+                <div class="rvmain"><span class="rvname">01_首页.psd</span><span class="rvstat">已对齐（40/40 单元）</span></div>
+              </div>
+              <div class="rvrow" data-s="todo" id="revrow-f2">
+                <div class="rvmain"><span class="rvname">02_详情页.psd</span><span class="rvstat" id="revstat-f2">3 项待处理</span></div>
+                <div class="rvwhy">3 条表行未在稿中命中：서울 지점 · 특별 할인 · 무료 배송</div>
+                <div class="rowbtns"><button class="btn sm outline" id="fix-f2">全部忽略（3 条，不入替换）</button><span class="hint">或回稿补层后重新扫描该稿</span></div>
+              </div>
+              <div class="rvrow" data-s="ok" id="revrow-f3">
+                <div class="rvmain"><span class="rvname">03_活动页.psd</span><span class="rvstat">已对齐（31/31 单元）</span></div>
+              </div>
+              <div class="rvrow" data-s="todo" id="revrow-f4">
+                <div class="rvmain"><span class="rvname">04_弹窗.psd</span><span class="rvstat" id="revstat-f4">1 项待处理</span></div>
+                <div class="rvwhy">1 个排除图层待确认：_系统_水印（扫描建议排除）</div>
+                <div class="rowbtns"><button class="btn sm outline" id="fix-f4">确认排除（1 个）</button></div>
+              </div>
+            </div>
+            <span class="donechip" id="step3-done" style="display:none"><span class="guard">全部稿已对齐 ✓ 交付已开放</span></span>
+          </div>
+          <div class="enginebar">
+            <span>引擎：<span class="ok">PhotoCraft 0.7.0（dev build）✓ 免 PS</span></span>
+            <span>或 Photoshop 2024 ✓（双通道任选）</span>
+            <span>扫描来源 ＝ 执行来源 · 绑定校验开启</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= 阶段 4 ======================= -->
+      <section class="stage" id="stage-delivery">
+        <div class="card">
+          <div class="card-head"><span class="t">生成交付</span><span class="meta">按稿顺序逐批执行 · 1 稿 × 3 语言 = 1 批次</span></div>
+          <div class="gatebar">
+            <span><b>覆盖率闸：2 格低于 95%</b>（02_详情页×韩语 92.5% · 04_弹窗×泰语 88%）—— 低于阈值的格建议先回稿补全；继续执行需显式放行。</span>
+          </div>
+          <label class="ack"><input type="checkbox" id="ack-check"><span>我已了解：2 格低于阈值仍要继续执行（未命中单元不入替换，记录在回执）。</span></label>
+          <div class="inner">
+            <span class="sec-t">执行队列</span>
+            <div class="qlist" id="queue">
+              <div class="qrow" id="qrow-f1" data-s="idle"><span class="qname">01_首页.psd</span><span class="qchips" id="qchips-f1"></span><span class="qstat" id="qstat-f1">待执行</span></div>
+              <div class="qrow" id="qrow-f2" data-s="idle"><span class="qname">02_详情页.psd</span><span class="qchips" id="qchips-f2"></span><span class="qstat" id="qstat-f2">待执行</span></div>
+              <div class="qrow" id="qrow-f3" data-s="idle"><span class="qname">03_活动页.psd</span><span class="qchips" id="qchips-f3"></span><span class="qstat" id="qstat-f3">待执行</span></div>
+              <div class="qrow" id="qrow-f4" data-s="idle"><span class="qname">04_弹窗.psd</span><span class="qchips" id="qchips-f4"></span><span class="qstat" id="qstat-f4">待执行</span></div>
+            </div>
+            <div id="resume-panel">
+              <span><b>第 3/4 稿失败，队列已停止</b> —— 03_活动页.psd：读回不一致（1 层文本与预期不符）；该批次积分<b>已退回</b>。已完成稿不会重跑。</span>
+              <div class="rowbtns">
+                <button class="btn sm" id="resume-btn">从第 3 稿续跑（已完成稿跳过）</button>
+                <button class="btn sm outline" id="stop-btn">停止队列（已完成稿保留）</button>
+              </div>
+            </div>
+            <div class="rowbtns">
+              <button class="btn" id="exec-btn" disabled>开始执行（逐稿队列）</button>
+              <span class="hint" id="exec-hint">需全部稿对齐 ＋ 勾选覆盖率放行</span>
+            </div>
+          </div>
+
+          <div id="receipt">
+            <div class="rcpt-head"><span class="t">聚合回执 · 4 稿 × 3 语言</span><span class="meta" style="margin-left:auto;font-size:12px;color:var(--muted-foreground)">12 格终态 · 标准单位 408 · 引擎身份已钉</span></div>
+            <div class="mwrap">
+              <table class="rcpt" id="rcpt-table">
+                <thead><tr><th></th><th>日语</th><th>韩语</th><th>泰语</th><th>批次</th></tr></thead>
+                <tbody id="rcpt-body"></tbody>
+              </table>
+            </div>
+            <div class="rcpt-note">
+              <span>合计：<b style="color:var(--foreground)">408</b> 标准单位（136 单元 × 3 语言；口径同单文件台：1 稿 × N 语言 = 1 批次）。</span>
+              <span>失败退回明细：03_活动页 首次尝试失败（读回不一致）—— 积分已退回；续跑批次（03_活动页 × 3 语言）单独结算。</span>
+              <span class="ok">引擎：PhotoCraft 0.7.0（dev build）· 未使用 Photoshop · 来源绑定 ✓ · 逐语言读回校验 ✓</span>
+            </div>
+            <div class="rowbtns">
+              <button class="btn outline" id="export-btn">导出执行报告（CSV）</button>
+              <button class="btn ghost" id="reset-btn">重放演示</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="bottombar">
+  <div class="in">
+    <span id="bottom-status">当前阶段：准备素材 —— 还有 1 稿未扫描</span>
+    <button class="btn" id="bottom-action">扫描全部稿</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var LANGS=[['ja','日'],['ko','韩'],['th','泰']];
+  var FILES=[
+    {id:'f1',name:'01_首页.psd'},
+    {id:'f2',name:'02_详情页.psd'},
+    {id:'f3',name:'03_活动页.psd'},
+    {id:'f4',name:'04_弹窗.psd'}
+  ];
+  var COV={f1:{ja:100,ko:100,th:100},f2:{ja:100,ko:92.5,th:100},f3:{ja:100,ko:100,th:100},f4:{ja:100,ko:100,th:88}};
+  var COV_DETAIL={
+    'f2-ko':'02_详情页 × 韩语：37/40 命中（92.5%）。未匹配 3 条：서울 지점 · 특별 할인 · 무료 배송',
+    'f4-th':'04_弹窗 × 泰语：22/25 命中（88%）。未匹配 3 条：ยืนยันคำสั่งซื้อ · ที่อยู่จัดส่ง · หมายเลขโทรศัพท์'
+  };
+  var DET_RESULT={f1:{ja:'ok',ko:'ok',th:'ok'},f2:{ja:'ok',ko:'warn',th:'ok'},f3:{ja:'ok',ko:'ok',th:'ok'},f4:{ja:'ok',ko:'ok',th:'ok'}};
+
+  var state={
+    scanned:{f1:true,f2:true,f3:true,f4:false},
+    det:{}, detRunning:false,
+    rev:{f1:'ok',f2:'todo',f3:'ok',f4:'todo'},
+    qcells:{f1:0,f2:0,f3:0,f4:0},
+    qrow:{f1:'idle',f2:'idle',f3:'idle',f4:'idle'},
+    ack:false, resumed:false, running:false, receipt:false, queueStarted:false,
+    stage:'materials'
+  };
+
+  function setText(id,t){var el=document.getElementById(id); if(el) el.textContent=t}
+  function setAttr(id,k,v){var el=document.getElementById(id); if(el) el.setAttribute(k,v)}
+  function scannedCount(){return FILES.filter(function(f){return state.scanned[f.id]}).length}
+  function detProcessed(){return Object.keys(state.det).length}
+  function warnCount(){return Object.keys(state.det).filter(function(k){return state.det[k]==='warn'}).length}
+  function alignedCount(){return FILES.filter(function(f){return state.rev[f.id]==='ok'}).length}
+  function todoCount(){return FILES.length-alignedCount()}
+  function doneCells(){return FILES.reduce(function(a,f){return a+state.qcells[f.id]},0)}
+  function materialsDone(){return scannedCount()===4}
+  function reviewDone(){return detProcessed()===12 && warnCount()===0}
+  function reconcileDone(){return alignedCount()===4}
+  function issuesCount(){ return (detProcessed()>0?warnCount():0) + (detProcessed()===12&&warnCount()===0?todoCount():0) }
+
+  // ---------- 帧渲染 ----------
+  function renderTop(){
+    setText('st-scanned',scannedCount()+'/4');
+    setText('st-detect',detProcessed()+'/12');
+    setText('st-aligned',alignedCount()+'/4');
+    setText('st-done',doneCells()+'/12');
+    var right=$('#strip-right');
+    if(state.receipt){ right.innerHTML='<span class="aligned">✓ 全部完成 12/12</span>' }
+    else if(issuesCount()>0 && detProcessed()>0){ right.innerHTML='<button class="amberbtn" id="strip-issues">'+issuesCount()+' 项待处理 ▾</button>'; $('#strip-issues').addEventListener('click',function(){
+      if(warnCount()>0){ showStage('review'); var p=$('#dconfirm'); if(p) p.scrollIntoView({behavior:'smooth',block:'center'}) }
+      else { showStage('reconcile') }
+    }) }
+    else if(reconcileDone()){ right.innerHTML='<span class="aligned">✓ 已对齐</span>' }
+    else { right.innerHTML='<span class="dim">本地助手已连接</span>' }
+  }
+
+  function renderRail(){
+    var mDone=materialsDone(), rOpen=mDone, kDone=reviewDone(), kOpen=kDone, dDone=reconcileDone(), dOpen=dDone;
+    $('#rail-materials').classList.toggle('done', false);
+    $('#rail-review').classList.toggle('locked', !rOpen);
+    $('#rail-reconcile').classList.toggle('locked', !kOpen);
+    $('#rail-delivery').classList.toggle('locked', !dOpen);
+    $$('.rbtn').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-stage')===state.stage) });
+    $('#rail-materials').classList.toggle('done', false);
+    if(rOpen) $('#rail-review-h').textContent = kDone ? '已通过 12/12' : (detProcessed()>0 ? '检测中… '+detProcessed()+'/12' : '可以开始');
+    if(kOpen) $('#rail-reconcile-h').textContent = dDone ? '已对齐 4/4' : '还剩 '+todoCount()+' 稿待处理';
+    if(dOpen) $('#rail-delivery-h').textContent = state.receipt ? '已完成 12/12' : (state.queueStarted ? '执行中 '+doneCells()+'/12' : '可以开始');
+    var h1=$('#rail-materials .rnum'); if(mDone) h1.textContent='✓';
+    var h2=$('#rail-review .rnum'); h2.textContent = kDone ? '✓' : '2';
+    $('#rail-review').classList.toggle('done', kDone);
+    var h3=$('#rail-reconcile .rnum'); h3.textContent = dDone ? '✓' : '3';
+    $('#rail-reconcile').classList.toggle('done', dDone);
+    var h4=$('#rail-delivery .rnum'); h4.textContent = state.receipt ? '✓' : '4';
+    $('#rail-delivery').classList.toggle('done', state.receipt);
+    $('#rail-materials').classList.toggle('on', state.stage==='materials');
+    $('#rail-review').classList.toggle('on', state.stage==='review');
+    $('#rail-reconcile').classList.toggle('on', state.stage==='reconcile');
+    $('#rail-delivery').classList.toggle('on', state.stage==='delivery');
+  }
+
+  function renderBottom(){
+    var st=$('#bottom-status'), btn=$('#bottom-action');
+    btn.className='btn'; btn.disabled=false; btn.onclick=null;
+    if(state.stage==='materials'){
+      if(!materialsDone()){ st.textContent='当前阶段：准备素材 —— 还有 '+(4-scannedCount())+' 稿未扫描'; btn.textContent='扫描全部稿'; btn.onclick=function(){ doScan() } }
+      else { st.textContent='当前阶段：准备素材 —— 4 稿已扫描，覆盖率已出（2 格低于阈值）'; btn.textContent='下一步：智能检测 →'; btn.onclick=function(){ showStage('review') } }
+    }
+    else if(state.stage==='review'){
+      if(state.detRunning){ st.textContent='当前阶段：智能检测 —— 检测中…'; btn.textContent='检测中…'; btn.disabled=true; btn.className='btn outline' }
+      else if(detProcessed()===0){ st.textContent='当前阶段：智能检测 —— 4 稿共 12 格待检'; btn.textContent='开始检测（4 稿 × 3 语言）'; btn.onclick=function(){ doDetect() } }
+      else if(warnCount()>0){ st.textContent='当前阶段：智能检测 —— 1 项需确认'; btn.textContent='处理待确认项'; btn.className='btn wait'; btn.onclick=function(){ var p=$('#dconfirm'); if(p) p.scrollIntoView({behavior:'smooth',block:'center'}) } }
+      else { st.textContent='当前阶段：智能检测 —— 12/12 通过'; btn.textContent='下一步：设计稿校对 →'; btn.onclick=function(){ showStage('reconcile') } }
+    }
+    else if(state.stage==='reconcile'){
+      if(!reconcileDone()){ st.textContent='当前阶段：设计稿校对 —— 还剩 '+todoCount()+' 稿待处理'; btn.textContent='还有 '+todoCount()+' 项待处理'; btn.className='btn wait'; btn.onclick=function(){ var r=$('.rvrow[data-s="todo"]'); if(r) r.scrollIntoView({behavior:'smooth',block:'center'}) } }
+      else { st.textContent='当前阶段：设计稿校对 —— 全部稿已对齐'; btn.textContent='下一步：生成交付 →'; btn.onclick=function(){ showStage('delivery') } }
+    }
+    else if(state.stage==='delivery'){
+      if(state.receipt){ st.textContent='当前阶段：生成交付 —— 12/12 完成，回执已出'; btn.textContent='导出执行报告（CSV）'; btn.className='btn outline'; btn.onclick=function(){ $('#export-btn').click() } }
+      else if(state.running){ st.textContent='当前阶段：生成交付 —— 执行中 '+doneCells()+'/12'; btn.textContent='执行中…'; btn.disabled=true; btn.className='btn outline' }
+      else if(state.qrow.f3==='fail' && !state.resumed){ st.textContent='当前阶段：生成交付 —— 稿 3 失败，队列已停止'; btn.textContent='从第 3 稿续跑'; btn.onclick=function(){ doResume() } }
+      else if(!state.ack){ st.textContent='当前阶段：生成交付 —— 需要勾选覆盖率放行'; btn.textContent='请先勾选覆盖率放行'; btn.disabled=true; btn.className='btn outline' }
+      else { st.textContent='当前阶段：生成交付 —— 4 稿待执行（1 稿 × 3 语言 = 1 批次）'; btn.textContent='开始执行（逐稿队列）'; btn.onclick=function(){ doExec() } }
+    }
+  }
+
+  function renderMatrix(){
+    FILES.forEach(function(f){
+      LANGS.forEach(function(L){
+        var el=document.getElementById('cell-'+f.id+'-'+L[0]); if(!el) return;
+        if(!state.scanned[f.id]){ el.className='cell none'; el.textContent='未扫描'; return }
+        var v=COV[f.id][L[0]];
+        el.className='cell '+(v>=95?'ok':'warn');
+        el.textContent=v+'%';
+      });
+    });
+    var fst=document.getElementById('fstat-f4');
+    if(state.scanned.f4){ document.getElementById('frow-f4').querySelector('.fdot').className='fdot ok'; fst.className='fstat ok'; fst.textContent='已扫描 ✓' }
+  }
+
+  function renderDetect(){
+    FILES.forEach(function(f){ LANGS.forEach(function(L){
+      var el=document.getElementById('dchip-'+f.id+'-'+L[0]); if(!el) return;
+      var k=f.id+'-'+L[0], s=state.det[k];
+      if(!s){ el.setAttribute('data-s','wait'); el.textContent=L[1]+' 待检' }
+      else if(s==='ok'){ el.setAttribute('data-s','ok'); el.textContent=L[1]+' ✓ 通过' }
+      else { el.setAttribute('data-s','warn'); el.textContent=L[1]+' 需确认' }
+    })});
+  }
+
+  function renderReview(){
+    $('#revrow-f2').setAttribute('data-s',state.rev.f2);
+    $('#revrow-f4').setAttribute('data-s',state.rev.f4);
+    setText('revstat-f2', state.rev.f2==='ok' ? '已对齐（40/40 单元）' : '3 项待处理');
+    setText('revstat-f4', state.rev.f4==='ok' ? '已对齐（25/25 单元）' : '1 项待处理');
+    if(state.rev.f2==='ok'){ $('#fix-f2').disabled=true; $('#fix-f2').textContent='已忽略 ✓' }
+    if(state.rev.f4==='ok'){ $('#fix-f4').disabled=true; $('#fix-f4').textContent='已排除 ✓' }
+    if(reconcileDone()) $('#step3-done').style.display='inline-flex';
+  }
+
+  function renderQueue(){
+    FILES.forEach(function(f){
+      var row=$('#qrow-'+f.id); row.setAttribute('data-s',state.qrow[f.id]);
+      var stat=$('#qstat-'+f.id);
+      stat.textContent={idle:'待执行',running:'执行中…',done:'已完成 ✓',fail:'失败 · 已退回'}[state.qrow[f.id]];
+      var ce=$('#qchips-'+f.id); ce.textContent='';
+      LANGS.forEach(function(L,j){
+        var c=document.createElement('span'); c.className='qchip';
+        if(state.qrow[f.id]==='fail'){ c.setAttribute('data-s','bad'); c.textContent=L[1]+' 未完成' }
+        else if(state.qcells[f.id]>j){ c.setAttribute('data-s','ok'); c.textContent=L[1]+' ✓' }
+        else if(state.qrow[f.id]==='running'){ c.setAttribute('data-s','run'); c.textContent=L[1]+' …' }
+        else { c.textContent=L[1] }
+        ce.appendChild(c);
+      });
+    });
+  }
+
+  function renderAll(){ renderTop(); renderRail(); renderBottom() }
+
+  // ---------- 阶段切换 ----------
+  function showStage(name){
+    var lockMap={ materials:false, review:materialsDone(), reconcile:reviewDone(), delivery:reconcileDone() };
+    if(lockMap[name]===false && name!=='materials') return;
+    state.stage=name;
+    $$('.stage').forEach(function(s){ s.classList.toggle('on', s.id==='stage-'+name) });
+    renderAll();
+    $('#stage-'+name).scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  $$('.rbtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(b.classList.contains('locked')) return;
+      showStage(b.getAttribute('data-stage'));
+    });
+  });
+
+  // ---------- 阶段 1：扫描 ----------
+  function doScan(){
+    if(scannedCount()===4) return;
+    var btn=$('#scan-btn'); btn.disabled=true; btn.textContent='扫描队列运行中…';
+    var fst=document.getElementById('fstat-f4');
+    fst.className='fstat run'; fst.textContent='排队中…';
+    setTimeout(function(){ fst.textContent='扫描中… 42%' },350);
+    setTimeout(function(){ fst.textContent='扫描中… 86%' },800);
+    setTimeout(function(){
+      state.scanned.f4=true;
+      renderMatrix(); renderAll();
+      btn.textContent='已全部扫描 ✓'; btn.disabled=true;
+      $('#cov-detail').textContent='04_弹窗 × 泰语：22/25 命中（88%）—— 低于阈值 95%，点格可查看未匹配条目。';
+      $('#rail-review-h').textContent='可以开始';
+    },1300);
+  }
+  $('#scan-btn').addEventListener('click',doScan);
+  $('#paste-btn').addEventListener('click',function(){ var b=this; b.textContent='粘贴框已就绪'; setTimeout(function(){ b.textContent='粘贴路径加入' },1200) });
+  $$('#mx td.cell').forEach(function(td){
+    td.addEventListener('click',function(){
+      if(td.classList.contains('none')){ $('#cov-detail').textContent='04_弹窗：尚未扫描 —— 先跑扫描再看覆盖率'; return }
+      $$('#mx td.cell').forEach(function(x){x.classList.remove('sel')});
+      td.classList.add('sel');
+      var f=td.getAttribute('data-f'), l=td.getAttribute('data-l');
+      var d=COV_DETAIL[f+'-'+l];
+      $('#cov-detail').textContent=d? d : (f.toUpperCase()+' × '+l+'：'+COV[f][l]+'% 命中（预检粗估；执行口径以引擎匹配为准）');
+    });
+  });
+
+  // ---------- 阶段 2：检测 ----------
+  function doDetect(){
+    if(state.detRunning || detProcessed()===12) return;
+    state.detRunning=true; renderBottom();
+    var btn=$('#detect-btn'); btn.disabled=true; btn.textContent='检测中…（逐稿扇出）';
+    FILES.forEach(function(f,i){
+      setTimeout(function(){
+        LANGS.forEach(function(L){ state.det[f.id+'-'+L[0]]=DET_RESULT[f.id][L[0]] });
+        renderDetect(); renderAll();
+        setText('detect-hint', detProcessed()===12?'':'检测中… '+detProcessed()+'/12');
+      }, 700*(i+1));
+    });
+    setTimeout(function(){
+      state.detRunning=false;
+      btn.textContent='检测完成 ✓'; btn.disabled=true;
+      var w=warnCount();
+      $('#detect-hint').textContent = w>0 ? '检测完成：需确认 '+w+' 项' : '检测完成：12/12 通过';
+      if(w>0) $('#dconfirm').style.display='flex';
+      setAttr('detect-grid','data-done','1');
+      renderAll();
+    }, 700*4+250);
+  }
+  $('#detect-btn').addEventListener('click',doDetect);
+  $('#confirm-f2-ko').addEventListener('click',function(){
+    state.det['f2-ko']='ok';
+    this.disabled=true; this.textContent='已修正 ✓';
+    this.parentNode.querySelector('span').innerHTML='02_详情页 × 韩语：已按术语表修正并重审 —— <b>通过 ✓</b>';
+    renderDetect(); renderAll();
+    $('#detect-hint').textContent='检测完成：12/12 通过';
+  });
+
+  // ---------- 阶段 3：对账 ----------
+  $('#fix-f2').addEventListener('click',function(){
+    state.rev.f2='ok';
+    var w=$('#revrow-f2 .rvwhy'); if(w) w.textContent='已忽略 3 条未命中表行（不入替换；记录在回执行明细）。';
+    renderReview(); renderAll();
+  });
+  $('#fix-f4').addEventListener('click',function(){
+    state.rev.f4='ok';
+    var w=$('#revrow-f4 .rvwhy'); if(w) w.textContent='已确认排除 _系统_水印（扫描建议排除）。';
+    renderReview(); renderAll();
+  });
+
+  // ---------- 阶段 4：执行 ----------
+  function runFile(f,fileDone){
+    state.qrow[f.id]='running'; renderQueue(); renderBottom();
+    LANGS.forEach(function(L,j){
+      setTimeout(function(){
+        state.qcells[f.id]=j+1; renderQueue(); renderTop();
+        if(j===2) setTimeout(fileDone,420);
+      }, 420*(j+1));
+    });
+  }
+  function finishReceipt(){
+    state.receipt=true;
+    var body=$('#rcpt-body'); body.textContent='';
+    FILES.forEach(function(f){
+      var tr=document.createElement('tr');
+      var td0=document.createElement('td'); td0.className='rf'; td0.textContent=f.name; tr.appendChild(td0);
+      LANGS.forEach(function(L){ var td=document.createElement('td'); td.className='rcell'; td.setAttribute('data-s','ok'); td.textContent='已完成 ✓'; tr.appendChild(td) });
+      var tdb=document.createElement('td'); tdb.className='rf'; tdb.textContent = f.id==='f3' ? '首次失败 → 续跑成功' : '正常'; tr.appendChild(tdb);
+      body.appendChild(tr);
+    });
+    $('#receipt').classList.add('show');
+    setAttr('receipt','data-done','1'); setAttr('queue','data-done','1');
+    renderAll();
+    setTimeout(function(){ $('#receipt').scrollIntoView({behavior:'smooth',block:'nearest'}) },80);
+  }
+  function runQueue(){
+    state.running=true; renderAll();
+    var order=FILES.filter(function(f){ return state.qrow[f.id]!=='done' });
+    var idx=0;
+    function next(){
+      if(idx>=order.length){ state.running=false; finishReceipt(); return }
+      var f=order[idx]; idx++;
+      runFile(f,function(){
+        if(f.id==='f3' && !state.resumed){
+          state.qrow.f3='fail'; state.qcells.f3=0; renderQueue();
+          var r1=$('#qrow-f1'); if(r1 && !r1.querySelector('.guard')){ var g=document.createElement('span'); g.className='guard'; g.textContent='已完成 · 不重跑'; r1.insertBefore(g, r1.querySelector('.qstat')) }
+          var r2=$('#qrow-f2'); if(r2 && !r2.querySelector('.guard')){ var g2=document.createElement('span'); g2.className='guard'; g2.textContent='已完成 · 不重跑'; r2.insertBefore(g2, r2.querySelector('.qstat')) }
+          $('#resume-panel').classList.add('show');
+          state.running=false; renderAll();
+          setTimeout(function(){ $('#resume-panel').scrollIntoView({behavior:'smooth',block:'nearest'}) },80);
+          return;
+        }
+        state.qrow[f.id]='done'; renderQueue();
+        setTimeout(next,240);
+      });
+    }
+    next();
+  }
+  function doExec(){
+    if(state.queueStarted || !state.ack || !reconcileDone()) return;
+    state.queueStarted=true;
+    var eb=$('#exec-btn'); eb.disabled=true; eb.textContent='队列运行中…';
+    renderAll(); runQueue();
+  }
+  function doResume(){
+    if(state.resumed) return;
+    state.resumed=true;
+    var rb=$('#resume-btn'); if(rb){ rb.disabled=true; rb.textContent='续跑中…' }
+    $('#resume-panel').classList.remove('show');
+    var f3=FILES[2], f4=FILES[3];
+    runFile(f3,function(){
+      state.qrow.f3='done'; renderQueue();
+      runFile(f4,function(){ state.qrow.f4='done'; renderQueue(); finishReceipt() });
+    });
+  }
+  $('#exec-btn').addEventListener('click',function(){ doExec() });
+  $('#resume-btn').addEventListener('click',doResume);
+  $('#stop-btn').addEventListener('click',function(){ this.disabled=true; this.textContent='已停止（已完成稿保留）'; renderBottom() });
+  $('#ack-check').addEventListener('change',function(){
+    state.ack=this.checked;
+    $('#exec-btn').disabled = !(state.ack && reconcileDone() && !state.queueStarted && !state.receipt);
+    $('#exec-hint').textContent = this.checked ? '已放行 · 未命中单元不入替换' : '需全部稿对齐 ＋ 勾选覆盖率放行';
+    renderBottom();
+  });
+  $('#export-btn').addEventListener('click',function(){ this.textContent='已导出（模拟）'; this.disabled=true });
+  $('#reset-btn').addEventListener('click',function(){ location.reload() });
+
+  // ---------- init ----------
+  renderMatrix(); renderDetect(); renderQueue(); renderReview(); renderAll();
+  setAttr('sim','data-ready','1');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#190 覆盖率假绿灯 · 修法与真机复测 · 2026-10-20</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap"><header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 修法与复测</p>
+  <h1>#190 覆盖率假绿灯已修：算不出就说算不出</h1>
+  <p class="standfirst">矩阵过去任何情况都报 100%（连和稿完全对不上的表也报 100%），执行前覆盖率闸因此永不触发。现在改为「无法估算」如实显示，既不判绿也不判红，命中率交给第 3 步真实对账。提交 develop <span class="mono">bd2c860</span>（6 文件 +84/−16），未 push。</p>
+  <p class="meta">2026-10-20 16:2x · Owner 令「用对抗式审查给方案并按方案执行」· 隔离环境真浏览器复测通过</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">为什么恒绿（三层根因）</p>
+  <p class="lede">浏览器只拿到削减摘要（隐私：<strong>逐层原文不上云、不进浏览器</strong>）→ 矩阵分母偏去读那份不存在的原文 → 空分母被兜底成满分 100。矩阵与「执行前覆盖率闸」同一取数口，于是闸的低阈值清单恒空＝常亮绿灯、永不拦。</p>
+  <div class="stats">
+    <div class="stat bad"><span class="n">100%</span><span class="lb">改前任何格子的读数</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="lb">改前闸实际拦截次数（设计为 95% 阈值）</span></div>
+    <div class="stat ok"><span class="n">108</span><span class="lb">逻辑门 checks（rc=0）</span></div>
+    <div class="stat ok"><span class="n">37</span><span class="lb">守卫门 checks（rc=0）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel no">
+    <p class="hd">门没抓到它的原因（更要紧的一层）</p>
+    <ul class="tl">
+      <li class="tl-body">守卫脚本自己造了真实链路<strong>从不产出</strong>的形状 <span class="mono">summary:{textLayers:[{sourceText}]}</span>（smoke-batch-workbench-logic.mjs:216-219）</li>
+      <li class="tl-body">并把「无有效文本 ⇒ 覆盖率 100」当期望结果钉住（原 <span class="mono">:151</span>）</li>
+      <li class="tl-body">净效果：测试永远绿，线上永远假绿，两件事同时成立</li>
+    </ul>
+  </div>
+  <div class="panel yes">
+    <p class="hd">我先否掉的那版方案</p>
+    <ul class="tl">
+      <li class="tl-body"><strong>不做</strong>「矩阵改吃真实对账结果」：逐层原文浏览器侧不存在（<span class="mono">local-assistant-client.ts:539,783</span> 写死空数组），要真数需 N 稿 × M 语次本机对账，且对账结果单槽、切稿即清（<span class="mono">workbench-view.tsx:411/:499/:2144</span>）</li>
+      <li class="tl-body"><strong>不做</strong>「把无法估算算作低于阈值」：实读判据 <span class="mono">coverageGateBlocked = coverageBelowCount &gt; 0 &amp;&amp; !coverageReleaseAck</span> ⇒ 会锁死每一个批次，把展示缺陷换成生产事故</li>
+      <li class="tl-body">落地＝最小诚实解：不新增阻塞，但不再撒谎</li>
+    </ul>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">改了什么（6 个文件）</p>
+  <div class="gate first"><span class="sn">1</span><p><span class="mono">coverage.ts</span>：结果新增 <span class="mono">estimable</span>（分母&gt;0 才可估算），空分母不再等于 100。</p></div>
+  <div class="gate"><span class="sn">2</span><p><span class="mono">coverage-matrix.tsx</span>：算不出的格子显示「无法估算」＋虚线中性描边（不给绿/黄），撤掉「该格所有可翻译文本都已在语言表中找到对应行」，新增「N 格无法在执行前估算」与口径脚注。</p></div>
+  <div class="gate"><span class="sn">3</span><p><span class="mono">workbench-view.tsx:1806-1809</span>：判红集合只收可估算格子 ⇒ 行为零回归（不会误锁批次）。</p></div>
+  <div class="gate"><span class="sn">4</span><p><span class="mono">design-file-card.tsx:1019 / :1116</span>：「所有设计稿共用一张表」→「每一稿各导自己那张表，稿与稿之间不共用」。</p></div>
+  <div class="gate"><span class="sn">5</span><p><span class="mono">local-assistant.ts</span>：内部令牌读不到不再静默吞异常（3.7.15 助手配置已迁加密 <span class="mono">.tygf_session</span>），改报失败类别；日志绝不打印令牌。</p></div>
+  <div class="gate"><span class="sn">6</span><p><span class="mono">smoke-batch-workbench-logic.mjs</span>：改期望＋新增<b>真实形状负控</b>三条：不得报 100、必须 <span class="mono">estimable=false</span>、不得混进判红集合。</p></div>
+</section>
+
+<section class="notes">
+  <p class="hd">验证（本轮全部实跑）</p>
+  <ol>
+    <li><span class="now">门 1</span> 逻辑 smoke ⇒ 108 checks，rc=0</li>
+    <li><span class="now">门 2</span> 守卫 smoke ⇒ 37 checks，rc=0</li>
+    <li><span class="now">门 3</span> <span class="mono">tsc --noEmit</span> ⇒ rc=0；<span class="mono">lint</span> ⇒ 0 error（35 条存量 a11y warning 与改前同集），改动文件单独 eslint ⇒ rc=0</li>
+    <li><span class="now">真浏览器</span> 隔离树 :3000，两稿重扫（助手 <span class="mono">outcome=prepared</span> 08:19:32Z/08:19:37Z）：格子正文与 aria 均为 <span class="mono">DE 无法估算 / FR 无法估算</span>；明细「无法估算 · 浏览器侧可翻译文本 0 条 … 以第 3 步对账为准」；缺表闸照旧点名未导表的稿</li>
+  </ol>
+</section>
+
+<section class="notes">
+  <p class="hd">仍然遗留</p>
+  <ol>
+    <li>矩阵现在是「诚实地算不出」；要给执行前真数须把第 3 步对账提前（N×M 次本机对账）＝产品决策，未动。</li>
+    <li><span class="mono">bd2c860</span> 未 push（<span class="mono">origin/develop..HEAD</span> 现 9 笔）；推送与发版窗待 Owner。</li>
+    <li>真实执行链（批次/回执/结算/逐稿串行）仍未实测——本机执行闸关着（Batch-1 只开放 Web 流程）。</li>
+    <li>助手状态端点是否应校验 <span class="mono">scanId ↔ installId</span> 归属：只有线索，标未核实。</li>
+  </ol>
+</section>
+
+<footer>
+  <p>本轮所有读数由本会话实跑取得：三条本地命令退出码、守卫回显条数、真浏览器结构快照与 aria 文本、助手 engine.log 时刻。审查方式为三路并行取证＋主审独立复现，其中两条别手线索（FAQ 文案、助手报告正文）经复现判为与 v7 一致、已丢弃，未计入缺陷。</p>
+</footer>
+</div>
+</body>
+</html>

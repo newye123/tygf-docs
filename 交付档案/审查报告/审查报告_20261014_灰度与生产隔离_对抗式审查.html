@@ -1,0 +1,644 @@
+﻿<title>灰度与生产隔离对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>灰度与生产隔离 · 初版方案纠偏</span><span class="sep">/</span>
+    <span>2026-10-14</span>
+  </p>
+  <h1>灰度与生产隔离对抗式审查</h1>
+  <p class="standfirst">对本会话初版灰度方案（Unleash + OpenFeature + PostgreSQL + Sentry + WebSocket 全栈）的五路对抗核验。基线 develop@756978c，全程只读，未改任何文件、未碰两站。</p>
+  <div class="meta">
+    <span>五路并行</span>
+    <span>初版 P0 推翻一半</span>
+    <span>修正方案 P0′ 约 1 天</span>
+    <span>未部署、未提交</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>初版方向对——灰度=应用层特性开关+用户分群；选型错了——本仓库已有一条完整的 DB 可配置开关链路，再部署一套 Unleash 等于给同一个事实建两本账（#137 双账本病的重演）。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>保留的</h3>
+      <ul>
+        <li><strong>白名单分群 + 阶段扩名单</strong>：替代无意义的 10% 随机放量（内测十位数基数下 10% 只有 2-5 人）。</li>
+        <li><strong>版本闸方向</strong>：但必须改写——ISSUES.md:1152 实录证明硬闸一刀切会卡死已激活用户，改为「旗标对旧版=功能隐藏」的软落回。</li>
+        <li><strong>杀开关 + 可观测</strong>：保留方向，落点改为既有 hook 加 TTL + evidence 落库查询，不引监控重工业。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>推翻的</h3>
+      <ul>
+        <li><strong>Unleash + PG + OpenFeature 全栈</strong>：重复建设。既有链路四件套全部实测存在（详见 §02）。</li>
+        <li><strong>「秒级杀开关」话术</strong>：现有 hook 模块级缓存永不失效，in-flight PS 执行是分钟级，最多承诺「最坏 30s」。</li>
+        <li><strong>Sentry + WebSocket + Grafana</strong>：地基是坏的（#143 &gt; #138 &gt; #120 一串前置未修），先加固源站再谈实时。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">初版漏掉的头号漏洞</span>
+    <p><strong>配置随代码发布</strong>：灰度默认值写死在 <code>src/config/featureFlags.ts</code>，随部署上线。默认值误设 true → 生产站下次部署那一刻灰度直接归零、全量用户一起进。铁律：新旗标默认 false；生产开启必须是运营台独立动作（SiteSetting 覆盖），永不随代码部署生效。这才是「不影响生产用户」真正的命门——不是流量分发问题。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>五路对抗核对（全部实测 file:line）</h2>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">4</span><span class="k">初版硬伤<br>重复建设/版本闸/时延话术/监控重工业</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">上轮没说的点<br>服务端分群/放量噪音</span></div>
+    <div class="stat ok"><span class="n">4</span><span class="k">既有链路实测存在<br>形状/合并/鉴权审计/hook</span></div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="tag bad">推翻选型</span>
+        <strong>路一 · 重复建设</strong>
+        <span class="loc">featureFlags.ts:6-62 / feature-flags-store.ts:27-41 / route.ts:18,24,45 / use-feature-flags.ts:27-41</span>
+      </div>
+      <p>既有链路四件套：默认形状与二十余开关（支付族默认 false）；SiteSetting key=featureFlagsV1 合并 + sanitizeAgainst 防注入；运营台 API requireOwnerDb + writeAuditLog（鉴权+审计已有，初版「需补审计」不成立）；客户端 hook。裁决：不装 Unleash——缺的只有分群和 TTL，不是缺平台。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="tag bad">推翻写法</span>
+        <strong>路二 · 版本闸先例</strong>
+        <span class="loc">AI_MEMORY/ISSUES.md:1152</span>
+      </div>
+      <p>实录：测试站升 3.6.15 后，已激活的 3.6.14 用户被版本门槛一刀切，全流程卡死；当时结论「canary 空白名单=放行」与版本门槛矛盾。初版 minAssistantVersion 硬闸重演此坑。修正：旗标对旧版=功能隐藏（软落回），版本门槛只拦「显式开新功能」，永不拦既有流程。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="tag bad">推翻话术</span>
+        <strong>路三 · 杀开关时延</strong>
+        <span class="loc">use-feature-flags.ts:8-12</span>
+      </div>
+      <p>模块级 cached 永不失效——今天关旗标只对「刷新过页面」的会话生效；in-flight PS 执行分钟级，旗标只断新进入。修正：hook 加 30s TTL + visibilitychange 重取，验收话术「最坏 30s」。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="tag bad">推翻重工业</span>
+        <strong>路四 · 实时处理地基</strong>
+        <span class="loc">ISSUES.md:179（#138）前置 #143；#120</span>
+      </div>
+      <p>#143 源站 :80 对公网开放、cf-connecting-ip 可伪造 → #138 限流不敢开；#120 access.log 无 $host 与 $request_time → 按站归因不可能；「零回看零基线」→「错误率&lt;0.1%」无基线可比。修正：可观测降级为「查得到」——复用执行 evidence 落库 + 运营台只读查询；Sentry 接时必须复用 FORBIDDEN_LOCAL_FIELD_NAMES 脱敏先例（learning-evidence.js:33）。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="tag bad">推翻落点</span>
+        <strong>路五 · 消费面错位</strong>
+        <span class="loc">photoshop-step.tsx:33,202</span>
+      </div>
+      <p>用的是静态 featureFlags import——运营台动态覆盖到不了这个组件。动态 hook 消费方实测仅 4 文件：execute-step、workbench-view、settings-panel、pack/page。字体功能恰好要挂 photoshop-step，不改消费方式开关就是摆设。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>上轮没说、这轮必须说的三点</h2>
+  <ul class="notes">
+    <li><strong>分群评估必须在服务端。</strong>Unleash Proxy（初版推荐）与任何「白名单下发客户端自判」的方案，都会把全部白名单用户 ID 泄漏给每个浏览器。正确形态：服务端 <code>isFeatureEnabledForUser(flag, userId)</code>，客户端只拿「对我开没开」一个布尔。这也是不用 Unleash 的又一理由。</li>
+    <li><strong>10% 随机放量在内测基数下是噪音。</strong>内测十位数用户（量级，待确认），10% 只有 2-5 人，统计无意义，只制造偶发不可复现的客服负担。改为显式名单 + 阶段扩名单。</li>
+    <li><strong>审计不用新建。</strong>运营台开关已有 requireOwnerDb + writeAuditLog（route.ts:4,5,18,45）。新分群管理沿用同一 route 模式，零新面。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>修正后方案 P0′（约 1 天，全部在既有链路上）</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>featureFlags 形状扩展（零迁移）</h3>
+        <p>加 <code>typographyCustomizationEnabled: false</code> + <code>typographyBetaUserIds: string[]</code>，默认必须 false。避开 #129 迁移门；admin API <code>route.ts:60-68</code> flags 字段路径原样可用。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>服务端分群判定（约 40 行）</h3>
+        <p>新 <code>src/lib/server/feature-flag-gating.ts</code>：全局开关 AND 用户在名单（名单空=仅 Owner/测试账号）。白名单永不出服务端。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>photoshop-step 改动态消费</h3>
+        <p>SSR 时调第 2 条，props 下发。静态 import 留给官网板块。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>杀开关修真（30s TTL）</h3>
+        <p><code>use-feature-flags.ts:8</code> 加 30s TTL + visibilitychange 重取。验收话术「最坏 30s」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>助手端本轮不动</h3>
+        <p>字体能力若为纯服务端计算则无助手协议变更、无 release 链。确需助手感知时走既有 /config（server.js:4372-4386）加字段，按助手版本纪律单独立项——那是另一个任务书。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>可观测降级为「查得到」</h3>
+        <p>复用执行 evidence 结构化落库，运营台加只读「灰度用户执行结果」查询。Sentry 推迟；将来接必须脱敏。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body">
+        <h3>Unleash / OpenFeature 推迟</h3>
+        <p>复议触发条件写死：旗标超过 8 个，或需要 A/B 百分比分桶，或出现同部署多环境。在此之前不预付成本。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>验收（P0′）</h2>
+  <ul class="notes">
+    <li>生产站不部署新默认值时行为逐字节不变。</li>
+    <li>测试站 Owner 加进名单 → 字体面板出现。</li>
+    <li>换一个不在名单的账号 → 全旧流程。</li>
+    <li>运营台关总开关 → 所有会话最坏 30s 内面板消失。</li>
+    <li>触及 execute-step 消费链时跑 <code>npm run test:batch-row-contract</code> 与 <code>test:trust-chain</code>，必须绿。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>开源候选裁决（推迟备查）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>候选</th><th>事实</th><th>裁决</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Unleash</td><td>Node SDK 成熟、分群策略全、10s Proxy 热刷——但需要 PostgreSQL</td><td><span class="tag bad">不装</span> SQLite 单机不匹配 + 双账本</td></tr>
+        <tr><td class="mono">GoFeatureFlag</td><td>Go 单二进制、无 DB、OpenFeature 兼容</td><td><span class="tag warn">复议首选</span> 条件触发才评估</td></tr>
+        <tr><td class="mono">Flipt</td><td>Go 单二进制、SQLite 默认</td><td><span class="tag warn">备选</span></td></tr>
+        <tr><td class="mono">OpenFeature</td><td>CNCF 标准规范，Provider 可换</td><td><span class="tag ok">长期方向</span></td></tr>
+        <tr><td class="mono">Argo Rollouts /<br>Flagger / Istio</td><td>K8s 专属</td><td><span class="tag bad">永不适用</span> 本项目无 K8s</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>「不影响生产用户」三条风险排序</h2>
+  <ul class="notes">
+    <li><strong>配置随代码发布（部署即生效）</strong>——头号命门。新旗标默认 false；生产开启必须是运营台独立动作。</li>
+    <li><strong>灰度用户拿到坏输出</strong>——字体缺失静默替换是 #66 家族已实证机制（ISSUES.md:641-648）。字体灰度必须捆绑 readback/coverage 门禁，否则明知有坑还放人进去。</li>
+    <li><strong>「实时处理生产问题」缺地基</strong>——#143 → #138 → #120 一串前置未修；源站加固不落地，任何「实时」都是口号。<strong>源站加固比灰度系统本身更优先。</strong></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>最后一句</h2>
+  <div class="verdict">
+    <p>这套灰度不需要引入任何新平台——缺的只是既有开关链上的三块补丁：分群、TTL、消费面。「不影响生产」天然成立在双站双库架构里，真正的命门是默认值随代码发布，和源站还没加固就谈实时。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>待确认（未核实，禁止当事实用）</h2>
+  <ul class="notes">
+    <li>内测实际活跃用户基数（十位数是量级推断，未实测）。</li>
+    <li>运营台是否已有分群/名单管理 UI（未搜到 experiment-groups 相关页面）。</li>
+    <li>测试站/生产站 DB 文件隔离在部署脚本层面的确认（架构常识推断，未逐行核对 deploy 脚本）。</li>
+    <li>字体功能是否纯服务端计算（决定 P0′ 第 5 条成立与否；P0 spike 未做）。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>五路对抗核对：既有链路 4 处 / 推翻项 4 处 / 补充洞见 3 条 / P0′ 七步 / 开源裁决 5 项。基线 develop@756978c，未改任何文件、未跑门、未碰两站。</p>
+  <p>2026-10-14 · 本地实测。文中不含凭据、用户素材与运行时数据。附随《审查报告_20261014_灰度与生产隔离_对抗式审查.md》《交接文档_20261014_灰度与生产隔离_给接续AI》。</p>
+</footer>
+
+</div>
+</body>
+</html>

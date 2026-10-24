@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟 · 灰度名单卡改造（B 案）</title>
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#fff; --sunk:#f1f3f6; --ink:#111827; --ink2:#374151; --muted:#6b7280;
+  --line:#e5e7eb; --line2:#d1d5db; --accent:#2563eb;
+  --ok:#047857; --ok-soft:#ecfdf5; --ok-btn:#059669; --ok-btn-h:#047857;
+  --bad:#b91c1c; --bad-soft:#fef2f2; --warn:#92400e; --warn-soft:#fffbeb;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"JetBrains Mono",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6}
+.shell{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:6px}
+.mast h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.pill{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);background:var(--surface)}
+.sub{color:var(--muted);margin:0 0 18px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:18px}
+.controls .grp{display:flex;align-items:center;gap:6px}
+.controls .lbl{font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:12px;border:0;background:var(--surface);color:var(--ink2);padding:5px 11px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed="true"]{background:#111827;color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+/* ---- 卡片：仿运营台真实观感 ---- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.card h2{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 14px}
+.card h2 .t{display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid var(--ink);border-radius:4px;font-family:var(--mono);font-size:11px}
+.env{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;border:1px solid transparent}
+.env.prod{color:#fff;background:var(--bad)}
+.env.test{color:var(--warn);background:var(--warn-soft);border-color:#f2d59a}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.btn{font:inherit;font-size:13px;border-radius:8px;padding:7px 13px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:#6b7280;border-color:#6b7280;color:#fff}
+.btn.on{background:#4b5563;border-color:#4b5563;color:#fff}
+.btn.green{background:var(--ok-btn);border-color:var(--ok-btn);color:#fff}
+.btn.green:hover{background:var(--ok-btn-h)}
+.btn.sm{font-size:12px;padding:4px 9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.hint b{color:var(--ink2)}
+.state{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px;min-height:24px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;border:1px solid var(--line2);border-radius:999px;padding:3px 4px 3px 10px;background:var(--surface)}
+.chip .nm{font-weight:600}
+.chip .id{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.chip .x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:2px 7px;border-radius:999px}
+.chip .x:hover{background:var(--sunk);color:var(--bad)}
+.chip.miss{border-color:#f0b4ad;background:var(--bad-soft)}
+.empty{font-size:12.5px;color:var(--muted)}
+label.fld{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+.searchwrap{position:relative}
+input.txt,textarea.txt{font:inherit;width:100%;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink)}
+textarea.txt{font-family:var(--mono);font-size:12.5px;min-height:92px;resize:vertical;line-height:1.65}
+input.txt:focus,textarea.txt:focus{outline:2px solid #bfd3fe;outline-offset:1px}
+.results{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.12);max-height:290px;overflow:auto}
+.results[hidden]{display:none}
+.res{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid var(--line)}
+.res:last-child{border-bottom:0}
+.res .who{flex:1;min-width:0}
+.res .nm{font-size:13px;font-weight:600}
+.res .mt{font-size:11.5px;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res .st{font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 7px}
+.res .st.paused{color:var(--warn);border-color:#f2d59a;background:var(--warn-soft)}
+.none{padding:12px;color:var(--muted);font-size:12.5px}
+.summary{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12.5px;color:var(--ink2);margin:10px 0 4px}
+.summary .n{font-family:var(--mono)}
+.summary .bad{color:var(--bad)}
+.foot{display:flex;justify-content:flex-end;margin-top:12px}
+.toast{margin-top:12px;border-radius:10px;padding:11px 13px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+.toast[hidden]{display:none}
+.toast.err{background:var(--bad);color:#fff}
+.toast.err .h{font-weight:700}
+.toast.err .m{font-family:var(--mono);font-size:12px;opacity:.95}
+.toast.ok{background:var(--ok-soft);color:var(--ok);border:1px solid #b7e4cd}
+.toast .close{margin-left:auto;background:transparent;border:0;color:inherit;cursor:pointer;font-size:15px}
+.oldcopy{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* ---- 右侧说明 ---- */
+.side{display:flex;flex-direction:column;gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.box h3{margin:0 0 8px;font-size:13.5px}
+.box ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--ink2)}
+.box code,.mono{font-family:var(--mono);font-size:11.5px}
+.kv{display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--muted);min-width:78px}
+.selfcheck{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.sc-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+table.sc{width:100%;border-collapse:collapse;font-size:12.5px}
+table.sc th{text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px;font-size:11.5px}
+table.sc td{border-bottom:1px solid var(--line);padding:7px 8px;vertical-align:top}
+table.sc td.n{font-family:var(--mono);white-space:nowrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);white-space:nowrap}
+.tag.pass{color:var(--ok);background:var(--ok-soft);border-color:#b7e4cd}
+.tag.fail{color:#fff;background:var(--bad);border-color:var(--bad)}
+.note{font-size:11.5px;color:var(--muted);margin-top:8px}
+dialog{border:1px solid var(--line2);border-radius:12px;padding:0;max-width:440px;width:calc(100% - 40px);box-shadow:0 20px 60px rgba(16,24,40,.25)}
+dialog::backdrop{background:rgba(17,24,39,.42)}
+.dlg{padding:18px}
+.dlg h4{margin:0 0 8px;font-size:15px}
+.dlg p{margin:0 0 14px;font-size:13px;color:var(--ink2)}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="mast">
+    <h1>灰度名单卡改造 · 可点模拟</h1>
+    <span class="pill">B 案</span><span class="pill">夹具数据</span><span class="pill">2026-10-21</span>
+  </div>
+  <p class="sub">左边是能真点的界面；「现状 / B 案」切换就是这次要改的前后对比。数据是按两站真实形状造的夹具，不是线上数据。</p>
+
+  <div class="controls">
+    <div class="grp"><span class="lbl">视图</span>
+      <div class="seg" role="group">
+        <button id="vOld" aria-pressed="false" onclick="setView('old')">现状（手填 ID）</button>
+        <button id="vNew" aria-pressed="true" onclick="setView('new')">B 案（搜人点选）</button>
+      </div>
+    </div>
+    <div class="grp"><span class="lbl">站点</span>
+      <div class="seg" role="group">
+        <button id="eProd" aria-pressed="true" onclick="setEnv('prod')">生产</button>
+        <button id="eTest" aria-pressed="false" onclick="setEnv('test')">测试</button>
+      </div>
+    </div>
+    <button class="btn sm" onclick="seedBadPaste()">演示：粘贴三个邮箱</button>
+    <button class="btn sm" onclick="seedDirtyPaste()">演示：一行粘多个（逗号/分号）</button>
+    <button class="btn sm" onclick="seedAmbiguous()">演示：重名怎么办</button>
+    <button class="btn sm" onclick="failSearchDemo()">演示：搜索请求失败</button>
+    <button class="btn sm" id="loadToggle" onclick="toggleLoaded()">演示：名单未读取成功</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2><span class="t">T</span> 字体排版定制灰度 <span class="env prod" id="envBadge">生产站</span></h2>
+
+        <div class="row">
+          <button class="btn on" id="swOn">开启总开关</button>
+          <button class="btn" id="swOff">关闭总开关</button>
+          <span class="state" id="swState">当前：已开启</span>
+        </div>
+
+        <p class="hint" id="cardHint"></p>
+
+        <div class="chips" id="chips"></div>
+
+        <div id="searchBlock">
+          <label class="fld" for="q">按邮箱 / 姓名 / 公司 / 用户 ID 找人</label>
+          <div class="searchwrap">
+            <input class="txt" id="q" placeholder="输入关键词，回车或点选结果加入名单" autocomplete="off" oninput="onSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();addFirst()}">
+            <div class="results" id="results" hidden></div>
+          </div>
+          <div class="oldcopy" id="caseDemo"></div>
+        </div>
+
+        <label class="fld" for="ta">名单（每行一个用户 ID）</label>
+        <textarea class="txt" id="ta" spellcheck="false" oninput="renderSummary()"></textarea>
+        <div class="summary" id="summary"></div>
+
+        <div class="foot">
+          <button class="btn green" id="saveBtn" onclick="save()">💾 保存名单</button>
+        </div>
+
+        <div class="toast err" id="toastErr" hidden>
+          <div><div class="h" id="errH"></div><div class="m" id="errM"></div></div>
+          <button class="close" onclick="hideToast()">×</button>
+        </div>
+        <div class="toast ok" id="toastOk" hidden>
+          <div id="okM"></div><button class="close" onclick="hideToast()">×</button>
+        </div>
+      </div>
+
+      <div class="selfcheck">
+        <div class="sc-head">
+          <h3 style="margin:0;font-size:13.5px">自动自检（跑真 DOM，不是示意图）</h3>
+          <button class="btn sm" onclick="runSelfCheck()">运行自检</button>
+          <span class="state" id="scState">未运行</span>
+        </div>
+        <table class="sc"><thead><tr><th style="width:34px">#</th><th>断言</th><th style="width:64px">结果</th><th>实测值</th></tr></thead>
+        <tbody id="scBody"><tr><td colspan="4" class="none">点「运行自检」后在这里出结果。</td></tr></tbody></table>
+        <p class="note" id="scNote"></p>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h3>这一屏在证明什么</h3>
+        <ul>
+          <li><b>点选落的是 ID</b>：搜索结果里看得见邮箱，进 textarea 的只有 <code>cms68etxy…</code>。服务端形状一字不改。</li>
+          <li><b>大小写不再是坑</b>：搜索走 <code>LIKE</code>（ASCII 不区分大小写），实测 <code>%FREEDESIGNYES%</code> 与 <code>%freedesignyes%</code> 都命中 1 行；而现在的存在性校验走 <code>=</code>，大写直接 0 命中。</li>
+          <li><b>重名不猜</b>：夹具里两个 <code>demo-seed</code> 真实同名（生产库实测 6 组重名），必须人来点，系统不解析。</li>
+          <li><b>脏数据不背锅</b>：contact 字段生产 54 人为空、8 人值是 "sw"，按它解析必歧义。</li>
+          <li><b>生产有二次确认</b>：站点=生产时保存要确认一次，因为加了对人真的可见。</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>夹具（照真实形状造）</h3>
+        <div id="fixtureList"></div>
+      </div>
+      <div class="box">
+        <h3>与开源做法的对应</h3>
+        <ul>
+          <li>Django <code>autocomplete_fields</code>：搜人话、提交主键 → 本卡搜索框。</li>
+          <li>GrowthBook free-solo 多选：陌生值变标签不炸 → 未识别条目在 textarea 里标红但不吞。</li>
+          <li>Unleash / LaunchDarkly：名单存稳定内部标识，邮箱只作展示 → 存的仍是 <code>id</code>。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="confirmDlg">
+  <div class="dlg">
+    <h4>这是生产站</h4>
+    <p id="confirmMsg"></p>
+    <div class="acts">
+      <button class="btn" id="dlgNo">取消</button>
+      <button class="btn green" id="dlgYes">确认保存到生产</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+// ---- 夹具：照两站真实形状造（生产 68 人 / 54 空 contact / 8 个 "sw" / 10 有邮箱凭证 / 6 组重名） ----
+const FIXTURE = [
+  {id:'cms68etxy001cwj4n38vqi9jb', name:'Not Designer', email:'freedesignyes@gmail.com', contact:'freedesignyes@gmail.com', company:'', status:'active'},
+  {id:'cms5damzc000fwj0id5f6d9k0', name:'demo-seed',    email:null, contact:'', status:'active'},
+  {id:'cmt4j6l8g0003wjm7k0wuamoj', name:'demo-seed',    email:null, contact:'', status:'active'},
+  {id:'cmuz9zqvo001nwjnamhj6eh1f', name:'test',         email:null, contact:'', status:'active'},
+  {id:'cms5damyu000bwj0ic770mn32', name:'Not Designer', email:'not.designer@example.com', contact:'not.designer@example.com', company:'示例工作室', status:'active'},
+  {id:'cmz11111aaaa0001bbbbcccc',  name:'张三',         email:'zhangsan@acme.cn', contact:'sw', status:'active'},
+  {id:'cmz22222bbbb0002ccccdddd',  name:'李四',         email:null, contact:'sw', status:'paused'},
+  {id:'cmz33333cccc0003dddddddd',  name:'王五（已注销）', email:null, contact:'', status:'disabled'},
+];
+const byId = new Map(FIXTURE.map(u=>[u.id,u]));
+
+let view='new', env='prod', switchOn=true;
+let loaded=true;          // 名单是否读取成功（false 时禁止保存——Round 2 F-3）
+let saving=false;         // 保存请求在飞（在飞时禁止「加入」——Round 2 F-2）
+let failNextSearch=false; // 模拟请求失败（Round 2 F-1）
+const $ = (s)=>document.querySelector(s);
+const ta = ()=>$('#ta');
+
+function setView(v){
+  view=v;
+  $('#vOld').setAttribute('aria-pressed', String(v==='old'));
+  $('#vNew').setAttribute('aria-pressed', String(v==='new'));
+  $('#searchBlock').style.display = v==='new' ? '' : 'none';
+  $('#caseDemo').textContent='';
+  ta().value=''; hideToast(); renderChips(); renderSummary();
+  hint();
+}
+function setEnv(e){
+  env=e;
+  $('#eProd').setAttribute('aria-pressed', String(e==='prod'));
+  $('#eTest').setAttribute('aria-pressed', String(e==='test'));
+  const b=$('#envBadge');
+  b.textContent = e==='prod' ? '生产站' : '测试站';
+  b.className = 'env ' + (e==='prod'?'prod':'test');
+  hint();
+}
+function hint(){
+  const base='名单内账号在工作台「准备素材」步骤可见「排版定制（内测预览）」面板；移出后最坏 30 秒消失；空名单=谁都不开。最多 100 人。';
+  $('#cardHint').innerHTML = view==='new'
+    ? base + ' <b>用上方搜索按邮箱找人点选，或直接粘用户 ID（换行 / 逗号 / 分号都算分隔）。</b>'
+    : base + ' 每行一个用户 ID。';
+}
+
+// ---- 搜索：模拟现成接口 /api/admin/installs?q= 的七路 contains（LIKE，ASCII 不区分大小写） ----
+function search(q){
+  const k=(q||'').trim().toLowerCase();
+  if(!k) return [];
+  return FIXTURE.filter(u=>[u.name,u.email,u.contact,u.company,u.id].some(f=>(f||'').toLowerCase().includes(k)));
+}
+function onSearch(){
+  const q=$('#q').value.trim();
+  const box=$('#results');
+  if(q.length<2){ box.hidden=true; setHint('idle',0,0); return; }
+  if(failNextSearch){
+    failNextSearch=false;
+    box.hidden=true; setHint('error',0,0); return;   // 失败态：不渲染候选，也不说"没这个人"
+  }
+  const hits=search(q);
+  if(hits.length===0){ box.hidden=true; setHint('empty',0,0); return; }
+  box.hidden=false;
+  const shown=hits.slice(0,8);
+  box.innerHTML = shown.map(u=>`<div class="res">
+      <div class="who"><div class="nm">${u.name||'（无姓名）'}</div>
+        <div class="mt">${u.email||u.contact||'（无联系方式）'} · ${u.id}</div></div>
+      <span class="st ${u.status==='active'?'':'paused'}">${u.status}</span>
+      <button class="btn sm" ${saving?'disabled':''} onclick="addUser('${u.id}')">${byId.has(u.id)&&parseLines(ta().value).includes(u.id)?'已在名单':'加入'}</button></div>`).join('');
+  setHint('hits', hits.length, shown.length);
+}
+// 告知行写在滚动容器之外：命中超一页时，"还有其余 N 条"若藏在折叠线下，
+// 运营者会误判成"这人不在库里"（Round 2 F-4）。
+function setHint(state,total,shown){ $('#caseDemo').textContent = describeBetaSearchState(state,total,shown); }
+function addFirst(){ const h=search($('#q').value); if(h.length) addUser(h[0].id); }
+function addUser(id){
+  if(saving) return;   // 保存中点「加入」会被响应覆盖成丢字（Round 2 F-2）
+  const cur=parseLines(ta().value);
+  if(!cur.includes(id)) ta().value = (cur.length? cur.join('\n')+'\n' : '') + id;
+  $('#q').value=''; $('#results').hidden=true; setHint('idle',0,0);
+  hideToast(); renderSummary();
+}
+
+// ---- 切分：现状只认换行；落地版认 换行/逗号/中文逗号/中文分号/顿号/半角分号/空白 ----
+// 顿号必须在内：后端 400 用「、」回显未知条目，运营者最自然的恢复动作就是把那串粘回来。
+function parseLines(text){
+  if(view==='old') return text.split('\n').map(s=>s.trim()).filter(Boolean);
+  return text.split(/[\n,，;；、\s]+/).map(s=>s.trim()).filter(Boolean);
+}
+function dedupeKeepOrder(list){ const s=new Set(); const out=[]; for(const x of list){ if(!s.has(x)){s.add(x);out.push(x)} } return out; }
+
+// ---- 以下三个函数是 src/lib/admin/typography-beta-input.ts 的逐字副本（Round 2 修后版）----
+// 目的：让本页自检跑的是**线上同一套文案与判据**，而不是模拟件自己编的漂亮话。
+const BETA_USER_ID_MAX_LEN = 64
+const BETA_USER_LIMIT = 100
+function summarizeTypographyBetaInput(items){
+  let emailLike=0, tooLong=0;
+  for(const it of items){ if(it.includes('@')) emailLike++; if(it.length>BETA_USER_ID_MAX_LEN) tooLong++ }
+  return {count:items.length, emailLike, tooLong, overLimit:items.length>BETA_USER_LIMIT};
+}
+function describeBetaSearchState(state, total, shown){
+  switch(state){
+    case 'loading': return '搜索中…'
+    case 'error': return '搜索请求失败（会话过期或网络问题）——这与某人有没有账号无关，请重试或刷新页面'
+    case 'empty': return '这个关键词没搜到匹配。注意：只有设过邮箱凭证的账号能按邮箱搜到，可换姓名或用户 ID 再试'
+    case 'hits': return total>shown ? `显示 ${shown} / ${total} 条，缩小关键词可看到其余 ${total-shown} 条` : `匹配 ${total} 条`
+    default: return ''
+  }
+}
+
+function classify(list){
+  // 服务端角色：只按 id 认人（与 findUnknownTypographyBetaUserIds 同语义）。
+  // 客户端**不做**存在性判断——这是 Round 2 F-1 的结论。
+  const ids=[], unknown=[];
+  for(const x of list){ (byId.has(x) && !x.includes('@') ? ids : unknown).push(x) }
+  return {ids, unknown};
+}
+
+function renderChips(){
+  const list=dedupeKeepOrder(parseLines(ta().value));
+  const el=$('#chips');
+  if(list.length===0){ el.innerHTML='<span class="empty">当前名单为空</span>'; return; }
+  el.innerHTML = list.map(id=>{
+    const u=byId.get(id);
+    if(!u) return `<span class="chip miss"><span class="nm">${id}</span><span class="id">保存时会被后端拒</span><button class="x" onclick="removeOne('${id}')">×</button></span>`;
+    return `<span class="chip"><span class="nm">${u.name||'（无姓名）'}</span><span class="id">${id}</span>${u.status!=='active'?`<span class="id">${u.status}</span>`:''}<button class="x" title="移出" onclick="removeOne('${id}')">×</button></span>`
+  }).join('');
+}
+function removeOne(v){
+  const kept=dedupeKeepOrder(parseLines(ta().value)).filter(x=>x!==v);
+  ta().value=kept.join('\n'); renderSummary();
+}
+function renderSummary(){
+  renderChips();
+  const list=dedupeKeepOrder(parseLines(ta().value));
+  const s=summarizeTypographyBetaInput(list);
+  const el=$('#summary');
+  // 按钮禁用态要先算，否则未读取成功的早退分支会跳过它（模拟件自检抓到的一处假绿）
+  $('#saveBtn').disabled = !loaded || saving;
+  $('#saveBtn').textContent = !loaded ? '保存名单（读取中…）' : (env==='prod' ? '💾 保存名单 · 生产站' : '💾 保存名单');
+  if(!loaded){ el.innerHTML='<span class="summary"><span class="bad">名单尚未读取成功——此时保存等于写入空名单，按钮已禁用，请刷新页面重试</span></span>'; return; }
+  el.innerHTML = `<span>${s.count===0?'名单为空 = 谁都不开（服务端 fail-closed）':`将提交 <span class="n">${s.count}</span> 条`}</span>`
+    + (s.emailLike? `<span class="bad"> · ${s.emailLike} 条含 @（像邮箱不像用户 ID，请用上方搜索点选）</span>`:'')
+    + (s.tooLong? `<span class="bad"> · ${s.tooLong} 条超 ${BETA_USER_ID_MAX_LEN} 字符（后端必拒）</span>`:'')
+    + (s.overLimit? `<span class="bad"> · 已超 ${BETA_USER_LIMIT} 人上限</span>`:'');
+}
+
+// ---- 保存：复刻后端语义 ----
+function save(){
+  hideToast();
+  if(!loaded) return;                       // 按钮已禁用，函数内二次拦截（Round 2 F-3）
+  const list=dedupeKeepOrder(parseLines(ta().value));
+  const {ids,unknown}=classify(list);
+  if(view==='old'){
+    if(unknown.length){ showError('保存灰度名单失败', `以下用户不存在：${unknown.join('、')}`); return; }
+    doSave(unknown.length?ids:list); return;
+  }
+  if(unknown.length){
+    showError('保存灰度名单失败',
+      `这些账号在库里找不到：${unknown.join('、')}（名单要的是用户 ID，形如 25 位字母数字串；邮箱不是用户 ID）`);
+    return;
+  }
+  if(env==='prod'){ askConfirm(`${ids.length} 人将立刻在生产站看到「排版定制（内测预览）」。确认保存？`, ()=>doSave(ids)); return; }
+  doSave(ids);
+}
+function doSave(ids){
+  saving=true; renderSummary();   // 在飞期间「加入」禁用（Round 2 F-2）
+  ta().value=ids.join('\n');
+  saving=false;
+  renderSummary();
+  const t = view==='new'
+    ? `灰度名单已保存（${ids.length} 人）· 最坏 30 秒后收敛（站点：${env==='prod'?'生产站':'测试站'}）· 已写入审计动作 feature-flags.save`
+    : `已保存（${ids.length} 人）`;
+  $('#toastOk').hidden=false; $('#okM').textContent=t;
+}
+function showError(h,m){ $('#errH').textContent=h; $('#errM').textContent=m; $('#toastErr').hidden=false; }
+function hideToast(){ $('#toastErr').hidden=true; $('#toastOk').hidden=true; }
+
+const dlg=$('#confirmDlg');
+let dlgCb=null;
+function askConfirm(msg,cb){ $('#confirmMsg').textContent=msg; dlgCb=cb; dlg.showModal(); }
+$('#dlgNo').onclick=()=>{dlg.close();dlgCb=null};
+$('#dlgYes').onclick=()=>{dlg.close(); const cb=dlgCb; dlgCb=null; if(cb) cb();};
+
+// ---- 演示按钮 ----
+function seedBadPaste(){ setView('old'); ta().value='353099912@qq.com\nfreedesignyes@gmail.com\n353099912@163.com'; renderSummary(); save(); }
+function seedDirtyPaste(){ setView('new'); ta().value='cms68etxy001cwj4n38vqi9jb，cms5damzc000fwj0id5f6d9k0; cmuz9zqvo001nwjnamhj6eh1f'; renderSummary(); }
+function seedAmbiguous(){ setView('new'); $('#q').value='demo-seed'; onSearch(); }
+function failSearchDemo(){ setView('new'); loaded=true; failNextSearch=true; $('#q').value='freedesign'; onSearch(); }
+function toggleLoaded(){
+  loaded=!loaded;
+  $('#loadToggle').textContent = loaded ? '演示：名单未读取成功' : '演示：恢复读取成功';
+  if(!loaded){ $('#q').value=''; $('#results').hidden=true; setHint('idle',0,0); }
+  renderSummary();
+}
+
+// ---- 自检：跑真 DOM ----
+function setTa(v){ ta().value=v; renderSummary(); }
+async function runSelfCheck(){
+  const R=[];
+  const push=(name,pass,got)=>R.push({name,pass,got:String(got)});
+  const prevView=view, prevEnv=env;
+
+  setView('new'); setEnv('prod'); loaded=true; saving=false;
+  // 1 搜索大小写不敏感（LIKE 语义）
+  $('#q').value='FREEDESIGNYES'; onSearch();
+  const n1=document.querySelectorAll('#results .res').length;
+  push('搜索按 LIKE 匹配，大写关键词仍命中', n1===1, n1+' 条');
+  // 2 点选落的是 ID 不是邮箱
+  addUser('cms68etxy001cwj4n38vqi9jb');
+  push('点「加入」后 textarea 里是 userId，不含 @', !ta().value.includes('@') && ta().value.includes('cms68etxy'), ta().value);
+  // 3 摘要只报形状、不做存在性断言
+  setTa('cms68etxy001cwj4n38vqi9jb\nfreedesignyes@gmail.com');
+  const sum3=$('#summary').textContent;
+  push('摘要报「1 条含 @」且整句不出现「不存在」', /1 条含 @/.test(sum3) && !sum3.includes('不存在'), sum3.trim());
+  // 4 保存被拦时新文案点名要的是用户 ID
+  save();
+  push('保存被拦时文案含「名单要的是用户 ID」', $('#errM').textContent.includes('名单要的是用户 ID'), $('#errM').textContent);
+  // 5 多分隔符（含顿号——后端回显就用顿号）
+  setTa('cms68etxy001cwj4n38vqi9jb，cms5damzc000fwj0id5f6d9k0; cmuz9zqvo001nwjnamhj6eh1f、cms5damyu000bwj0ic770mn32');
+  const n5=dedupeKeepOrder(parseLines(ta().value)).length;
+  push('中文逗号/分号/顿号/空格都算分隔（现状只认换行）', n5===4, n5+' 条');
+  // 6 重名不自动解析
+  $('#q').value='demo-seed'; onSearch();
+  const n6=document.querySelectorAll('#results .res').length;
+  push('同名两人时给出两条候选，不自动选', n6===2, n6+' 条候选');
+  // 7 已在名单的人按钮改口（Round 2 F-5）
+  setTa('cms5damzc000fwj0id5f6d9k0'); $('#q').value='demo-seed'; onSearch();
+  const btn7=[...document.querySelectorAll('#results button')].map(b=>b.textContent);
+  push('已在名单者按钮显示「已在名单」', btn7.filter(t=>t==='已在名单').length===1, btn7.join(' / '));
+  $('#results').hidden=true; $('#q').value=''; setHint('idle',0,0);
+  // 8 失败态 ≠ 没搜到态，且都不做存在性断言（Round 2 F-1）
+  failNextSearch=true; $('#q').value='freedesign'; onSearch();
+  const err8=$('#caseDemo').textContent;
+  $('#q').value='zzzz-no-such'; onSearch();
+  const empty8=$('#caseDemo').textContent;
+  push('请求失败说「失败」，与「没搜到」不同句，两句都不含「不存在」',
+    err8.includes('失败') && err8!==empty8 && !err8.includes('不存在') && !empty8.includes('不存在'),
+    err8.slice(0,20)+' … vs … '+empty8.slice(0,20));
+  $('#q').value=''; setHint('idle',0,0);
+  // 9 命中截断告知写在滚动容器之外（Round 2 F-4）
+  $('#q').value='demo'; onSearch();
+  push('截断告知行不在滚动容器内部（折叠线藏不住）',
+    !$('#results').contains($('#caseDemo')) && /其余|匹配/.test($('#caseDemo').textContent), $('#caseDemo').textContent);
+  $('#q').value=''; $('#results').hidden=true; setHint('idle',0,0);
+  // 10 生产二次确认 / 测试站不弹
+  setTa('cms68etxy001cwj4n38vqi9jb'); setEnv('prod'); save();
+  const opened10 = dlg.open; if(opened10){ $('#dlgNo').click(); }
+  setEnv('test'); save();
+  push('生产站保存弹确认、测试站不弹', opened10===true && dlg.open===false, 'prod.open='+opened10+' / test.open='+dlg.open);
+  // 11 名单未读取成功时禁止保存（Round 2 F-3）
+  toggleLoaded();
+  push('未读取成功时保存按钮禁用且摘要说明后果',
+    $('#saveBtn').disabled===true && /尚未读取成功/.test($('#summary').textContent), $('#summary').textContent.trim().slice(0,24));
+  toggleLoaded();
+  // 12 空名单语义
+  setTa('');
+  push('清空后摘要说明「空名单=谁都不开」', /谁都不开/.test($('#summary').textContent), $('#summary').textContent.trim());
+  // 13 幂等
+  const once=dedupeKeepOrder(parseLines('a1，a2；a1 a3'));
+  push('解析幂等：join 后再切一次结果不变', dedupeKeepOrder(parseLines(once.join('\n'))).join('|')===once.join('|'), once.join('|'));
+  // 14 现状视图复刻线上旧报错
+  setView('old'); setEnv('prod'); ta().value='353099912@qq.com\nfreedesignyes@gmail.com\n353099912@163.com'; renderSummary(); save();
+  push('现状视图复现线上那条旧报错', $('#errM').textContent.startsWith('以下用户不存在：'), $('#errM').textContent);
+  // 15 环境徽标
+  setView('new'); setEnv('prod');
+  push('卡片带环境徽标且值随站点切换', $('#envBadge').textContent==='生产站', $('#envBadge').textContent);
+
+  const passN=R.filter(r=>r.pass).length;
+  $('#scBody').innerHTML = R.map((r,i)=>`<tr><td class="n">${i+1}</td><td>${r.name}</td><td><span class="tag ${r.pass?'pass':'fail'}">${r.pass?'PASS':'FAIL'}</span></td><td class="n">${r.got.replace(/</g,'&lt;')}</td></tr>`).join('');
+  $('#scState').textContent = `${passN}/${R.length} 通过`;
+  $('#scNote').textContent = '自检跑的是本页真实 DOM，以及从 src/lib/admin/typography-beta-input.ts 逐字复制过来的解析/摘要/文案函数——模拟件与落地件共用同一套判据。';
+  setView('new'); setEnv('prod'); setTa(''); loaded=true; saving=false;
+  return {pass:passN, total:R.length};
+}
+
+// 初始化
+setView('new'); setEnv('prod'); renderSummary();
+$('#fixtureList').innerHTML = FIXTURE.map(u=>`<div class="kv"><span class="k">${u.id.slice(0,7)}…</span><span>${u.name||'（无姓名）'} · ${u.email||u.contact||'（空）'} · ${u.status}</span></div>`).join('');
+window.__selfCheck = runSelfCheck;
+</script>
+</body>
+</html>

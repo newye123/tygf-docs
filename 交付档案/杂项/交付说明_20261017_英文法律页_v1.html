@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交付说明：英文法律页 v1.0（5bf18c8）</title>
+<style>
+  :root { --ink:#1f2328; --muted:#59636e; --line:#d8dee4; --brand:#0b57d0; --bg:#f6f8fa; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:40px 20px; background:var(--bg); color:var(--ink);
+         font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; line-height:1.75; }
+  main { max-width:860px; margin:0 auto; background:#fff; border:1px solid var(--line);
+         border-radius:12px; padding:40px 48px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  h2 { font-size:1.1rem; margin:32px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line); color:var(--brand); }
+  .meta { color:var(--muted); font-size:.9rem; margin-bottom:24px; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:.93rem; }
+  th,td { border:1px solid var(--line); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--bg); white-space:nowrap; }
+  code { background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px;
+         font-family:Consolas,monospace; font-size:.88em; word-break:break-all; }
+  ul { margin:8px 0; padding-left:22px; }
+  li { margin:6px 0; }
+  .ok { color:#116329; font-weight:600; }
+  .note { background:#fff8e6; border:1px solid #eedc82; border-radius:8px; padding:12px 16px; font-size:.92rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>交付说明：英文法律页 v1.0（5bf18c8）</h1>
+  <p class="meta">日期：2026-10-17 · 执行：CodeBuddy/砚 · 状态：<span class="ok">已交付</span>（生产已上线并过验收门）</p>
+
+  <h2>一、交付内容</h2>
+  <table>
+    <tr><th>项</th><th>内容</th></tr>
+    <tr><td>新增页面</td><td><code>/en/privacy</code>、<code>/en/terms</code>、<code>/en/privacy/subprocessors</code>（v1.0，生效 2026-10-16）</td></tr>
+    <tr><td>双语对等</td><td>三中文页增加 hreflang languages 映射（zh-CN / en / x-default 互指）</td></tr>
+    <tr><td>可达性</td><td><code>sitemap.ts</code> 收录两个英文法律 URL（priority 0.3, yearly）；<code>/en</code> 布局页脚加 Privacy / Terms 链接</td></tr>
+    <tr><td>守卫扩展</td><td><code>scripts/smoke-legal-pages-drift.mjs</code>：PAGE_SOURCES 扩到 6，占位标记中英分家（中文：草案/待取证/未核实/待定稿/生效日期：待定；英文：TODO/TBD/PLACEHOLDER），子处理者页加 5 个处理者锚点断言</td></tr>
+    <tr><td>守卫扩展</td><td><code>scripts/smoke-seo-consistency.mjs</code>：LEGAL_PAGES 扩到 6，英文页用英文标记集</td></tr>
+  </table>
+  <ul>
+    <li>提交：<code>5bf18c8bc7090eabe6ab937010e68ee88d2f34db</code>（10 文件，+763/−14）。</li>
+    <li>内容纪律：与中文 v1.0 逐节对应；运营主体名称沿用「未公示」诚实边界，不编造；技术证据（dmidecode、环境变量、AS 号等）逐字保留。</li>
+  </ul>
+
+  <h2>二、出包与部署证据链</h2>
+  <ul>
+    <li><strong>出包</strong>：<code>package-release.cjs production --allow-detached-head 5bf18c8… --allow-unsigned-beta</code> → 17 道预检门全 PASS（含第 17 道 <code>legal-pages-drift</code>）。
+      <ul>
+        <li>归档：<code>release/production/tygf-production-5bf18c8bc709.zip</code>（SHA-256 <code>3abe0300…afc74c</code>，收据同目录）。</li>
+        <li>本机两坑及修法见 <code>.workbuddy-ai/memory/MEMORY.md</code>「出包/部署链本机坑」（spawnSync fd-shim + file 替身 ASCII 路径）。</li>
+      </ul>
+    </li>
+    <li><strong>部署</strong>（归档自带 <code>deploy/deploy-release.sh</code>）：
+      <ul>
+        <li>首跑在最终 unit 路径闸被拦（脚本按 <code>$(dirname BASH_SOURCE)</code> 找同级 <code>check-unit-paths.sh</code>，单抽一个文件缺失；当时 symlink 已翻、服务未重启）。</li>
+        <li>按脚本顺序手工补完剩余步：unit 校验 PASS（26 路径 / 6 unit）→ <code>systemctl enable</code> → restart → <strong>2 秒健康</strong> → 4 个 timer <code>enable --now</code> → auth-mail / smart-review 随发布重启 → 旧 release 裁剪留 3（剪 <code>ba62ba0</code>，当前 <code>5bf18c8</code>、回滚链 <code>cb3596d</code> / <code>034b4fd</code>）。</li>
+      </ul>
+    </li>
+    <li><strong>验收</strong>：
+      <ul>
+        <li>服务器本机：三英页 HTTP 200、占位 0、生效日期齐。</li>
+        <li>生产验收门 <code>smoke-seo-consistency</code>（SEO_TARGET=https://tuyigf.com）：<span class="ok">222 PASS / 0 FAIL</span>，日志存档 <code>交付档案/杂项/SEO一致性门禁_生产_5bf18c8_20261017.log</code>。</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2>三、诚实边界</h2>
+  <div class="note">
+    <ul>
+      <li>运营主体名称仍未公示（查无可靠来源，不编造）。</li>
+      <li>条款用词充分性未经专业法律复核，建议 Owner 安排。</li>
+      <li><code>smoke-seo-consistency.mjs:20</code>「条款/隐私英页未定稿」注释已过时（cosmetic，下轮清理）。</li>
+      <li>生产 FAQ 内容通道（DB 覆盖）与本轮无关，未触碰。</li>
+    </ul>
+  </div>
+
+  <h2>四、登记</h2>
+  <ul>
+    <li>台账 <code>AI_MEMORY/ledger.jsonl</code>：<code>LEGAL-EN-V1.0</code>（updatedAt 2026-10-17 09:06，74 行）。</li>
+    <li>飞书 Base：已投影并回读确认（状态「已交付」）。</li>
+    <li>飞书推送：<code>交付档案/杂项/飞书推送_20261017_英文法律页上线.md</code>（三节人话版，已发送）。</li>
+  </ul>
+</main>
+</body>
+</html>

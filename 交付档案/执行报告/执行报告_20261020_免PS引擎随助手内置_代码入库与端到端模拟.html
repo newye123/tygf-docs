@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>免 PS 引擎随助手内置 · 代码入库 3ec8a4b · 2026-10-20</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 免 PS 内置落地</p>
+  <h1>免 PS 引擎真的内置进本地助手了：代码入库 3ec8a4b，"内置"不再是纸面方案</h1>
+  <p class="standfirst">Owner 追问成立——10-17 的执行方案在，但代码没落：判定层函数名叫 bundled，实现只读本机配置里的空路径。这次把取件、钉值、出包 staging、安装脚本四条一起接上。</p>
+  <p class="meta">2026-10-20 21:59:18 提交（git log %ad 实测）· develop 3ec8a4b · 未推送 / 未改版本号 / 未部署 · 实现与跑门在隔离树 worktrees/tmp-pc-bundle（detached @ 99baaf6）</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">结论</p>
+  <p class="lede">助手现在按 <span class="mono">{助手目录}\bin\engine.sha256</span> 自动取引擎并校验出厂钉值；缺钉值／缺件一律拒绝走引擎道，配置里的路径降为开发覆盖口子。开关 <span class="mono">pcExecutorEnabled</span> 出厂仍 false ⇒ 装了不等于启用，物理断路一字不变。仍缺的是产物面三件：云构建（换中性版本资源与图标＋构建清单）、开源许可页、带 NSIS 的出包机。</p>
+  <div class="stats">
+    <div class="stat ok"><span class="n">15/15</span><span class="lb">新契约门（含负控）rc=0</span></div>
+    <div class="stat ok"><span class="n">31/31</span><span class="lb">既有四门复跑（7＋9＋6＋9）</span></div>
+    <div class="stat ok"><span class="n">25</span><span class="lb">候选包和值复算 0 处不符</span></div>
+    <div class="stat warn"><span class="n">3</span><span class="lb">出厂前仍缺（非本机能力）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel yes">
+    <p class="hd">本轮运行证据（全部真实回显）</p>
+    <ul class="tl">
+      <li class="tl-body"><span class="tag">1</span>新门 <span class="mono">smoke-pc-bundled-engine.mjs</span>：15 项全过，<span class="mono">GATE_RC=0</span>。负控三枚独立成立——换引擎字节 ⇒ <span class="mono">PC_VENDOR_HASH_MISMATCH</span> rc=1；删钉值 ⇒ <span class="mono">PC_VENDOR_PIN_MISSING</span> rc=1；无内置件目录上跑 <span class="mono">--bundled</span> ⇒ rc=1 并点名缺什么</li>
+      <li class="tl-body"><span class="tag">2</span>既有四门同轮复跑：<span class="mono">pc-channel 7/7</span>、<span class="mono">wiring-freeze 9/9</span>、<span class="mono">enable-script 6/6</span>、<span class="mono">observation 9/9</span>；<span class="mono">node --check</span> 四件全 rc=0</li>
+      <li class="tl-body"><span class="tag">3</span>端到端模拟装包形态：真 67 MB 引擎走 staging（<span class="mono">STAGE_RC=0</span>）⇒ 造 <span class="mono">{app}\bin</span> 布局 ⇒ 取件解析 <span class="mono">source=bundled</span> ⇒ 实跑只读扫描 <span class="mono">SCAN_RC=0</span> 全 PASS（<span class="mono">scan_status=SUCCESS · psVersion=null · textLayers=3 · 母版前后同 a2da784116ed…</span>）</li>
+      <li class="tl-body"><span class="tag">4</span>候选包补 <span class="mono">bin\engine.sha256</span> 后和值重算：<span class="mono">FILES=25 / SUMS_LINES=25 / MISMATCHES=0 / 101.2 MB</span></li>
+      <li class="tl-body"><span class="tag">5</span>gitignore 规则实测生效：<span class="mono">git check-ignore -v</span> 命中新增行 ⇒ 引擎 exe 本体不入库，只入钉值与许可文本</li>
+    </ul>
+  </div>
+
+  <div class="panel no">
+    <p class="hd">改了什么，以及"已定未做"错在哪一层</p>
+    <div class="card">
+      <p class="k">🟠 判定层名字叫 bundled，实现却依赖空配置</p>
+      <p class="body">10-17 方案第 5 条已给落位，但代码里 <span class="mono">bundledEnginePresent()</span> 只读 <span class="mono">cfg.pcExePath</span>，而该键缺省为空串 ⇒ 没有配置写入就永远判"未配置"。内置这件事从未成立。</p>
+      <p class="loc">worktrees/develop/download/local-assistant/pc-channel.js:21（新增 resolveBundledEngine）· 同文件 :59（取件失败原因原样透出）· server.js:732（取件视图）· 交付档案/执行方案/执行方案_20261017_PhotoCraft商用许可与内置方式_对抗式审查.md:5（原决定）</p>
+      <p class="fix">新增取件解析：配置给路径则用配置（开发覆盖），否则读 <span class="mono">{app}\bin\engine.sha256</span>；五种失败各有独立码，绝不回退成"路径看着在就走引擎"。</p>
+    </div>
+    <div class="card">
+      <p class="k">🔴 内置之后必须有三处一起改，否则凭记与取件会分叉</p>
+      <p class="body">预扫描调用、Readiness 调用、以及写进凭记的 <span class="mono">engineExeSha256</span> 原本都直接读裸配置。只改判定层不改这三处，内置形态下扫描会成功但凭记里的哈希是 null ⇒ 执行段被判"缺凭记"。</p>
+      <p class="loc">server.js:5173（视图只算一次并冻结）· :5301（扫描吃视图值）· :5400（凭记取视图钉值）· :5856 与 :5876（Readiness 同一把尺）</p>
+      <p class="fix">两处通道判定各自冻结一份视图，扫描与凭记都吃同一份；观测门断言按新形状重定靶并新增"不得绕过取件视图"。</p>
+    </div>
+    <div class="card">
+      <p class="k">🟠 出包与安装面：钉值不能由打包机现场编</p>
+      <p class="body">新增 <span class="mono">build/vendor-engine.cjs</span>：验钉值→staging→复制后复核，换件／缺钉值／缺许可一律 rc=1；挂进 <span class="mono">build-engine.bat</span> 第 4b 步（纯插入 +11/−0，行尾未被改写）。<span class="mono">installer.iss</span> 加两条 Source（<span class="mono">dist\bin\*</span>→<span class="mono">{app}\bin</span>、<span class="mono">dist\licenses\*</span>→<span class="mono">{app}\licenses</span>）。</p>
+      <p class="loc">download/local-assistant/build/vendor-engine.cjs:1 · 同目录 build-engine.bat:56 与 :76（:vendor_fail 标号）· installer.iss:50-56 · vendor/photocraft/engine.sha256:1 · 许可 bundle 8 件同目录</p>
+      <p class="fix">许可八件与钉值入库，引擎本体 .gitignore 不入库；下一版助手打包后开通道只需 <span class="mono">--bundled</span>。</p>
+    </div>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">出厂前仍缺三件（都不是我这台机器能补齐的）</p>
+  <div class="gate first"><span class="num">1</span><div class="body">云构建产出"版本资源与图标换成我们自己"的引擎＋构建清单 {上游 commit／补丁 commit／Cargo.lock sha256／exe sha256／许可 bundle sha256}。本机无 Rust；当前钉值 <span class="mono">be118612…</span> 来自本机已装副本 ⇒ 仍只能算内测件。</div></div>
+  <div class="gate"><span class="num">2</span><div class="body">站内开源许可页未建，且要同时写明两个署名主体：许可文本＝ArtCraft Team 与 PhotoCraft contributors，文件属性公司名＝Learning Machines LLC（后者在许可目录 0 命中，法人关系<strong>未核实</strong>）。</div></div>
+  <div class="gate"><span class="num">3</span><div class="body">带 NSIS 的出包机：<span class="mono">setup.exe</span> 本机造不出（多处路径实测 0 命中，未静默安装任何系统工具）。</div></div>
+</section>
+
+<section class="notes">
+  <p class="hd">并发纪律与测试口径（两点必须说清）</p>
+  <ul class="notes">
+    <li><strong>没重演上午的误卷</strong>：提交期间另一会话把 develop 从 99baaf6 推到 e93b81f，我先比文件集零重叠，再用 <span class="mono">git apply --cached</span> 只暂存自己的 hunk；提交后实测他们未提交改动原样在（<span class="mono">server.js</span> 29/0、<span class="mono">v15-runner.js</span> 22/0、<span class="mono">package.json</span> 2/1、守卫脚本仍未跟踪 5,768 B）。</li>
+    <li><strong>没 bump 版本号是故意的</strong>：安装包产物尚未产出，先把身份改成 3.7.16 等于再造一枚常亮绿灯（同 <span class="mono">check-release-identity</span> 的 <span class="mono">missing &lt;assistantFile&gt;</span> 判据）。</li>
+    <li><strong>你测试时</strong>：本包助手 exe 是内置寻址入库前构建的，这一版仍按测试卡用 <span class="mono">--exe</span> 开三键；下一版起只需 <span class="mono">--bundled</span>，配置不再记路径。</li>
+    <li><strong>开三键的写操作请由你本人在测试机执行</strong>：脚本改的是你机器的助手会话文件，我不代改你的现场；只读核验与 <span class="mono">--dry-run</span> 我已跑过（能打印将要取哪个内置件、且实测一字节没写）。</li>
+    <li><strong>红线自查</strong>：未 push、未改历史、未部署两站、未翻支付闸、未重启本机 PS 与助手、未代装系统依赖；进程收尾只按 PID。</li>
+  </ul>
+</section>
+
+<div class="callout"><span class="lb">给你的一句话</span>"引擎内置进助手"这件事从今天起是真的：助手自己去安装目录里找引擎并按出厂钉值校验，换件或缺钉值都会被拒。剩下的三件事（云构建、许可页、出包机）都得在别的机器上做，需要你指定一台；而"用免 PS 扫真稿"这一步现在就可以测——本包照测试卡跑即可。</div>
+
+<footer>
+  <p>证据位置：worktrees/develop 提交 3ec8a4b（19 文件 +1646/−18）· AI_MEMORY/ISSUES.md:1241（#198 追加"①②已入库"）· AI_MEMORY/TASK_LOG.md:1 · AI_MEMORY/ledger.jsonl 末行 PC-BUNDLED-ADDRESSING（updatedAt 2026-10-20 22:03，投影 create=1）· tmp/pc-candidate-3.7.16/{测试卡.txt:15／:31／:73, bin/engine.sha256, SHA256SUMS.txt}</p>
+  <p>取数方式：node 直跑各门并单独取退出码（不经管道）；PowerShell Get-FileHash 与 git 实测；所有钟点抄自同轮回显（date 21:59:42／git %ad 21:59:18／ledger 22:03）。</p>
+</footer>
+</div>
+</body>
+</html>

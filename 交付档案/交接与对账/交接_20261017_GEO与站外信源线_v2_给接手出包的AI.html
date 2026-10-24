@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<title>交接文档 v2：GEO 与站外信源线 → 接手出包的 AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>渠道打分</span><span class="sep">/</span><span>24 个免费外链与目录</span><span class="sep">/</span><span>2026-10-17</span></p>
+  <h1>交接文档 v2：GEO 与站外信源线 → 接手出包的 AI</h1>
+  <p class="standfirst">上一手 10-11 已把这批渠道分过一档。这次是<strong>逐个重新实测</strong>：站还在不在、提交口还在不在、要不要主体资质、条目页是不是服务端渲染（决定 AI 引擎抓不抓得到）。只读探测，不提交表单、不注册。</p>
+  <div class="meta"><span>24 个渠道</span><span>三轮复跑（修掉 6 个本机 TLS 假阴性）</span><span>未核实：DR／nofollow（无 Ahrefs key）</span><span>结论：建议投 3 个</span></div>
+</header>
+<h1>交接文档（第二版）：GEO 与站外信源线（砚 · Qoder 会话）→ 接手出包的 AI</h1>
+<ul class="notes">
+<li>生成时刻：2026-10-17 23:4x（实测；取代本会话 22:3x 那份《交接_20261017_GEO第九轮_给接手出包的AI.md》，那份保留不回改）</li>
+<li>范围：<strong>只含本会话（砚）的产出与实测</strong>。别手四条线（官网文案刀一至刀四、排版 W 系列、批量台 v6、SEO 刀五册子）只写"与我的交叉面"，不代其声明。</li>
+<li>一句话结论：<strong>我这两笔代码合格但仍未部署；真正挡路的是 #172（四枚提交只在本地 main）——它到现在还没被推、也没被合。</strong></li>
+</ul>
+<p class="lede">---</p>
+<section><h2><span class="sn">01</span>0 现场状态（本会话 23:4x 实测，接手方请重跑一遍再用）</h2>
+<div class="scrollx"><table><thead><tr><th>项</th><th>读数</th><th>含义</th></tr></thead><tbody><tr><td><code>origin/develop</code></td><td class="mono"><strong>418ad75</strong></td><td class="mono">就是我那两笔的尖端，<strong>没人再往上推</strong></td></tr><tr><td>本地 <code>develop</code></td><td class="mono"><strong>3316292</strong>（刀四）</td><td class="mono">别手已提交但<strong>未推</strong>，本地 ahead</td></tr><tr><td><code>origin/main</code></td><td class="mono"><strong>cb3596d</strong></td><td class="mono">仍停在旧点</td></tr><tr><td>本地 <code>main</code></td><td class="mono"><strong>4fa9d4f</strong></td><td class="mono"><strong>领先 origin/main 4 枚</strong>（实测 <code>git rev-list --count</code>）＝#172 未处置</td></tr><tr><td>合流是否发生</td><td class="mono"><strong>否</strong></td><td class="mono"><code>git cat-file -e origin/develop:src/app/en/terms/page.tsx</code> 失败＝英文法律页仍不在 develop</td></tr><tr><td><code>worktrees/develop</code> 工作树</td><td class="mono">1 处脏（<code>M inline-edit.css</code>）</td><td class="mono">别手在飞</td></tr><tr><td>台账</td><td class="mono">169 行、0 坏行、90 个唯一任务、<strong>在办 10</strong>（上限 2）</td><td class="mono">见 §6 那条 #144 复发</td></tr></tbody></table></div>
+<section><h2><span class="sn">02</span>1 本会话产出</h2>
+<p class="lede"><strong>代码（均在 <code>origin/develop</code>，均未部署）</strong></p>
+<ul class="notes">
+<li><code>9bc1778</code>（5 文件 +51/−10）：中文首页页脚补四条真链接（<code>/download</code>、<code>/terms</code>、<code>/privacy</code>、<code>/en</code>）；FAQ 问句由 <code>&lt;button&gt;</code> 升 <code>&lt;h3 class="faq-h"&gt;</code>（zh/en 同改，<strong>问句文字一字未动</strong>）；首页示意卡标题加「（示意数据，非实测统计）」；<code>smoke-seo-consistency.mjs</code> 新增「首页静态 HTML 必须出边到 sitemap 每个本站一级路径」＋「取不到首页必须报红」。</li>
+<li><code>418ad75</code>（2 文件 +113/−0）：新增只读门 <code>scripts/check-sitemap-route-parity.mjs</code> ＋ <code>npm run check:sitemap-parity</code>。</li>
+</ul>
+<p class="lede"><strong>交付件（文档，不进构建）</strong></p>
+<ul class="notes">
+<li><code>交付档案/执行方案/执行方案_20261017_GEO第九轮_业界算法对标与可发现性修复.{md,html}</code>（含 §7/§09 执行记录）</li>
+<li><code>交付档案/执行方案/模拟方案_20261017_GEO第九轮_改造后面貌与双分度量面板.html</code>（可交互，浏览器实测）</li>
+<li><code>交付档案/宣传与运营/渠道打分_20261017_免费外链24个逐个实测.{md,html}</code>（24×7 表，浏览器核过渲染）</li>
+<li><code>交付档案/交接文档/交接_20261017_GEO第九轮_给接手出包的AI.{md,html}</code>（第一版，被本文取代）</li>
+<li>飞书已发四份（<code>…GEO第九轮.md</code>、<code>…执行版.md</code>、<code>…E2.md</code>、<code>渠道打分…</code>），全部 <code>rc=0</code></li>
+<li>取证载体（gitignored）：<code>tmp/geo-research/</code>（<code>tu_report.json</code>、<code>gptbot_home.html</code>、<code>rubric_v11.json</code>、<code>channel-probe.json</code>、<code>probe-channels.mjs</code>、<code>169-positive-negative-control.mjs</code>、<code>ledger.jsonl.bak-2340</code>）</li>
+</ul>
+<p class="lede"><strong>治理记账</strong>：<code>TASK_LOG</code> 三节（第九轮／执行版／执行版 E2）；<code>ISSUES</code> 新立 <strong>#169 #170 #171</strong>，在别手原案 <strong>#172</strong> 段末追加<strong>补证一、补证二</strong>（未改别人一字）；台账 <code>GEO-ALGO-R8</code>（<code>等您定</code>、<code>wip:false</code>）。</p>
+<section><h2><span class="sn">03</span>2 已验证 / 未验证（别把未验证当通过）</h2>
+<p class="lede">已验证（真实退出码）：<code>npx tsc --noEmit</code> rc=0；<code>npx eslint</code> 四个改动文件 rc=0；<code>npm run test:content-studio-v1</code> rc=0、<code>npm run test:content-studio-draft</code> rc=0（专门跑给新增文案键把关）；<code>check:sitemap-parity --self-test</code> rc=0；<strong>两棵真树对照：develop RED 缺口 2（点名 <code>/en/terms</code>、<code>/en/privacy</code>）、main GREEN 缺口 0</strong>；#169 门夹具正负对照（负控 FAIL=3／正控 FAIL=0）；<code>git show --stat</code> 行数与实际改动一致。</p>
+<p class="lede">未验证（接手方必须补）：</p>
+<ul class="notes">
+<li><strong>本地真机渲染 NOT RUN</strong>——<code>npm run dev</code> 被 <code>dev-isolated</code> 挡（<code>workspace:init</code> 报「workspace name must contain 2-49 lowercase letters…」＝CJK 路径派生名不合法）。⇒ 页脚四条链接与 FAQ <code>&lt;h3&gt;</code> <strong>没在浏览器里看过</strong>。请在非中文路径的树上起服务，跑 <code>SEO_TARGET=http://127.0.0.1:3000 npm run test:seo-consistency</code>，并肉眼核页脚换行与 FAQ 折叠（我加了 <code>.faq-h{margin:0;font-size:inherit…}</code>，Tailwind v4 preflight 已归零 margin，理论视觉不变）。</li>
+<li><strong>无障碍未复验</strong>：<code>&lt;h3&gt;</code> 包 <code>&lt;button&gt;</code> 是 APG accordion 正确形，但没跑 a11y 检查（仓里可用 <code>chrome-devtools-mcp:a11y-debugging</code>）。</li>
+<li><code>test:seo-consistency</code> 只对着生产跑过一次（<code>assertion failures=1, fetch failures=7</code>；那条 FAIL 是 <code>en home links to /terms and /privacy</code>，属两树分叉产物，非我引入）。<strong>没对本地或测试站构建跑过。</strong></li>
+<li>渠道打分表的 <strong>DR／是否 nofollow 未核实</strong>（本机无 Ahrefs key，一律留空，没编）。</li>
+</ul>
+<section><h2><span class="sn">04</span>3 与另两只手的交叉面（这段最重要，漏了就会互相覆盖）</h2>
+<p class="lede"><strong>刀四（官网文案，别手，已提交本地 <code>develop@3316292</code>，未推）</strong>：把 43 个碎片键并成 16 个「一段话＝一个键」（<code>\n</code> 换行＋<code><strong>粗体</strong></code>＋<code>{占位符}</code>），动的是 <code>home-view.tsx</code>、<code>siteContent.ts</code>、<code>siteContentEn.ts</code>——<strong>与我 <code>9bc1778</code> 同三文件</strong>。</p>
+<p class="lede">⇒ 三条后果：</p>
+<ul class="notes">
+<li>谁后推谁要合。我这两笔已在 <code>origin/develop</code>，刀四在本地——<strong>他 pull 时会在这三个文件冲突</strong>。</li>
+<li>他的 <code>next</code> 里写着「部署前必须按 <strong>#173</strong> 计数（面扩到 <code>leadA|leadB|copyA|copyB|copyStrong|successSub*</code>）」。我的四个新页脚键（<code>linkDownload/linkTerms/linkPrivacy/linkEn</code>）<strong>不在那个清单里</strong>，因为是全新键、库里不可能有旧值 ⇒ <strong>#173 不咬我这几键</strong>，但<strong>咬我改过的示意卡标题</strong>（<code>report.doc.title</code> 是既有键，若生产库存着旧值，部署后会被覆盖＝我那句「示意数据」白加）。<strong>部署后必须现读复核这一句</strong>：<code>curl -s https://&lt;站&gt;/ | grep -c "示意数据"</code>。</li>
+<li>他引入的 <code>{占位符}</code>/<code>\n</code> 渲染层如果和我的 <code>&lt;h3&gt;</code> 包装同落一处，以他的语法层为准（他有 <code>site-copy-markup.ts</code> 与守卫），<strong>不要在我的改动里另造一套富文本</strong>。</li>
+</ul>
+<p class="lede"><strong>刀五（SEO 册子对表，别手，<code>SEO-R13-PLAYBOOK</code>，等您定）</strong>：已经做了我上一轮建议的"信源实测"的中文侧——<strong>百度四词 76 条结果里产品页形态仅 1.3%、<code>site:</code> 双采 0 条、品牌词 20 条 0 命中且第 8 位是同名邻居 <code>zhitugf.com</code>（#180）</strong>。</p>
+<p class="lede">⇒ <strong>接手方不要重跑这批</strong>；我上一轮建议的"信源面板"只剩<strong>英文/生成式引擎那一半</strong>没做（ChatGPT／Perplexity／豆包英文问法），且要与他的页面归属表并轨，别建第二套。</p>
+<p class="lede"><strong>排版线（<code>TYPO-UIUX-REDUX</code>）</strong>：与 GEO 无交叉，但同处一个 develop 树，出包时会一起走。</p>
+<section><h2><span class="sn">05</span>4 出包顺序（在第一版交接基础上更新，照做）</h2>
+<ul class="notes">
+<li><strong>先存生产代码的第二份</strong>（需 Owner 点头）：<code>git -C worktrees/develop push origin main</code>；判据 <code>ls-remote --heads origin main</code> = <code>4fa9d4f…</code>；被 non-fast-forward 挡 ⇒ <strong>停，问 Owner，不要 force</strong>。</li>
+<li><strong>确认无别线在飞</strong>：<code>git -C worktrees/develop status --porcelain</code> 为空，且 <code>rev-list --left-right --count refs/remotes/origin/develop...HEAD</code> = <code>0 0</code>（<strong>现在不是</strong>：本地有刀四未推）。不为零 ⇒ 停。</li>
+<li><strong>合流</strong>：在<strong>新孤立 worktree</strong> 做，<code>git merge main</code>（<strong>不是 <code>origin/main</code></strong>——那 4 枚只在本地 main）。五处冲突处置见第一版交接 §4 第 2 步；<strong>合完必查</strong>：<code>grep -c "checklist\|check-item"</code> 在 <code>home-view.tsx</code>、<code>home-view-en.tsx</code>、<code>siteContent.ts</code>、<code>siteContentEn.ts</code> <strong>四个都不能是 0</strong>（防内容卡静默消失）。新增一条：合完再核 <code>grep -c "linkDownload" src/config/siteContent.ts</code> ≥1（我那四键别被合流吃掉）。</li>
+<li><strong>跑门</strong>：<code>npx tsc --noEmit</code>；<code>npm run lint</code>；<strong><code>npm run check:sitemap-parity</code> 必须 GREEN</strong>；<code>SEO_TARGET=http://127.0.0.1:3000 npm run test:seo-consistency</code>；<code>npm run repo:check</code>。若动助手/计费面：<code>test:batch-row-contract</code> 与 <code>test:trust-chain</code> 是硬前置。</li>
+<li><strong>出包</strong>：<code>npm run release:preflight:test</code> 通过才 <code>npm run release:package:test</code>（既有坑：<code>porcelain</code> 非空会在任何测试门前 1 秒挡死打包；产包脚本有"先做副作用后做检查"形态，跑过要 <code>ls release</code> 核）。</li>
+<li><strong>部署后回读</strong>（证明真生效，别只信 rc=0）：<code>grep -c 'href="/download"'</code> ≥1；<code>grep -c 'class="faq-h"'</code> ≥1；<code>grep -c "示意数据"</code> ≥1（这条同时验 #173 有没有把我的改动盖掉）；<code>/en/terms</code> = 200。</li>
+<li><strong>记账</strong>：<code>TASK_LOG</code> 置顶追加；<code>CURRENT_STATUS</code> 是单写者文件（属主＝总控长槽），非属主不得整档重写；<code>ISSUES</code> 只更新状态不删条目；<code>ledger.jsonl</code> <strong>只用 node <code>fs.appendFileSync</code> 追加</strong>（见 §6），再 <code>bash scripts/sync-task-ledger.sh</code>（先 <code>--dry-run</code>，失败不阻塞交付）。</li>
+</ul>
+<section><h2><span class="sn">06</span>5 渠道打分结论（24 个免费外链/目录，逐个实测）</h2>
+<p class="lede"><strong>建议投 3 个</strong>：16map 设计师导航（唯一客群正面撞上——用户就是设计师）、异次元软件世界（走投稿不是挂链，SSR 6.6%）、果核剥壳（有表单，但<strong>它自己条目页 SSR≈0%，别指望被引擎引用</strong>）。</p>
+<p class="lede">排队 9／砍 8／<strong>已死 4</strong>（电商导航网 DNS 不解析、一网一匠 HTTP 522、正版中国证书名不符＋403、NodeLoc 提交路径 404）。</p>
+<p class="lede">砍掉的一半原因集中：<strong>"只收免费"（小众软件、tigg.cc、正版中国、新趣集）或"要主体资质"（微博、36氪企服）与我们"付费内测＋无主体"形态正面冲突</strong>；知乎 AI Works 更是要我们对外自称 AI 工具才投得进——<strong>那是失真，撞铁律，不做</strong>。</p>
+<p class="lede">天花板：外链数量与 AI 可见度相关性 <strong>ρ≈0.17–0.29</strong>（品牌提及 0.66–0.71、YouTube 0.737）。<strong>别按"发完就有流量"排预算。</strong></p>
+<section><h2><span class="sn">07</span>6 现场提醒（今天真实发生的三件，省你踩）</h2>
+<ul class="notes">
+<li><strong>#144 那个失效形态今天又复发一次</strong>：<code>ledger.jsonl</code> 第 167 行出现两条记录用 <code>}{</code> 粘在同一行（<code>SEO-R13-PLAYBOOK</code> 23:30 ＋ <code>TYPO-UIUX-REDUX</code> 23:34），后果是这两条在飞书投影里被<strong>静默丢掉</strong>。我 23:35 前诊断到、准备做保字节拆分时，<strong>别手已在 23:35:57 修好</strong>（+1 字节），我的脚本按"读后文件被改过即中止"的守卫自动退出没动它。⇒ 追加台账一律 <code>fs.appendFileSync(..., '\n')</code>，<strong>禁用 PowerShell <code>Add-Content</code></strong>；写前先 <code>node</code> 逐行 <code>JSON.parse</code> 体检。</li>
+<li><strong>交接文档现在有三个目录并存</strong>：<code>交付档案/交接与对账/</code>（2 份）、<code>交付档案/交接/</code>（1 份）、<code>交付档案/交接文档/</code>（1 份，我建的）。本文放 <code>交接与对账/</code>（多数派）。<strong>下一个人请先定一个目录</strong>，别开第四个。</li>
+<li><strong>本机环境坑（全部本会话实测）</strong>：<code>python</code> 是坏壳（<code>exit 49</code> 且零输出，连 <code>-c</code> 都是）⇒ 用 <code>py -3</code>；<code>curl</code> 需 <code>--ssl-no-revoke</code>，否则会把活站判成不可达（我第一轮 13 个"不可达"里 6 个是这个原因）；<code>-w %{size_download}</code> 是传输字节不是文件字节（我因此把 <code>llms-full.txt</code> 报错 5,256 B，真值 7,148 B）；<strong>在容器根目录跑 <code>git show &lt;业务ref&gt;:&lt;path&gt;</code> 会 fatal 而管道把空输出计成 0</strong> ⇒ 判存在性一律在 <code>worktrees/develop</code> 里跑并用 <code>git cat-file -e</code> 反证。</li>
+</ul>
+<section><h2><span class="sn">08</span>7 待 Owner（不写给接手 AI，但会挡住相关步骤）</h2>
+<ul class="notes">
+<li>#172：谁合流、合流前是否<strong>冻结从 develop 出包</strong>（我的意见：该冻）。</li>
+<li>是否把 <code>check:sitemap-parity</code> 接进发布门（一行；接上后当前所有从 develop 的出包都会被挡，而那正是它该挡的）。</li>
+<li>英文首页两套实现二选一（main 的 237 行内联版 vs develop 的重构组件版）——我建议保留重构版并把内容卡搬进去。</li>
+<li>B1 边缘缓存（生产实测恶化到 <code>ttfb=14.74 s</code>、40 s 只回 6,437/95,308 字节）；B3 GSC/GA4 基线；B4 具名作者与主体公示；B5 视频面；信源面板需你的引擎登录态。</li>
+<li><strong>战略建议（本会话最后一句）</strong>：GEO 从"继续优化"降级为"守住不回退"。三个理由：AI 引荐占全站会话约 <strong>0.32%</strong>；那份公开量表的就绪度分与被引用相关性 <strong>T=0.074、p=0.513 未检出</strong>；而唯一有强相关性的两条（第三方提及、视频）分别卡在"无主体不能署名"和"对外素材已暂停"。力气转回第一指标<strong>首跑成功率</strong>。</li>
+</ul>
+</section>
+<footer>
+  <p>读数载体：<code>tmp/geo-research/channel-probe.json</code>（24 条）；探针可复跑：<code>tmp/geo-research/probe-channels.mjs</code>。清单来源：<code>outputs/运营方案-v2-20261011/R3-中文渠道拉新手段.md</code> 第 391-428 行。</p>
+  <p>本机坑（本轮实测）：<code>curl</code> 不加 <code>--ssl-no-revoke</code> 会把 6 个活站判成不可达；<code>-w %{size_download}</code> 是传输字节不是文件字节。SSR% 为「剥标签后可见文本 ÷ HTML 体积」的粗代理，只用于横向比较，不当绝对判据。</p>
+</footer>
+</div>

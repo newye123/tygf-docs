@@ -1,0 +1,384 @@
+<title>SEO-GEO 全链路对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;
+  --ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;
+  --accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;
+  --bad:#ae2318;--bad-soft:#fbeae8;
+  --warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.04rem,2.4vw,1.18rem);line-height:1.65;max-width:52ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.8rem}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.errata{border-left:3px solid var(--warn)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>SEO · GEO 全链路</span><span class="sep">/</span>
+    <span>2026-10-14</span>
+  </p>
+  <h1>SEO/GEO 全链路对抗式审查：为什么搜不到</h1>
+  <p class="standfirst">Owner 判「做得非常失败」，令再审。手法：9-16/10-10 两份方案 × <strong>两本账</strong>（容器根 + develop TASK_LOG）逐条对账 + 生产站 curl/rg/git 实测 + 三发搜索实测。全部只读。</p>
+  <div class="meta">
+    <span>提交链 2/4（GSC✅ Bing✅ 百度❌ IndexNow❌）</span>
+    <span>提交后回看 0 次</span>
+    <span>内容 0/5</span>
+    <span>度量基线 0</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p><strong>「没提交」是误判</strong>——9-17/9-18 已把 GSC、Bing 两条线打穿（sitemap 成功、首页当时已收录 Google）。真正的失败：<strong>提交即终点，4 周零回看</strong>——收录现状成谜、失败不可见，直到 Owner 人肉搜索撞出来。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>其实已经做成的</h3>
+      <ul>
+        <li><strong>GSC 9-17 全套</strong>：sc-domain TXT 验证、sitemap 提交成功（4 URL）、首页当时<strong>「网址已收录到 Google」</strong>＋请求编入（develop 账本 :1282-1287）。</li>
+        <li><strong>Bing 双轮</strong>：9-18 GSC 导入＋sitemap 提交；10-13 CNAME 验证通过＋sitemap Success 重提。</li>
+        <li><strong>技术件全绿</strong>：robots.txt（7 AI bot 具名放行）/llms.txt/JSON-LD/title/canonical 生产实测全 200 全对。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>真正的四层失败</h3>
+      <ul>
+        <li><strong>提交后零回看零基线</strong>：覆盖报告从未打开、B4 从未拍、AI 引用基线复测（计划 10-02）逾期 12 天。</li>
+        <li><strong>百度整条缺席</strong>（#131）＋ <strong>IndexNow 批而未跑</strong>（key 404 等部署）。</li>
+        <li><strong>内容 0/5、P0 词 0 上页</strong>——管道就算通也无内容可竞争。</li>
+        <li><strong>跨账本记忆断裂</strong>：误出「GSC 未建」写进已发答复——文末勘误。</li>
+      </ul>
+    </div>
+    <div class="panel warn">
+      <h3>三发搜索实测＋归因边界</h3>
+      <ul>
+        <li><code>site:tuyigf.com</code>→0 条；品牌词前 10 全是同行；意图词竞品占位。</li>
+        <li><strong>但本机搜索通道来源未证实</strong>（无法证明是 Google 前端）——0 条与「百度从未进＋IndexNow 未推送＋Bing 昨日才 Success」相容，<strong>不能直接断言 Google 无收录</strong>。</li>
+        <li>权威判定＝登录 GSC 看覆盖报告（门 1）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat warn"><span class="n">2/4</span><span class="k">提交通道<br>GSC✅ Bing✅ 百度❌ IndexNow❌</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">提交后回看次数<br>4 周·覆盖报告从未打开</span></div>
+    <div class="stat bad"><span class="n">0/5</span><span class="k">内容承接页<br>C1 卡门·C2–C5 无稿</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">度量基线<br>B4 未拍·AI 复测逾期 12 天</span></div>
+    <div class="stat ok"><span class="n">✅</span><span class="k">技术地基<br>生产实测全绿</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>四通道提交现状（两本账对账·修正版）</h2>
+  <p class="lede">每格都有行号出处——这次先对账再下判，推翻了「0/4」的初版结论。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>通道</th><th>状态</th><th>证据</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">GSC</td>
+          <td><span class="tag ok">✅ 9-17 全套</span><br><span class="was">验证＋sitemap 成功（4 URL）＋首页当时已收录 Google＋请求编入；9-18 改版后再请求。<strong>此后 4 周零回看</strong></span></td>
+          <td class="mono">develop TASK_LOG:1282-1287、:1256；根账:134「已完成，不再重查」；rg 覆盖报告两账 0 命中</td>
+        </tr>
+        <tr>
+          <td class="mono">Bing</td>
+          <td><span class="tag ok">✅ 双轮</span><br><span class="was">9-18 GSC 导入＋sitemap 提交；10-13 CNAME 验证通过＋sitemap Success 重提。无索引回看</span></td>
+          <td class="mono">develop:1240；根账:111-113（ISSUES:3「Bing 未做」＝10-13 早间旧注记，同日晚被收官推翻）</td>
+        </tr>
+        <tr>
+          <td class="mono">百度</td>
+          <td><span class="tag bad">❌ 整条缺席</span><br><span class="was">站点已加、验证文件 200，验证 6+ 次卡百度→CF 连通（#131）⇒ sitemap 未提交、基线未记</span></td>
+          <td class="mono">根账:134；ISSUES #131；develop:1227-1231</td>
+        </tr>
+        <tr>
+          <td class="mono">IndexNow</td>
+          <td><span class="tag bad">❌ 批而未跑</span><br><span class="was">O6 Owner 10-13 已批「上」，key 在 develop 不在 main ⇒ 生产 key 实测 404</span></td>
+          <td class="mono">merge-base=False；curl key→404；package.json:140</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">度量双空</span>
+    <p><strong>B4 基线</strong>（site: 结果数/SERP/AI 问答快照）从未拍过；<strong>AI 引用基线</strong> 9-18 有快照（Kimi ✅ / DeepSeek 🟡 / 豆包 ❌），复测计划 10-02——两账本 rg 无任何复测记录，<strong>逾期 12 天</strong>（develop:1242）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>Batch 总对账</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>批次</th><th>实际</th><th>判</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">A 技术地基</td>
+          <td>生产今天实测全绿（robots 200 含 7 AI bot、sitemap 200、llms.txt 200、title/canonical/JSON-LD 全对）</td>
+          <td><span class="tag ok">完成</span></td>
+        </tr>
+        <tr>
+          <td class="mono">B 提交</td>
+          <td><strong>2/4</strong>：GSC✅ Bing✅ 百度❌（#131）IndexNow❌（key 404）；<span class="now">提交后回看 0 次</span></td>
+          <td><span class="tag warn">半程+全盲</span></td>
+        </tr>
+        <tr>
+          <td class="mono">C 内容</td>
+          <td><span class="now">0/5</span>——C1 草稿卡「披露定稿」（O4 未拍）；C2–C5 无真草稿；9-18 草稿包自标「未发布」</td>
+          <td><span class="tag bad">词无承接</span></td>
+        </tr>
+        <tr>
+          <td class="mono">D 第三方</td>
+          <td>知乎 1 篇已发（9-18 含官网链）；百科卡「需权威媒体报道」；小红书待标题；CSDN 未发</td>
+          <td><span class="tag warn">1/4</span></td>
+        </tr>
+        <tr>
+          <td class="mono">E GEO 度量</td>
+          <td><span class="now">0</span>——AI 基线复测逾期、月报脚本未跑生产日志、无统计（O2）、覆盖报告从未打开</td>
+          <td><span class="tag bad">全盲</span></td>
+        </tr>
+        <tr>
+          <td class="mono">词面上页</td>
+          <td><span class="now">0 上页</span>——P0 词（20260916:230）rg <code>src/+public/</code>=0 命中；9-18 曾有 keywords meta，重构后消失</td>
+          <td><span class="tag bad">没织</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>发现清单</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">F1</span><h3>提交后零回看零基线——失败 4 周不可见</h3><span class="tag bad">🔴</span></div>
+      <p>GSC/Bing 提交完就当「完成」：覆盖报告从未打开、B4 从未拍、AI 引用基线复测逾期 12 天。<strong>「失败」不会以任何形式报警</strong>——今天是 Owner 手动搜索才撞出来的。反馈回路（geo-kit 第④步）从头到尾不存在。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">F2</span><h3>跨账本记忆断裂致对外误判——「GSC 未建」是错的</h3><span class="tag bad">🔴</span></div>
+      <p>9-17/18 执行记录只在 develop 账本；根账只有「已完成，不再重查」一句＋早期「无账号」遗留 ⇒ 近期答复误称「GSC 未建」并已发给 Owner（文末勘误）。同族实证：10-13 SSO 导入 GSC 返回空（账号下无资产）——<strong>O5 账号归属混乱是错乱的现实根因之一</strong>。记忆断裂本身已是治理级缺陷（→ #137）。</p>
+    </div>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>发现</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F3</td><td><span class="tag bad">🟠</span></td><td><strong>百度整条缺席</strong>——中文品类词主战场（且中文 AI 信源 Top1＝百度百科）零进场</td><td class="mono">#131；develop:1229</td></tr>
+        <tr><td class="mono">F4</td><td><span class="tag bad">🟠</span></td><td><strong>IndexNow 批而未跑</strong>——Bing→ChatGPT/Perplexity 主动推送线断在「等生产部署」：Owner 批了，key 却在另一个分支</td><td class="mono">key 404 实测；develop:146</td></tr>
+        <tr><td class="mono">F5</td><td><span class="tag bad">🟠</span></td><td><strong>内容线 0/5＋承接页不存在</strong>——P0 词表写明承接页＝首页+C1/C3，C1 卡门、C3 不存在</td><td class="mono">20260916:230-234；ISSUES:3</td></tr>
+        <tr><td class="mono">F6</td><td><span class="tag bad">🟠</span></td><td><strong>GEO 语料双源污染</strong>——①生产 JSON-LD＝DB 旧版含已删「平均约 3 分钟」＋缺披露（#130）②知乎文同样含「3 分钟」：站内外两源都在把已删承诺喂给 AI</td><td class="mono">#130；develop:1249 vs :1255</td></tr>
+        <tr><td class="mono">F7</td><td><span class="tag warn">🟡</span></td><td>绿灯错觉结构性——smoke 只测「页面里有没有 X」，无一条测「收录没有」；rg <code>indexnow</code> in <code>scripts/</code>＝仅脚本自身，无守卫调用</td><td class="mono">smoke 断言面</td></tr>
+        <tr><td class="mono">F8</td><td><span class="tag warn">🟡</span></td><td>竞品内容机器在跑——青虎 10-13 仍发新文；Fdesign 把「中文检索入口」词表直接做成检索词入口；三发实测我们全缺席</td><td class="mono">今日搜索返回</td></tr>
+        <tr><td class="mono">F9</td><td><span class="tag warn">🟡</span></td><td>技术小账——sitemap 无 lastmod（实测 0 行）；canonical 无斜杠 vs sitemap 有斜杠并存（低危）；EN 片+key 滞留 develop（19/6 两线分叉）</td><td class="mono">curl/rg/git rev-list</td></tr>
+        <tr><td class="mono">F10</td><td><span class="tag warn">🟡</span></td><td>外链/实体面单薄——earned mention 仅知乎 1 篇；百科死锁；Wikidata/featureList 在 P2 未动</td><td class="mono">develop:1248-1252；v2:204</td></tr>
+        <tr><td class="mono">F11</td><td><span class="tag warn">待核</span></td><td>O4 CF 后台 AI bot/Content-Signal 从未核对（Owner 账号）</td><td class="mono">v2:216</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>根因（怎么回事）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">根因 1</span><h3>没有反馈回路：①做了前半段，④从未开始</h3></div>
+      <p>geo-kit 四步＝①进索引→②最清晰答案→③已知实体→④度量。①的 GSC/Bing 提交做完了，④一次没跑——<strong>没有回看就没有「失败」这个信号</strong>，问题可以安然存活 4 周。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">根因 2</span><h3>两本账、两套记忆</h3></div>
+      <p>执行在 develop 账、判断读根账——「已提交」被读成「未建」，还把错误结论发给了 Owner。账号归属混乱（O5）让 10-13 的实操连资产都看不到，错上加错。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">根因 3</span><h3>两条真缺口各卡一个门</h3></div>
+      <p>百度卡 #131（CF 连通，需 Owner 面板动作）；IndexNow 卡生产部署（key 在 develop，O1 未开窗）。<strong>审批与可执行之间没人对齐</strong>——O6 批了，物理上却跑不了。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">根因 4</span><h3>内容与词面与管道无关地空着</h3></div>
+      <p>C1 卡 O4、C2–C5 无稿、P0 词没上页——就算全管道今天通了，品类词依然零载体，而竞品每个词上都有内容页。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>七道门（按杠杆排序，门 1 今天就能做）</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>登录 GSC 打开覆盖报告＋Bing Webmaster 索引页，拍 B4 基线</h3>
+        <p>零成本、当天可做——回答「今天到底收没收录」，这是所有后续归因的前提；顺手把 O5 账号归属钉死（9-17 用的是内测账号，10-13 的 SSO 账号看不到资产）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>开生产部署窗（O1）→ IndexNow 当天跑</h3>
+        <p>main 对齐 develop（落后 19 笔／反向 6 笔）→ 解锁 key、EN 片、sitemap 6 URL；随后 <code>npm run seo:indexnow</code> 打通 Bing→ChatGPT/Perplexity 主动推送。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>百度 #131 三选一</h3>
+        <p>9-18 已备好：隔时重试／<code>@</code>/<code>www</code> 灰云 DNS-only 直连源站／HTML 标签验证发版。中文主战场唯一入口。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>内容线解锁</h3>
+        <p>O4 披露定稿放行 C1；C2–C5 排期；P0 品类词织进 title/FAQ（<strong>title 改动需 Owner 点头</strong>）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>度量开张</h3>
+        <p>AI 引用基线补复测（10-02 计划已逾期）＋月报跑生产日志＋O2 统计拍板＋此后 GSC 覆盖报告月看。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>双账本 SEO 记录对账合并</h3>
+        <p>防「GSC 未建」类误判再发——执行记录与状态判断必须同一出处。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body">
+        <h3>语料收口</h3>
+        <p>知乎文「3 分钟」请 Owner 更新；#130 生产 FAQ 随下次授权一并修（F6 双源）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>勘误（对已发答复）</h2>
+  <div class="callout errata">
+    <span class="lb">Errata</span>
+    <p>前发 <code>答复_20261014_SEO-GEO关键词与自查词表.md</code> 称 <strong>「GSC 未建」——错</strong>。事实：9-17 GSC 域名验证＋sitemap 提交（成功，4 URL）＋首页已收录 Google，见 develop 账本 <code>TASK_LOG.md:1282-1287</code>。错因＝只查了根账本（其早期「无账号」遗留＋「不再重查」一句）。同文件「IndexNow 未跑、百度 #131、EN 未上生产」三项仍属实。</p>
+  </div>
+</section>
+
+<footer>
+  <p>只读审查：9-16/10-10 两份方案 × 双账本执行记录 × 生产实测（curl/rg/git）× 三发搜索实测。发现登记 ISSUES #137–#138。</p>
+  <p>2026-10-14 · 未改业务码、未提交、未部署 · 业务测试 NOT RUN（无业务码变更）。</p>
+</footer>
+
+</div>

@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量台「每稿一绑定」· 图二形态可点模拟 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#fff; --sunk:#f0efec; --ink:#121412; --ink2:#3c443f; --muted:#6c756f;
+  --line:#e2e3df; --line2:#d3d5cf;
+  --teal:#009588; --teal-soft:#e2f3f1; --emerald:#009767; --emerald-soft:#e3f5ee;
+  --amber:#9a6505; --amber-soft:#fff7e7; --rose:#b3261e; --rose-soft:#fbeae8;
+  --sky:#3d8065; --sky-soft:#f2f7f4;
+  --r:16px; --r-sm:12px;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.68;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1400px;margin:0 auto;padding:26px 22px 70px}
+
+/* ── 文档头 ── */
+.doc{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.45rem,3.2vw,2rem);line-height:1.28;font-weight:700;max-width:34ch;text-wrap:balance}
+.standfirst{margin:0;max-width:78ch;color:var(--ink2);font-size:.97rem}
+.answer{background:var(--teal-soft);border:1px solid #bfe3df;border-left:3px solid var(--teal);border-radius:var(--r-sm);padding:14px 18px;font-size:.94rem;color:#0d3b37}
+.answer b{color:#08302d}
+.answer .q{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#0a6f69;display:block;margin-bottom:4px}
+.switch{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);align-self:flex-start;flex-wrap:wrap}
+.switch button{border:0;background:transparent;padding:7px 16px;border-radius:999px;font-size:.86rem;font-weight:600;color:var(--ink2)}
+.switch button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+/* ── 工作台外框 ── */
+.app{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 12px 32px -18px rgba(0,0,0,.18)}
+.appbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:#fbfbfa}
+.appbar h2{margin:0;font-size:1.02rem;font-weight:700}
+.crumb{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.appbar .right{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:7px 13px;font-size:.85rem;font-weight:600;color:var(--ink);transition:border-color .12s,background .12s}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:#007f74}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn.sm{padding:4px 10px;font-size:.79rem;border-radius:8px}
+.btn[disabled]{opacity:.42;cursor:not-allowed}
+
+/* ── 主体：主从 ── */
+.split{display:grid;grid-template-columns:288px minmax(0,1fr);min-height:520px}
+.rail{border-right:1px solid var(--line);background:#fbfbfa;display:flex;flex-direction:column;min-width:0}
+.rail-head{padding:12px 14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.rail-head .t{font-size:.9rem;font-weight:700}
+.rail-head .s{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.rail-list{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px;max-height:660px}
+.sku{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:9px 11px;display:flex;flex-direction:column;gap:4px;transition:border-color .12s,box-shadow .12s}
+.sku:hover{border-color:var(--line2)}
+.sku[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.sku .n{display:flex;align-items:center;gap:6px}
+.sku .f{font-family:var(--mono);font-size:.8rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sku .meta{font-size:.73rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.idle{background:#c9ccc7}
+.pill{font-family:var(--mono);font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.share{background:#eef1f5;border-color:#d5d9e0;color:#3d4757}
+
+.detail{padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.95rem;font-weight:700;margin:0 0 3px}
+.card-s{font-size:.8rem;color:var(--muted);margin:0 0 12px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.grow{flex:1 1 240px;min-width:0}
+.input{width:100%;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;font-size:.88rem;font-family:var(--mono);background:var(--surface);color:var(--ink)}
+.input[disabled]{background:var(--sunk);color:var(--muted)}
+
+/* 文件卡（图二同款） */
+.filecard{border:1px solid var(--line2);border-radius:var(--r-sm);padding:13px 15px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--surface)}
+.filecard .fi{font-size:20px;line-height:1}
+.filecard .fn{font-family:var(--mono);font-size:.92rem;font-weight:600}
+.filecard .sub{font-size:.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.filecard .sp{margin-left:auto;display:flex;gap:8px}
+
+/* 语言行（图二同款 + 三态） */
+.langrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:4px}
+.lchip{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.lchip.src{border-color:var(--teal);color:#0a6f69;background:var(--teal-soft)}
+.lchip.on{border-color:var(--teal);background:var(--teal);color:#fff}
+.lchip.on.unconfirmed{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}
+.lchip.off{color:var(--muted);border-style:dashed;background:transparent}
+.lchip.miss{border-color:var(--rose);color:var(--rose);background:var(--rose-soft);border-style:dashed}
+.lchip .pk{font-family:var(--mono);font-size:.68rem;opacity:.85}
+.lchip.on .pk{opacity:.95}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.76rem;color:var(--muted);padding-top:2px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:13px;height:13px;border-radius:4px;border:1px solid var(--line2);display:inline-block}
+.lg.on{background:var(--teal);border-color:var(--teal)}
+.lg.unconf{background:var(--amber-soft);border-color:var(--amber)}
+.lg.off{border-style:dashed}
+.lg.miss{background:var(--rose-soft);border-color:var(--rose);border-style:dashed}
+
+/* 表绑定行 */
+.bindrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;background:var(--surface)}
+.bindrow .who{font-family:var(--mono);font-size:.85rem;font-weight:600}
+.bindrow .why{font-size:.78rem;color:var(--muted)}
+
+/* 体检 */
+.hp{border-radius:var(--r-sm);padding:11px 14px;font-size:.83rem;display:flex;flex-direction:column;gap:3px}
+.hp.ok{background:var(--emerald-soft);border:1px solid #b8e0cd;color:#0a5a41}
+.hp.warn{background:var(--amber-soft);border:1px solid #eec87c;color:var(--amber)}
+.hp.bad{background:var(--rose-soft);border:1px solid #f0bdb8;color:var(--rose)}
+.hp b{font-weight:700}
+
+/* 矩阵 */
+.matrixwrap{border-top:1px solid var(--line);background:#fbfbfa;padding:16px 20px 20px}
+.mhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.mhead .t{font-size:.92rem;font-weight:700}
+.mhead .s{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.mhead .right{margin-left:auto;display:flex;gap:8px}
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:460px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.76rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:.68rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:7px 4px;text-align:center;min-width:62px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:12px;min-width:210px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:7px 12px;font-weight:600;border-right:1px solid var(--line);min-width:210px}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f6fbfb}
+table.mx tbody th:hover{background:#f2f8f8}
+.cell{border:0;background:transparent;width:100%;height:100%;min-height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 2px}
+.cell .cv{font-family:var(--mono);font-size:.76rem;font-weight:600}
+.cell .cs{font-size:.62rem;color:var(--muted);line-height:1.2}
+.c-ok{background:var(--emerald-soft);color:#0a5a41}
+.c-warn{background:var(--amber-soft);color:var(--amber)}
+.c-bad{background:var(--rose-soft);color:var(--rose)}
+.c-miss{background:transparent;color:var(--rose);box-shadow:inset 0 0 0 1px var(--rose)}
+.c-off{background:transparent;color:#a8aea9}
+.c-none{background:transparent;color:#a8aea9}
+.cell.sel{outline:2px solid var(--ink);outline-offset:-2px}
+.cell:hover{filter:brightness(.96)}
+
+/* 现状（图一）对照 */
+.legacy{padding:20px;display:flex;flex-direction:column;gap:16px}
+.legcard{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;background:var(--surface)}
+.legcard.bad{border-color:#e6c9c5;background:#fdfbfb}
+.legnote{position:relative;border-left:3px solid var(--rose);background:var(--rose-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 14px;font-size:.82rem;color:var(--rose)}
+.legnote.ok{border-left-color:var(--emerald);background:var(--emerald-soft);color:#0a5a41}
+.legnote b{font-weight:700}
+.legacy-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.legacy-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--mono);font-size:.82rem}
+.legacy-tree{font-family:var(--mono);font-size:.78rem;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;white-space:pre;overflow:auto;color:var(--ink2)}
+
+/* 配对抽屉 */
+.scrim{position:fixed;inset:0;background:rgba(18,20,18,.42);display:none;align-items:center;justify-content:center;padding:24px;z-index:60}
+.scrim.on{display:flex}
+.drawer{background:var(--surface);border-radius:var(--r);max-width:920px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 30px 70px -24px rgba(0,0,0,.4)}
+.drawer header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+.drawer header h3{margin:0;font-size:1rem}
+.drawer .body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.drawer footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--surface)}
+table.pair{width:100%;border-collapse:collapse;font-size:.82rem}
+table.pair th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);background:var(--sunk)}
+table.pair td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.pair td.m{font-family:var(--mono);font-size:.78rem}
+.rule{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+
+.note{font-size:.8rem;color:var(--muted);max-width:88ch}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:.82rem}
+.kv dt{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.kv dd{margin:0}
+footer.docf{border-top:1px solid var(--line);margin-top:26px;padding-top:14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){.split{grid-template-columns:1fr}.rail{border-right:0;border-bottom:1px solid var(--line)}.rail-list{max-height:240px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc">
+    <p class="eyebrow"><span>执行方案 · 真实模拟</span><span class="sep">/</span><span>批量台「每稿一绑定」</span><span class="sep">/</span><span>2026-10-20</span><span class="sep">/</span><span>可点 · 12 SKU × 12 语种</span></p>
+    <h1>12 个 SKU 各自一张不同的语言表，界面怎么区分？</h1>
+    <div class="answer">
+      <span class="q">一句话回答 Owner 的问题</span>
+      <b>区分的钥匙是「物料（设计稿）」，不是「语言」。</b>每个 SKU 在批量台里占<b>一行</b>，那一行自带三样东西：<b>自己那张表</b>、<b>自己那套语言子集</b>、<b>自己的确认状态</b>；表和 SKU 的对应关系靠「配对规则（同名 / 同码 / 同目录）」自动建议 + 逐条预览确认建立，不是手工 12×12 拖。界面上，图二那种单稿形态<b>不再占整页</b>，它降级成矩阵右侧的<b>详情区</b>；矩阵本体是「行=SKU、列=语言」的真表，一屏扫得完。
+    </div>
+    <div class="switch" role="group" aria-label="形态切换">
+      <button type="button" data-view="new" aria-pressed="true">新形态（主从 + 真矩阵）</button>
+      <button type="button" data-view="legacy" aria-pressed="false">现状对照（图一 · 为什么难受）</button>
+    </div>
+  </header>
+
+  <div class="app" id="app">
+    <div class="appbar">
+      <h2>准备素材</h2>
+      <span class="crumb" id="crumb">SKU-01_主图.psd · 原文 · 德语 · 法语</span>
+      <div class="right">
+        <button class="btn primary" type="button" id="scanAll">全部扫描（按顺序）</button>
+        <button class="btn" type="button" id="openPair">自动配对（按命名）</button>
+        <button class="btn ghost" type="button" id="clearAll">清除全部</button>
+      </div>
+    </div>
+
+    <!-- 新形态 -->
+    <section id="viewNew">
+      <div class="split">
+        <!-- 物料栏 -->
+        <aside class="rail">
+          <div class="rail-head">
+            <span class="t">物料栏 · 12 个 SKU</span>
+            <span class="s" id="railSum">已扫描 10 · 已配表 11 · 已确认 38/128</span>
+          </div>
+          <div class="rail-list" id="rail"></div>
+        </aside>
+
+        <!-- 详情区（图二形态） -->
+        <div class="detail" id="detail"></div>
+      </div>
+
+      <!-- 真矩阵 -->
+      <div class="matrixwrap">
+        <div class="mhead">
+          <span class="t">SKU × 语言 真矩阵</span>
+          <span class="s">行 = 物料　列 = 12 个语种　格 = 这一稿这一语的状态　点格子＝跳到那一格</span>
+          <div class="right">
+            <button class="btn sm" type="button" id="mxToggle">收起矩阵</button>
+          </div>
+        </div>
+        <div id="mxHost"></div>
+        <div class="legend" style="margin-top:10px">
+          <span><i class="lg on"></i>已确认</span>
+          <span><i class="lg unconf"></i>待确认</span>
+          <span><i class="lg miss"></i>表里缺这一列</span>
+          <span><i class="lg off"></i>本稿不做 / 不适用</span>
+          <span style="color:var(--muted)">矩阵按<b>行</b>判读：每行末尾的「已确认 x/y」是这一稿的语言确认进度。</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 现状对照 -->
+    <section id="viewLegacy" hidden>
+      <div class="legacy">
+        <div class="legnote bad"><b>这就是现在的样子（图一）。</b>问题不在配色，在<b>信息层级</b>：文件、译文表、语言、对账被拆成 4 个互相独立的横条，用户要在 4 个地方来回对照同一个 SKU；再加上「当前稿」这个隐形中心，12 个 SKU 时没有人知道屏幕上的「德语·法语」到底属于哪一个。</div>
+        <div class="legcard">
+          <p class="card-t">块 1 · 选择设计文件 · 只读预扫描</p>
+          <p class="card-s">现状：多设计稿选择（文件夹导入 / 粘贴路径 / 全部扫描）+ 一大段「怎么用」的说明文字。</p>
+          <div class="legacy-tree">我的项目 /
+├── 首页.psd        ← 设计稿，全部找出
+├── 详情页.psd
+├── 活动页.psd
+└── 译文/
+    ├── 英语.xlsx    ← 译文表，只列候选
+    └── 日语.xlsx</div>
+          <div class="legnote bad" style="margin-top:10px"><b>问题 1：</b>「只列候选、不自动套用」是对的，但<b>没有下一步的落点</b>——列了 12 张表，还得逐稿手工挑 12 次，一次挑错没人拦。</div>
+        </div>
+        <div class="legcard">
+          <p class="card-t">块 2 · 译文表 · 每个设计稿一张</p>
+          <p class="card-s">现状：另起一个横条，逐稿列出「xx.psd · 4 行 · 6 语言 · 3/6 已确认 · 切换到该稿」。</p>
+          <ul class="legacy-list">
+            <li><span>SKU-01_主图.psd</span><span>42 行 · 8 语言　3/8 已确认</span></li>
+            <li><span>SKU-02_主图.psd</span><span>42 行 · 8 语言　0/8 已确认</span></li>
+            <li><span>SKU-05_主图.psd</span><span>28 行 · 3 语言　未导入译文表</span></li>
+          </ul>
+          <div class="legnote bad" style="margin-top:10px"><b>问题 2：</b>这一条<b>和上面那条文件列表是两份名单</b>，同一个 SKU 出现两次；而且只有「切换到该稿」一个动作，<b>看不到、也换不了表</b>——12 稿 12 表时，改一稿的表要先进「当前稿」再点「重选译文表」。</div>
+        </div>
+        <div class="legcard">
+          <p class="card-t">块 3 · 语言行（原文 · 德语 · 法语 · 选择语言 · 重选译文表）</p>
+          <p class="card-s">现状：只有当前稿的，且看不出「表里有哪些语言」和「这一稿要做哪些语言」的区别。</p>
+          <div class="langrow">
+            <span class="lchip src">原文</span><span class="lchip on">德语</span><span class="lchip on">法语</span>
+            <span class="lchip on">英语</span><span class="lchip on">西班牙语</span><span class="lchip on">日语</span>
+            <span class="lchip on">韩语</span><span class="lchip on">葡萄牙语</span>
+            <button class="btn sm" type="button">选择语言</button>
+            <button class="btn sm" type="button">重选译文表</button>
+          </div>
+          <div class="legnote bad" style="margin-top:10px"><b>问题 3：</b>「德语·法语」这些词<b>不说是谁的</b>。SKU-03 的表只有德法，SKU-05 的表有 12 列，这一行永远只显示当前稿的那一套——用户对「另外 11 稿做什么语言」<b>零可见性</b>。</div>
+        </div>
+        <div class="legcard">
+          <p class="card-t">块 4 · 覆盖率矩阵</p>
+          <p class="card-s">现状：每稿一段，段内一行语言格子。12 稿 12 语种 = 要滚过 12 段、144 个格子。</p>
+          <div class="legnote bad"><b>问题 4：</b>它不是矩阵，是「12 个小矩阵上下摞」。<b>横向对不齐</b>，没法一眼看出「哪一稿缺哪个语种」。</div>
+        </div>
+        <div class="legnote ok"><b>新形态怎么把这四块收成一块：</b>① 文件名单 → <b>左栏物料栏</b>（只有一份名单，且每张卡自带表/语言/进度徽章）；② 译文表名单 → <b>并进物料栏卡片的徽章</b>，不再是第二份名单；③ 语言行 → <b>右栏详情区</b>（就是图二，且补上三态区分）；④ 覆盖率 → <b>变成真矩阵</b>（行=稿，列=语言，粘性表头）。</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 自动配对抽屉 -->
+  <div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-label="自动配对预览">
+    <div class="drawer">
+      <header>
+        <h3>自动配对（按命名规则）· 预览</h3>
+        <span class="pill amber">12 稿 · 11 张表 · 3 处要人拍板</span>
+        <button class="btn sm" type="button" style="margin-left:auto" id="closePair">关闭</button>
+      </header>
+      <div class="body">
+        <p class="note">规则按优先级从上往下试，命中即停。<b>一对多、零命中、名字像但不是同一批</b>的一律<b>不自动决定</b>，列出来让你点。</p>
+        <div class="rule">
+          <span class="pill teal">规则 1 · 同名同目录</span>
+          <span class="pill teal">规则 2 · 同 SKU 码</span>
+          <span class="pill teal">规则 3 · 表名含 SKU 码且唯一</span>
+          <span class="pill amber">规则 4 · 表在「翻译/」子目录</span>
+        </div>
+        <table class="pair">
+          <thead><tr><th>设计稿</th><th>候选表</th><th>命中规则</th><th>判定</th></tr></thead>
+          <tbody id="pairBody"></tbody>
+        </table>
+        <div class="legnote bad"><b>3 处必须人拍板：</b>① <code>SKU-08.psd</code> 有 <b>2</b> 张同名表（<code>SKU-08.xlsx</code> 与 <code>SKU-08_终稿.xlsx</code>）→ 不自动选；② <code>SKU-12.psd</code> <b>零候选</b> → 留空并点名；③ <code>SKU-01…04</code> 4 稿指向同一张 <code>主表A.xlsx</code> → 这是<b>共享</b>，要你确认是「4 稿真的共用」还是「该各自一张」。</div>
+      </div>
+      <footer>
+        <button class="btn" type="button" id="pairCancel">取消</button>
+        <button class="btn primary" type="button" id="pairApply">应用 9 条确定的，3 条留给我自己配</button>
+      </footer>
+    </div>
+  </div>
+
+  <footer class="docf">
+    <p>2026-10-20 · 本页是<b>方案模拟</b>，不是线上界面；数据为示意（12 SKU / 12 语种 / 共享表组 1 个 / 3 类异常样本）。</p>
+    <p>现状代码依据：<span class="mono">worktrees/develop@99baaf6</span> — 稿上限 12（design-file-card.tsx:91）、语种上限 12（batch-limits.ts:6）、表按 draftKey 存副本（workbench-view.tsx:349）、闸门硬编码「每稿一张，互不共用」（workbench-view.tsx:1958）、覆盖率分段渲染（coverage-matrix.tsx:95）、1 稿 × 该稿语言 = 1 批次（execute-step.tsx:2342）。</p>
+  </footer>
+</div>
+
+<script>
+/* ───────────────────────── 数据 ───────────────────────── */
+const LANGS = [
+  {c:'de',n:'德语'},{c:'fr',n:'法语'},{c:'en',n:'英语'},{c:'es',n:'西班牙语'},
+  {c:'ja',n:'日语'},{c:'ko',n:'韩语'},{c:'pt',n:'葡萄牙语'},{c:'it',n:'意大利语'},
+  {c:'ru',n:'俄语'},{c:'ar',n:'阿拉伯语'},{c:'zh-TW',n:'繁体中文'},{c:'nl',n:'荷兰语'}
+];
+const LMAP = Object.fromEntries(LANGS.map(l=>[l.c,l.n]));
+
+const TABLES = {
+  'T-A': {id:'T-A', name:'主表A_通用8语.xlsx', group:'主表组 A', shared:true, langs:['de','fr','en','es','ja','ko','pt','it'], rows:42},
+  'T-B': {id:'T-B', name:'SKU-05_德法英.xlsx', group:'独立表', shared:false, langs:['de','fr','en'], rows:28},
+  'T-C': {id:'T-C', name:'SKU-06_英西.xlsx', group:'独立表', shared:false, langs:['en','es'], rows:19},
+  'T-D': {id:'T-D', name:'SKU-07_九语.xlsx', group:'独立表', shared:false, langs:['de','fr','en','es','ja','ko','ru','ar','zh-TW'], rows:51},
+  'T-E': {id:'T-E', name:'SKU-09_全12语.xlsx', group:'独立表', shared:false, langs:LANGS.map(l=>l.c), rows:63},
+  'T-F': {id:'T-F', name:'SKU-10_十语.xlsx', group:'独立表', shared:false, langs:['de','fr','en','es','ja','ko','pt','it','ru','ar'], rows:47},
+  'T-G': {id:'T-G', name:'SKU-11_六语.xlsx', group:'独立表', shared:false, langs:['de','fr','en','es','ja','ko'], rows:33},
+};
+
+const SKUS = [
+  {id:'SKU-01', file:'SKU-01_主图.psd', layers:12, scan:'scanned', table:'T-A', scope:['de','fr','en','es','ja','ko','pt','it'], conf:['de','fr','en','es','ja','ko','pt','it'], cov:{de:100,fr:100,en:100,es:98,ja:100,ko:96,pt:100,it:99}},
+  {id:'SKU-02', file:'SKU-02_主图.psd', layers:12, scan:'scanned', table:'T-A', scope:['de','fr','en','es','ja','ko','pt','it'], conf:['de','fr','en'], cov:{de:100,fr:97,en:100,es:95,ja:93,ko:88,pt:100,it:94}},
+  {id:'SKU-03', file:'SKU-03_主图.psd', layers:11, scan:'scanned', table:'T-A', scope:['de','fr','en','es'], conf:['de','fr'], cov:{de:100,fr:96,en:100,es:91}},
+  {id:'SKU-04', file:'SKU-04_主图.psd', layers:12, scan:'scanned', table:'T-A', scope:['de','fr','en','es','ja','ko','pt','it'], conf:[], cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,pt:100,it:100}},
+  {id:'SKU-05', file:'SKU-05_主图.psd', layers:9, scan:'scanned', table:'T-B', scope:['de','fr','en'], conf:['de','fr','en'], cov:{de:100,fr:100,en:100}},
+  {id:'SKU-06', file:'SKU-06_主图.psd', layers:7, scan:'scanned', table:'T-C', scope:['en','es'], conf:['en'], cov:{en:100,es:86}},
+  {id:'SKU-07', file:'SKU-07_主图.psd', layers:16, scan:'scanned', table:'T-D', scope:['de','fr','en','es','ja','ko','ru','ar','zh-TW'], conf:['de','fr','en','es'], cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,ru:98,ar:100,'zh-TW':92}, hp:'warn',
+    hpText:'这张表里有 8 行原文，在本稿的文字图层里找不到（表比稿多）。可能是混进了别的 SKU 的表，或本稿有 8 句没做译文。'},
+  {id:'SKU-08', file:'SKU-08_主图.psd', layers:14, scan:'scanned', table:null, scope:['de','fr','en','es','ja','ko','pt','it'], conf:[], cov:{}, hp:'pair',
+    hpText:'两张同名表：SKU-08.xlsx / SKU-08_终稿.xlsx —— 不自动选，请指一张。'},
+  {id:'SKU-09', file:'SKU-09_主图.psd', layers:21, scan:'scanned', table:'T-E', scope:LANGS.map(l=>l.c), conf:['de','fr','en','es','ja','ko','pt','it','ru','ar'], cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,pt:100,it:100,ru:100,ar:97,'zh-TW':89,nl:83}},
+  {id:'SKU-10', file:'SKU-10_主图.psd', layers:18, scan:'scanned', table:'T-F', scope:LANGS.map(l=>l.c), conf:['de','fr','en','es','ja','ko','pt','it','ru','ar'], cov:{de:100,fr:100,en:100,es:99,ja:100,ko:97,pt:100,it:100,ru:100,ar:100}, hp:'miss',
+    hpText:'本稿要做 12 个语种，这张表只有 10 列：繁体中文、荷兰语这两列表里没有，这两格做不了。'},
+  {id:'SKU-11', file:'SKU-11_主图.psd', layers:31, scan:'scanned', table:'T-G', scope:['de','fr','en','es','ja','ko'], conf:['de','fr'], cov:{de:100,fr:100,en:94,es:88,ja:71,ko:66}, hp:'low',
+    hpText:'覆盖率偏低：日语 71% / 韩语 66%，低于 95% 阈值。执行前需要显式放行。'},
+  {id:'SKU-12', file:'SKU-12_主图.psd', layers:10, scan:'not', table:null, scope:[], conf:[], cov:{}, hp:'noscan',
+    hpText:'这一稿还没扫描，所以还看不出它该配哪张表。'},
+];
+
+let activeId = 'SKU-01';
+let selCell = null;   // {skuId, lang}
+let mxOpen = true;
+
+/* ───────────────────────── 工具 ───────────────────────── */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sku = id => SKUS.find(s=>s.id===id);
+const tableOf = s => s.table ? TABLES[s.table] : null;
+
+function cellState(s, lang){
+  const t = tableOf(s);
+  if(s.scan!=='scanned') return {k:'none', v:'—', t:s.scan==='not'?'未扫描':'未扫描完'};
+  if(!t) return {k:'none', v:'缺表', t:'未配译文表'};
+  const inScope = s.scope.includes(lang);
+  const inTable = t.langs.includes(lang);
+  if(inScope && !inTable) return {k:'miss', v:'缺列', t:'表里没有这一列'};
+  if(!inScope) return {k:'off', v:'—', t:'本稿不做这个语种'};
+  const cov = s.cov[lang];
+  if(cov===undefined) return {k:'none', v:'—', t:'本稿没有这一列'};
+  const confirmed = s.conf.includes(lang);
+  if(cov < 80) return {k:'bad', v:cov+'%', t:'覆盖率低于 80%'};
+  if(cov < 95) return {k:'warn', v:cov+'%', t:'覆盖率低于 95% 阈值'};
+  return confirmed ? {k:'ok', v:cov+'%', t:'已确认'} : {k:'warn', v:cov+'%', t:'已覆盖，待确认'};
+}
+
+/* ───────────────────────── 渲染：物料栏 ───────────────────────── */
+function renderRail(){
+  const host = $('#rail');
+  host.innerHTML = SKUS.map(s=>{
+    const t = tableOf(s);
+    const total = s.scope.length||0;
+    const done = s.conf.length;
+    const covAvg = s.scope.length ? Math.round(s.scope.reduce((a,l)=>a+(s.cov[l]??0),0)/s.scope.length) : 0;
+    const dot = s.scan!=='scanned' ? 'idle' : (!t ? 'bad' : (s.hp==='warn'||s.hp==='low'||s.hp==='miss' ? 'warn' : 'ok'));
+    let badge;
+    if(s.scan!=='scanned') badge = `<span class="pill">未扫描</span>`;
+    else if(!t) badge = `<span class="pill rose">未配表</span>`;
+    else badge = t.shared ? `<span class="pill share">共享表 · ${s.scope.length}语</span>` : `<span class="pill teal">独立表 · ${s.scope.length}语</span>`;
+    const confPill = total===0 ? `<span class="pill">—</span>`
+      : done===total ? `<span class="pill teal">${done}/${total} 已确认</span>`
+      : done>0 ? `<span class="pill amber">${done}/${total} 已确认</span>`
+      : `<span class="pill rose">0/${total} 未确认</span>`;
+    return `<button class="sku" type="button" data-sku="${s.id}" aria-current="${s.id===activeId}">
+      <span class="n"><i class="dot ${dot}"></i><span class="f" title="${esc(s.file)}">${esc(s.file)}</span></span>
+      <span class="meta">${badge}${confPill}<span>${s.layers} 图层</span>${total?`<span>均${covAvg}%</span>`:''}</span>
+    </button>`;
+  }).join('');
+  host.querySelectorAll('[data-sku]').forEach(b=>b.addEventListener('click',()=>{ activeId=b.dataset.sku; selCell=null; render(); }));
+
+  const scanned = SKUS.filter(s=>s.scan==='scanned').length;
+  const bound = SKUS.filter(s=>tableOf(s)).length;
+  const confSum = SKUS.reduce((a,s)=>a+s.conf.length,0);
+  const scopeSum = SKUS.reduce((a,s)=>a+s.scope.length,0);
+  $('#railSum').textContent = `已扫描 ${scanned} · 已配表 ${bound} · 已确认 ${confSum}/${scopeSum}`;
+}
+
+/* ───────────────────────── 渲染：详情区（图二形态） ───────────────────────── */
+function renderDetail(){
+  const s = sku(activeId);
+  const t = tableOf(s);
+  const host = $('#detail');
+
+  const langChips = LANGS.map(l=>{
+    const st = cellState(s,l.c);
+    let cls='', mark='';
+    if(st.k==='miss'){cls='miss';mark='缺';}
+    else if(s.scan!=='scanned'||!t){cls='off';mark='';}
+    else if(!s.scope.includes(l.c)){cls='off';mark='不做';}
+    else if(s.conf.includes(l.c)){cls='on';mark='';}
+    else {cls='on unconfirmed';mark='待确认';}
+    const title = `${l.n}｜${st.t}`;
+    return `<span class="lchip ${cls}" title="${esc(title)}">${l.n}${mark?`<span class="pk">${mark}</span>`:''}</span>`;
+  }).join('');
+
+  const hp = s.hp==='warn' ? `<div class="hp warn"><b>绑定体检 · 需要你看一眼</b>${esc(s.hpText)}</div>`
+    : s.hp==='miss' ? `<div class="hp bad"><b>绑定体检 · 有 2 个语种做不了</b>${esc(s.hpText)}</div>`
+    : s.hp==='low' ? `<div class="hp warn"><b>绑定体检 · 覆盖率偏低</b>${esc(s.hpText)}</div>`
+    : s.hp==='pair' ? `<div class="hp warn"><b>配表 · 待你指一张</b>${esc(s.hpText)}</div>`
+    : s.hp==='noscan' ? `<div class="hp"><b style="color:var(--muted)">绑定体检 · 还没扫</b><span style="color:var(--muted)">${esc(s.hpText)}</span></div>`
+    : `<div class="hp ok"><b>绑定体检 · 通过</b>表里的原文与本稿文字图层对得上（命中 ${s.scope.length?Math.round(s.scope.reduce((a,l)=>a+(s.cov[l]??0),0)/s.scope.length):0}%），没有发现混稿迹象。</div>`;
+
+  const bindBlock = t ? `
+    <div class="bindrow">
+      <span class="who">${esc(t.name)}</span>
+      <span class="pill ${t.shared?'share':'teal'}">${t.shared?'共享表 · '+t.group:'独立表（只给这一稿）'}</span>
+      <span class="why">${t.rows} 行 · 表里 ${t.langs.length} 个语种列${t.shared?' · 本批 4 稿共用':''}</span>
+      <button class="btn sm" type="button" style="margin-left:auto">换成别的表</button>
+    </div>` : `
+    <div class="bindrow" style="border-style:dashed">
+      <span class="who" style="color:var(--muted)">这一稿还没有译文表</span>
+      <span class="why">自动配对给了 2 个候选，要你指一个</span>
+      <button class="btn sm" type="button" style="margin-left:auto">选一张表</button>
+    </div>`;
+
+  host.innerHTML = `
+    <div class="card plain">
+      <p class="card-t">选择设计文件 · 只读预扫描</p>
+      <p class="card-s">这一稿的路径与扫描状态。批量台里 12 稿各扫各的，互不影响。</p>
+      <div class="stack">
+        <div class="row">
+          <input class="input grow" value="D:\\项目\\${esc(s.file)}" readonly aria-label="文件路径">
+          <button class="btn" type="button">选择文件…</button>
+          <button class="btn primary" type="button">${s.scan==='scanned'?'重新扫描':'扫描'}</button>
+        </div>
+        <div class="filecard">
+          <span class="fi">📁</span>
+          <div style="min-width:0">
+            <div class="fn">${esc(s.file)}</div>
+            <div class="sub">
+              <span>${s.scan==='scanned'?'已扫描':'未扫描'}</span>
+              <span>${s.layers} 个文字图层</span>
+              <span>${t?`表：${t.name}`:'未配译文表'}</span>
+            </div>
+          </div>
+          <div class="sp">
+            <button class="btn sm" type="button">重新扫描</button>
+            <button class="btn sm" type="button">移除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-t">这一稿的语言</p>
+      <p class="card-s">行里只认<b>这一稿</b>的表与语言：实心＝本稿要做，深色＝已确认，虚线＝表里有但本稿不做，红框＝本稿要做但表里没这一列。</p>
+      <div class="langrow">
+        <span class="lchip src">原文</span>
+        ${langChips}
+        <button class="btn sm" type="button">选择语言</button>
+        <button class="btn sm" type="button" style="border-color:#d9a84f;color:var(--amber)">重选译文表</button>
+      </div>
+      <div class="legend" style="margin-top:10px">
+        <span><i class="lg on"></i>已确认</span>
+        <span><i class="lg unconf"></i>本稿要做 · 待确认</span>
+        <span><i class="lg off"></i>表里有 · 本稿不做</span>
+        <span><i class="lg miss"></i>本稿要做 · 表里缺列</span>
+      </div>
+      <div style="margin-top:12px">${bindBlock}</div>
+      <div style="margin-top:10px">${hp}</div>
+    </div>`;
+
+  $('#crumb').textContent = `${s.file} · 原文 · ${s.scope.map(c=>LMAP[c]).join(' · ') || '未选语言'}`;
+}
+
+/* ───────────────────────── 渲染：真矩阵 ───────────────────────── */
+function renderMatrix(){
+  const host = $('#mxHost');
+  if(!mxOpen){ host.innerHTML = `<p class="note" style="padding:8px 0">矩阵已收起（144 格）。<button class="btn sm" type="button" onclick="document.getElementById('mxToggle').click()">展开</button></p>`; return; }
+  const head = `<thead><tr><th>物料 \\ 语种</th>${LANGS.map(l=>`<th>${l.n}</th>`).join('')}<th style="min-width:110px">本稿进度</th></tr></thead>`;
+  const body = SKUS.map(s=>{
+    const t = tableOf(s);
+    const cells = LANGS.map(l=>{
+      const st = cellState(s,l.c);
+      const sel = selCell && selCell.skuId===s.id && selCell.lang===l.c;
+      return `<td><button class="cell c-${st.k}${sel?' sel':''}" type="button" data-c="${s.id}|${l.c}" title="${esc(s.file)} · ${l.n} · ${esc(st.t)}">
+        <span class="cv">${st.v}</span>${st.k==='miss'?'<span class="cs">缺列</span>':''}</button></td>`;
+    }).join('');
+    const done=s.conf.length, total=s.scope.length;
+    const prog = total===0 ? '<span class="pill">—</span>'
+      : done===total ? `<span class="pill teal">${done}/${total}</span>`
+      : done>0 ? `<span class="pill amber">${done}/${total}</span>` : `<span class="pill rose">0/${total}</span>`;
+    return `<tr><th title="${esc(s.file)}">${esc(s.file)}</th>${cells}<td>${prog}</td></tr>`;
+  }).join('');
+  host.innerHTML = `<div class="scroller"><table class="mx">${head}<tbody>${body}</tbody></table></div>`;
+  host.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const [id,lang]=b.dataset.c.split('|');
+    activeId=id; selCell={skuId:id,lang};
+    render();
+    document.querySelector('#detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }));
+}
+
+/* ───────────────────────── 自动配对预览 ───────────────────────── */
+const PAIRS=[
+  ['SKU-01_主图.psd','主表A_通用8语.xlsx','规则 1 · 同名同目录','ok','这条命中的其实是 SKU 码 → 主表（4 稿共用）'],
+  ['SKU-02_主图.psd','主表A_通用8语.xlsx','规则 2 · 同 SKU 码','shared','4 稿指向同一张表 → 共享'],
+  ['SKU-03_主图.psd','主表A_通用8语.xlsx','规则 2 · 同 SKU 码','shared','4 稿指向同一张表 → 共享'],
+  ['SKU-04_主图.psd','主表A_通用8语.xlsx','规则 2 · 同 SKU 码','shared','4 稿指向同一张表 → 共享'],
+  ['SKU-05_主图.psd','SKU-05_德法英.xlsx','规则 1 · 同名同目录','ok',''],
+  ['SKU-06_主图.psd','SKU-06_英西.xlsx','规则 1 · 同名同目录','ok',''],
+  ['SKU-07_主图.psd','SKU-07_九语.xlsx','规则 1 · 同名同目录','ok','配上了，但表比稿多 8 行 → 执行前要体检'],
+  ['SKU-08_主图.psd','SKU-08.xlsx ／ SKU-08_终稿.xlsx','—','amb','一对多，不自动选'],
+  ['SKU-09_主图.psd','SKU-09_全12语.xlsx','规则 1 · 同名同目录','ok',''],
+  ['SKU-10_主图.psd','SKU-10_十语.xlsx','规则 1 · 同名同目录','ok','表只有 10 列，本稿要 12 语 → 2 格缺列'],
+  ['SKU-11_主图.psd','SKU-11_六语.xlsx','规则 1 · 同名同目录','ok',''],
+  ['SKU-12_主图.psd','（无候选）','—','miss','零命中，留空并点名'],
+];
+function renderPairs(){
+  const badge = k => k==='ok' ? `<span class="pill teal">确定</span>`
+    : k==='shared' ? `<span class="pill share">共享</span>`
+    : k==='amb' ? `<span class="pill amber">要你选</span>` : `<span class="pill rose">没配上</span>`;
+  $('#pairBody').innerHTML = PAIRS.map(p=>`<tr>
+    <td class="m">${esc(p[0])}</td><td class="m">${esc(p[1])}</td><td class="m">${esc(p[2])}</td>
+    <td>${badge(p[3])}${p[4]?`<div class="note" style="margin-top:3px">${esc(p[4])}</div>`:''}</td></tr>`).join('');
+}
+
+/* ───────────────────────── 渲染 ───────────────────────── */
+function render(){ renderRail(); renderDetail(); renderMatrix(); }
+
+/* ───────────────────────── 事件 ───────────────────────── */
+document.querySelectorAll('.switch button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.switch button').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
+  const v=b.dataset.view;
+  document.getElementById('viewNew').hidden = v!=='new';
+  document.getElementById('viewLegacy').hidden = v!=='legacy';
+}));
+$('#mxToggle').addEventListener('click',()=>{ mxOpen=!mxOpen; $('#mxToggle').textContent = mxOpen?'收起矩阵':'展开矩阵'; renderMatrix(); });
+$('#openPair').addEventListener('click',()=>{ renderPairs(); $('#scrim').classList.add('on'); });
+$('#closePair').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#pairCancel').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#pairApply').addEventListener('click',()=>{ $('#scrim').classList.remove('on'); });
+$('#scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') $('#scrim').classList.remove('on'); });
+$('#scanAll').addEventListener('click',()=>{ SKUS.forEach(s=>{ if(s.scan==='not') s.scan='scanned'; }); render(); });
+$('#clearAll').addEventListener('click',()=>{ SKUS.forEach(s=>{s.table=null;s.conf=[];s.cov={};}); render(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#scrim').classList.remove('on'); });
+
+render();
+</script>
+</body>
+</html>

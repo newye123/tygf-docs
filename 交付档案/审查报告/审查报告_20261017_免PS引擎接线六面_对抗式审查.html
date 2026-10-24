@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>免 PS 引擎接线六面 · 对抗式审查（2026-10-17）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,54px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.6vw,2.4rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.26rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;color:var(--accent);flex:none}
+p{margin:0;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.05rem,2.4vw,1.2rem);line-height:1.6;max-width:52ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card.block{border-left:3px solid var(--bad)}.card.heavy{border-left:3px solid var(--warn)}.card.mid{border-left:3px solid var(--line-strong)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted)}
+.card p{font-size:.93rem;color:var(--ink-2)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <div class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>第三轮</span><span class="sep">/</span><span>接线面</span></div>
+  <h1>免 PS 引擎接线六面：层号身份没绑死才是真风险</h1>
+  <p class="standfirst">接线的风险不在行号搬家，而在<strong>扫描引擎与执行引擎的身份没有绑死</strong>。<code>layer_id</code> 是各自引擎内部的层号空间；现有前置检查挡不住"同一段原文出现在多层"——那种情况下比对通过、读回通过、回执全绿，而该翻的那层被静默漏掉。本轮已在隔离树补第一道 fail-closed 防线并跑绿。</p>
+  <div class="meta"><span>2026-10-17</span><span>隔离树 <code>worktrees/pc-port-20261017</code></span><span>基线 develop <code>338da1d</code></span><span>未推·未部署·旗标默认关</span></div>
+</header>
+
+<section>
+  <div class="verdict"><span class="lb">判词</span>
+    <p>面 1 是阻断级：跨引擎层号歧义会造成"回执全绿的静默漏翻译"。本轮把它变成硬失败；彻底解（manifest 带扫描引擎标记 + 跨引擎拒执行）属合同变更，另班车。</p>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">4 键</span><span class="k">manifest 执行字段全集里没有引擎标记（<code>execution-manifest.js:158</code>）</span></div>
+    <div class="stat warn"><span class="n">5 码</span><span class="k"><code>TERMINAL_CODES</code> 闭集；新码被折成 <code>EXECUTOR_FAILED</code>（<code>v15-runner.js:36/:208</code>）</span></div>
+    <div class="stat ok"><span class="n">17/17</span><span class="k"><code>smoke-pc-executor</code> rc=0（含歧义拒＋放行负控）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">回归：<code>v15-runner</code>／<code>thin-executor</code>／<code>execution-manifest</code>／<code>receipt-privacy</code> 全 rc=0</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">六面</span>逐条结论与证据</h2>
+  <div class="cards">
+    <div class="card block"><div class="top"><span class="tag bad">面 1 阻断</span><span class="loc">execution-manifest.js:158,165,166 · TASK_LOG.md:752,767</span></div><p>manifest 只允许 <code>expected_source / layer_id / object_id / target_text</code> 四键，<strong>无法回答"这批层号是谁扫出来的"</strong>；而 PS <code>Layer.Id</code> 实测有遍历期确定性串号（<code>paramId=14207 realId=12075</code>），跨引擎"只认 ledgerEntryId"是既有结论。本轮动作：编辑前清点"同原文命中层数 vs 投喂替换条数"，命中多于投喂 ⇒ <strong>整批拒执行</strong>；码复用 <code>SOURCE_STALE</code>，真相进 <code>details</code> 的 <code>SOURCE_TEXT_AMBIGUOUS</code>。实测 <code>dup-ambiguous</code> 拒、<code>dup-paired</code> 放行。</p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">面 2 重</span><span class="loc">server.js:5590,5606,6711,6746,5482,4582,5243</span></div><p>develop 实测执行入口只有两处（本地 <code>:5590</code>／云批次 <code>:6711</code>），分派回调 <code>:5606</code>/<code>:6746</code>，组件检查 <code>:5482</code>；<strong>扫描闸 <code>:4582</code> 与就绪扫描 <code>:5243</code> 属扫描链，不在执行链</strong>。⇒ 扫描兜底与执行接线不能混一次改，混改最容易留下"哪条门放行哪条门拦"说不清的后门。</p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">面 3 重</span><span class="loc">v1.5 server.js:435,3372 ↔ feature-flags-store.ts:184</span></div><p>B1 白名单在助手本地判 <code>install_id</code>＝用户改本机 JSON 就自开，按既定判据（只能靠自觉＝无效）。本轮只保留默认关，F 段仅放您那台笔记本；<strong>任何对外放开前，服务端判定必须先落地</strong>。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">面 4 中</span><span class="loc">test:contracts → smoke-batch-error-zh-mapping</span></div><p>接线若引入 <code>PHOTOCRAFT_EXECUTOR_MISSING</code>/<code>PHOTOCRAFT_TIMEOUT</code> 两码，必须同笔补中文映射，否则前端显示英文原句；<code>PC_EXE_SHA_UNPINNED</code>、<code>PC_EXE_VERSION_*</code> 只进 <code>details</code>，不进用户句子。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">面 5 中</span><span class="loc">server.js:408-414</span></div><p>v1.5 用 <code>existingPsExe(cfg.pcExePath)</code> 判引擎存在性。实测该函数只做"路径存在且是文件"，不校验是否真是 Photoshop.exe ⇒ 今天没坏，但属语义借用：将来给 PS 加真实名校验会连带影响引擎路径。接线时拆成 <code>bundledEnginePresent()</code> 与 PS 探测两个函数。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">面 6 中</span><span class="loc">v15-runner.js:208</span></div><p><code>issueCode = TERMINAL_CODES.has(code) ? code : 'EXECUTOR_FAILED'</code> ⇒ 新增码即被折成通用码，等于静默降级。所以刻意复用 <code>SOURCE_STALE</code>。代价说白：用户句与"原文真的变了"相同、不够准；要准就得扩码 + 四层同步 + fixture，那是另一班车，不该塞进这条线顺手做。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">已跑绿</span>本轮安全件（可复跑）</h2>
+  <ul class="notes">
+    <li>引擎身份运行时取：<code>--version</code> spawn（6 秒超时、控制字符清洗、截 128），执行/重开各写自己的 <code>runtimeVersion</code> 进回执；硬编码串 <code>photocraft-cli f0e8d404</code> 已删。</li>
+    <li>缺哈希即拒：无 <code>pcExeSha256</code> ⇒ <code>PC_EXE_SHA_UNPINNED</code>（原实现"配了才校验"＝默认不校验）。</li>
+    <li>测试分母从写死 12 改为 <code>assert.equal(passed, N)</code>；夹具补 <code>--version</code> 通路与"故意不输出"负控。</li>
+    <li>读数：<code>smoke-pc-executor</code> 17/17 rc=0；回归 <code>smoke-v15-runner</code> rc=0，<code>smoke-thin-executor</code>／<code>smoke-execution-manifest</code>／<code>smoke-receipt-privacy</code> 带 <code>--experimental-loader ./scripts/ts-path-loader.mjs</code> 各 rc=0。<strong>裸跑 thin-executor 报 <code>ERR_MODULE_NOT_FOUND: '@/lib'</code> 是我调用少开关，同题在 develop 树复现同错，不是回归。</strong></li>
+    <li><code>package.json</code>：加 <code>test:pc-executor</code> 并接进 <code>test:trust-chain</code> 尾（+2/−1）。</li>
+  </ul>
+  <div class="callout"><span class="lb">下一班车（不塞进本轮）</span>
+    <p>manifest 增 <code>scan_engine</code> 标记 + 跨引擎拒执行（合同变更，四层同步）；扫描兜底（<code>:4582</code>/<code>:5243</code>）；那 20+ 处替 Photoshop 表功的旧句（与扫描兜底同班车）；服务端灰度判定；安装包内置与许可 bundle。<strong>接线本体刻意没做半套</strong>：只加配置键与死代码无法端到端验证，会把没验的路径写进主干。</p></div>
+</section>
+
+<footer>
+  <p>md 正本：<code>交付档案/审查报告/审查报告_20261017_免PS引擎接线六面_对抗式审查.md</code>｜报告人 Qoder｜2026-10-17</p>
+  <p>实测命令：<code>grep -n</code>（manifest 字段集、TERMINAL_CODES、既有借用法、两处入口行号）· <code>node scripts/smoke-pc-executor.mjs</code> · <code>node --experimental-strip-types --experimental-loader ./scripts/ts-path-loader.mjs scripts/smoke-*.mjs</code></p>
+</footer>
+</div>
+</body>
+</html>

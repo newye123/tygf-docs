@@ -1,0 +1,699 @@
+<title>PSD 原生改文字审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>PSD · PSB 字节层改写</span><span class="sep">/</span>
+    <span>2026-10-12</span>
+  </p>
+  <h1>PSD 原生改文字审查</h1>
+  <p class="standfirst">对《PSD 原生改文字 · 原理与实现》一文的五路独立核验：数字复算、格式论断证伪、文档内部一致性、工具安全声明、治理与产品集成。全部只读，未修改任何文件。</p>
+  <p class="standfirst"><strong>2026-10-12 当日下午更正：</strong>§04 里针对 §01 的那一条原判（「机制句被 Adobe 官方文档证伪」）<strong>已被 PS 2021 实跑推翻并撤回</strong>——PS 打开该产物后画布确实是源文英文，另存副本重开仍是英文，逐层触碰后才变日文。被证伪的是文档产品结论的<strong>后半句</strong>「降级成无脑渲染器，只需打开 + 保存」，不是机制句。详见 §04 第一栏。其余各条不变。</p>
+  <div class="meta">
+    <span>五路并行</span>
+    <span>51 条数字独立复算</span>
+    <span>未执行任何写入脚本</span>
+    <span>工作区未改动</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>这份文档不是那种「看着很实、其实站不住」的产物——它不吹。<br>但它把半截证据当成了已完成的证明，而那个「半截」恰好是唯一决定成败的一步。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>可以立刻用的</h3>
+      <ul>
+        <li><strong>读侧解析</strong>：57 份真实客户件、3525 个文字图层、不变量零违反。这一侧完全不依赖 Photoshop，直接解掉「扫描 PSD 总扫不到」。</li>
+        <li><strong>三条硬不变量</strong>：以 EngineData 的 <code>/Text</code> 为基准量，而非描述符 <code>Txt </code>。这是全文最值钱的部分。</li>
+        <li><strong>字体规则</strong>：PS 按文字里的脚本切分样式 run 再逐脚本挑字体；原字体渲染不了目标语言时才补；文件里写的字体名不等于本机装了那个字体。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能当写入规范用的</h3>
+      <ul>
+        <li><strong>「增量恒为偶数」</strong>：漏了 XMP 的 UTF-8 奇数增量。作者自己的代码里已写好补丁，文档没写。本件恰好是偶数，是运气不是性质。</li>
+        <li><strong>「签名必须落在 4 的倍数上」</strong>：那是长度补齐的结果，不是位置公理。照此实现会在别的文件上补错对齐。</li>
+        <li><strong>「7 份副本跨 2 种编码」</strong>：实为 3 类（UTF-8 两处、UTF-16BE 四处、遗留字段一类）。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>核对总账</h2>
+  <p class="lede">数字核验路在内存中按源码逻辑复演编辑，复演产物的 md5 与磁盘文件逐字节相同——没有执行过任何写入脚本。</p>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">43</span><span class="k">精确可复现<br>含全部承重数字</span></div>
+    <div class="stat bad"><span class="n">4</span><span class="k">不符<br>全部集中在两处统计</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">无法核实<br>均为使用侧 / 流程侧断言</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">核实的承重数字</span>
+    <p>文件尺寸、画布尺寸、图层计数、<code>49/55</code> 通道像素差异、<code>18,167,055</code> 图像数据段、<code>642</code> 处编辑、净 <code>−10,364</code> 字节、<code>186</code> 个长度字段、七项验证逐项、字体各项统计、日文排版开关、layerInfo 奇偶——全部与实物精确吻合。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>四处错数</h2>
+  <p class="lede">差错不是数据臆造，而是比对口径与解码方式错误留下的产物：数字看起来有零有整，却复现不出文档自己描述的那个口径。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>位置</th><th>文档写的</th><th>实测</th><th>性质</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">§03</td>
+          <td class="was">200 层有 <strong>140</strong> 层 Pascal 名 ≠ luni 名</td>
+          <td><span class="now">16 / 200</span><br><span class="was" style="font-size:.92em">140 恰等于「Pascal 名含非 ASCII 字节的层数」，即按 UTF-8 粗解码再比对的结果</span></td>
+          <td><span class="tag bad">口径错误</span></td>
+        </tr>
+        <tr>
+          <td class="mono">§03</td>
+          <td class="was">Pascal 名编码<strong>混用 GBK 与 Shift-JIS</strong></td>
+          <td><span class="now">单一 GBK</span><br><span class="was" style="font-size:.92em">140/140 个 8 位名 GBK 解码合法，且与 luni 相等或为其截断前缀；Shift-JIS 下 63/140 直接非法，0 层需要它才能吻合</span></td>
+          <td><span class="tag bad">解码错误</span></td>
+        </tr>
+        <tr>
+          <td class="mono">§03</td>
+          <td class="was">7 份副本<strong>跨 2 种编码</strong></td>
+          <td><span class="now">≥ 3 类</span><br><span class="was" style="font-size:.92em">「2 种」只对同源的 6 份成立</span></td>
+          <td><span class="tag bad">口径错误</span></td>
+        </tr>
+        <tr>
+          <td class="mono">§06</td>
+          <td class="was">PS 整条删掉拉丁字体 <strong>5 层</strong></td>
+          <td><span class="now">11 层</span><br><span class="was" style="font-size:.92em">「5」只在未写明的「含假名子集」口径下成立——把 PS 同类行为的规模低估了一倍以上</span></td>
+          <td><span class="tag bad">口径错误</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">为什么第一条最重</span>
+    <p>「200 层有 140 层不一致」是全文<strong>唯一</strong>支撑「Photoshop 自己不维护 Pascal 名字段一致性」这一结论的量化证据。方向没错（不一致确实来自 31 字节截断），但数字错了近九倍，任何照它复测的人都会得到不同结果，结论将失去自称的数据支撑。</p>
+    <p>另有一处两路撞车：格式论断路据单层样本判日文层的 Pascal 名是 Shift-JIS，数字核验路据 140 个名字判全件单一 GBK。那一层的名字是纯假名串，而 GBK 与 Shift-JIS 在假名区码位重叠，单层样本区分不了两种假说。按现有证据偏后者。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>三处结构性打回</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">§01</span>
+        <h3>产品结论的后半句「打开 + 保存就能当渲染器」被实跑推翻</h3>
+        <span class="tag bad">证伪</span>
+      </div>
+      <p><strong>本栏当日下午更正过一次，这里把更正本身也记下。</strong>本栏原判「§01 那句『PS 画布显示的是文件里存的图层像素，不是从描述符实时渲染』被 Adobe 官方帮助文档证伪」，并据此推出「PS 一打开就会重渲染，画布本就该显示新文字」。<strong>用 PS 2021 实跑后事实相反：机制句是对的，原判是纸面推断压过了实测，已撤回。</strong></p>
+      <p>实测三步：① 打开产物导出画布 ＝ <strong>源文英文</strong>；② 从 PS 里另存副本、重新打开、再导出 ＝ <strong>仍是英文</strong>；③ 对每个文字层做一次非破坏性重写（<code>contents = contents</code>，55/55）后再导出 ＝ <strong>日文，且版式与客户真产物完全一致</strong>。⇒ PS 打开时用文件里存的图层像素，不按描述符重渲染；<strong>保存也不触发</strong>；必须真的碰到那一层，它才重画那一层。</p>
+      <p>⇒ 所以 §01 的产品结论要劈成两半看：<strong>「把 PS 从流水线里拿掉」走不通——成立</strong>；<strong>「把 PS 降级成无脑渲染器，只需打开 + 保存」——不成立</strong>。要刷新像素就得逐层触碰，助手侧那一步省不掉。实测记录见 <code>tmp/psb5857/判读清单-JP-第3轮-结果.md</code>。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">§08</span>
+        <h3>封面数字盖住了最大的洞</h3>
+        <span class="tag bad">需标注</span>
+      </div>
+      <p>封面写着「七项验证全绿」。七项逐项复算确实全绿——但<strong>七项全部是机器自检，没有一项在 Photoshop 里看过画布或换行</strong>。其中「ag-psd 独立回读」一项是真的，强度边界也写得准确（它排除的是「我的读和写犯了同一个错」）；问题在于它<strong>不能</strong>排除「我对 PS 渲染行为的理解错了」，而实跑证明这恰恰是最要命的一条：文档里「只需打开 + 保存就能让 PS 当渲染器」那半句是错的，七项自检没有一项能发现。正文其他节没有守住同样的限定。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">§09</span>
+        <h3>缺了最关键的那一条</h3>
+        <span class="tag bad">缺项</span>
+      </div>
+      <p>「已知缺口」列了六条，<strong>唯独没有「PS 打开后画布是否正确」</strong>。它列的是「保存再打开的往返」——而「往返」预设了第一次打开就是对的。这一条应当排在第一位。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">归因错的另一处</span>
+    <p>§03 把「某些文本图层需要更新后才能用于基于矢量的输出」这条提示，归因到「改了 Txt2 文字却没改它的 run 数组」。该提示的已文档化触发条件是字体版本不一致、字体缺失、旧版文字引擎——与 run 数组无关。而真正对应「文字数据自相矛盾」的是另一条提示（「发生错误导致无法读取此文档中的某些文字图层，所以已将这些文字图层栅格化」）。文档把两条不同的 PS 提示混为一谈，接手的人会照错误方向排查，而真因恰好是 §06 自己在讲的主题，两节没有接上。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>Photoshop 真机观测史</h2>
+  <p class="lede">这条路线的 PS 端观测只发生过两次，两次看到的都是失败；两次的修复都没有再进过 PS。</p>
+
+  <div class="tl">
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>第 1 轮</strong><span class="tag bad">失败</span></div>
+        <p>用 PS 打开产物：<strong>画布全是源文英文</strong>。定位到 EngineData 里有<strong>两个</strong> <code>/RunLengthArray</code>——只重算了段落 run、留着样式 run 原值，求和与文字长度不符，PS 不报错、不弹窗，静默丢弃新文字。</p>
+        <p class="after">修复：样式 run 按比例重分配、用最大余数法保证求和精确、元素个数按源件保留。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot partial"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>第 2 轮</strong><span class="tag warn">部分成功</span></div>
+        <p>画布<strong>显示日文了</strong>（样式 run 那次修复是对的）。但 PS 弹「已将这些文字图层栅格化」，被栅格化的层退回显示文件里存的旧像素，表象是「有些文字没替换成功」。中招 3 层，全是减行的层。由此挖出第三条硬不变量。</p>
+        <p class="after">修复：段落样式对象数与段落 run 元素数、按行切开的段数三者相等。同层内所有段落样式对象实测完全相同，增删即复制同一个对象。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>字体版（当前最好的产物）</strong><span class="tag warn">从未进过 PS</span></div>
+        <p>七项机器验证全绿，含「含假名的层不再引用纯拉丁字体 39/39」。但这份产物<strong>没有任何一次人工判读记录</strong>——第三条不变量的修复与字体规则，都还没有在画布上被看见过。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">三轮判读清单</span>
+    <p>等长替换实验的判读清单：五个记录栏全空。变长改写第 1 轮清单：七个记录栏全空。第 2 轮清单：两个文件各三栏，全空。<strong>唯一的 PS 端结论是靠第 2 轮清单正文里一句回述反推出来的</strong>（「图层名、双击进文字编辑这两项第 1 轮就是对的」）。这条路线的真机证据，目前只活在对话记录里。</p>
+    <p>另一个会话在自己的记忆里写下了同一件事：<strong>「写侧只在一份文件上过过 PS（读侧 57 份 / 写侧 1 份）——这个不对称是当前最大的风险敞口。」</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>与等长替换实验的关系</h2>
+  <p class="lede">不是两种毛病，是同一个洞的两次出现。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th></th><th>等长替换实验</th><th>变长改写（本文档）</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">改动量</td>
+          <td>24 字节（一个 8 码元串）</td>
+          <td>642 处编辑、净 −10,364 字节、186 个长度字段</td>
+        </tr>
+        <tr>
+          <td class="mono">机器证据</td>
+          <td class="fix">硬——预期窗口外 0 处不符</td>
+          <td class="fix">硬——51 条核，43 条精确可复现</td>
+        </tr>
+        <tr>
+          <td class="mono">PS 端判读</td>
+          <td><span class="now">清单 5 栏全空</span></td>
+          <td><span class="now">三份清单全空</span></td>
+        </tr>
+        <tr>
+          <td class="mono">有据可查的 PS 观测</td>
+          <td>记忆称 4/4 全中，来源是对话</td>
+          <td>两次，两次都是失败</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>共同点：<strong>都停在「该看画布了」这一步，都没记。</strong>区别是——等长那次成功了但没记；变长这次失败了两次，修完之后没再看。</p>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>要「去」的话，四道门</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>把当前最好的那份产物用 PS 打开看一眼</h3>
+        <p>一小时的活，且是唯一能定生死的动作。第三条不变量的修复和字体规则都还没经过这一步。其余三道门都可以与它并行，但这一道不过，后面全是空转。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>补 L2 立项</h3>
+        <p>活动变更目录里七件，没有一件与这条路线相关；问题登记册一百余条，零命中。按治理规则，L2 变更必须有 <code>changes/active/*</code>，且写明 IN SCOPE / OUT OF SCOPE / Acceptance。这条路线目前是没有立项的探索。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>把文档改掉那几处</h3>
+        <p>四个错数按实测改；「七项全绿」标注为「七项均为机器自检」；把「PS 打开后画布是否正确」补进已知缺口并排第一；§01 的机制句按原文保留（实测支持），但产品结论要劈成两半：「拿掉 PS」走不通成立，「降级成只需打开 + 保存的渲染器」不成立。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>把写侧语料从 1 份扩到多份</h3>
+        <p>重点砸三个已知盲区：内嵌智能对象里的文字（扫描与改写都看不见）、竖排图层、样式 run 分成多段的情形——后者占了真实语料的 12%，却只在一份文件上验证过。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>顺带查明，不影响判定</h2>
+  <ul class="notes">
+    <li><strong>2 GiB 硬墙。</strong>最大的真实客户件读不进来——Node 的 Buffer 上限，与堆大小无关。而生产服务器是 2 核 2G，所以读侧能力也只能跑在用户机器上，上不了服务器。</li>
+    <li><strong><code>Txt </code> 可能是陈旧值。</strong>实测有 4 个图层的 <code>Txt </code> 是 226 字的模板占位文本，而 EngineData 的 <code>/Text</code> 是空文字。扫描必须以 EngineData 为准；目前的改写器信 <code>Txt </code>，靠 run 比对告警兜底。</li>
+    <li><strong>安全声明有一条不成立。</strong>文档称「源件每次操作后用 md5 复核」——三个脚本里没有任何 md5 或哈希实现，七项验证只校验产物、从不重读源件。md5 只出现在人工判读记录里。这是把「人工事后做过一次」写成了「工具的安全设计」。</li>
+    <li><strong>版本漂移。</strong>正式依赖锁定的第三方解析库是 31.0.2，实验目录装的是 31.0.3。</li>
+    <li><strong>泄漏面已核。</strong>报告本身干净（无绝对路径、无凭据、无人名）。敏感内容（真实译文、客户与译者姓名、绝对路径、客户素材）全部落在被 gitignore 覆盖的临时目录内，未入库。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>最后一句</h2>
+  <div class="verdict">
+    <p>这条路即使全部验通，也是<strong>替换</strong>现在这条已上线的交付链（助手驱动 Photoshop 改文字 + 三重校验 + 回执），不是并存；而任何助手侧落点都会撞上三项 runtime 身份全等的契约门，推进身份部署等于硬拦全部旧安装。</p>
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">所以它不在「测试站部署通过」这条关键路径上。第 1 道门是独立的一小时，值得先做；第 2 到第 4 道门是另一个项目。</p>
+  </div>
+</section>
+
+<footer>
+  <p>五路并行只读审查：数字复算（51 条）、格式论断证伪、文档内部一致性、工具与安全声明、治理与产品集成。</p>
+  <p>2026-10-12 · 本地实测，未部署、未提交。文中不含客户名称、本地路径与素材内容。</p>
+</footer>
+
+</div>

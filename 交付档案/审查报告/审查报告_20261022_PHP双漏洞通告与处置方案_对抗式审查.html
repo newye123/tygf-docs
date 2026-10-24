@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHP 双漏洞通告与处置方案 · 对抗式审查 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--ok);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 对抗式审查</span><span class="sep">/</span><span>2026-10-22 10:19 +0800</span><span class="sep">/</span><span>风险档 High（漏洞本体）</span><span class="sep">/</span><span>Round 1/3</span></div>
+  <h1>PHP 的两个洞是真的，但我们的服务器没有 PHP；转来的 5.x 修复链接是坑</h1>
+  <p class="standfirst">两件事分开说：第一，<strong>tygf-server 上没有 PHP 运行时</strong>，生产/测试两站都是 Next.js 走 nginx 反代，这个漏洞在我们这台机器上没有攻击面。第二，转来的处置方案里，PHP 5.x 给的是<strong>未修补的原始源码包</strong>，照做会得到一个"看起来升了、其实仍有洞"的 PHP 5.6.40。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">VERDICT：处置方案打回 ｜ 我方主机不受影响</span>
+  <p><strong>一句话：</strong>漏洞真实且严重（NVD CVSS 3.1 9.8），但我们的服务器<strong>不用 PHP，零动作</strong>；方案本身要改两处——5.x 的链接必须换成带 <span class="mono">debian.tar.xz</span> 的源包，7.x 只能写 7.4（7.0–7.3 官方没修）。</p>
+</div>
+
+<div class="contract">
+  <div><b>审查对象</b>：php.net 通告 <span class="mono">2026-10-21-5</span> ＋ 转来的 PHP 8/7/5 处置方案</div>
+  <div><b>实测范围</b>：<span class="mono">tygf-server</span>（生产/测试同机），只读</div>
+  <div><b>改动</b>：0 个文件；未安装、未编译、未改 nginx</div>
+  <div><b>已证实</b>：5 条（Important 2 / Medium 1 / Nit 2）</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>我们的服务器用 PHP 吗：不用</h2>
+  <div class="callout ok">
+    <strong>实测排除（全部只读）：</strong>没有 <span class="mono">php</span> 可执行文件、没有 dpkg PHP 包、没有 php/apache/httpd 服务、没有 PHP 进程、没有 9000 端口；<span class="mono">nginx -T</span> 全量配置里没有生效的 <span class="mono">fastcgi_pass</span>；<span class="mono">/var/www</span> 三层内 <span class="mono">*.php</span> 数量为 0。
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th>检查</th><th>结果</th><th>说明</th></tr>
+    <tr><td>PHP 二进制 / 包</td><td class="code">无</td><td><span class="mono">command -v php</span> 空；<span class="mono">dpkg -l | grep -i php</span> 空；<span class="mono">/etc/php</span>、<span class="mono">/usr/bin/php*</span> 不存在</td></tr>
+    <tr><td>服务 / 进程</td><td class="code">无</td><td>systemd 无 php/apache/httpd；ps 无 php/php-fpm/php-cgi</td></tr>
+    <tr><td>监听端口</td><td class="code">22 / 80 / 443 / 3000 / 3001 / 53 / 20241</td><td>没有 9000（php-fpm 默认口）</td></tr>
+    <tr><td>nginx 后端</td><td>全部 Node</td><td>sites-enabled 五个站点都 <span class="mono">proxy_pass</span> 到 127.0.0.1:3000 或 :3001</td></tr>
+    <tr><td>Web 目录 PHP 文件</td><td class="code">count=0</td><td><span class="mono">/var/www</span> 深度 3 内无 .php</td></tr>
+  </table></div>
+  <div class="callout warn"><strong>别被文件名字骗了：</strong><span class="mono">/etc/nginx/fastcgi_params</span>、<span class="mono">fastcgi.conf</span>、<span class="mono">sites-available/default</span> 里出现 php 字样，是 nginx 安装包自带的模板/注释；<span class="mono">sites-enabled</span> 没有启用它们。看到这些文件就判"在用 PHP"是假阳性。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>漏洞本身：真的，而且严重</h2>
+  <p>php.net 官方通告标题是 "Security advisory: Critical remote code execution vulnerabilities, update now"，明确写的是<strong>未认证远程代码执行</strong>。两条 CVE：</p>
+  <ul class="plain">
+    <li><strong>CVE-2026-109618</strong>：OOM 处理中断 PHP 时，请求内部数据只初始化了一半；清理阶段把无效数据当有效数据用。</li>
+    <li><strong>CVE-2026-109619</strong>：请求私有状态在底层内存释放后仍存活，同一 worker 的后续请求会用到过期状态。</li>
+  </ul>
+  <p>官方修复版本：<span class="mono">8.5.12 / 8.4.27 / 8.3.36 / 8.2.35</span>；另外为 <span class="mono">7.4 / 8.0 / 8.1</span> 提供最小源码 backport。NVD 两条均为 CVSS 4.0 9.2、CVSS 3.1 9.8（Critical）。</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span>处置方案的对抗式审查</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">F-1</span><span class="tag bad">Important</span><span class="tag bad">照做会留洞</span></div>
+      <p><strong>PHP 5.x 的链接给错了。</strong>方案指向 <span class="mono">php5.6_5.6.40.orig.tar.xz</span>，这是 Debian 打包体系里的"上游原始源码"，不是修复版。实测它与官方 2019 年的 <span class="mono">php-5.6.40.tar.xz</span> 逐字节相同：同为 12,472,236 B，SHA-256 同为 <span class="mono">1369a51e…56d1c</span>，<span class="mono">cmp</span> 返回 0；Last-Modified 是 2019-01-11。</p>
+      <p class="fix"><strong>真正的修复</strong>在同一目录的 <span class="mono">php5.6_5.6.40-104+0~20261021.134+…debian.tar.xz</span>：补丁 <span class="mono">0261-Avoid-state-corruption-via-bailout.patch</span> 头两行明确 Fix 两个 GHSA/CVE。`.dsc` 同时列出 orig 与 debian 两个包。要用 <span class="mono">.dsc</span> 走 <span class="mono">apt-get source</span> / <span class="mono">dpkg-buildpackage</span>，不能只编译 orig。</p>
+      <p class="fix"><strong>失效场景：</strong>照原链接编译 → 得到 2019 年的、仍有洞的 5.6.40 → 以为已修复。这是本次最危险的一条。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-2</span><span class="tag bad">Important</span><span class="tag warn">范围写大</span></div>
+      <p><strong>"PHP 7.x 有官方修复版"只对 7.4 成立。</strong>实测 GitHub refs：<span class="mono">PHP-7.4-CVE-2026-109618-109619</span> 存在；7.0、7.1、7.2、7.3 的 CVE 分支查询全部为空。</p>
+      <p class="fix"><strong>正确写法：</strong>7.4 用官方 backport；7.0–7.3 只能升级到受支持版本，或找 LTS 厂商。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-3</span><span class="tag warn">Medium</span><span class="tag warn">方案风险</span></div>
+      <p><strong>"8.x 必须从源代码编译"不是官方要求。</strong>官方优先让用发行版/LTS 厂商的更新包；源码只适合没有包的情况。生产上自己编译会引入工具链、依赖和后续补丁跟踪问题，且不如包管理器可回滚。应锁定四个明确版本，不是笼统"最新 8.x"。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-4</span><span class="tag info">Nit</span><span class="tag info">表述</span></div>
+      <p><strong>"获得所有权限、对数据库任意操作"是夸大。</strong>RCE 的权限上限是 PHP 工作进程的运行用户；能否读数据库取决于该进程拿到的凭据与数据库授权。风险仍然很高，但别用"所有权限"判断爆炸半径。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">F-5</span><span class="tag ok">排除性结论</span><span class="tag ok">我方无暴露</span></div>
+      <p><strong>本机没有 PHP，两个 CVE 都无法触发。</strong>不需要升级、编译或改 nginx。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>现在实际要做什么</h2>
+  <ol class="plan">
+    <li><strong>这台服务器：零动作。</strong>不装 PHP、不编译、不改 nginx。</li>
+    <li><strong>如果还有别的服务器 / 托管面板 / 老项目：</strong>逐台跑只读探针，先确认有没有 PHP，再决定修补。</li>
+    <li><strong>如果探到 5.6：</strong>不要用 orig.tar.xz；用 sury 的 <span class="mono">.dsc</span> 源包，或直接迁移。5.6 已 EOL 多年，打补丁只是止血。</li>
+    <li><strong>如果探到 7.0–7.3：</strong>官方没有 backport，升级是唯一完整解。</li>
+    <li><strong>如果探到 8.x：</strong>优先发行版包到 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35；没有包再源码编译，并记录来源与校验值。</li>
+  </ol>
+  <div class="callout"><strong>只读探针（任何 Linux 主机都能跑）：</strong><br><span class="mono">command -v php; dpkg -l 2>/dev/null | grep -i php; systemctl list-units --all 2>/dev/null | grep -Ei 'php|apache|httpd'; ps -eo pid,comm,args | grep -i '[p]hp'; ss -ltnp 2>/dev/null | grep -E ':9000|:9001'; sudo -n nginx -T 2>/dev/null | grep -nE 'fastcgi_pass|include .*fastcgi'</span></div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>覆盖缺口与未决</h2>
+  <ul class="plain">
+    <li><strong>只实测了 tygf-server 这一台</strong>（生产与测试同机）。没有其它服务器清单，不能替别的机器下结论。</li>
+    <li>未检查 Owner 个人电脑或其它项目目录是否装 PHP（与"服务器"问题无关）。</li>
+    <li>未做外部端口扫描或漏洞利用验证（不在授权范围，也没有必要）。</li>
+    <li>未验证 sury 二进制 <span class="mono">.deb</span> 安装后的实际版本；只验证了源码包确实带补丁。</li>
+    <li>"我们有没有别的机器跑 PHP"＝<strong>未核实</strong>；"这台机器没有 PHP"＝<strong>已实测</strong>。</li>
+  </ul>
+</section>
+
+<div class="footer">
+  <span>来源：php.net 官方通告 2026-10-21（锚点 2026-10-21-5）；NVD CVE-2026-109618 / CVE-2026-109619；GitHub php-src 7.4/8.0/8.1 backport 分支；packages.sury.org php5.6 源包目录。</span>
+  <span>实测时间：2026-10-22 10:15–10:19 +0800；tarball 比对与服务器探针均为本会话现跑。</span>
+</div>
+
+</div>
+</body>
+</html>

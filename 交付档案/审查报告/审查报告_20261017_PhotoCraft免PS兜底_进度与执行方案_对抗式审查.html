@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhotoCraft 免 PS 兜底 · 进度实测与执行方案（对抗式审查 2026-10-17）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{color:var(--ink)}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card.block{border-left:3px solid var(--bad)}
+.card.heavy{border-left:3px solid var(--warn)}
+.card.mid{border-left:3px solid var(--line-strong)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>免 PS 兜底链</span><span class="sep">/</span><span>助手执行 + 扫描</span></div>
+  <h1>PhotoCraft 兜底：进度实测与执行方案</h1>
+  <p class="standfirst">这条链现在是<strong>断的</strong>，不是"差最后一步"。执行段本地已绿但代码停在旁支分支；扫描段一行没写；引擎本体没进安装包。更要紧的是回执里的引擎身份是写死字符串、从未经运行校验，哈希门"配了才校验"。</p>
+  <div class="meta"><span>2026-10-17</span><span>基线 develop <code>ee05c9a</code> 14:58</span><span>旁支 <code>codex/v1.5-trust-chain</code> @ <code>7d8f09b</code></span><span>判据全部本轮实测复跑</span></div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">判词</span>
+    <p>未修版 PhotoCraft 一旦被通道接管，写出的 PSD 真 Photoshop 打不开，而回执写着 <code>SAVE_SUCCEEDED</code>。先堵引擎身份闸，再谈功能。</p>
+    <div class="split">
+      <div class="panel yes"><h3>已成立（10-15/16 实测）</h3><ul>
+        <li>执行器 <code>pc-executor.js</code> 415 行 + server 接线 16 处</li><li>冒烟 12/12、真机 E2E 执行+重开读回一致（含中文）</li><li>写侧补丁版在 PS 2021 五门 + 目视门通过、n=2 模板</li>
+      </ul></div>
+      <div class="panel no"><h3>四个断点（本轮现读）</h3><ul>
+        <li>不在 develop：<code>pc-executor.js</code> 不存在、<code>pcExecutorEnabled</code> 命中 0</li><li>扫描段没做：<code>server.js:4582</code> 无 PS 即 202</li><li>引擎没内置：<code>download/</code> 搜 photocraft 命中 0</li><li>探针已停：<code>TYGF-Deploy-Probe</code> Status=Disabled</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">764</span><span class="k">develop 领先旁支的提交数（merge-base <code>58f5855</code>，09-10）</span></div>
+    <div class="stat bad"><span class="n">3767</span><span class="k">两树 <code>server.js</code> 差行数 ⇒ 合入＝重新接线</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k">扫描段 PC 分支的实现行数</span></div>
+    <div class="stat warn"><span class="n">43.3 MB</span><span class="k">补丁版引擎体积（安装包现 ~12.5 MB）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>对抗式审查（含审我自己上一轮的方案）</h2>
+  <div class="cards">
+    <div class="card block"><div class="top"><span class="tag bad">阻断 F-1</span><span class="loc">pc-executor.js:19 / :220 / :227 / :300 / :308 / :340</span></div>
+      <p><strong>引擎身份是硬编码字符串。</strong><code>EXECUTOR_VERSION='photocraft-cli f0e8d404'</code> 五处原样写进回执，没有任何一处从 exe 取值。本轮实测：<code>--version</code> 在补丁版输出 <code>photocraft-cli 0.7.0 (dev build)</code>、在未修版输出 <code>photocraft-cli 0.7.0 (792616159, 2026-10-11)</code>——同一版本号、都不含 f0e8d404。违反本树 AGENTS.md「禁止用源码版本代替真实 runtime 身份」，并命中 Stop-the-line「source / build / installer 与 runtime identity 不一致」。</p></div>
+    <div class="card block"><div class="top"><span class="tag bad">阻断 F-2</span><span class="loc">pc-executor.js:181</span></div>
+      <p><strong>哈希门"配了才校验"。</strong><code>if (expected &amp;&amp; sha256File(...) !== expected)</code>，出厂默认 <code>pcExeSha256:''</code> ⇒ 空值即跳过。与 F-1 叠加：用户机是未修版（<code>C:/Program Files/PhotoCraft</code>，67,313,528 B）时 PC 通道照样接管，产物真 PS 打不开（10-13 写侧终验 <strong>6/6 FAIL</strong>，TASK_LOG.md:811-818），积分照扣、客户件报废。<strong>本案最贵的一条，先堵再谈功能。</strong></p></div>
+    <div class="card block"><div class="top"><span class="tag bad">阻断 F-3</span><span class="loc">AI_MEMORY/ledger.jsonl:41 / :48 / :56</span></div>
+      <p><strong>验收路径给不出证据。</strong>台账三处都写"等 Owner 授权测试站部署并人工四验"，但 PC 通道 100% 活在助手侧，测试站部署换的是 Web/服务端包；助手行为变化必须出安装包并验实际运行版本（<code>config/release-identity.json</code> 现 3.7.15）。走这条道，关于 PhotoCraft 的运行证据是 <strong>0</strong>。该口径需更正，不能继续当"下一步"。</p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">重 F-4</span><span class="loc">server.js:435 / :3372 / :4118 ↔ feature-flags-store.ts:184</span></div>
+      <p><strong>灰度白名单放错面。</strong>v1.5 把名单放在助手本地配置（<code>pcExecutorBetaUsers: []</code>）＝用户改本机一个 JSON 就能自开，属"只能靠自觉"，按既定判据＝无效。develop 已有服务端先例 <code>typographyBetaUsersV1</code> 可同构抄。</p></div>
+    <div class="card heavy"><div class="top"><span class="tag warn">重 F-5</span><span class="loc">server.js:3373</span></div>
+      <p><strong>它解不了当前的扫描投诉。</strong>分派条件是 <code>pcExecutorUsable &amp;&amp; !psExeForExecutor &amp;&amp; isBetaUser</code>，只对"PS 没在跑"生效；而真客户卡点是 <strong>PS 在跑但扫不动</strong>（SCAN-FIX-LINE：您三台机都正常、只有用户机不行）。范围要先钉死，别在派工里把它当"扫描卡死"的解药。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">中 F-6</span><span class="loc">TASK_LOG.md:768 ↔ develop ee05c9a</span></div>
+      <p><strong>缺 2 字段会撞今天刚落的覆盖率闸。</strong>PC 扫描 38 字段覆盖 36：<code>leading</code> 16/30 混合态、<code>hangingPunctuation</code> 0/30 真缺。develop 今日落覆盖率闸（&lt;95% 须显式放行），把缺字段写成 0 或空 ⇒ 闸读数假低或假高。合同须锁"如实登记、禁补 0"。</p></div>
+    <div class="card mid"><div class="top"><span class="tag">中 F-7</span><span class="loc">installer.iss:44-58 / TASK_LOG.md:818</span></div>
+      <p><strong>内置 43 MB 的代价还没人算。</strong>安装包量级 ~12.5 MB，并入补丁版 43,341,312 B ⇒ 约 56 MB；下载带宽、自动更新体积、杀软白名单全受影响。许可 MIT OR Apache-2.0 ⇒ 内置须随包附声明，<code>installer.iss</code> 现在没有这一项。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行方案（四段串行 · 判据可复跑）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">0</span><div class="body"><h3>三句待拍板（不说后面全堵）</h3>
+      <p>① 引擎进不进安装包（进＝~56 MB；不进＝用户自装、我们只校验哈希并如实报缺件）。② 无 PS 验收用哪台机器——您三台都有 PS，验不到这条链，没 PS 的笔记本是唯一对照组。③ 扫描缺 2 字段是否接受"如实告知 + 该层不参与计费"。</p></div></div>
+    <div class="gate"><span class="num">1</span><div class="body"><h3>移植（无悔，可立即开工，约半天）</h3>
+      <p>从 develop 新签 <code>worktrees/pc-port-20261017</code>，不动在飞现场（实测 7 项未提交）。六处接线按 develop 现行行号重做，不沿用 v2 旧坐标。<br>判据：<code>node --check</code> 双过；<code>test:pc-executor</code> 12/12；<code>test:trust-chain</code> 整链 rc=0（develop 是长链，不是旁支的 22 项）；<code>pcExecutorEnabled=false</code> 时行为面零变化。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>引擎身份闸（先于一切功能，半天 + 真机约一小时）</h3>
+      <p><code>EXECUTOR_VERSION</code> 改运行时取（<code>--version</code> + <code>sha256File</code> 现算），回执写实测串；<code>assertExeReady</code> 反向＝无哈希即拒；出厂默认钉 <code>628268bb…c1c5fd1b</code>（补丁版实测）；负控冒烟＝喂未修版 <code>be118612…f3336</code> 必须出 <code>PC_EXE_HASH_MISMATCH</code>；真机复测须用<strong>助手集成路径产物</strong>，PS 2021 + PS 22 双版开档 + 深遍历，n≥3 母版。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>扫描兜底（您问的那条，1–2 天）</h3>
+      <p>给 <code>server.js:4582</code>（预扫描 PS 闸）与 <code>:5243</code>（就绪扫描）按 <code>executorMode</code> 加分流，产出与 <code>Preparation_Scanner.jsx</code> 同构的 <code>scan-observation.json</code>。<br>判据：同一母版 PS 扫 vs PC 扫双跑逐字段取差集，差集只允许白名单那 2 项且须在告知面点名；<code>ledgerEntryId</code> 树路径 1:1 写成断言；覆盖率闸在 PC 扫描下的读数实测入档；缺字段禁补 0。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>出厂与灰度（约一天 + 发布链）</h3>
+      <p>白名单挪服务端判定（同构 <code>feature-flags-store.ts:184</code>）；<code>installer.iss</code> 增 Source 装到 <code>{app}\bin\</code>、发布物 manifest 逐项 SHA；版本 bump 3.7.15→3.7.16 并同步九文件一 exe 面；界面显式"本次由 PhotoCraft 引擎执行，未使用 Photoshop"（禁静默降级）；三、四段全绿前对外禁写"无需 Photoshop"；灰度先放 1 台无 PS 白名单机。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">建议</span>
+    <p>先只做 <strong>第 1 段 + 第 2 段</strong>。第 2 段是安全闸，不做等于往用户机器上放一个"能把客户件写坏、还回执成功"的通道。第 3 段值不值得做，取决于第 0 段第 ③ 句。探针保持停用，别让它在条件凑齐时自动部署。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>未核实项（不编，点名留档）</h2>
+  <ul class="notes">
+    <li>探针被谁停用：只读到 OS 侧 <code>Status=Disabled</code> 与末次运行结果码 0，停用动作盘上无痕迹。</li>
+    <li>测试站当前 BOUND 提交：本轮未现读 <code>/api/runtime-provenance</code>；台账最后是 <code>aefc8a8</code>（10-16 08:59），develop 已到 <code>ee05c9a</code>，中间是否有别的部署落站未证。</li>
+    <li><code>gh_build2</code> 与提交 <code>f0e8d40</code> 的对应关系：只有 <code>--version</code> 串与 TASK_LOG 叙述，无构建 manifest，属"强证未闭环"。</li>
+    <li>上游 PhotoCraft 是否已产生新代差：未 fetch，未核实。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>本轮实测命令：<code>git merge-base --is-ancestor</code> · <code>git rev-list --left-right --count</code> · <code>git diff --stat</code> · <code>git status --porcelain</code> · <code>grep -c</code> · <code>certutil -hashfile</code> · <code>photocraft-cli --version</code> · <code>schtasks /query /tn TYGF-Deploy-Probe /v</code></p>
+  <p>md 正本：<code>交付档案/审查报告/审查报告_20261017_PhotoCraft免PS兜底_进度与执行方案_对抗式审查.md</code>｜报告人 Qoder｜2026-10-17</p>
+</footer>
+
+</div>
+</body>
+</html>

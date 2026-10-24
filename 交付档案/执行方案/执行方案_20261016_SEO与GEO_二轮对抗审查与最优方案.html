@@ -1,0 +1,382 @@
+<title>SEO / GEO 二轮对抗审查与最优方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;
+  --ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;
+  --accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;
+  --bad:#ae2318;--bad-soft:#fbeae8;
+  --warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+pre{font-family:var(--font-mono);font-size:.79rem;line-height:1.7;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;margin:0;color:var(--ink-2)}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.22rem);line-height:1.6;max-width:54ch;font-weight:500;text-wrap:balance}
+.verdict.alert{border-left-color:var(--bad)}
+.verdict.alert .lb{color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:68ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.gate.first{border-color:var(--accent)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.alert{background:var(--bad-soft);border-color:var(--bad-soft)}
+.callout.alert .lb{color:var(--bad)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>SEO · GEO</span><span class="sep">/</span>
+    <span>二轮对抗式审查</span><span class="sep">/</span>
+    <span>2026-10-16</span>
+  </p>
+  <h1>机制层没有欠账，欠的是三个动作</h1>
+  <p class="standfirst">读完项目自己的 100 轮 SEO/GEO 对抗审查后，我先拆掉了上一版方案，再给一个单一方案。全部只读实测，未改动任何文件、未部署、未提交。</p>
+  <div class="meta">
+    <span>自我对抗</span>
+    <span>生产实测</span>
+    <span>1 个红色项</span>
+    <span>8 项明确不做</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>机制层没有欠账。<strong>欠的是三个动作，其中两个只需要你说一句话。</strong></p>
+  </div>
+  <p class="lede">上一版方案的核心 P1（markdown 孪生、内容协商、llms.txt 加料）——<strong>项目自己 2026-10-10 的 100 轮对抗审查已经裁决过，且大部分判为「不做」</strong>。我重复提出了它们。这一轮先拆自己，再给方案。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>我先拆自己</h2>
+
+  <div class="callout alert">
+    <span class="lb">硬伤</span>
+    <p>我没先读既有方案就开工——违反项目铁律「先校验前提，再动手」。<code>worktrees/develop/docs/records/</code> 下已有三份：<code>20260916_官网SEO与GEO_对抗审查执行方案.md</code>（首版）、<code>20261010_SEO_GEO_v2_对抗审查100轮与调整方案.md</code>（AR-01…AR-100）、<code>20260918_AI引用基线_三引擎.md</code>（基线）。</p>
+  </div>
+
+  <h3>我提的 P1，四条已被裁决</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>我上一版提的</th><th>既有裁决</th><th class="mono">出处</th></tr></thead>
+      <tbody>
+        <tr><td>llms.txt 加反幻觉句 / llms-full.txt</td><td><strong>llms.txt 被证伪</strong>：Limy 分析 5.15 亿次 LLM bot 请求，<code>/llms.txt</code> 仅 <strong>408 次</strong>（0.00008%）；「文件保留，<strong>不进任何 KPI</strong>」</td><td class="mono">AR-52</td></tr>
+        <tr><td>markdown 孪生 / 内容协商 / md 发现提示</td><td><strong>本期不做（官网非文档站）</strong>，记为 P2 观察</td><td class="mono">AR-38</td></tr>
+        <tr><td>RSS / feed</td><td>部分采纳（P2），<strong>本期不做</strong></td><td class="mono">AR-20</td></tr>
+        <tr><td>竞品对比页</td><td><strong>驳回</strong>（P2 不做）</td><td class="mono">AR-46</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">独立复核（外部证据同向）</span>
+    <p>腾讯云（2026-06-16）：「AI 爬虫几乎不读取 llms.txt……建议优先优化 robots.txt 和结构化数据，<strong>llms.txt 仅对开发者文档站有价值</strong>」。LLMGenerator（2026-01）：「OpenAI 遵循 robots.txt 但尚未正式采用 llms.txt；Google 未提及；Meta 无迹象」。<strong>与项目内证据互相印证。</strong></p>
+  </div>
+
+  <p class="lede">另外，我上一版的「P0 发现」也不是新发现——#130 / #131 早在 10-13 / 10-14 就登记了（容器根 <code>AI_MEMORY/ISSUES.md:136</code>、<code>:126</code>）。我加的增量只有一个，见下一节。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>这一轮的真实增量</h2>
+
+  <h3>3.1 今天 11:52 的生产发版，证明了「发版修不了 FAQ」</h3>
+  <div class="verdict alert">
+    <span class="lb">本轮唯一实质增量</span>
+    <p>同一份生产 HTML 里，meta 层已修，FAQ 层没修——<strong>而 FAQ 不在代码里，所以再发版也永远修不好。</strong></p>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>层</th><th>线上现状</th><th>单源</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>meta description</code> / <code>og:description</code></td>
+          <td><span class="tag ok">已修</span>「……设计稿文件本体只在您本机处理、不上传（图层文字与译文需上传，范围见隐私政策）。」</td>
+          <td>与 <code>src/config/site.ts:15-16</code> <strong>一致</strong></td>
+        </tr>
+        <tr>
+          <td>JSON-LD <code>FAQPage</code> 第 ⑦ 问</td>
+          <td><span class="tag bad">仍旧</span>「平均约 3 分钟改完一套亚马逊 A+ 和主副图」</td>
+          <td><code>src/config/siteContent.ts</code> 中 <code>grep "3 分钟"</code> <strong>0 命中</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="notes">
+    <li><strong>AR-22 / AR-23（生产文案漂移）在生产面已闭</strong>——meta 层修好了。</li>
+    <li><strong>FAQ 层没修，且不会被「再发一次版」修好</strong>：<code>src/lib/server/site-settings.ts:182-190</code> 把 DB 的 <code>faq.items</code> 合并覆盖在 <code>siteContent.faq.items</code> 之上。</li>
+    <li>⇒ 漂移从「部署问题」被重新定性为「<strong>数据库内容问题</strong>」。这是本轮最重要的发现，上一版没说清。</li>
+  </ul>
+
+  <h3>3.2 修复通道是现成的、可回滚的</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><strong>生产内容工作室全套路由已存在</strong><span class="loc">src/app/api/admin/site-content/</span></div>
+      <pre>draft  diff  publish  revisions  rollback  discard  bootstrap  edit-mode</pre>
+      <p>被环境闸拦在生产外：<code>src/lib/server/site-settings.ts:361-368</code></p>
+      <pre>function assertContentStudioMutationAllowed(): void {
+  if (contentEnvironment() === 'production') {
+    throw new ContentStudioError('CONTENT_STUDIO_PRODUCTION_LOCKED',
+      'Content Studio 当前仅允许 development/test；production 发布需另行 Owner 批准。', 403)
+  }
+}</pre>
+      <p>⇒ <strong>正确修法是走 <code>draft → diff → publish</code>，有版本号和 <code>rollback</code>。</strong>比 SQL 直写安全得多。上一版只说「需授权解锁」，没说清通道。</p>
+    </div>
+  </div>
+
+  <h3>3.3 隐私页 6 天后仍是「草案」—— 锁住了唯一的内容杠杆</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>页面</th><th class="mono">HTTP</th><th>正文含「草案」</th></tr></thead>
+      <tbody>
+        <tr><td><code>/privacy</code></td><td class="mono">200</td><td><span class="tag bad">是</span></td></tr>
+        <tr><td><code>/privacy/subprocessors</code></td><td class="mono">200</td><td><span class="tag bad">是</span></td></tr>
+        <tr><td><code>/terms</code></td><td class="mono">200</td><td><span class="tag bad">是</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p>AR-41 明确：「C1 自陈隐私页'仍标注草案'」⇒ 前置未满足，暂不发（<code>20261010_...md:106</code>）。<strong>⇒ 站内唯一能改变 AI 引用内容的杠杆，卡在一个 6 天没动的签字动作上。</strong></p>
+  </div>
+
+  <h3>3.4 公开面探针：三个基线问题，图译工坊一次都没出现</h3>
+  <div class="callout alert">
+    <span class="lb">口径声明（重要）</span>
+    <p>以下是我的搜索工具结果，<strong>不是</strong>基线的 DeepSeek / 豆包 / Kimi 登录会话，<strong>不能替代复测</strong>。基线里 Kimi 是答对的（实搜型引擎能吃到官网内容）。此项仅作<strong>补充信号</strong>。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>基线问题</th><th>公开搜索返回</th></tr></thead>
+      <tbody>
+        <tr><td>Q1 图译工坊是什么</td><td><strong>图译工坊 0 次出现</strong>；返回 Translate Image / Manga Image Translator / 妙手 ERP 等图片翻译工具</td></tr>
+        <tr><td>Q2 图译工坊和图片翻译工具的区别（品牌+品类词）</td><td><strong>图译工坊 0 次出现</strong>；返回什么值得买 / 百家号 / 知乎的通用图片翻译工具横评</td></tr>
+        <tr><td>Q3 PSD 多语言怎么批量改</td><td><strong>图译工坊 0 次出现</strong>；返回 Adobe 官方文档 / PHP 中文网 / 百度贴吧</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">方向与 AR-37 / AR-48 一致：<strong>品类词内容我们是零</strong>，而 earned media 占 AI 引用来源约 84%。这与「加什么技术管道」无关。</p>
+
+  <h3>3.5 Cloudflare「Markdown for Agents」—— 新选项，本轮裁定归档</h3>
+  <p class="lede">10-10 审查只看了 <code>continuedev/next-geo</code> 的<strong>源站实现</strong>并判「本期不做」。但 2026-02-12 Cloudflare 已发布<strong>边缘侧</strong>方案，性质不同：</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>维度</th><th>实测事实</th></tr></thead>
+      <tbody>
+        <tr><td>机制</td><td>客户端带 <code>Accept: text/markdown</code>，CF <strong>从源站取 HTML 后边缘转 markdown</strong></td></tr>
+        <tr><td>代码改动</td><td><strong>零</strong>（无需 md 孪生文件、无需源站协商）</td></tr>
+        <tr><td>自动附带</td><td><code>vary: accept</code>、<code>x-markdown-tokens</code>、<strong><code>content-signal: ai-train=yes, search=yes, ai-input=yes</code></strong></td></tr>
+        <tr><td>消费方</td><td>CF 原文：「We already see some of the most popular coding agents today – like Claude Code and OpenCode – send these accept headers」</td></tr>
+        <tr><td><strong>套餐</strong></td><td><strong>仅 Pro / Business / Enterprise（Beta 免费），Free 不可用</strong></td></tr>
+        <tr><td>我们是否可用</td><td>项目内证据显示我们当时在 <strong>CF Free</strong>（<code>20260916_...md:24</code>）⇒ <strong>不可用</strong>。⚠️ 该证据为 2026-09-16，<strong>需你在 CF 后台确认是否已变更</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">裁决：仍不做</span>
+    <p>理由从「官网非文档站」升级为三条：① Free 套餐不可用；② 官网非文档站，消费方是编码 agent 而非搜索爬虫；③ 它会<strong>强制下发 <code>ai-train=yes</code></strong>，而训练爬虫策略正是你<strong>尚未拍板</strong>的 O2——用它等于替你做了决定。<strong>归档意义：第三轮不应再被提起。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>最优执行方案</h2>
+  <p class="lede"><strong>排序依据</strong>：不按「好不好做」，按「<strong>错得多快</strong>」。</p>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <strong>修生产 FAQ 漂移 <span class="tag bad">唯一红色</span> <span class="loc" style="font-family:var(--font-mono);font-size:.74rem;color:var(--muted)">约 1 小时 · 需你一句授权</span></strong>
+        <p><strong>为什么第一</strong>：它是唯一「现在就是错的」，而且已被证明<strong>发版修不了</strong>。AI 引擎此刻读到的就是一条已删除的承诺 + 一份不完整的隐私披露。</p>
+        <p><strong>动作</strong>：你授权放开生产内容编辑 → 后台内容工作室改 FAQ → 删「平均约 3 分钟」→ 补图层文字 / 译文 / 设计稿路径的上传披露 → <code>draft → diff → publish</code>。</p>
+        <p><strong>为什么不裸写库</strong>：走内容工作室有 diff 与 <code>rollback</code>，可审计、可回退；裸 SQL 没有。</p>
+        <p><strong>验收</strong>：① 线上 JSON-LD <code>FAQPage</code> 不再含「3 分钟」；② <code>test:seo-consistency</code> 对生产 <strong>0 FAIL</strong>（当前 1 FAIL）。</p>
+        <p><strong>回滚</strong>：publish 前记下当前 revision 号，出问题一键 <code>rollback</code>。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <strong>三个法律页去「草案」 <span class="tag warn">🟠</span> <span style="font-family:var(--font-mono);font-size:.74rem;color:var(--muted)">约 10 分钟 · 需你一个决定</span></strong>
+        <p><strong>为什么</strong>：AR-41 把 C1 内容卡锁死在「披露未定稿」上。<strong>这是站内唯一能改变 AI 引用内容的杠杆，卡了 6 天。</strong></p>
+        <p><strong>动作</strong>：你（或法务）确认 <code>/privacy</code>、<code>/privacy/subprocessors</code>、<code>/terms</code> 三页内容 → 去掉「草案」标记。</p>
+        <p><strong>之后</strong>：C1 内容卡才能进入发布流程（AR-36/41/42/44）。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <strong>AI 引用复测 <span class="tag warn">🟠</span> <span style="font-family:var(--font-mono);font-size:.74rem;color:var(--muted)">约 30 分钟 · 需你的浏览器</span></strong>
+        <p><strong>为什么</strong>：基线 09-18 建好，复测原定 <strong>10-02，已逾期 14 天</strong>（#138）。<strong>所有机制工作目前零度量。</strong></p>
+        <p><strong>动作</strong>：同 3 问 × DeepSeek / 豆包 / Kimi 登录会话，沿用 <code>20260918_AI引用基线_三引擎.md</code> 的模板。有余力就一次跑完 30 条分层问题集。</p>
+        <p><strong>我做不了</strong>：需要登录会话，我没有。这一步只能你来。</p>
+        <p><strong>附件</strong>：<code>清单_20261016_GEO问题集30条_分层.md</code>——已按 AR-37 扩到 30 条（品牌 6 / 品类 6 / 场景 8 / 对比 5 / 长尾 5），并把 09-18 的 3 问原题标出，保证可比性。</p>
+        <p><strong>新增重点</strong>：<strong>D 对比层是新增的</strong>——09-18 基线里 DeepSeek 与豆包都把我们替换成了竞品（OMNIX / PSD Translator / PS 变量），而官网 FAQ 只有一条泛泛的「和图片翻译工具的区别」，没点名任何竞品。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <strong>跑起 AI 爬虫月报 <span class="tag warn">🟡</span> <span style="font-family:var(--font-mono);font-size:.74rem;color:var(--muted)">有部署授权后再做</span></strong>
+        <p><strong>为什么</strong>：<code>scripts/ai-crawler-log-report.mjs</code> 已写好并入了 CI，但<strong>从未对生产日志跑过</strong>。crawl 段目前无真相来源（AR-51/58/59）。</p>
+        <p><strong>动作</strong>：开放生产 nginx 日志读取 → 跑一轮，落月报。</p>
+        <p><strong>备注</strong>：这一步是上一版完全漏掉的——它才是「AI 到底有没有来」的唯一可靠证据（爬虫不跑 JS，标签统计恒为 0，见该脚本 <code>:4-6</code>）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>我不做什么，以及为什么</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>不做</th><th>理由</th><th class="mono">出处</th></tr></thead>
+      <tbody>
+        <tr><td>markdown 孪生 / 内容协商 / md 发现提示</td><td>已裁决「本期不做（官网非文档站）」；CF 版在 Free 套餐不可用</td><td class="mono">AR-38</td></tr>
+        <tr><td>llms.txt 加反幻觉句 / llms-full.txt</td><td>已裁决 llms.txt 被证伪（408 / 5.15 亿），<strong>不进任何 KPI</strong></td><td class="mono">AR-52</td></tr>
+        <tr><td>加 <code>Content-Signal</code></td><td><code>ai-train</code> 取值是你未决的 <strong>O2</strong>；且会与 CF 后台设置打架</td><td class="mono">AR-05 / AR-08 / O2</td></tr>
+        <tr><td>RSS / feed</td><td>已判 P2，本期不做</td><td class="mono">AR-20</td></tr>
+        <tr><td>竞品对比落地页</td><td>已驳回</td><td class="mono">AR-46</td></tr>
+        <tr><td>批量程序化内容页</td><td>已驳回（folklore + 红线）</td><td class="mono">AR-45</td></tr>
+        <tr><td>屏蔽训练爬虫</td><td>你的策略决定，不擅改</td><td class="mono">AR-05 / O2</td></tr>
+        <tr><td>Wikidata / 编造 sameAs</td><td>无已验证来源，禁止编造</td><td class="mono">AR-34 / AR-90</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>复现命令</h2>
+  <pre># ① 生产 meta 已修、FAQ 未修（同一份 HTML）
+curl -s https://tuyigf.com/ -o /tmp/h.html
+grep -o '&lt;meta name="description"[^&gt;]*&gt;' /tmp/h.html      # 诚实版（已修）
+grep -c "3 分钟" /tmp/h.html                                # 1（FAQ 仍在）
+grep -o '.\{40\}3 分钟.\{40\}' /tmp/h.html | head -3        # 定位到 acceptedAnswer
+
+# ② 单源是干净的
+grep -n "3 分钟" worktrees/develop/src/config/site.ts        # 0 命中
+grep -n "3 分钟" worktrees/develop/src/config/siteContent.ts # 0 命中
+
+# ③ DB 覆盖单源
+sed -n '182,190p' worktrees/develop/src/lib/server/site-settings.ts
+
+# ④ 内容工作室通道齐全、被环境闸拦住
+ls worktrees/develop/src/app/api/admin/site-content/         # draft diff publish revisions rollback ...
+sed -n '361,368p' worktrees/develop/src/lib/server/site-settings.ts
+
+# ⑤ 三个法律页仍是草案
+for p in privacy privacy/subprocessors terms; do
+  curl -s "https://tuyigf.com/$p" | grep -c "草案"; done      # 均 &gt; 0</pre>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>最后一句</h2>
+  <div class="verdict">
+    <p>上一版我给了你一个「该加什么」的清单。这一轮读完项目自己的 100 轮审查后，判断变了：</p>
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">这个项目在 SEO/GEO 上<strong>不缺技术判断，缺的是把已经写好的东西发出去、把已经该做的度量做起来</strong>。机制层（robots 具名组、sitemap、llms、JSON-LD、meta 诚实版、守卫、日志脚本）已经做完且做得比 Supabase 的对应项更规范——首页 <code>@graph</code> 聚合就是证据。<br><br>剩下的三件事里，<strong>两件只需要你说一句话，一件只需要你花半小时。</strong></p>
+  </div>
+</section>
+
+<footer>
+  <p>二轮对抗式审查（2026-10-16，全部只读）：先复核项目既有的 <code>20261010_SEO_GEO_v2_对抗审查100轮与调整方案.md</code>（AR-01…AR-100），据此拆掉上一版方案的 4 项 P1；再对生产做实测，得出「meta 已修、FAQ 未修且发版修不了」的新结论。</p>
+  <p>未改动任何文件、未部署、未提交。外部证据（Cloudflare Markdown for Agents 套餐限制、llms.txt 消费率）均为公开来源，已在正文标注出处。</p>
+</footer>
+
+</div>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node 安全升级与系统安全更新｜执行报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict.done{border-left-color:var(--ok)}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict.done .lb{color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:44ch;font-weight:500;text-wrap:balance}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.was{color:var(--muted)}
+.now{color:var(--ok);font-weight:500}
+.keep{color:var(--warn);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.65;color:var(--ink-2)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>生产＋测试同机服务器</span><span class="sep">/</span>
+    <span>2026-10-22</span>
+  </p>
+  <h1>Node 安全升级 ＋ 254 个系统补丁：已执行完，两站正常</h1>
+  <p class="standfirst">起因是 Owner 转来的 PHP 严重漏洞公告。实测<strong>这台服务器根本没有 PHP</strong>，但顺着查运行时查出两个真洞：Node 落后一整个安全版本、系统欠 158 个安全补丁且自动更新从不工作。本轮把两个都补上并完成验收。</p>
+  <div class="meta">
+    <span>Owner 令：审查→方案→执行</span>
+    <span>风险档 High</span>
+    <span>验收时刻 12:17:41 CST</span>
+    <span>业务代码／数据库／支付开关 未动</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict done">
+    <span class="lb">结论</span>
+    <p>两个洞都补上了：Node <strong>v22.23.2 → v22.23.4</strong>、内核 <strong>6.8.0-124 → 6.8.0-147</strong>、<strong>158 个安全包清零</strong>、自动安全更新<strong>真的接上了</strong>。重启后 11 秒业务回来，公网与身份读数全部对得上。</p>
+    <p style="font-size:.95rem;font-weight:400;color:var(--ink-2);max-width:60ch">对用户侧无感知（含重启共停约 3 分钟）；Owner 不需要做任何事；这类漏洞下次不必再临时动手。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">22.23.4</span><span class="k">Node 运行时（3 个高危已离开影响区间）</span></div>
+    <div class="stat ok"><span class="n">254</span><span class="k">系统包已装（227 升级＋27 新装，0 删除）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">剩余安全包待装（基线 158）</span></div>
+    <div class="stat ok"><span class="n">11 s</span><span class="k">重启到业务进程就绪</span></div>
+    <div class="stat warn"><span class="n">1</span><span class="k">存量红单元（重启前就红，非本次）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先证伪「PHP 漏洞影响我们」：这台机器没有 PHP</h2>
+  <p class="lede">Owner 给的处置方案（PHP 8.x 源码编译升级／7.x 用修复分支／5.x 用 Ondřej Surý 的修复包）逐条核对后<strong>全部不适用</strong>。四条只读探针：</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>检查项</th><th>命令</th><th>实测结果</th></tr></thead>
+      <tbody>
+        <tr><td>装了 PHP 包吗</td><td class="mono">dpkg -l 'php*'</td><td class="now">0 个</td></tr>
+        <tr><td>PHP 配置目录</td><td class="mono">ls /etc/php</td><td class="now">不存在</td></tr>
+        <tr><td>PHP-FPM 二进制</td><td class="mono">ls /usr/sbin/php-fpm*</td><td class="now">不存在</td></tr>
+        <tr><td>nginx 五个站点后端</td><td class="mono">grep proxy_pass</td><td>全部指向 3000 / 3001 两个 Node 进程</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">为什么还是动了服务器</span>
+    <p>「PHP 有洞」是假警报，但它是这次排查的入口。沿入口查运行时才发现：<strong>真正敞着的是 Node 和系统层</strong>——而且自动安全更新从配置上就从不打安全补丁。修掉的是这个。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>对抗式审查：执行前钉死的六条</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">契约</span><span class="loc">/opt/tygf-node-v22</span></div>
+      <p><strong>两站共用同一个 Node 目录</strong>：生产 systemd 的 <code>ExecStart</code> 与测试 PM2 的 script path 都指它 ⇒ 换运行时等于同时换两站，必须一起停、一起验，不能只动一边。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">状态</span><span class="loc">~/.pm2/dump.pm2</span></div>
+      <p><strong>PM2 把 Node 二进制当脚本路径存</strong>：只有 <code>save → kill → resurrect</code> 才真换运行时；只 <code>pm2 restart</code> 会保持旧二进制，看起来成功其实没换。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">数据</span><span class="loc">apt 模拟</span></div>
+      <p><strong>普通 <code>upgrade</code> 会漏掉新内核</strong>：需要装新依赖的包被跳过。改用 <code>--with-new-pkgs</code>，读数 <strong>254 个 Inst、0 个 Remv</strong>；基线（11:23:27）测得 <strong>158 个包来自 noble-security</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">根因</span><span class="loc">50unattended-upgrades:8</span></div>
+      <p><strong>自动安全更新形同虚设</strong>：那一行 <code>-security</code> 是注释状态，日志里允许源只有 <code>o=Ubuntu,a=noble</code> ⇒ 装了工具但从不打安全补丁。这一条是「为什么会积压 158 个」的答案。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">归属</span><span class="loc">failed-before.txt</span></div>
+      <p><strong>测试站那枚红单元是存量</strong>：重启前先存证。若不先存，重启后它还红会被误算成本次造成的；若它恰好不红了又会被误算成本次修好的。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">容量</span><span class="loc">df -h /</span></div>
+      <p><strong>只剩 4.9G（88%）</strong>：254 个包约 1G 下载 ⇒ 必须先清 apt 缓存。写到一半满盘比不补丁更危险（dpkg 半装状态）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>执行时间线（服务器侧实测钟点）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>时刻</th><th>动作</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">11:23:27</td><td>建备份目录（root 700）：基线读数、两站 SQLite、PM2 dump、dpkg selections、apt 原配置、重启前红单元清单</td><td class="mono">/var/backups/tygf-security-20261022/</td></tr>
+        <tr><td class="mono">11:2x</td><td>双源核对制品哈希（官方＝腾讯镜像）；解包校验；确认 ABI 新旧同为 modules=127</td><td class="mono">1805bcd3…37e9ce / SHA_OK / XZ_OK</td></tr>
+        <tr><td class="mono">11:28</td><td>版本化安装 <code>/opt/tygf-node-v22.23.4</code>，旧目录改名保留 <code>…-v22.23.2-aside</code>，建同名软链接 ⇒ <strong>不改任何 unit 文件</strong>：13 个 <code>tygf*.service</code> 里 <strong>12 个引用该软链接</strong>（<code>grep -l</code> 计数）随链接一起切；<strong>唯一例外</strong> <code>tygf-test-photoshop-reconcile</code> 写死用系统 Node 20 ⇒ 切不到它（见 §06）</td><td class="mono">ls -ld → …-> /opt/tygf-node-v22.23.4</td></tr>
+        <tr><td class="mono">11:28:58→11:29:01</td><td>停生产服务与 timer → 切换 → 起服务（生产中断 3 秒）</td><td class="mono">journalctl -u tygf</td></tr>
+        <tr><td class="mono">11:2x–11:3x</td><td>PM2 三应用 <code>save → kill → resurrect</code> 切运行时</td><td class="mono">dump.pm2.bak</td></tr>
+        <tr><td class="mono">11:32:41→11:34:50</td><td><code>apt-get upgrade --with-new-pkgs</code>：227 升级＋27 新装＝254，0 删除（新内核、openssl、sudo、systemd、libc、openssh、nginx…）</td><td class="mono">apt history.log / tygf-security-updates-20261022.log</td></tr>
+        <tr><td class="mono">11:3x</td><td>自动更新：<code>:8</code> 放开 noble-security；<code>:94</code> 显式 <code>Automatic-Reboot "false"</code>；dry-run 确认允许源已含 noble-security</td><td class="mono">Allowed origins are: …, o=Ubuntu,a=noble-security</td></tr>
+        <tr><td class="mono">11:36:09→:29→:40</td><td>重启换内核；开机 11:36:29 → 业务 11:36:40（11 秒）；PM2 11:36:43 三应用 online</td><td class="mono">last reboot / ExecMainStartTimestamp / pm2.log</td></tr>
+        <tr><td class="mono">11:38:02</td><td>第一轮全量验收</td><td class="mono">post-verification.txt</td></tr>
+        <tr><td class="mono">12:17:41</td><td>本报告读数（距重启 41 分钟，两轮 timer 已自行跑过）</td><td class="mono">tmp/verify-node-upgrade.sh 输出</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">并发说明（不记账到本轮）</span>
+    <p>测试站 <strong>11:44–11:46 被另一个会话部署了新 Web 构建</strong>（代码 <code>31bed477 → cad83e4f</code>）。那不是本次变更——本次只动运行时与系统包。它顺带成了一次额外验证：<strong>新构建在新 Node 上正常起来了</strong>（<code>BOUND</code>、本机 200）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>验收读数（2026-10-22 12:17:41 实测）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项目</th><th>执行前</th><th>执行后</th><th>判据来源</th></tr></thead>
+      <tbody>
+        <tr><td>业务运行时</td><td class="was mono">v22.23.2</td><td class="now mono">v22.23.4</td><td class="mono">node -v</td></tr>
+        <tr><td><strong>进程实际用的二进制</strong></td><td class="was">旧目录</td><td class="now">4557 生产／9676·9682·9683 测试 ＝ <code>/opt/tygf-node-v22.23.4/bin/node</code></td><td class="mono">readlink /proc/&lt;pid&gt;/exe</td></tr>
+        <tr><td>生产另两枚常驻 worker</td><td class="was">—</td><td class="keep">4558／4565 命令行走同一软链接；其 <code>/proc/&lt;pid&gt;/exe</code> 因权限归属读不到 ⇒ <strong>未单独取证</strong></td><td class="mono">ps cmdline（exe 读不到）</td></tr>
+        <tr><td>内核</td><td class="was mono">6.8.0-124</td><td class="now mono">6.8.0-147（旧内核保留）</td><td class="mono">uname -r / dpkg -l</td></tr>
+        <tr><td>待装安全包</td><td class="was">158 个</td><td class="now">0 个</td><td class="mono">apt-get -s upgrade｜Inst=0 rc=0</td></tr>
+        <tr><td>仍可升级总数</td><td class="was">254</td><td class="keep">1 ＝ tmux（Ubuntu phasing 分批推送，非安全项）</td><td class="mono">apt list --upgradable</td></tr>
+        <tr><td>自动安全更新</td><td class="was">从不打</td><td class="now">已含 noble-security；自动重启 false</td><td class="mono">dry-run Allowed origins</td></tr>
+        <tr><td>生产服务</td><td class="was">active</td><td class="now">active／enabled，NRestarts=0</td><td class="mono">systemctl show tygf</td></tr>
+        <tr><td>测试三应用</td><td class="was">online</td><td class="now">全 online</td><td class="mono">pm2 list</td></tr>
+        <tr><td>生产身份</td><td class="was mono">319bc1384a36</td><td class="now mono">BOUND@319bc1384a36（未变）</td><td class="mono">/api/runtime-provenance</td></tr>
+        <tr><td>测试身份</td><td class="was mono">31bed477</td><td class="keep mono">BOUND@cad83e4f4dd6（另一会话）</td><td class="mono">同上</td></tr>
+        <tr><td>本机 HTTP</td><td class="was">—</td><td class="now">3000＝200、3001＝200</td><td class="mono">curl 127.0.0.1</td></tr>
+        <tr><td>公网</td><td class="was">—</td><td class="now">tuyigf.com／＝200，/download＝200</td><td class="mono">curl</td></tr>
+        <tr><td>测试站外网</td><td class="was">403</td><td class="keep">403（访问门在，非 5xx）</td><td class="mono">curl</td></tr>
+        <tr><td>红单元</td><td class="was">1（存量）</td><td class="keep">仍 1 ＝ tygf-test-photoshop-reconcile，与重启前同一枚</td><td class="mono">systemctl --failed</td></tr>
+        <tr><td>磁盘</td><td class="was">4.9G（88%）</td><td class="now">4.9G（88%）；中途一度 92%，<code>apt-get clean</code> 后回落</td><td class="mono">df -h /</td></tr>
+        <tr><td>内存</td><td class="was">—</td><td class="now">1.9Gi 总／1.2Gi 可用</td><td class="mono">free -h</td></tr>
+        <tr><td>定时任务</td><td class="was">—</td><td class="now">reconcile 两站各跑过 12:09／12:10；learning-cleanup 11:56 跑过</td><td class="mono">systemctl list-timers</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">数据完整性</span>
+    <p>切换前用 <code>sqlite3 .backup</code> 各取一份：生产 <code>custom.db</code> 13M（<code>PRAGMA integrity_check</code> ＝ <strong>ok</strong>）、测试 37M，都在备份目录内。<strong>本次没有触碰数据库。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>回滚路径（都是盘上真文件）</h2>
+  <pre>sudo systemctl stop tygf tygf-auth-mail tygf-smart-review
+sudo rm /opt/tygf-node-v22
+sudo mv /opt/tygf-node-v22.23.2-aside /opt/tygf-node-v22
+sudo -u ubuntu env PM2_HOME=/home/ubuntu/.pm2 pm2 kill
+sudo -u ubuntu env PM2_HOME=/home/ubuntu/.pm2 pm2 resurrect
+sudo systemctl start tygf tygf-auth-mail tygf-smart-review</pre>
+  <ul class="notes">
+    <li><strong>内核</strong>：GRUB 选 <code>6.8.0-124-generic</code>（旧内核包未卸载）。</li>
+    <li><strong>自动更新</strong>：<code>cp /var/backups/tygf-security-20261022/50unattended-upgrades.bak → /etc/apt/apt.conf.d/</code>。</li>
+    <li><strong>数据库</strong>：备份目录内两份 <code>.db</code>；PM2 应用清单有 <code>dump.pm2.bak</code>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>遗留与边界（如实，不粉饰）</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>已证实</h3>
+      <ul>
+        <li>版本层已离开公告的影响区间（Node 与内核、158 个安全包）。</li>
+        <li>两站<strong>进程实际二进制</strong>已换——不是「配置文件应该是新的」。</li>
+        <li>重启后自动恢复链路成立（服务与 PM2 单元均 enabled 且真的拉起来了）。</li>
+        <li>自动安全更新从此有效，且<strong>不会自动重启</strong>。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>没做／没验</h3>
+      <ul>
+        <li><strong>未做漏洞利用验证</strong>：三个 Node 高危（Brotli 越界写、dns.resolve NUL 截断、TLS 主机名校验绕过）按官方公告判定，我们没复现攻击。</li>
+        <li><strong>PM2 守护进程仍用系统 Node 20.20.2</strong>（<code>pm2.log</code> 自陈 <code>Runtime Binary : /usr/bin/node</code>）；业务进程不受影响。已登记为独立项。<strong>〔同日 13:25 已收口，见下〕</strong></li>
+        <li><strong>系统 /usr/bin/node 未升</strong>（NodeSource，v20.20.2，2026-04 起停止维护）。它不是两站业务运行时，但<strong>确实还在被执行</strong>：测试站 <code>tygf-test-photoshop-reconcile</code>（每 10 分钟）写死用它 ⇒ 本轮软链接切换<strong>切不到它</strong>；改它一行 <code>ExecStart</code> 属另一件事，未静默扩大范围。</li>
+        <li>测试站那枚存量红：<code>403 INVALID_RESPONSE</code>，重启前后同形，未修。</li>
+        <li>无整机快照；未逐包读 changelog；未跑业务全链路（不占 PS 与积分）；未做入侵痕迹排查。</li>
+        <li>只覆盖这一台服务器，读数不可外推到其他机器。</li>
+        <li>nginx 配置未动未 reload；两站代码未重新构建；助手侧未碰。</li>
+        <li><strong>记账工具一处假警报（顺手查出，已投属主）</strong>：<code>feishu-readback.mjs</code> 读<strong>缓存快照</strong>（由 <code>control-plane.sh</code> 刷新）⇒ 单独调用会把已落地的投影报成「投影未落地」。本轮它把 <code>SEC-NODE-20261022</code> 等三行一起报缺，而按 <code>sync-task-ledger.sh</code> 原式全量拉取（156 行）三行都在 ⇒ 判"没落地"前必须先刷新快照。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">同日 13:1x–13:3x 后续轮（本节"遗留"以那份为准）</span>
+    <p>已完成三件：磁盘 <strong>4.9G → 12G 可用</strong>（回收 7.1G ＋ 日志上限 200M）；系统 Node 20 → <strong>22.23.4</strong>（#235 收口，PM2 与那枚写死 <code>/usr/bin/node</code> 的单元都随之离开 EOL 运行时）；新增可复跑探针 <code>scripts/security-runtime-probe.sh</code>（正控全绿 rc=0、负控 rc=1）。详见 <code>执行报告_20261022_磁盘清理_系统Node收口_运行时安全探针.md</code>（＋同名 HTML）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>建议的下一步（等 Owner 一句话，不自行扩大范围）</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="tag warn">P2</span><span class="loc">PM2／系统 Node</span></div><p>把 PM2 与系统 Node 20 一起收口：要么 PM2 守护也换到受控新 LTS，要么两个测试常驻应用改由 systemd 承载、彻底退役 PM2。</p></div>
+    <div class="card"><div class="top"><span class="tag warn">P3</span><span class="loc">可复跑探针</span></div><p>把「运行时版本 对 官方安全公告」做成每月自动比对。这两次（PHP 恐慌、Node 落后）都是 Owner 看到新闻才发起的被动响应。</p></div>
+    <div class="card"><div class="top"><span class="tag bad">P3</span><span class="loc">磁盘 88%</span></div><p>剩 4.9G。下次大版本更新若不清缓存会踩「写到一半满盘」，那比不更新更麻烦。</p></div>
+  </div>
+</section>
+
+<footer>
+  <p><strong>证据出处</strong>：基线 <code>baseline.txt</code>（11:23:27，kernel=6.8.0-124、old_node=v22.23.2、security_upgradable=158）；重启前红单元清单 <code>failed-before.txt</code>；第一轮验收 <code>post-verification.txt</code>（11:38:02）；apt 全量日志 <code>/var/log/tygf-security-updates-20261022.log</code>（118030 B）＋ <code>/var/log/apt/history.log</code>；12:17 复采用本会话 SSH 实测（脚本 <code>tmp/verify-node-upgrade.sh</code>）。备份目录 <code>/var/backups/tygf-security-20261022/</code>（root 700）。</p>
+  <p><strong>一处如实标注</strong>：<code>post-verification.txt</code> 里 <code>tarball_sha256=</code> 为空——<code>/tmp</code> 那枚 tar 包执行后被系统清理。哈希证据取的是<strong>下载当时那条命令的真实输出</strong>（<code>1805bcd3…37e9ce</code>、<code>SHA_OK</code>），不是事后补算。</p>
+  <p>本报告不含任何密钥；制品校验用的是公开哈希；服务器访问沿用既有受控凭据。同文 md 版与本 HTML 同目录。</p>
+</footer>
+
+</div>
+</body>
+</html>

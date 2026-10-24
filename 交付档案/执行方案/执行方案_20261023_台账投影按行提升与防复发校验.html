@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>台账投影按行提升与防复发校验 · 执行方案 · 2026-10-23</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:1.6rem;line-height:1.1}
+.stat .v.bad{color:var(--bad)}.stat .v.ok{color:var(--ok)}.stat .v.warn{color:var(--warn)}
+.stat .s{font-size:.78rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="masthead">
+  <div class="eyebrow">
+    <span>执行方案 v1</span><span class="sep">/</span><span>台账投影 · 按行提升</span><span class="sep">/</span><span>2026-10-23 13:3x</span>
+  </div>
+  <h1>把"全有或全无"的提升，改成"只提升真正写成功的行"</h1>
+  <p class="standfirst">承接 13:2x 的同步脚本验证：<b>一行坏日期让对账基准从 10-22 16:47 起永久停摆</b>，而且更糟的是——它一旦"恢复"，会把历史上所有被拦下的行变成假"人改过"。这份方案给出四个可独立合入的改动、一次不中毒的迁移、七条验收判据（含负控）。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">结论</span>
+  <p><b>修法不是"修那行日期"这一条，是三条</b>：源头挡刀（非法日期别想进写盘）＋按行提升（失败行不许污染基准）＋可观测性（恒失败行第一天就点名）。少了第三条，本方案只是把"卡死"变成"慢性病"。</p>
+  <div class="contract">
+    <span>对象：<b>scripts/sync-task-ledger.sh / .mjs / test-sync-reconcile.sh / control-plane.sh</b></span>
+    <span>基线：root <b>master@f56c550</b> 之后工作树（四文件均未改）</span>
+    <span>风险档：<b>Medium</b>（影响所有会话的投影；退化方向安全）</span>
+    <span>根因：<b>6 条</b>，每条带 file:line 或实跑回显</span>
+    <span>验收：<b>7 项</b>判据，含"整批提升必让 T-P1/T-P2 变红"的负控</span>
+    <span>待拍：<b>4 问</b>（O1 顺序 · O2 代贴与否 · O3 单行强推 · O4 迁移窗口）</span>
+  </div>
+</div>
+
+<section>
+  <h2><span class="num">一</span>根因（六条，全部可复跑）</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>事实</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td class="code">R1</td><td>一条写失败 ⇒ 整批基准不提升</td><td class="code">sync-task-ledger.sh:135 计 FAILS → :143-146 只有零失败才 mv；13:24:05 真跑回显「⛔ 写入执行有 1 条失败（快照未提升，下次重试）」</td></tr>
+      <tr><td class="code">R2</td><td>基准从 10-22 16:47 起没前进</td><td class="code">final mtime=2026-10-22 16:47:14 / 128,765 B / 164 行；同日 pending=13:24:07 / 186 行</td></tr>
+      <tr><td class="code">R3</td><td>基准冻结 ⇒ 之后所有合法变更被当可疑</td><td class="code">classify()：if(!P) → no-snapshot；13:24 heldCount=11（含我今日三行）</td></tr>
+      <tr><td class="code">R4</td><td><b>held 行也把"想写值"写进基准</b> ⇒ 一旦提升即永久 human-edit</td><td class="code">mjs:317 snapshotRows.push(values: L)；只读模拟（pending 当基准）实测：理由 no-snapshot→human-edit，held 11→12</td></tr>
+      <tr><td class="code">R5</td><td>写失败的原因根本不进摘要</td><td class="code">summary.errors.push 全文只有 3 处（:267/:282/:286），无一覆盖写失败；真跑 errors=[]</td></tr>
+      <tr><td class="code">R6</td><td>比较宽容、写入严格 ⇒ 坏格式要等到投影才炸</td><td class="code">实演 normTime('2026-10-22 20:1x')='2026-10-22 20:00'（把占位字母当整点）；写盘用原串 ⇒ 飞书 date 字段拒收</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">二</span>四个改动（可独立合入，顺序即安全顺序）</h2>
+  <div class="cards">
+    <div class="card"><h3>C1 源头挡刀（最先合，零风险）</h3><p><code>control-plane.sh</code> 加日期格式体检 ＋ mjs 在生成 payload 前做行级严格校验：<code>time</code> 列须匹配 <span class="mono">^YYYY-MM-DD([T ]HH:MM)?$</span>、<code>date</code> 列须 <span class="mono">^YYYY-MM-DD$</span>。<b>只排除该行并在 errors 点名</b>，其余行照跑；<b>不自动"修好"</b>——把 <span class="mono">20:1x</span> 静默降级成 <span class="mono">20:00</span> 等于伪造实测读数。</p></div>
+    <div class="card"><h3>C2 按行提升（核心）</h3><p>不新增 manifest：<code>EXEC_LOG</code> 里已有逐行 <span class="mono">[ok] create|update &lt;taskId&gt;</span>。提升改为 <b>newP = oldP ⊕ {pending[t] | t∈OK}</b>，由新工具 <code>promote-state.mjs</code>（≤40 行、纯本地）完成。三道守卫：OK 为空不提升；提升前备份 final；同 <span class="code">taskId</span> 既 ok 又 fail ⇒ 拒绝提升并点名。</p></div>
+    <div class="card"><h3>C3 held 行不污染基准</h3><p>mjs 四个 push 点（<span class="mono">:304/:317/:329/:339</span>）里只改 held 那一处：<b>透传旧 P</b>；无旧 P 就不写进 candidate，并计入新字段 <span class="code">summary.unbaselined</span> 由 wrapper 点名。这一改直接断掉 R4 的"恢复即中毒"。</p></div>
+    <div class="card"><h3>C4 恒失败行第一天就可见</h3><p><span class="mono">[fail]</span> 旁路带上 lark-cli 的 stderr 片段（现在被 <span class="mono">|| echo</span> 吞掉）；新增 <code>failing.json</code> 计连续失败次数，<b>≥2 次就在摘要置顶点名</b>；摘要补 <span class="code">promoted / unbaselined / failing</span> 三个计数（只增字段，向后兼容）。</p></div>
+  </div>
+  <div class="callout"><strong>为什么 C1 先合</strong>：它不动提升语义，合进去就止住新的坏数据，还给 C2/C3 的测试提供可控坏样本。<strong>为什么迁移必须最后做</strong>：账本是共享追加写面（今天已见两枚并发空行），重建基准要在夜间低并发窗口。</div>
+</section>
+
+<section>
+  <h2><span class="num">三</span>迁移：处理今天已经中毒的 pending（顺序不能错）</h2>
+  <p class="muted"><b>禁止</b>把现在的 pending 直接提升成 final——那会让我那三行＋别会话所有历史 held 行永久变 <span class="mono">human-edit</span>（已实测）。</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>步</th><th>做什么</th><th>核对读数</th></tr></thead>
+    <tbody>
+      <tr><td>M1</td><td>备份 final(164) 与 pending(186) 到 <span class="mono">tmp/readback/backup-20261023/</span>，记 sha256</td><td class="code">两文件字节数与哈希留底</td></tr>
+      <tr><td>M2</td><td>安全重建：<b>只把"台账值 L 与飞书现值 F 全等"的行</b>纳入基准；不等价、无基准的一律不纳入</td><td class="code">dry-run：no-snapshot 数下降（今天至少我那 3 行退出）、skip 上升、L==F 的行不出现在计划里</td></tr>
+      <tr><td>M3</td><td>合入 C1（可单独先合），再合 C2/C3/C4 ＋ 测试</td><td class="code">harness 29 → 36 断言 rc=0</td></tr>
+      <tr><td>M4</td><td>跑一次真投影，确认语义闭环</td><td class="code">promoted == 真 [ok] 数；final mtime 前进；failing.json 里 USAGE-LIMIT-TRIAGE≥1 并被点名</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout"><strong>那行坏日期本身</strong>：由<b>属主会话</b>用实测钟点重贴一行（append、last-wins，历史不回改）。可核来源两条：其 TASK_LOG「20:0x 部署」一节标题钟点，或服务器收据目录名 <span class="mono">deploy-20261022_200455-557fe7670371</span> ⇒ 20:04（须在出处里写明是服务器时区）。我不代改别人的账，也不按 <span class="mono">--force</span>（同批 held 含 Owner 手改行 <span class="code">ZHIHU-COPY</span>）。</div>
+</section>
+
+<section>
+  <h2><span class="num">四</span>验收与对抗自查</h2>
+  <div class="stats">
+    <div class="stat"><span class="k">T-P1 核心</span><span class="v">按行提升</span><span class="s">A 成功 / B 失败 / C 未列入 ⇒ 只有 A 进新基准，B、C 保留旧值</span></div>
+    <div class="stat"><span class="k">T-P2 防污染</span><span class="v bad">held≠基准</span><span class="s">candidate 里该 taskId 的值必须 == 旧 P，不得 == L</span></div>
+    <div class="stat"><span class="k">T-P3 源头挡刀</span><span class="v">点名排除</span><span class="s">坏日期行被排除且 errors 点名，其余行照出计划</span></div>
+    <div class="stat"><span class="k">T-P4/T-P6</span><span class="v">回归＋幂等</span><span class="s">全成功时 promoted==计划数；二跑 update=0；健全性闸 update==带 --record-id 数不破</span></div>
+    <div class="stat"><span class="k">T-P5 早晨体检</span><span class="v warn">rc 两态</span><span class="s">control-plane：坏⇒rc=1 点名；好⇒rc=0</span></div>
+    <div class="stat"><span class="k">负控（防恒真）</span><span class="v bad">必须红</span><span class="s">把 promote 换回"整批 mv"，T-P1/T-P2 必须失败，否则测试没牙</span></div>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>自我攻击后保留的判断</h3><p>① 不新增 manifest 文件（exec log 已是唯一真值源，两处真值必分叉）；② L==F 才纳入基准 ⇒ <b>Owner 手改的行不会被顺手"洗白"</b>，下次仍被拦，这是要的行为；③ 迁移里绝不把 held 的 L 写进基准；④ 不用 <span class="mono">--force</span> 换便利。</p></div>
+    <div class="card"><h3>已承认的残余风险</h3><p>若 lark-cli 改了 echo 形状，<span class="mono">[ok]</span> 解析会落空 ⇒ 最坏"永不提升"＝退回今天现状（<b>不会写坏飞书</b>）；因此 C4 的连续失败点名不是装饰，是这条退化的报警器。另一处未覆盖：<span class="mono">feishu-readback.mjs</span> 是否也假设"整批提升"——合入前必须一并复核，否则早晨体检会报假漂移。</p></div>
+  </div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>待拍</th><th>建议</th></tr></thead>
+    <tbody>
+      <tr><td class="code">O1</td><td>是否按 C1 →（观察一天）→ C2/C3/C4 → 迁移 的顺序</td><td>是。先止血，再改提升语义</td></tr>
+      <tr><td class="code">O2</td><td>坏日期由属主会话重贴，还是允许我在"只改日期格式、内容一字不动"前提下代贴</td><td>建议属主自贴；若要立刻恢复投影我可代贴，但出处必须写明"代贴＋时间取自部署收据目录名"</td></tr>
+      <tr><td class="code">O3</td><td>要不要加 <span class="mono">--only TASKID</span> 单行强推</td><td>要。把"全量 --force"这个危险动作换成可控最小动作，且必须打印被覆盖列旧值</td></tr>
+      <tr><td class="code">O4</td><td>迁移窗口</td><td>夜间低并发（账本是共享追加写面）</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>依据：<span class="code">AI_MEMORY/ISSUES.md:2043（#274，含 13:2x 验证补记）</span>· 码：<span class="code">scripts/sync-task-ledger.sh:135 / :143-146；scripts/sync-task-ledger.mjs:298-304 / :317 / :329 / :339 / :267,282,286 / :97-103</span></p>
+  <p>基线读数：<span class="code">bash scripts/test-sync-reconcile.sh ⇒ PASS=29 FAIL=0 rc=0</span>（13:3x 实跑）· <span class="code">13:24:05 真投影 ⇒ [fail] 1 条、held 11、final mtime 未变</span></p>
+  <p class="code">交付档案/执行方案/执行方案_20261023_台账投影按行提升与防复发校验.md · 2026-10-23 13:3x</p>
+  <p><b>本方案未执行</b>：四个文件一字未改、未迁移基准、未提交未推未部署、未 --force；等你回 O1–O4 四个字母。</p>
+</footer>
+
+</main>
+</body>
+</html>

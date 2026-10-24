@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案＋执行记录：免 PS 链 PC-A5 就绪引擎道与排序纠正（2026-10-17）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(26px,5vw,52px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(32px,5vw,48px)}
+.masthead{display:flex;flex-direction:column;gap:13px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.65rem,4.2vw,2.2rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.75rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.24rem;margin:0;padding-bottom:9px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.73rem;color:var(--accent);flex:none}
+p{margin:0;max-width:72ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.3vw,1.13rem);line-height:1.6;font-weight:500;max-width:58ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.5rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.79rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:17px 19px;display:flex;flex-direction:column;gap:11px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--bad)}.panel.warn{border-top:2px solid var(--warn)}
+.panel h3{font-family:var(--font-display);font-size:.96rem;margin:0}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.gate .num{font-family:var(--font-mono);font-size:.8rem;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:6px 8px;border-radius:8px;height:fit-content;flex:none;white-space:nowrap}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.hot{border-left:3px solid var(--bad)}
+.callout.hot .lb{color:var(--bad)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow"><span>执行方案＋执行记录</span><span class="sep">·</span><span>免 PS 链 PC-A5</span><span class="sep">·</span><span>2026-10-17 21:5x</span></div>
+  <h1>就绪扫描也有引擎道了——而本轮对抗式审查砍掉的，是我自己上一轮定的排序</h1>
+  <p class="standfirst">您令「使用对抗式审查后给个执行方案，然后按方案执行」。审查的第一对象是我自己的方案：原计划的 PC-A4（执行期同源闸）当轮做了<strong>也守不住任何东西</strong>。改做 PC-A5 后，A4 才有对象可判。</p>
+  <div class="meta"><span>隔离树 worktrees/pc-port-20261017（基线 develop 338da1d）</span><span>未提交 · 未推 · 未部署 · 未碰两站</span><span>零合同变更（manifest 键集一字未动）</span></div>
+</div>
+
+<section>
+  <div class="verdict"><span class="lb">结论</span>
+    <p>逐脚本 <code>test:trust-chain</code> 44/44 绿、新门 7/7、合同门 rc=0、<code>tsc</code> rc=0、负控五发各咬一处。<strong>没跑的两格照旧不记为绿</strong>：lint 本机超时（环境级）；真机 HTTP 与无 PS 端到端——引擎就绪道只验到协议与映射层。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">44/44</span><span class="k">逐脚本 trust-chain（新门已在链内）</span></div>
+    <div class="stat ok"><span class="n">7/7</span><span class="k">新守卫 smoke-pc-readiness</span></div>
+    <div class="stat ok"><span class="n">5</span><span class="k">负控各咬一处（逐发还原后）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">manifest 键改动（不触发四层同步）</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">未跑项（lint／无 PS 真机端到端）</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="k">我自己的负控工具缺陷（已修并记档）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§1</span>审查砍我自己那一刀的三量</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">量 1</span><div class="body"><p>就绪扫描 <code>runReadinessScan</code>（<code>server.js:5267-5366</code>）只会起 PS：写 <code>readiness-input.json</code>（<code>:5278</code>）、发 <code>TYGF_V15_Readiness_Scanner.jsx</code>、读回 <code>readiness-observation.json</code>（现役支 <code>:5307-5340</code>）。</p></div></div>
+    <div class="gate"><span class="num">量 2</span><div class="body"><p>就绪快照是执行清单的前置：<code>execution-manifest.js:195</code> 要核 <code>READINESS_FINGERPRINT_MISMATCH</code>。没有它就建不出清单。</p></div></div>
+    <div class="gate"><span class="num">量 3</span><div class="body"><p>⇒ 没有 PS 的机器现在连清单都建不出来，"引擎扫的层号交给 PS 执行"今天走不到。给不可达分支加同源闸＝自欺，还会把恢复锁语义再抄一遍。<strong>执行序改为 A5 → A4。</strong></p></div></div>
+  </div>
+  <div class="callout"><span class="lb">顺手查到的省事事实</span>
+    <p>就绪扫描器按 PSD 内部层 id 认层（jsx <code>:17-25</code> 的 <code>putIdentifier('Lyr ', id)</code>），内置引擎报的也是同一套 id ⇒ 引擎道不需要新契约、不需要改 manifest 一个键。但"两边 id 空间真等价"<strong>仍未实测</strong>，须 PC-F 用同一文件双通道对表定论。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§2</span>四件改动</h2>
+  <ul class="notes">
+    <li><code>pc-scanner.js</code> 新增 <code>readEngineLayerIndex()</code>：只读会话 <code>doc.open</code> → <code>doc.inspect</code> → <code>doc.close</code>，压成 <code>id → {isText, kind, text}</code>，不编辑不保存。</li>
+    <li><code>pc-scanner.js</code> 新增纯函数 <code>buildReadinessObservations()</code>：三态映射逐条对齐 PS 侧（缺失 / 存在但非文本 / 文本读回）。抽纯函数理由同上一轮——内联在 <code>server.js</code> 就测不到，而这三态直接决定用户看到哪个阻断码。</li>
+    <li><code>server.js</code> 就绪入口按同一把尺判通道（<code>:5274</code> 复用 <code>decideScanChannel</code>；<code>:5273</code> 旗标关时不起引擎探针），引擎分支 <code>:5287</code>，现役 PS 支（含 <code>:5315</code>/<code>:5331</code> 两处 <code>markBusyRecoveryRequired</code>）一字未动；引擎道另跳过拉 JSX（<code>:5279</code>，无 PS 机可能没网没云端）。</li>
+    <li>新守卫 <code>scripts/smoke-pc-readiness.mjs</code>（7 段）挂进 <code>package.json</code> 与 <code>test:trust-chain</code>。另把 <code>pc-channel.js</code> 的"没凭记"与"凭记是 PS 扫的"拆成两个码（<code>PC_SCAN_PROVENANCE_MISSING</code> / <code>PC_SCAN_PROVENANCE_PS_SOURCE</code>），因为处置不一样。</li>
+  </ul>
+  <div class="callout"><span class="lb">A3 那条规矩扩到就绪道</span>
+    <p>就绪两处恢复锁的语义都是"PS 执行器退出状态未确认"。引擎只读不改盘 ⇒ 失败只落定错误码＋本机日志＋抛错，<strong>绝不进那把锁</strong>——否则就是给一台没有 Photoshop 的机器造一个需要人工救援的死锁。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§3</span>请复验的人重点看这三条我自己的错</h2>
+  <div class="split">
+    <div class="panel no"><h3>形状不等价（会改变用户看到的码）</h3><ul>
+      <li><strong>组层被我跳过</strong>：第一版只收非组节点 ⇒ 就绪报 <code>OBJECT_MISSING</code>，而 PS 侧对组层报"存在但非文本"（<code>OBJECT_NOT_TEXT</code>）。已修，[A]/[F] 断言钉住。</li>
+      <li><strong>空正文写成 <code>null</code></strong>：PS 侧是 <code>String(textItem.contents)</code>＝空串；<code>null</code> 会让"读回为空"走成缺失形。已修，负控 N3 专咬。</li>
+    </ul></div>
+    <div class="panel warn"><h3>判据与工具自身的坑</h3><ul>
+      <li>断言"引擎分支不许出现 <code>markBusyRecoveryRequired</code>"被我自己的注释自命中（注释里就写着这句话）——今天第二次踩。改为<strong>只读代码行、过滤注释行</strong>。</li>
+      <li>负控第一版只在最后统一还原 ⇒ 第二三发继承第一发的改动，<strong>报出的咬点是错的</strong>。改成每发前全量还原＋锚点唯一性检查，才拿到本轮那五发结果。</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§4</span>实跑 vs 没跑</h2>
+  <div class="split">
+    <div class="panel yes"><h3>实跑（命令与退出码都在）</h3><ul>
+      <li>逐脚本 <code>test:trust-chain</code> 44/44 rc=0；<code>test:pc-readiness</code> 7/7；<code>test:pc-observation</code> 9/9；<code>test:pc-channel</code> 7/7。</li>
+      <li><code>test:batch-row-contract</code> rc=0；<code>npx tsc --noEmit</code> rc=0；<code>git diff --check</code> rc=0；<code>node --check</code> 双过。</li>
+      <li>负控 N1/N2/N3/N5/N6 各 <code>rc=1</code> 且咬点与改动一一对应；<code>RESTORED=true</code>、还原后 rc=0。</li>
+    </ul></div>
+    <div class="panel no"><h3>未跑（不记为绿）</h3><ul>
+      <li><code>npm run lint</code>：本机 300s 量级超时无输出（环境级，10-15 同日先例）。</li>
+      <li>真机 HTTP 层与无 PS 端到端：本机无 PS 进程、助手未运行（49152 无监听）⇒ 只验到协议与映射层，<strong>没验到"无 PS 机器真能建成执行清单"</strong>。</li>
+      <li>双通道层 id 等价性未对表 ⇒ #159 的 fail-closed 守卫本轮不松。</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">§5</span>下一步（顺序已按本轮审查更正）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">PC-A4</span><div class="body"><p>执行期同源闸：<code>decideExecuteChannel</code> 接进本地与云端两条分派道＋两条新拒绝码。<strong>现在有对象可判了。</strong></p></div></div>
+    <div class="gate"><span class="num">PC-D</span><div class="body"><p>20+ 处替 Photoshop 表功的旧句，与扫描/就绪道同一班车改，否则界面说的和后台做的不一致。</p></div></div>
+    <div class="gate"><span class="num">PC-E</span><div class="body"><p>安装包与许可包——不做这条，用户机上就没有引擎，前面全部代码在真实世界等于零。</p></div></div>
+    <div class="gate"><span class="num">PC-F</span><div class="body"><p>无 PS 真机四步，含双通道层号对表（这是唯一能补上"真机端到端"那一格的地方）。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">需要您点头的时机</span>
+    <p>期间不提交不推。要合进 develop 或出安装包时我停下来找您——按铁律那两件事需要您明确授权。另提醒：台账投影本轮被对账闸拦下 2 行（<code>ZHIHU-COPY</code> 是您手改过、<code>PC-NOPS-EXEC</code> 到期日飞书为空），我没强推；飞书表里另有 4 组重复行待处理，删行属动共享状态，同样等您一句话。</p>
+  </div>
+</section>
+
+<footer>
+  <span>报告人：Qoder ｜ 2026-10-17 21:5x ｜ 依据：Owner「使用对抗式审查后给个执行方案，然后按方案执行」</span>
+  <span>代码与测试：<code>worktrees/pc-port-20261017</code>（未提交）｜ 记账：<code>AI_MEMORY/TASK_LOG.md</code> 顶节、ledger <code>PC-NOPS-EXEC</code> 新行 ｜ 相关：<code>AI_MEMORY/ISSUES.md</code> #159 / #174</span>
+</footer>
+
+</div>
+</body>
+</html>

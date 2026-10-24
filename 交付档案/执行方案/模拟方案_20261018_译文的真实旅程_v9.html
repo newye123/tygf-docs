@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>译文的真实旅程 · 图译工坊</title>
+<style>
+  :root{
+    --ink:#111311; --ink-strong:#121412; --muted:#6f746f; --muted-2:#8b908b;
+    --line:#e0e3e0; --line-soft:#eef0ee; --surface:#fff; --surface-2:#f7f8f7;
+    --accent:#2d7356; --accent-ink:#245c45; --accent-soft:#eaf2ed; --accent-line:#cfe1d6;
+    --raw:#a33a32; --raw-soft:#fdefee; --raw-line:#f2d3d0;
+    --warn:#8a5a1a; --warn-soft:#fdf4e3; --warn-line:#f0dcb4;
+    --ok:#2d7356; --ok-soft:#eaf2ed;
+    --r-panel:16px; --r-btn:10px; --r-sm:8px;
+    --font:"Tuyigf Source Han Sans","Source Han Sans SC","PingFang SC","Microsoft YaHei",-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--surface);font-size:14px;line-height:1.68;letter-spacing:-.012em;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 24px 90px}
+  .lede{font-size:13.5px;color:var(--muted);margin:6px 0 0;line-height:1.7}
+  .h1row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  h1{font-size:24px}
+  .tagline{font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
+  .card{border:1px solid var(--line);border-radius:var(--r-panel);padding:18px;margin-top:18px;background:var(--surface)}
+  .card>h2{font-size:15px;margin-bottom:4px}
+  .card>p.sub{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px;font-size:11.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:middle}
+  .lg-raw{background:var(--raw)} .lg-sum{background:var(--ok)} .lg-none{background:#c8ccc8}
+  .step{display:flex;gap:12px;padding:0}
+  .step + .step{margin-top:2px}
+  .rail{display:flex;flex-direction:column;align-items:center;flex:none;width:22px}
+  .bullet{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none}
+  .b-raw{background:var(--raw);color:#fff} .b-sum{background:var(--ok);color:#fff} .b-none{background:#e8eae8;color:var(--muted)}
+  .ln{width:2px;flex:1;background:var(--line-soft);min-height:14px}
+  .step:last-child .ln{display:none}
+  .body{flex:1;min-width:0;padding-bottom:14px}
+  .steph{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .steph .nm{font-size:13.5px;font-weight:700}
+  .chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid}
+  .c-raw{background:var(--raw-soft);color:var(--raw);border-color:var(--raw-line)}
+  .c-sum{background:var(--ok-soft);color:var(--accent-ink);border-color:var(--accent-line)}
+  .c-none{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+  .to{font-size:12px;color:var(--muted);margin:5px 0 0}
+  .to code{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--surface-2);padding:1px 5px;border-radius:4px}
+  .payload{margin:7px 0 0;font-size:12px;color:#4a4f4a;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:8px;padding:8px 10px;line-height:1.75}
+  .payload b{color:var(--ink)}
+  .ev{margin-top:6px}
+  .ev summary{font-size:11.5px;color:var(--accent-ink);cursor:pointer;list-style:none}
+  .ev summary::-webkit-details-marker{display:none}
+  .ev summary::before{content:"▸ ";font-size:10px}
+  .ev[open] summary::before{content:"▾ "}
+  .ev pre{margin:6px 0 0;font-family:var(--mono);font-size:11px;line-height:1.7;background:#fff;border:1px solid var(--accent-line);border-radius:8px;padding:9px 11px;overflow-x:auto;color:#3a3f3a}
+  .ev .at{color:var(--muted-2)}
+  /* 界面预览 */
+  .pv{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .pv-bar{background:var(--surface-2);border-bottom:1px solid var(--line-soft);padding:8px 12px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .pv-bar b{color:var(--ink);font-weight:600}
+  .pv-body{padding:16px}
+  .pv-h1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:space-between}
+  .pv-h1 h3{font-size:18px}
+  .pv-sub{font-size:12.5px;color:var(--muted);margin:5px 0 0;line-height:1.65}
+  .pv-sub .add{color:var(--accent-ink);font-weight:600}
+  .pv-strip{display:flex;align-items:center;gap:8px;margin-top:12px;padding:8px 11px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:8px;font-size:12px;color:var(--muted)}
+  .pv-strip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+  .pv-sec{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:13px}
+  .pv-sect{font-size:13px;font-weight:700;margin-bottom:9px}
+  .pv-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:var(--r-btn);font-size:12.5px;font-weight:600}
+  .btn-a{background:var(--accent);color:#fff}
+  .btn-o{border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .btn-g{color:var(--muted)}
+  .btn-g:hover{background:var(--surface-2);color:var(--ink)}
+  .notice{display:flex;gap:8px;margin-top:10px;padding:9px 11px;border-radius:8px;font-size:11.5px;line-height:1.7}
+  .n-add{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-ink)}
+  .n-old{background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--warn)}
+  .n-add .mark,.n-old .mark{font-weight:700;flex:none}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  .mini{border:1px solid var(--line);border-radius:10px;padding:12px}
+  .mini h4{font-size:12px;margin:0 0 7px;display:flex;align-items:center;gap:6px}
+  .mini p{font-size:11.5px;color:var(--muted);margin:0;line-height:1.7}
+  .mini .st{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:auto}
+  .st-a{background:var(--ok-soft);color:var(--accent-ink)}
+  .st-w{background:var(--warn-soft);color:var(--warn)}
+  .st-r{background:var(--raw-soft);color:var(--raw)}
+  /* 自检条 */
+  .sc{position:fixed;left:0;right:0;bottom:0;z-index:100;background:rgba(18,20,18,.96);color:#e8eae8;backdrop-filter:blur(12px);padding:8px 16px;font-size:11px;font-family:var(--mono);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .sc b{color:#fff;font-family:var(--font);font-size:11.5px}
+  .ck{display:inline-flex;gap:4px;opacity:.45}
+  .ck.ok{opacity:1;color:#7fd6a8}
+  .ck.bad{opacity:1;color:#ff9b90}
+  .sc .sep{opacity:.25}
+  .mono{font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="h1row">
+    <h1>译文的真实旅程</h1>
+    <span class="tagline">debug · 只读 · 不连任何服务</span>
+  </div>
+  <p class="lede">把「译文到底会不会离开这台电脑」拆成 6 步，每步标出带的是<b>原文</b>、<b>摘要</b>还是<b>什么都没有</b>，并附真实代码位置。结论先说：<b>表格文件本身不上传；译文原文只在你主动点「智能检测」时才离开本机。</b></p>
+
+  <!-- ═══ 数据流 ═══ -->
+  <div class="card">
+    <h2>译文内容的真实流向</h2>
+    <p class="sub">6 步，按时间顺序。红＝译文原文跟着走；绿＝只跟着走一个 SHA-256 摘要；灰＝原文不参与。</p>
+    <div class="legend">
+      <span><i class="lg-raw"></i>带完整译文原文</span>
+      <span><i class="lg-sum"></i>只带摘要</span>
+      <span><i class="lg-none"></i>不带译文</span>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-none">1</div><div class="ln"></div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">导入表格</span><span class="chip c-none">文件不出本机</span></div>
+        <p class="to">在<b>你的浏览器里</b>解析，不会先把文件传到任何地方。支持 <code>.xlsx .xls .csv .tsv .txt</code>；多个单语言表可一次选中，按原文列自动合并。</p>
+        <div class="payload"><b>实际发生：</b><span class="mono">file.arrayBuffer()</span> 拿到字节 → 本地 XLSX 解析成文本 → 得到一张「原文 + 各语言译文」的表。<b>文件本体到此为止，不再存在。</b></div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/components/workbench/csv-step.tsx:404</span>
+accept=".xlsx,.xls,.csv,.tsv,.txt,…"
+
+<span class="at">src/components/workbench/csv-step.tsx:117-124</span>
+const buf = await file.arrayBuffer()
+if (/\.(xlsx|xls)$/i.test(lowerName)) {
+  const workbook = XLSX.read(buf, { type: 'array', dense: true,
+                                    sheetRows: 302 })
+  … XLSX.utils.sheet_to_csv(worksheet, …) → parseCsv(…)
+}</pre></details>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-raw">2</div><div class="ln"></div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">译文进入页面内存</span><span class="chip c-raw">完整原文</span></div>
+        <p class="to">解析结果放进 React state（<code>parsed</code>），此刻<b>完整译文原文在内存里</b>——包括你还没开始任何操作的时候。</p>
+        <div class="payload"><b>含义：</b>刷新或关闭标签页就没了（工作台已明确提示「草稿只保存在当前标签页」）。它不会自动写盘，也不会自动上传——但如果下一步你点了智能检测，它就会跟着走。</div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/components/workbench/workbench-view.tsx:471-491（节选）</span>
+const translationsFor = useCallback((lang: string) =&gt; {
+  if (!parsed) return []
+  … const target = edited ?? row.translations[lang] ?? ''
+  return { rowId: rowIds[idx], rowIndex: idx + 1,
+           source: row.source, target }  // ← 原文在这里
+}</pre></details>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-raw">3</div><div class="ln"></div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">智能检测（可选，你主动点）</span><span class="chip c-raw">原文离开本机</span></div>
+        <p class="to">第 2 阶段的「智能检测」按钮点了之后，<b>译文原文会发到图译工坊服务器</b>交给 AI 复核。这是<b>全流程唯一一处译文原文离开这台电脑</b>。</p>
+        <div class="payload"><b>发出去的内容：</b><span class="mono">{ rows, targetLanguage, batchId }</span>——rows 就是原文行与译文行。<br><b>不点它，这一步就不发生。</b>不检测也能直接执行，检测只是帮你标出可疑行。</div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/components/workbench/workbench-view.tsx:781</span>
+let res = await fetch('/api/workbench/ai-review', {
+  method: 'POST',
+  headers: workbenchAuthHeaders({ 'Content-Type': 'application/json',
+                                  'Idempotency-Key': actionKey }),
+  body: JSON.stringify({ rows, targetLanguage: language, batchId,
+                         ...activationFields }),
+})
+… while (res.status === 202 …) { 轮询 /status }
+
+<span class="at">按钮文案 src/config/siteContent.ts:575-577</span>
+reviewDetectIdle: '智能检测' / reviewDetecting: '检测中' / reviewDetectDone: '检测完成'</pre></details>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-raw">4</div><div class="ln"></div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">执行准备</span><span class="chip c-raw">原文到本机助手</span></div>
+        <p class="to">译文原文发给<b>本机助手</b> <span class="mono">127.0.0.1:49152</span>——就是你电脑上那个离线进程。<b>不到云端。</b></p>
+        <div class="payload"><b>实际发生：</b>浏览器把「冻结快照 + 译文行 + 你的绑定决策」一次性交给助手，由助手完成绑定编译、正式 Readiness 与不可变清单组装。这是替换动作的数据基础，所以必须过本机。</div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/lib/workbench/local-assistant-client.ts:1338-1361（节选）</span>
+const prepareRes = await fetch(`${BASE}/v1.5/execute/prepare`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json',
+             'x-tygf-ticket': prepareTicket },
+  body: JSON.stringify({
+    installId, jobId, scanId, masterPath, targetLanguage,
+    … review 字段 …
+    translations: params.translations,   // ← 完整译文原文
+    excludedLayerObjectIds, ignoredTranslationRowIds,
+    forcedBindings, outputDirectory, …
+  }),
+})</pre></details>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-sum">5</div><div class="ln"></div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">执行运行</span><span class="chip c-sum">只带摘要与路径</span></div>
+        <p class="to">真正驱动 Photoshop 写入的那一下，请求体里<b>没有译文</b>——只有任务号、不可变清单摘要、文件路径。</p>
+        <div class="payload"><b>为什么能做到：</b>译文已经在第 4 步进了助手内存并由助手编译成了清单；这一步只是「照这份清单跑」的口令。</div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/lib/workbench/local-assistant-client.ts:1420</span>
+const executeRes = await fetch(`${BASE}/v1.5/execute/run`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json',
+             'x-tygf-ticket': String(authorized.ticket) },
+  body: JSON.stringify({ attemptId, executionManifestDigest,
+                         masterPath: params.masterPath }),
+})          // ← 没有任何译文字段</pre></details>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="rail"><div class="bullet b-sum">6</div></div>
+      <div class="body">
+        <div class="steph"><span class="nm">计费与证据</span><span class="chip c-sum">只带 SHA-256 摘要</span></div>
+        <p class="to">发到图译工坊服务器的只有<b>逐语言译文摘要</b>（WebCrypto 现算的 SHA-256）和设备/任务标识，<b>没有译文内容</b>。</p>
+        <div class="payload"><b>摘要的用途：</b>事后证明「这一批到底写了什么」，而不是为了读你的内容。同一条目重算结果一致，所以它能当凭据；但它<b>不可反推</b>回原文。</div>
+        <details class="ev"><summary>看真实代码</summary><pre><span class="at">src/components/workbench/execute-step.tsx:1053-1061</span>
+// 译文摘要合同 §3.2：逐语言真实 SHA256（WebCrypto），禁止占位值
+const translationDigests: Record&lt;string, string&gt; = {}
+for (const locale of executionLanguages) {
+  const digestInput = billableRows
+    .map(lr =&gt; `${lr.rowToken}:${lr.translationByLang[locale] ?? ''}`)
+    .join('\n')
+  const digestBuf = await crypto.subtle.digest('SHA-256',
+                    new TextEncoder().encode(digestInput))
+  translationDigests[locale] = …hex…
+}</pre></details>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 界面预览 ═══ -->
+  <div class="card">
+    <h2>改完之后的界面（预览）</h2>
+    <p class="sub">把三处对不上的话各补到位。<b style="color:var(--accent-ink)">绿色＝本次新增</b>，<b style="color:var(--warn)">黄色＝现在这句的局限</b>。截图级还原，非真实渲染。</p>
+    <div class="pv">
+      <div class="pv-bar">
+        <span><b>工作台</b> · 单个设计稿 · 第 2 段「导入多语言译文表」</span>
+        <span>模拟数据 · 不连助手</span>
+      </div>
+      <div class="pv-body">
+        <div class="pv-h1">
+          <div style="min-width:0">
+            <h3>工作台</h3>
+            <p class="pv-sub">
+              扫描设计稿、导入译文并在本机生成多语言文件；<b>设计文件不会上传。</b><span class="add" id="pvAddSub">智能检测会把译文发到服务端做 AI 复核，不用就不会外传。</span>
+            </p>
+          </div>
+          <div class="sw">
+            <span class="sw-opt on">单个设计稿</span><span class="sw-sep"></span><span class="sw-opt">多个设计稿</span>
+          </div>
+        </div>
+
+        <div class="pv-strip"><span class="dot"></span>本批 1 个稿 · ES / DE · 助手已连接 · 草稿只保存在当前标签页</div>
+
+        <div class="pv-sec">
+          <div class="pv-sect">导入多语言译文表（表格 / 粘贴）</div>
+          <div class="drop">
+            <span class="drop-ic">＋</span>
+            <span class="drop-t">选择或拖入表格文件</span>
+            <span class="drop-h">支持 Excel / CSV / TSV / TXT 表格文件，可一次选择多个文件</span>
+          </div>
+          <div class="pv-btns">
+            <button class="btn btn-o" type="button">粘贴原文 / 译文</button>
+            <button class="btn btn-g" type="button">下载模板</button>
+            <span class="pv-note">格式示例：Buy Now | Comprar ahora</span>
+          </div>
+          <div class="notice n-add" id="pvAddCsv">
+            <span class="mark">新增</span>
+            <span>表格在<b>你的浏览器里解析，文件本体不上传</b>；多个单语言表（如 ES.csv、FR.csv）可一次选中，按原文列自动合并。</span>
+          </div>
+        </div>
+
+        <div class="pv-sec">
+          <div class="pv-sect">识别与复核</div>
+          <div class="pv-btns">
+            <button class="btn btn-a" type="button">智能检测</button>
+            <span class="btn-g">撤销</span>
+            <span class="btn-g">查看译文行</span>
+          </div>
+          <div class="notice n-add" id="pvAddReview">
+            <span class="mark">新增</span>
+            <span>智能检测会把<b>本批译文原文</b>发到服务端做 AI 复核；不点这个按钮，译文不会离开这台电脑。</span>
+          </div>
+        </div>
+
+        <div class="notice n-old" id="pvOldSub">
+          <span class="mark">现在</span>
+          <span>副标题只写「设计文件不会上传」——保住了设计文件，<b>没说译文会怎样</b>。用户在工作台里看不到「智能检测会上传译文」这件事。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══ 多个设计稿 ═══ -->
+  <div class="card" id="batchCard">
+    <h2>多个设计稿：你说得对，这比「说法分歧」更硬</h2>
+    <p class="sub">你的用法——12 个 PSD、<b>每个稿画面文字不同</b>、每个稿各换自己的语言——需要「<b>每稿一张表</b>」。今天的代码没有这个能力；而 12×N 实验当年之所以全绿，是因为 fixture 的 12 个稿<b>共用同样的 16 条原文</b>。<b>你的场景从来没有被测过。</b></p>
+
+    <div class="notice n-old" id="fixtureNote">
+      <span class="mark">台账</span>
+      <span>《多对多 12×N 框架内三档实测》fixture 行原文：<span class="mono">PSD-01..12（各 17 文字层 = <b>16 common</b> + 1 marker）、3 张语言表</span>——16 条原文在所有稿里都一样，所以「一张表服务整批」在实验里自洽。<b>换成文字各不相同的 12 个稿，这条结论不成立。</b></span>
+    </div>
+
+    <table class="batchtbl">
+      <thead>
+        <tr><th>环节</th><th>单个设计稿</th><th>今天的「多个设计稿」</th><th>每稿一表后（应该）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>译文表</td><td>一张</td><td><b>整批一张并集表</b>，各稿共用</td><td><b>每稿各自的表</b>，A.psd 对 A.xlsx</td></tr>
+        <tr><td>行来源</td><td>本稿</td><td><b>全部 parsed.rows，无按稿过滤</b></td><td>只取本稿匹配上的行</td></tr>
+        <tr><td>执行准备</td><td>1 次</td><td>每稿一次，每次带全量并集行</td><td>每稿一次，只带本稿行</td></tr>
+        <tr><td>覆盖率闸</td><td>不涉及</td><td>并集表下每稿仍约 100%；<b>只传某一稿的表</b> ⇒ 其余 11 稿 0%</td><td>各自表 vs 各自稿 ⇒ 红灯恢复本义</td></tr>
+        <tr><td>报价预留</td><td>一次</td><td>服务端以助手 evidence 为准，<b>未绑定行 EXCLUDED、只按本稿计</b>；界面预估仍可能虚高</td><td>每稿按自己的表报价</td></tr>
+        <tr><td>最终结算</td><td>一次</td><td>按验证比例退差，<b>不会多收</b></td><td>不变，仍不多收</td></tr>
+      </tbody>
+    </table>
+
+    <p class="sub" style="margin:14px 0 0"><b>今天硬跑你的场景，具体会发生七件事</b>（红＝挡路，黄＝难用，绿＝幸好没事）：</p>
+    <div class="grid2" style="margin-top:8px">
+      <div class="mini"><h4>① 得手工拼一张并集大表 <span class="st st-r">挡路</span></h4><p>没有地方能「给某个稿指定它自己的表」。你要把 12 个稿的所有原文行手工塞进一个文件——哪行属于哪个稿，只有你自己知道。</p></div>
+      <div class="mini"><h4>② 覆盖率不是全红，真问题是「得手工拼表」 <span class="st st-w">难用</span></h4><p>矩阵的分母是<b>本稿自己的源文本</b>（<span class="mono">coverage.ts:112-121</span>）：并集表只要包含本稿那 16 条原文，本稿仍显示 100%。反过来，只传某一稿的表，其余 11 稿才是 0%——真正的挡路点是「没有地方按稿挂表」，不是假红灯。</p></div>
+      <div class="mini"><h4>③ 实际预留不会 12 倍，虚高的是界面预估 <span class="st st-a">已核实更正</span></h4><p>服务端报价读<b>本机助手的 evidence</b>：当前稿没绑上的行 <span class="mono">requiredObjectCount=0 → EXCLUDED → 0 单位</span>（<span class="mono">billing-evidence-rows.js:63-82</span>；<span class="mono">execution-batch.ts:147-155,188-192</span>）。探针：192 行并集、当前稿只绑 16 行 ⇒ <b>192 单位</b>，不是 2,304。虚高的是浏览器「预计费用」：未匹配行清单按单次检查最多只带 50 条（<span class="mono">binding-core.ts:422</span>），并集会显示约 142 行×12 语言的量级，和真实冻结分叉。不是钱被多冻，是会把人吓退。</p></div>
+      <div class="mini"><h4>④ 完成率不会 1/12 <span class="st st-a">已核实更正</span></h4><p>完成率的分母是服务端批次的 <span class="mono">standardRowCount</span>，同样来自本稿 evidence（<span class="mono">execution-batch.ts:2059-2067</span>）⇒ 每稿仍是「本稿行×语言」，不会显示 8.3%。真正要改的是上面那条界面预估。</p></div>
+      <div class="mini"><h4>⑤ 每稿准备都带全表行 <span class="st st-w">仅本机</span></h4><p>12 次 prepare 每次把整张并集表发给本机助手。<b>不到云端、不涉隐私</b>，但 12 倍无效载荷，「这份译文属于这个稿」的语义也彻底看不出。</p></div>
+      <div class="mini"><h4>幸好没事的两件 <span class="st st-a">安全</span></h4><p><b>不会写错</b>：真正配对的是 <span class="mono">runMatch()</span>，按归一化 source_text 严格相等建索引，别的稿的行在本稿配不上 ⇒ 不写。<b>不会最终多收钱</b>：结算 <span class="mono">floor(报价×验证单位/总单位)</span>，未匹配行释放。</p></div>
+    </div>
+
+    <div class="pv" style="margin-top:14px">
+      <div class="pv-bar"><span><b>应该是什么样</b> · 素材阶段 · 每稿挂自己的表</span><span>模拟 · 12 个稿展示 4 个</span></div>
+      <div class="pv-body">
+        <div class="pv-btns" style="margin-bottom:10px">
+          <span class="chip c-none">A.psd ↔ A.xlsx · 16 行 · 12 语言</span>
+          <span class="chip c-none">B.psd ↔ B.xlsx · 18 行 · 12 语言</span>
+          <span class="chip c-none">C.psd ↔ C.xlsx · 18 行 · 12 语言</span>
+          <span class="chip c-none">D.psd ↔ D.xlsx · 15 行 · 12 语言</span>
+          <button class="btn btn-o" type="button">换表 / 改配对</button>
+        </div>
+        <table class="cov" id="covTable">
+          <thead><tr><th>设计稿（用各自的表）</th><th>ES 西班牙语</th><th>DE 德语</th></tr></thead>
+          <tbody>
+            <tr><td>A.psd × A.xlsx</td><td class="ok">100%</td><td class="ok">100%</td></tr>
+            <tr><td>B.psd × B.xlsx</td><td class="ok">100%</td><td class="ok">100%</td></tr>
+            <tr><td>C.psd × C.xlsx</td><td class="low">83%</td><td class="ok">100%</td></tr>
+            <tr><td>D.psd × D.xlsx</td><td class="ok">100%</td><td class="low">88%</td></tr>
+          </tbody>
+        </table>
+        <p class="cov-note" id="covNote">这两个红格是<b>真的漏译</b>：C 的 ES 少 3 行、D 的 DE 少 2 行。不是「表里有别的稿的行」造成的噪声——红灯恢复本义，勾了放行就是你确实想带着漏译跑。</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:14px 0 0"><b>应该是什么样</b>：素材阶段列出 12 张稿卡片，每张挂自己的表（按文件名自动建议 <span class="mono">A.psd ↔ A.xlsx</span>，可手改）；覆盖率只对该稿自己的表算；每稿各自 N 种语言；12×12＝144 格仍在，但每一格对的是各自的表。</p>
+
+    <details class="ev"><summary>看真实代码：单表的硬证据（含钱的路径）</summary><pre><span class="at">src/components/workbench/workbench-view.tsx:264</span>
+const [parsed, setParsed] = useState&lt;ParsedCsv | null&gt;(initialDraft?.parsed ?? null)
+// ↑ 单个值。全库 grep 不到 parsedBy / tableBy / perPsd 等任何按稿分表状态
+
+<span class="at">src/components/workbench/execute-step.tsx:767-783</span>
+const buildRowsByLang = () =&gt; { …
+  rowsByLang[lang] = parsed.rows.map((r, idx) =&gt; ({ … })) }
+// ↑ 每稿的执行/计费行都取整张表，没有任何按稿过滤
+
+<span class="at">src/lib/workbench/batch-executable-rows.ts:96-99</span>
+const billableLanguages = … Boolean(String(row.translationByLang?.[code] ?? '').trim())
+// ↑ 只按「有没有译文」定可计费语言；没有「这行是否属于本稿」的判据
+
+<span class="at">download/local-assistant/billing-evidence-rows.js:63-82</span>
+requiredObjectCount = assignmentCountByRowId.get(rowId) || 0
+included = !ignoredRowIds.has(rowId) &amp;&amp; requiredObjectCount &gt; 0
+// ↑ 助手按「当前这一稿」构 evidence：本稿没绑上的并集行 ⇒ EXCLUDED、0 单位
+
+<span class="at">src/lib/server/execution-batch.ts:147-155,188-192</span>
+authoritativeRows = submittedEvidence.rows.map(…)
+// ↑ 服务端报价不读浏览器行，只读助手 evidence ⇒ 冻结按本稿计，不是按整张并集表
+
+<span class="at">src/lib/billing/batch-v3.ts:59 / 129-141</span>
+if (input.scopeStatus !== 'INCLUDED') return 0
+actualCredits = S&lt;=0 ? 0 : (S&gt;=T ? Q : max(1, floor(Q*S/T)))
+// ↑ 未绑定行 0 单位；结算再按验证单位比例退差 ⇒ 预留与最终结算都不按并集全额
+
+<span class="at">交付档案/执行报告/实验报告_20261016_多对多12xN_框架内三档实测.md:28</span>
+| fixture | 同源：PSD-01..12（各 17 文字层 = 16 common + 1 marker）、3 张语言表 |</pre></details>
+  </div>
+
+<style>
+  .batchtbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+  .batchtbl th{background:var(--surface-2);border:1px solid var(--line);padding:6px 9px;text-align:left;font-size:11.5px;color:var(--muted);font-weight:600}
+  .batchtbl td{border:1px solid var(--line-soft);padding:7px 9px;vertical-align:top}
+  .batchtbl td:first-child{font-weight:700;white-space:nowrap}
+  .batchtbl td:nth-child(2){color:var(--muted)}
+  .batchtbl td .mono{font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .cov{width:100%;border-collapse:collapse;margin-top:4px;font-size:12px}
+  .cov th{background:var(--surface-2);border:1px solid var(--line);padding:5px 8px;font-size:11px;color:var(--muted);text-align:left}
+  .cov td{border:1px solid var(--line-soft);padding:6px 8px;text-align:center;font-family:var(--mono);font-size:11.5px}
+  .cov td:first-child{text-align:left;font-family:var(--font);font-weight:600}
+  .cov td.ok{background:var(--ok-soft);color:var(--accent-ink)}
+  .cov td.low{background:var(--raw-soft);color:var(--raw);font-weight:700}
+  .cov-note{font-size:11.5px;color:var(--muted);margin:8px 0 0;line-height:1.7}
+  .rel{margin-top:10px;border:1px solid var(--warn-line);background:var(--warn-soft);border-radius:8px;padding:10px 12px}
+  .rel-t{font-size:12px;font-weight:700;color:var(--warn);margin:0}
+  .rel-b{font-size:11.5px;color:var(--warn);margin:5px 0 0;line-height:1.7}
+  .rel-ck{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer}
+  .rel-ck input{width:14px;height:14px;accent-color:var(--warn)}
+</style>
+
+  <!-- ═══ 对不上的清单 ═══ -->
+  <div class="card">
+    <h2>还有哪几句对不上</h2>
+    <p class="sub">按轻重排。前三句话术、第四条是死代码，各自独立。</p>
+    <div class="grid2" id="gapsGrid">
+      <div class="mini" id="gap-sub">
+        <h4>① 工作台副标题偏窄 <span class="st st-w">待补</span></h4>
+        <p>现在：<span class="mono">workbench-view.tsx:2097-2098</span> 两版副标题都以「设计文件不会上传」收尾，只保住了设计文件。<br><b>要补：</b>后接一句「智能检测会把译文发到服务端做 AI 复核，不用就不会外传」。</p>
+      </div>
+      <div class="mini" id="gap-review">
+        <h4>② 检测按钮旁无上传说明 <span class="st st-w">待补</span></h4>
+        <p>现在：<span class="mono">review-step.tsx:1248-1268</span> 的「智能检测」按钮旁只有「检测中 / 检测完成」状态与失败兜底（<span class="mono">smart-review-runner.ts:65</span> 未配置时明确「未调用外部服务」），没有任何一处告诉用户这一步会把译文发到服务端。<br><b>要补：</b>按钮旁加同一句。</p>
+      </div>
+      <div class="mini" id="gap-site">
+        <h4>③ 官网宣传了不存在的功能 <span class="st st-a">已做 13:17</span></h4>
+        <p><b>已由 <span class="mono">fdf75b7</span>（newye123，今天 13:17）落地</b>：<span class="mono">siteContent.ts:39</span> 的「或图片识别」四字已删，条款 4.1 中英同步清理，ISSUES #156 记账。当日现状：该句现为「…也支持粘贴文本。」；佐证 <span class="mono">featureFlags.ts:46-48</span> 的 <span class="mono">showOcrSection / ocrImageEnabled</span> 均为 false。</p>
+      </div>
+      <div class="mini" id="gap-ocr">
+        <h4>④ 死路由本身 <span class="st st-r">待处理</span></h4>
+        <p>现在：<span class="mono">api/workbench/ocr</span> 路由存在但无调用方，paddleocr 依赖只在这里出现。<br><b>要改：</b>要么接上（产品上真做图片识别），要么删掉路由和依赖，别留着充数。</p>
+      </div>
+    </div>
+    <div class="notice n-add" style="margin-top:12px">
+      <span class="mark">路径</span>
+      <span>①②是工作台内文案，改完随代码发布即可；③走 <span class="mono">site-content</span> 的 draft / publish 通道，改完等你确认再发；④要么接线要么删，需要先定产品方向。</span>
+    </div>
+  </div>
+
+  <!-- ═══ 一句话回答 ═══ -->
+  <div class="card">
+    <h2>回到最初的问题：译文怎么上传？</h2>
+    <p class="sub" style="margin-bottom:0">严格说，<b>它不是被「上传」的</b>——表格文件在你的浏览器里解析完就结束了，本体不进任何服务器。译文原文跟着流程走两步：一步到<b>本机助手</b>（127.0.0.1:49152，用来驱动 PS 写入），一步到<b>服务端</b>——但服务端那步只有你主动点「智能检测」才发生。计费和证据只收 SHA-256 摘要，反推不回原文。<b>多个设计稿时整批共用一张译文表，且没有地方给某个稿单独挂表</b>——这是当前的硬缺口；解析仍是一次、智能检测仍按语言一次，按稿重复的只有「到本机助手的执行准备」（每稿一次，带的是整张并集表）。计费按语言、不按稿，服务端只按本稿 evidence 里绑上的行计；两者都不把译文原文送出本机。</p>
+  </div>
+
+  <!-- ═══ 自检条 ═══ -->
+  <div class="sc" id="sc">
+    <b>自检</b>
+    <span class="ck" id="ck-steps">数据流 6 步</span>
+    <span class="ck" id="ck-chips">每步有标签</span>
+    <span class="ck" id="ck-ev">证据块可展开</span>
+    <span class="ck" id="ck-band">红绿灰与代码一致</span>
+    <span class="ck" id="ck-adds">新增说明 2 处</span>
+    <span class="ck" id="ck-gaps">对不上 4 项</span>
+    <span class="ck" id="ck-batch">批量对照 6 行</span>
+    <span class="ck" id="ck-cov">覆盖率阈值 95%</span>
+    <span class="ck" id="ck-money">钱的路径写明</span>
+    <span class="sep">|</span>
+    <span class="ck" id="ck-err">0 JS 错误</span>
+  </div>
+</div>
+<style>
+  .sw{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:2px;flex:none}
+  .sw-opt{font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:999px;color:var(--muted)}
+  .sw-opt.on{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .sw-sep{display:none}
+  .drop{display:flex;flex-direction:column;align-items:center;gap:2px;padding:18px 12px;border:1.5px dashed var(--accent-line);border-radius:10px;background:var(--accent-soft)}
+  .drop-ic{font-size:17px;font-weight:700;color:var(--accent)}
+  .drop-t{font-size:13px;font-weight:700}
+  .drop-h{font-size:11px;color:var(--muted)}
+  .pv-note{font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
+</style>
+<script>
+(function(){
+  var JS_ERRORS = [];
+  window.addEventListener('error', function(e){ JS_ERRORS.push(String(e.message||e)); });
+  function mark(id, ok, label){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.className = 'ck ' + (ok ? 'ok' : 'bad');
+    if(label) el.textContent = (ok ? '✓ ' : '✗ ') + label;
+  }
+  function run(){
+    try{
+      var steps = document.querySelectorAll('.step');
+      var chips = document.querySelectorAll('.step .chip');
+      var evs   = document.querySelectorAll('details.ev');
+      var evPres= document.querySelectorAll('details.ev pre');
+      mark('ck-steps', steps.length === 6, '数据流 6 步('+steps.length+')');
+      mark('ck-chips', chips.length === 6, '每步有标签('+chips.length+')');
+      var stepEvs = document.querySelectorAll('.step details.ev');
+      mark('ck-ev', stepEvs.length === 6 && evs.length === 7 && evPres.length === 7, '证据块可展开(步骤 6 + 批量 1，共 '+evs.length+')');
+      // 红=原文照步骤走：2/3/4 应为 c-raw，5/6 应为 c-sum，1 应为 c-none
+      var want = {1:'c-none',2:'c-raw',3:'c-raw',4:'c-raw',5:'c-sum',6:'c-sum'};
+      var bad = 0;
+      steps.forEach(function(s, i){
+        var b = s.querySelector('.bullet');
+        var c = s.querySelector('.chip');
+        if(!b || !c) { bad++; return; }
+        if(!b.textContent.trim() === false){}
+        var n = (i+1);
+        if(c.className.indexOf(want[n]) < 0) bad++;
+        if(b.className.indexOf(want[n].replace('c-','b-')) < 0) bad++;
+      });
+      mark('ck-band', bad === 0, '红绿灰与代码一致('+(6-bad)+'/6)');
+      mark('ck-adds', document.querySelectorAll('#pvAddCsv,#pvAddReview').length === 2, '界面新增说明 2 处');
+      mark('ck-gaps', document.querySelectorAll('#gapsGrid .mini').length === 4, '对不上 4 项');
+      mark('ck-batch', document.querySelectorAll('.batchtbl tbody tr').length === 6, '批量对照 6 行');
+      mark('ck-cov', document.querySelectorAll('.cov td.low').length === 2 && document.body.textContent.includes('95%') && document.body.textContent.includes('显式放行覆盖率闸'), '覆盖率阈值 95%');
+      mark('ck-money', document.body.textContent.includes('16 common') && document.body.textContent.includes('billing-evidence-rows.js:63-82') && document.body.textContent.includes('execution-batch.ts:147-155,188-192') && document.body.textContent.includes('floor(报价×验证单位/总单位)') && document.body.textContent.includes('192 单位') && document.body.textContent.includes('不是 2,304') && !document.getElementById('batchCard').textContent.includes('27,648'), '钱的路径写明（evidence 权威，无 12× 旧数）');
+      mark('ck-err', JS_ERRORS.length === 0, JS_ERRORS.length + ' JS 错误');
+    }catch(err){
+      mark('ck-err', false, '自检本身报错');
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+  window.__SELFCHECK__ = function(){ return { steps: document.querySelectorAll('.step').length, errors: JS_ERRORS }; };
+})();
+</script>
+</body>
+</html>

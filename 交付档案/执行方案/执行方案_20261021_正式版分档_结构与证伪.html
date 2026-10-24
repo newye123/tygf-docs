@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>正式版分档 · 结构与证伪</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>正式版分档</span><span class="sep">/</span>
+    <span>结构与证伪</span><span class="sep">/</span>
+    <span>2026-10-21 19:22</span>
+  </p>
+  <h1>本轮只给结构，不给数字——数字全部被证伪</h1>
+  <p class="standfirst">Owner 的前提"内测积分没做任何分档"经查不成立：已有五层事实分层，只是没命名。而"299/599/1499 三档"我起草的额度表被两路独立复算打回——<strong>单价基准有两个、差 4–5 倍</strong>，且<strong>三档每元分值只差 6.4%</strong>。下面第 03 节是可点的档位自洽性检查器。</p>
+  <div class="meta">
+    <span>先读旧提案（甲-5 / G5 / N-25）</span>
+    <span>逐个查现成抓手</span>
+    <span>两路证伪自己的草案</span>
+    <span>未改代码与数据</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>内测其实已经分了五层</h2>
+  <p class="lede">所以正式版的正确动作是<strong>给已有分层命名，再往上补一条付费档</strong>，不是从零搭三档。</p>
+  <div class="cards">
+    <div class="card"><div class="top"><span class="loc">credits.ts:36-38</span><h3>注册 100 分 vs 内测 788 分</h3><span class="tag ok">已在跑</span></div><p>同一件事给两种额度，本身就是两档。</p></div>
+    <div class="card"><div class="top"><span class="loc">credits.ts:1078-1085</span><h3>问卷 500 分·永久 vs 赠送 30 天</h3><span class="tag ok">已在跑</span></div><p>有效期差异已经存在，且按来源区分。</p></div>
+    <div class="card"><div class="top"><span class="loc">schema.prisma:309,317</span><h3>邀请码 source 与 maxActivations</h3><span class="tag ok">已在跑</span></div><p>来源与名额分层，原子抢名额在 <code>activation.ts:102</code>。</p></div>
+    <div class="card"><div class="top"><span class="loc">feature-flag-gating.ts:11-24<br>batch-execution-mode.ts:73</span><h3>三条"按人给能力"白名单</h3><span class="tag ok">已在跑</span></div><p>betaUserId 名单（排版定制灰度）、installId 名单（批量 canary）、邮箱 env 名单。</p></div>
+    <div class="card"><div class="top"><span class="loc">grey-release.ts:8-11</span><h3>购买资格按邮箱名单控制</h3><span class="tag warn">我上一轮看漏了</span></div><p><code>TYGF_PACK_ALLOWLIST_EMAILS</code> 被消费于 <code>credit-orders.ts:194-204</code>——"谁能买积分包"本来就分了层。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>我起草的额度表，被证伪成什么样</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>草案原话（已作废）</h3>
+      <ul>
+        <li>「¥299 ≈ 30000 积分 / ¥599 ≈ 62000 / ¥1499 ≈ 160000」</li>
+        <li>「三档只差额度＋有效期，甲版改动最小、几乎全用现成机制」</li>
+        <li>「有效期这一维不用新建，已经在跑」</li>
+        <li>「299/599/1499 这三档 Owner 早就拍过了」</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>复算结果</h3>
+      <ul>
+        <li><strong>基准错 4–5 倍。</strong>现价率 0.99 元/百分 vs 原价率 4.95；<code>schema.prisma:1578</code> 自己标注原价是「<strong>正式版参考价</strong>」⇒ GA 该用原价，¥299 只买 <strong>6040 分</strong>。</li>
+        <li><strong>量级荒谬。</strong>30000 分 = 生产站上线至今<strong>全部实扣（4528）的 6.6 倍</strong>；160000 分 = 最重用户一生用量（16287）的 9.8 倍。</li>
+        <li><strong>三档只差额度＝没有阶梯。</strong>每元分值 100.3 / 103.5 / 106.7，顶档只比底档多 <strong>6.4%</strong>。</li>
+        <li><strong>有效期要改 6 处</strong>，还有一个我没想到的账务耦合：清算不能加到 <code>used</code>，否则 <code>refund-orders.ts:77-83</code> 的"未消费才可全额退"判客户失格。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">两处我把话说过了</span>
+    <p>①「299/599/1499 早就拍过了」——原文（<code>C:34</code>）拍的是「<strong>尽早做三档实验</strong>」的意向，<code>:342</code> 明写「未执行……没有对外定过价」。我把它写成执行授权，正是 <code>ISSUES.md:512-516</code> #24「定价决策内嵌于提交未被显式追认」那个毛病，不能犯第二次。</p>
+    <p>②「别动『永久资格』这个已承诺的事实」——夸大。"激活后永久使用"只出现在<strong>运营台内部界面</strong>与代码注释，没找到面向用户的对外文案；真正对外公示的是 <code>pack/page.tsx:600</code> 那句「<strong>充值积分永久有效，正式版延续</strong>」。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>档位自洽性检查器（可点）</h2>
+  <p class="lede">改三档价格与额度，看"每元分值"的阶梯增益、覆盖多少个真实使用日、以及额度相对全站历史总消耗是几倍。判据来自本轮实测：人日实扣 p50 246／p90 459（生产 n=18）、测试极值 1868；全站生产实扣合计 4528；单稿批次 p90 429。</p>
+
+  <div class="card" style="padding:16px 18px">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px">
+      <span style="font-size:.8rem;color:var(--muted)">单价基准</span>
+      <span class="seg" style="display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden">
+        <button id="bCur" onclick="setBasis('cur')" style="font:inherit;font-size:.82rem;border:0;padding:5px 11px;cursor:pointer">现价率（内测 2 折）</button>
+        <button id="bOrig" onclick="setBasis('orig')" style="font:inherit;font-size:.82rem;border:0;border-left:1px solid var(--line);padding:5px 11px;cursor:pointer">原价率（正式版锚）</button>
+      </span>
+      <span id="basisNote" style="font-size:.78rem;color:var(--muted)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档一 价格 ¥<input id="p1" type="number" value="299" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档一 额度（分）<input id="u1" type="number" value="6040" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档二 价格 ¥<input id="p2" type="number" value="599" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档二 额度（分）<input id="u2" type="number" value="12610" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档三 价格 ¥<input id="p3" type="number" value="1499" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted)">档三 额度（分）<input id="u3" type="number" value="36030" oninput="run()" style="font:inherit;font-size:1rem;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn2" onclick="preset('linear')">试"无阶梯"配法</button>
+      <button class="btn2" onclick="preset('ladder')">试"真阶梯 +25%/+60%"</button>
+      <button class="btn2" onclick="preset('draft')">还原我草案的错数字</button>
+    </div>
+    <div id="tierOut" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>有一条已公示的承诺，卡住了所有"设有效期"的设计</h2>
+  <div class="verdict">
+    <span class="lb">解释冲突</span>
+    <p><code>pack/page.tsx:600</code>「充值积分永久有效，<strong>正式版延续</strong>」——不只承诺现在，还替正式版承诺了。<br>
+    <code>terms/page.tsx:124</code>「积分存在有效期，逾期未使用的积分按规则作废」。两句都在线上，直接对立。</p>
+  </div>
+  <p>依据条文我上一轮也指错了：不是章程 §3.4，而是 <code>worktrees/develop/AGENTS.md:137</code> 第 5 条——与合同冲突时必须 <code>STOP -&gt; REPORT CONFLICT</code>，列两方案影响，等 Owner 决策。<strong>这条不裁定，任何给付费档设有效期的档位设计都不能定稿。</strong></p>
+  <p>另补两个流程缺口（本轮才查出来）：正式版分档新增 SKU／价格／有效期＝改变产品合同，按 <code>AGENTS.md:138</code> 第 6 条属 <strong>L2 Product Change</strong>，要开 <code>changes/active/*</code> 并做 Product Convergence Review；到期清算 job 写账务，属高风险状态机门禁范围。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>推荐与要你拍的</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>先裁定"永久有效"站哪边</h3><p>兑现（则付费档不能设有效期，差异只能靠额度与能力）或撤回（要走文案变更与老用户衔接，不能静默改）。这一条不定，档位只能停在结构层。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>查那 14 笔 manual_qr 零到账</h3><p>生产全部订单都走这一条路、2 个主体。这是唯一真实的成交信号，只读排查。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>只上一档，不上三档</h3><p>保留 ¥9.9 尝鲜包，另加一个大额包（同单价基准、给真阶梯折扣，比如 ≥5000 分每元多送 15–20%），跑 4 周；拿到 ≥10 个真实付费主体后再谈三档——这也正好是办主体的触发线（<code>C:36</code> N-25）。</p></div></div>
+  </div>
+  <div class="callout">
+    <span class="lb">代价说清楚</span>
+    <p>这么做的代价是<strong>晚 4 周才有完整档位表</strong>，并放弃"299/599/1499 立刻上"的窗口。收益是：不在 0 笔付费到账、4 个主体的样本上，把一张每元分值只差 6% 的三档表钉进产品合同——那种表上线第一天就会被第一个真实客户问穿。</p>
+  </div>
+  <ul class="notes">
+    <li><strong>要你拍的</strong>：① 永久有效兑现还是撤回；② 299/599/1499 的<strong>单位</strong>（一次性包？每月子额度？按套——历史只有数字没有单位，而所有额度都按它反解）；③ GA 用原价率还是延续 2 折；④ 三档是否保留（保留就得接受"必须真阶梯或能力差异"）；⑤ 是否授权我开 <code>changes/active/*</code> 的 L2 变更单（只写文档，不动码、不动 flag、不动账务）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>覆盖缺口</h2>
+  <ul class="notes">
+    <li>没算每积分的边际成本（OCR/LLM 单价），所以大额档的 COGS 敞口无法估。</li>
+    <li>没读 <code>ApiCredential</code> 里那组可覆盖价格键的线上值。</li>
+    <li>微信私聊是否对用户口头承诺过"永久资格"＝<strong>盘上无证据，标未核实</strong>。</li>
+    <li>竞品价未复测（记录停在 10-10，无汇率、无月/年口径、无"张"的定义）。</li>
+    <li>「愿付＝节省值 20–40%」这个旧假设经复算<strong>不可证伪</strong>（按"张＝稿"与"张＝行×语种"两种口径互算差 30 倍），本轮不再用它支撑任何数字。</li>
+    <li>Round 只走到 1/3；档位表定稿前需第 2 轮只审新数字。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>方法：读旧提案（甲-5/G5/N-25/Plan C）→ 逐个查现成抓手（10 项，含 4 项"看着有其实没有"）→ 起草 → 两路独立证伪（数字算术 / 口径红线）→ 主审逐条复算并作废自己的额度表。</p>
+  <p>2026-10-21 19:22 · 本地与两站真库只读实测，未改代码、未改数据、未部署、未动任何支付 flag。</p>
+</footer>
+
+</div>
+<style>
+.btn2{font:inherit;font-size:.82rem;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.btn2:hover{background:var(--sunk)}
+table.tier{width:100%;border-collapse:collapse;font-size:.86rem}
+table.tier th{text-align:left;color:var(--muted);font-size:.76rem;font-weight:600;border-bottom:1px solid var(--line);padding:6px 8px}
+table.tier td{border-bottom:1px solid var(--line);padding:7px 8px;vertical-align:top}
+table.tier td.m{font-family:var(--font-mono);white-space:nowrap}
+</style>
+<script>
+const BASIS={cur:{label:'现价率（内测 2 折）',perYuan:100/0.99/100*100,note:'0.99 元/百分 ⇒ 1 元 ≈ 101 分。这是把 GA 当内测价延续。'},
+             orig:{label:'原价率（正式版锚）',perYuan:100/4.95,note:'4.95 元/百分 ⇒ 1 元 ≈ 20.2 分。schema.prisma:1578 标 originalPriceMinor 为「正式版参考价」。'}};
+const DAY_P50=246, DAY_P90=459, DAY_HEAVY=1868, TOTAL_PROD=4528, BATCH_P90=429;
+let basis='orig';
+const v=(id)=>Math.max(0,Number(document.getElementById(id).value)||0);
+function setBasis(b){basis=b;document.getElementById('bCur').style.background=b==='cur'?'var(--ink)':'transparent';document.getElementById('bCur').style.color=b==='cur'?'var(--surface)':'inherit';document.getElementById('bOrig').style.background=b==='orig'?'var(--ink)':'transparent';document.getElementById('bOrig').style.color=b==='orig'?'var(--surface)':'inherit';document.getElementById('basisNote').textContent=BASIS[b].note;run();}
+function preset(k){
+  const perYuan=BASIS[basis].perYuan;
+  const P=[v('p1'),v('p2'),v('p3')];
+  const set=(id,x)=>document.getElementById(id).value=String(Math.round(x));
+  if(k==='linear'){set('u1',P[0]*perYuan);set('u2',P[1]*perYuan);set('u3',P[2]*perYuan);}
+  if(k==='ladder'){set('u1',P[0]*perYuan);set('u2',P[1]*perYuan*1.25);set('u3',P[2]*perYuan*1.6);}
+  if(k==='draft'){set('u1',30000);set('u2',62000);set('u3',160000);}
+  run();
+}
+function run(){
+  const rows=[1,2,3].map(i=>({p:v('p'+i),u:v('u'+i)}));
+  if(rows.some(r=>r.p<=0||r.u<=0)){document.getElementById('tierOut').innerHTML='<p style="color:var(--bad)">价格与额度都要大于 0。</p>';return}
+  const base=rows[0].u/rows[0].p;
+  const html=rows.map((r,i)=>{
+    const perYuan=r.u/r.p, gain=perYuan/base;
+    const days50=r.u/DAY_P50, daysHeavy=r.u/DAY_HEAVY, mult=r.u/TOTAL_PROD, batches=r.u/BATCH_P90;
+    const flag=i===0?'<span class="tag">基准</span>':(gain<1.10?'<span class="tag bad">无阶梯激励</span>':(gain<1.25?'<span class="tag warn">阶梯偏弱</span>':'<span class="tag ok">有真阶梯</span>'));
+    const sens=i===0?'—':(rows[i].u-rows[i-1].u);
+    return `<tr><td class="m">¥${r.p} / ${r.u.toLocaleString()}分</td><td class="m">${perYuan.toFixed(1)} 分/元</td><td>${(gain*100).toFixed(1)}% ${flag}</td><td class="m">${days50.toFixed(0)} 典型日 · ${daysHeavy.toFixed(1)} 重度日 · ≈${batches.toFixed(0)} 个 p90 批次</td><td class="m">${mult.toFixed(1)}×</td><td class="m">${typeof sens==='number'?sens.toLocaleString()+' 分':sens}</td></tr>`;
+  }).join('');
+  const topGain=(rows[2].u/rows[2].p)/(rows[0].u/rows[0].p);
+  const verdict=topGain<1.10
+    ? `<span class="tag bad">三档不成立</span> 顶档每元分值只比底档多 ${((topGain-1)*100).toFixed(1)}%——客户花 ${(rows[2].p/rows[0].p).toFixed(1)} 倍的钱只多买 ${((topGain-1)*100).toFixed(1)}% 的量。三档必须要么给真阶梯，要么把差异挪到能力轴（那要新建），要么减档。`
+    : `<span class="tag ok">阶梯增益 ${((topGain-1)*100).toFixed(1)}%</span> 顶档每元比底档多拿这么多，三档对客户有可感知差别。`;
+  const absurd=rows.map((r,i)=>r.u/TOTAL_PROD).map((x,i)=>x>=3?`档${'一二三'[i]}（${x.toFixed(1)}×全站历史总消耗）`:null).filter(Boolean);
+  document.getElementById('tierOut').innerHTML=`
+    <div class="scrollx"><table class="tier"><thead><tr><th>价格 / 额度</th><th>每元分值</th><th>相对底档</th><th>覆盖多少用量</th><th>额度 ÷ 全站历史实扣合计(4528)</th><th>比上一档多</th></tr></thead><tbody>${html}</tbody></table></div>
+    <p class="lede" style="margin-top:12px">${verdict}</p>
+    ${absurd.length?`<p class="lede" style="color:var(--bad)">量级提醒：${absurd.join('；')}——历史消耗样本不足以支撑这种额度，任何对外写的"够做多少"都会变成未实测承诺。</p>`:''}`;
+}
+setBasis('orig');
+</script>
+</body>
+</html>

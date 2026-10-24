@@ -1,0 +1,181 @@
+<title>批量台 v11 · 目录即绑定：读一个文件夹就能做</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.55rem,4vw,2.15rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:60ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.gray{background:var(--sunk);color:var(--muted)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.blue{background:var(--blue-soft);border-color:var(--blue)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate h3{margin:0;font-size:.96rem;font-weight:600}
+.gate p{font-size:.89rem;color:var(--ink-2);max-width:70ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500;min-width:38px}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>方向级简化</span><span class="sep">/</span><span>批量台 v11</span><span class="sep">/</span><span>2026-10-21</span></p>
+  <h1>目录即绑定：读一个文件夹就能做</h1>
+  <p class="standfirst">Owner 定的方向：<strong>每个子文件夹放一套要改的 SKU 的 PSD 和它的表</strong>，<strong>直接对子文件夹定位</strong>、<strong>免调用户上传文档</strong>，系统直接读 PSD 与文档做校对、智能审核。本稿<strong>认账上一版的复杂度来自"把绑定做成了人工界面"</strong>，并把界面重做成"文件夹 → 组卡片"。</p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>方向级简化</span><span>审查 D1–D12</span><span>界面形态重做</span><span>模拟已出</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 方向对，复杂度大降；但成败取决于"教用户摆目录"和"配对结果可见可改"</span>
+    <p>Owner 的方案一句话点破：<strong>目录结构已经把对应关系说完了</strong>——PSD 和它的表在同一个子文件夹里，这就是绑定，而且是<strong>用户自己摆的</strong>。我上一版做了<strong>四个上传入口 ＋ 12 行分配表 ＋ 144 格矩阵</strong>，等于让用户把文件夹已经表达的信息<strong>再说一遍</strong>。这是我的设计错误。</p>
+    <ul>
+      <li><strong>入口收敛为一个按钮</strong>：选一个工作文件夹。免的是"逐个上传"，不免"指一个根目录"（助手是本机进程，浏览器拿不到绝对路径）。</li>
+      <li><strong>绑定从人工界面降级为规则推导</strong>：组内 1 张表 ⇒ 全组共用；多张表 ⇒ 按同名一对一；配不上的 ⇒ 逐条点名。<strong>规则确定、可解释、结果可见可改。</strong></li>
+      <li><strong>界面形态重做</strong>：144 格矩阵 ⇒ <strong>组卡片列表</strong>（3 组，各一行进度条）；组内是一张 PSD 表 ＋ 该组语言进度 ＋ 单稿同款智能审核表。</li>
+      <li><strong>两条最要紧的审查结论（D11／D12）</strong>：最大的落地风险<strong>不是技术，是"用户不知道要这么摆目录"</strong>（⇒ 第一屏就要把约定讲清、读完要回显"已按目录分成 3 组"、给「重新读取」）；以及<strong>"免上传"不能被读成"免确认"</strong>（⇒ 配对结果必须列出来让人看一眼、改个别几个）。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>阶段一 · 认账：复杂度来自我把绑定做成了人工界面</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th></th><th>上一版（v10）</th><th>本稿（v11）</th></tr></thead>
+      <tbody>
+        <tr><td>入口</td><td>路径输入 / 多选文件 / 粘贴多路径 / 选文件夹（<b>四个</b>）</td><td><b>一个按钮</b>：选择工作文件夹</td></tr>
+        <tr><td>绑定</td><td>人工分配表（12 行下拉）</td><td><b>目录即绑定</b>（规则自动推导）</td></tr>
+        <tr><td>总量表</td><td>144 格大矩阵</td><td><b>组级进度条</b>（3 组，各一行）</td></tr>
+        <tr><td>逐稿视图</td><td>矩阵 ＋ 抽屉</td><td><b>组卡片内一张表</b>（这一组的 PSD × 它那张表）</td></tr>
+        <tr><td>智能审核</td><td>矩阵逐格</td><td><b>按组跑</b>（一组＝一次审核单元）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>阶段二 · 对抗式审查 D1–D12</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td><span class="tag warn">🟠</span></td><td>「同目录」真的等于「这张表就是这张稿的表」吗？组里 4 个 PSD + 4 张表怎么配？</td><td><b>确定性规则</b>：组内<b>一张表 ⇒ 全组共用</b>；多张表 ⇒ <b>按同名一对一</b>；同名对不上 ⇒ 剩余兜底并<b>逐条点名</b>。可解释、可逐条改，<b>默认全自动</b></td></tr>
+        <tr><td class="mono">D2</td><td><span class="tag ok">🟡</span></td><td>「免上传」真能免吗？</td><td>助手是本机进程，浏览器拿不到绝对路径 ⇒ <b>免"逐个上传"，不免"指一个根目录"</b>；第一屏只留一个按钮</td></tr>
+        <tr><td class="mono">D3</td><td><span class="tag warn">🟠</span></td><td>目录是"当下的摆法"，会变。PSD 改版换名、表换版本 ⇒ 绑定还在但版本对不上</td><td><b>版本一致性检查</b>：稿指纹变了（<code>preparation-contract.ts:466-473</code> 已有 <code>INVALIDATED</code>）⇒ 该组<b>重新核对</b>，不静默沿用</td></tr>
+        <tr><td class="mono">D4</td><td><span class="tag ok">🟡</span></td><td>文件夹里可能混着"归档的、不该做的"</td><td><b>组级开关</b>（一个复选框管一组），默认全开；不逐文件勾</td></tr>
+        <tr><td class="mono">D5</td><td><span class="tag acc">✅</span></td><td>智能审核/校对按什么粒度跑？</td><td><b>按组跑</b>：一组＝一次审核单元。界面是"这一组：32 份交付物，已审 24，待审 8"——<b>组级进度条，不是 144 格矩阵</b></td></tr>
+        <tr><td class="mono">D6</td><td><span class="tag acc">✅</span></td><td>会不会又动了单稿工作台？</td><td>不会。批量台比单稿台<b>只多一个入口</b>（文件夹），其余全沿用 ⇒ 反而<b>更贴单稿台</b></td></tr>
+        <tr><td class="mono">D7</td><td><span class="tag ok">🟡</span></td><td>「直接读取 PSD 和文档」会不会扩大外泄面？</td><td><b>本机读取，不上传</b>；只有译文/行文本在用户点检测时按需发（既有口径）⇒ 不新增外泄面</td></tr>
+        <tr><td class="mono">D8</td><td><span class="tag warn">🟠</span></td><td>一次扫出几百个文件怎么办？</td><td><b>按组限流</b>：一组最多 12 个 PSD（沿用 <code>MAX_PSD_ENTRIES=12</code>），超了逐条点名；<b>先列组、让用户勾要做哪几组</b>（组级）</td></tr>
+        <tr><td class="mono">D9</td><td><span class="tag acc">✅</span></td><td>目录里混着不该读的东西</td><td>沿用助手既有规则（只认 <code>.psd/.psb</code> 与 <code>.xlsx/.csv/.tsv</code>、软链跳过、超 6 层跳过，<code>design-file-card.tsx:1104</code> 有跳过原因），界面<b>如实显示跳过了什么、为什么</b></td></tr>
+        <tr><td class="mono">D10</td><td><span class="tag ok">🟡</span></td><td>我之前做的那些（分配/切片/证据分级/矩阵）全废了？</td><td><b>没废，变成"读目录之后的自动推导"</b>：分配＝规则得出｜切片＝规则自动切｜证据＝读到稿与表自动算｜矩阵＝<b>降级为组内一行</b> ⇒ <b>工作量更小、用户操作更少</b></td></tr>
+        <tr><td class="mono">D11</td><td><span class="tag bad">🔴</span></td><td><b>最大的落地风险不是技术，是"用户不知道要这么摆目录"</b></td><td><b>必须教</b>：① 第一屏就说清约定（「每个子文件夹＝一套要改的 SKU」）；② 读完后<b>回显</b>「已按目录分成 3 组」并给「重新读取」；③ 配不上的<b>逐条点名</b>（最常见的错摆法：PSD 与表不同名）</td></tr>
+        <tr><td class="mono">D12</td><td><span class="tag warn">🟠</span></td><td><b>「免上传」被读成「免确认」怎么办？</b></td><td><b>免的是上传，不是确认</b>：自动读完后必须列出「哪组、哪个稿、配了哪张表、有没有对不上的」，让人<b>看一眼、改个别几个</b>。<b>配对结果必须可见可改</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>阶段三 · 收敛后的形态</h2>
+  <h3>第一屏：一个按钮</h3>
+  <pre>准备素材
+选一个工作文件夹就行。每个子文件夹＝一套要改的 SKU（里面放着这批的 PSD 和它们的译文表），
+系统自己读、自己配、自己审。
+
+  工作文件夹   D:\项目\2026Q4_秋季新品        [选择文件夹] [读取]</pre>
+  <h3>读出来：每组一张卡</h3>
+  <pre>☑ 主图      4 个 PSD · 1 张表 · 组内 1 张表 ⇒ 4 个 PSD 共用   [都配上了]  ▓▓▓▓ 32/32 份已审  [打开这一组]
+   SKU-AX1001_主图.psd  12 图层  已扫描  AX1001-AX1004_文案主表.xlsx  96%
+   …（4 行）
+
+☑ 详情页    4 个 PSD · 4 张表 · 组内 4 张表 ⇒ 按同名一对一      [1 处要处理] ▓▓▓░ 24/32 份已审  [打开这一组]
+   SKU-BX2079_详情页.psd  14 图层  已扫描  [没配上表]                 —
+
+☑ 长尾      4 个 PSD · 4 张表 · 组内 4 张表 ⇒ 按同名一对一      [2 处要处理] ▓▓░░ 16/32 份已审  [打开这一组]</pre>
+  <h3>打开一组：这一组的全部信息</h3>
+  <ul class="notes">
+    <li><span class="n">1</span><div><b>这一组的语言进度</b>：每门语言一条进度条（不是 12×12 矩阵）。</div></li>
+    <li><span class="n">2</span><div><b>智能审核（这一组）</b>：<b>单稿工作台同一个表</b>（<code># | 原文 | 译文 | 状态</code>），跑完点「设计稿校对」接第 3 步。</div></li>
+    <li><span class="n">3</span><div><b>这一组要处理</b>：配不上的、覆盖率不足的、缺语言的，逐条列。</div></li>
+  </ul>
+  <h3>底部：把规则写给用户看</h3>
+  <div class="callout">
+    <span class="lb">三句</span>
+    <p>① 一个<b>子文件夹＝一组</b>；组里 PSD 与表按目录就近配：<b>1 张表 ⇒ 全组共用</b>；<b>多张表 ⇒ 按同名一对一</b>；<b>配不上的逐条点名</b>。<br>
+    ② 扫描与审核都<b>在本机做</b>：PSD 与表格正文不上云，只有点「智能审核」时译文行才按需发出。<br>
+    ③ 一组最多 12 个 PSD；目录里非设计稿/非表格文件、软链、超过 6 层的会跳过，<b>跳过了什么、为什么都列出来</b>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>阶段四 · 执行建议（按新方向重排）</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">0</span><div class="body"><h3>#workbench 快照断言脚本</h3><p>先立闸（唯一能把「与原行为逐字节一致」从口号变事实的东西）。</p></div></div>
+    <div class="gate"><span class="num">1</span><div class="body"><h3>目录约定的文案与引导（D11）</h3><p>第一屏怎么说、读完怎么回显、点错了怎么改。Owner 过目。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>读目录 ＋ 配对规则（纯函数）</h3><p>组内 1 张 ⇒ 共用；多张 ⇒ 同名一对一；配不上 ⇒ 点名。单测：共用/同名/名不符/超 12/软链/超 6 层。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>组卡片列表 ＋ 组级开关 ＋ 组级进度</h3><p>新界面，取代 144 格矩阵。浏览器实拍 3 组，开关与进度联动。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>组内详情</h3><p>PSD 列表（用哪张表可改）＋ 该组语言进度 ＋ 智能审核（<b>复用单稿的 <code>ReviewStep</code></b>）。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>版本一致性检查（D3）</h3><p>稿指纹变了 ⇒ 该组重新核对（用 <code>preparation-contract.ts:466-473</code> 的 <code>INVALIDATED</code>）。</p></div></div>
+    <div class="gate"><span class="num">6</span><div class="body"><h3>接执行</h3><p>走通「确认并生成」；助手得分接口独立排期。按组执行、按组计费。</p></div></div>
+  </div>
+  <div class="callout ok"><span class="lb">与前几版的关系</span><p>v7 的 N:M 模型、v8 的旁挂形态、v10 的「沿用旧名」<strong>全部保留</strong>；变的是<strong>界面形态从「矩阵＋人工分配」改成「文件夹＋组卡片」</strong>，以及<strong>绑定从人工界面降级为规则推导</strong>。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>阶段五 · 待拍板</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O11</td><td><strong>目录约定要不要做成"产品会检查"（例如 PSD 与表不同名时主动提示"要不要按目录就近配"）？</strong></td><td><strong>要</strong>，但只是<b>提示</b>、不自动改（沿用"只列候选、不会自动套用"）</td></tr>
+        <tr><td class="mono">O10′</td><td>沿用单稿台的步骤名与操作名、只加"多稿层"说法</td><td>沿用不变（v10 已定）</td></tr>
+        <tr><td class="mono">O9</td><td>批量台自己写表导入器</td><td><strong>要</strong></td></tr>
+        <tr><td class="mono">O1″–O8</td><td>见 v7／v8</td><td>沿用不变</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>2026-10-21 · 只读取证＋方案设计（未改业务代码）· 基线 worktrees/develop@99baaf6 · 方向级简化：<strong>目录即绑定</strong>，界面由「四入口＋12 行分配表＋144 格矩阵」改为「一个按钮＋组卡片」· 审查 D1–D12（D11/D12 最要紧）· 配套模拟 <code>模拟_20261021_批量改语言_读文件夹就做_子文件夹即一套SKU.html</code>（实测 0 console error：读取→3 组、规则自动判定、进度条、组级开关、抽屉内 8 语种进度＋智能审核表）。</p>
+</footer>
+</div>

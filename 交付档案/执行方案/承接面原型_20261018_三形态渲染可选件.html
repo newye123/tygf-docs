@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>承接面三形态原型 · 渲染可选件（第十五轮 · 2026-10-18）</title>
+<style>
+:root{
+  /* 取自官网真令牌：worktrees/develop/src/components/site/home-v17.css:14-32 */
+  --bg:#ffffff;--surface:#ffffff;--surface-2:#fafbfa;--surface-green:#f7faf8;
+  --ink:#111311;--muted:#6f746f;--muted-2:#8b918c;--line:#e0e3e0;--line-strong:#d2d7d3;
+  --accent:#2d7356;--accent-2:#3d8065;--accent-soft:#eef6f1;
+  --amber:#9a6505;--amber-soft:#fff7e7;--red:#c24b4b;--red-soft:#fff1f1;
+  --shadow:0 22px 70px rgba(17,28,21,.07);
+  --font:"Tuyigf Source Han Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-2);color:var(--ink);font-family:var(--font);line-height:1.68;letter-spacing:-.012em}
+.shell{max-width:1240px;margin:0 auto;padding:0 22px 70px}
+.chrome{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.chrome-in{max-width:1240px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;line-height:1}
+.brand-name{font-weight:700;font-size:15px}
+.switcher{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+.switcher button{font:inherit;font-size:13px;font-weight:600;padding:8px 13px;border-radius:999px;border:1px solid var(--line-strong);background:#fff;color:#4e554f;cursor:pointer}
+.switcher button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.badge{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge.warn{background:var(--amber-soft);color:var(--amber)}
+.page{display:none;background:var(--bg);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);margin-top:22px;overflow:hidden}
+.page.on{display:block}
+.nav{display:flex;align-items:center;gap:21px;padding:18px 34px;border-bottom:1px solid var(--line);font-size:14px;color:#5f655f}
+.nav .brand-mark{width:24px;height:24px;font-size:11px}
+.nav .links{margin-left:auto;display:flex;gap:20px}
+.hero{padding:64px 34px 54px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;padding:7px 11px;border-radius:999px;color:#5e645f;font-size:13px;font-weight:600;margin-bottom:20px}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+h1{font-size:clamp(34px,4.4vw,54px);line-height:1.1;letter-spacing:-.045em;margin:0 0 18px;font-weight:800}
+h1 strong{color:var(--accent);font-weight:800}
+.lead{font-size:18px;line-height:1.85;color:#626762;max-width:660px;margin:0 0 24px}
+.lead b{color:#202420;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:11px 17px;font-weight:700;font-size:14px;border:1px solid transparent}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.gho{background:#fff;border-color:var(--line-strong);color:#202420}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.trust{display:flex;flex-wrap:wrap;gap:8px 18px;color:#747a75;font-size:13px}
+section.blk{padding:44px 34px;border-top:1px solid var(--line);background:var(--bg)}
+section.blk.alt{background:var(--surface-green)}
+h2{font-size:clamp(23px,2.6vw,30px);line-height:1.28;letter-spacing:-.035em;margin:0 0 8px;font-weight:700}
+h3{font-size:17px;margin:22px 0 8px;font-weight:700}
+.sub{color:var(--muted);font-size:15px;margin:0 0 22px;max-width:680px}
+.steps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.step{border:1px solid var(--line);border-radius:17px;padding:16px 17px;background:#fff}
+.step .no{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.06em}
+.step h4{margin:6px 0 6px;font-size:16px}
+.step p{margin:0;font-size:14px;color:#5b615b;line-height:1.75}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14px;margin:6px 0 18px}
+th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--surface-2);font-size:12.5px;color:#4e554f;font-weight:700}
+tr:last-child td{border-bottom:0}
+td.yes{color:var(--accent);font-weight:700}
+td.part{color:var(--amber);font-weight:700}
+td.no{color:var(--muted-2)}
+.faq{border:1px solid var(--line);border-radius:17px;background:#fff;margin:9px 0}
+.faq summary{cursor:pointer;padding:14px 17px;font-weight:700;font-size:15.5px;list-style:none;display:flex;justify-content:space-between;gap:14px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--mono);color:var(--muted-2);font-size:18px;line-height:1}
+.faq[open] summary::after{content:"–"}
+.faq .a{padding:0 17px 16px;color:#5b615b;font-size:14.5px;line-height:1.8}
+.note{border-left:4px solid var(--amber);background:var(--amber-soft);padding:13px 16px;border-radius:0 12px 12px 0;font-size:14px;color:#5b4510;margin:16px 0}
+.note.red{border-left-color:var(--red);background:var(--red-soft);color:#6d2424}
+.checklist{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.check{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:13px 15px;background:#fff;font-size:14px;color:#4e544e}
+.check input{margin-top:3px;flex:none;accent-color:var(--accent)}
+.cta{padding:48px 34px;border-top:1px solid var(--line);background:var(--ink);color:#fff}
+.cta h2{color:#fff}
+.cta .sub{color:#b9c2bb}
+.cta .btn.pri{background:#fff;color:var(--ink)}
+.spec{margin-top:26px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px 26px}
+.spec h2{font-size:21px}
+.spec table{font-size:13.5px}
+.evi{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+footer{margin-top:26px;text-align:center;color:var(--muted-2);font-size:12.5px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <div class="chrome-in">
+    <div class="brand-mark">图</div><div class="brand-name">承接面三形态原型</div>
+    <span class="badge">第十五轮 · 2026-10-18 渲染可选件</span>
+    <span class="badge warn">文案未上线，先挑形态</span>
+    <div class="switcher" role="tablist">
+      <button role="tab" aria-selected="true" data-p="A">A 教程型（推荐）</button>
+      <button role="tab" aria-selected="false" data-p="B">B 对比型</button>
+      <button role="tab" aria-selected="false" data-p="C">C 场景型</button>
+      <button role="tab" aria-selected="false" data-p="S">④ 推荐与坑</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- ══════════════ 形态 A：教程型 ══════════════ -->
+<article class="page on" id="pA">
+  <div class="nav"><div class="brand-mark">图</div><b style="font-size:14px">图译工坊</b><div class="links"><span>工作流</span><span>常见问题</span><span style="color:var(--accent);font-weight:700">下载本地助手</span><span>申请内测</span></div></div>
+
+  <div class="hero">
+    <span class="eyebrow"><i></i>单批最多 12 个目标语种 · Windows 本地执行</span>
+    <h1>PSD <strong>批量改语言</strong>：<br>把已定稿的译文写回文字图层</h1>
+    <p class="lead">这一页只解决一件事：<b>译文已经有了，怎么不用一个语言一个语言地手动改。</b>结论先给——能自动的是文字图层里的替换与回读核对，不能自动的一律在报告里列出来交给你，不静默跳过。</p>
+    <div class="actions"><span class="btn pri">下载本地助手</span><span class="btn gho">先看体检报告长什么样</span></div>
+    <div class="trust"><span>· 设计稿文件本体不上云</span><span>· 每处写入回读核对</span><span>· 输出仍可编辑的 PSD / PSB</span></div>
+  </div>
+
+  <section class="blk">
+    <h2>开工前先做图层体检（这一步决定成败）</h2>
+    <p class="sub">批量改语言能不能做，八成取决于稿件本身。四类位置是重灾区，先知道自己踩了哪几类，再决定自动化到什么程度。</p>
+    <div class="steps">
+      <div class="step"><div class="no">01</div><h4>可编辑文字图层</h4><p>能自动。工具按扫描到的图层路径逐层绑定译文，写完回读比对。</p></div>
+      <div class="step"><div class="no">02</div><h4>栅格化文字</h4><p>不能自动——文字已经变成像素。报告会点名到具体图层，需要设计侧改回或手工处理。</p></div>
+      <div class="step"><div class="no">03</div><h4>智能对象内的文字</h4><p>不能直接写。要么进源文件改，要么这一版手工处理，报告里不会漏。</p></div>
+      <div class="step"><div class="no">04</div><h4>溢出与换行风险</h4><p>译文比原文长时提示给你，不悄悄缩字号、不改版式。</p></div>
+    </div>
+    <div class="note">这一节存在的理由：实测前排 76 条里，产品/工具页形态只有 1 条（1.3%），赢家一半是教程式内容。所以承接这一组词的页面必须<strong>先让人把稿件判清楚</strong>，再谈下载。</div>
+  </section>
+
+  <section class="blk alt">
+    <h2>跑一遍的实际形状</h2>
+    <p class="sub">不是"一键全自动"，是一条有停下来环节的流水线。下面每一步都是产品真实做的事。</p>
+    <table>
+      <thead><tr><th>步骤</th><th>你在做什么</th><th>工具在做什么</th><th>停下来交给你的是什么</th></tr></thead>
+      <tbody>
+        <tr><td>① 整理译文</td><td>把各语言文案汇成一张表（或粘贴）</td><td>逐行对账：原文—译文—图层是否对得上</td><td>同一原文有多个译法时，不自作主张选一个</td></tr>
+        <tr><td>② 扫描图层</td><td>选中设计稿，发起扫描</td><td>读文字图层路径、原文、可写性</td><td>写不进去的位置清单</td></tr>
+        <tr><td>③ 批量写入</td><td>确认范围后交给本机 Photoshop 执行</td><td>逐层替换，写完立刻回读比对</td><td>回读不一致的语种版本恢复原文，不产出错误文件</td></tr>
+        <tr><td>④ 拿结果</td><td>只看需要判断的位置</td><td>产出多语言 PSD / JPG 与分组报告</td><td>报告分成「已确认 / 待复查 / 需要你决定」</td></tr>
+      </tbody>
+    </table>
+    <div class="note red"><strong>上线前必须补的一格：</strong>本页所有「产品真实做得到」的表述，发布前逐条要回指到代码或报告样例。第 ③ 步的回读语义与失败粒度在产品侧有实现依据（<code>TYGF_V15_Thin_Executor.jsx:118-127</code>：不一致即 <code>READBACK_MISMATCH</code> 并关闭不保存），但页面上不写具体分钟数、不写通过率——那两条属禁写清单。</div>
+  </section>
+
+  <section class="blk">
+    <h2>常见问题</h2>
+    <details class="faq" open><summary>这是图片翻译工具吗？</summary><div class="a">不是。图片翻译读的是已经压平成一张图上的字，再把另一种语言画回去，源文件没变。这里写的是 PSD / PSB 里的文字图层，交付的仍是可继续编辑的源文件。</div></details>
+    <details class="faq"><summary>需要上传设计文件吗？</summary><div class="a">设计稿文件本体不上传，源文件与结果文件都在你这台电脑。会上传的是图层里的文字、译文表里的译文与设计稿路径，用于报价、绑定与结算；范围逐项写在隐私政策里。</div></details>
+    <details class="faq"><summary>能保证完全自动正确吗？</summary><div class="a">不能这么承诺。能自动的是替换与回读核对；需要你判断的位置（多译法、可能溢出、回读不一致）会停下来交给你，这也是报告和"静默跳过"的区别。</div></details>
+    <details class="faq"><summary>Mac 能用吗？</summary><div class="a">现在只有 Windows 10 / 11（64 位）的本地助手，且需要本机装有完整版 Photoshop。</div></details>
+  </section>
+
+  <div class="cta">
+    <h2>先给一份最麻烦的稿子跑体检</h2>
+    <p class="sub">只看两个数：有多少处文字是可写的、有多少处要你手工处理。这两个数决定这活该自动化到什么程度。</p>
+    <div class="actions"><span class="btn pri">下载本地助手</span><span class="btn gho" style="background:transparent;border-color:#4a534c;color:#fff">申请内测</span></div>
+    <div class="evi" style="color:#8f9892">页面归属：词簇 HOWTO-REPLACE ＋ CATEGORY-WRITEBACK ｜ 深链落点 /download ｜ 锚文本用词簇代表词，不写「点击这里」</div>
+  </div>
+</article>
+
+<!-- ══════════════ 形态 B：对比型 ══════════════ -->
+<article class="page" id="pB">
+  <div class="nav"><div class="brand-mark">图</div><b style="font-size:14px">图译工坊</b><div class="links"><span>与 Photoshop 原生做法的差别</span><span>工作流</span><span style="color:var(--accent);font-weight:700">下载本地助手</span></div></div>
+
+  <div class="hero">
+    <span class="eyebrow"><i></i>两条都能批量，差别在"谁来核对"和"交付什么"</span>
+    <h1>Photoshop 变量法 vs 源文件写回：<br><strong>哪条适合你这批稿</strong></h1>
+    <p class="lead">搜索「批量替换文字」时排在最前面的，多是 Photoshop 自己的变量 / 数据组 / 批处理教程。这不冲突——它也是一条正经路线。这一页把两条路的<strong>分工边界</strong>说清楚，不贬低前者。</p>
+    <div class="actions"><span class="btn pri">看我的稿适合哪条</span><span class="btn gho">下载本地助手</span></div>
+  </div>
+
+  <section class="blk">
+    <h2>把两条路线摆平着比</h2>
+    <p class="sub">比较轴只挑能验证的。凡是"更快 / 更准 / 更省"这类没有实测数据的句子，一律不写。</p>
+    <table>
+      <thead><tr><th>比较维度</th><th>Photoshop 变量 / 数据组 / 批处理</th><th>本工具（源文件写回）</th></tr></thead>
+      <tbody>
+        <tr><td>输入是什么</td><td class="part">数据集文件 + 需要按变量重新设置的版式</td><td class="yes">已有译文表 + 原样设计稿</td></tr>
+        <tr><td>稿件要不要改造</td><td class="part">通常要把图层接上变量、定义数据组</td><td class="yes">不改版式，按图层路径绑定译文</td></tr>
+        <tr><td>改完能不能继续编辑</td><td class="yes">可以（仍是 PSD）</td><td class="yes">可以（PSD / PSB 均可）</td></tr>
+        <tr><td>写完有没有回读核对</td><td class="no">批处理本身不做回读比对</td><td class="yes">每处写入回读比对，不一致则该语种版本不产出</td></tr>
+        <tr><td>拿不准的位置怎么办</td><td class="no">不会停，需要你自己在成图里发现</td><td class="yes">停下来交给你，并进报告分组</td></tr>
+        <tr><td>交付物</td><td class="part">生成的文件</td><td class="yes">多语言源文件 + JPG + 可复查报告</td></tr>
+        <tr><td>单批语种数</td><td class="part">取决于你的数据集与动作设计</td><td class="yes">最多 12 个目标语种，逐语言连续执行</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>诚实标记：</strong>第 4、5 行关于原生批处理的表述属于"通用机制说明"，<u>本会话未在自己的 Photoshop 上实机复现</u>。发布前要用一台真机跑一遍变量法对照组（同一份稿、同样语种），拿到截图与产物清单才允许写在这页上；否则这两行改成中性表述「原生批处理不提供多语言核对环节，需自行验证」。</div>
+  </section>
+
+  <section class="blk alt">
+    <h2>什么时候该选哪条</h2>
+    <div class="steps">
+      <div class="step"><div class="no">选变量法</div><h4>版式本身要变</h4><p>同一张稿要出不同尺寸、不同文案结构，或者素材本身（图片）也要一起换。</p></div>
+      <div class="step"><div class="no">选源文件写回</div><h4>版式不动、只换语言</h4><p>译文已经定稿，稿件是现成的多语言交付物，要的是"改完还是能编辑的源文件 + 一份能复查的报告"。</p></div>
+      <div class="step"><div class="no">两条都要</div><h4>先变量出结构，再写回语言</h4><p>这情况不少见。工具不拦你，报告里会写清哪些位置来自哪一步。</p></div>
+      <div class="step"><div class="no">都不选</div><h4>只要一张成品图</h4><p>没有源文件、也不需要继续编辑时，用图片翻译类工具更省事——那不是本工具。</p></div>
+    </div>
+  </section>
+
+  <div class="cta">
+    <h2>不确定的话，拿一份稿跑一遍就清楚了</h2>
+    <p class="sub">体检不改动你的源文件。</p>
+    <div class="actions"><span class="btn pri">下载本地助手</span></div>
+    <div class="evi" style="color:#8f9892">页面归属：词簇 DDG-COMPARE（前排第 11／12 位即原生变量法教程）</div>
+  </div>
+</article>
+
+<!-- ══════════════ 形态 C：场景型 ══════════════ -->
+<article class="page" id="pC">
+  <div class="nav"><div class="brand-mark">图</div><b style="font-size:14px">图译工坊</b><div class="links"><span>电商详情页</span><span>包装 / 说明书</span><span style="color:var(--accent);font-weight:700">下载本地助手</span></div></div>
+
+  <div class="hero">
+    <span class="eyebrow"><i></i>场景页：按你要交付的东西组织，不按功能列表</span>
+    <h1>多语言详情页与 A+：<br>下一波活动还要<strong>复用同一份稿</strong></h1>
+    <p class="lead">电商的场景是"这批稿不是做完就完"：大促改版、上新、多站点同时投。所以交付物必须是还能改的源文件，而不是一张翻译好的图。</p>
+    <div class="actions"><span class="btn pri">下载本地助手</span><span class="btn gho">看电商场景的检查表</span></div>
+  </div>
+
+  <section class="blk">
+    <h2>接单前先看这六处</h2>
+    <p class="sub">勾选只在你的浏览器里，不会上传，也不代表产品承诺。</p>
+    <div class="checklist">
+      <label class="check"><input type="checkbox"><span>文字是否都在可编辑图层（不是栅格化）</span></label>
+      <label class="check"><input type="checkbox"><span>有没有把文字转成形状 / 智能对象内的字</span></label>
+      <label class="check"><input type="checkbox"><span>品牌名、型号、合规文案是否已锁死不可改</span></label>
+      <label class="check"><input type="checkbox"><span>译文是否已定稿，还是还要边改边出</span></label>
+      <label class="check"><input type="checkbox"><span>小语种的字形与字体是否这台机器上有</span></label>
+      <label class="check"><input type="checkbox"><span>交付要求是源文件、JPG，还是两者都要</span></label>
+    </div>
+    <div class="note">六项里有两项以上不清楚，就先别接大货——这是内测阶段真实的承接判断，不是话术。</div>
+  </section>
+
+  <section class="blk alt">
+    <h2>另一个场景：包装与说明书（印前）</h2>
+    <p class="sub">同一套写回能力，风险点完全不同：这里错的每一个字都会印出去。</p>
+    <table>
+      <thead><tr><th>关注点</th><th>电商详情页</th><th>包装 / 说明书印前</th></tr></thead>
+      <tbody>
+        <tr><td>最强约束</td><td class="part">版式复用与活动节奏</td><td class="part">强制信息与合规文案不能少不能错</td></tr>
+        <tr><td>核对手段</td><td class="yes">回读比对 + 报告分组</td><td class="yes">同样两样，但仍需打样与印厂确认</td></tr>
+        <tr><td>能不能替代人工</td><td class="no">不能，需要你判断的位置照旧停下</td><td class="no">不能，核对报告替代不了印前样</td></tr>
+      </tbody>
+    </table>
+    <div class="note red">本页不得写"替代打样 / 免印前确认"。这条属对外承诺面的硬边界。</div>
+  </section>
+
+  <div class="cta">
+    <h2>先看报告长什么样，再决定接不接</h2>
+    <div class="actions"><span class="btn pri">下载本地助手</span><span class="btn gho" style="background:transparent;border-color:#4a534c;color:#fff">申请内测</span></div>
+    <div class="evi" style="color:#8f9892">页面归属：词簇 ECOM ＋ PRINT-PREFLIGHT ｜ 素材来自已发布稿（知乎印前六检 / 头条长文）</div>
+  </div>
+</article>
+
+<!-- ══════════════ ④ 推荐与坑 ══════════════ -->
+<div class="spec" id="pS">
+  <h2>我的推荐、代价与坑（三套都是真实渲染，不是线框）</h2>
+  <p class="sub">依据是 2026-10-17 夜的百度四词 76 条前排实测：产品/工具页形态只有 1 条（1.3%），教程形态合计 50%；「多语言 PSD 设计稿」20 条里 14 条是素材站（该词不属我们，已写进归属表排除项）。</p>
+  <table>
+    <thead><tr><th>排序</th><th>形态</th><th>为什么</th><th>代价／风险</th><th>工作量</th></tr></thead>
+    <tbody>
+      <tr><td><b>1 推荐</b></td><td>A 教程型 <code>/guide/psd-batch-replace-text</code></td><td>直接对上前排赢家形态（文库/博客/问答占一半）；且它同时承接 HOWTO-REPLACE 与 CATEGORY-WRITEBACK 两个簇，一页两用</td><td>新增对外承诺页 ⇒ 逐条过禁写清单；内容必须真有价值，否则就是"薄页面"，反被判负信号</td><td>文案 1 天（骨架已在此原型里）＋ 1 个 route ＋ sitemap 一行</td></tr>
+      <tr><td>2</td><td>B 对比型 <code>/compare/psd-data-driven-graphics</code></td><td>正面接住真竞品（PS 变量法在前排第 11／12 位）；买家决策位置，转化意图强</td><td><b>有硬前置：</b>关于原生批处理的两行表述未实机复现，必须先跑对照组拿截图，否则只能写中性句（已在页内标黄）</td><td>实机对照 0.5 天 ＋ 文案 0.5 天</td></tr>
+      <tr><td>3</td><td>C 场景型 <code>/solutions/ecommerce-locale</code></td><td>素材已存在（印前六检、电商稿），复用便宜</td><td>场景页在我们没有 inbound 数据前容易变成自说自话；且"电商"意图前排也被教程与素材站占着</td><td>0.5 天</td></tr>
+      <tr><td colspan="5" style="background:var(--amber-soft);color:#5b4510"><b>三条共同代价：</b>新增页面会动 <code>src/app/sitemap.ts</code> 与 <code>smoke-seo-consistency</code> 的英文对等断言；且 #172 那条 develop／main 英文页不对等的问题没解决前，<b>英文对页要么一起建、要么先不建</b>，否则测试站结构上测不到那一面。</td></tr>
+    </tbody>
+  </table>
+  <h3>我没有做的三件事（以及为什么）</h3>
+  <ul style="font-size:14.5px;color:#4e544e;line-height:1.85;padding-left:20px">
+    <li><b>没批量铺 pSEO 页。</b>册子第 21 章目录自己写着「为什么批量换词不是 pSEO」；我们收录还是 0，先要一页真在场，再谈 30 页。</li>
+    <li><b>没把这三页提交进 develop。</b>新增对外承诺面要 Owner 点头，且 develop 是多会话共享树——上一轮我因误裹别手 hunk 造成分支尖端不可编译（根账 ISSUES.md #164），这次只出渲染件不碰代码。</li>
+    <li><b>没写"更快／更省／通过率"任何数字。</b>缺实测即不写，禁写清单第 2、7 类。</li>
+  </ul>
+  <h3>你只需要回一个字母</h3>
+  <p style="font-size:14.5px;color:#4e544e">A／B／C 任选，或「A 先做，B 等实机对照」。<b>拍板后我做的是：</b>在 develop 建 route（含 layout metadata、robots 与 sitemap 条目，按 hunk 级暂存纪律提交）、把这三套原型的文案落成站内真组件、跑 <code>tsc/lint/test:seo-consistency</code> 并附回显；<b>不部署</b>，等你的测试站窗口。</p>
+  <div class="evi">本页配色与字号取自官网真令牌（worktrees/develop/src/components/site/home-v17.css:14-32／:71-85），非另一套设计语言。</div>
+</div>
+
+<footer>图译工坊 · 第十五轮承接面原型 · 2026-10-18 上午本会话渲染 ｜ 三套原型与推荐页均为<b>未上线</b>素材，文案待过禁写机扫与 Owner 拍板后才进代码</footer>
+</div>
+
+<script>
+const btns=document.querySelectorAll('.switcher button');
+const pages={A:'pA',B:'pB',C:'pC',S:null};
+btns.forEach(b=>b.addEventListener('click',()=>{
+  btns.forEach(x=>x.setAttribute('aria-selected',x===b?'true':'false'));
+  const k=b.dataset.p;
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',k!=='S'&&p.id===pages[k]));
+  document.getElementById('pS').style.display=k==='S'?'block':'none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+document.getElementById('pS').style.display='none';
+document.querySelectorAll('.checklist input').forEach((i,n)=>{
+  const k='ytgf-r15-ck-'+n;
+  if(localStorage.getItem(k)==='1')i.checked=true;
+  i.addEventListener('change',()=>localStorage.setItem(k,i.checked?'1':'0'));
+});
+</script>
+</body>
+</html>

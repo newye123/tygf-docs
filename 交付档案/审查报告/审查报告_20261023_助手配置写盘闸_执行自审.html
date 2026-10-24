@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>助手配置写盘闸：执行与自我对抗复验</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:64ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre.cmd{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  line-height:1.65;
+  margin:0;
+  color:var(--ink-2);
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:5px}
+.gate li{font-size:.9rem;color:var(--ink-2);line-height:1.65}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行自审</span><span class="sep">/</span>
+    <span>助手配置写盘闸 · Round 1/3</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>动手之前先证伪，动手之后复验自己</h1>
+  <p class="standfirst">按 v2 第 2 步落地：会话文件读不出来时不再被默认配置覆盖，停写自定义权限项，退出改成只读降级。三条动手前的怀疑全部有结论，其中两条改变了实现；自我复验又抓出两条我自己刚写进去的缺陷，已在同一分支修掉。</p>
+  <div class="meta">
+    <span>分支 codex/assistant-state-guard-20261023</span>
+    <span>cdade2db → 01ee489e（2 笔）</span>
+    <span>3 文件 +302/−21</span>
+    <span>未合入 · 未推 · 未出包 · 未上站</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">有条件放行 · 未合流，等 Owner 定窗口</span>
+    <p>切片已在独立分支落地，7 条命令真退出码全 0，其中一条是<strong>实起助手服务端</strong>跑通的。<br>放行的条件有三条：一是它没合进 develop（那棵树上正有"行排除"同族改动在飞，合流要按预演走）；二是界面侧还没消费新加的读状态字段，所以用户可见收益目前只有一半；三是托盘那一支重启风暴本轮没动——改它要重编译才能验，而本会话不出包。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">7/7</span><span class="k">本轮跑的命令真退出码全 0（不走管道尾取码）</span></div>
+    <div class="stat ok"><span class="n">9</span><span class="k">新增断言组数，含三条负控</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">自我复验抓出的"本次引入"缺陷，均已修</span></div>
+    <div class="stat bad"><span class="n">3</span><span class="k">存量未修项，每条都写了为什么这轮不动</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>落地了什么</h3>
+      <ul>
+        <li><strong>读状态可分类</strong>：没配过／读不到／内容坏／从备份恢复，四种不再洗成同一个空值——这是"授权反复丢"的根。</li>
+        <li><strong>备份先立后破</strong>：坏内容整份改名留证，好备份永不被动。</li>
+        <li><strong>停写自定义权限项</strong>：不再拿裸用户名当授权目标，改成只修不锁的一次继承恢复。</li>
+        <li><strong>写盘闸下沉到配置层</strong>：读不出来就拒写，界面拿到真码而不是"请重新授权"。</li>
+        <li><strong>不退出，改只读降级</strong>：既不丢授权，也不会变成重启风暴。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>本轮明确没做（不是漏）</h3>
+      <ul>
+        <li><strong>最小证据闸（v2 第 4 步①）</strong>：它改回执语义，纪律要求两道合同门必跑，而本树跑不动那两道 ⇒ 宁可不改。</li>
+        <li><strong>托盘致命闭锁</strong>：要重编译才验得了，与出包同笔更干净。</li>
+        <li><strong>类型检查与 lint</strong>：新树未建依赖软链。</li>
+        <li><strong>真机权限故障注入</strong>：全部"读不出来"用把文件做成目录来模拟。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>动手前的三条证伪（两条改变了实现）</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>ID</th><th>怀疑</th><th>取证</th><th>判定</th><th>影响</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">P-1</td><td>目标树正被别人写，直接落笔会吞掉别人现场</td><td>21:22 现读：develop 已从 558384c9 推进到 cdade2db；工作树 6 改 3 新，是"行排除"族在飞</td><td><span class="tag bad">证实</span></td><td>新建独立分支树落笔，不在 develop 上写、不整树暂存</td></tr>
+      <tr><td class="mono">P-2</td><td>新抛出的异常可能逃进定时器 ⇒ 崩进程 ⇒ 我警告过的重启风暴</td><td>本文件无进程级异常钩子；逐个量体四个定时器可达函数，写配置调用均为"无"；唯一清授权调用点在请求路径内</td><td><span class="tag ok">证伪</span></td><td>保留抛出设计</td></tr>
+      <tr><td class="mono">P-3</td><td>最小证据闸会打挂既有测试语料</td><td>12 个用到该摘要的 smoke 全部写真 64 位十六进制，无一使用空数组摘要</td><td><span class="tag ok">证伪</span></td><td>不会打挂，但必跑门跑不动 ⇒ 该切片本轮不做</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>更正：推翻我自己两条说法</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">C-1</span><h3>v2 的"首跑分级"做不到，换成只读降级</h3></div>
+      <p>v2 写的是"未配对机器允许回落、已配对机器读不到就停"。落地时发现判据取不到：<strong>文件读不出来的那一刻，无法知道它里面有没有授权</strong>。</p>
+      <p class="was">换法：不退出、不写盘、界面拿真码、本机留一份点名文件的诊断。它同时消掉两个坏结果——不覆盖授权，也不因"退出＋托盘 5 秒重拉"变成重启风暴。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">C-2</span><h3>"对象结果表全仓 0 引用"说过头了</h3></div>
+      <p>守卫脚本里有 10 处命中，而且这文件在第一轮基线就已存在（9 月 20 日那笔"逐对象写入结果表第一片：表＋纯加法迁移＋不变量门禁"）。</p>
+      <p class="was">正确说法：<strong>表、迁移、不变量守卫都在，缺的是业务读写面</strong>——业务代码里 0 处读写，那笔提交标题自己也写着"结算仍读行轴"。影响：v2 第 8 步的前置从四件减到三件。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>运行验证（原式与真退出码）</h2>
+  <p class="lede">输出重定向到文件后单独取退出码，不走管道尾——否则拿到的是 <code>tail</code> 的码。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>命令</th><th>码</th><th>覆盖到哪</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">node --check persisted-state.js / server.js</td><td class="mono">0 / 0</td><td>语法</td></tr>
+      <tr><td class="mono">smoke-local-assistant-state-persistence</td><td class="mono">0</td><td>行为：原 5 组断言全过 ＋ 新增 9 组含负控</td></tr>
+      <tr><td class="mono">smoke-assistant-script-distribution-http</td><td class="mono">0</td><td><strong>实起服务端</strong>走 /ping 全场景 ⇒ 启动路径改动被真实执行</td></tr>
+      <tr><td class="mono">smoke-pc-enable-script</td><td class="mono">0（6/6）</td><td>同一写盘函数的另一个消费方未被改坏</td></tr>
+      <tr><td class="mono">smoke-pc-bundled-engine</td><td class="mono">0（21/21）</td><td>内置引擎面未受影响</td></tr>
+      <tr><td class="mono">smoke-workbench-ui-contract</td><td class="mono">0</td><td>配置接口加字段未打挂界面契约守卫</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">最硬的三条负控</span>
+    <p>① 当前文件读不出来 ⇒ 会话写盘抛错且好备份的 sha256 逐字不变；② 同一情况下<strong>派生状态（执行日志）仍能继续写</strong>，坏当前整份留证——这条是刻意分流的，否则一次权限抖动会把正常跑批改成交给失败；③ 源码剥掉注释后不得再出现裸用户名授权、断继承、自写授权项三种写法。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>缺陷清单</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>等级</th><th>来源</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">S-01</td><td><span class="tag bad">Important</span></td><td class="mono">server.js writeConfigRecoveryNote</td><td>提示写在读失败分支上，而每个响应都会读一次配置 ⇒ 一次故障变成每响应重写诊断文件的持续写盘。已改进程内一次成文</td><td class="mono">A</td><td>本次引入，已修</td></tr>
+      <tr><td class="mono">S-02</td><td><span class="tag bad">Important</span></td><td class="mono">persisted-state.js 写闸作用域</td><td>无差别拒写会波及执行日志写盘（该调用行不在 try 内）⇒ 权限抖动把正常跑批改成交给失败。已按调用方分流</td><td class="mono">A</td><td>本次引入，已修</td></tr>
+      <tr><td class="mono">S-03</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:8227-8229 ＋ TrayHost.cs:55-63,117-132</td><td>打包版读不到硬件身份仍退出、托盘 5 秒无条件重拉无闭锁 ⇒ 重启风暴这一支仍在。本轮把配置那一支改成降级，这条没动</td><td class="mono">A</td><td>存量，未修</td></tr>
+      <tr><td class="mono">S-04</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:8221 migrateOldConfig</td><td>它在新加的 try 之外。已论证触发不了拒写（只在配置文件不存在时写），但那是"靠调用条件成立"，不是结构性防护</td><td class="mono">A</td><td>存量，未修</td></tr>
+      <tr><td class="mono">S-07</td><td><span class="tag bad">Important</span></td><td class="mono">工作台前端</td><td>新加的读状态字段还没有消费方，界面仍按旧字段显示 ⇒ "分得清没配过与读不到"目前只在助手接口层成立</td><td class="mono">A</td><td>本次引入的半成品面，需跟进单</td></tr>
+      <tr><td class="mono">S-05</td><td><span class="tag warn">Nit</span></td><td class="mono">persisted-state.js 归档命名</td><td>归档名按毫秒，同毫秒两次会撞名；同族脚本自己实现了撞名顺延，本模块没有</td><td class="mono">A</td><td>本次引入，未修</td></tr>
+      <tr><td class="mono">S-06</td><td><span class="tag warn">Nit</span></td><td class="mono">readStateWithStatus</td><td>"读"动作里含写盘（用备份覆盖当前），沿用旧行为未改</td><td class="mono">A</td><td>存量</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>覆盖缺口与下一步</h2>
+
+  <h3>覆盖缺口</h3>
+  <ul class="notes">
+    <li>没跑类型检查与 lint：新树未建依赖软链，本切片只碰纯 JS 与一个 smoke。</li>
+    <li>没跑两道合同门（行契约、信任链，后者是 45 串脚本含隔离库）⇒ <strong>因此最小证据闸本轮不做</strong>：跑不了必跑门就不动回执语义。</li>
+    <li>没跑 contracts 全链（约 50 串）。</li>
+    <li>没做真机权限故障注入：读不出来全部用"把文件做成目录"模拟。</li>
+    <li>没合入 develop、没推远端、没出包、没上站。</li>
+  </ul>
+
+  <h3>下一步（按性价比）</h3>
+  <div class="gates">
+    <div class="gate first"><div class="num">1</div><div class="body"><h3>前端消费读状态</h3><p>不做这条，这次修复的用户可见收益只有一半。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>托盘闭锁 ＋ 硬件身份那一支</h3><p>与出包同一笔做，一次真机验完。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>最小证据闸</h3><p>等 develop 上"行排除"那笔合流后单独跑，必带两道合同门。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>真机注入验证</h3><p>拿一台机把会话文件权限改坏，验降级与诊断文件确实出现。</p></div></div>
+  </div>
+</section>
+
+<footer>
+  <p>分支：<code>codex/assistant-state-guard-20261023</code>，base <code>cdade2db</code> → head <code>01ee489e</code>（两笔）。改动 3 个文件 +302/−21，工作树干净。</p>
+  <p>合流前提示：develop 上另有"行排除"同族语义改动在飞，两笔都碰计费/回执族，合并需按合流预演走；本会话未推远端、未出包、未部署、未改动任何账号或线上配置。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

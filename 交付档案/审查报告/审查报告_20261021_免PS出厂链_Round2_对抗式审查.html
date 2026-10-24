@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对抗式审查 Round 2 · 免 PS 出厂链 · 2026-10-21</title>
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 对抗式审查 Round 2/3</p>
+  <h1>审我自己刚提的免 PS 出厂方案：打回——三个已交付的安装包现在装上会被工作台硬拦，另外抓到一条假结论</h1>
+  <p class="standfirst">VERDICT：打回（r1/r2/r3 三包不可安装）→ 已按方案改完并出 r4，r4 的"装上真能用"待 Owner 实机复验。范围＝worktrees/develop <span class="mono">741fc04</span> ＋ <span class="mono">c570c9b</span> 两笔 ＋ 四只交付目录；风险档 High（安装器与发布身份按规矩永远要过人）。</p>
+  <p class="meta">已证实 7 条（Important 5／存量 2／Nit 1）· 未决 5 条 · 号界＝RR2-，不与 Round 1 的 F-0x 共号 · 门真退出码逐条另取（见"执行结果"）</p>
+</header>
+
+<section class="verdict">
+  <p class="hd">结论</p>
+  <p class="lede">上一轮我以为"出厂链已经自证"，<strong>方向反了</strong>。我把助手构建号 <span class="mono">assistantBuildId</span> 改成 <span class="mono">bundled-engine-20261020-r1</span> 当成本事，可工作台的合同门（<span class="mono">assistant-compatibility.ts:38-47</span>）要求这个值和网站上的<strong>逐字相等</strong>（版本号只是下限）——站点两边（main 与 origin/main）要的都是 <span class="mono">transport-hardening-20261011-r1</span>。差分实跑证明：装上我那三版 ⇒ 每一次本地助手操作都被拦，提示"报告组件版本与当前工作台不一致"。这对你意味着：<strong>那三版一律别装，只装 r4</strong>。同时撤掉了上一轮我自己提的"改名"步骤——改名要重编 Rust，而这台机器现在的 cargo/rustc 已经取不到，硬改只会造出"文件叫 A、属性写 B"的新残留。</p>
+  <div class="stats">
+    <div class="stat bad"><span class="n">1</span><span class="lb">阻塞级：三包装上即被硬拦（已修）</span></div>
+    <div class="stat bad"><span class="n">2</span><span class="lb">我上一轮的假结论／假绿（已更正）</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="lb">存量：探针与占用表会漏（已补断言）</span></div>
+    <div class="stat warn"><span class="n">5</span><span class="lb">未决（各写清还缺什么证据）</span></div>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel yes">
+    <p class="hd">本轮已修（741fc04 ＋ c570c9b）</p>
+    <ul class="tl">
+      <li class="tl-body"><span class="tag">RR2-01</span><strong>阻塞级·本次引入</strong>：<span class="mono">assistantBuildId</span> 恢复为站点合同值、<strong>一字不动</strong>，版本面六处统一前进 3.7.16（<span class="mono">release-identity.json</span>／<span class="mono">.env.example</span>／<span class="mono">installer.iss</span>／<span class="mono">deploy/server-setup.sh</span> 4 行／助手 <span class="mono">server.js</span>／助手 <span class="mono">package.json</span>）。<span class="mono">npm run repo:check</span> ⇒ <span class="mono">[release-identity] passed: assistant 3.7.16, Node 22</span></li>
+      <li class="tl-body"><span class="tag">RR2-02</span>改名会留 43 MB 孤儿（<span class="mono">[UninstallDelete]</span> 管不到 <span class="mono">bin</span>）⇒ 立"曾出厂名都要留一行清理"的纪律，并写进门里 [D3]</li>
+      <li class="tl-body"><span class="tag">RR2-03</span>内置引擎门当时<strong>不在任何 npm 入口、也不在 test:trust-chain 总链里</strong> ⇒ 那句"门全绿"不含这条链。已接 <span class="mono">test:pc-bundled</span> 并入总链，门内再加 [E] 自证已接线</li>
+      <li class="tl-body"><span class="tag">RR2-04</span><span class="mono">smoke-pc-scan-live.mjs</span> 默认件是<strong>上游</strong>的 <span class="mono">C:\Program Files\PhotoCraft\…</span>、缺件还 <span class="mono">exit 0</span> ⇒ 跑绿测的不是出厂件。默认值改为按 <span class="mono">vendor/engine.sha256</span> 解析仓内件，SKIP 分支显式点名"本次未对真实件做断言"</li>
+      <li class="tl-body"><span class="tag">RR2-05</span>引擎是 <span class="mono">serve</span> 常驻子进程（<span class="mono">pc-executor.js:123</span>），而 <span class="mono">CloseApplicationsFilter</span> 不含它 ⇒ 覆盖安装时句柄被占、删除退化成"重启后才删"。已补引擎名＋断言 [D4]</li>
+      <li class="tl-body"><span class="tag">RR2-06</span>更正 BUILD-MANIFEST 里的假结论：同拍重测 出厂件 <span class="mono">43,252,736 B/3cb06ed1…</span>（字体串 0/0/0）vs 带字体重建 <span class="mono">67,435,008 B/423e627b…</span>（1/4/1），差 <span class="mono">24,182,272 B</span> ⇒ 字体确实进件，"链接期被丢弃"不成立</li>
+    </ul>
+  </div>
+
+  <div class="panel no">
+    <p class="hd">已证实但本轮没修 · 与更正</p>
+    <div class="card">
+      <p class="k">🟠 RR2-07 文档教的是旧路径，配置路径又优先于出厂钉值</p>
+      <p class="body"><span class="mono">pc-channel.js:34</span> 里 <span class="mono">pcExePath</span> 非空就直接用配置值、根本不看 <span class="mono">engine.sha256</span>；而开通脚本头注释和候选包测试卡都在教 <span class="mono">--exe "C:\Program Files\PhotoCraft\…"</span>。照抄的机器永远用不到内置件（失败是安全拒，不静默降级，但会看不懂原因）。</p>
+      <p class="loc">download/local-assistant/pc-channel.js:32-34 · scripts/pc-enable-on-machine.cjs:13,20-21 · tmp/pc-candidate-3.7.16/测试卡.txt</p>
+      <p class="fix">统一改教 <span class="mono">--bundled</span>；这条与"服务端开通开关"一起做，避免两份口径同时存在。</p>
+    </div>
+    <div class="card">
+      <p class="k">🟠 RR2-U2 自编引擎现在"编不回来"</p>
+      <p class="body">这台机器取不到 cargo/rustc：机器与用户 PATH 里没有 rust 条目、<span class="mono">C:\Users</span> 深度 5 内搜不到 <span class="mono">cargo.exe</span>、<span class="mono">where cargo</span> 找不到。出厂件此前只有两枚拷贝，都在我建的临时建树里。</p>
+      <p class="loc">HKCU\Environment\Path 与机器 Path（只读查询）· worktrees/tmp-pc-bundle/…/dist/bin 与 …/vendor/photocraft</p>
+      <p class="fix">已把件离线留底到 <span class="mono">tmp/engine-artifact/</span>（＋ r4 交付目录 <span class="mono">tools\tygf-engine.exe</span>）；根治＝把 clone＋apply patch＋构建＋ISCC 四步搬进云构建，构建清单字段形状已经能直接复用。</p>
+    </div>
+    <div class="card">
+      <p class="k">⚪ 旧案仍未修（不重复报，只引用）</p>
+      <p class="body">F-08 <span class="mono">decideExecuteChannel</span> 无生产调用者、<span class="mono">engineExeSha256</span> 无读取者（换件后旧缓存扫描照常执行）；U-01 Owner 机字体探针失败真因；U-03 许可扫描对自编产物未重跑且无可复跑脚本。</p>
+      <p class="loc">worktrees/develop/download/local-assistant/pc-channel.js:97-111 · 交付档案/审查报告/审查报告_20261020_…_Round1_…</p>
+      <p class="fix">F-08 排在写回解冻之前；U-01 要等你换装 r4 重启后复测；U-03 需要一个能跑的扫描入口。</p>
+    </div>
+  </div>
+</section>
+
+<section class="gates">
+  <p class="hd">未决（每条注明还缺什么证据）</p>
+  <div class="gate first"><span class="num">U1</span><div class="body">r4 装上后 <span class="mono">/ping</span> 是否真回 <span class="mono">version=3.7.16 ＋ assistantBuildId=transport-hardening-20261011-r1</span>、工作台不再拦批次。<strong>缺</strong>：你本人安装并重启（红线：我不代装代重启）。静态面已验：件内 <span class="mono">release-identity.json</span> 与 <span class="mono">server.js</span> 的 <span class="mono">VERSION</span> 都取自将提交内容。</div></div>
+  <div class="gate"><span class="num">U2</span><div class="body">自编引擎能否重新编出来。<strong>缺</strong>：可用的 cargo/rustc（本机现在取不到）。</div></div>
+  <div class="gate"><span class="num">U3</span><div class="body">许可扫描对自编产物仍未重跑。本轮实测 <span class="mono">worktrees/develop/scripts</span> 共 315 个脚本，<span class="mono">ls | grep -iE "licen|attrib|disclos|depend"</span> <strong>0 命中</strong>，只有 3 个文件正文含"许可"（内置引擎门只核许可 bundle 在不在，不做依赖闭包披露核验）。<strong>缺</strong>：一个能复跑的扫描入口。并行会话今日 10:2x 在 #213 声称"已建闸并首跑 345 个唯一名"，其落点<strong>未核实</strong>（不在本轮覆盖范围；若已落地则本条应改为已闭）。</div></div>
+  <div class="gate"><span class="num">U4</span><div class="body">Owner 机字体探针失败的真因（旧 U-01 仍未修，那行原因曾被 500 吞掉）。<strong>缺</strong>：换装 r4 并重启后的一次复测（按红线我不代重启你的助手）。</div></div>
+  <div class="gate"><span class="num">U5</span><div class="body"><span class="mono">{app}</span> 顶层 5 个带时间戳的 <span class="mono">.bak-*</span>（合计 116,049,352 B）归属未核实——develop 树里找不到生成它的代码（<span class="mono">grep</span> 正则 <span class="mono">\.bak-\$|bakTag|timestampedBackup</span> 无命中）。<strong>缺</strong>：是谁、用什么流程写的（多半是 8-10 月手工热补丁）。本轮只登记不动。</div></div>
+</section>
+
+<section class="notes">
+  <p class="hd">执行结果（真实退出码，最后一次运行为准）</p>
+  <p class="body">
+    <span class="mono">npm run repo:check rc=0</span>（identity passed 3.7.16／repo-policy passed，policyAssertions=36、protectedTables=9/9／learning safety ok，扫描文件=478 值导入命中=0）·
+    <span class="mono">test:pc-bundled rc=0，21 项</span>（原 18 ＋ [D3][D4][E]）·
+    <span class="mono">test:pc-observation rc=0</span>（内含 [I] SKIP 真件留底不存在＝未执行，不算绿）·
+    <span class="mono">test:pc-wiring-freeze rc=0，9/9</span>（pc-executor 仍冻结、站点无「免 PS」宣称）·
+    <span class="mono">test:pc-enable rc=0，6/6</span>·
+    <span class="mono">build-engine.bat rc=0</span>（staging 实测重算 43,252,736 B＝3cb06ed1…）·
+    <span class="mono">ISCC rc=0 Successful compile (25.515 sec)</span>。
+    新断言的变异测试：拆掉 photocraft 清理行 ⇒ <span class="mono">rc=1</span> 并点名；把引擎名从过滤器去掉 ⇒ <span class="mono">rc=1</span>；两处还原后哈希逐字相同、复跑 <span class="mono">rc=0</span>。
+  </p>
+  <p class="hd">出厂件（r4）与四代对照</p>
+  <p class="body">
+    r4 <span class="mono">25,507,012 B</span> · SHA-256 <span class="mono">9c9464376908741f…24db5559</span> · 目录 <span class="mono">tmp/setup-3.7.16-r4-身份纠偏/</span>（14 件：安装包／engine.sha256／BUILD-MANIFEST／licenses 8 件／tools 留底）<br>
+    r3 25,503,355 B（<strong>作废</strong>）· r2 25,503,329 B（作废）· r1 37,172,332 B（作废，且引擎件仍是上游原件）。
+    和值回读（给旧交付加作废抬头会改字节，五只目录全部重算后复验）：<span class="mono">内测=10 · r2=11 · r3=11 · 候选包=25 · r4=14，mismatches 全 0</span>。<br>
+    未推笔数 <span class="mono">git rev-list --count origin/main..HEAD = 37</span>（按红线我不推）。
+  </p>
+  <p class="hd">覆盖缺口（本次明确没检查的部分）</p>
+  <p class="body">没跑 <span class="mono">tsc --noEmit</span> 与 <span class="mono">npm run lint</span>（本两笔只动 sh/json/iss/mjs/txt，无 TS 面）；没跑 <span class="mono">test:trust-chain</span> 全链（含别手在飞的助手内存闸）；没确认 Inno 的 <span class="mono">CloseApplicationsFilter</span> 是否支持通配符（文档抓取失败，按最保守写法只列实名）；没验 Authenticode（本就没签名，清单 <span class="mono">UnsignedBeta</span>）；没查 <span class="mono">public/downloads/</span> 历史件与下载页可达性。</p>
+</section>
+
+<section class="notes">
+  <p class="hd">需 Owner 拍（≤3 件，各标耗时；我给立场）</p>
+  <div class="card">
+    <p class="k">1 ｜装 r4（3 分钟）</p>
+    <p class="body">先托盘完全退出旧助手，再装 <span class="mono">tmp/setup-3.7.16-r4-身份纠偏/tygf-engine-setup-3.7.16.exe</span>。我的立场：<strong>只装这一版</strong>。r1/r2/r3 已在目录里标作废——那三版会让工作台拦住你的每一次操作，这是我上一轮造成的，必须这样收口。</p>
+  </div>
+  <div class="card">
+    <p class="k">2 ｜服务端开通开关（先听 5 分钟约束，再拍做不做）</p>
+    <p class="body">三条硬约束：服务端只准下发那一个布尔；引擎路径与哈希永远只认本机出厂钉值（现在 <span class="mono">pc-channel.js:34</span> 是"配置压过钉值"，若让服务端填这两键，"哈希保护"就变成自己发自己验——JSX 分发那条道已经是这个毛病）；必须有 <span class="mono">/ping</span> 回读与写操作留痕，否则不做。我的立场：值得做，但排在 r4 实机复验之后。</p>
+  </div>
+  <div class="card">
+    <p class="k">3 ｜可复现构建（拍一次授权，10 分钟起）</p>
+    <p class="body">要么授权我在这台机器重装 Rust 工具链，要么把这四步搬进云构建。我的立场：<strong>优先云构建</strong>——现在这枚引擎是"丢了就编不回来"的状态，离线留底只是止痛。</p>
+  </div>
+</section>
+
+<footer>
+  <p>证据位置：交付档案/审查报告/审查报告_20261021_免PS出厂链_Round2_对抗式审查.md · worktrees/develop 提交 741fc04 ＋ c570c9b · 差分探针 tmp/probe-contract-buildid.mjs（四格含正控）· 变异测试 tmp/mutcheck-d3-d4.cjs（两条新断言各自 rc=1，还原哈希一致）· 出厂件 tmp/setup-3.7.16-r4-身份纠偏/SHA256SUMS.txt</p>
+  <p>方法：三路并行取证（契约面＝改名爆炸半径与升级残留／测试证据面＝门会不会"绿而生产坏"／安全面＝服务端下发开关的既有通道与失效模式）＋主审逐条独立复现；子代理返回一律只当线索，本报告每条结论均为我自己跑出的回显或读到的 file:line。风险档 High ⇒ 安装器与发布身份两路永远需要人签字，本审查不给 approval。</p>
+</footer>
+</div>
+</body>
+</html>

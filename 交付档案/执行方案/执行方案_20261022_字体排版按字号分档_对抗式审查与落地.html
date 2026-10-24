@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>字体排版按字号分档 · 对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* masthead */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* sections */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+pre{
+  margin:0;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  overflow-x:auto;
+  font-family:var(--font-mono);
+  font-size:.78rem;
+  line-height:1.7;
+  color:var(--ink-2);
+}
+pre b{color:var(--ink);font-weight:500}
+
+/* verdict */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+.verdict p.small{font-size:1rem;font-weight:400;color:var(--ink-2);max-width:68ch}
+.verdict .band{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  padding-top:12px;
+}
+
+/* split */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* stats */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* tags */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* tables */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.findings{min-width:660px}
+table.findings td:nth-child(1){white-space:nowrap;width:82px}
+table.findings td:nth-child(2){width:126px}
+table.findings td:nth-child(3){width:270px}
+table.findings td:nth-child(3) code{margin:1px 0}
+table.findings td:nth-child(4){min-width:220px}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* cards */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* timeline */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* gates */
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* notes / callout */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.callout.warn{background:var(--warn-soft);border-color:var(--warn-soft)}
+.callout.warn .lb{color:var(--warn)}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>字体排版 · 按字号分档</span><span class="sep">/</span>
+    <span>2026-10-22</span>
+  </p>
+  <h1>字体排版按字号分档</h1>
+  <p class="standfirst">对现有「每种语言一份排版」模型的只读审查，以及一份可执行的落地案。结论是<strong>换模型，不是补控件</strong>：字号格锁死、一份 profile 套全稿，所以「按字号选字重」在现有结构里根本表达不了；字距/行距另有四条「设了也不会发、不会用、不告诉你」的断点。</p>
+  <div class="meta">
+    <span>只读审查 · 0 文件改动</span>
+    <span>develop HEAD 571a26d0</span>
+    <span>8 条已证实 · 2 条未决</span>
+    <span>风险档 High</span>
+    <span>审查时刻 2026-10-22 10:09</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">VERDICT · 打回</span>
+    <p>不是「字重坏了」，而是现有模型<strong>在结构上只允许每种语言一套排版</strong>。72pt 标题和 14pt 正文拿到的是一模一样的脸和粗细——所谓「全稿一个粗细」，是模型的必然结果，不是某个开关的 bug。</p>
+    <p class="small">为什么不是「有条件放行」：在旧面板上再加几个控件，仍然是一份 profile 套全稿，Owner 的核心诉求无法满足；失败仍不可见，等于把「看起来能设」又做一遍。为什么不必紧急回滚：排版失败不会推翻文本替换（<code>TYGF_V15_Thin_Executor.jsx:47-48</code> 明确「排版是偏好，替换才是承诺」），也不碰计费与回执，可按正常节奏替换。</p>
+    <div class="band">
+      <span>范围：工作树审查（非 git diff）</span><span>·</span>
+      <span>Round 1/3</span><span>·</span>
+      <span>拟实施约 14 个文件</span><span>·</span>
+      <span>证据等级 A（本会话读到的 file:line）</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">8</span><span class="k">已证实缺陷<br>Important 7 / 存量 1</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">字距/行距的独立断点<br>全部有代码位置</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="k">份 profile 套全稿<br>按字号分档无法表达</span></div>
+    <div class="stat ok"><span class="n">5</span><span class="k">组现有测试全绿<br>但没有一组测本诉求</span></div>
+    <div class="stat"><span class="n">10</span><span class="k">条可判定验收判据<br>缺一不算完成</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>本轮能直接修好的</h3>
+      <ul>
+        <li><strong>三条已实现、只差接线</strong>：自动字距（度量/光学）、伪粗、伪斜。助手白名单收了、执行器写了，浏览器从不发送，开关永久禁用。</li>
+        <li><strong>百分比行距</strong>：助手与执行器都支持，但下拉框第一次切不过去，映射层也只发固定值。</li>
+        <li><strong>失败可见</strong>：执行器已经产出排版失败清单，只是没人消费；补逐层证据与界面摘要即可。</li>
+        <li><strong>预览保真</strong>：把脸名里的样式词映射成真实 CSS 字重，Medium 与 Bold 才看得出差别。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>必须换模型才能做到的</h3>
+      <ul>
+        <li><strong>按字号选字重</strong>：现存储是「每语言一份」，不是「每语言一组阈值档位」。不改形状，任何 UI 都只是换皮。</li>
+        <li><strong>字号不能当编辑项</strong>：改字号会重新折行，牵动行数判据与溢出预估；本版只把原稿字号当「选档依据」。</li>
+        <li><strong>同字号不同角色</strong>：14pt 的标题与 14pt 的正文，本轮无法区分；这要按图层覆盖，单独立项。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>现象 → 根因</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <h3>「改字体只能全部改成一个粗细」</h3>
+        <span class="tag bad">已证实 · A</span>
+      </div>
+      <p>浏览器只按语言取一份 profile（<code>typography-persistence.ts:232-240</code>），单语言与批量派发各取这一份（<code>local-assistant-client.ts:1500</code>、<code>:2005</code>），执行器再把它套到每个文字层（<code>TYGF_V15_Thin_Executor.jsx:221</code>）。同时字号格在界面上是死的（<code>typography-panel.tsx:456-457</code>），能力表标「未实测」（<code>typography-capabilities.ts:81-85</code>），助手白名单把 <code>fontSize/size</code> 列为锁死键（<code>typography-profile.js:25-29</code>）。</p>
+      <p><strong>失效场景：</strong>同一篇稿 72pt 标题、24pt 小标题、14pt 正文。选一次 Bold，三层全 Bold；选 Regular，三层全 Regular。没有第二个维度能表达「大字号重、小字号常规」。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <h3>「字距、行距设了没用」——这不是一条，是四条</h3>
+        <span class="tag bad">已证实 · A</span>
+      </div>
+      <p><strong>① 没点「保存到本机」＝执行时完全不读。</strong>保存只发生在 <code>typography-panel.tsx:331-344</code>，而派发只从 localStorage 读（<code>typography-persistence.ts:232-240</code>），全链路没有「未保存草稿」的提示或拦截，入口上只有一个脏点（<code>workbench-view.tsx:3238</code>、<code>:3593</code>）。</p>
+      <p><strong>② 百分比行距第一次选不到。</strong><code>typography-panel.tsx:461-470</code> 只有「沿用/固定pt」，<code>percent</code> 选项仅在当前已是 percent 时渲染（<code>:469</code>）；即便存了，映射层也只发固定值（<code>typography-persistence.ts:158-165</code>）。而助手与执行器其实都支持百分比（<code>typography-profile.js:5</code>、<code>TYGF_V15_Thin_Executor.jsx:92-94</code>）。</p>
+      <p><strong>③ 排版失败没有界面消费者。</strong>执行器产出了 <code>typographyRequested/typographyIssues</code>（<code>TYGF_V15_Thin_Executor.jsx:258-259</code>），但全仓检索只有执行器自身、<code>server.js:1428</code> 一行注释、<code>smoke-typography-wiring.mjs:144</code> 的字符串断言三处；runner 不读回，回执与 attempt 状态都没有，界面自然看不到。</p>
+      <p><strong>④ 字体清单读不到时，手填脸名也被关。</strong>手输框只在 <code>faces.length &gt; 0</code> 时渲染（<code>typography-panel.tsx:754</code>），输入的名字不在清单里就立刻清空 <code>face</code>（<code>:764-773</code>），与设计注释「清单读不到仍可手填」相反。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <h3>「视觉等等这些无法使用」——要分两类，不能混</h3>
+        <span class="tag warn">实现已存在 / 本版写不进</span>
+      </div>
+      <p><strong>已实现、只差接线：</strong><code>autoKerning</code>、<code>fauxBold</code>、<code>fauxItalic</code>。白名单收了（<code>typography-profile.js:24</code>），执行器写了（<code>TYGF_V15_Thin_Executor.jsx:73-85</code>、<code>:122-131</code>），但浏览器的 profile 形状没有这三个键（<code>typography-persistence.ts:52-57</code>、<code>:149-167</code>），面板上的 8 个开关全是禁用态（<code>typography-capabilities.ts:162-211</code>）。</p>
+      <p><strong>本版 PS 确实写不进 / 不该写：</strong>水平/垂直缩放、基线偏移、消除锯齿、语言、大小写、下划线/删除线。这些不拿「未实测」含糊过去，直接写进「不做什么」。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <h3>预览本身会把「字重分档」做废</h3>
+        <span class="tag bad">已证实 · A</span>
+      </div>
+      <p><code>previewStyle</code>（<code>typography-panel.tsx:72-87</code>）只把 <code>bold</code> 映射成 700、<code>italic</code> 映射成斜体；Light、Medium、SemiBold、Black 全按 400 渲染，固定行距直接按原始 px 套在 14px 样例上。</p>
+      <p><strong>后果：</strong>即使后台真的按档位写了 Medium 与 Regular，预览看起来也完全一样，Owner 仍会得出「还是只有一个粗细」。所以预览保真是验收项，不是美化。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>已证实缺陷清单</h2>
+  <div class="scrollx">
+    <table class="findings">
+      <thead>
+        <tr><th class="mono">ID · 等级</th><th>严重度 · 性质</th><th>位置</th><th>会怎么坏 / 证据</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">F-01 · A</td><td><span class="tag bad">Important</span><br>设计缺口（存量）</td>
+          <td><code>typography-persistence.ts:232-240</code><br><code>local-assistant-client.ts:1500/2005</code><br><code>TYGF_V15_Thin_Executor.jsx:221</code></td>
+          <td>一语言一份排版，全稿只能一个脸/一个粗细；字号格被锁，按字号分档无法表达。<br><span class="was">证据：</span>加 <code>typography-panel.tsx:456-457</code>、<code>typography-profile.js:25-29</code></td>
+        </tr>
+        <tr>
+          <td class="mono">F-02 · A</td><td><span class="tag bad">Important</span><br>静默忽略（存量）</td>
+          <td><code>typography-panel.tsx:331-344</code><br><code>typography-persistence.ts:232-240</code></td>
+          <td>未保存草稿在执行时被静默忽略，界面有值、执行用旧值/空值。<br><span class="was">证据：</span><code>workbench-view.tsx:3238</code>、<code>:3593</code> 只有脏点；派发无第二条读取路径</td>
+        </tr>
+        <tr>
+          <td class="mono">F-03 · A</td><td><span class="tag bad">Important</span><br>不可达（存量）</td>
+          <td><code>typography-panel.tsx:461-470</code><br><code>typography-persistence.ts:158-165</code></td>
+          <td>百分比行距第一次选不到；即使存了也不发。<br><span class="was">证据：</span>助手/执行器已支持 <code>typography-profile.js:5</code>、<code>TYGF_V15_Thin_Executor.jsx:92-94</code></td>
+        </tr>
+        <tr>
+          <td class="mono">F-04 · A</td><td><span class="tag bad">Important</span><br>静默降级（存量）</td>
+          <td><code>TYGF_V15_Thin_Executor.jsx:258-259</code><br><code>v15-runner.js:214</code><br><code>server.js:1428</code></td>
+          <td>字体被静默换脸、行距没吃进，用户和界面都看不到；<code>typoIssue</code> 还把逐层信息压成 <code>field|code</code> 计数（<code>:49-54</code>），只知有几处、不知是哪层。<br><span class="was">证据：</span>全仓检索 <code>typographyIssues</code> 仅执行器、注释、测试断言三处；runner/状态/回执零消费</td>
+        </tr>
+        <tr>
+          <td class="mono">F-05 · A</td><td><span class="tag bad">Important</span><br>接线缺口（存量）</td>
+          <td><code>typography-profile.js:24</code><br><code>TYGF_V15_Thin_Executor.jsx:73-85/122-131</code><br><code>typography-persistence.ts:52-57/149-167</code><br><code>typography-capabilities.ts:162-211</code></td>
+          <td>自动字距、伪粗、伪斜端到端已实现，浏览器从不发送，开关永久禁用。<br><span class="was">证据：</span>白名单/执行器有，profile 形状无这三个键</td>
+        </tr>
+        <tr>
+          <td class="mono">F-06 · A</td><td><span class="tag bad">Important</span><br>回退路径被关（存量）</td>
+          <td><code>typography-panel.tsx:754</code><br><code>:764-773</code></td>
+          <td>字体清单读不到时手输框不渲染；输入不在清单里的合法脸名会被清空，退路被关。<br><span class="was">证据：</span><code>FontSearchPopover</code> 同样在 <code>faces.length===0</code> 时禁用（<code>:743</code>）</td>
+        </tr>
+        <tr>
+          <td class="mono">F-07 · A</td><td><span class="tag bad">Important</span><br>误导（存量）</td>
+          <td><code>typography-panel.tsx:72-87</code></td>
+          <td>预览把 Light/Medium/Black 全按 400 渲染；分档做了也看不出来。<br><span class="was">证据：</span>只判断 <code>bold</code>/<code>italic</code>；固定行距按原始 px 套 14px 样例</td>
+        </tr>
+        <tr>
+          <td class="mono">F-08 · A</td><td><span class="tag warn">Important · Pre-existing</span><br>预估缺口</td>
+          <td><code>workbench-view.tsx:770-807</code><br><code>overflow-estimator.ts:172-181</code></td>
+          <td>用户加大字距/行距后，译前「版式风险」数字不变，执行后才发现溢出。<br><span class="was">证据：</span>预估只用扫描到的 <code>fontSizePt</code> 与 <code>bounds.width</code>，不含 tracking/leading/face</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <span class="lb">未决 · 不进结论，只列证据缺口</span>
+    <p><strong>U-01 字号单位未标定。</strong>扫描器用 <code>textItem.size.value</code> 并命名为 <code>fontSizePt</code>（<code>TYGF_V15_Preparation_Scanner.jsx:144</code>）；两个 JSX 都没有设置或读取 <code>rulerUnits</code>，也没有 <code>.as('pt')</code>（本会话 <code>grep -c</code> 均为 0）。若 <code>.value</code> 跟随标尺单位，像素标尺下所有阈值会差 2.83 倍。落地前必须真机探针，不得直接按 pt 写死。</p>
+    <p><strong>U-02 Owner 具体被哪条咬到，未复现。</strong>F-02/F-03/F-04 都是已证实的静默路径，但没有原稿与操作步骤，无法判定本次投诉由哪一条触发。方案把三条一起修，并加一条可自诊的结果面。</p>
+  </div>
+
+  <div class="callout">
+    <span class="lb">覆盖缺口</span>
+    <p>本次没有真机 Photoshop 运行，也没有真实浏览器交互；PS 行为结论来自代码与本机既有实测记录，不来自本轮复跑。未读到出问题的设计稿，无法统计字号分布与字体安装情况。未直接探测测试站当前助手版本；用户机器上跑的是哪一版，只有本机 <code>/ping</code> 能回答。未审云端回执的规范化细节——本方案刻意不把排版证据塞进云端回执，只走本地兄弟字段。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>先说清楚「不做什么」</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>控件</th><th>本版状态</th><th>为什么</th><th>以后要做，前置是什么</th></tr></thead>
+      <tbody>
+        <tr><td>改字号</td><td><span class="tag warn">不做</span></td><td>改字号会重新折行，和行数判据、溢出预估、合同行语义耦合；本方案只把原稿字号当「选档依据」</td><td>先建立「改字号后的行数/溢出」新判据，再单独立项</td></tr>
+        <tr><td>水平/垂直缩放</td><td><span class="tag warn">不做</span></td><td>会改变字面宽高，和版面/溢出判据冲突</td><td>真机标定 + 溢出预估重算</td></tr>
+        <tr><td>基线偏移</td><td><span class="tag warn">暂不做</span></td><td>PS 22 实测会移动文字位置，本版未接；接它要同步改位置判据</td><td>单独立项，按层记录位移</td></tr>
+        <tr><td>消除锯齿</td><td><span class="tag warn">不做</span></td><td>未实测，纯视觉，优先级低</td><td>真机探针</td></tr>
+        <tr><td>语言/方向</td><td><span class="tag warn">不做</span></td><td>读取即抛「内部错误」，本版 PS 写不进</td><td>无（等 PS 版本变化）</td></tr>
+        <tr><td>大小写/下划线/删除线</td><td><span class="tag warn">不做</span></td><td>实测写了看不出变化</td><td>换 PS 版本再探</td></tr>
+        <tr><td>同字号不同角色分开</td><td><span class="tag warn">不做</span></td><td>字号是唯一分档轴；同为 14pt 的标题和正文无法区分</td><td>后续做「按图层/图层组覆盖」，需要图层选择器与逐层 wire</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>目标与验收</h2>
+  <div class="verdict">
+    <span class="lb">一句话目标</span>
+    <p>在同一种语言的一次执行里，排版偏好必须能<strong>按原稿字号分档</strong>，逐档决定字体脸、字距、行距、自动字距、伪粗/伪斜；执行后能逐层读回，并把失败在界面上说清。</p>
+  </div>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body"><h3>三字号夹具</h3><p>72/36/14pt 一次执行后，三层分别得到三档设定的脸/字距/行距；本地回执里有逐层 <code>sizePt / tierId / face / tracking / leading</code> 的实际值与读回值。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body"><h3>失败不再静默</h3><p>故意给某一档一个本机不存在的脸名：文本替换仍成功；结果面明确显示「第 N 层字体被替换为 MyriadPro-Regular（FONT_FALLBACK_APPLIED）」。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body"><h3>旧偏好不丢</h3><p>老版本（v1/v2）保存的单一 profile 升级后仍原样应用（迁移为「默认档」），不清空、不改变行为。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body"><h3>行距两种模式都精确</h3><p>百分比 120%：24pt 层读回 <code>autoLeadingAmount=120</code>；固定 18pt：读回 <code>leading=18</code> 且 <code>useAutoLeading=false</code>。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body"><h3>字距与视觉项读回</h3><p>字距 −50‰ 与 +200‰ 读回精确相等；自动字距 METRICS/OPTICAL 读回成功；伪粗/伪斜读回 true。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body"><h3>手填脸名可用</h3><p>字体清单为空时，手输合法 PostScript 脸名仍能发送；执行后读回失败必须报告，不得清空输入或假装成功。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body"><h3>未保存不再被忽略</h3><p>要么自动保存并读回，要么执行前明确拦下并给「保存并执行 / 不保存继续」。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">8</span>
+      <div class="body"><h3>预览肉眼可分</h3><p>Light/Medium/Bold 必须肉眼可分；浏览器没有该字体时，明说「预览不可用」，不许拿 400 冒充。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">9</span>
+      <div class="body"><h3>测试全绿且有负控</h3><p>现有 5 组排版测试继续全绿；新增测试覆盖档位校验、匹配、迁移、映射、结算一致性、失败归因，且能在旧执行器上变红。</p></div>
+    </div>
+    <div class="gate">
+      <span class="num">10</span>
+      <div class="body"><h3>真机验收</h3><p>测试站真机跑完整批；生产部署前由 Owner 明确点头。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>方案：按字号阈值分档</h2>
+
+  <h3>为什么用阈值，不用区间</h3>
+  <p class="lede">每条规则写「≥ X pt 用这套」，按 <code>minPt</code> 从高到低匹配，最后永远有一个「默认档」兜底。这样不会出现区间空档，也不会因为两个边界写反而漏层。</p>
+
+  <pre><b>// 浏览器本地存储 v3（键仍是 tygf:v15:typography，读得动 v1/v2）</b>
+interface TypographyRule {
+  id: string                 // 'r1'…，稳定
+  label: string              // '大标题' / '正文'，用户可改
+  minPt: number              // ≥ 1，≤ 2000；规则按 minPt 降序
+  profile: TypographyProfile // 现有字段 + autoKerning/fauxBold/fauxItalic
+}
+interface TypographyTiersByLanguage {
+  version: 3
+  rulesByLanguage: Record&lt;string, TypographyRule[]&gt;
+  fallbackByLanguage: Record&lt;string, TypographyProfile | null&gt;
+}</pre>
+
+  <p class="lede"><strong>迁移：</strong>读到 v1/v2 的单一 profile 时，<code>rules=[]</code>、<code>fallback=那份 profile</code>。语义与今天完全一致（所有字号都用它），用户不会「升级完发现设置没了」。</p>
+
+  <h3>下发体（助手侧）</h3>
+  <pre>{
+  "typographyTiers": {
+    "version": 1,
+    "rules": [
+      { "id": "r1", "label": "大标题", "minPt": 48,
+        "profile": { "face": "NotoSansSC-Bold", "tracking": -20,
+                     "leading": { "mode": "percent", "value": 110 },
+                     "autoKerning": "METRICS" } },
+      { "id": "r2", "label": "小标题", "minPt": 20,
+        "profile": { "face": "NotoSansSC-Medium", "tracking": 0,
+                     "leading": { "mode": "fixed", "value": 24 } } }
+    ],
+    "fallback": { "face": "NotoSansSC-Regular", "tracking": 0,
+                  "leading": { "mode": "follow" } }
+  }
+}</pre>
+
+  <div class="callout">
+    <span class="lb">校验约束（助手强制，浏览器同口径）</span>
+    <p><code>rules</code> 最多 8 条；<code>minPt</code> 唯一、降序、<code>1 ≤ minPt ≤ 2000</code>。每条 profile 只允许 <code>face / tracking / leading / autoKerning / fauxBold / fauxItalic</code>；<code>autoKerning</code> 只收 <code>follow/METRICS/OPTICAL</code>；<code>leading</code> 三态；其余键一律拒绝（沿用现有「未知键拒绝」原则，<code>typography-profile.js:51-53</code>）。<code>fallback</code> 可为空（未命中的字号不改排版），但面板必须显式显示「未命中不改」。</p>
+  </div>
+
+  <h3>匹配语义</h3>
+  <p class="lede">执行器写完每层文字后，读该层<strong>当前</strong>字号，按 <code>minPt</code> 从高到低找第一条 <code>sizePt &gt;= minPt</code>，命中就用它的 profile；都不命中用 <code>fallback</code>；<code>fallback</code> 为空则该层零写入。字号读不出（NaN/null）时用 <code>fallback</code> 并记 <code>SIZE_UNREADABLE</code>，不猜。<strong>关键决定：不改字号</strong>——原稿字号只做选择器，所以不会因本功能引起重新折行。</p>
+
+  <h3>链路（兄弟字段，不进执行清单）</h3>
+  <pre>Web 面板（按语言 + 按档位编辑）
+  → prepare / batch 请求体加 typographyTiers
+  → 助手校验器（typography-profile.js）
+  → execution-envelope.json 的兄弟字段 typographyTiers（不进 manifest、不改 digest）
+  → ExtendScript 执行器按层字号选档，写脸/字距/行距/自动字距/伪粗斜
+  → executor-result.json 产逐层读回证据
+  → v15-runner 把排版证据挂到本地回执的兄弟字段（同 layoutGeometry 先例）
+  → attempt 状态只带摘要（避免 5 秒轮询传大数组）
+  → 执行完成界面显示「应用了几层 / 哪几层失败」</pre>
+
+  <p class="lede">为什么不塞进 <code>execution-manifest</code>：清单键集是精确校验的，digest 只算清单（<code>server.js:1430-1434</code> 注释已写明这条边界）；进清单等于改四层合同、报价口径和已有冻结证据。排版是偏好，走兄弟字段即可。</p>
+
+  <h3>逐层证据（解决「失败看不见」）</h3>
+  <pre>{
+  "typographyRequested": true,
+  "typographyMode": "tiers",
+  "typographyLayers": [
+    { "objectId": "obj_…", "layerId": 123, "sizePt": 72,
+      "tierId": "r1", "ok": true,
+      "fields": {
+        "face":     { "wanted": "NotoSansSC-Bold", "got": "NotoSansSC-Bold", "ok": true },
+        "tracking": { "wanted": -20, "got": -20, "ok": true },
+        "leading":  { "wanted": 110, "got": 110, "ok": true }
+      } }
+  ],
+  "typographyIssues": [
+    { "field": "face", "code": "FONT_FALLBACK_APPLIED",
+      "wanted": "NotoSansSC-Bold", "actual": "MyriadPro-Regular",
+      "count": 2, "layers": ["obj_…", "obj_…"] }
+  ],
+  "typographyTruncated": false
+}</pre>
+
+  <ul class="notes">
+    <li>逐层记录上限 500 层；超出只置 <code>typographyTruncated:true</code>，问题计数不丢。</li>
+    <li><code>typographyIssues</code> 保留聚合计数，但补 <code>layers</code> 样例（最多 20 个 objectId），既看总量也能定位到层。</li>
+    <li>本地回执挂 <code>receipts.typography</code>；云端回执不动（云端载荷由白名单字段构建，<code>v15-runner.js:1059</code> 起）。<code>test:trust-chain</code> 作为回归闸。</li>
+  </ul>
+
+  <h3>视觉控件与预览</h3>
+  <div class="split">
+    <div class="panel yes">
+      <h3>接线</h3>
+      <ul>
+        <li><strong>自动字距</strong>：面板「沿用 / 度量标准 / 光学」三选一，映射 <code>follow/METRICS/OPTICAL</code>；执行器已有读回逻辑（<code>TYGF_V15_Thin_Executor.jsx:73-85</code>）。</li>
+        <li><strong>伪粗 / 伪斜</strong>：两个开关，只在用户显式打开时发 <code>true</code>；不发 <code>false</code>，避免把原稿本来有的伪粗斜关掉。</li>
+        <li><strong>百分比行距</strong>：下拉框永远提供「沿用 / 固定pt / 百分比」三项；百分比走 <code>autoLeadingAmount</code>，固定走 <code>useAutoLeading=false + leading</code>。</li>
+        <li><code>SEND_PROBE</code> 加这三个键后，<code>SENDABLE_KEYS</code> 自动变 6 个，能力表和结算条跟着变——现有单源设计的正确用法（<code>typography-capabilities.ts:40-54</code>）。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>预览保真</h3>
+      <ul>
+        <li>脸名样式词映射到 CSS 字重：Thin 100 / ExtraLight 200 / Light 300 / Regular 400 / Medium 500 / SemiBold 600 / Bold 700 / ExtraBold 800 / Black 900；斜体单独映射。</li>
+        <li>按该档代表字号渲染；固定行距按「预览基准字号」折算，并在旁边标「预览按 N pt 折算」。</li>
+        <li>浏览器没有该字体时，<strong>不静默退回 sans-serif</strong>：显示「本机浏览器没有这款字体，预览不可用；以执行回执为准」。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>保存一致性与面板结构</h3>
+  <p class="lede"><strong>推荐：输入即保存（防抖 400ms）</strong>，保存后读回比对（现有 <code>saveTypographyProfiles</code> 已做读回），状态显示「已保存 hh:mm:ss」或「保存失败：原因」，保留「立即保存」按钮作为手动确认。若 Owner 不喜欢自动保存，退路是执行前闸：「保存并执行 / 不保存继续 / 取消」。两条都行，但<strong>不能维持今天的静默忽略</strong>。</p>
+
+  <ul class="notes">
+    <li><strong>顶部：</strong>语言页签（现有）。</li>
+    <li><strong>档位页签：</strong><code>默认（其余字号）</code> + <code>大标题 ≥48</code> + <code>小标题 ≥20</code> + <code>+ 新增档</code>。</li>
+    <li><strong>编辑区：</strong>沿用现有 12 格字符面板，新增自动字距、伪粗、伪斜；字号格显示「原稿字号」但不让改。</li>
+    <li><strong>本稿字号分布：</strong>从 <code>psdSelection.summary.typographyLayers</code> 统计（如 72pt ×2、36pt ×4、14pt ×38），每个字号标「会落到哪一档」；点一个字号可直接建档。</li>
+    <li><strong>结算条：</strong>全局「会发 N 项 / 覆盖 M 层」；每档「命中 K 层」；0 命中给黄色提醒；未命中且有兜底时显示「其余 N 层用默认档」。</li>
+    <li><strong>手输脸名：</strong>始终可用（即使清单为空），只做形状校验；旁边写明「无法核对是否安装，执行时会读回」。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>实施阶段</h2>
+
+  <div class="callout">
+    <span class="lb">版本号注意</span>
+    <p><code>worktrees/develop</code> 里已有另一条在飞工作（内存闸 + 运行目录迁移），其注释把下一版写作 <strong>3.7.21</strong>（<code>server.js</code> 未提交改动中 <code>.tygf-runtime</code> 注释）。本方案<strong>不抢 3.7.21</strong>：若 3.7.21 尚未出包，可合并出包；否则排版用 <strong>3.7.22</strong>。执行器从 <code>1.2.0</code> 升 <code>1.3.0</code>。版本号由发布线统一分配。</p>
+  </div>
+
+  <div class="tl">
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 0 · 真机探针</strong><span class="tag warn">先做，不写业务代码</span></div>
+        <p>产物：一次性 JSX 探针 + 一份 JSON 读数（放 <code>tmp/</code>，不随包发）。必须回答五问：</p>
+        <ul class="notes">
+          <li><code>textItem.size</code> 在标尺为像素/点/毫米时，<code>.value</code>、<code>Number(size)</code>、<code>.as('pt')</code> 各是什么；确定匹配用哪个。</li>
+          <li>百分比行距 <code>useAutoLeading=true; autoLeadingAmount=120</code> 在 24pt 层读回多少。</li>
+          <li>字距 −50 / +200 读回是否精确；CJK 与拉丁是否一致。</li>
+          <li><code>autoKerning</code> 的 METRICS/OPTICAL 读回形状；<code>fauxBold/fauxItalic</code> 在 CJK 上是否真的变化。</li>
+          <li>不存在的脸名写回后 <code>item.font</code> 读回什么（确认当前 PS 版本仍静默换脸）。</li>
+        </ul>
+        <p class="after">闸：探针 JSON 落盘并逐条标注；U-01 未回答前，Phase 1 可写纯逻辑，但 Phase 2 的匹配代码不得按 pt 写死。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 1 · 浏览器纯逻辑层</strong><span class="tag ok">可脱离 PS 测</span></div>
+        <p><code>typography-persistence.ts</code>：v3 存储形状、v1/v2 迁移、profile 增加三键、<code>toAssistantTypographyProfile</code> 发 percent/自动字距/伪粗斜、新增 <code>toAssistantTypographyTiers</code>。新增 <code>typography-tiers.ts</code>：阈值排序、匹配、覆盖率、结算纯函数。<code>typography-capabilities.ts</code>：<code>SEND_PROBE</code> 加新键，声明键集必须等于下发键集。</p>
+        <p class="after">闸：<code>npx tsc --noEmit</code>、<code>npm run lint</code>、typography-profile / picker / wiring / fonts-catalog 四组 smoke + 新增单测全绿；旧数据往返不变形，边界（等于阈值、低于最小、无兜底）逐条测。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 2 · 助手与执行器</strong><span class="tag bad">风险最高</span></div>
+        <p><code>typography-profile.js</code> 加 <code>validateTypographyTiers</code>；<code>server.js</code> 三入口读新字段、能力位 <code>typographyTiersReady</code>（执行器 ≥1.3.0）、终端结果带摘要；<code>v15-runner.js</code> 写信封兄弟字段、挂本地回执；<code>attempt-runtime.js</code> 白名单加摘要；执行器 <code>1.3.0</code> 做字号归一、阈值选档、逐层证据、兼容旧 <code>typography</code>；扫描器按 Phase 0 结论归一 <code>fontSizePt</code>。</p>
+        <p class="after">同步登记：<code>config/script-versions.json</code> 新 lfSha256、<code>config/release-identity.json</code> 版本与 exe 名、<code>package.json</code>。闸：<code>test:trust-chain</code>、<code>test:batch-row-contract</code>、<code>smoke-photoshop-script</code>、新 tier smoke 全绿；<strong>重建安装包，不重打 zip</strong>。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 3 · 界面与结果面</strong></div>
+        <p><code>typography-panel.tsx</code>：档位页签、字号分布、预览字重、结算、手输脸名、自动保存/执行前闸。 <code>workbench-view.tsx</code>：把 <code>typographyLayers</code> 传给面板、脏状态执行闸、溢出预估旁注明「未含排版改动」（Phase 4 再算）。<code>execute-step.tsx</code>：完成摘要显示「排版应用 N 层 / 失败 M 层 / 点开看明细」。<code>local-assistant-client.ts</code>：发 tiers、读能力位、完成结果加摘要。</p>
+        <p class="after">闸：真实浏览器走一遍；面板在 360px 宽、1293 款字体下不卡死；Esc/Tab 闭环不回归。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot partial"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 4 · 测试站真机验收</strong></div>
+        <p>先助手、后 web（避免 required version 先挡住旧助手）。在真机 PS 22 上用三字号夹具跑一整批，保存回执、报告、截图；逐条对照第 05 节 10 条判据；失败项修完重跑，不带「应该可以」交付。</p>
+        <p class="after">只有全部通过，才谈生产。</p>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <span class="dot blind"></span>
+      <div class="tl-body">
+        <div class="hd"><strong>Phase 5 · 生产</strong><span class="tag warn">需 Owner 点头</span></div>
+        <p>按现有发布线流程。<strong>生产部署、支付 flag、任何闸门翻转都必须 Owner 明确点头</strong>；本方案不触碰支付与计费。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>测试与证据</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">86</span><span class="k">typography-profile<br>断言通过</span></div>
+    <div class="stat ok"><span class="n">200</span><span class="k">typography-picker<br>断言通过</span></div>
+    <div class="stat ok"><span class="n">8</span><span class="k">vitest 测试<br>1 个文件</span></div>
+    <div class="stat ok"><span class="n">47</span><span class="k">typography-wiring<br>断言通过</span></div>
+    <div class="stat ok"><span class="n">36</span><span class="k">fonts-catalog<br>1293 款脸 / 1287 文件</span></div>
+  </div>
+
+  <p class="lede">本会话 2026-10-22 10:05:46 跑了上述五组，退出码 0。<strong>但这五组全绿不能证明本功能可用</strong>：没有一条测「按字号分档」，也没有一条验证执行器结果真的被界面消费；<code>smoke-typography-wiring:144</code> 只断言执行器源码里出现了 <code>typographyIssues: typoList(typographySink)</code> 这串字。绿的是「旧合同没破」，不是「Owner 要的东西做成了」。</p>
+
+  <div class="callout warn">
+    <span class="lb">负控（必须做）</span>
+    <p>把新测试跑在旧执行器（1.2.0）上应变红，否则测试是假绿。把 <code>typographyTiers</code> 换成未知键/倒序阈值，助手必须 400，不能静默忽略。字体不存在时，结果面必须出现 <code>FONT_FALLBACK_APPLIED</code>；如果只报成功，算失败。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>风险与回滚</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>风险</th><th>触发条件</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td>字号单位不是 pt</td><td>U-01 成立</td><td>Phase 0 先定标；执行器统一归一后再匹配，不按字段名猜</td></tr>
+        <tr><td>版本号撞 3.7.21</td><td>在飞内存/运行目录工作先出包</td><td>本方案用 3.7.22 或合并；发布线统一分配，禁止两处各写各的</td></tr>
+        <tr><td>执行器改动导致替换回归</td><td>匹配/写回抛错</td><td>排版失败不推翻文本替换（保持现有原则）；逐层证据 + 负控；先测试站</td></tr>
+        <tr><td>回执合同被意外扩大</td><td>把排版塞进云端回执</td><td>只挂本地兄弟字段；<code>test:trust-chain</code> 与 <code>test:batch-row-contract</code> 回归</td></tr>
+        <tr><td>预览仍误导</td><td>浏览器没有 PS 字体</td><td>明说「预览不可用」，不静默回退；以回执为准</td></tr>
+        <tr><td>同字号不同角色无法区分</td><td>14pt 标题 + 14pt 正文</td><td>写入「不做什么」，后续做按图层覆盖；本轮不承诺</td></tr>
+        <tr><td>旧偏好丢失</td><td>v3 迁移写坏</td><td>迁移只读旧键、不删；读回比对；clear 只清新键前先确认</td></tr>
+        <tr><td>批量一稿一档不一致</td><td>不同设计稿字号不同</td><td>同一套阈值应用到所有稿；未命中用兜底；面板写明「本稿分布来自当前稿」</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>回滚 · Web</h3>
+      <ul>
+        <li>回退上一部署；localStorage v3 在旧代码里会被判为损坏而回退默认（偏好丢失，不影响设计文件与计费）。</li>
+        <li>若 Owner 不接受偏好丢失，改用新键 + 旧键双写，代价是多一套迁移逻辑。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>回滚 · 助手与在飞任务</h3>
+      <ul>
+        <li>重装上一版安装包；执行器 1.3.0 同时兼容旧 <code>typography</code> 与新 <code>typographyTiers</code>，旧 web 发来的 profile 照常工作。</li>
+        <li>执行器随助手打包，不依赖云端；web 回滚不影响已开始的 attempt。回滚后不要重放同一 attempt。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>需要拍的三个默认值</h2>
+  <p class="lede">方案已按推荐值写死，除非 Owner 否决：</p>
+  <ul class="notes">
+    <li><strong>保存方式：</strong>输入即保存（读回确认），保留「立即保存」按钮。——直接消灭「设了没发」的最大来源。</li>
+    <li><strong>分档轴：</strong>只按原稿字号阈值（≥X pt），不做同字号按图层区分。——符合本次诉求，边界清楚。</li>
+    <li><strong>本轮范围：</strong>只做字体脸/字距/行距/自动字距/伪粗斜；不做改字号、缩放、基线、消除锯齿。——避免把版面判据一起掀翻。</li>
+  </ul>
+
+  <div class="verdict">
+    <span class="lb">最后一句</span>
+    <p>这次不要再在旧面板上加控件。旧模型一天不换，「按字号分字重」就一天表达不了；先把「每语言一组字号档位 + 逐层读回」这条链打通，再谈视觉细节。</p>
+    <p class="small">范围守住了，七天左右能到测试站；范围一松（改字号、缩放、基线一起上），版面判据会跟着翻，反而交付不了。</p>
+  </div>
+</section>
+
+<footer>
+  <p>对抗式审查（正确性 / 契约 / 测试证据三镜头），只读，未改业务代码。审查基线：<code>worktrees/develop</code> HEAD <code>571a26d0</code>（2026-10-22 09:59:23 +0800，另有 7 个未提交修改）；容器根 <code>81611c8</code>。行号以 2026-10-22 10:09 的工作树为准，落地后用符号名重新定位。</p>
+  <p>覆盖缺口：无真机 Photoshop 运行、无真实浏览器交互、未读到出问题的原稿、未直接探测测试站助手版本。文中所有 <code>file:line</code> 均为本会话实际读到的工作树位置；未核实项已显式标注。</p>
+</footer>
+
+</div>
+</body>
+</html>

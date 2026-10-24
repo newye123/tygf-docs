@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双站部署：manifest 拒绝修复落地 · 2026-10-21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--ok);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+h3{font-family:var(--font-display);font-size:1rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 执行报告</span><span class="sep">/</span><span>2026-10-21</span><span class="sep">/</span><span>Owner 批准：B 方案双站同升</span><span class="sep">/</span><span>风险档 High</span></div>
+  <h1>两站一起升到 319bc13：用户卡住的那道拒绝，已经不在线上了</h1>
+  <p class="standfirst">生产站此前停在 10-19 的 <code class="mono">6ff5c3c</code>，不包含 10-20 的行标识白名单修复。本次按 Owner「直接按b方案走，两个一起部署」，测试站与生产站部署同一份不可变归档，均为 <code class="mono">319bc13</code>。两站 provenance 已回 <code class="mono">status=BOUND</code>，生产服务 active，公网 200。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">结论：已上线 · 两站一致 · 最终判据仍待真机</span>
+  <p><strong>一句话：</strong>导致「用户点执行、本机助手直接拒」的那条修复（浏览器侧行标识单源 + 派发前硬闸）已进入两站线上构建，构建产物里三处命中新提示串。但<strong>浏览器 → 本机助手 → Photoshop 的整条真实执行链本次没有复跑</strong>——那需要一台装了 3.7.15 与 PS 的机器，这一项写在覆盖缺口里，不当绿。</p>
+</div>
+
+<div class="contract">
+  <div><b>部署靶子</b>：develop <span class="mono">319bc1384a36…</span>（两站同一归档）</div>
+  <div><b>归档 SHA-256</b>：<span class="mono">5B46BB6C…62031</span> · 41,187,411 B</div>
+  <div><b>时间</b>：测试站 10:45:04–10:47:51 ｜ 生产站 11:17–11:19:06（+0800）</div>
+  <div><b>助手</b>：3.7.15 / <span class="mono">transport-hardening-20261011-r1</span>（两站一致）</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>为什么这次能解决用户「用不了」</h2>
+  <p>用户执行时，浏览器把 <code class="mono">record:&lt;id&gt;</code> 形态的行标识写进 manifest，本机助手按白名单 <code class="mono">/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/</code> 校验，不合法就整批拒绝。旧版生产站没有 <code class="mono">7af4230</code>，所以浏览器照发、助手照拒，界面表现为点了没反应或直接失败。</p>
+  <p>这次上去的修复做两件事：新建 <code class="mono">src/lib/workbench/row-identifier.ts</code>，让浏览器生成行标识与助手校验<strong>同口径单源</strong>；<code class="mono">local-assistant-client.ts</code> 增加<strong>派发前硬闸</strong>，不合法的 id 在浏览器侧就被拦住并给出「本机助手不接受这种行标识」，不再送出去挨拒。同一个提交里还顺带修了排障快照上传恒 503、零落盘的问题（生产单元补 <code class="mono">support-bundles</code> 路径）。</p>
+</section>
+
+<section>
+  <h2><span class="num">02</span>发布门真跑时拦下的三处红（不修就出不了包）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">f50635a</span><span class="tag bad">contracts 红</span><span class="tag info">develop</span></div>
+      <p>字距（tracking）边界冒烟仍按 10000 判合法，而浏览器侧已对齐助手的 9999 上限 ⇒ <code class="mono">test:contracts</code> 在第 87 行断言红。改成 9999 合法、10000 拒。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">f87de19</span><span class="tag bad">卫生门红</span><span class="tag info">develop</span></div>
+      <p>出包卫生门报 <code class="mono">forbidden paths remain in final archive (1)</code>：归档带进了 <code class="mono">scripts/smoke-site-traffic-timer.sh</code>，因为 <code class="mono">.gitattributes</code> 只排除了 <code class="mono">*.mjs</code>。补 <code class="mono">scripts/smoke-*.sh export-ignore</code> 后 <code class="mono">forbidden=0</code>。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">319bc13</span><span class="tag bad">隐私冒烟红</span><span class="tag info">develop</span></div>
+      <p><code class="mono">8412d4a</code> 把后台 9 处手写 <code class="mono">{owner &amp;&amp; (</code> 改成导航派生后，<code class="mono">smoke-user-profile-privacy.mjs</code> 仍按旧形态找 <code class="mono">FeedbackPanel</code> 旁的 owner 字面量 ⇒ 第三次出包在 79 秒处 AssertionError。按原隐私意图重钉两头：导航项 <code class="mono">ownerOnly: true</code>（真门）＋ 面板仍经 <code class="mono">adminPanel('feedback', …)</code> 渲染（不私接）。</p>
+    </div>
+  </div>
+  <div class="callout warn"><strong>说明：</strong>这三处不是「顺手改」，是发布链实际跑到时拦下的存量红（第三处由另一会话的前序提交引入）。修法都在 develop 上单独成笔，未夹带无关改动。</div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>部署后实测</h2>
+  <div class="tablewrap"><table>
+    <tr><th>检查</th><th>测试站</th><th>生产站</th></tr>
+    <tr><td>运行时 provenance</td><td class="code">BOUND @ 319bc13…</td><td class="code">BOUND @ 319bc13…</td></tr>
+    <tr><td>本机健康</td><td class="code">127.0.0.1:3001 → 200</td><td class="code">127.0.0.1:3000 → 200</td></tr>
+    <tr><td>公网</td><td>test.tuyigf.com 403（既有口令门，预期）</td><td>首页 / <span class="mono">/download</span> / <span class="mono">/api/runtime-provenance</span> 全 200</td></tr>
+    <tr><td>服务进程</td><td>pm2 三个 online、restart 0</td><td><span class="mono">systemctl is-active tygf</span> → active（11:18:59 起）</td></tr>
+    <tr><td>助手清单</td><td class="code">3.7.15</td><td class="code">3.7.15</td></tr>
+    <tr><td>构建产物含修复串</td><td>3 处命中「本机助手不接受这种行标识」</td><td>3 处命中（standalone + static）</td></tr>
+    <tr><td>数据库备份</td><td>脚本自带</td><td class="code">pre-schema-20261021-111708-319bc1384a36.db</td></tr>
+    <tr><td>排障快照目录</td><td>—</td><td><span class="mono">support-bundles</span> 在 <span class="mono">ReadWritePaths</span>、<span class="mono">.env</span> 已设、属主 <span class="mono">tygf:tygf</span> 750</td></tr>
+  </table></div>
+  <div class="callout"><strong>冒烟实跑：</strong><code class="mono">test:row-id-whitelist</code>、<code class="mono">smoke-execution-manifest</code>、<code class="mono">smoke-local-assistant-errors</code> 三条 rc=0（在干净出包树 <code class="mono">release-670f7cb-b</code> 上跑）。发布门 <code class="mono">test:contracts</code> PASS（测试包 142s / 生产包 294s）、<code class="mono">test:trust-chain</code> PASS（76s）、助手系全 PASS、卫生门 <span class="mono">forbidden=0 / secretLike=0</span>。</div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>主分支与现场</h2>
+  <p><code class="mono">main</code> 由 <code class="mono">6ff5c3c</code> 纯快进到 <code class="mono">319bc13</code>（反向提交 0）。为不覆盖生产工作树里另一会话未提交的两份台账，先 stash → 合并 → 按行并集写回 → 核完再 drop；写回后 <code class="mono">git diff --numstat</code> 只有那两份台账 +9/−0、+8/−0，无删除、无冲突标记。</p>
+  <div class="tablewrap"><table>
+    <tr><th>现场</th><th>路径</th></tr>
+    <tr><td>测试部署日志</td><td class="code">/home/ubuntu/deploy-test-319bc13.log</td></tr>
+    <tr><td>测试备份</td><td class="code">/var/www/tygf-test-backups/deploy-20261021_104504-319bc1384a36</td></tr>
+    <tr><td>生产部署日志</td><td class="code">/home/ubuntu/deploy-prod-319bc13.log</td></tr>
+    <tr><td>生产版本目录</td><td class="code">/var/www/tygf-releases/319bc1384a36…</td></tr>
+    <tr><td>生产数据库备份</td><td class="code">/var/www/tygf/db-backup/pre-schema-20261021-111708-319bc1384a36.db</td></tr>
+    <tr><td>出包树</td><td class="code">worktrees/release-670f7cb-b（clean detached @ 319bc13）</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>覆盖缺口与遗留（不写成绿）</h2>
+  <ol class="plan">
+    <li><strong>真实执行链未复跑。</strong>需要一台装了 3.7.15 助手与 Photoshop 的机器，从工作台点一次批量执行，确认不再出现行标识拒绝。这是本次修复的最终判据，我这边没有真机环境。</li>
+    <li><strong>support-bundles 真实上传未验。</strong>本次只验到单元路径、目录属主、环境变量三件；上传接口要有效 ticket，无法凭空造。</li>
+    <li><strong>develop 在部署窗口内又前进 4 笔。</strong><span class="mono">0635361</span>（后台灰度名单改搜人点选）、<span class="mono">a54602a</span>（登记 #161）、<span class="mono">741fc04</span>、<span class="mono">c570c9b</span>（助手身份 3.7.16 + r4 出厂，另一会话在跑，待 Owner 装包复验）。本次两站<strong>刻意仍为 3.7.15</strong>，不夹带未复验的助手身份变更；新助手装包复验后走它自己的发布链。</li>
+    <li><strong>测试站公网 403 是口令门</strong>，不是部署失败；本次未动 nginx 配置。</li>
+    <li><strong>根账 #160 号冲突。</strong>根 <span class="mono">AI_MEMORY/ISSUES.md</span> 的 #160（生产回退事故）与 develop 账的 #160（Txt2 fail-open）被两只手同时占用。按「不删除、不重编号」并存，引用必须带账本名；本次新登记用根账 #218。</li>
+  </ol>
+</section>
+
+<div class="footer">
+  <span>配套文件：<span class="mono">执行报告_20261021_双站部署_manifest拒绝修复落地.md</span></span>
+  <span>证据口径：本页所有状态均取自 2026-10-21 部署后实测；未复跑项已在第 05 节显式列出。</span>
+</div>
+
+</div>
+</body>
+</html>

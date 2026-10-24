@@ -1,0 +1,779 @@
+<title>官网文案后台改字 · 现状核实与补齐模拟</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1020px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.45rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.26rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.04rem,2.3vw,1.2rem);line-height:1.62;max-width:52ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.65rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.was{color:var(--muted)}.now{color:var(--bad);font-weight:500}.fix{color:var(--ok);font-weight:500}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.02rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.91rem;color:var(--ink-2);max-width:66ch}
+.gate.first{border-left:3px solid var(--accent)}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.91rem;color:var(--ink-2);line-height:1.7}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);line-height:1.8}
+
+/* ---------- 模拟台 ---------- */
+.mock{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.mockbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:11px 14px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.mockbar .ttl{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.seg{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--surface);color:var(--ink-2);font-family:var(--font-body);font-size:.82rem;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+.stage{position:relative;padding:clamp(16px,3vw,28px);background:var(--bg)}
+.stage note{display:block}
+.mk-h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.5rem,3.6vw,2.05rem);line-height:1.28;margin:0 0 10px}
+.mk-eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;color:var(--accent);margin-bottom:12px}
+.mk-copy{color:var(--ink-2);font-size:.95rem;max-width:60ch;margin-bottom:16px}
+.mk-btn{display:inline-block;font-size:.86rem;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);margin-right:8px}
+.mk-btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.mk-note{font-size:.78rem;color:var(--muted);margin-top:14px}
+.mk-trust{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.mk-trust span{font-size:.79rem;color:var(--ink-2);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.mk-faq{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.mk-faq h4{font-family:var(--font-display);font-size:1rem;margin:0 0 10px;font-weight:600}
+.faq-item{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:8px}
+.faq-q{padding:9px 12px;font-size:.9rem;font-weight:600;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.faq-a{padding:0 12px 10px;font-size:.87rem;color:var(--ink-2);line-height:1.7}
+.faq-tools{display:flex;gap:4px;padding:0 10px 9px}
+.faq-tools button{appearance:none;border:1px solid var(--line);background:var(--sunk);color:var(--ink-2);border-radius:6px;font-size:.74rem;padding:3px 8px;cursor:pointer;font-family:var(--font-mono)}
+.faq-tools button:hover{border-color:var(--accent);color:var(--accent)}
+.faq-item.softdel{opacity:.5;background:repeating-linear-gradient(45deg,transparent,transparent 8px,var(--bad-soft) 8px,var(--bad-soft) 16px)}
+.faq-item.newitem{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft)}
+.unannotated{border:1px dashed var(--bad);border-radius:4px;background:var(--bad-soft)}
+/* 可编辑元素 */
+[data-sc]{cursor:text;border-radius:3px;transition:box-shadow .12s,outline-color .12s}
+.ed [data-sc]{outline:1px dashed var(--line-strong);outline-offset:2px}
+.ed [data-sc]:hover{outline:2px solid var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ed [data-sc].dirty{outline:2px solid var(--warn);background:var(--warn-soft)}
+.ed [data-sc].locate{animation:flash 1.1s ease-out 2}
+@keyframes flash{0%,100%{background:transparent}40%{background:var(--accent-soft)}}
+[data-sc]:hover::after{content:attr(data-sc);position:absolute;font-family:var(--font-mono);font-size:.62rem;color:var(--accent)}
+/* 角标 */
+.badge{position:absolute;right:14px;bottom:14px;z-index:5;background:#131820;color:#fff;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:212px;font-size:.78rem}
+.badge .r1{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.72rem;color:#cfd8e6}
+.badge .live{width:7px;height:7px;border-radius:50%;background:#54cf96}
+.badge .r2{display:flex;flex-wrap:wrap;gap:5px}
+.badge button{appearance:none;border:1px solid #38414f;background:#1b212b;color:#e8ecf3;border-radius:6px;font-size:.74rem;padding:4px 9px;cursor:pointer;font-family:var(--font-body)}
+.badge button:hover{border-color:#78a8ff;color:#78a8ff}
+.badge button.pub{background:#1b5bd0;border-color:#1b5bd0;color:#fff;font-weight:600}
+/* 弹层 */
+.pop{position:absolute;z-index:9;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.2);padding:12px;width:min(420px,calc(100% - 28px));display:flex;flex-direction:column;gap:8px}
+.pop .pk{font-family:var(--font-mono);font-size:.68rem;color:var(--accent);word-break:break-all}
+.pop textarea{width:100%;min-height:74px;font-family:var(--font-body);font-size:.9rem;line-height:1.6;padding:8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.pop textarea.over{border-color:var(--bad);background:var(--bad-soft)}
+.pop .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.72rem;color:var(--muted);flex-wrap:wrap}
+.pop .acts{display:flex;gap:6px}
+.pop .acts button{appearance:none;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer;font-family:var(--font-body)}
+.pop .acts button.go{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.pop .hint{font-size:.76rem;color:var(--muted);font-family:var(--font-body)}
+/* 抽屉 */
+.drawer{border-top:1px solid var(--line);background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:330px;overflow:auto}
+.drawer h4{margin:0;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.drow{display:grid;grid-template-columns:1fr;gap:3px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--bg);cursor:pointer}
+.drow:hover{border-color:var(--accent)}
+.dkey{font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+.dval{display:flex;gap:8px;align-items:baseline;font-size:.83rem}
+.dval .was{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+.dval .now{color:var(--ok);font-weight:600}
+.dval .struct{font-family:var(--font-mono);font-size:.7rem;padding:1px 6px;border-radius:4px;background:var(--warn-soft);color:var(--warn);flex:none}
+/* 结果条 */
+.res{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:11px 13px;font-size:.87rem;border:1px solid}
+.res.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.res.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.res.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.res .who{font-family:var(--font-mono);font-size:.7rem;display:block;margin-top:4px;opacity:.85}
+/* 批准面板 */
+.appr{border:1px solid var(--line-strong);border-radius:10px;background:var(--bg);padding:13px;display:flex;flex-direction:column;gap:9px}
+.appr label{font-size:.84rem;color:var(--ink-2);display:flex;gap:8px;align-items:flex-start}
+.appr input[type=text]{flex:1;font-family:var(--font-mono);font-size:.84rem;padding:7px 9px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink)}
+.appr .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.appr .cap{font-family:var(--font-mono);font-size:.74rem;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:6px 10px;letter-spacing:.16em;color:var(--ink)}
+/* 键树 */
+.tree{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.tnode{background:var(--surface);padding:9px 13px;display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;font-size:.86rem}
+.tnode .path{font-family:var(--font-mono);font-size:.79rem;color:var(--ink-2)}
+.tnode .cnt{font-family:var(--font-mono);font-size:.72rem;color:var(--muted)}
+.tnode.ghost{background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 9px,var(--sunk) 9px,var(--sunk) 18px)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.8rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid var(--line-strong)}
+.legend i.a{background:var(--accent-soft);border-color:var(--accent)}
+.legend i.g{background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 3px,var(--sunk) 3px,var(--sunk) 6px)}
+.legend i.r{background:var(--bad-soft);border:1px dashed var(--bad)}
+.prog{display:grid;grid-template-columns:1fr;gap:8px}
+.prow{display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:center;font-size:.86rem}
+.bar{height:9px;background:var(--sunk);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.zero{background:var(--line-strong)}
+.prow .v{font-family:var(--font-mono);font-size:.76rem;color:var(--muted);white-space:nowrap}
+@media (max-width:680px){.prow{grid-template-columns:110px 1fr}.faq-tools{flex-wrap:wrap}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>模拟原型 · 执行方案</span><span class="sep">/</span>
+    <span>官网文案后台改字</span><span class="sep">/</span>
+    <span>2026-10-17</span>
+  </div>
+  <h1>能改的那一半已经做完了，改不动的那一半是一行锁</h1>
+  <p class="standfirst">
+    「后台改文字」不是一件待新建的事：<strong>就地直改在 10-13/10-14 两笔提交里做完，并且已经进了生产代码</strong>。
+    真正卡住的是 <code>site-settings.ts:361</code> 那个对 production 一律 403 的写侧硬锁，加上只有首页打了标注。
+    下面三个可点模拟分别是：线上今天就能改的、改了没用的、补齐之后的样子。
+  </p>
+  <div class="meta">
+    <span>核实窗口 15:14—15:42（同一会话两次取数）</span>
+    <span>develop HEAD 由 ee05c9a 推进到 4e4cdd4（别手并发，工作树已复核干净）</span>
+    <span>测试站 BOUND 由 2367950 → ee05c9a（15:20:47 别手部署）</span>
+    <span>生产 BOUND 4fa9d4f 未变</span>
+    <span>本页数字均为本会话实测，非引用旧台账</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论与把握度</h2>
+  <div class="verdict">
+    <span class="lb">verdict</span>
+    <p>功能已实现、已上线到生产代码，但<strong>生产环境点发布必然 403</strong>，所以 Owner 今天仍然改不动线上任何一个字；要改只有两条老路——改代码发版，或直接改库。</p>
+    <div class="split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+      <div style="background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--ok);border-radius:var(--radius);padding:14px 16px">
+        <h3 style="color:var(--ok)">已成立（高把握）</h3>
+        <ul style="margin:8px 0 0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--ink-2)">
+          <li>就地编辑层 + 草稿 PATCH + 发布清单 + 撤销 + 回滚 + 审计，代码在 <code>src/components/site/inline-edit/</code>（3 文件 881 行）</li>
+          <li>首页 95 个文案键已批注（<code>sc(</code> 出现 97 处，其中 95 处带字面键名），文案已从 <code>home-view.tsx</code> 硬编码搬进内容树 <code>siteContent.ts:673</code></li>
+          <li>两道冒烟当场跑过：<code>content studio v1 smoke: PASS</code>、<code>site content draft lifecycle smoke: PASS</code></li>
+          <li>访客零污染：生产首页 60,916 B 里 <code>data-sc-key</code> 命中 <strong>0</strong></li>
+        </ul>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--bad);border-radius:var(--radius);padding:14px 16px">
+        <h3 style="color:var(--bad)">改不动（高把握）</h3>
+        <ul style="margin:8px 0 0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--ink-2)">
+          <li>生产写锁无放行口子：<code>bootstrap</code>/<code>createDraft</code>/<code>discard</code>/<code>publish</code>/<code>rollback</code> 五个入口 <code>:531/:573/:628/:657/:684</code> 全部先调它</li>
+          <li>legacy 整树写入 <code>saveSiteContentOverride</code>（<code>:330</code>）<strong>全仓 0 调用方</strong> ⇒ 生产没有第二条正规通道</li>
+          <li>只有 zh 首页挂编辑层（<code>src/app/(zh)/page.tsx:36</code> 唯一命中）；EN 站与页脚 <code>sc()</code> 命中 <strong>0</strong></li>
+          <li>只能改「已存在的字符串叶子」：数组不能增删/排序，无行内标记，长度上限 <code>max(原长×2, 500)</code></li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:.92rem;font-weight:400;color:var(--ink-2);max-width:70ch">
+      把握度说明：上面每条都在本会话跑过命令并贴了可复跑出处（见文末证据清单）。唯一没实测的是<strong>生产库里 Content Studio 表是否仍 0 行</strong>（需 SSH，属未核实）——它决定放行后第一次要不要点「初始化 Revision 1」，不影响「今天改不动」这个结论。
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>实测读数</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">2</span><span class="k">实现提交<br>91eee61 / f63b872（10-13、10-14）</span></div>
+    <div class="stat ok"><span class="n">95</span><span class="k">首页已批注文案键<br>grep sc( · home-view.tsx</span></div>
+    <div class="stat bad"><span class="n">403</span><span class="k">生产环境五个写入口<br>CONTENT_STUDIO_PRODUCTION_LOCKED</span></div>
+    <div class="stat warn"><span class="n">21</span><span class="k">未批注中文文本节点<br>首页 13 + 页脚 8</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">英文站批注 / 编辑层入口数<br>home-view-en.tsx · src/app 全站</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">生产首页泄漏编辑属性<br>data-sc-key 命中数（60,916 B）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>先纠正三条过期指针（盘上的话与实测不一致）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>盘上原话</th><th>出处</th><th>本会话实测</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="was">「待批：官网文案直改 B 方案…估 4 工作日」</td>
+          <td class="mono">AI_MEMORY/CURRENT_STATUS.md「一句话状态」段</td>
+          <td class="now">已实现并合入，两笔均在 origin/develop 与 origin/main</td>
+          <td><span class="tag bad">过期指针</span></td>
+        </tr>
+        <tr>
+          <td class="was">「生效环境：测试站已上线；生产站未部署（冻结中）」</td>
+          <td class="mono">docs/records/20261013_官网文案就地直改_运营手册10分钟版.md 页眉</td>
+          <td class="now">生产 BOUND <code>4fa9d4f</code> 含 <code>f63b872</code>（merge-base 实测 CONTAINS）；首页确已渲染 homeV17 独有句</td>
+          <td><span class="tag bad">过期（代码已在生产，缺的是写权限）</span></td>
+        </tr>
+        <tr>
+          <td class="was">「#31 官网文案直改 GitHub 开源集成未完成…功能未就绪」</td>
+          <td class="mono">AI_MEMORY/ISSUES.md:493-497</td>
+          <td class="now">首页可编辑已就绪；未完成项实为「生产放行 + 全站覆盖 + 结构编辑」三件事</td>
+          <td><span class="tag warn">部分过期，条目需重写</span></td>
+        </tr>
+        <tr>
+          <td class="was">「首屏文案全在 home-view.tsx 硬编码，后台 Content Studio 改不到」</td>
+          <td class="mono">项目记忆 project-landing-copy-render-path（10-07 段）</td>
+          <td class="now">该块已搬进内容树并批注 95 键；<strong>但「后台字典里的 legacy 块改了不上页面」这一半仍成立</strong></td>
+          <td><span class="tag warn">半过期</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">为什么值得先纠这三条</span>
+    <p>三条都写着「没做/待批」，实际是「做了但锁住」。按盘上的话派工会得出<strong>重新实现一遍</strong>的结论——这正是本仓库反复提醒的病根（把已有能力当待新建）。本轮已核实：<code>总控/产品功能全景_20261003.md</code> 里也还没有这一条能力，属清单滞后。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>模拟一 · 线上今天就能改（现状，可点）</h2>
+  <p class="lede">这就是已实现的那一半。切到「生产站」点【发布】，会撞上当前的锁；切「测试站」则全程通。<strong>下面用的是产品真实文案（siteContent.ts 现取），不是占位字</strong>；FAQ 取线上 6 条中的前 4 条。</p>
+
+  <div class="mock" id="m1">
+    <div class="mockbar">
+      <span class="ttl">环境</span>
+      <div class="seg" data-seg="env">
+        <button data-v="test" aria-pressed="true">测试站（可用）</button>
+        <button data-v="prod" aria-pressed="false">生产站（今天 403）</button>
+      </div>
+      <span class="ttl" style="margin-left:10px">编辑层</span>
+      <div class="seg" data-seg="mode">
+        <button data-v="visitor" aria-pressed="false">访客视图</button>
+        <button data-v="edit" aria-pressed="true">owner 编辑态</button>
+      </div>
+      <button class="mk-btn" data-act="reset" style="margin-left:auto;font-size:.78rem;padding:5px 10px">重置草稿</button>
+    </div>
+    <div class="stage ed" data-stage="1">
+      <div class="mk-eyebrow" data-sc="homeV17.hero.eyebrow">已有译文的多语言 PSD / PSB · 单次最多 12 个目标语种</div>
+      <h3 class="mk-h1"><span data-sc="homeV17.hero.titleLine1">让设计师改语言</span><br><span data-sc="homeV17.hero.titleLine2">变轻松</span></h3>
+      <p class="mk-copy"><span data-sc="homeV17.hero.copyA">不是把设计交给工具。</span> <strong data-sc="homeV17.hero.copyStrong">是不再按语言，一个个从头做。</strong></p>
+      <div class="mk-trust"><span data-sc="homeV17.hero.trust.0">PSD / PSB 留在本机</span><span data-sc="homeV17.hero.trust.2">写入后核对</span></div>
+      <div><a class="mk-btn pri" data-sc="homeV17.hero.ctaPrimary">拿一套正在改语言的项目试跑 →</a><a class="mk-btn" data-sc="homeV17.hero.ctaSecondary">看看它怎么改语言</a></div>
+      <div class="mk-note" data-sc="homeV17.hero.note">示意界面 · 完成的先完成，需要你的集中留下</div>
+
+      <div class="mk-faq">
+        <h4 data-sc="faq.title">常见问题</h4>
+        <div data-faqlist></div>
+      </div>
+    </div>
+    <div data-out></div>
+  </div>
+  <div class="legend">
+    <span><i class="a"></i>蓝框＝这句话有文案键，可点开改</span>
+    <span><i class="r" style="border-style:solid;border-color:var(--warn);background:var(--warn-soft)"></i>黄框＝已改、未发布</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>模拟二 · 改了没用 / 根本改不动（现状的两个坑，可点）</h2>
+  <p class="lede">这两处是 Owner 说「需要更多功能」时最可能撞上的：<strong>后台字典里的键远多于页面上真存在的话</strong>，以及<strong>生产写侧连草稿都建不出来</strong>。</p>
+
+  <div class="mock">
+    <div class="mockbar"><span class="ttl">运营台 → 全站文案编辑（字典视图，现状形状）</span></div>
+    <div style="padding:14px 16px;background:var(--bg);display:flex;flex-direction:column;gap:12px">
+      <p style="font-size:.88rem;color:var(--ink-2)">接口把<strong>整棵内容树</strong>交给表单（<code>site-content/route.ts:26</code>），字典里因此挂着 19 个顶层块；其中 <code>hero / workflow / localSafety / reviewGate / why / how / queue / report / boundary / cta / fit</code> 在首页<strong>不渲染</strong>——改它们＝改了不在页面上的字。</p>
+      <div class="tree" id="m2tree"></div>
+      <div class="legend">
+        <span><i class="a"></i>页面上有（已批注，可就地改）</span>
+        <span><i class="g"></i>页面渲染不到（改了没有可见效果）</span>
+        <span><i class="r"></i>未批注的中文节点（想改只能改代码）</span>
+      </div>
+      <div data-out2></div>
+    </div>
+  </div>
+
+  <div class="mock" style="margin-top:14px">
+    <div class="mockbar">
+      <span class="ttl">同一套动作，两站结果不同</span>
+    </div>
+    <div style="padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px">
+      <div class="res bad">
+        <span><strong>生产站 · 保存草稿 →</strong> <code>HTTP 403 CONTENT_STUDIO_PRODUCTION_LOCKED</code><br>「Content Studio 当前仅允许 development/test；production 发布需另行 Owner 批准。」<span class="who">出处 src/lib/server/site-settings.ts:361-368，无 env 开关、无批准记录可解锁</span></span>
+      </div>
+      <div class="res warn">
+        <span><strong>更别扭的一层：</strong>开关 <code>siteCopyInlineEdit</code> 的写入<em>不受</em>这把锁管（<code>feature-flags/route.ts:101</code> → <code>feature-flags-store.ts:61</code>）。所以在生产可以正常把「官网就地直改」点成<strong>已开启</strong>，编辑层也照常加载——直到点保存才撞 403。<span class="who">形状＝「开关能开、句子存不下」，2026-10-14 Owner 报「开关开了还是改不了」的另一半真因（那一半是 nginx 302 丢参数）</span></span>
+      </div>
+      <div class="res ok">
+        <span><strong>测试站 · 保存草稿 → 发布清单 → 发布</strong> 全链可用，两道冒烟 PASS（本会话实跑）。</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>模拟三 · 补齐之后（三刀，逐刀可点）</h2>
+  <p class="lede">按「Owner 一个人在晚上十分钟能改完一句官网话」这个标准排的执行顺序。每刀都只做可被现有审计/回滚罩住的动作。</p>
+
+  <div class="mock" id="m3">
+    <div class="mockbar">
+      <span class="ttl">刀一 · 生产放行（Owner 批准制）</span>
+      <div class="seg" data-seg="gate">
+        <button data-v="locked" aria-pressed="true">未批准</button>
+        <button data-v="approved" aria-pressed="false">已批准本会话</button>
+      </div>
+      <span class="ttl" style="margin-left:10px">环境</span>
+      <div class="seg" data-seg="env3">
+        <button data-v="prod" aria-pressed="true">生产站</button>
+      </div>
+    </div>
+    <div style="padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:13px">
+      <p style="font-size:.89rem;color:var(--ink-2)">改动：给那把锁加一道<strong>可审计、默认关闭、单次会话有效</strong>的批准，而不是删掉它。锁保留 fail-closed 缺省；批准后写 <code>ContentStudioProductionGrant</code>（谁、何时、到期、理由），审计与回滚走现成链路。</p>
+      <div class="appr">
+        <label><input type="checkbox" data-ck="ack"> 我确认这次允许 Content Studio 写生产库（默认 60 分钟到期，到期自动回到 403）</label>
+        <div class="row">
+          <input type="text" data-in="reason" name="grant-reason" placeholder="必填：批准理由，例「FAQ 第 2 问存储地表述更正」" style="min-width:260px">
+          <span class="cap" data-cap>PROD-4F9A</span>
+          <button class="mk-btn pri" data-act="grant" style="padding:6px 14px;font-size:.82rem">批准并解锁</button>
+        </div>
+        <p class="hint" style="font-size:.78rem;color:var(--muted)">交互理由用一次性确认码（图上这串是演示值）——目的不是防机器，是让「写生产」这个动作必须留一句人话进审计。</p>
+      </div>
+      <div data-out3></div>
+    </div>
+  </div>
+
+  <div class="mock" style="margin-top:14px">
+    <div class="mockbar">
+      <span class="ttl">刀二 · 全站覆盖 + 漏标守卫（现状 vs 目标）</span>
+      <div class="seg" data-seg="cov">
+        <button data-v="now" aria-pressed="true">现状</button>
+        <button data-v="next" aria-pressed="false">补齐后</button>
+      </div>
+    </div>
+    <div style="padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:13px">
+      <div class="prog" id="m4prog"></div>
+      <p class="hint" style="font-size:.82rem;color:var(--muted)"><strong>守卫的形状（对照业界后改过一次）：</strong>原方案是「发布门数 DOM 文本节点 vs 有键节点」，现改成<strong>写代码时就报错的 lint 规则</strong>——抄 <code>eslint-plugin-i18next</code> 的 <code>no-literal-string</code>（默认只查 JSX 纯文本节点，支持白名单组件），改写成「站点组件里出现未经 <code>sc()</code>/<code>&lt;T&gt;</code> 包裹的中文文本节点即 error」。首页现有 21 处（13+8）就是它今天该报的第一批红。lint 比出包时才发现便宜一个量级，还能精确点到行。</p>
+    </div>
+  </div>
+
+  <div class="mock" style="margin-top:14px">
+    <div class="mockbar">
+      <span class="ttl">刀三 · 结构编辑（FAQ 条目增删/排序，现状只能改字不能动条 · 模拟取线上 6 条中的前 4 条）</span>
+      <div class="seg" data-seg="struct">
+        <button data-v="off" aria-pressed="true">现状（只能改字）</button>
+        <button data-v="on" aria-pressed="false">补齐（可增删排序）</button>
+      </div>
+      <button class="mk-btn" data-act="pubstruct" style="margin-left:auto;font-size:.78rem;padding:5px 10px">查看发布清单</button>
+    </div>
+    <div class="stage" data-stage="3" style="padding:16px 18px">
+      <div data-faqlist3></div>
+    </div>
+    <div data-out4></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>建议的执行顺序（三刀，每刀独立可停）</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>生产放行改「批准制」——不做完这一刀，后面都白做</h3>
+        <p>锁不动，加 <code>ContentStudioProductionGrant</code>（会话级到期）+ 运营台批准面板 + 审计与回滚沿用现成链路。<strong>同批补两件权限</strong>（调研里最该抄的一条）：按 key 前缀的写入白名单（法律页 <code>privacy.*</code> / <code>terms.*</code> 只允许 Owner 且必填理由）、以及「谁能读草稿」——现在这两处都是 owner 一刀切。<strong>估 1 个工作日</strong>（含新增冒烟场景：批准后成功、到期后 403、无批准 403、非 owner 403、法律页键被非白名单角色拒写）。</p>
+        <p style="color:var(--muted);font-size:.86rem">验收判据：生产站 owner 走完「批准 → 改 3 句（含 1 句 FAQ）→ 发布清单 → 发布 → 无痕窗口看到 → 回滚」全程；<strong>未批准时保存仍 403</strong>（负控必测）。红线核对：这是写生产库的动作，需 Owner 明令才开工。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>覆盖 + 漏标守卫：把「改了没用」变成写代码时就报错的事</h3>
+        <p>① 批注补齐：页脚 8 处、下载页、EN 站逐页打键；② 字典视图给每块标「在页面上 / 渲染不到」，渲染不到的折叠出可编辑区；③ <strong>守卫用 lint，不用运行时对账</strong>——抄 i18n 生态的现成轮子：<code>eslint-plugin-i18next</code> 的 <code>no-literal-string</code>（默认只查 JSX 纯文本节点、支持白名单组件）改写成「站点组件里的 JSX 文本节点未经 <code>sc()</code> / <code>&lt;T&gt;</code> 即 error」。</p>
+        <p style="color:var(--muted);font-size:.86rem"><strong>估 2—3 个工作日</strong>。本会话原方案是「发布门数 DOM 文本节点 vs 有键节点」，对照业界后改掉：lint 在写代码阶段就报，比出包时才发现便宜一个量级，且能精确点名是哪一行。<strong>再进一步是 <code>&lt;T p="homeV17.hero.copyA"&gt;默认文案&lt;/T&gt;</code> 组件</strong>（key 自动查内容树、未命中即报错），一次解决「标注成本高」和「漏标」两件事——Apostrophe 的 <code>&lt;Field&gt;</code> 与 Sanity「文案必须来自数据层」合起来就是这个形态。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>结构编辑：FAQ / 步骤能增删、能排序</h3>
+        <p>现状 <code>patchStringLeaf</code> 只在目标确为字符串时写入（<code>site-content-paths.ts:57</code> 起），所以新增条目、删条目、调整顺序一律做不到。</p>
+        <p style="color:var(--muted);font-size:.86rem"><strong>估 3—5 个工作日</strong>。业界对照后修正了做法：<strong>不要在页面上给每行加 ↑↓ 箭头</strong>——Tina 的 <code>list</code>、Payload 的 <code>blocks</code> 都把增删排序放在侧栏表单里，唯一贴近「就地 + 数组」的 Apostrophe 也是<strong>一次 patch 一个块</strong>。我们的正确形状是：把 <code>faq.items</code> 当数组字段整体对待，编辑层给整块控件（新增/删除/移动），<strong>一次写回整个数组</strong>+ 结构级 diff。风险最高的一刀：结构变更会同时打断 FAQ 数量守卫等既有断言，须按合同变更纪律同批改 fixture。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">×</span>
+      <div class="body">
+        <h3>不建议做（拿业界成熟形态对照后的取舍）</h3>
+        <p>iframe 双栏后台预览（Payload 形态）、git 分支草稿→PR 合并状态机（Decap 形态）、Yjs 多人实时协同、全量 stega 零宽编码（Sanity 形态，要求全站文案走数据层）。富文本 WYSIWYG 与拖拽排版同样不做：当前只有 owner 一人改文案，这三样是纯维护成本。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>业界参照（GitHub 调研，逐条给出处）</h2>
+  <div class="callout">
+    <span class="lb">先纠正我自己上一版的框法</span>
+    <p>我原本把生产 403 写成「缺陷」。对照业界后更正：<strong>「生产环境关掉内容写入口」本身是主流做法之一</strong>——Keystatic 官方 recipe 就是生产禁用 Admin 路由。所以刀一不是修 bug，是<strong>选路线</strong>：路线 A＝生产禁写、文案一律走代码发版（现状，最严，Owner 改一个字要等出包）；路线 B＝生产可写，但配字段级权限 + 审计 + 批准到期（Payload / Apostrophe / Sanity 形态）。Owner 的诉求指向 B，代价是生产库多一个写面。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>做法</th><th>出处</th><th>我们能不能抄</th></tr></thead>
+      <tbody>
+        <tr><td>JSX 文本节点未经标注即 lint error（<code>no-literal-string</code> / <code>no-unlocalized-strings</code>）</td><td class="mono"><a href="https://github.com/edvardchen/eslint-plugin-i18next">eslint-plugin-i18next</a> · <a href="https://github.com/lingui/eslint-plugin">lingui</a></td><td class="fix">直接抄，性价比最高（刀二）</td></tr>
+        <tr><td>组件式声明可编辑区：<code>&lt;Field&gt;</code> / key 自动绑定</td><td class="mono"><a href="https://apostrophecms.com/docs/guide/inline-editing.html">Apostrophe inline-editing</a></td><td class="fix">抄成 <code>&lt;T p="…"&gt;</code>（刀二加强项）</td></tr>
+        <tr><td>数组/块结构就地增删排序，一次 patch 一个块</td><td class="mono"><a href="https://apostrophecms.com/docs/guide/areas-and-widgets.html">Apostrophe areas</a> · <a href="https://payloadcms.com/docs/fields/blocks">Payload blocks</a> · <a href="https://tina.io/docs/reference/types/object">Tina list</a></td><td class="warn">抄交互与写回粒度，不抄其渲染管线（刀三）</td></tr>
+        <tr><td>按 key 前缀的字段级权限（法律页只允许 Owner）</td><td class="mono"><a href="https://payloadcms.com/docs/access-control/overview">Payload access-control</a></td><td class="fix">P0 抄，随刀一一起做（现状只有 owner 一刀切）</td></tr>
+        <tr><td>分语言发布（值按 locale 存、<code>localizeStatus</code>）</td><td class="mono"><a href="https://payloadcms.com/docs/configuration/localization">Payload localization</a></td><td class="warn">P1 抄——EN 站批注完成后才有意义</td></tr>
+        <tr><td>编辑层与预览态同源开关（draftMode 才挂 Overlay）</td><td class="mono"><a href="https://www.sanity.io/docs/visual-editing/visual-editing-with-next-js-app-router">Sanity app-router</a></td><td class="ok">已同构：<code>(zh)/page.tsx:36</code> 就是 flag+会话+owner 三条件同判</td></tr>
+        <tr><td>版本快照 + diff + <code>readVersions</code> 独立授权</td><td class="mono"><a href="https://payloadcms.com/docs/versions/drafts">Payload drafts</a></td><td class="warn">已有快照/digest，缺「谁能读草稿」——随刀一补</td></tr>
+        <tr><td>受限行内标记：白名单 + 不存 HTML（Lexical <code>features</code> / Tina <code>overrides.toolbar</code>）</td><td class="mono"><a href="https://payloadcms.com/docs/rich-text/overview">Payload rich-text</a> · <a href="https://tina.io/docs/reference/types/rich-text/">Tina rich-text</a></td><td class="warn">P2 才做，且只放行内标记</td></tr>
+        <tr><td>手写 <code>data-*-field</code> 属性（无自动发现）</td><td class="mono"><a href="https://tina.io/docs/contextual-editing/tinafield">Tina tinaField</a></td><td class="ok">与我们 <code>sc()</code> 同构——证明这条路不是野路子，但也证明它是三者中最贵的</td></tr>
+        <tr><td>零宽字符编码内容源映射，DOM 自动定位字段</td><td class="mono"><a href="https://www.sanity.io/docs/visual-editing/visual-editing-architecture">Sanity stega</a></td><td class="now">不抄（要求全站文案走数据层），抄它「非字符串才手动标」的分层</td></tr>
+        <tr><td>分支草稿 → PR 合并即发布</td><td class="mono"><a href="https://decapcms.org/docs/editorial-workflows/">Decap editorial-workflow</a></td><td class="now">不抄（单人产品过度工程）</td></tr>
+        <tr><td>生产环境禁用 Admin 路由</td><td class="mono"><a href="https://keystatic.com/docs/recipes/nextjs-disable-admin-ui-in-production">Keystatic recipe</a></td><td class="warn">与现状同构 ⇒ 刀一是「选路线」不是「修 bug」</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="notes">
+    <li>调研口径：以上均为官方文档/仓库正文可核到的表述；Tina 的 iframe 双向绑定与 Keystatic 的协同实现细节<strong>未逐行读源码</strong>，只按文档口径陈述。Keystatic 的 <code>inlineField</code> / <code>&lt;InlineEditing&gt;</code> 在其当前文档目录里找不到对应页，Statamic 的「Live 就地编辑」仓库与文档页均未找到 ⇒ 两条记为<strong>未核实</strong>，不作为方案依据。</li>
+    <li>业界<strong>没有</strong>字段级三方合并的成熟形态，只有三种替代：版本快照+diff、分支走 PR、把写粒度压到单字段。我们已是「digest + 单字段 PATCH + 发布清单」，属主流，<strong>不要上 CRDT</strong>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>待拍板的四件事</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><h3>① 生产写锁要不要开、按哪种粒度</h3><span class="tag warn">需 Owner 明令</span></div>
+      <p>三选一：<strong>会话级批准</strong>（本页模拟的形状，默认 60 分钟到期）／<strong>env 长期开启</strong>（省事但敞口常驻）／<strong>维持现状</strong>＝生产文案一律走代码默认值 + 发版（最严，Owner 改一个字要等出包）。注意第三条不是"没做完"，Keystatic 官方 recipe 就是这么写的——选它就把「后台改文字」永久理解为工程流程，不是运营自助。</p></div>
+    <div class="card"><div class="top"><h3>② 覆盖优先顺序</h3><span class="tag warn">等选择</span></div>
+      <p>页头页脚（8 处，半小时）→ 下载页 → EN 首页（<code>home-view-en.tsx</code> 现有中文文本节点 0，需先定 EN 文案源）→ 工作台内部说明（另一条面，属运营台，不在官网）。</p></div>
+    <div class="card"><div class="top"><h3>③ 漏标守卫挂在哪一层</h3><span class="tag warn">等选择</span></div>
+      <p>挂 ESLint（写代码当场报、精确到行，但要先清掉现存 21 处或先给站点目录开豁免名单）／挂发布门（只在出包时报，改动小但发现晚）／不挂（靠自觉——本仓库已多次证明只靠自觉会漂）。</p></div>
+    <div class="card"><div class="top"><h3>④ 三条过期指针谁来改</h3><span class="tag ok">可顺手</span></div>
+      <p>CURRENT_STATUS 的「待批」段、运营手册页眉「生产站未部署」、ISSUES #31 条目。<code>CURRENT_STATUS.md</code> 是总控长槽单写者文件，我不能整档重写——需投属主或在官制代写区挂一行。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>边界与未核实（不凑数）</h2>
+  <ul class="notes">
+    <li><strong>未核实</strong>：生产库 <code>SiteContentPublication/Revision</code> 是否仍 0 行（10-16 台账如此记，本轮没 SSH 复测）。若仍 0 行，放行后第一次必须点【初始化 Content Studio】冻结 Revision 1，否则连草稿都建不出来（<code>:576 CONTENT_STUDIO_NOT_BOOTSTRAPPED</code>）。</li>
+    <li><strong>未实测</strong>：字典整树保存（<code>POST /api/admin/site-content</code>）与就地单键 PATCH 并存时的覆盖顺序——基线只核 ACTIVE（<code>:577</code>），不核「你加载表单之后别人又改了草稿」。这是可判定的风险，建议随刀一补一条冒烟证实，本轮未跑不下结论。</li>
+    <li><strong>估算</strong>：三刀的「1 / 2—3 / 3—5 工作日」是按现存代码规模（编辑层 881 行、批注 95 键、写入口 8 个路由）推的，不是历史工时回归。</li>
+    <li><strong>本页性质</strong>：可点模拟＝交互原型，非产品截图。文案取自 <code>siteContent.ts</code> 现值；报错原文取自 <code>site-settings.ts</code> 字符串常量。生产真实行为仍须上线后按 §07 判据复测。</li>
+  </ul>
+</section>
+
+<footer>
+  证据清单（本会话实跑，两拍取数 15:14—15:24 与 15:42）：<br>
+  <code>git worktree list</code> · <code>git rev-parse --short HEAD</code>=ee05c9a（15:15）→ 4e4cdd4（15:42，别手并发推进）· <code>git merge-base --is-ancestor f63b872 origin/main</code>=0 ⇒ 已进 main<br>
+  <code>git show --stat 91eee61</code> ⇒ 18 files +1604/−141（含 inline-edit 三件 644+47+190）· <code>git log --oneline -- src/components/site/inline-edit/</code> ⇒ 91eee61 / f63b872<br>
+  <code>curl tuyigf.com/api/runtime-provenance</code> ⇒ production BOUND 4fa9d4f（两拍同值）；<code>curl test.tuyigf.com/api/runtime-provenance</code> ⇒ test BOUND 2367950（15:16）→ ee05c9a（15:42，别手 15:20:47 部署）<br>
+  <code>curl tuyigf.com/</code> ⇒ 60,916 B；<code>grep -c 'data-sc-key'</code>=0；homeV17 独有三句各命中 1（是不再按语言，一个个从头做 / 已有译文的多语言 PSD / 单次最多 12 个目标语种）<br>
+  <code>node scripts/smoke-content-studio-v1.mjs</code> ⇒ PASS rc=0 · <code>npm run test:content-studio-draft</code> ⇒ PASS<br>
+  读码：<code>site-settings.ts:330/:361-368/:531/:573/:628/:657/:684</code> · <code>featureFlags.ts:58</code> · <code>(zh)/page.tsx:36</code> · <code>site-content/route.ts:26</code> · <code>site-content/draft/route.ts:29</code> · <code>site-content-paths.ts:57</code> · <code>运营手册 §9</code><br>
+  计数（两种算法各数一遍，15:42 复测同一值）：node 逐行 <code>/sc\\(/g</code>=97、<code>/sc\\(\\s*['\`]/g</code>=95（后者＝带字面键名的批注数，正文引用的 95 取此）· 未批注中文文本节点 home-view 13 / site-footer 8 / home-view-en 0 · <code>git status --porcelain</code> 对这三个文件为空 ⇒ 非在飞改动<br>
+  更正入账：初稿把写入口记作「四个」，是 <code>grep | head -5</code> 截断所致，15:42 复测为五个（补 <code>rollbackSiteContentRevision:684</code>）
+</footer>
+
+</div>
+
+<script>
+const FAQ = [
+  ['这是图片自动翻译工具吗？','不是。我不做翻译，我面向多语言设计文件的交付流程：把你已有的译文批量写进 PSD 文字图层。译文好不好，由你的翻译来源负责。'],
+  ['需要上传设计文件吗？','不需要上传 PSD/PSB 设计文件本体或替换后图像，二者在本机处理；但图层文字、表格原文与译文、路径等数据会按隐私政策传输和处理。'],
+  ['可以保证完全自动正确吗？','不能。栅格化文字、智能对象等复杂情况我无法自动替换，会在报告中列出供你处理。定位是「可复查」，不是「全自动」。'],
+  ['为什么有的位置需要我决定？','同一原文多个译文、写入后回读不一致、译文可能溢出——这些位置我证据不足，盲写有风险。停下来问你是更稳的选择。'],
+];
+const TREE = [
+  ['homeV17','首页首屏到页脚全部区块', '95 键', 'live'],
+  ['faq','首页常见问题（6 条）', '14 键', 'live'],
+  ['brand / footer','品牌名与页脚区块', '页脚 8 处未批注', 'partial'],
+  ['download','下载页说明', '未批注', 'ghost'],
+  ['hero','旧首屏（v5.6 前）','—','ghost'],
+  ['workflow / how / why','旧流程三段式','—','ghost'],
+  ['localSafety / reviewGate','本机安全与对账承诺','—','ghost'],
+  ['queue / report','排队与报告样例（含 48/43/3/2 等虚构读数）','—','ghost'],
+  ['boundary / cta / fit','边界·号召·适配','—','ghost'],
+  ['workbench / auth / pack / apply / contact','工作台·登录·积分包·申请·联系','部分渲染','partial'],
+];
+const COV = {
+  now: [['zh 首页','95 / 116',82,'已批注 95，另有 13 处中文节点无键'],['下载页','0 / —',0,'未批注'],['页头 / 页脚','0 / 8',0,'页脚 8 处中文节点无键'],['EN 首页','0 / —',0,'sc() 命中 0，且无编辑层入口'],['法律页','0 / —',0,'隐私·条款为母本单源，不在直改范围'],['漏标守卫','未建',0,'站点组件里无 lint 规则拦「未标注的中文文本节点」']],
+  next: [['zh 首页','116 / 116',100,'补齐 13 处 + 页脚 8 处'],['下载页','完成',100,'逐区块打键'],['页头 / 页脚','完成',100,'含品牌名'],['EN 首页','完成',100,'与 zh 同键名，分语言发布'],['法律页','保持只读',100,'走母本 + 发版，有第 17 道门罩着'],['漏标守卫','已进门',100,'ESLint 规则：未标注即 error，精确到行']]
+};
+
+// ---- 通用弹层 ----
+let popEl = null, popKey = null;
+function closePop(){ if(popEl) popEl.remove(); popEl=null; popKey=null; }
+function limitOf(v){ return Math.max(v.length*2, 500); }
+function openPop(el, key, cur, onsave){
+  closePop();
+  const stage = el.closest('.stage');
+  popEl = document.createElement('div');
+  popEl.className='pop';
+  popEl.innerHTML = `<div class="pk">${key}</div>
+    <textarea name="sc-value" spellcheck="false"></textarea>
+    <div class="foot"><span class="cc"></span>
+      <span class="acts"><button data-b="revert" type="button">改回线上值</button><button data-b="cancel" type="button">取消</button><button data-b="save" class="go" type="button">保存草稿</button></span></div>
+    <div class="hint">Ctrl+Enter 保存 · Esc 取消 · 纯文本，不支持加粗/链接</div>`;
+  stage.appendChild(popEl);
+  const ta = popEl.querySelector('textarea'); ta.value = cur;
+  const lim = limitOf(cur);
+  const paint = ()=>{ const n=ta.value.length; popEl.querySelector('.cc').textContent=`${n} / ${lim}${n>lim?'  超上限':''}`; ta.classList.toggle('over', n>lim); };
+  ta.addEventListener('input', paint); paint();
+  const r = popEl.getBoundingClientRect(), s = stage.getBoundingClientRect();
+  popEl.style.left = Math.min(Math.max(8, el.getBoundingClientRect().left - s.left), s.width-r.width-8)+'px';
+  popEl.style.top = (el.getBoundingClientRect().bottom - s.top + 8)+'px';
+  ta.focus();
+  popEl.addEventListener('keydown', e=>{ if(e.key==='Escape'){e.preventDefault();closePop();} if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();save();} });
+  function save(){ if(ta.value.length>lim){return;} onsave(ta.value); closePop(); }
+  popEl.querySelector('[data-b=save]').onclick=save;
+  popEl.querySelector('[data-b=cancel]').onclick=closePop;
+  popEl.querySelector('[data-b=revert]').onclick=()=>{ onsave(null); closePop(); };
+}
+
+// ---- 模拟一 ----
+(function(){
+  const mock = document.getElementById('m1');
+  const stage = mock.querySelector('[data-stage="1"]');
+  const list = mock.querySelector('[data-faqlist]');
+  const out = mock.querySelector('[data-out]');
+  let env='test', mode='edit', draft={}, hist=[];
+  const LIVE = {};   // 线上生效值基线：首次渲染时一次性取，之后编辑不再回读 DOM（否则草稿会变成自己的基线）
+
+  function renderFaq(){
+    list.innerHTML = FAQ.map((it,i)=>`<div class="faq-item">
+      <div class="faq-q"><span data-sc="faq.items.${i}.q">${it[0]}</span></div>
+      <div class="faq-a" data-sc="faq.items.${i}.a">${it[1]}</div></div>`).join('');
+  }
+  function liveOf(el){
+    const k = el.dataset.sc;
+    return (k in LIVE) ? LIVE[k] : el.textContent;
+  }
+  function captureLive(){
+    stage.querySelectorAll('[data-sc]').forEach(el=>{ if(!(el.dataset.sc in LIVE)) LIVE[el.dataset.sc] = el.textContent; });
+  }
+  function syncDirty(){
+    stage.querySelectorAll('[data-sc]').forEach(el=>{
+      const k=el.dataset.sc;
+      const cur = (k in draft)? draft[k] : liveOf(el);
+      el.classList.toggle('dirty', k in draft && draft[k]!==liveOf(el));
+      el.textContent = cur;
+    });
+    paintBadge();
+  }
+  function changes(){ return Object.keys(draft).filter(k=>draft[k]!==LIVE[k]); }
+  function stageVal(k){ const el=stage.querySelector(`[data-sc="${CSS.escape(k)}"]`); return el?liveOf(el):''; }
+
+  let badge=null;
+  function paintBadge(){
+    const n=changes().length;
+    if(!badge){ badge=document.createElement('div'); badge.className='badge'; stage.appendChild(badge); }
+    badge.innerHTML = `<div class="r1"><span class="live"></span><span>${env==='test'?'测试站':'生产站'}</span>·<span>${mode==='edit'?'编辑会话':'访客'}</span></div>
+      <div class="r2" style="color:#cfd8e6">${n} 处未发布</div>
+      ${mode==='edit'?`<div class="r2"><button class="pub" data-x="pub">发布</button><button data-x="diff">查看改动</button><button data-x="drop">丢弃改动</button><button data-x="exit">退出编辑</button></div>`:''}`;
+    badge.querySelectorAll('button').forEach(b=>b.onclick=()=>act(b.dataset.x));
+    badge.style.display = (mode==='edit'||n>0)?'flex':'none';
+  }
+  function outHtml(h){ out.innerHTML = h?`<div class="drawer">${h}</div>`:''; }
+  function diffHtml(){
+    const cs=Object.entries(draft).filter(([k,v])=>v!==stageVal(k));
+    if(!cs.length) return `<h4>发布清单</h4><p style="font-size:.86rem;color:var(--muted)">清单为空 = 草稿与线上一致（服务端实时算，非客户端记账）。</p>`;
+    return `<h4>发布清单 · ${cs.length} 条（点条目定位到那句话）</h4>`+cs.map(([k,v])=>
+      `<div class="drow" data-jump="${k}"><span class="dkey">${k}</span><span class="dval"><span class="was">${stageVal(k)}</span>→<span class="now">${v}</span></span></div>`).join('');
+  }
+  function act(x){
+    const cs=Object.entries(draft).filter(([k,v])=>v!==stageVal(k));
+    if(x==='diff'){ outHtml(diffHtml()); wireJump(); return; }
+    if(x==='pub'){
+      if(!cs.length){ outHtml(`<div class="res warn" style="margin:14px"><span>没有可发布的改动（清单为空）。</span></div>`); return; }
+      if(env==='prod'){
+        outHtml(`<div class="res bad" style="margin:14px"><span><strong>HTTP 403 · CONTENT_STUDIO_PRODUCTION_LOCKED</strong><br>Content Studio 当前仅允许 development/test；production 发布需另行 Owner 批准。<span class="who">site-settings.ts:361-368 · 五个写入口 :531/:573/:628/:657/:684 全部先过这把锁 ⇒ 生产连草稿都存不下，不是发布这一步才拦</span></span></div>`);
+        return;
+      }
+      outHtml(`<div class="res ok" style="margin:14px"><span><strong>已发布 Revision 7（ACTIVE）</strong> · 无痕窗口刷新可见 · 旧版退役保留，可回滚 · 审计新增 <code>site-content.publish</code>。<span class="who">发布限流：每 IP 每小时 10 次</span></span></div>`);
+      draft={}; hist=[]; syncDirty(); return;
+    }
+    if(x==='drop'){ draft={}; hist=[]; syncDirty(); outHtml(`<div class="res warn" style="margin:14px"><span>整份草稿标记 discarded（不删任何历史，也不能作为回滚目标）；页面立刻回到线上文案。</span></div>`); return; }
+    if(x==='exit'){ mode='visitor'; setSeg('mode','visitor'); syncDirty(); outHtml(''); return; }
+  }
+  function wireJump(){
+    out.querySelectorAll('[data-jump]').forEach(r=>r.onclick=()=>{
+      const el=stage.querySelector(`[data-sc="${CSS.escape(r.dataset.jump)}"]`);
+      if(el){ el.scrollIntoView({block:'center'}); el.classList.remove('locate'); void el.offsetWidth; el.classList.add('locate'); }
+    });
+  }
+  function setSeg(name,v){
+    mock.querySelectorAll(`[data-seg=${name}] button`).forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v)));
+  }
+  mock.querySelectorAll('[data-seg]').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(seg.dataset.seg==='env'){ env=b.dataset.v; setSeg('env',env); paintBadge(); }
+    if(seg.dataset.seg==='mode'){ mode=b.dataset.v; setSeg('mode',mode); stage.classList.toggle('ed', mode==='edit'); syncDirty(); }
+  }));
+  mock.querySelector('[data-act=reset]').onclick=()=>{ draft={}; hist=[]; outHtml(''); syncDirty(); };
+  stage.addEventListener('click', e=>{
+    const el = e.target.closest('[data-sc]');
+    if(!el || mode!=='edit') return;
+    if(e.altKey) return;
+    e.preventDefault(); closePop();
+    const k = el.dataset.sc;
+    openPop(el, k, (k in draft)?draft[k]:liveOf(el), v=>{
+      hist.push([k, (k in draft)?draft[k]:liveOf(el)]);
+      if(v===null){ delete draft[k]; } else { draft[k]=v; }
+      syncDirty();
+      if(out.querySelector('[data-jump]')) outHtml(diffHtml()), wireJump();
+    });
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='z' && (e.ctrlKey||e.metaKey) && !e.shiftKey && document.activeElement.tagName!=='TEXTAREA' && mock.querySelector('.badge')?.style.display!=='none'){
+      const last=hist.pop(); if(!last) return;
+      if(last[1]==='' ) delete draft[last[0]]; else draft[last[0]]=last[1];
+      syncDirty();
+    }
+  });
+  renderFaq(); captureLive(); syncDirty();
+})();
+
+// ---- 模拟二：键树 ----
+(function(){
+  const box=document.getElementById('m2tree'), out=document.querySelector('[data-out2]');
+  box.innerHTML = TREE.map(([p,d,c,s])=>`<div class="tnode ${s==='ghost'?'ghost':''}">
+      <span class="path">${p}</span><span class="cnt">${c}</span>
+      <span class="tag ${s==='ghost'?'warn':s==='partial'?'bad':'ok'}">${s==='ghost'?'页面渲染不到':s==='partial'?'部分无键':'在页面上'}</span></div>`).join('');
+  box.querySelectorAll('.tnode').forEach((n,i)=>n.onclick=()=>{
+    const t=TREE[i];
+    if(t[3]==='ghost') out.innerHTML=`<div class="res warn"><span><strong>「${t[0]}」：保存会成功，但首页没有一处渲染它。</strong> 例如 <code>queue</code> 里的 <code>48 / 43 / 3 / 2</code> 读数、<code>report</code> 里的 <code>REP-2026-0807-001</code>，屏幕上都不存在——改这类键＝假交付。<span class="who">判据出处：运营手册 §9「其它页面的键在接口层是可写的，但那些页面没有可点的元素」+ 本会话渲染串探针</span></span></div>`;
+    else if(t[3]==='partial') out.innerHTML=`<div class="res bad"><span><strong>「${t[0]}」${t[2]}：</strong>字典里能改，页面上点不开——这些句子还硬编码在组件里，需要开发者补 <code>sc()</code> 标注。</span></div>`;
+    else out.innerHTML=`<div class="res ok"><span><strong>「${t[0]}」${t[1]}</strong>：${t[2]}可在首页就地点开编辑。</span></div>`;
+  });
+})();
+
+// ---- 模拟三：刀一 生产放行 ----
+(function(){
+  const mock=document.getElementById('m3');
+  const box=mock.querySelector('[data-out3]'), cap=mock.querySelector('[data-cap]');
+  const list3=document.querySelector('[data-faqlist3]');
+  let approved=false;
+  function render(){
+    box.innerHTML = approved
+      ? `<div class="res ok"><span><strong>本会话已获生产写权限（60 分钟）</strong><br>此刻起「保存草稿 → 发布清单 → 发布」在生产可用；到期自动回到 403。审计条目：<code>content-studio.production.grant</code>（操作人 / 到期 / 理由「${(mock.querySelector('[data-in=reason]')?.value||'').slice(0,40)||'未填'}」）。</span></div>
+         <div class="res warn"><span><strong>放行不等于免检：</strong>发布仍要过 diff 清单 + 频率限制（10 次/小时/IP）+ 回滚入口常驻。改坏了的回滚是秒级、可审计，不必再改库。</span></div>`
+      : `<div class="res bad"><span><strong>未批准 · 现状</strong>：生产任何写入一律 403（含初始化 Revision 1）。这就是「后台改文字做完了却用不上」的那一步。<span class="who">代码原文 site-settings.ts:361-368</span></span></div>`;
+  }
+  mock.querySelectorAll('[data-seg=gate] button').forEach(b=>b.onclick=()=>{
+    approved = b.dataset.v==='approved';
+    mock.querySelectorAll('[data-seg=gate] button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    render();
+  });
+  mock.querySelector('[data-act=grant]').onclick=()=>{
+    const ck=mock.querySelector('[data-ck=ack]').checked, rs=mock.querySelector('[data-in=reason]').value.trim();
+    if(!ck||!rs){ box.innerHTML=`<div class="res bad"><span>批准需要<strong>两样</strong>：勾确认 + 一句理由（进审计）。当前：勾选 ${ck?'✓':'✗'}、理由 ${rs?'✓':'✗'}。</span></div>`; return; }
+    approved=true; mock.querySelectorAll('[data-seg=gate] button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v==='approved')));
+    cap.textContent='PROD-'+Math.random().toString(16).slice(2,6).toUpperCase();
+    render();
+  };
+  render();
+
+  // ---- 刀二 覆盖进度 ----
+  const prog=document.getElementById('m4prog');
+  function paintCov(which){
+    prog.innerHTML = COV[which].map(([k,v,pct,d])=>`<div class="prow"><span>${k}</span>
+      <span class="bar"><i class="${pct===0?'zero':''}" style="width:${pct}%"></i></span>
+      <span class="v">${v}</span></div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:-4px">${d}</div>`).join('');
+  }
+  document.querySelectorAll('[data-seg=cov] button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('[data-seg=cov] button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    paintCov(b.dataset.v);
+  });
+  paintCov('now');
+
+  // ---- 刀三 结构编辑 ----
+  let items = FAQ.map((f,i)=>({q:f[0],a:f[1],id:i})), softdel={}, orderMode='off', seq=100;
+  const ORIG_IDS = items.map(x=>x.id).join(',');
+  const resetItems = () => { items = FAQ.map((f,i)=>({q:f[0],a:f[1],id:i})); softdel={}; seq=100; };
+  const o4=document.querySelector('[data-out4]');
+  function rowHtml(it){
+    const del=softdel[it.id];
+    const tools = orderMode==='on' ? `<div class="faq-tools">
+        <button data-t="up">↑</button><button data-t="down">↓</button><button data-t="dup">复制</button>
+        <button data-t="del">${del?'撤销删除':'删除（软删）'}</button></div>` : '';
+    return `<div class="faq-item ${del?'softdel':''}" data-id="${it.id}">
+      <div class="faq-q"><span>${it.q}</span>${del?'<span class="tag bad">发布后从页面消失</span>':''}</div>
+      <div class="faq-a">${it.a}</div>${tools}</div>`;
+  }
+  function paintStruct(){
+    list3.innerHTML = items.filter(it=>orderMode==='on'||!softdel[it.id]).map(rowHtml).join('')
+      + (orderMode==='on'?`<button class="mk-btn" data-t="add" style="margin-top:6px;font-size:.82rem;padding:7px 13px">+ 新增一条问答</button>`:'');
+    list3.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+      const id=b.closest('[data-id]')?.dataset.id;
+      if(b.dataset.t==='add'){ items.push({q:'（新问答·待填）',a:'（答案·待填）',id:++seq}); paintStruct(); return; }
+      const i=items.findIndex(x=>String(x.id)===id); if(i<0) return;
+      if(b.dataset.t==='del'){ softdel[items[i].id]=!softdel[items[i].id]; }
+      if(b.dataset.t==='dup'){ items.splice(i+1,0,{...items[i],id:++seq}); }
+      if(b.dataset.t==='up'&&i>0){ [items[i-1],items[i]]=[items[i],items[i-1]]; }
+      if(b.dataset.t==='down'&&i<items.length-1){ [items[i+1],items[i]]=[items[i],items[i+1]]; }
+      paintStruct();
+    });
+  }
+  document.querySelectorAll('[data-seg=struct] button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('[data-seg=struct] button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    orderMode=b.dataset.v;
+    if(orderMode==='off') resetItems();
+    paintStruct();
+    o4.innerHTML = orderMode==='on'
+      ? `<div class="res warn" style="margin:14px 16px"><span><strong>结构性变更要走更严的一道：</strong>增删/排序不是「替换一个字符串」，<code>patchStringLeaf</code> 落不动（<code>site-content-paths.ts:57</code>：目标当前必须是已存在的字符串）。这一刀要新增数组写回 + 结构级 diff + 软删语义，并同步 FAQ 数量守卫与它的烟测断言——否则发布清单会显示「2 处」而实际改了顺序。</span></div>`
+      : '';
+  });
+  document.querySelector('[data-act="pubstruct"]').onclick=()=>{
+    const s=Object.keys(softdel).filter(k=>softdel[k]).length;
+    const addN=items.filter(i=>i.q.startsWith('（')).length;
+    const moved=items.filter(x=>Number(x.id)<FAQ.length).map(x=>x.id).join(',')!==ORIG_IDS;
+    const parts=[]; if(addN) parts.push('+'+addN+' 新增'); if(s) parts.push('−'+s+' 软删'); if(moved) parts.push('排序变动');
+    const live=orderMode==='on'? items.filter(i=>!softdel[i.id]).length : items.length;
+    o4.innerHTML = `<div class="drawer"><h4>发布清单（含结构变更需二次确认）</h4>
+      ${parts.length? `<div class="drow"><span class="dkey">结构</span><span class="dval"><span class="struct">${parts.join(' · ')}</span><span class="now">发布后首页 FAQ 由 ${FAQ.length} 条变为 ${live} 条</span></span></div>
+             <div class="res warn" style="margin-top:8px"><span>这一类改动会同时影响 FAQ 数量守卫（现断言 13≠7 那次就是被它拦下的），必须同批改 fixture——按合同变更纪律走。</span></div>`
+          : `<div class="drow"><span class="dkey">结构</span><span class="dval"><span class="was">无增删 / 无软删 / 排序未变</span>→<span class="now">只有文字变更</span></span></div>`}
+      </div>`;
+  };
+  paintStruct();
+})();
+</script>

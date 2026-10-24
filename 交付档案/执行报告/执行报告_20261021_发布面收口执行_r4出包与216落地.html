@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行报告 · 发布面收口 · r4 出包与 #216 落地 · 2026-10-21</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;
+  --ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;
+  --accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code,.mono{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.mono{background:none;border:none;padding:0;font-variant-numeric:tabular-nums}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .lb{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted)}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.card .fix{font-size:.88rem;color:var(--ok)}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">图译工坊 · 内测版 · 执行报告 · 发布面收口</p>
+  <h1>候选包已出、17 道门全绿，剩下三件要你拍</h1>
+  <p class="standfirst">范围＝develop 发布线（<span class="mono">15c41c6</span>）与 #216 收口。结论＝<strong>测试站候选包已就绪，可以部署；生产本轮仍不发</strong>。风险档 Low：代码面已过门，未部署、未推远端、未碰生产。</p>
+  <p class="meta">2026-10-21 · 预检 13:50:18→13:59:20 · develop 领先 main 11 笔 · 归档 54,289,906 B</p>
+</header>
+
+<section class="verdict">
+  <p class="lb">一句话</p>
+  <p>该我做的都做完了：隐私洞修好并上了锁、发版说明改成实话、签名口径的错误结论已更正、干净树上 17 道发布门整链通过、测试站候选包与收据都出了。现在缺的不是代码，是三个动作——<strong>你装新版助手、你给部署时刻、你跑五项真机验收</strong>。</p>
+</section>
+
+<div class="stats">
+  <div class="stat ok"><span class="n">17</span><span class="lb">道发布门整链 PASS（此前口径写 16，实测 17）</span></div>
+  <div class="stat ok"><span class="n">1</span><span class="lb">个候选包＋收据（分支 develop）</span></div>
+  <div class="stat ok"><span class="n">46</span><span class="lb">条 #216 断言（形状 34＋运行时 12）</span></div>
+  <div class="stat warn"><span class="n">3</span><span class="lb">件要你拍（3 分钟／一句话／15 分钟）</span></div>
+</div>
+
+<section>
+  <h2><span class="sn">01</span>你现在最该知道的一件事</h2>
+  <p class="lede">你这台机器上的助手和两站的要求对不上：你那边报的是 <code>bundled-engine-20261020-r1</code>，两站要的是 <code>transport-hardening-20261011-r1</code>，而合同门要求逐字相等 ⇒ <strong>每次本地助手操作都会被拒</strong>。装上 r4 就解，不用等发布。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>做完了什么（每条都有本机实测）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">#216</span><strong>运营备注泄漏：修好并上锁</strong></div>
+      <p>身份接口 <code>/api/auth/me</code> 只回四样：<code>ok</code>／<code>email</code>／<code>emailVerified</code>／<code>accountStatus</code>；运营的"姓名／备注"改走独立 owner 通道（单一写者＋审计）；用户界面一律用邮箱本地部分当显示名；运营改用户姓名返回 409 <code>ADMIN_USER_NAME_READONLY</code>，不静默忽略。</p>
+      <p class="loc">实现 <code>26e84c4</code>＋<code>67032ea</code></p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">发布门</span><strong>两道测试真进了门，不再是纸门</strong></div>
+      <p>之前只有测试文件、没有 npm 入口。现在 <code>test:contracts</code> 末尾跑形状断言（34 项 rc=0），<code>test:trust-chain</code> 末尾跑运行时断言（12 项：隔离库真建"姓名里塞着备注"的脏用户、真发会话、真调路由，证明备注到不了用户端）。</p>
+      <p class="loc">接线 <code>c9f1a87</code></p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">文案</span><strong><code>/latest</code> 发版说明改成 3.7.16 的实话</strong></div>
+      <p>首句写明"内置本地引擎、执行通道默认关闭、工作台流程本版不变"，旧内容挂到"此前版本能力保留"；一致性冒烟 46 项 rc=0。</p>
+      <p class="loc">提交 <code>529912a</code></p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">更正</span><strong>签名口径：我上一轮说错了一半</strong></div>
+      <p>"生产被两道门互相挡住"不成立——那道"生产禁止无签名"的检查从来没在发布路径上跑过。运行时反证：生产 <code>/api/local-assistant/latest</code> 今天返回 <code>available:true</code>＋<code>UnsignedBeta</code>，说明生产的开关确实是开的。更正入账 <code>ISSUES #219</code>，专项说明（A／B 两条路）13:01 已发飞书，发送 rc=0。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">出包</span><strong>测试站候选包＋收据</strong></div>
+      <p>干净出包树（detached、无 <code>.env</code>）上 17 道门全 PASS，随后出包 rc=0：归档 <code>tygf-test-15c41c6acf93.zip</code>，54,289,906 字节，SHA-256 实测 <code>A4CE13C2…4B38C0B</code>。收据：分支 <strong>develop</strong>、助手 <strong>3.7.16</strong>、安装包 <code>tygf-engine-setup-3.7.16.exe</code>（<code>9C946437…24DB5559</code>）、<code>UnsignedBeta</code>、包卫生绿（归档内禁入路径 0、疑似密钥 0）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>过程中撞到的四件事（都留了证据）</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <strong>预检中过一次"假红"（环境）</strong>
+        <p>第一次整链在 vitest 文件处 <strong>60.79 秒 worker 启动超时</strong>；同一棵树单跑同一文件 <strong>rc=0、36.21 秒、7 用例全过</strong>。⇒ 这是启动抖动而非契约不成立；60 秒余量偏紧（单跑已用 36 秒），预检必须在空闲机跑。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <strong>我新加的运行时冒烟有个真缺陷</strong>
+        <p>它硬读 <code>.env</code>，而干净出包树没有这个文件 ⇒ <code>test:trust-chain</code> ENOENT 红。改成"有就读、没有就跳过"，并在无 <code>.env</code> 的树里实测 rc=0。</p>
+        <p class="fix">修：<code>da2d739</code></p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <strong>我的形状断言又被"实现形状"咬了一次</strong>
+        <p>显示名原断言 <code>me.email.split('@')</code> 一种写法；别手把显示名改成读会话 Provider 后断言误红、把门挡死。已改成钉不变量"显示名必须从邮箱取本地部分"，补首页账号入口与会话摘要断言＋负控（同日 #218 同类）。</p>
+        <p class="fix">修：<code>7c80bcd</code></p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <strong>出包脚本要求免导出清单入库</strong>
+        <p><code>.gitattributes</code> 里安装包的 <code>-export-ignore</code> 白名单必须提交（<code>git archive</code> 读 HEAD 不读工作树）。已把"3.7.14 退出归档、3.7.15／3.7.16 保留"入库。</p>
+        <p class="fix">修：<code>15c41c6</code></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>候选包里多了别手的一笔，我核过了</h2>
+  <div class="callout">
+    <span class="lb">e65b572 · 首页登录态统一</span>
+    <p>另一个会话的提交（10 个文件、+563/−46）。按"不从落后的树打包"的规矩，它现在就在候选里。我读了服务端摘要 <code>src/lib/auth/session-summary.ts</code>：只下发 <code>state</code>／<code>email</code>／<code>emailVerified</code> 三样，没有 <code>name</code>／<code>betaUserId</code>／<code>sessionId</code>，与 #216 一致。</p>
+    <p><strong>但它的冒烟 <code>scripts/smoke-home-session-ui.mjs</code> 没有 npm 入口、也没接进任何门（纸门）</strong>——不影响本次机械放行，属于"新功能无门"，应由作者补或我下一轮补。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>你要做的（按顺序，各标耗时）</h2>
+  <ul class="notes">
+    <li><strong>① 装 r4（你，3 分钟）。</strong>判据：<code>/ping</code> 回 <code>version=3.7.16</code> 且 <code>buildId=transport-hardening-20261011-r1</code>。</li>
+    <li><strong>② 给测试站部署时刻（你一句话，我 10 分钟执行）。</strong>前置＝静默闸（近 30 分钟无 RUNNING 批次／无预扣）。<strong>部署即发布</strong>：测试站助手下限抬到 3.7.16，仍在 3.7.15 的测试机当场被拦——建议你先装、并确认其他测试机都能升级，再给时刻。</li>
+    <li><strong>③ 跑五项真机验收（你，约 15 分钟）。</strong>安装／配对／扫描／批量／报告五项全过；我落成 <code>docs/acceptance/3.7.16_&lt;日期&gt;_&lt;机器&gt;.json</code>。这是生产预检的唯一入口（盘上只有 3.7.15 那份，10-26 到期）。</li>
+    <li><strong>④ 签名口径一句话（A 或 B）。</strong>A＝白名单无签名＋写死到期日（我 30 分钟可落，推荐现在选）；B＝Authenticode 签名（需公司主体与证书，正式对外售卖前必办）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>我不会做的</h2>
+  <ul class="notes">
+    <li>不推远端、不擅自部署两站、不碰生产、不改服务器环境变量。</li>
+    <li>不删判据或放宽判据凑绿、不伪造签名、不拿旧包顶替候选。</li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>证据位置：</strong><code>tmp/package-15c41c6-run2.log</code>（17 门 PASS／<code>PACKAGE_RC=0</code>）、<code>tmp/package-7c80bcd.log</code>（首次全绿预检，随后被 <code>.gitattributes</code> 挡）、<code>tmp/preflight-529912a.log</code> 与 <code>tmp/vitest-picker-release-solo.log</code>（假红与单跑对照）、<code>tmp/runtime-smoke-clean-tree.log</code>（无 <code>.env</code> 树 rc=0）、<code>tmp/cp-1329.out</code>（<code>发布挂号：main@319bc13 ✅已挂号</code>）。开发线：<code>worktrees/develop</code> HEAD <code>15c41c6</code>，<code>main..develop</code>＝11 笔。更正账：<code>AI_MEMORY/ISSUES.md</code> #219。</p>
+  <p>方法：整合预检＋出包同一次运行（出包脚本内部重跑全部发布门），逐条按退出码与文件读数核对；预检的假红用同树单跑对照判定为环境红，未把它当契约不成立、也未拿单文件绿当全链绿。</p>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日访客数据线：脚本与 nginx 改法 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--font-display);font-size:1.24rem;font-weight:600;line-height:1.3}
+.stat .n{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .id{font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.card .title{font-weight:600}
+.card p{font-size:.94rem;color:var(--ink-2)}
+.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout strong{color:var(--ink)}
+ul.evi{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px;font-size:.93rem;color:var(--ink-2)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 运营数据线</span><span class="sep">/</span><span>2026-10-20 12:06</span><span class="sep">/</span><span>develop（工作树，未提交未部署）</span></div>
+  <h1>每日访客数据线：脚本已跑通，nginx 改法备好待执行</h1>
+  <p class="standfirst">Owner 两句话已拍（CF 分析按「补一行用途」处理、授权两站一起改 nginx）。本轮把能自己做完的做完并留运行证据，做不完的那一步如实标出原因。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">状态</span>
+  <p>拉数脚本 <strong>已落地并跑通</strong>（自测 9/9、端到端 8/8、缺凭据退 2）；nginx 改法 <strong>做成一条命令可落的两份文件</strong>（<span class="mono">bash -n</span> rc=0、sed 规则三形状本地验真）；<strong>但本会话执行不了服务器那一步</strong>——SSH 被本机权限层拦且密钥直连被拒，按纪律不试第三次、不绕闸。<strong>"每天多少访客"至今仍无真数</strong>：缺一枚只读 Cloudflare 分析令牌，我不拿估算糊数。</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span>本轮真实读数</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="k">脚本自测</span><span class="v">9/9 PASS</span><span class="n">--self-test rc=0</span></div>
+    <div class="stat ok"><span class="k">端到端</span><span class="v">8/8 ALL PASS</span><span class="n">幂等·空响应·报错三路 rc 全对</span></div>
+    <div class="stat ok"><span class="k">自测抓出的真 bug</span><span class="v">1 处</span><span class="n">Number(null) 会把"没数"写成"零访客"</span></div>
+    <div class="stat warn"><span class="k">nginx 脚本</span><span class="v">未执行</span><span class="n">bash -n rc=0 · sed 3 形状验真</span></div>
+    <div class="stat bad"><span class="k">服务器访问</span><span class="v">被拦</span><span class="n">权限层拒 + 密钥直连 publickey denied</span></div>
+    <div class="stat ok"><span class="k">记账</span><span class="v">h2 +1</span><span class="n">TASK_LOG 336→337 · ledger 234 行 0 坏行</span></div>
+  </div>
+  <div class="callout"><strong>取数与验证时刻：</strong>2026-10-20 11:53—12:06。命令：<span class="mono">node scripts/site-traffic-daily.mjs --self-test</span>、<span class="mono">node tmp/e2e-site-traffic.mjs</span>、<span class="mono">bash -n deploy/nginx/apply-ops-logging.sh</span>、<span class="mono">node --check scripts/site-traffic-daily.mjs</span>；无凭据直跑 <span class="mono">rc=2</span>（直连跑，不经管道——管道后的退出码不是脚本的）。</div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>三件产出</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="id">scripts/site-traffic-daily.mjs</span><span class="title">每日访客拉数（Cloudflare 只读分析接口）</span><span class="tag ok">已跑通</span></div>
+      <p>按天取 <span class="mono">uniques / pageViews / requests</span>，一天一行落 <span class="mono">AI_MEMORY/traffic-daily.jsonl</span>。支持 <span class="mono">--from-json</span>（本机 node fetch 不稳时用 curl 喂）、<span class="mono">--days</span>、<span class="mono">--out</span>、<span class="mono">--dry-run</span>、<span class="mono">--self-test</span>。</p>
+      <div class="fix"><strong>三条硬纪律：</strong>① 缺输入退 2 且<strong>绝不写 0 访客</strong>（照 northstar 的 <span class="mono">zero_or_not_supplied</span>）；② 写盘前三道闸——IPv4 形状／未替换占位符／未来钟点，命中即拒写；③ 输出只含聚合计数，不含 IP、UA、令牌。每行自带 <span class="mono">scope:"zone"</span> 与 <span class="mono">caveat</span>，防下游把 zone 合计当"官网访客"引。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">deploy/nginx/tygf-ops-logging.conf ＋ apply-ops-logging.sh</span><span class="title">日志基建（真实 IP／脱敏／分站／耗时）</span><span class="tag warn">备好未执行</span></div>
+      <p>配置三块：<span class="mono">set_real_ip_from</span>（CF 官方 v4/v6 段，本会话 curl 取回）＋ <span class="mono">real_ip_header CF-Connecting-IP</span>；凭据脱敏；格式补 <span class="mono">host=</span> 与 <span class="mono">rt=</span>。执行脚本走「备份 → 改 → <span class="mono">nginx -t</span> → 失败整目录回滚 → reload → 四件事取证」，并带一道<strong>脱敏负控</strong>：新日志检出凭据形状即判失败并回滚。<span class="mono">--apply</span> 必须同带 <span class="mono">--confirm-both-sites</span>，漏一个就拒绝跑。</p>
+      <div class="fix"><strong>比原草案更严的一处：</strong>草案用 map 逐参数替换 <span class="mono">REDACTED</span>，而 map 每行只替换最后一处命中 ⇒ 同一 URL 两个凭据参数会漏一个。这里改成「检出凭据参数即整段查询串不落盘」——宁可丢一点数据，不留泄漏面。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">deploy/observability/README.md §7</span><span class="title">观测草案勘误</span><span class="tag ok">已落（纯追加）</span></div>
+      <p>更正 §3「Umami 复用一个 Postgres 库」——生产是 SQLite 单文件库，全仓无 Postgres，而 Umami v3 只认 PostgreSQL ≥12.14；并补记 §1 红线漏算的事实：Cloudflare 早已登记在《第三方处理方清单》，用它的边缘分析属<strong>目的变更</strong>而非新增处理方。ISSUES <span class="mono">#189</span> 状态改「部分处置」。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>为什么还没有数字，以及我故意没做的一件事</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="id">唯一缺口</span><span class="title">缺一枚只读 Analytics Token</span><span class="tag bad">阻塞第一个真数</span></div>
+      <p>给了令牌（只进服务器 root-only 环境文件，不进仓库、不进文档），脚本第一次真跑就能出「昨天多少访客、多少浏览」，之后每天早上自动推一句到这里。在那之前这个数仍是<strong>没有</strong>——不是没算，是站内从没存过。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">刻意不动</span><span class="title">隐私政策那行「访问流量统计」不提前写</span><span class="tag info">防主张超前</span></div>
+      <p>beacon 开关还没在 Cloudflare 那边打开，先把用途写进政策＝对外声明一件我们还没做的事（与 LEGAL-1 同族毛病）。那一行必须与开关<strong>同一笔</strong>落，连同中英双语页与 <span class="mono">test:legal-pages-drift</span> 一起跑。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>待办与未核实</h2>
+  <ul class="evi">
+    <li><strong>推进任一即可：</strong>给只读 Analytics Token；或有服务器权限的手跑 <span class="mono">apply-ops-logging.sh --dry-run</span> 看计划，再决定 <span class="mono">--apply --confirm-both-sites</span>。</li>
+    <li><strong>未核实：</strong>CF <span class="mono">uniques</span> 的去重键与爬虫计入与否；按站拆分需换 adaptive 数据集的 <span class="mono">clientRequestHTTPHost</span> 维度（未实测）；CF 是否已为该域开启分析。</li>
+    <li><strong>本轮改动面（实测）：</strong>develop 工作树仅新增 3 个未跟踪文件 ＋ <span class="mono">deploy/observability/README.md</span> <span class="mono">+7/−0</span>；容器根 <span class="mono">AI_MEMORY/</span> 三处记账。<strong>未 commit、未 push、未部署。</strong>（工作树里另有他人未提交的内存探针改动，与本轮无关，未触碰。）</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">05</span>勘误与追加（同轮 12:2x，Owner 令「按你的建议执行」后）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="id">勘误 1</span><span class="title">我上一节写的「CF 官方 v4/v6 段已取回」不完整</span><span class="tag warn">自查发现</span></div>
+      <p>上一轮我只 <span class="mono">head -12</span> 就抄了清单，实际官方 v4 是 <strong>15 段</strong>，我的 conf 缺 <span class="mono">172.64.0.0/13</span> 与 <span class="mono">131.0.72.0/22</span>。方向上这是"写窄"——不造成伪造风险，但会让部分流量还原不到真实 IP（少计）。<strong>已补齐为 v4 15 ＋ v6 7 ＝ 22 段，与官方逐段等长。</strong></p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">新增门</span><span class="title">scripts/smoke-ops-logging-conf.mjs ＋ 两道 npm 入口</span><span class="tag ok">已跑通</span></div>
+      <p>把"执行前该成立的东西"变成一道可复跑的门：断言网段与官方清单逐段等长（写宽＝伪造敞口，直接红）、<span class="mono">log_format</span> 不得引用 <span class="mono">$request</span>／<span class="mono">$request_uri</span>／裸 <span class="mono">$http_referer</span>、脱敏必须是"整段丢弃"（残留 <span class="mono">REDACTED</span> 逐参数替换法即红）、<span class="mono">$tygf_args_tail</span> 必须定义在 <span class="mono">log_format</span> 之前，以及 apply 脚本必须含备份／语法闸／回滚／双旗确认／脱敏负控且不得删日志目录。</p>
+      <div class="fix"><strong>负控 4/4：</strong>把 <span class="mono">$request</span> 塞回去、删一段网段、塞一段非 CF 网段、抽掉 <span class="mono">nginx -t</span>——四种破坏全被拦红，证明这道门不是空门。<span class="mono">npm run test:ops-logging</span> 与 <span class="mono">npm run test:site-traffic</span> 均 rc=0；两枚新脚本 eslint rc=0。</div>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">检查器自己的错</span><span class="title">首跑三处红是假红（自命中）</span><span class="tag info">已修</span></div>
+      <p>门第一次跑报三条 FAIL，逐条查是我用 <span class="mono">indexOf('log_format')</span> 先撞到了<strong>注释里出现的"log_format"三个字</strong>，截出来的块是错的——正是本仓 R6 记过的那族自命中。改成行首锚定真指令后全绿。<strong>没有把这三条当成 conf 的缺陷去"修配置"。</strong></p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="id">仍然卡住的两步</span><span class="title">服务器访问被拦两次；本机无 CF 凭据</span><span class="tag bad">未推进</span></div>
+      <p>SSH 生产机第二次仍被本机权限层拦（理由：跨网络生产直连需在会话外授权），按纪律<strong>不试第三次、不绕闸</strong>；本机两枚 env 文件与进程环境对 CF 令牌键名<strong>零命中</strong>，只读令牌只能由你铸。⇒ 档一与档二停在「已备好＋已自检，等一只手或一枚令牌」，<strong>"每天多少访客"至今仍是未核实</strong>，我没有拿估算填数。</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div>同任务前一件：《每日访客与运营数据 · 现状盘点与方案》（九方案对抗式审查，含 GitHub 逐个核到的官方前置条件与两处硬事实冲突）。</div>
+  <div>飞书：两份均已发送成功（<span class="mono">SENT chunks=1 EXIT=0</span> ×2）。台账投影：<span class="mono">create=1 update=1 held=2</span>（held 为先前 Owner 手改行，与本轮无关）。</div>
+</footer>
+
+</div>
+</body>
+</html>

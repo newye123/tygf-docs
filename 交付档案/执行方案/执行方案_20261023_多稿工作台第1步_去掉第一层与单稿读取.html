@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行方案 · 第 1 步去掉第一层与单稿读取 · 2026-10-23</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-family:var(--font-mono)}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>2026-10-23</span><span class="sep">/</span><span>多稿工作台 · 第 1 步</span></div>
+  <h1>去掉第一层，文件夹入口按单稿卡来做</h1>
+  <p class="standfirst">不再让用户先过一张多选卡再看到第二层。进「准备素材」就是第二层：没有文件夹时是一张单稿样式的入口卡；选完文件夹，同一页直接出统计、队列和矩阵。每份稿补「选择译文表…」，把内核承诺、界面却缺失的手动出口补上。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">结论：可以删第一层 ｜ 不动自动归属内核 ｜ 不发助手新版</span>
+  <p><strong>这次不是“把第一层藏起来”就完事：</strong>文件夹读取状态必须收到父层，否则进度和错误留在隐藏组件里，用户会以为卡死。单稿保留原生文件框，把 owner 锚点改到应用窗口中心，不为这一处发助手 3.7.25。</p>
+</div>
+
+<div class="contract">
+  <div><b>第一层</b>：批量多选卡，删除可见入口</div>
+  <div><b>第二层</b>：<span class="mono">AttributionStage</span>，保留统计/队列/矩阵</div>
+  <div><b>读取</b>：父层 <span class="mono">loadStageFolder</span> 统一 loading/error</div>
+  <div><b>手动选表</b>：每稿一个出口，自动配对降为建议</div>
+  <div><b>单稿选文件</b>：原生文件框，owner 居中</div>
+  <div><b>助手</b>：仍 3.7.24；生产零操作</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>对抗审查：五个必须先说清的点</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>发现</th><th>证据</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">G1</td><td>第一层和第二层重复，还多一步；第一层的读取状态藏在隐藏组件里。</td><td class="mono">workbench-view.tsx:4224 / :4273<br>design-file-card.tsx folderScanning</td><td>删第一层可见入口；文件夹读取收到父层统一管理。</td></tr>
+        <tr><td class="mono">G2</td><td>单稿卡是“路径输入 + 选择文件 + 扫描 + 只读预扫描”；批量第一层是另一套。</td><td class="mono">design-file-card.tsx:1469-1525</td><td>第二层空态照单稿卡做；文件夹入口同款。</td></tr>
+        <tr><td class="mono">G3</td><td>单稿 Windows 文件框按按钮锚点定位，所以偏右下。</td><td class="mono">picker-dialogs.cjs:65-99</td><td>原生文件框 + 应用窗口中心锚点；不跟按钮跑右下。</td></tr>
+        <tr><td class="mono">G4</td><td>12 份稿“认不出 SKU”：文件名同时有 0202 / 5660；界面没有手动选表出口。</td><td class="mono">sku-attribution.ts:71-87 / :328<br>attribution-stage.tsx:722-733</td><td>每稿「选择译文表…」；读表复用单稿解析。</td></tr>
+        <tr><td class="mono">G5</td><td>966 个设计稿只收 12 份。</td><td class="mono">design-file-card.tsx:121</td><td>本轮先保留 12；从 966 里挑稿另开一刀。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>交互：进第 1 步以后怎么走</h2>
+  <div class="cards">
+    <div class="card"><div class="head"><span class="title">没有文件夹</span><span class="tag info">入口态</span></div><p>第二层直接出现，卡头与单稿共用（「准备素材」+「排版定制」），里面是一张单稿样式的入口卡：路径输入、<strong>选择文件夹…</strong>、<strong>读取文件夹</strong>、“只读预扫描”。点按钮弹 Windows 原生文件夹框（FolderBrowserDialog），直接选文件夹本身。</p></div>
+    <div class="card"><div class="head"><span class="title">读完文件夹</span><span class="tag ok">数据态</span></div><p>同一页切成四个统计、左右两栏和整宽矩阵；不再经过多选卡。换文件夹仍先确认，扫描进行中禁止换。</p></div>
+    <div class="card"><div class="head"><span class="title">每份稿的右栏</span><span class="tag warn">补出口</span></div><p>有候选：候选卡 + 选择其他译文表…；缺表：选择译文表…（主）、重新扫描文件夹、这稿先不做；已选：读表状态 + 换一张表…。</p></div>
+    <div class="card"><div class="head"><span class="title">选表弹窗</span><span class="tag info">单稿逻辑</span></div><p>列出当前文件夹里的表，可搜索，显示相对路径；点选即读。表不在文件夹时给“逐稿手动导入…”出口。自动配对只做建议。</p></div>
+    <div class="card"><div class="head"><span class="title">单稿页</span><span class="tag ok">原生框</span></div><p>「选择文件…」仍打开 Windows 原生文件框（PSD/PSB 过滤），可直接选文件；owner 锚点改为应用窗口中心，框不再偏右下。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>改动与人日</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>阶段</th><th>内容</th><th class="num">人日</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag warn">P0</span></td><td>第二层空态入口卡 + 父层文件夹读取 + 删第一层</td><td class="num">1.0–1.5</td></tr>
+        <tr><td><span class="tag warn">P1</span></td><td>单稿原生文件框居中锚点</td><td class="num">0.5</td></tr>
+        <tr><td><span class="tag warn">P2</span></td><td>每稿手动选表 + 闸/统计适配</td><td class="num">1.0</td></tr>
+        <tr><td><span class="tag ok">P3</span></td><td>单测/合同/出包/测试站</td><td class="num">0.5–1.0</td></tr>
+        <tr><td colspan="2"><strong>合计</strong></td><td class="num"><strong>3–4</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p><strong>新增：</strong><span class="mono">stage-folder-gate.tsx</span>、<span class="mono">table-picker-dialog.tsx</span>、手动选表单测。<strong>修改：</strong><span class="mono">workbench-view.tsx</span>、<span class="mono">attribution-stage.tsx</span>、<span class="mono">stage-rows.ts</span>、<span class="mono">design-file-card.tsx</span>、<span class="mono">folder-picker-dialog.tsx</span>、<span class="mono">siteContent.ts</span>、UI 合同。<strong>不动：</strong>归属内核、助手 3.7.24、计费/回执、生产站。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>验收</h2>
+  <ol class="plan">
+    <li><strong>入口</strong>：进批量页没有第一层多选卡，直接看到单稿样式的“选择设计稿文件夹”。</li>
+    <li><strong>读取</strong>：Windows 原生文件夹框（FolderBrowserDialog）直接选文件夹本身；读取进度/错误都在入口卡里；读完同一页出统计/队列/矩阵。</li>
+    <li><strong>手动选表</strong>：0202/5660 这类认不出 SKU 的稿，点「选择译文表…」能选、能读、能变绿；下一步不再被卡。</li>
+    <li><strong>单稿</strong>：原生文件框可直接选 PSD；框以应用窗口为中心，不再偏右下。</li>
+    <li><strong>回退</strong>：批量仍是老式文件夹框（图四外观），功能正确；要做图三现代外观需助手 3.7.25；单稿本身就是原生文件框；旧界面仍能从「更多 → 逐稿手动导入…」回。</li>
+    <li><strong>门</strong>：tsc 0 错、lint 0 error、定向单测/合同、17 道出包门、测试站 health/provenance。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">05</span>风险与不做</h2>
+  <div class="callout warn">
+    <p><strong>不做：</strong>① 不在这一轮放开 966 个设计稿的选择上限；② 不完全删掉自动配对/矩阵（保留为建议）；③ 不发助手 3.7.25（批量仍是老文件夹框；现代文件夹框另开）；④ 生产零操作、支付开关关闭。</p>
+  </div>
+  <div class="callout bad">
+    <p><strong>风险：</strong>隐藏的 <span class="mono">DesignFileCard</span> 仍负责 PSD 扫描队列，不能卸载；手动表可能不是 SKU 候选，读表按交付物选 sheet，错了可换；未知 SKU 不做一表一稿静默去重，同 SKU 同交付物仍拦。</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>代码：<span class="mono">worktrees/multidraft2</span>；基线：<span class="mono">5d4c3f10</span>（测试站现役）。方案正文同目录 <span class="mono">执行方案_20261023_多稿工作台第1步_去掉第一层与单稿读取.md</span>。</p>
+  <p>方案待执行；施工后按三段轨先上测试站，生产不动。</p>
+</footer>
+
+</div>
+</body>
+</html>

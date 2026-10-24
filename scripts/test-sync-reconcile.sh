@@ -136,6 +136,25 @@ check "summary update=0" "$D/summary.json" '"update": 0'
 check "计划含 [create] T2" "$D/plan.sh" '\[create\] T2'
 check "快照含 T2" "$D/state.pending.ndjson" '"taskId":"T2"'
 
+echo "== 例8 坏日期（updatedAt=2026-10-22 20:1x）→ 该行排除并点名，其余行照常 =="
+D="$T/c8"; new_case "$D"
+cat >>"$D/ledger.jsonl" <<'EOF'
+{"taskId":"T3","title":"丙任务","status":"待复验","owner":"总控长","next":"n3-new","source":"s3.md:3","updatedAt":"2026-10-22 20:1x","due":"2026-10-24"}
+EOF
+cat >>"$D/current.ndjson" <<'EOF'
+{"record_id":"rec3","任务ID":"T3","标题":"丙任务","状态":["待复验"],"负责人":"总控长","下一步":"n3-old","出处":"s3.md:3","更新时间":"2026-10-22T19:00:00+08:00","到期日":"2026-10-24T00:00:00+08:00"}
+EOF
+cat >>"$D/state1.ndjson" <<'EOF'
+{"taskId":"T3","record_id":"rec3","values":{"任务ID":"T3","标题":"丙任务","状态":"待复验","负责人":"总控长","下一步":"n3-old","出处":"s3.md:3","更新时间":"2026-10-22 19:00","到期日":"2026-10-24"},"updatedAt":"2026-10-22 22:00"}
+EOF
+run_mjs "$D" --state "$(to_win "$D/state1.ndjson")"
+check "summary invalidRowCount=1" "$D/summary.json" '"invalidRowCount": 1'
+check "summary update=0（坏行未进计划）" "$D/summary.json" '"update": 0'
+check "errors 点名 T3" "$D/summary.json" 'taskId=T3 更新时间'
+check "计划不含 T3" "$D/plan.sh" 'T3' 1
+check "快照不含 T3" "$D/state.pending.ndjson" '"taskId":"T3"' 1
+check "其余行照常 skip=1" "$D/summary.json" '"skip": 1'
+
 echo
 echo "== 结果：PASS=$PASS FAIL=$FAIL =="
 [ "$FAIL" -eq 0 ] || exit 1

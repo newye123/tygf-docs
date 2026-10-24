@@ -1,0 +1,439 @@
+<title>飞书多维表格当任务台账：开源调研 + 对抗式审查 + 执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:50ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.card ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px}
+.card li{font-size:.9rem;color:var(--ink-2);line-height:1.7}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+pre{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.65;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>飞书多维表格当任务台账</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>工作计划搬进飞书多维表格：可行性、坑与执行方案</h1>
+  <p class="standfirst">开源调研（6 类候选）＋ 对抗式审查（8 问）＋ 五步执行方案。核心裁决：这个方向值得做，但它不该是「第四本账」，而该是「账的显示窗口」——而且它正好补上总控今早 A/B 之外的第三条路。</p>
+  <div class="meta">
+    <span>前提实测 3 条</span>
+    <span>对抗审查 8 问</span>
+    <span>执行 5 步</span>
+    <span>未安装 · 未建表 · 未改代码</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>裁决</h2>
+
+  <div class="verdict">
+    <span class="lb">一句话</span>
+    <p>可行、值得做，但定位要改：<strong>它该是「账的显示窗口」，不是「第四本账」</strong>。真相仍是 git，表格只是让您看得见。前提：本机现在还没有 <code>lark-cli</code>，这是第一步。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">1</span><span class="k">个直接用（飞书官方 CLI）</span></div>
+    <div class="stat warn"><span class="n">6</span><span class="k">类开源候选评估</span></div>
+    <div class="stat ok"><span class="n">8</span><span class="k">问对抗式审查</span></div>
+    <div class="stat warn"><span class="n">5</span><span class="k">步执行 · 约半天</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>本机前提实测</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>前提</th><th>实测</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>飞书连接器授权</strong></td>
+        <td><code>feishu</code> connector：<code>bound: true</code>、<code>enabled: true</code>，随附 28 个 <code>lark-*</code> skill（含 <code>lark-base</code> 多维表格、<code>lark-task</code> 任务）</td>
+        <td><span class="tag ok">已就绪</span></td>
+      </tr>
+      <tr>
+        <td><strong><code>lark-cli</code> 二进制</strong></td>
+        <td><code>which lark-cli</code> → command not found；插件目录、binaries、npm 全局均无</td>
+        <td><span class="tag bad">未安装 · 第一步</span></td>
+      </tr>
+      <tr>
+        <td><strong>安装方式</strong></td>
+        <td>插件配置 <code>ai.workbuddy/cli.json</code>：<code>npm install -g @larksuite/cli</code>，版本要求 <strong>≥1.0.97</strong>，运行时 node ≥18</td>
+        <td><span class="tag ok">路径明确</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">能力边界（实测自 lark-base skill）</span>
+    <p>覆盖建表、字段、记录、视图、统计、公式、表单、仪表盘、workflow、角色权限、<strong>模板中心搜索</strong>。另有一条重要提示：<strong>「Table 下的大多数更新通过异步链路生效，写入成功返回后立即读取可能暂时看不到最新状态」</strong>——这一条后面进对抗审查第 5 问。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>GitHub 开源调研</h2>
+
+  <h3>3.1 直接可用</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">直接用</span><h3>@larksuite/cli（飞书官方）</h3></div>
+      <p>飞书官方开源 CLI，MIT 协议，约 2.8K★，覆盖 12 个业务域（含多维表格、任务），200+ 命令、19 个 Agent Skill。本机 connector 本来就基于它，装上即可用。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">用</span><h3>飞书官方模板中心</h3></div>
+      <p>公开的项目管理 / 任务看板 / 甘特图模板库，<code>+template-search</code> 可按关键词搜。字段设计不用从零想。</p>
+    </div>
+  </div>
+
+  <h3>3.2 借架构、不照抄</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">借形状</span><h3>popipo-ai/popipo-feishu-skill</h3></div>
+      <p>与需求最贴近的参考：链路是「用户反馈群 → 多维表格归档 → 飞书任务分配」。值得抄的是四个工程习惯：</p>
+      <ul>
+        <li><strong>增量拉取</strong>：只拉新增，不全量重写</li>
+        <li><strong>一话题一行</strong>：主键稳定，不重复插入</li>
+        <li><strong><code>--dry-run</code> 预览</strong>：写入前先看「将新增多少行」</li>
+        <li><strong>Agent 中间步骤</strong>：字段空的行由 AI 补全再进任务——<strong>即「AI 负责填、人只看」</strong></li>
+      </ul>
+      <p>裁决：借形状，不装代码。它的脚本是 Python + 自建应用凭据，与本机 CLI 授权体系不同。</p>
+    </div>
+  </div>
+
+  <h3>3.3 反面教材（重要）</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">不装</span><h3>ddddnet/FeiShuDataBase</h3></div>
+      <p>Python 封装多维表格当免费数据库，功能能用。但它的 README <strong>把 <code>APP_ID</code> 和 <code>APP_SECRET</code> 明文写在示例里</strong>（真实凭据）。</p>
+      <p>裁决：不装。理由不是功能，是它示范了一种<strong>会把凭据带进仓库的写法</strong>——本项目已有「密钥只放环境变量或后台，禁明文进文档/提交」的红线。</p>
+    </div>
+  </div>
+
+  <h3>3.4 备查与明确不装</h3>
+  <div class="split">
+    <div class="panel yes">
+      <h3>备查</h3>
+      <ul>
+        <li><strong>feishu-cli</strong>（社区，非官方）：Markdown ↔ 飞书文档双向无损转换。台账本体就是 md，将来要推文档可用。</li>
+        <li><strong>飞书集成平台 anycross</strong>：有定时同步模板（多维表格 ↔ MySQL）。属重方案，暂不需要。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>明确不装</h3>
+      <ul>
+        <li><strong>Plane / Vikunja / Focalboard / OpenProject / Taiga</strong>：自托管项目管理，生态成熟，甚至有 Vikunja MCP 可让 AI 直接管任务。</li>
+        <li>理由与上月否决 Unleash 同族——<strong>本仓库已有一条完整台账链路，再装一套就是重复建设</strong>，且新增一个要部署、备份、升级的系统。我们要的是「换个窗口看账」，不是「再开一本账」。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>对抗式审查 · 八问</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>这会不会变成第四本没人写的账？<span class="tag bad">头号风险</span></h3>
+        <p>三账休眠 8 天、日报停更 17 天，根因都是<strong>靠人写</strong>。如果飞书表格同样靠人手动更新，它会以同样的方式烂掉。</p>
+        <p><strong>裁决</strong>：表格内容<strong>必须机器写</strong>。写手是 AI 会话（装上 CLI 后会话就能直接写表），时机是<strong>会话收尾那一步</strong>——与「追加 TASK_LOG」合并成同一个动作，不新增人的负担。</p>
+        <p><strong>可判定标准</strong>：表格超过 7 天没更新、而 git 同期有提交 ⇒ 投影链断了，立案。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>谁是真相源？</h3>
+        <p>若表格是真相源：飞书故障 = 项目失忆；且与 git 无法互证，分歧时不知道信谁。</p>
+        <p><strong>裁决</strong>：<strong>单向投影，git 为准</strong>。推论：「表格没更新」<strong>不算事故</strong>；「git 有、表格没有」<strong>才算</strong>。这条同时回答您的核心诉求——进度权威定义来自 git，表格只是让您看得见。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>表格里放什么？</h3>
+        <p>不能全量塞。四本账 + 18 个交付目录 + 58 份任务书全进去，等于把混乱从文件系统搬到云端，还是没人看。</p>
+        <p><strong>裁决</strong>：只放<strong>两类</strong>——① 需要您决策的；② 需要跨会话可见的（谁在做什么、做到哪）。目标规模 <strong>20–40 行</strong>。<strong>不放</strong>：代码级细节、单个 bug 编号、历史归档件。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>谁来写、什么时候写？</h3>
+        <p><strong>写手</strong>＝AI 会话（不需要您操作）；<strong>时机</strong>＝会话收尾，与 TASK_LOG 追加同一步；另加一个定时兜底扫描，比对 git 提交与表格行数，发现漂移就补。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>多会话并发写会不会冲突？</h3>
+        <p>本项目是多窗口并行的（今天就有 opencode、总控等多手同时在写）。各会话都往表格 append 会出重复行。</p>
+        <p><strong>裁决</strong>：<strong>主键幂等</strong>。任务 ID 用稳定键（如 <code>T-20261015-01</code>），写入前先查后写（update-or-insert），<strong>禁止 append</strong>。popipo 那个项目的「一话题一行」就是同一手法。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>写失败怎么办？</h3>
+        <p>飞书 API 会限流、会超时，CLI 可能没登录。</p>
+        <p><strong>裁决</strong>：<strong>不阻塞交付</strong>。与现有飞书推送纪律一致——失败只登记、继续干活。<strong>表格绝不能成为开工的前置条件</strong>，否则飞书一抖，全线停摆。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body">
+        <h3>凭据放哪？</h3>
+        <p>CLI 的授权凭据存本机（<code>auth login</code> 后由 CLI 自管），<strong>不进仓库、不进文档、不进提交</strong>。反面教材见 §3.3——那个把 <code>APP_SECRET</code> 写进 README 的项目。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">8</span>
+      <div class="body">
+        <h3>这会不会又是一个仪式？</h3>
+        <p>判据只有一个：<strong>您能不能用它回答「谁领了任务、到哪一步」</strong>。答不了，就是失败，应当撤掉而不是硬撑。</p>
+        <p>附带自省：本方案<strong>不做</strong>仪表盘、不做甘特图、不做自动化 workflow。第一版只要能回答上面那句话。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>执行方案 P0′ · 五步</h2>
+
+  <div class="gate first" style="margin-bottom:14px">
+    <span class="num">1</span>
+    <div class="body">
+      <h3>装 CLI 并授权（约 10 分钟，需要您扫码一次）</h3>
+      <pre>npm install -g @larksuite/cli          # 版本要求 ≥1.0.97
+lark-cli.cmd config init --new --lang en
+lark-cli.cmd auth login --recommend    # 这一步需要您扫码
+lark-cli.cmd auth status               # 应返回 identity: user</pre>
+      <p>说明：本机 connector 已授权，但那是 WorkBuddy 侧的授权记录；CLI 装好后能否直接复用、还是需要重新登录，属待确认项。</p>
+    </div>
+  </div>
+
+  <div class="gate" style="margin-bottom:14px">
+    <span class="num">2</span>
+    <div class="body">
+      <h3>建 Base 与表结构</h3>
+      <p><strong>路 A</strong>：<code>lark-cli base +template-search --keyword 任务</code> 找官方模板直接套用；<strong>路 B</strong>：<code>+base-create</code> 自建。建议先看模板再决定。</p>
+    </div>
+  </div>
+
+  <div class="scrollx" style="margin-bottom:14px">
+  <table>
+    <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">任务ID</td><td>文本（主键）</td><td>稳定键，如 <code>T-20261015-01</code></td></tr>
+      <tr><td class="mono">标题</td><td>文本</td><td>一句话</td></tr>
+      <tr><td class="mono">状态</td><td>单选</td><td>待定 / 进行中 / <strong>等您定</strong> / 已完成 / 已暂缓</td></tr>
+      <tr><td class="mono">负责人</td><td>单选</td><td>会话槽（opencode / 总控 / 待派）</td></tr>
+      <tr><td class="mono">下一步</td><td>文本</td><td>谁、做什么</td></tr>
+      <tr><td class="mono">出处</td><td>文本</td><td><code>路径:行号</code>，便于回溯</td></tr>
+      <tr><td class="mono">更新时间</td><td>日期</td><td>自动</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="gate" style="margin-bottom:14px">
+    <span class="num">3</span>
+    <div class="body">
+      <h3>写投影脚本（约百行）</h3>
+      <p><strong>输入</strong>：<code>AI_MEMORY/TASK_LOG.md</code> 条目 + git 状态；<strong>输出</strong>：表格行；<strong>行为</strong>：<code>--dry-run</code> 先预览将新增/更新多少行（抄 popipo 的习惯），确认后按任务 ID 幂等写入。<strong>落点</strong>：<code>scripts/sync-task-ledger.mjs</code>（与现有 <code>send-feishu-report.mjs</code> 同目录同风格）。</p>
+    </div>
+  </div>
+
+  <div class="gate" style="margin-bottom:14px">
+    <span class="num">4</span>
+    <div class="body">
+      <h3>接进会话收尾流程</h3>
+      <p>在 <code>AGENTS.md</code> 的「任务结束必做」里加一条：追加 TASK_LOG 之后，跑一次投影脚本（失败不阻塞）。</p>
+    </div>
+  </div>
+
+  <div class="gate">
+    <span class="num">5</span>
+    <div class="body">
+      <h3>验证与降级</h3>
+      <p><strong>验证</strong>：表格里能看到今天的条目、状态正确、能按负责人筛。<strong>降级</strong>：CLI 未登录 / 网络失败 / 限流 → 脚本退出码非 0，只登记，<strong>不影响交付</strong>。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>跟总控 A/B 的关系</h2>
+  <p class="lede">这一节最重要：您这个提议，实际是总控今早提的 A/B 之外的<strong>第三个选项</strong>。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>选项</th><th>内容</th><th>谁提的</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">A</td><td>补回三账，恢复派工与复验节拍</td><td>总控</td></tr>
+      <tr><td class="mono">B</td><td>三账停写归档，改用 git + TASK_LOG + 机器判据当唯一台账</td><td>总控（推荐）</td></tr>
+      <tr><td class="mono">C</td><td><strong>把工作计划搬到飞书多维表格</strong></td><td><strong>您（本方案）</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="verdict">
+    <span class="lb">我的建议</span>
+    <p><strong>B + C 组合，而不是 C 替代 B。</strong></p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>B 解决「账没人写」</h3>
+      <ul>
+        <li>真相源必须是不依赖人自觉、可机器校验的东西——git 有提交就有记录。</li>
+        <li>这正是总控推荐 B 的理由，我认同。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>C 解决「账没人看」</h3>
+      <ul>
+        <li>您要的是一个打开就能看、能筛、能按人分组的窗口。</li>
+        <li>md 文件翻起来累，这正是您现在抱怨的事。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">正确读法</span>
+    <p><strong>B 是真相层，C 是视图层。</strong>若只做 C 不做 B，表格会变成第四本靠人写的账（问 1 的失败路径）；若只做 B 不做 C，您仍然要翻 md 文件。所以本方案的正确读法是：<strong>接受 B 的真相源定义，把 C 作为它的显示窗口</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>待确认（未核实，禁止当事实用）</h2>
+  <ul class="notes">
+    <li><strong>CLI 授权能否复用</strong>——本机 connector 已 bound，但 CLI 装好后是直接可用、还是需要重新扫码登录，未实测。</li>
+    <li><strong>API 写入频率限制</strong>——飞书多维表格接口限流值未实测；第一版按「会话收尾写一次」设计，理论上远低于任何限流，但未验证。</li>
+    <li><strong>建表权限</strong>——您的飞书账号是否有创建 Base 的权限（个人版/企业版差异），未核实。</li>
+    <li><strong>模板可用性</strong>——官方模板字段名与我们的 7 列是否吻合，未实查；可能仍需自建。</li>
+    <li><strong>异步可见性</strong>——skill 明确提示写入是异步链路，「写成功但立刻读不到」是已知行为，验收时需留缓冲，未实测具体延迟。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>与既有纪律的冲突检查</h2>
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>纪律</th><th>是否违反</th></tr></thead>
+    <tbody>
+      <tr><td>密钥只放环境变量/后台，禁明文进文档与提交</td><td><span class="tag ok">不违反</span> 凭据由 CLI 自管</td></tr>
+      <tr><td>不得静默降级</td><td><span class="tag ok">不违反</span> 投影失败必须登记</td></tr>
+      <tr><td><code>CURRENT_STATUS.md</code> 单写者令</td><td><span class="tag ok">不违反</span> 本方案不碰该文件</td></tr>
+      <tr><td>三账周增 ≤30KB</td><td><span class="tag ok">不违反</span> 本方案不写三账</td></tr>
+      <tr><td>交付件产出后必须直发飞书</td><td><span class="tag ok">已执行</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<footer>
+  <p>本件为调研 + 方案，<strong>未执行任何安装、未建表、未改业务代码、未提交</strong>。第一步（装 CLI）需 Owner 点头后执行。</p>
+  <p>调研来源：GitHub 公开仓库（@larksuite/cli、popipo-ai/popipo-feishu-skill、ddddnet/FeiShuDataBase）、飞书开放平台文档、本机 connector 与插件配置实测。</p>
+  <p>2026-10-15 · 容器根现场实测。</p>
+</footer>
+
+</div>

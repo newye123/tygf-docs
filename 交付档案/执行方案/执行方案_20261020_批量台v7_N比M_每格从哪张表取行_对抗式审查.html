@@ -1,0 +1,223 @@
+<title>批量台 v7 · N:M 推广：每格从哪张表取行 · 对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--blue:#1b5bd0;--blue-soft:#e8effc;--violet:#6b3fa0;--violet-soft:#f0e9fa;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a;--violet:#c4a6f0;--violet-soft:#241a3a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a;--violet:#c4a6f0;--violet-soft:#241a3a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.55rem,4vw,2.15rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.1rem);line-height:1.62;max-width:60ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:68ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.blue{background:var(--blue-soft);color:var(--blue)}.tag.violet{background:var(--violet-soft);color:var(--violet)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.blue{background:var(--blue-soft);border-color:var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:5px}
+.card .n{font-family:var(--font-mono);font-size:.7rem;color:var(--blue);letter-spacing:.08em}
+.card h3{margin:0;font-size:.93rem;font-weight:600}
+.card p{font-size:.83rem;color:var(--ink-2);max-width:none}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500;min-width:38px}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查 · 第四轮</span><span class="sep">/</span><span>批量台 v7</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>不是「每稿一表」，是「每格从哪张表取行」</h1>
+  <p class="standfirst">Owner 指出真实关系应是 1 稿 / N 稿对 1 表、N 稿对 M 表——也就是 N:M。我上一版把它压成「每稿一表」是<strong>收窄了</strong>。这一版把绑定单元下沉到真正最小的粒度：<strong>(设计稿 × 语种) → 一组行</strong>，四种关系不再是四种模式，而是同一个模型的四个取值。</p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>实现事实 X1–X7</span><span>审查 R1–R12</span><span>自我推翻 S1–S2</span><span>待拍板 O6–O8</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 方向再进一步；且好消息是 N:M 不用动写入层</span>
+    <p>把绑定下沉到 <strong>(稿 × 语种) → 行集</strong>后，<strong>1:1 / N:1 / 1:M / N:M 四种关系自动涌现</strong>，用户要做的操作永远只有三种：<strong>换这稿的主表 / 把某几门语言指到别的表 / 加一张补充表</strong>；其余 144 格的来源由系统推导并画出来给人看——<strong>例外驱动，零操作起步</strong>。</p>
+    <ul>
+      <li><strong>最关键的好消息</strong>：浏览器的行来源<strong>只有一处</strong>（<code>execute-step.tsx:792-807</code> 的 <code>buildRowsByLang()</code>）⇒ 只要把「整表」换成「该 (稿, 语种) 的合并行集」，<strong>N:M 就能实现</strong>；合并发生在<strong>构建 fragments 之前</strong>，信任链的分组与冲突检查（<code>binding-core.ts:657</code>／<code>:930-939</code>）<strong>原样复用</strong> ⇒ <strong>不触发合同变更</strong>。</li>
+      <li><strong>「整表共用」与「必须切片」的判据是可计算的，不是配置项</strong>：表内存在「同原文不同译文」⇒ 必须切片；不存在 ⇒ 可整张给多稿共用（多出来的行由助手判 <code>EXCLUDED</code>、不写入、单位 0）。</li>
+      <li><strong>R1 是本轮最要紧的一条</strong>：合并粒度必须是 <strong>(稿, 语种)</strong>，不能是整表——否则同原文不同译文的冲突面会被放大到<strong>不相关的稿</strong>之间。</li>
+      <li><strong>自我推翻两处</strong>：S1「每稿一表」是模型 → 收窄了，它只是"每格都取主表"的默认态；S2「共享表组」作为一等对象 → N:M 下<strong>没有它的位置</strong>，共用只是"多个稿的默认行集来自同一张表"。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>阶段一 · 为什么 Owner 的推广是对的</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>关系</th><th>真实场景</th><th>在 v7 模型里是什么</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1 稿 : 1 表</strong></td><td>常规：一份 PSD 配一张自己的表</td><td>默认：每格取主表该语种的行</td></tr>
+        <tr><td><strong>N 稿 : 1 表</strong></td><td>一套主文案给 12 个 SKU 变体共用（文案一样、图不同）</td><td>多个稿的默认行集来自同一张表（表内无同原文多译文时才合法）</td></tr>
+        <tr><td><strong>1 稿 : M 表</strong></td><td>日语、韩语由对方单独发；另有几句新文案在补充表里</td><td>某些语种的行集换成别的表（语种覆盖）＋ 某些行从补充表并进来</td></tr>
+        <tr><td><strong>N 稿 : M 表</strong></td><td>上面几种同时出现</td><td>上述组合</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout blue">
+    <span class="lb">往下再问一层：绑定的原子</span>
+    <p>交付物的原子 ＝ <strong>(设计稿, 语种)</strong>；一行译文的原子 ＝ <strong>(原文, 语种) → 目标文本</strong>；<strong>表不是原子</strong>——它是行的容器，而且容器可以横跨多个稿（主表）、也可以只带一门语言（专表）。<br>⇒ <strong>真正的绑定单元是「(稿 × 语种) → 一组行」。</strong>把绑定下沉到这一格，四种关系就自动涌现，不再是四种模式。</p>
+  </div>
+  <h3>人要做的事只有三种</h3>
+  <div class="cards">
+    <div class="card"><span class="n">操作 1</span><h3>换这稿的主表</h3><p>默认来源。12 稿 = 12 次。</p></div>
+    <div class="card"><span class="n">操作 2</span><h3>把某几门语言指到别的表</h3><p>语种覆盖。现实中只有几行需要动。</p></div>
+    <div class="card"><span class="n">操作 3</span><h3>给这稿加一张补充表</h3><p>只并进主表里没有的那几句。</p></div>
+    <div class="card"><span class="n">不用做</span><h3>144 格逐格配</h3><p>系统推导出来并画给人看——<b>例外驱动，零操作起步</b>。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>阶段二 · 决定 N:M 能不能落地的实现事实</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>事实</th><th>证据</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">X1</td><td><strong>浏览器的行来源只有一处</strong>：<code>buildRowsByLang()</code> 把 <code>parsed.rows</code> <strong>整表</strong>映射给每个语种</td><td class="mono">execute-step.tsx:792-807（:798 rowsByLang[lang] = parsed.rows.map(...)）</td><td>把「整表」换成「该 (稿, 语种) 的合并行集」即可；合并发生在<strong>构建 fragments 之前</strong></td></tr>
+        <tr><td class="mono">X2</td><td>信任链按<strong>原文</strong>分组喂进来的 fragments；<strong>同原文不同译文</strong>才抛 <code>V15_DUPLICATE_SOURCE_ROW</code></td><td class="mono">binding-core.ts:657、:930-939</td><td>合并后<strong>沿用同一套冲突检查</strong>，不新增闸</td></tr>
+        <tr><td class="mono">X3</td><td>助手 evidence：非本稿行判 <code>EXCLUDED</code>、<strong>不写入、单位 0</strong></td><td class="mono">billing-evidence-rows.js:81；execute-step.tsx:1073</td><td>表里多出来的行<strong>不会写错，只会"少写"</strong>（风险是漏，不是错写）</td></tr>
+        <tr><td class="mono">X4</td><td>覆盖判定已有三档口径（strict / whitespace / substring）</td><td class="mono">coverage.ts:43-96</td><td>覆盖率按<strong>合并后的行集</strong>算，口径不变、只换输入</td></tr>
+        <tr><td class="mono">X5</td><td>取数口目前是「<strong>每稿一表</strong>」</td><td class="mono">coverage.ts:169-185</td><td>要改成「<strong>每格一行集</strong>」（R11）</td></tr>
+        <tr><td class="mono">X6</td><td>表格式自带「模块」列（归属维度）</td><td class="mono">csv.ts:423、:759-761</td><td>切片（宽表按归属切）的数据基础已在</td></tr>
+        <tr><td class="mono">X7</td><td>采表带回 <code>relPath</code> / <code>dir</code></td><td class="mono">local-assistant-client.ts:1010-1020</td><td>配表建议仍按目录就近</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>阶段三 · 模型与判据</h2>
+  <pre>Table   { tableId, name, rows[], langColumns[], hasSameSourceConflict }   // 库
+Slice   { sliceId, tableId, ownerValue, rowIds[] }                        // 库按归属切出的一片
+Binding { draftKey → {
+    mainSliceId,                                  // 主表片（默认来源）
+    localeOverrides: { locale → sliceId },         // 语种覆盖
+    supplements: sliceId[]                        // 补充片（按原文差集并入）
+} }
+
+rows(D, locale) =
+    (localeOverrides[locale] ?? mainSlice) 的该语种行
+  ∪ supplements 各片中「主表里没有的原文」的行
+⇒ 同原文多译文 ⇒ 点名冲突（沿用 X2 的既有检查）</pre>
+  <div class="callout ok">
+    <span class="lb">「整表共用」vs「必须切片」——可计算的判据</span>
+    <p><strong>表内存在「同一原文、不同译文」⇒ 必须切片；不存在 ⇒ 可以整张给多稿共用。</strong>判据来自表自身的行集合（解析期即可算，与稿无关）⇒ <strong>零配置项、零猜测</strong>。整表共用时，多出来的行由助手判 <code>EXCLUDED</code>（X3）⇒ 不会写错，只会少写；界面要如实显示「这稿用到该表的 12/42 行」。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>阶段四 · Review（第四轮 12 条）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">R1</td><td><span class="tag bad">🔴</span></td><td><strong>合并粒度必须是 (稿, 语种)，不能是整表</strong>：若先把多张表合成一张再分发，同原文不同译文的冲突面会被放大到<strong>不相关的稿</strong>之间</td><td>合并<strong>只在每格内</strong>发生（X1 出口），冲突检查随 X2 原样落在每格</td></tr>
+        <tr><td class="mono">R2</td><td><span class="tag warn">🟠</span></td><td>「整表给多稿共用」什么时候合法？表里有同原文不同译文时，两稿都会命中它 ⇒ 一稿同时对上两行</td><td><strong>可计算判据</strong>（§04）：有冲突 ⇒ 必须切片；无冲突 ⇒ 整表共用合法。<strong>不留成配置项</strong></td></tr>
+        <tr><td class="mono">R3</td><td><span class="tag warn">🟠</span></td><td>「1 稿 ← 2 表」会不会逼写入层改语义？</td><td><strong>不会</strong>：合并发生在 fragments 之前（X1），信任链分组与冲突检查（X2）原样复用 ⇒ <strong>不触发合同变更</strong></td></tr>
+        <tr><td class="mono">R4</td><td><span class="tag ok">🟡</span></td><td>多出来的行会怎样？</td><td>助手判 <code>EXCLUDED</code>、不写入、单位 0（X3）⇒ 风险是<strong>漏</strong>不是错写；但同原文同表内不同稿的译文会命中 ⇒ 正是 R2 要切片的理由。界面须显示「用到该表的 12/42 行」</td></tr>
+        <tr><td class="mono">R5</td><td><span class="tag ok">🟡</span></td><td>144 格逐格配置会不会把界面炸掉？</td><td><strong>例外驱动</strong>：默认 12 次，其余例外才动手；界面呈现的是系统推导出的来源矩阵</td></tr>
+        <tr><td class="mono">R6</td><td><span class="tag warn">🟠</span></td><td>「这一格做不做」和「这一格从哪取」是两个轴，容易混成一种颜色</td><td>做/不做决定格有没有内容，从哪取决定内容；关系类型用<strong>第二行小字</strong>标，不与状态色混用</td></tr>
+        <tr><td class="mono">R7</td><td><span class="tag acc">✅</span></td><td>证据还是一个数吗？</td><td>是。每格的证据 ＝ 合并行集对该稿的<strong>对稿命中率</strong>；表级只留一个可计算标签：可整表共用 / 必须切片</td></tr>
+        <tr><td class="mono">R8</td><td><span class="tag acc">✅</span></td><td>会不会退回「自动指派」？</td><td>不会。提案仍只给<strong>排序与例外</strong>，人拍板（v4 的 T1 自我更正继续成立）</td></tr>
+        <tr><td class="mono">R9</td><td><span class="tag acc">✅</span></td><td>「共享表组」这个概念还要不要留？</td><td><strong>不留</strong>。N:M 下它是 N:1 的特例；模型里只剩「多稿指向同一张表或同一切片」</td></tr>
+        <tr><td class="mono">R10</td><td><span class="tag warn">🟠</span></td><td>主表 / 语种覆盖 / 补充表三种关系会不会打架？</td><td><strong>优先级定死</strong>：语种覆盖 &gt; 主表 &gt; 补充表；<strong>补充表只补「主表里没有的原文」</strong>（原文集合差集），带来同原文不同译文 ⇒ 点名冲突，<strong>不静默覆盖</strong></td></tr>
+        <tr><td class="mono">R11</td><td><span class="tag warn">🟠</span></td><td>覆盖率口径会不会分裂？</td><td>不会，但<strong>取数口要改</strong>：<code>calcCoverageMatrixForDraftTables</code>（X5）从「每稿一表」改成「<strong>每格一行集</strong>」，三档口径（X4）不变 ⇒ 组件与闸仍共用一份</td></tr>
+        <tr><td class="mono">R12</td><td><span class="tag ok">🟡</span></td><td>合并后行集变大，性能与缓存怎么办？</td><td>按 <strong>(表指纹 × 稿指纹 × 语种)</strong> 缓存合并结果（<code>preparation-contract.ts:311</code> 的指纹已是现成稳定键）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>我推翻自己的两处</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>上一版说法</th><th>推翻</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">S1</td><td>「每稿一表」是模型</td><td><strong>收窄了</strong>。原子是「(稿×语种) → 行集」；「每稿一表」只是"每格都取主表"这个<strong>默认态</strong></td></tr>
+        <tr><td class="mono">S2</td><td>「共享表组」是一等数据对象</td><td>N:M 下<strong>没有它的位置</strong>（R9）。共用只是"多个稿的默认行集来自同一张表"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>阶段五 · 落地与门</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>档</th><th>内容</th><th>落点</th><th>门</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag bad">P0-1</span></td><td><strong>来源矩阵</strong>（144 格，每格标出从哪张表取；关系类型第二行标注）＋ 例外驱动配置</td><td class="mono">新 components/workbench/source-matrix.tsx</td><td>tsc rc=0 ／ lint rc=0 ／ 实拍 144 格</td></tr>
+        <tr><td><span class="tag bad">P0-2</span></td><td><strong>按格合并行集</strong>：<code>buildRowsByLang()</code> 从「整表」改成「该 (稿, 语种) 的合并行集」</td><td class="mono">execute-step.tsx:792-807</td><td><strong>写入层语义不变 ⇒ 不跑合同变更门</strong>；单测：合并后同原文冲突按 X2 抛</td></tr>
+        <tr><td><span class="tag bad">P0-3</span></td><td><strong>覆盖率取数口</strong>改「每格一行集」（三档口径不动）</td><td class="mono">coverage.ts:169-185</td><td>组件与闸仍同一份口径</td></tr>
+        <tr><td><span class="tag warn">P1-1</span></td><td><strong>切片 / 整表共用的可计算判据</strong> ＋ 切片器</td><td class="mono">新 lib/workbench/dataset-slice.ts</td><td>单测：有冲突 ⇒ 必须切片；无冲突 ⇒ 整表共用</td></tr>
+        <tr><td><span class="tag warn">P1-2</span></td><td><strong>补充表</strong>（按原文差集并入 ＋ 冲突点名）</td><td class="mono">新 lib/workbench/supplement-merge.ts</td><td>单测：差集并入 / 同原文不同译文 ⇒ 点名不覆盖</td></tr>
+        <tr><td><span class="tag warn">P1-3</span></td><td>配表提案（目录就近 → 得分 → 例外确认）</td><td class="mono">复用 table-pairing-dialog</td><td>一对多/零命中不自动决定</td></tr>
+        <tr><td><span class="tag ok">P2</span></td><td>绑定持久化（存 <code>稿→主表+覆盖+补充</code>，不存表内容）</td><td class="mono">新 lib/workbench/binding-persistence.ts</td><td>不触发合同变更门</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout ok">
+    <span class="lb">不动</span>
+    <p>执行链、报价、结算闸、助手协议、支付 flag、<code>binding-core</code> 匹配键 ⇒ <strong>v7 仍不触发合同变更门</strong>（不跑 <code>test:batch-row-contract</code> / <code>test:trust-chain</code>）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>阶段六 · 待拍板（新增三件）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O6</td><td><strong>语种覆盖要不要支持到「每稿 12 门语言可各自指向不同的表」？</strong></td><td><strong>① 支持（完整 N:M）</strong>。同门内混表在「一门语言一份表」的现实里几乎不出现，<strong>先不做</strong>，但<strong>模型要留得住</strong>（合并按行集，天然容得下）</td></tr>
+        <tr><td class="mono">O7</td><td><strong>补充表要不要做？</strong></td><td><strong>① 做，但排 P1</strong>：它会引出「<strong>这一行是谁贡献的</strong>」的追溯问题（报告里要标出来源表），工作量比前两项大</td></tr>
+        <tr><td class="mono">O8</td><td><strong>「整表给多稿共用」要不要在界面上明确允许（而不是自动切片）？</strong></td><td><strong>① 明确允许 ＋ 给判据</strong>。判据是可计算的，明确允许比"系统替你猜"更诚实；切片只是有冲突时的<strong>必要</strong>动作</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">沿用：O1″ 助手回传命中得分 ｜ O2″ 模板加「记录编号/模块」两列 ｜ O3″ 逐层哈希默认不传 ｜ O4 目录分段默认开可关 ｜ O5「只确认干净的格」要不要有。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>附 · 模拟件走法</h2>
+  <p class="note">文件：<code>交付档案/执行方案/模拟_20261020_批量台v7_N比M_每格从哪张表取行.html</code>（单文件，双击即开；实测 0 console error：12 行 / 144 格 / 8 张表）。</p>
+  <ul class="notes">
+    <li><span class="n">1</span><div><strong>来源矩阵</strong>：144 格，每格标出从哪张表取（<code>M</code>、<code>W</code>、<code>05+SUP</code>、<code>JP</code>…），第二行标关系类型。点任一格 → 右侧给出<strong>这一格合并后的行集</strong>（各来源多少行、合并后多少行、冲突检查结论、样例原文译文）。</div></li>
+    <li><span class="n">2</span><div><strong>一稿的 N:M 剖面</strong>：<code>SKU-05</code>（主表 05 供德法英 ＋ 日语专表 ＋ 韩语专表 ＋ 补充表）／<code>SKU-01</code>（主表 M 供 8 语 ＋ 补充表 2 行）。</div></li>
+    <li><span class="n">3</span><div><strong>一张表被谁用</strong>：每张表一条<strong>可计算判据</strong>（可整表共用 / 必须切片）＋ 被哪些稿以什么关系用；底部说明四种关系如何从同一个模型里长出来。</div></li>
+  </ul>
+</section>
+
+<footer>
+  <p>2026-10-20 · 只读取证＋方案设计（未改业务代码）· 基线 worktrees/develop@99baaf6 · 实现事实 X1–X7 · 审查 R1–R12 · 自我推翻 S1–S2 · 相对 v5/v6 净推进：绑定原子下沉到 (稿×语种)→行集，四种关系统一，且仍不触发合同变更门。</p>
+</footer>
+</div>

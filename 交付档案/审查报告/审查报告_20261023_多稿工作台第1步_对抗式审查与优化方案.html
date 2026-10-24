@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>多稿工作台第 1 步：对抗式审查与优化方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.12rem;margin:0;display:flex;align-items:center;gap:10px}
+h2 .n{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);letter-spacing:.12em;font-weight:500}
+h3{font-size:.95rem;margin:0}
+p{margin:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.04rem,2.3vw,1.2rem);line-height:1.65;max-width:52ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px}
+.panel.yes h3{color:var(--ok)} .panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.panel li::marker{color:var(--line-strong)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.warn{background:var(--warn-soft);color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:640px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-size:.78rem;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:70ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:.95rem;font-weight:500;color:var(--accent);background:var(--accent-soft);min-width:38px;height:34px;padding:0 6px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:68ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:74ch}
+code{font-family:var(--font-mono);font-size:.8em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>图译工坊 · 多稿工作台</span><span class="sep">/</span>
+      <span>第 1 步 准备素材</span><span class="sep">/</span>
+      <span>对抗式审查</span><span class="sep">/</span>
+      <span>2026-10-23</span>
+    </div>
+    <h1>不是细节没对齐，是三个结构性偏差</h1>
+    <p class="standfirst">
+      对照你点头的《模拟_20261022_多稿工作台_完美版》：选完文件夹还要多点一次“加入本批”；语言要等导入才存在，所以矩阵是空的；第 1 步的终点会把你送回旧弹窗。这三条不改，界面再像也不是那套逻辑。
+    </p>
+  </header>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>现在的新壳，是旧流程前面加的一道门：<strong>门里看不到语言，出门又回到旧确认框</strong>。要按参考稿做，就得让第 1 步自己成为全部——选完文件夹即本批、表头已读、矩阵可点、出口就是“下一步”。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><div class="n">3</div><div class="k">处结构性偏差（红）</div></div>
+    <div class="stat warn"><div class="n">5</div><div class="k">处同逻辑次级偏差（黄）</div></div>
+    <div class="stat ok"><div class="n">4</div><div class="k">处做对了、保留（绿）</div></div>
+    <div class="stat"><div class="n">2</div><div class="k">件需要你拍板</div></div>
+  </div>
+
+  <section>
+    <h2><span class="n">01</span>参考稿要求的那套交互（判据）</h2>
+    <div class="split">
+      <div class="panel yes">
+        <h3>参考稿是这么做的</h3>
+        <ul>
+          <li><strong>选完文件夹就是本批</strong>——统计、队列、矩阵立刻就是这份文件夹的，没有“加入本批”这一道。</li>
+          <li><strong>第 1 步就有语言</strong>——12 稿、51 张表、12 种语言，矩阵 12 列直接可看。</li>
+          <li><strong>矩阵是每份稿 × 每种语言</strong>，四态：有表 / 表套待定 / 缺表 / 不涉及。</li>
+          <li><strong>点任意格子能追来源</strong>——哪张表、哪个 sheet、第几列、第 2–N 行、凭什么。</li>
+          <li><strong>拍板一件自动跳下一件</strong>，并给一句人话确认。</li>
+          <li><strong>出口是“下一步 · 逐稿校对”</strong>，不是读表弹窗。</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>我们的第 1 步实际是</h3>
+        <ul>
+          <li>选完文件夹，四个统计全是 0，要再点“把 12 个稿加入本批”。</li>
+          <li>矩阵写着“表还没读：语言列要等『读表并导入』之后才出现”。</li>
+          <li>矩阵一行一个 SKU，格子里写“几份稿”，还多一列“缺表”。</li>
+          <li>格子点不开，没有来源、没有抽屉。</li>
+          <li>冲突项标题用文件名，不写“牵着 N 份稿”。</li>
+          <li>“读表并导入”弹回旧的批量导入确认框。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span>逐条对照</h2>
+    <div class="scrollx">
+      <table>
+        <thead>
+          <tr><th>判定</th><th>条目</th><th>现状（证据）</th><th>参考稿要求</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag bad">R1</span></td>
+            <td>批次边界多一道</td>
+            <td>选完文件夹先出横幅“文件夹里找到 12 个设计稿，还没加入本批”，要再点一次<code>attribution-stage.tsx:245-258</code>、<code>workbench-view.tsx:2018-2032</code></td>
+            <td>换文件夹即本批<code>模拟…完美版.html:1162</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag bad">R2</span></td>
+            <td>语言要等导入才有</td>
+            <td>语言列取自已解析的表<code>workbench-view.tsx:1964-1970</code>；矩阵只能写“表还没读”<code>attribution-stage.tsx:574-578</code></td>
+            <td>第 1 步已有 12 列<code>:718-723</code>、<code>:755-768</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag bad">R3</span></td>
+            <td>终点是旧弹窗</td>
+            <td>“读表并导入”调<code>openBulkImport</code><code>workbench-view.tsx:2006-2014</code>、<code>:2052-2080</code>，弹窗渲染在<code>:4793</code></td>
+            <td>底部就是“下一步 · 逐稿校对”<code>:641-645</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">Y1</span></td>
+            <td>矩阵粒度错</td>
+            <td>一行一个 SKU、格内写份数<code>attribution-stage.tsx:564</code>、<code>:593-611</code></td>
+            <td>一行一份稿 × 12 语言<code>:836-851</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">Y2</span></td>
+            <td>格子点不开</td>
+            <td>格子是纯展示，无点击</td>
+            <td>点格开来源抽屉<code>:1129-1155</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">Y3</span></td>
+            <td>右栏缺小矩阵</td>
+            <td>SKU 面板只有文字＋凭什么<code>attribution-stage.tsx:470-519</code></td>
+            <td>该 SKU 自带 12 列小矩阵、稿行可点<code>:647-676</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">Y4</span></td>
+            <td>冲突项文案对不上</td>
+            <td>标题用文件名<code>attribution-stage.tsx:303-307</code></td>
+            <td>冲突名＋“牵着 N 份稿”<code>:729-734</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag warn">Y5</span></td>
+            <td>拍板缺反馈</td>
+            <td>自动跳已做<code>attribution-stage.tsx:141-147</code>，但无 toast</td>
+            <td>选完给一句“已定 / 下一件”<code>:1037-1056</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag ok">G1</span></td>
+            <td>页内选文件夹</td>
+            <td>路径输入、上一级、常用位置、前 8＋展开、500 截断明说<code>folder-picker-dialog.tsx:143-270</code></td>
+            <td>一致</td>
+          </tr>
+          <tr>
+            <td><span class="tag ok">G2</span></td>
+            <td>左右骨架与三组左队列</td>
+            <td>待你拍板 / 按 SKU 看 / 别漏掉，四个统计名字一致</td>
+            <td>一致</td>
+          </tr>
+          <tr>
+            <td><span class="tag ok">G3</span></td>
+            <td>归属记忆</td>
+            <td>可继承、可遗忘，写死“人手 &gt; 记忆 &gt; 唯一候选”</td>
+            <td>参考稿之外加分项，保留</td>
+          </tr>
+          <tr>
+            <td><span class="tag ok">G4</span></td>
+            <td>旧能力出口</td>
+            <td><code>stageClassic</code> 与“逐稿手动导入…”都还在</td>
+            <td>不删除</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span>反方意见，以及为什么站不住</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="top"><span class="tag warn">反方 1</span><strong>先归属再读表更省</strong></div>
+        <p>省的是实现，不是用户。归属判断的依据就是“这稿有没有这门语言的表”；语言不知道，人只能盲选。参考稿把语言放在第 1 步，不是因为好看，是因为它是判断材料。</p>
+      </div>
+      <div class="card">
+        <div class="top"><span class="tag warn">反方 2</span><strong>多一次确认更稳妥</strong></div>
+        <p>现实里没有“半个批次”。要防误选，应该防在“换文件夹”那一步（换目录二次确认），而不是让每一批都多点一次。多这一下不增加安全，只增加摩擦。</p>
+      </div>
+      <div class="card">
+        <div class="top"><span class="tag warn">反方 3</span><strong>51 张表读起来太慢</strong></div>
+        <p>读<strong>表头</strong>不读整表。参考稿给的实测口径是 12 个设计文件、51 张表、1.4 秒。整表解析才慢，那本来就是导入阶段的事。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span>优化方案</h2>
+    <div class="gates">
+      <div class="gate first">
+        <div class="num">P0-1</div>
+        <div class="body">
+          <h3>选文件夹即本批</h3>
+          <p>删掉“加入本批”的横幅和按钮，扫描结果直接进批次。验收：选完文件夹 1 秒内，四个统计都不是 0。</p>
+        </div>
+      </div>
+      <div class="gate first">
+        <div class="num">P0-2</div>
+        <div class="body">
+          <h3>表头预读：让第 1 步就有语言</h3>
+          <p>助手新增只读端点（建议 <code>/v1.5/read-table-head</code>），只读每张表的前若干行与 sheet 名，返回语言列、sheet 与交付物的对应、数据行数。复用现有 <code>select_file</code> 票，不新增权限；单表上限沿用 5 MB；并发 4；失败逐张说原因，不静默。验收：51 张表 ≤3 秒出结果；读不到的表在矩阵里标“表头读不到＋原因”。</p>
+          <p><strong>这是唯一需要助手再发一版（3.7.25）的地方。</strong>旧助手自动退回“表头没读”的降级态，并给一键升级入口。</p>
+        </div>
+      </div>
+      <div class="gate first">
+        <div class="num">P0-3</div>
+        <div class="body">
+          <h3>矩阵改成每稿 × 每语言，四态，可点</h3>
+          <p>行＝本批每份稿（SKU＋交付物），列＝语言；四态：有表 / 表套待定 / 缺表 / 不涉及。点格开抽屉：语言、文件、sheet、列、行区间、凭什么、另一个版本。验收：行数＝本批稿数；任点一格，抽屉五要素齐全。</p>
+        </div>
+      </div>
+      <div class="gate first">
+        <div class="num">P0-4</div>
+        <div class="body">
+          <h3>出口改回“下一步 · 逐稿校对”</h3>
+          <p>去掉“读表并导入”；读表与导入在进入第 2 步时自动完成，失败才弹提示。旧弹窗只保留在“逐稿手动导入…”这个显式入口里，能力不删。</p>
+        </div>
+      </div>
+      <div class="gate">
+        <div class="num">P1</div>
+        <div class="body">
+          <h3>决定“像不像”的四条细节</h3>
+          <p>① 右栏 SKU 面板补该 SKU 的 12 列小矩阵，逐稿行可点；② 冲突项写“冲突名＋牵着 N 份稿”，选完弹“已定 / 下一件”；③ 统计口径对齐（同名副本待定 / 其中 N 格等表套确定 / 文件夹数与跳过项）；④ 左栏去掉固定 420px 内滚动，窄屏塌单列。</p>
+        </div>
+      </div>
+      <div class="gate">
+        <div class="num">P2</div>
+        <div class="body">
+          <h3>可后置</h3>
+          <p>“重新扫描”保留已定选择；扫描中给进度；矩阵表头吸顶、SKU 列吸附。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">05</span>代价与风险</h2>
+    <ul class="notes">
+      <li><strong>助手要再发一版 3.7.25</strong>（新端点＋版本闸）。网页侧按版本闸灰化“页内读表”，用户不装也不报错。</li>
+      <li><strong>读表头的性能与兼容</strong>：xlsx 要解压首个 sheet，csv/tsv 直接取前若干行；超 5 MB 的表逐张说明“太大，导入时再读”，不假装读过。</li>
+      <li><strong>旧弹窗保留</strong>为显式入口，不删除；新流程不再经过它。</li>
+      <li><strong>已导入的批次不受影响</strong>：只改第 1 步“读表的时机”，不改导入后的数据结构。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">06</span>修正版模拟怎么点</h2>
+    <div class="callout">
+      <span class="lb">文件</span>
+      <p><code>交付档案/执行方案/模拟_20261023_多稿工作台第1步_交互修正版.html</code></p>
+      <ol>
+        <li>先看默认画面：四个统计有数、矩阵 12 列有颜色——这就是“选完文件夹即本批＋表头已读”的样子。</li>
+        <li>点左栏“5857 · 两套表结构不同”，右边选一个方案：会弹一句确认，并自动跳到下一件。</li>
+        <li>点矩阵里任意一格：右边抽屉写清语言、文件、sheet、列、行、凭什么。</li>
+        <li>点文件夹栏“换文件夹”→“用这个文件夹”：走一遍“读表头 51 张”的进度，回到带数据的本批，没有“加入本批”这一步。</li>
+        <li>右上角“这次改了什么（7 条）”：现状与改成什么逐条对照。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">07</span>需要你拍板</h2>
+    <div class="callout">
+      <span class="lb">两件</span>
+      <ol>
+        <li><strong>是否按这份方案做</strong>——含再发一版助手 3.7.25（只有它会读表头，第 1 步才能有语言）。</li>
+        <li><strong>模拟里还有哪里不像</strong>——你点完直接说“第几条不对”，我按条改，改完再上测试站。</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <p>边界：这份是模拟件，没有部署；测试站仍为 <code>730ee499</code>（第 1 步旧逻辑）。模拟数据取自 2026-10-22 的真实目录快照，数字与参考稿一致。生产零操作，支付开关保持关闭。</p>
+    <p>报告与模拟同目录：<code>交付档案/审查报告/</code>、<code>交付档案/执行方案/</code>。</p>
+  </footer>
+
+</div>
+</body>
+</html>

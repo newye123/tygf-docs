@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生产站故障取证 · 批次在 manifest 阶段被拒 · 2026-10-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#14181f;--mut:#5b6572;--line:#dfe2e6;--acc:#0b57d0;--ok:#0f7b45;--bad:#c0392b;--warn:#a06a00;--mono:'IBM Plex Mono',monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--card:#171b21;--ink:#e8eaed;--mut:#9aa5b1;--line:#2a3038;--acc:#78a9ff;--ok:#57d38a;--bad:#ff8a80;--warn:#e0b264}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.62 'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:36px 22px 70px}
+h1{font-size:27px;line-height:1.28;margin:0 0 6px;letter-spacing:-.2px}
+.sub{color:var(--mut);font-size:14px;margin-bottom:22px}
+.verdict{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:12px;padding:20px 22px;margin:0 0 22px}
+.verdict b{font-size:18px}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:0 0 22px}
+.stats{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.stats .n{font:600 25px/1.1 var(--mono);color:var(--acc)}
+.stats .l{font-size:13px;color:var(--mut);margin-top:5px}
+h2{font-size:15px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin:34px 0 12px;font-weight:600}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
+th{text-align:left;background:rgba(11,87,208,.07);color:var(--mut);font-weight:600;padding:9px 11px;border-bottom:1px solid var(--line);font-size:13px}
+td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.t{font:500 13px var(--mono);white-space:nowrap;color:var(--acc)}
+code{font:500 13px var(--mono);background:rgba(11,87,208,.09);padding:1px 5px;border-radius:5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h3{margin:0 0 8px;font-size:15px}
+.card p{margin:0;font-size:14px;color:var(--mut)}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+.tag{font:600 12px var(--mono);letter-spacing:.6px;padding:3px 0;border-radius:5px;text-align:center}
+.tag.own{color:var(--warn)}.tag.me{color:var(--ok)}
+.gate p{margin:0;font-size:14px}
+.callout{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:12px;padding:16px 19px;font-size:14px}
+.callout.bad{border-left-color:var(--bad)}
+ol,ul{margin:0;padding-left:20px}
+li{margin:7px 0;font-size:14px}
+.note{font-size:13px;color:var(--mut)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font:400 12.5px/1.7 var(--mono)}
+@media (max-width:640px){.wrap{padding:22px 14px 50px}h1{font-size:22px}.gate{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>生产站故障取证：批次在 manifest 阶段被本机助手拒绝</h1>
+<div class="sub">窗口 2026-10-20 17:34—18:05 CST · 生产 <code>tuyigf.com</code> / BOUND <code>6ff5c3c1414f</code> / 期望助手 3.7.15 · 取证面＝生产库 + <code>tygf.service</code> journal + nginx</div>
+
+<div class="verdict"><b>站点没挂，是这一位用户的一份译文表被助手挡在执行清单门外。</b><br>
+「记录编号」这类行标识的字符形态不在助手白名单里 → <code>MANIFEST_FRAGMENT_ROWS_INVALID</code> → Photoshop 从未启动 → 批次悬挂 RUNNING、界面上"取消/完成"全被 409 拒回。用户 17:37 换表后<b>同一台机器已跑完并交付</b>；两笔失败批次的 70+70 单位预占已由回收器自动退回，当前 <b>0 积分冻住</b>。属 2026-09-14「事故3」复发，本次首次拿到助手内层原因码。</div>
+
+<div class="split">
+  <div class="stats"><div class="n">3</div><div class="l">今日生产批次：2 失败 + 1 成功交付</div></div>
+  <div class="stats"><div class="n">140</div><div class="l">自动退回单位（70×2，17:49 / 17:59 两拍）</div></div>
+  <div class="stats"><div class="n">60</div><div class="l">真实扣费单位（成功批 3 语 × 20 行）</div></div>
+  <div class="stats"><div class="n">0</div><div class="l">排障快照落盘数（通道 503，等于没这条腿）</div></div>
+</div>
+
+<h2>时间线</h2>
+<table>
+<tr><th>时刻</th><th>事实</th><th>证据</th></tr>
+<tr><td class="t">17:11:55</td><td>用户建 5 语批次（ES,MS,ID,VI,TH，70 行表）</td><td><code>ExecutionBatch cmvggsb1z…</code></td></tr>
+<tr><td class="t">17:11:56</td><td>首个 attempt 停在 <code>DISPATCHING</code>、<code>acceptedAt</code> 空＝本机从未接受</td><td><code>ExecutionLanguageAttempt cmvggsbsn0018…</code></td></tr>
+<tr><td class="t">17:12:01</td><td>助手诊断带内层码 <code>EXECUTION_MANIFEST_BUILD_FAILED</code> / stage=manifest / message=<b>MANIFEST_FRAGMENT_ROWS_INVALID</b> / 5337ms</td><td><code>ExecutionAttemptDiagnostic</code> seq=5</td></tr>
+<tr><td class="t">17:12:07</td><td>用户点"上传排障信息" → <code>support-bundles</code> <b>503</b></td><td>nginx 23.236.119.58；落盘目录文件数 0</td></tr>
+<tr><td class="t">17:12—13</td><td>界面 <code>ES/abandon</code>、<code>/finish</code> 连续 <b>409</b></td><td>nginx</td></tr>
+<tr><td class="t">17:16:42</td><td>同表再建第二个 5 语批次，同形状（MS，3389ms）</td><td><code>cmvggyg2d…</code> / <code>cmvggyhwx003p…</code></td></tr>
+<tr><td class="t">17:18:03</td><td>浏览器如实上报 <code>execution_failed</code> 并<b>停止后续派发</b>（首拒即停生效：每批只留 1 个孤儿，不再是 09-14 的 5 连拒）</td><td><code>BetaFunnelEvent</code>；<code>batch-error-policy.ts:29</code></td></tr>
+<tr><td class="t">17:35—36</td><td>用户重扫 + 换表（105 行，3 语 ES,FR,ID）</td><td><code>preparation_scanned / csv_loaded / review_completed</code></td></tr>
+<tr><td class="t">17:37—46</td><td>3 个 attempt 全被接受、20/20 VERIFIED ×3，批次 SETTLED、交付完成</td><td><code>cmvghp4qc…</code>；<code>replacement_done ES</code> 17:46:44</td></tr>
+<tr><td class="t">17:29 / 17:39</td><td>回收器把两个 DISPATCHING attempt 终态化为 <code>ATTEMPT_ABANDONED_NEVER_DISPATCHED</code></td><td><code>execution-batch.ts:1659</code>；<code>finishedAt</code></td></tr>
+<tr><td class="t">17:49 / 17:59</td><td>批次收口 timer 置 STALLED，预占 70+70 <b>released</b></td><td>journal <code>[batch-reconcile] {"stalled":{"settled":1…}}</code>；<code>CreditReservation</code></td></tr>
+</table>
+
+<h2>根因链（到代码行为止）</h2>
+<div class="cards">
+  <div class="card"><h3>① 浏览器：编号列不设字符关</h3><p><code>execute-step.tsx:401</code> 把 <code>row.recordId</code> 原样当清单行标识；<code>csv.ts:646 / 751-753 / 765-770</code> 导入时只校验唯一性，不校验字符集。</p></div>
+  <div class="card"><h3>② 助手：白名单很窄</h3><p><code>execution-manifest.js:9</code> <code>^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$</code>；中文、空格、全角括号、以 <code>- _ .</code> 开头、超 128 字符一律触发 <code>:168</code> 的 <code>MANIFEST_FRAGMENT_ROWS_INVALID</code>。</p></div>
+  <div class="card"><h3>③ 服务端：只能等窗口用尽</h3><p>attempt 从未被接受＝<code>acceptedAt NULL</code>；派发窗口每语 3 分钟（5 语＝15 分钟，<code>:955/:971</code>），到点才置终态（<code>:1636-1660</code>）。</p></div>
+  <div class="card"><h3>④ 界面：窗口内既不能取消也不能完成</h3><p>abandon / finish 返 409 —— 用户主观就是"点了没反应、卡死"。</p></div>
+</div>
+
+<h2>顺带查出来的三处"下次还会瞎"</h2>
+<div class="cards">
+  <div class="card"><h3>排障快照通道在生产是坏的</h3><p>返回 503，而 <code>/var/www/tygf/support-bundles</code> 自 09-17 建目录以来一个文件都没有；路由把异常整个吞掉不记日志（<code>route.ts:68-70</code>），抛的什么错盘上无从取证。这正是事故3 拖五周才拿到内层码的同一根病灶。</p></div>
+  <div class="card"><h3>助手回传的诊断被服务端丢掉</h3><p>今日 23 条 <code>ATTEMPT_DIAGNOSTICS_INVALID</code>；成功落库的条目里 <code>code</code> 是 <code>TUESDAY_</code>、<code>2026_10_20T09</code>、<code>_</code> 这类 PS 日志串——文本占了码字段，白名单判非法。PS 阶段现场基本收不到。</p></div>
+  <div class="card"><h3>两站共用一份 access.log 且没有 <code>$host</code></h3><p><code>/etc/nginx/nginx.conf:40</code>。按路径统计的 403/409/503 无法判定属于生产还是测试站；本次全部结论改走"生产库 + journal"取证。</p></div>
+</div>
+
+<h2>待办</h2>
+<div class="gates">
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>修法 A（推荐）</b>：导入与执行前按助手同一白名单校验「记录编号」，不合规就点名哪一行哪一列，而不是等助手在 manifest 阶段整体拒。属校验＋文案，不碰计费/回执合同。</p></div>
+  <div class="gate"><span class="tag own">等 Owner</span><p><b>修法 B（合同变更）</b>：清单构建时把任意 <code>recordId</code> 规范成安全 token 并保留映射——按纪律须同步浏览器／助手 evidence／服务端报价／结算闸四层＋<code>smoke-batch-row-contract</code> fixture，成本明显高于 A。</p></div>
+  <div class="gate"><span class="tag own">等 Owner</span><p>排障通道修复（catch 改带错误码的 warn ＋ 目录写权限自证）与 nginx 加 <code>$host</code>（需 reload 生产 nginx）是否现在做。</p></div>
+  <div class="gate"><span class="tag me">我可自走</span><p>用生产库把 11 笔 STALLED 批次按内层码归类，判这次复发是否同一用户/同一族表，结论并给 ISSUES 立案。</p></div>
+</div>
+
+<h2>未核实项（如实标注）</h2>
+<div class="callout bad">
+<ul>
+<li><b>用户表里具体是哪个字符踩线</b>：未核实。服务端表快照只存 <code>language/rowIndex/source/target</code> 四列、不含行标识（实测 <code>ReviewSnapshot.tableJson</code> keys），而唯一能带回现场的排障包通道正好 503。</li>
+<li><b>503 的确切抛出点</b>：未核实（异常被吞、无日志）。已排除：目录不存在、属主/权限（<code>tygf:tygf drwxr-xr-x</code>，以 tygf 身份 mkdir+touch 实测 WRITE_OK）、磁盘（78% 用、8.5G 可用）。</li>
+<li><b>助手 3.7.15 实际加载的校验器与本仓 <code>download/local-assistant/execution-manifest.js</code> 是否逐字节一致</b>：未核实（未做安装包内脚本哈希比对）。</li>
+</ul>
+</div>
+
+<p class="note">取证纪律：结论只认"运行中的进程 + 它实际读的库"；上文所有时刻均为本会话同拍读数（<code>sqlite3 file:/var/www/tygf/db/custom.db?mode=ro</code> 只读、<code>journalctl -u tygf.service / -u tygf-batch-reconcile.service</code>、<code>sudo -n tail /var/log/nginx/access.log</code>）。服务器上未做任何写操作，除一次性 <code>touch</code> 写权限自证已即时删除。</p>
+
+<footer>图译工坊内测版 · 生产故障取证 · 2026-10-20 18:0x CST · 同名 md 已按 Owner 令送飞书</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地助手整改方案必要性复审</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:64ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre.cmd{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
+  overflow-x:auto;
+  line-height:1.65;
+  margin:0;
+  color:var(--ink-2);
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:46ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.gate ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:5px}
+.gate li{font-size:.9rem;color:var(--ink-2);line-height:1.65}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>整改方案必要性复审</span><span class="sep">/</span>
+    <span>2026-10-23</span>
+  </p>
+  <h1>本地助手整改方案：哪些是真的该动</h1>
+  <p class="standfirst">对《本地助手整改：开源参考、对抗式复核与执行方案》逐条核验必要性。结论：问题清单基本可信，但最贵的一件按现写法跑不通，发布闸的顺序也倒过来了。全部只读，未改代码、未出包、未部署。</p>
+  <div class="meta">
+    <span>方案 26,403 B / sha256 26c1c80e…</span>
+    <span>develop@e8d3d666 只读</span>
+    <span>16 条已证实（Important 10）</span>
+    <span>代码改动 0</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">打回 · 改 6 处后重审</span>
+    <p>方向是对的：ACL 按用户名解析、读不到就覆盖、空证据能过结算闸，这三件都是真的。<br>但方案把"该修的问题"和"最贵的修法"绑在了一起，还把执行顺序倒过来了——先立发布闸、后修 ACL，结果是把唯一能救客户的热修锁在门外。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">3</span><span class="k">真必要<br>身份核对 / ACL 停损 / 不覆盖</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">条件必要<br>发布闸 / 墓碑 / 最小闸 / HTTP 卫生</span></div>
+    <div class="stat bad"><span class="n">4</span><span class="k">不必现在做<br>全量对象上传等</span></div>
+    <div class="stat bad"><span class="n">69,993</span><span class="k">方案自称的"500 对象"回执字节数，上限 65,536</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>方案做对的部分</h3>
+      <ul>
+        <li><strong>拒绝清单整段照做</strong>：DPAPI、SQLite、混淆、加壳、凭据管理器、mTLS 全部不碰。这是本轮最不需要改的一节。</li>
+        <li><strong>BLK-1 抓得准</strong>：ACL 授权目标用裸 <code>USERNAME</code>，并且先断继承后授权，顺序也反了。</li>
+        <li><strong>"读不到绝不覆盖"方向对</strong>：这是"授权反复丢"的真正放大器，方案看对了病。</li>
+        <li><strong>不做"防破解"</strong>：把护城河放在"即使读懂也改不了结算"，这个判断是对的。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>按现写法会出事的部分</h3>
+      <ul>
+        <li><strong>P1-A 跑不通</strong>：字段被隐私白名单拒、体积顶穿 64 KB、服务端没有对象清单也没有行映射、新旧版本互相拒收。</li>
+        <li><strong>P0-C 顺序倒置</strong>：证书没到就要求生产发布失败闭合，等于把 ACL 热修一起停发；且现网清单已经是 <code>UnsignedBeta</code>。</li>
+        <li><strong>P0-B 会埋掉好备份</strong>：CORRUPT 时"当前与 .bak 一起改名"，把可恢复变成必须重新授权。</li>
+        <li><strong>P0-D 写点选错</strong>：墓碑写进共用清理函数，会把"永久拒绝"记成"已 ACK"。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>核对总账</h2>
+  <p class="lede">以下行号全部是本会话在 <code>worktrees/develop@e8d3d666</code> 上现读的。严重度按"会不会让客户丢东西或让账算错"排，不按改动大小排。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>等级</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">F-01</td><td><span class="tag bad">Important</span></td><td class="mono">execution-batch.ts:2317-2325, 2366</td><td>白名单只有 7 个键，没有 <code>objects</code>；客户端按方案加字段 → 命中 <code>hasForbiddenKeys</code> → 回执 400，客户端当永久拒绝并删除待重放记录</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-02</td><td><span class="tag bad">Important</span></td><td class="mono">receipt/route.ts:40；server.js:7706</td><td>回执体上限 64 KB。方案自称的 500 对象场景实测 69,993 B，已超；413 不在永久拒绝集合 → 每 5 分钟无限重试</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-03</td><td><span class="tag bad">Important</span></td><td class="mono">schema.prisma:1399-1411, 1491</td><td>行表只有"需要几个对象"，没有 objectId；对象结果表全仓 0 引用。服务端无法判断上传的对象属不属于这次尝试</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-04</td><td><span class="tag bad">Important</span></td><td class="mono">execution-batch.ts:152；v15-runner.js:1078-1085</td><td>摘要是客户端自己对自己算的，<code>requiredObjectCount</code> 也是客户端提交的。"重算一致"只证明自洽，不证明活干过</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-05</td><td><span class="tag bad">Important</span></td><td class="mono">release-preflight.cjs:134-139；check-release-identity.cjs:189-190</td><td>删除生产清单或移除 flag → 证书到位前所有生产发布失败，包括修 ACL 的热修</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-06</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:3487, 4399</td><td>新旧版本互斥：旧客户端不带对象被新服务端拒，新客户端带对象被旧服务端拒；400/409 都算永久拒绝，回执被删</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-07</td><td><span class="tag bad">Important</span></td><td class="mono">persisted-state.js:89-105</td><td>当前文件坏、备份好时，代码本来会把备份复制回当前；方案却要求把两者一起隔离 → 唯一一份好备份被埋</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-08</td><td><span class="tag bad">Important</span></td><td class="mono">TrayHost.cs:55-63, 104-133</td><td>方案要求配置不可读时退出；托盘每 5 秒把引擎拉起，没有致命错误闭锁 → 无限重启风暴</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-09</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:766-773, 8134, 4793/6241/6750</td><td>"不覆盖"只写在启动逻辑不够：<code>saveConfig</code> 会先读（失败＝默认值）再合并写，三个请求路径也会触发</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F-10</td><td><span class="tag bad">Important</span></td><td class="mono">server.js:4381, 4386, 4399, 7731</td><td>墓碑写在共用清理函数里，永久拒绝和防御终态也会写 → 被拒收的回执被记成"已 ACK"，真未知被抹掉</td><td class="mono">A</td></tr>
+      <tr><td class="mono">N-01</td><td><span class="tag warn">Nit</span></td><td class="mono">方案 :183</td><td><code>sha256("[]")</code> 负控在"对象非空＋服务端重算"之后是空对象的子集，不是独立安全项</td><td class="mono">A</td></tr>
+      <tr><td class="mono">N-02</td><td><span class="tag warn">Nit</span></td><td class="mono">server.js:172, 184-193</td><td>方案要求日志打印路径，但落盘前盘符路径已被替换成 <code>[path]</code>，托盘又用无窗口启动</td><td class="mono">A</td></tr>
+      <tr><td class="mono">N-03</td><td><span class="tag warn">Nit</span></td><td class="mono">server.js:143</td><td>Host 白名单写死 49152，但端口可由环境变量改 → 改过端口的联调环境全被 421 拒</td><td class="mono">A</td></tr>
+      <tr><td class="mono">P-01</td><td><span class="tag">存量</span></td><td class="mono">receipt/route.ts:40；batch-limits.ts:15</td><td>服务端允许 1500 行，1500 行单行结果就 128,261 B，永远 413；UI 上限 300 行所以现在打不到</td><td class="mono">A</td></tr>
+      <tr><td class="mono">P-02</td><td><span class="tag">存量</span></td><td class="mono">schema.prisma:1491</td><td>逐对象结果表建了但 0 引用——对象轴证据从来没落过云</td><td class="mono">A</td></tr>
+      <tr><td class="mono">P-03</td><td><span class="tag">存量</span></td><td class="mono">installer.iss:95-97</td><td>升级覆盖用户自定义自启项，卸载直接删值；审计报告 MIN-1 提过，方案没接</td><td class="mono">A</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">体积实测（UTF-8 字节，本会话 node 计算）</span>
+    <p>55 行＋500 对象 = 69,993 B；86 行＋500 对象 = 72,597 B；300 行＋300 对象 = 64,773 B；再叠加客户端 diagTail 上限 12 KB 必超。上限是 65,536 B。方案自己提的"先按 500 对象压测一次"，第一次压测就会撞墙。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>真必要：三件</h2>
+  <p class="lede">判据只有一条：不做会不会让客户丢东西、或者让账算错。只是"更规范""更好看"的，一律不进这一栏。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">真必要</span><h3>① 身份核对（前置，0 成本）</h3></div>
+      <p>审计报告自报的 buildId 是 <code>transport-hardening-20261011-r1</code>，对应 <strong>3.7.15</strong>，不是它写的 3.7.24。行为类结论很可能取错了版本。先让客户机把 <code>/ping</code> 原文贴回来，对得上出厂件再谈别的。</p>
+      <p class="was">补充事实：<code>persisted-state.js</code> 从 3.7.15 到 HEAD 逐字节相同，所以 ACL 那条不用等重测；但"24 条回执""CORS"必须重测。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">真必要</span><h3>② ACL 故障停损（可以比方案便宜）</h3></div>
+      <p>代码现在用 <code>process.env.USERNAME</code> 作为授权目标，还把"断继承"和"授权"塞在同一条命令里；授权只在写盘成功后做，启动时不修复。一旦名字解析到另一个账号，当前进程读不了自己刚写的文件，远程没法修。</p>
+      <p><strong>更便宜的反方案</strong>：配置在 <code>%LOCALAPPDATA%\Programs\…</code>，这个目录本来就只对当前用户开放，自定义 ACE 的安全收益接近 0，故障面却是实打实的。建议<strong>停写自定义 ACE</strong>，启动时对读不了的文件跑一次 <code>icacls /reset</code> 恢复继承权限；修不好就进入"不覆盖 + 停"。不需要 <code>whoami</code>、不需要 SID 缓存，代码量约为方案的三分之一。</p>
+      <p class="was">若 Owner 坚持保留加固，再按方案的 SID 版做；但要写清"文件属主不是当前用户时自愈会失败"这个残留风险。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">真必要</span><h3>③ 读不到绝不覆盖（含托盘闭锁）</h3></div>
+      <p>这是"授权反复丢"的真正放大器：读失败 → 返回默认配置 → <code>saveConfig</code> 合并后写盘 → 第二次写把唯一的好备份也覆盖掉。而 <code>ensureMachineId</code> 在三个请求路径里都会触发写盘，所以只要进程活着，任何一次请求都能把令牌冲空。</p>
+      <p><strong>三处必须同笔改</strong>：读函数要能区分"不存在 / 读不了 / 坏了 / 解不开"；闸要下沉到 <code>saveConfig</code>，不能只在启动时拦；托盘要记住"引擎已经因配置错误退出过"，停止 5 秒重启并显示原因。只做"退出"不做闭锁，会变成重启风暴，比现在更难诊断。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>条件必要：四件</h2>
+  <p class="lede">该做，但要么得改写法，要么得排在热修之后。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">条件必要</span><h3>④ 未签名不得冒充正式版</h3></div>
+      <p>现网清单就是 <code>UnsignedBeta</code>，下载页没说清楚，用户看到 SmartScreen 会以为下到假货——这是真实的信任损失，<strong>方向必须做</strong>。</p>
+      <p>但不能按方案写"证书没到之前生产发布失败闭合"：那会让证书到位前所有生产发布都过不去，包括马上要发的 ACL 热修。<strong>正确写法</strong>：保留清单与 flag，给 flag 加"原因＋到期日"；新增 beta 通道；下载页如实标注未签名。证书和四签名位排到热修之后。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">条件必要</span><h3>⑤ 回执墓碑（降级为 2 行）</h3></div>
+      <p>它不是账务缺陷：<code>unresolved</code> 只写一条本地日志，不上云、不进结算。真实后果是"每成功一次，下次启动的假告警就多一条"，把真未知淹没。</p>
+      <p><strong>修起来极便宜</strong>：ACK 成功后写一个标记，恢复时跳过。<strong>必须避开</strong>共用清理函数——它在永久拒绝和防御终态时也会跑，写在那里就会把"被拒收"记成"已结算"，那才是真错账。也不必新建目录和 30 天清理。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">条件必要</span><h3>⑥ 最小证据闸（替代 P1-A 主体）</h3></div>
+      <p>现在的收费闸只认"等级字符串 ＋ 摘要非空"。<code>sha256("[]")</code> 是一个合法的非空字符串，能直接过闸——被改的客户端不需要伪造任何内容就能结算。</p>
+      <p><strong>最小修法</strong>：服务端加 64 位十六进制形状校验；有 VERIFIED 行时拒绝空数组摘要。零客户端改动、零合同变更。<strong>能挡住</strong>"什么都不发直接白拿"，<strong>挡不住</strong>"编 N 个对象算自洽摘要"，所以不能写成"改不了结算"。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">条件必要</span><h3>⑦ 本地 HTTP 卫生</h3></div>
+      <p><code>Vary: Origin</code> 是正确性问题，PNA 是面向未来 Chrome 的兼容，Host 白名单能挡 DNS rebinding——三件都便宜，该做。</p>
+      <p>但不能当成 MAJ-1 的修复：本机进程可以随手伪造 Origin 和 Host。给浏览器发设备密钥在这条链上不可实现，所以 MAJ-1 只能<strong>显式记为接受风险</strong>。实现时端口要从环境变量取，别写死 49152。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>不必现在做：四件</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>条目</th><th>为什么现在不做</th><th>什么时候做</th></tr></thead>
+    <tbody>
+      <tr><td><strong>P1-A 全量对象上传＋服务端重算</strong></td><td>五件前置一件没落地：白名单、请求体上限、对象清单、行映射、双版本窗口。方案里"VERIFIED 行对应的对象不在 objects 里就降级"根本无法实现，因为行和对象之间没有映射。硬上＝存量客户回执全丢</td><td>另立 L 号单，五件前置齐了再开工</td></tr>
+      <tr><td><strong>DECRYPT_FAILED 独立态</strong></td><td>只影响提示文案，不影响处置：两种都不该覆盖，两种都要重新授权。多一态多一条测试路径</td><td>等有用户真的换硬件再说</td></tr>
+      <tr><td><strong>C:\snapshot 路径字面量清理</strong></td><td>落盘日志已把盘符路径替换成 <code>[path]</code>，控制台不落盘。只影响开发看日志的观感</td><td>随下次文案改动一起做</td></tr>
+      <tr><td><strong>MAJ-5 服务端重裁本体</strong></td><td>需要服务端持有原文/译文摘要，与隐私合同直接冲突；L 号工程。最小证据闸替代不了它，P1-A 也替代不了</td><td>记成已知边界，不进这一轮</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>必须改的六处（重审门）</h2>
+
+  <div class="gates">
+    <div class="gate first"><div class="num">1</div><div class="body"><h3>P1-A 降级</h3><p>主体改成服务端最小形状闸；全量对象上传另立单，并在单里写清白名单、体积、对象清单、行映射、双版本五件前置。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>P0-B 的 CORRUPT 定义</h3><p>改成"当前与备份<strong>都</strong>失效"才算坏；当前坏、备份好时走现有恢复路径，不得把好备份一起隔离。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>"不覆盖"闸下沉</h3><p>改在 <code>saveConfig</code>，覆盖三个请求路径；只在启动逻辑里拦不算完成。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>补托盘致命闭锁</h3><p>连续因配置错误退出即停止 5 秒重启，并显示明确原因。否则"退出"比"覆盖"更难诊断。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>P0-C 不得阻断热修</h3><p>保留清单与 flag，加"原因＋到期日"；未签名这件事先落在下载页文案与 beta 通道；证书排到 ACL 热修之后。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><h3>P0-D 钉死写点</h3><p>只在 ACK 成功路径写"已 ACK"；永久拒绝与防御终态单独记"被拒收"，不得混成一个标记。</p></div></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">附带三条低成本修正</span>
+    <p>Host 白名单端口从 <code>PORT</code> 取；<code>CONFIG_UNREADABLE</code> 的路径写进独立诊断文件或托盘提示，别指望落盘日志；方案里的 422 要落到路由层——现在失败一律映射成 404/409，没有 422 这条路。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>更正</h2>
+
+  <ol class="notes">
+    <li><strong>对方案</strong>：方案说 P1-A 是"本轮最该先做的一条"。本轮回读，它是最不该先做的一条——五件前置一件都没落地。真正最该先做的是身份核对与 ACL 停损。</li>
+    <li><strong>对方案</strong>：CORRUPT 时"当前与备份一起改名"与代码的恢复路径矛盾，也与方案自己的验收（"备份哈希逐字不变"）矛盾。按它做，那条验收永远过不了。</li>
+    <li><strong>对方案</strong>："证书没到就生产发布失败闭合"会把 ACL 热修一起停发；而现网清单已经是未签名。</li>
+    <li><strong>对审计报告</strong>：它自报的 buildId 对应 3.7.15，不是 3.7.24。行为类结论必须重取；代码类结论（ACL）不受影响。</li>
+    <li><strong>对我自己上一版</strong>：我上一版把回执墓碑当成账务缺陷。本轮回读，它只写本地日志、不上云、不进结算，应该降级为告警质量问题。上一版也照抄了"一起隔离"的错，这次一并改掉。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>建议顺序</h2>
+
+  <div class="gates">
+    <div class="gate first"><div class="num">0</div><div class="body"><h3>身份核对（5 分钟）</h3><p>客户机 <code>/ping</code> 原文贴回工单，确认版本与 buildId 和出厂件逐字一致。对不上先升客户机。</p></div></div>
+    <div class="gate"><div class="num">1</div><div class="body"><h3>3.7.25 热修（无证书依赖）</h3><p>停写自定义 ACL ＋ 启动 <code>icacls /reset</code> 修复 ＋ 读不到不覆盖（闸在配置层）＋ 托盘致命闭锁。四件一个包。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>发布闸加约束</h3><p>保留清单与 flag，加"原因＋到期日"；下载页如实标注未签名；beta 通道可同笔做，但不得阻断第 1 步。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>回执墓碑（2 行版）</h3><p>只在 ACK 成功路径写标记；对现存历史只做只读分类，不删、不重投、不改结算。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>最小证据闸</h3><p>服务端 64 位十六进制校验 ＋ 有 VERIFIED 行时拒绝空数组摘要。零客户端改动。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>HTTP 卫生</h3><p>Vary / PNA / Host（端口从环境变量取）；同时把"本机进程可伪造来源"记为接受风险。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><h3>证书与四签名位</h3><p>询价、构建机放证书、Inno 配置、出厂验证四件全有效且时间戳非空。</p></div></div>
+    <div class="gate"><div class="num">7</div><div class="body"><h3>全量对象证据（L 号单）</h3><p>对象清单表 ＋ 行映射 ＋ 请求体上限 ＋ 双版本窗口，四件齐了再开工。</p></div></div>
+    <div class="gate"><div class="num">8</div><div class="body"><h3>文档口径</h3><p>威胁模型改写成"本机管理员可读可换程序；我们保证结算不被伪造、分发可验真"，停止使用"防破解"。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>未决与覆盖缺口</h2>
+
+  <h3>未决（4 条）</h3>
+  <ol class="notes">
+    <li><strong>客户机是不是"域账号＋同名本地账号"</strong>：代码缺陷已证实，触发条件未证实。缺 <code>whoami /user</code> 原始输出。</li>
+    <li><strong>审计报告的版本身份</strong>：buildId 与自报版本矛盾。缺 <code>/ping</code>、身份文件、签名查询三份原文。</li>
+    <li><strong>未签名 flag 在生产上的实际调用记录</strong>：只看到结果清单，没看到调用参数。缺发布记录。</li>
+    <li><strong>文件属主不是当前用户时能否自愈</strong>：<code>/reset</code> 依赖属主或管理员权限。缺一台"安装时提权、运行时不提权"的机器实测。</li>
+  </ol>
+
+  <h3>覆盖缺口</h3>
+  <ul class="notes">
+    <li>没上客户机：ACL 故障注入、重新配对、连续重启 3 次全部未实测。</li>
+    <li>没跑安装器：四签名位、实际安装路径、自启覆盖行为都只读了脚本。</li>
+    <li>没跑测试套件：只读审查，未执行类型检查、lint、smoke。</li>
+    <li>没实测 Chrome PNA；没向 CA 询价；没核实生产下载页当前怎么描述"未签名"。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>审查基线：<code>worktrees/develop@e8d3d666</code>；方案文件 26,403 B，sha256 <code>26c1c80e…9011cec6</code>。全部读数为 2026-10-23 本会话实测。</p>
+  <p>本报告只读：未改任何业务代码、未出包、未部署、未改动任何账号或线上配置。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

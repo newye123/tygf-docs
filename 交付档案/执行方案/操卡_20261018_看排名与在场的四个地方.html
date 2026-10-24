@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<title>交付件</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>渠道打分</span><span class="sep">/</span><span>24 个免费外链与目录</span><span class="sep">/</span><span>2026-10-17</span></p>
+  <h1>交付件</h1>
+  <p class="standfirst">上一手 10-11 已把这批渠道分过一档。这次是<strong>逐个重新实测</strong>：站还在不在、提交口还在不在、要不要主体资质、条目页是不是服务端渲染（决定 AI 引擎抓不抓得到）。只读探测，不提交表单、不注册。</p>
+  <div class="meta"><span>24 个渠道</span><span>三轮复跑（修掉 6 个本机 TLS 假阴性）</span><span>未核实：DR／nofollow（无 Ahrefs key）</span><span>结论：建议投 3 个</span></div>
+</header>
+<h1>操卡 · 20261018 · 看"我的站在不在场/排第几"的四个地方（照着点，不需要再问任何一步）</h1>
+<ul class="notes">
+<li>配套：<code>交付档案/执行方案/执行方案_20261018_第十六轮_排名与在场度量闭环.{md,html}</code></li>
+<li>这张卡只回答一件事：<strong>每一格在哪看、看哪一行、那一行只说明什么、不能推成什么。</strong></li>
+<li>我（砚）没有您任何账号的登录态，也不代登录；这张卡全部是您本机能点开的动作。</li>
+</ul>
+<section><h2><span class="sn">01</span>卡一 · Google Search Console（唯一现在就有数据的地方）</h2>
+<ul class="notes">
+<li>打开 <code>https://search.google.com/search-console/about</code> → 用 9-17 那次建资产的 Google 账号登录（域名资产是 <code>sc-domain:tuyigf.com</code>，靠 DNS 里那条 TXT 认的，<strong>那条 TXT 记录不要删</strong>）。</li>
+<li>看三格，就三格：</li>
+</ul>
+<p class="lede">   - 左栏「<strong>效果</strong>」→「搜索性能」：看 <strong>展示次数</strong>、<strong>点击次数</strong>、<strong>平均位置</strong>。10-14 那次实拍是「效果 5 次点击」。</p>
+<p class="lede">   - 左栏「<strong>索</strong>引」→「页面」：看 <strong>已编入索引 / 未编入索引</strong> 两个数。10-14 实拍是 3 已编入 / 4 未编入。</p>
+<p class="lede">   - 左栏「<strong>索引</strong>」→「<strong>网站点地图</strong>」：确认 <code>https://tuyigf.com/sitemap.xml</code> 仍显示成功、已发现页数＝<strong>8</strong>（我今天现读 sitemap 就是 8 条 <code>&lt;url&gt;</code>）。</p>
+<ul class="notes">
+<li><strong>这一格能说明什么</strong>：Google 愿不愿意收录、给了多少次展示。</li>
+<li><strong>不能推成什么</strong>：① "平均位置"<strong>不是</strong>位次——Google 官方定义它是"你站点页面的最高位置的平均"，官方自己建议"更关注展示与点击，而不是位置"；② 表里没列出的词≠没人搜：Google 定义的两三个月只有几十人搜的查询<strong>在表格和 API 里一律不列</strong>（加任何过滤器就整体被忽略），Ahrefs 用 146,741 个站实测 <strong>46.08% 的点击来自这些隐藏词</strong>；③ 这里<strong>完全没有</strong> ChatGPT／豆包／Kimi 的引用信息。</li>
+<li>另有一格叫「<strong>生成式 AI 性能报告</strong>」（2026-06-03 宣布、2026-08-31 铺到全球所有站点）：<strong>只有展示次数</strong>，没有点击、没有查询词、没有位次，而且<strong>API 里拿不到</strong>（<code>searchconsole</code> 的 discovery 文档 rev 20260805 里 <code>generative</code>／<code>ai mode</code>／<code>datasource</code> 全部 0 命中）。<strong>基线只能从 2026-08-20 之后起算</strong>（Google 自认 08-13 起该报表因日志 bug 系统性偏低）。</li>
+</ul>
+<section><h2><span class="sn">02</span>卡二 · Bing Webmaster Tools（IndexNow 那条链真的通到这儿）</h2>
+<ul class="notes">
+<li>打开 <code>https://www.bing.com/webmasters</code>，用您那个微软账号登录；若列表里没有 <code>tuyigf.com</code>，点「导入 Google Search Console 属性」最快。</li>
+<li>看三格：「<strong>索引</strong>」→「网页」；「<strong>性能</strong>」→「排名和点击次数」；「<strong>关键字</strong>」。</li>
+<li>这一格能说明什么：Bing 系（含 ChatGPT 检索、Copilot 走的索引）认不认我们。<strong>IndexNow 那 8 条 URL 推的是 Bing/Yandex/Naver/Seznam/Yep，不含 Google、不含百度</strong>，所以这格是 IndexNow 唯一的回看面。</li>
+<li>不能推成什么：不能推成"Google 也收了"。</li>
+<li>顺带一条已生效的平台变化：Bing 旧 SOAP/POX 接口 <strong>2026-08-31 已退役</strong>、Bing Search API <strong>2025-08-11 已停</strong>，⇒ 程序化抓 Bing 结果这条路官方已经关上；我们仓里 <code>scripts/submit-indexnow.mjs:128</code> 打的是 <code>https://api.indexnow.org/indexnow</code>，不在这条退役线上（这点我核过原式）。</li>
+</ul>
+<section><h2><span class="sn">03</span>卡三 · 百度站长平台（现状：不是"点一下"，是先修链路）</h2>
+<ul class="notes">
+<li>打开 <code>https://ziyuan.baidu.com/</code>，用百度账号登录 →「资源平台」→ 站点 <code>tuyigf.com</code>。</li>
+<li>先确认「<strong>验证状态</strong>」。已知事实：验证文件本身是好的（我今天再读 <code>https://tuyigf.com/baidu_verify_codeva-eNLQKp1jN0.html</code>＝200、32 字节），但根账 <strong>#131 仍是 OPEN·major</strong>——10-13 那次文件验证与 HTML 标签验证各试多轮（累计 6+ 次），百度报错在「无法连接到您网站的服务器」↔「网站服务器错误」↔「301 网页存在跳转」之间抖动。</li>
+<li><strong>本轮补上了一条机制候选</strong>（不是定案）：我今天用自建哨兵量了本站取数完整率——12 秒耐心下 Next 渲染面六件 18 次尝试有 10 次没拿满，其中<strong>连接级超时 <code>UND_ERR_CONNECT_TIMEOUT</code> 4 次</strong>；而且<strong>百度那枚验证文件自己也在这条尾巴上</strong>（p50 23.9 秒、两次里有一次只拿到 0 字节）。⇒ 如果百度抓取方的耐心低于这个量级，它报的就是「无法连接」，与 10-13 的现场一致。</li>
+<li>如果这次还是过不去，别反复点，先看「<strong>索引量</strong>」和「<strong>流量与关键词</strong>」两格（能看多少是多少），然后把<strong>回源/边缘缓存</strong>那一拍交给我出方案（卡四 之后是我的部分）。</li>
+<li>不能推成什么：<code>site:tuyigf.com</code> 的条数<strong>不能</strong>当收录数——百度官方定性它是"估算值、不准"，权威口径是后台【索引量】工具，且官方自己声明浮动 30% 属正常。</li>
+</ul>
+<section><h2><span class="sn">04</span>卡四 · Cloudflare（这一格是本轮新找到的，免费、不引脚本）</h2>
+<ul class="notes">
+<li>打开 <code>https://dash.cloudflare.com/</code> → 选 <code>tuyigf.com</code> 这个 zone → 左栏 <strong>AI Crawl Control</strong>（旧名 Crawler Traffic Management；各套餐含 Free 都可用、零配置）。</li>
+<li>看 <strong>Crawlers</strong> 表：每一行是一个爬虫（GPTBot、ClaudeBot、PerplexityBot、Google-Extended…），列里有 <strong>Requests（允许数与失败数，带趋势）</strong> 和 <strong>Robots.txt violations</strong>。</li>
+<li>这一格能说明什么：<strong>这些 AI 爬虫到底来过没有、来过几次、有没有被拦</strong>。这是我们目前唯一能看到的"AI 侧真实取用"读数——我们自己的 nginx 日志只记<strong>进到源站</strong>的那些，被边缘挡掉的那部分只有这里看得见。</li>
+<li>不能推成什么：Cloudflare 官方自己写明"失败请求可能来自任意规则或响应错误，不只是 AI Crawl Control 的 block"⇒ <strong>GPTBot 来过 ≠ 我们被引用</strong>。</li>
+<li>顺手两格：<strong>Analytics → 域名</strong>（cookieless 统计的读数，如果我们没开就仍是空）；<strong>自适应分析（Adaptive Analytics）</strong>保留期自 2026-10 起每套餐至少 30 天，且<strong>同一批数据可以用 GraphQL Analytics API 拉</strong>——这条让"每周自己拉一份 JSON 存下来"零成本可行，也是 §执行方案 C4 之外唯一不需要 OAuth 的自动化路径。</li>
+</ul>
+<section><h2><span class="sn">05</span>卡五 · 不用登录、本机今天就有数的三处（补档）</h2>
+<ul class="notes">
+<li><strong>在场/取数读数</strong>：<code>交付档案/GEO测量/presence-snapshot_20261018.jsonl</code>——今天六轮真实读数，短字节率 <strong>16.4%</strong>（140 次尝试里 23 次没拿满；12 秒档那一轮 33.3%，30 秒档五轮 11.8%）。跑一轮：<code>node 交付档案/GEO测量/presence-snapshot.mjs --tries 2 --timeout-ms 30000</code>；看趋势和报警裁决：<code>node 交付档案/GEO测量/presence-snapshot.mjs --history</code>（连续 3 轮同形异常才报警，否则静默）。</li>
+<li><strong>中文 SERP 前排形态与百度在场性</strong>：<code>交付档案/GEO测量/测量记录_20261017_中文SERP前排形态与百度收录在场性.md</code>（四词 76 条形态分布、<code>site:</code> 双采 0 条、品牌词 20 条 0 命中且第 8 位是同名邻居智图工坊）。</li>
+<li><strong>AI 侧基线</strong>：<code>交付档案/GEO测量/geo-baseline_20261017_doubao_v2.jsonl</code>（豆包三问，v2 干净采集）。<strong>注意它的边界</strong>：单发读数，按 §三-6 的统计门槛，只能判"提没提到"，判不了趋势。</li>
+</ul>
+<p class="lede">---</p>
+<h3>点完之后请告诉我三件事（其余我不用问）</h3>
+<ul class="notes">
+<li>GSC「效果」页顶部的 <strong>展示/点击/平均位置</strong> 三个数（以及上面有没有"数据不可用/延迟"的黄条）；</li>
+<li>Bing「索引 → 网页」里 <strong>已提交/已索引</strong> 两个数；</li>
+<li>Cloudflare <strong>AI Crawl Control → Crawlers</strong> 表里，GPTBot / ClaudeBot / PerplexityBot / Google-Extended 四行的 <strong>Requests（允许/失败）</strong>。</li>
+</ul>
+<p class="lede">拿到这三个数，我就有了一条真基线；拿不到，我也不会用探针数冒充它们。</p>
+</section>
+<footer>
+  <p>读数载体：<code>tmp/geo-research/channel-probe.json</code>（24 条）；探针可复跑：<code>tmp/geo-research/probe-channels.mjs</code>。清单来源：<code>outputs/运营方案-v2-20261011/R3-中文渠道拉新手段.md</code> 第 391-428 行。</p>
+  <p>本机坑（本轮实测）：<code>curl</code> 不加 <code>--ssl-no-revoke</code> 会把 6 个活站判成不可达；<code>-w %{size_download}</code> 是传输字节不是文件字节。SSR% 为「剥标签后可见文本 ÷ HTML 体积」的粗代理，只用于横向比较，不当绝对判据。</p>
+</footer>
+</div>

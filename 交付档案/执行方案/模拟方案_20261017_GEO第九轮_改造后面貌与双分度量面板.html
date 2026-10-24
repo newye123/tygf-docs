@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<title>模拟方案 · GEO 改造后面貌与双分度量面板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+<style>
+/* ---- 模拟件专用增量（沿用 house 的 token，不新造色板） ---- */
+.sim-ribbon{
+  position:sticky;top:0;z-index:20;
+  background:var(--warn-soft);border-bottom:1px solid var(--warn);
+  color:var(--warn);font-family:var(--font-mono);font-size:.74rem;letter-spacing:.08em;
+  padding:9px 14px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;
+}
+.wrap{padding-top:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.86rem;color:var(--muted)}
+.toolbar label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.toolbar input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent)}
+.switch{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.76rem;
+  border:1px dashed var(--line-strong);border-radius:8px;padding:6px 10px;cursor:pointer;background:var(--surface);color:var(--ink-2)}
+.switch[data-on="1"]{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.dual{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.scorecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.scorecard.live{border-top:2px solid var(--warn)}
+.scorecard .big{font-family:var(--font-mono);font-size:2.5rem;font-weight:500;line-height:1;letter-spacing:-.02em}
+.scorecard .big.pending{color:var(--muted);font-size:2.1rem}
+.bar{height:8px;background:var(--sunk);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--warn)}
+.bar.g i{background:var(--ok)}
+.formula{font-family:var(--font-mono);font-size:.78rem;color:var(--muted)}
+.cell-sim{background:repeating-linear-gradient(-45deg,transparent 0 4px,var(--warn-soft) 4px 8px);
+  border-radius:4px;padding:1px 5px;font-family:var(--font-mono);position:relative}
+.cell-sim::after{content:"SIM";font-size:.58rem;letter-spacing:.06em;color:var(--warn);margin-left:5px;vertical-align:.35em}
+.pane{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:11px}
+.pane h4{margin:0;font-family:var(--font-display);font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:9px}
+.pane h4 .pill{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;padding:2px 7px;border-radius:999px;text-transform:uppercase}
+.pane.was h4 .pill{background:var(--bad-soft);color:var(--bad)}
+.pane.now h4 .pill{background:var(--ok-soft);color:var(--ok)}
+.excerpt{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:13px 15px;
+  font-family:var(--font-mono);font-size:.82rem;line-height:1.85;color:var(--ink-2);overflow-wrap:anywhere}
+.excerpt b{color:var(--ink);background:var(--warn-soft);padding:0 3px;border-radius:3px;font-weight:500}
+.linklist{display:flex;flex-wrap:wrap;gap:7px}
+.linklist code{font-size:.78rem}
+.linklist code.dead{background:var(--sunk);color:var(--muted);border-style:dashed}
+.linklist code.live{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.metrics div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+.metrics .v{font-family:var(--font-mono);font-size:1.16rem;font-variant-numeric:tabular-nums}
+.metrics .l{font-size:.75rem;color:var(--muted);line-height:1.45}
+.checkrow{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px}
+.checkrow input{width:17px;height:17px;margin-top:3px;accent-color:var(--ok);flex:none}
+.checkrow .body{display:flex;flex-direction:column;gap:5px}
+.checkrow.done .body h3{color:var(--muted);text-decoration:line-through}
+.cmd{font-family:var(--font-mono);font-size:.78rem;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre;color:var(--ink-2)}
+.copy{font:inherit;font-family:var(--font-mono);font-size:.7rem;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--ink-2);flex:none}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+.calc label{display:flex;flex-direction:column;gap:5px;font-size:.79rem;color:var(--muted)}
+.calc input[type=number]{font-family:var(--font-mono);font-size:.95rem;padding:7px 9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:7px;color:var(--ink)}
+.calc output{font-family:var(--font-mono);font-size:1.05rem;color:var(--accent);font-variant-numeric:tabular-nums}
+.legend{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+</style>
+
+<div class="sim-ribbon">
+  <span>模拟件 / SIMULATION</span><span>·</span>
+  <span>左列读数＝2026-10-17 本会话实测；标 SIM 的格子＝假数据，只为看形状</span><span>·</span>
+  <span>默认可见文本区不含任何假数</span>
+</div>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>模拟方案</span><span class="sep">/</span>
+    <span>GEO 第九轮 · 改造后面貌与度量</span><span class="sep">/</span>
+    <span>2026-10-17</span>
+  </p>
+  <h1>如果按方案做完，GEO 这一面会长成什么样</h1>
+  <p class="standfirst">这不是设计稿，是<strong>可点预览</strong>：上半是公开量表对我们生产站的首跑真实读数（25 项、逐项分档、逐项证据），中间是「改造前／改造后」的抽取面对照，下半是收益度量面板的形状——<strong>那一面的数我全没有，所以默认全是 <code>—（未测）</code></strong>，你按下「载入模拟数据」才会看到假数长什么样。</p>
+  <p class="standfirst"><strong>为什么把引用表现留空：</strong>那份量表自己做的唯一一次预注册检验，就绪度分与被引用之间的 Kendall τ_b 只有 <code>T=0.074</code>（<code>p=0.513</code>，1,280 个回答，单引擎）。所以<strong>分数只当体检，收益必须另外量</strong>。</p>
+  <p class="standfirst"><strong>号界：</strong>「第七轮」＝另一只手的 llms 引擎面文件补平（<code>TASK_LOG.md:31</code>），「第八轮」＝另一只手的英文面四件文件（<code>TASK_LOG.md:25</code>），<strong>本件自称第九轮</strong>。三只手不在同一轴：它们动机器面文本与英文站外，本轮量的是<strong>首页出边与取回稳定性</strong>——「可抓取面没问题」讲的是内容在不在，不覆盖我这两条。</p>
+  <div class="meta">
+    <span>实测载体：https://tuyigf.com</span>
+    <span>量表 v1.1 · geo-score 1.8.3</span>
+    <span>未部署 · 未改业务代码</span>
+    <span>配套方案：执行方案_20261017_GEO第九轮</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>双分面板 —— 两个数分开报，永不合并</h2>
+
+  <div class="dual">
+    <div class="scorecard">
+      <span class="lb" style="font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)">左数 · 站点就绪度（实测）</span>
+      <p class="big">58<span style="font-size:1rem;color:var(--muted)"> / 100</span></p>
+      <div class="bar"><i style="width:58%"></i></div>
+      <p class="formula">readiness 49 ÷ observable_max 84 = 58%　·　档位 Growing（基础已在做，差系统性）</p>
+      <p class="formula">门槛三项 g.robots／g.reachable／g.ssr ＝ 5+5+5 全满，未触发封顶 40</p>
+      <p class="formula">跑 4 页只用上 2 页（2 页报错）· 抽样源「找不到 sitemap」· 耗时 88.8 s</p>
+    </div>
+
+    <div class="scorecard live">
+      <span class="lb" style="font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)">右数 · AI 引用表现（未测）</span>
+      <p class="big pending" id="citeBig">—</p>
+      <div class="bar"><i style="width:0%"></i></div>
+      <p class="formula">提及率 —　引用率 —　信息准确率 —</p>
+      <p class="formula">量表作者的话：「结果型指标，单独报告，不并入就绪度——它由就绪度与时间共同决定，且同一问题多次提问结果不同，不可复现。」</p>
+      <p class="formula">这一格只能由 §04 的问题面板填；<strong>没有面板跑数，这里就该一直是 —</strong></p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <label><input type="checkbox" id="onlyGaps"> 只看失分项（0 分与未满档）</label>
+    <span class="switch" id="simToggle" data-on="0" role="button" tabindex="0">载入模拟数据（只看形状）</span>
+    <span>当前：<span id="simState">全部未测</span></span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>25 项体检逐条读数</h2>
+  <div class="scrollx">
+    <table id="ledger">
+      <thead><tr><th>检查项</th><th class="mono">得分</th><th>本会话实测证据</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td>g.robots 放行检索爬虫</td><td class="mono">5/5</td><td class="mono">robots.txt 354 B：7 个具名检索 UA 全 <code>Allow: /</code>；源码 <code>robots.ts:12-25</code></td><td><span class="tag ok">保持</span></td></tr>
+        <tr><td>g.reachable 检索 UA 实测可达</td><td class="mono">5/5</td><td class="mono">GPTBot UA 取回 95,308 B，与浏览器 UA <strong>同字节</strong></td><td><span class="tag ok">保持</span></td></tr>
+        <tr><td>g.ssr 正文服务端可见</td><td class="mono">5/5</td><td class="mono">原始 HTML 内可见正文 4,546 字（占比 7.0%），无需执行 JS</td><td><span class="tag ok">保持</span></td></tr>
+        <tr class="gap"><td><strong>p1.sitemap 可发现且新鲜</strong></td><td class="mono">0/4</td><td class="mono"><code>/sitemap.xml</code> 实测 200、8 个 <code>&lt;loc&gt;</code>、<code>robots.txt</code> 里 <code>Sitemap:</code> 行在位 ⇒ 审计器报「no sitemap reachable」是<strong>慢到超时</strong>（首拍 8.0 s）</td><td><span class="tag warn">B1 缓存</span></td></tr>
+        <tr><td>p1.llms-txt</td><td class="mono">5/5</td><td class="mono">3,534 B，双语单文件，要点式自足事实</td><td><span class="tag ok">维持不加码</span></td></tr>
+        <tr class="gap"><td>p1.organization + WebSite</td><td class="mono">5/6</td><td class="mono">报「logo does not resolve」；我复测 <code>/app-icon-512.png</code> ＝ <strong>200 image/png 16,494 B</strong>，20 s 才下完 ⇒ 又是超时不是 404</td><td><span class="tag warn">B1 缓存</span></td></tr>
+        <tr class="gap"><td>p1.breadcrumb</td><td class="mono">0/3</td><td class="mono">站内无 BreadcrumbList；营销站只有 4 个页面，面包屑意义低</td><td><span class="tag">放弃·理由见 §05</span></td></tr>
+        <tr class="gap"><td>p1.page-type 页型 schema</td><td class="mono">2/4</td><td class="mono">首页有 Organization／WebSite／SoftwareApplication／FAQPage；<code>/download</code>、条款页无页型 schema</td><td><span class="tag ok">A 可做</span></td></tr>
+        <tr><td><strong>p2.answer-passages 自足答案段</strong></td><td class="mono">9/9</td><td class="mono">满档——这是我们最强的一项（llms.txt 那套要点在页面上也有）</td><td><span class="tag ok">保持</span></td></tr>
+        <tr class="gap"><td><strong>p2.question-intent 标题匹配提问意图</strong></td><td class="mono">0/7</td><td class="mono">「0 of 2 pages carry at least one heading phrased as a question」；FAQ 问句渲染在 <code>&lt;button class="faq-q"&gt;</code>（<code>home-view.tsx:429</code>），而 FAQPage 里已有 7 个 <code>Question</code></td><td><span class="tag ok">A2 结构改</span></td></tr>
+        <tr class="gap"><td>p2.freshness 时间信号</td><td class="mono">3/6</td><td class="mono">2/2 页有可见日期，但「0 declare dateModified」；<code>sitemap.ts:4</code> 注释明写「无真实内容时间不伪造」</td><td><span class="tag bad">不许为分造时间</span></td></tr>
+        <tr class="gap"><td>p2.sourced-stats 数据带出处</td><td class="mono">3/7</td><td class="mono">报「0 figures on 0 pages」；首页那张示意卡的 <code>93.8%／12 个／48 个</code>（<code>siteContent.ts:252-278</code>）在可见文本里<strong>没有「示意」标注</strong></td><td><span class="tag warn">A3 先止血</span></td></tr>
+        <tr class="gap"><td>p2.named-author 具名作者</td><td class="mono">0/6</td><td class="mono">无署名、无身份页</td><td><span class="tag bad">B4 等 Owner</span></td></tr>
+        <tr><td>p3.listings／mentions／knowledge-graph／question-coverage</td><td class="mono">—/16</td><td class="mono">量表自陈「不站外搜索不可观测」；另 12 次 Wikidata／Wikipedia 查询 7 次无响应 ⇒ 判未测不判 0</td><td><span class="tag">留空</span></td></tr>
+        <tr class="gap"><td>p3.sameas</td><td class="mono">0/3</td><td class="mono">Organization 里无 <code>sameAs</code>（实测 JSON-LD 键面：<code>@id,@type,contactPoint,logo,name,url</code>）</td><td><span class="tag warn">需真身份页</span></td></tr>
+        <tr class="gap"><td>p3.video</td><td class="mono">0/3</td><td class="mono">无 VideoObject／频道链接；但业界相关性里 YouTube 品牌提及 ρ≈0.737 是最强项</td><td><span class="tag bad">B5 等 Owner</span></td></tr>
+        <tr><td>p4.answer-shape</td><td class="mono">4/4</td><td class="mono">满档</td><td><span class="tag ok">保持</span></td></tr>
+        <tr class="gap"><td>p4.cn-engines 中文引擎适配</td><td class="mono">1/2</td><td class="mono">「1 of 3 Chinese crawlers reached the home page; ICP filing not shown」⇒ 满档要求备案与主体信息</td><td><span class="tag bad">结构封顶</span></td></tr>
+        <tr><td>b.llms-full</td><td class="mono">2/2</td><td class="mono">7,148 B 实测 200（我首遍报的 5,256 是传输侧读数，不作文件字节）</td><td><span class="tag ok">保持</span></td></tr>
+        <tr class="gap"><td>b.ai-txt／b.geo-link／b.speakable</td><td class="mono">0/5</td><td class="mono">未做。<code>ai.txt</code> 我探测得到 <code>http=000</code>（TLS 失败，<strong>不是 404</strong>）</td><td><span class="tag">主动放弃</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="legend">
+    <span>就绪度合计 49 ＝ 15（门槛）+ 12（p1）+ 15（p2）+ 0（p3）+ 5（p4）+ 2（bonus）</span>
+    <span>可观测满分 84 ＝ 100 − 16（四项站外不可观测）</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>抽取面对照：改造前（实测）／改造后（形状示例）</h2>
+  <p class="lede">左边每一个字都是本会话从 <code>https://tuyigf.com</code> 原始 HTML 里剥标签取到的；右边只演示<strong>结构与可达性的形状</strong>——文案要你拍，而且 #163 未决时改代码单源可能根本不生效（数组字段整组替换，<code>site-settings.ts:255-271</code>）。</p>
+
+  <div class="dual">
+    <div class="pane was">
+      <h4>改造前 · 引擎实际拿到的<span class="pill">实测</span></h4>
+      <p class="formula">前 200 个可见字符（原文照录）</p>
+      <div class="excerpt">图译工坊｜批量把PSD文字改成多国语言（单批 12 语种） 图 图译工坊 为何变重 轻松在哪 如何处理 任务状态 工作台 登录 申请试跑 已有译文的多语言 PSD / PSB · 单次最多 12 个目标语种 <b>让设计师改语言 变轻松</b> 不是把设计交给工具。 是不再按语言，一个个从头做。</div>
+      <p class="formula">→ 前 200 字里是<strong>标题＋导航＋口号</strong>；「图译工坊先处理已经明确的文字替换……」这句定义落在其后。抽取器若按摘要窗口截断，读到的是情绪句不是产品句。</p>
+      <p class="formula">静态 HTML 里可发现的真实页面链接</p>
+      <div class="linklist">
+        <code class="live">/auth/login</code><code class="live">/privacy</code><code class="live">/privacy/subprocessors</code>
+        <code class="dead">/download ✗ 出现 0 次</code><code class="dead">/terms ✗ 出现 0 次</code><code class="dead">/en ✗ 仅存在于 hreflang</code>
+      </div>
+      <div class="metrics">
+        <div><span class="v">11</span><span class="l">唯一 <code>&lt;a href&gt;</code> 总数</span></div>
+        <div><span class="v">7</span><span class="l">其中是 <code>#</code> 锚点</span></div>
+        <div><span class="v">1</span><span class="l">问句形式的标题</span></div>
+        <div><span class="v">9.3 s</span><span class="l"><code>/download</code> 首字节</span></div>
+        <div><span class="v">0</span><span class="l">边缘缓存命中（全路径 DYNAMIC）</span></div>
+      </div>
+    </div>
+
+    <div class="pane now">
+      <h4>改造后 · 目标形状<span class="pill">示例</span></h4>
+      <p class="formula">前 200 字改成自足答案句（结构示意，非最终文案）</p>
+      <div class="excerpt">图译工坊｜批量把PSD文字改成多国语言（单批 12 语种） 图译工坊 下载助手 条款 隐私 English <b>图译工坊把已有译文批量写回 PSD / PSB 的文字图层</b>：网页整理并审查译文表，本地助手驱动 Photoshop 替换并逐处回读核对，输出 PSD、JPG 与可复查报告。栅格化文字与智能对象会列进报告，不静默跳过。</div>
+      <p class="formula">→ 第一句就回答「是什么 + 怎么做 + 边界」，导航里出现可发现的真实页面链接。</p>
+      <p class="formula">静态 HTML 里可发现的真实页面链接（A1 后）</p>
+      <div class="linklist">
+        <code class="live">/download</code><code class="live">/terms</code><code class="live">/privacy</code><code class="live">/privacy/subprocessors</code><code class="live">/en</code><code class="live">/en/download</code><code class="live">/auth/login</code>
+      </div>
+      <div class="metrics">
+        <div><span class="v">8</span><span class="l">真页面链接（=IndexNow 8 条同集合）</span></div>
+        <div><span class="v">≥7</span><span class="l">问句形式标题（A2 后）</span></div>
+        <div><span class="v">—</span><span class="l">TTFB：等 B1，我不擅自改缓存</span></div>
+        <div><span class="v">—</span><span class="l">缓存命中：等 B1</span></div>
+        <div><span class="v">示意</span><span class="l">演示数字加文本层标识（A3）</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">为什么这屏值得做而别的不动</span>
+    <p>业界唯一被公开测量过的机制事实是：<strong>GPTBot 一个月在 Vercel 网络发 5.69 亿次请求、抓 JS 文件但不执行（11.50%），Claude 23.84% 同样不执行</strong>——客户端渲染的内容对它们等于不存在。我们<strong>已经过了这一关</strong>（g.ssr 5/5，同字节）。所以我们缺的不是渲染，是<strong>链接发现</strong>和<strong>取回稳定性</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>收益度量面板：形状在这里，数我全没有</h2>
+  <p class="lede">冻结 30 问，四类分布：品类 8／问题 8／对比 7／场景 7。每条 × ≥3 次复采 × 固定「端」。这张表是<strong>要被填的那张表</strong>——默认空，按工具条上的「载入模拟数据」才会出现假数。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>引擎 · 端</th><th class="mono">复采</th><th class="mono">提及率</th><th class="mono">引用率</th><th class="mono">TOP3 占比</th><th class="mono">信息准确率</th><th class="mono">95% 区间</th></tr></thead>
+      <tbody id="panelBody">
+        <tr><td>ChatGPT · 网页端</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td></tr>
+        <tr><td>Perplexity · 网页端</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td></tr>
+        <tr><td>豆包 · app 端</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td></tr>
+        <tr><td>Kimi · 网页端</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td></tr>
+        <tr><td>DeepSeek · 网页端</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td><td class="mono simcell">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">三条口径，写在动手之前</span>
+    <p><strong>一、端是变量。</strong>同一模型换端口权重能差一倍（有实测报抖音域引用 app 端 ≈30%、网页端 11.85%，二手数）。所以「豆包 · app 端」和「豆包 · 网页端」是两行，不是一行。</p>
+    <p><strong>二、API 不等于产品。</strong>三家开源工具的自陈都指同一件事：走 API 只拿得到「模型本来就知道的品牌」，产品端的检索、排序、引用格式都不在里头。<strong>所以面板优先走真实网页端手工跑，API 只做补充。</strong></p>
+    <p><strong>三、先量噪声再读趋势。</strong>下面的计算器就是把这条变成动作：单次读数不结论，达到最小可检出变化才算数。</p>
+  </div>
+
+  <div class="pane">
+    <h4>最小可检出变化计算器<span class="pill" style="background:var(--accent-soft);color:var(--accent)">交互</span></h4>
+    <p class="formula">输入：同一问题重复次数 n、两次复采提及率的观测标准差 s（百分点）。输出：标准误 s/√n 与建议门槛 2×标准误（约 95% 粗略界）。</p>
+    <div class="calc">
+      <label>复采次数 n<input type="number" id="calcN" value="3" min="1" max="20"></label>
+      <label>复采标准差 s（百分点）<input type="number" id="calcS" value="8" min="1" max="40"></label>
+      <label>标准误 SEM<output id="outSem">4.62</output></label>
+      <label>建议门槛（≈2×SEM）<output id="outMdc">9.23</output></label>
+    </div>
+    <p class="formula">读法：s=8、n=3 时，单期提及率 20%→28% 这 8 个百分点<strong>还在噪声里</strong>，不许写进任何对外句子；把 n 提到 9，门槛降到约 5.3 个百分点。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>闸门：这些不在我手上</h2>
+  <div class="cards">
+    <div class="checkrow" data-key="geo7-b1">
+      <input type="checkbox"><div class="body">
+        <h3>B1 · 营销只读路径的边缘缓存（Cloudflare 控制台）</h3>
+        <p>现在所有页面 <code>cf-cache-status: DYNAMIC</code>、<code>age: 0</code>、<code>Cache-Control: no-store</code>。<code>no-store</code> 很可能是防后台改字后陈旧——<strong>我不擅自改它</strong>。建议先只对 5 个无 cookie 的只读路径试 60 秒：/download、/terms、/privacy、/llms.txt、/llms-full.txt、/sitemap.xml。审计器报的「logo 不可解析」「sitemap 不可达」「2 页报错」三个红项，我复测的成因都是慢到超时，不是缺文件。</p>
+      </div>
+    </div>
+    <div class="checkrow" data-key="geo7-b2">
+      <input type="checkbox"><div class="body">
+        <h3>B2 · 部署待发三笔</h3>
+        <p><code>e000a69</code>（标题词面）、<code>8bec41e</code>（退回时限句）、<code>e4b63a8</code>（复位）。上一轮已给门禁清单。</p>
+      </div>
+    </div>
+    <div class="checkrow" data-key="geo7-b3">
+      <input type="checkbox"><div class="body">
+        <h3>B3 · GSC 生成式 AI 表现报告 + GA4「AI Assistant」渠道取基线</h3>
+        <p>基线窗口取 <strong>2026-08-20 之后</strong>——Google 自曝 8-13 起有日志错误压低过 Gen-AI 曝光。这两个面免费、官方，但是你的账号动作。</p>
+        <div class="cmd" id="cmdB3">bash scripts/control-plane.sh</div>
+        <button class="copy" data-copy="cmdB3">复制</button>
+      </div>
+    </div>
+    <div class="checkrow" data-key="geo7-b4">
+      <input type="checkbox"><div class="body">
+        <h3>B4 · 具名作者与主体公示</h3>
+        <p>量表给 <code>p2.named-author</code> 6 分，前提是「具名且可核实的身份页」。当前项目<strong>无公司无备案</strong>，署名等于对外身份承诺 ⇒ 必须你拍，我不代拍。</p>
+      </div>
+    </div>
+    <div class="checkrow" data-key="geo7-b5">
+      <input type="checkbox"><div class="body">
+        <h3>B5 · 视频面是否重启（09-24 你令对外素材暂停）</h3>
+        <p>这是全表里相关性最强的一项（YouTube 品牌提及 ρ≈0.737，Ahrefs 75,000 品牌），但属产品级投入，不在本轮自派。</p>
+      </div>
+    </div>
+    <div class="checkrow" data-key="geo7-a5">
+      <input type="checkbox"><div class="body">
+        <h3>A5 · 那条只读 SELECT（#163 前置）</h3>
+        <p>只看生产库那一行有没有值、多大、什么时候改，<strong>不打印正文</strong>。</p>
+        <div class="cmd" id="cmdA5">sqlite3 &lt;生产库路径&gt; "SELECT key, updatedAt, length(valueJson) FROM SiteSetting WHERE key='siteContentV1';"</div>
+        <button class="copy" data-copy="cmdA5">复制</button>
+      </div>
+    </div>
+  </div>
+  <p class="formula">勾选存在这台浏览器的 localStorage，只作你自己的进度记号，不回写台账。</p>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>我主动放弃的分与原因（含 p1.breadcrumb）</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>放弃（不为分数加面）</h3>
+      <ul>
+        <li><strong>b.ai-txt 2・b.geo-link 1・b.speakable 1</strong>：消费方未证实，多三个维护面。</li>
+        <li><strong>p1.breadcrumb 3</strong>：全站只有 4 类页面，层级只有 1 层，面包屑是给深层目录站用的。</li>
+        <li><strong>llms.txt 加码</strong>：Ahrefs 137,210 域实测 97% 的 llms.txt 全月零请求，真检索类 bot 只占 1.1%。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不为而不为：造假口子一律堵住</h3>
+      <ul>
+        <li><strong>不写假 dateModified</strong>（<code>sitemap.ts:4</code> 既有注释已禁止）。</li>
+        <li><strong>不抄论文的「加数据／加引语／加引用」原文配方</strong>——它明写可以编造（<code>geo_functions.py:158,166,245</code>）。</li>
+        <li><strong>不把首页示意卡的 93.8% 当产品统计引用</strong>（<code>siteContent.ts:252-278</code>，可见文本无「示意」标注）。</li>
+        <li><strong>不把 58 分对外说成「GEO 提升 58%」</strong>：作者自己的预注册检验 T=0.074、p=0.513。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>A 档做完之后的体检复跑</h2>
+  <div class="pane">
+    <h4>固定页集合重跑，消除抽样抖动<span class="pill" style="background:var(--ok-soft);color:var(--ok)">A4</span></h4>
+    <div class="cmd" id="cmdRun">py -3 scripts/geo/geo_score.py https://tuyigf.com \
+  --urls tmp/geo-audit/urls.txt --json --json-out tmp/geo-audit/$(date +%F).json</div>
+    <button class="copy" data-copy="cmdRun">复制</button>
+    <div class="cmd" id="cmdDiff">py -3 scripts/geo/geo_score.py diff tmp/geo-audit/上周.json tmp/geo-audit/本周.json --fail-on-drop; echo rc=$?</div>
+    <button class="copy" data-copy="cmdDiff">复制</button>
+    <p class="formula">退出码：<code>0</code>  scored ・<code>1</code> 低于 <code>--fail-under</code>／门槛项归零／<code>--assert</code> 失败 ・<code>2</code> 取不到或用法错 ・<code>4</code> 有掉分。<strong>4 即停其他 GEO 动作先查因</strong>。</p>
+    <p class="formula">本机坑（本轮实测）：<code>python</code> 是坏壳（<code>exit 49</code>、连 <code>-c</code> 都不输出），必须走 <code>py -3</code>；<code>curl</code> 需 <code>--ssl-no-revoke</code> 才过得了部分站点。</p>
+  </div>
+</section>
+
+<footer>
+  <p><strong>这份模拟件里哪些是真的</strong>：§01 左卡、§02 全表、§03 左栏、§05 里所有带 <code>cf-cache</code>／<code>TTFB</code>／<code>grep</code>／<code>http=</code> 的读数——都是本会话在 <code>https://tuyigf.com</code> 与 <code>worktrees/develop</code> 上跑出的回显，载体在 <code>tmp/geo-research/</code>（<code>tu_report.json</code>、<code>gptbot_home.html</code>、<code>rubric_v11.json</code>、<code>results_wave0_zh.md</code>）。</p>
+  <p><strong>哪些是假的</strong>：§03 右栏的文案（只演示结构形状）、§04 表格在按下「载入模拟数据」后出现的任何数字（默认不出现）。假数一律带斜纹与 SIM 角标，且不会进任何对外句子。</p>
+  <p><strong>配套件</strong>：<code>交付档案/执行方案/执行方案_20261017_GEO第九轮_业界算法对标与可发现性修复.{md,html}</code>。</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  // 只看失分项
+  var only=document.getElementById('onlyGaps');
+  if(only){
+    only.addEventListener('change',function(){
+      document.querySelectorAll('#ledger tbody tr').forEach(function(tr){
+        if(only.checked){ tr.style.display = tr.classList.contains('gap') ? '' : 'none'; }
+        else { tr.style.display=''; }
+      });
+    });
+  }
+
+  // SIM 开关：默认全空
+  var t=document.getElementById('simToggle'), st=document.getElementById('simState'), big=document.getElementById('citeBig');
+  var SIM=[['3','18%','6%','10%','92%','±8.4'],['3','24%','13%','13%','88%','±9.1'],
+           ['3','31%','9%','17%','83%','±9.8'],['3','12%','3%','7%','95%','±6.9'],['3','22%','7%','13%','90%','±8.6']];
+  var simOn=false;
+  function paint(){
+    document.querySelectorAll('#panelBody .simcell').forEach(function(td,i){
+      var row=Math.floor(i/6), col=i%6;
+      if(!simOn){ td.classList.remove('cell-sim'); td.textContent='—'; }
+      else { td.classList.add('cell-sim'); td.textContent=SIM[row][col]; }
+    });
+    t.setAttribute('data-on', simOn?'1':'0');
+    st.textContent = simOn?'已载入模拟数据（假数，仅看形状）':'全部未测';
+    big.innerHTML = simOn ? '<span class="cell-sim">21%</span>' : '—';
+    var bar=document.querySelector('.scorecard.live .bar i');
+    if(bar){ bar.style.width = simOn?'21%':'0%'; }
+  }
+  if(t){
+    t.addEventListener('click',function(){simOn=!simOn;paint();});
+    t.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();simOn=!simOn;paint();}});
+    paint();
+  }
+
+  // 最小可检出变化计算器
+  var n=document.getElementById('calcN'), s=document.getElementById('calcS'),
+      oSem=document.getElementById('outSem'), oMdc=document.getElementById('outMdc');
+  function calc(){
+    var nn=Math.max(1,Number(n.value)||1), ss=Math.max(0,Number(s.value)||0);
+    var sem=ss/Math.sqrt(nn);
+    oSem.textContent=sem.toFixed(2);
+    oMdc.textContent=(2*sem).toFixed(2);
+  }
+  if(n){ [n,s].forEach(function(el){el.addEventListener('input',calc);}); calc(); }
+
+  // 勾选进度存本地
+  document.querySelectorAll('.checkrow').forEach(function(row){
+    var k='geo7.'+row.dataset.key, cb=row.querySelector('input');
+    try{ if(localStorage.getItem(k)==='1'){ cb.checked=true; row.classList.add('done'); } }catch(e){}
+    cb.addEventListener('change',function(){
+      row.classList.toggle('done',cb.checked);
+      try{ localStorage.setItem(k, cb.checked?'1':'0'); }catch(e){}
+    });
+  });
+
+  // 复制命令
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var src=document.getElementById(b.dataset.copy);
+      if(!src) return;
+      var txt=src.textContent;
+      var done=function(){ var o=b.textContent; b.textContent='已复制'; setTimeout(function(){b.textContent=o;},1400); };
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){fallback();}); } else { fallback(); }
+      function fallback(){
+        var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){ b.textContent='请手动复制'; }
+        document.body.removeChild(ta);
+      }
+    });
+  });
+})();
+</script>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行方案：排版面板改漂浮可拖浮窗（2026-10-23）</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --border:#dde3e9; --fg:#1b2430; --muted:#5c6b7a;
+    --teal:#0d7d6c; --teal-soft:#e3f2ef; --red:#b4372f; --red-soft:#faeceb; --amber:#8a6116;
+    --amber-soft:#fdf4e0; --blue:#2f5fa8; --blue-soft:#e9eff8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f151b; --card:#171f28; --border:#28343f; --fg:#e6ecf2; --muted:#94a2b0;
+      --teal:#37c3a8; --teal-soft:#123129; --red:#e07a72; --red-soft:#331b19; --amber:#e0b466;
+      --amber-soft:#2c2410; --blue:#7ba3dd; --blue-soft:#182338; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;line-height:1.75;font-size:14px}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 22px 60px}
+  .verdict{background:var(--teal-soft);border:1px solid var(--teal);border-left-width:5px;border-radius:10px;padding:14px 18px;margin:18px 0}
+  .verdict b{color:var(--teal)}
+  h1{font-size:21px;margin:6px 0 2px}
+  .sub{color:var(--muted);font-size:12.5px}
+  h2{font-size:16px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+  th,td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--card);font-size:12.5px}
+  tr:nth-child(even) td{background:color-mix(in srgb,var(--card) 60%,transparent)}
+  .tag{display:inline-block;border-radius:5px;padding:0 7px;font-size:11.5px;font-weight:700;margin-right:6px}
+  .tag.ok{background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal)}
+  .tag.warn{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin:12px 0}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 15px}
+  .card h4{margin:0 0 6px;font-size:13.5px}
+  .card p{margin:0;font-size:12.8px;color:var(--muted)}
+  .callout{background:var(--amber-soft);border:1px solid var(--amber);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px}
+  .gates{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:12px 0}
+  .gates li{margin:5px 0;font-size:13px}
+  code{background:var(--teal-soft);border-radius:4px;padding:0 5px;font-size:12.5px;font-family:Consolas,monospace}
+  ul{padding-left:22px;margin:8px 0}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  @media(max-width:720px){.split{grid-template-columns:1fr}}
+  .split .half{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 15px}
+  .split .half h4{margin:0 0 6px;font-size:13px}
+  .split .half p{margin:0;font-size:12.8px;color:var(--muted)}
+  footer{margin-top:44px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body><div class="wrap">
+  <h1>执行方案：排版面板改漂浮可拖浮窗</h1>
+  <div class="sub">2026-10-23 · 对 Owner「字小 / 太高 / 直接做成漂浮的、可移动」三问的执行方案 · 附可点模拟 HTML</div>
+
+  <div class="verdict"><b>结论：</b>把右侧通天抽屉改成<b>内容自适应高度的漂浮面板</b>——标题栏可拖动、位置记在浏览器里下次还在、方向键也能移动、背景不再被灰罩锁死；字号整体抬一档。<b>不引入任何新依赖</b>，手写约 80 行拖拽逻辑（Excalidraw/tldraw 同款做法）。</div>
+
+  <h2>① 两个抱怨的病根（对着代码量的）</h2>
+  <div class="split">
+    <div class="half"><h4>字小</h4><p>面板正文共 <b>39 处</b>使用 9–11px 字号（typography-panel.tsx 实测 grep 计数）。处置：分档抬——11→12、10→11、9px 徽章→10。</p></div>
+    <div class="half"><h4>太高太空</h4><p>容器是 <code>fixed inset-y-0 right-0</code>——通到屏幕上下两端；空态时里面只有一句话。处置：高度改跟内容走，超 72vh 才内部滚动。</p></div>
+  </div>
+
+  <h2>② 调研：四种做法（含依赖实测，不是抄宣传页）</h2>
+  <table>
+    <tr><th>方案</th><th>实测证据</th><th>判定</th></tr>
+    <tr><td><b>手写 pointer-events 拖拽</b><br>（标题栏监听 + setPointerCapture，拖动期间只改 transform，松手落 state）</td><td>Excalidraw / tldraw 同款思路；React 19 原生支持</td><td><span class="tag ok">推荐</span>零依赖、零 peer 风险、无障碍自己说了算</td></tr>
+    <tr><td>react-rnd 10.5.3（拖+缩二合一）</td><td>实测其 <code>lib/index.js:451</code> 已向 react-draggable 传 <code>nodeRef</code>——React 19 移除了 findDOMNode，旧链会炸，新版靠这个续命；2026-03 仍维护</td><td><span class="tag warn">不选</span>能用但重：带缩放，本单用不上</td></tr>
+    <tr><td>react-draggable 4.7.2（只拖）</td><td>实测源码 <code>chunk-ACOTSM7X.mjs:497</code> 自陈「React 19 移除 findDOMNode，必须传 nodeRef」</td><td><span class="tag warn">不选</span>只剩拖一半，白添依赖</td></tr>
+    <tr><td>@floating-ui/react</td><td>是定位引擎，不管拖拽</td><td><span class="tag warn">不对症</span></td></tr>
+  </table>
+  <p class="sub">社区共通要点（多库交叉印证）：拖柄只在标题栏；位置持久化且<b>恢复时夹回视口</b>（防换分辨率跑到屏幕外）；非模态浮窗 <code>role="dialog" aria-modal="false"</code>；Esc 关闭限定「焦点在面板内」；标题栏 <code>touch-action:none</code>；dockview 专为浮窗做了 WAI-ARIA 状态。</p>
+
+  <h2>③ 对抗式审查：方案会在哪 15 个口子上失败</h2>
+  <p class="sub">审查对象＝我自己刚提的方案（报给您之前先砍自己）。每条给处置。</p>
+  <table>
+    <tr><th style="width:34px">#</th><th style="width:46%">口子</th><th>处置</th></tr>
+    <tr><td>F1</td><td>拖动每帧 setState → 整面板（几十个输入框）重渲染，拖起来卡</td><td>拖动期间 ref 直改样式，<b>松手才 commit 一次</b>（模拟 HTML 已按此实现）</td></tr>
+    <tr><td>F2</td><td>关闭按钮 X 也会触发拖柄，点 X 变拖走</td><td>拖柄起点排除 <code>data-no-drag</code> 元素</td></tr>
+    <tr><td>F3</td><td>记住的位置在换分辨率/缩放后跑到屏幕外</td><td>恢复夹回视口；window resize 监听实时夹回</td></tr>
+    <tr><td>F4</td><td>非模态后 Esc 仍挂 document：在<b>工作台</b>输入框按 Esc 会误关面板</td><td>Esc 仅当焦点在面板内生效</td></tr>
+    <tr><td>F5</td><td>删灰罩/inert/滚动锁/焦点陷阱后，旧测试三处必红</td><td>aria-modal→false；「背景 inert」两条断言改写成<b>反向负控</b>；Esc 用例改焦点门控</td></tr>
+    <tr><td>F6</td><td>手机上标题栏拖动被页面滚动抢走</td><td>标题栏 <code>touch-action:none</code>；pointer events 覆盖触摸</td></tr>
+    <tr><td>F7</td><td>拖动时文字被选中</td><td>拖动期间标题栏 user-select:none</td></tr>
+    <tr><td>F8</td><td>默认位置写死 left/top 丢失右侧锚点</td><td>默认仍落右上（与旧抽屉同视觉锚点）</td></tr>
+    <tr><td>F9</td><td>12px 字号在 24px 高字格里溢出</td><td>行高 1.4≈16.8px，安全；出包前真浏览器复核</td></tr>
+    <tr><td>F10</td><td>39 处字号一刀切，微徽章会破</td><td>分档抬：正文 11→12、10→11，9px 徽章只抬到 10</td></tr>
+    <tr><td>F11</td><td>浮窗打开时悬浮球仍隐藏是否合理</td><td>保留：面板默认落右上、悬浮球也在右侧，重叠点不到——刻意取舍</td></tr>
+    <tr><td>F12</td><td>缺守卫，防止有人改回「全高抽屉＋inert」</td><td>smoke 新增三条：面板源码不得再出现 <code>inert</code> / <code>aria-modal="true"</code> / <code>inset-y-0</code>（负控塞回去必须红）</td></tr>
+    <tr><td>F13</td><td>位置存储坏 JSON / 未来版本</td><td>独立小键 <code>tygf.typographyPanelPos.v1</code>；解析失败回默认；不与字体偏好共用结构</td></tr>
+    <tr><td>F14</td><td>非模态还抢焦点（旧模态义务）会把打字中的人拽走</td><td>打开时<b>不聚焦面板</b>，焦点留在触发按钮，aria-expanded 照旧</td></tr>
+    <tr><td>F15</td><td>关闭后焦点归还掉进不可聚焦背景（10-20 实测过的坑）</td><td>焦点归还保留：surface 永不 inert，onClosed 回调照旧由 workbench 还给触发器</td></tr>
+  </table>
+  <div class="callout"><b>否证记录：</b>调研前我判断「react-rnd 在 React 19 装不上（peer 停 ≤18）」——实测 peer 是 <code>&gt;=16.3.0</code> 无上限，<b>这个否证不成立</b>；真坑在下游 findDOMNode，且 10.5.3 已修。结论仍不选它，理由从「装不上」改为「用不上还重」。</div>
+
+  <h2>④ 执行步骤（S1–S8，一个提交）</h2>
+  <div class="cards">
+    <div class="card"><h4>S1 模态→非模态</h4><p>删灰罩、surface inert、滚动锁、焦点陷阱；aria-modal=false；Esc 加焦点门控。</p></div>
+    <div class="card"><h4>S2 拖动</h4><p>标题栏 pointerdown→setPointerCapture；拖动期间 ref 直改样式；up 落 state；touch-action:none；data-no-drag 排除 X。</p></div>
+    <div class="card"><h4>S3 位置持久化</h4><p>tygf.typographyPanelPos.v1；恢复夹回视口；resize 监听夹回。</p></div>
+    <div class="card"><h4>S4 键盘</h4><p>标题栏可聚焦；←↑→↓ 移 8px、Shift 加速 32px；Esc 焦点门控。</p></div>
+    <div class="card"><h4>S5 尺寸与字号</h4><p>高度跟内容走、上限 min(72vh,640px) 内部滚动；宽恒 min(360px,92vw)；字号分档抬。</p></div>
+    <div class="card"><h4>S6 workbench-view</h4><p>预期零改动（悬浮球门控、三处灰度开关、aria-expanded 不动）；只跑回归。</p></div>
+    <div class="card"><h4>S7 测试与守卫</h4><p>改三条旧断言＋新增：持久化往返、data-no-drag、方向键移动；smoke 加 F12 三条防回潮。</p></div>
+    <div class="card"><h4>S8 验证闸</h4><p>tsc / lint / vitest / 两条 smoke；dev 起来真浏览器拖一遍（含窄屏与夹回）。</p></div>
+  </div>
+  <p><b>不做</b>（明说边界）：不做缩放（您没要，宽度恒 360）；不做多面板；不改入口与灰度逻辑。</p>
+
+  <h2>⑤ 您可以这样验收</h2>
+  <ul class="gates">
+    <li>打开排版面板：不再通天通地，高度跟内容走，字明显变大；</li>
+    <li>按住标题栏拖到任意位置，刷新页面位置还在；</li>
+    <li>面板开着时，后面工作台能正常点击滚动（没有灰罩）；</li>
+    <li>Tab 进标题栏按方向键面板会动；焦点不在面板里按 Esc 不误关；</li>
+    <li>tsc / lint / vitest 全绿，两条 smoke 断言只增不减。</li>
+  </ul>
+
+  <footer>交付：图译工坊 · 2026-10-23 · 附可点模拟：<b>模拟_排版浮窗漂浮可拖_20261023.html</b>（同目录，拖动/方向键/持久化/新旧对照全部可玩）</footer>
+</div></body>
+</html>

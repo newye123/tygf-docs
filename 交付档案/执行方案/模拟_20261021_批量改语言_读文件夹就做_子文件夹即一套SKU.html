@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量改语言 · 读文件夹就能做（子文件夹＝一套 SKU）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f4f4f1;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;--faint:#9aa19b;
+  --line:#e6e6e2;--line2:#d6d6d1;--teal:#009588;--teal-soft:#e4f4f2;--emerald:#009767;--emerald-soft:#e5f6ef;
+  --amber:#9a6505;--amber-soft:#fff6e6;--amber-700:#7d5004;--rose:#b3261e;--rose-soft:#fceceb;
+  --r:16px;--r2:12px;--r3:9px;
+  --font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --sh1:0 1px 2px rgba(18,20,18,.04);--sh2:0 8px 24px -12px rgba(18,20,18,.2);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input{font-family:inherit}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 0 80px}
+.top{height:56px;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
+.brand .mk{width:26px;height:26px;border-radius:8px;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:13px}
+.vswitch{display:flex;gap:2px;padding:3px;background:var(--sunk);border-radius:10px}
+.vswitch button{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.vswitch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh1)}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.off{background:#c9ccc7}.dot.busy{background:var(--teal);animation:p 1s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+main{padding:26px 20px 40px;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:14px;margin-top:4px;max-width:74ch}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;transition:.14s}
+.btn:hover{border-color:var(--ink2);background:var(--sunk)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;padding:10px 20px;font-size:15px}
+.btn.primary:hover{background:#00776d}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:8px}
+.btn.ghost{border-style:dashed;color:var(--muted)}
+.pick{border:1px solid var(--line2);border-radius:12px;background:var(--surface);padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--sh1)}
+.pick .t{font-size:16px;font-weight:700}
+.pick .p{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.pick .r{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag{font-family:var(--font-mono);font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap;display:inline-block}
+.tag.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.tag.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+.tag.bad{background:var(--rose-soft);border-color:#f2c8c5;color:var(--rose)}
+.tag.mute{background:var(--sunk2);color:var(--muted)}
+.group{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);overflow:hidden;margin-bottom:12px}
+.group.off{opacity:.5}
+.group>.hd{display:flex;align-items:center;gap:12px;padding:14px 18px;flex-wrap:wrap}
+.group>.hd .name{font-size:16px;font-weight:700}
+.group>.hd .cnt{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.group>.hd .r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.check{width:17px;height:17px;accent-color:var(--teal)}
+.bar{height:7px;border-radius:99px;background:var(--sunk2);overflow:hidden;flex:1 1 120px;min-width:90px}
+.bar i{display:block;height:100%;background:var(--emerald)}
+.bar i.warn{background:#d9a84f}.bar i.bad{background:var(--rose)}
+.group>.bd{border-top:1px solid var(--line);padding:0 18px}
+table.lst{width:100%;border-collapse:collapse;font-size:13px}
+table.lst th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--sunk)}
+table.lst td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.lst tr:last-child td{border-bottom:none}
+table.lst td.m{font-family:var(--mono);font-size:12.5px}
+.langbar{display:flex;flex-wrap:wrap;gap:8px 18px;padding:12px 0}
+.lg-item{display:flex;align-items:center;gap:7px;font-size:12.5px}
+.lg-item .lb{width:66px;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.lg-item .bar{width:92px;min-width:0}
+.drawer{position:fixed;top:56px;right:0;bottom:0;width:520px;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--sh2);z-index:45;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.drawer.open{transform:none}
+.drawer .dh{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px}
+.drawer .dh h3{margin:0;font-size:16px;font-weight:700}
+.drawer .dh .p{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:2px}
+.drawer .db{padding:16px 18px;overflow:auto;display:flex;flex-direction:column;gap:16px}
+.drawer .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;background:var(--sunk)}
+.note{font-size:13px;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:var(--r3);padding:11px 13px;line-height:1.62}
+.note.ok{background:var(--emerald-soft);border-color:#bfe6d3;color:#0a5a41}
+.note.warn{background:var(--amber-soft);border-color:#eed296;color:var(--amber-700)}
+.note.bad{background:var(--rose-soft);border-color:#f2c8c5;color:#8c1e17}
+h4{margin:0;font-size:13.5px;font-weight:700}
+.scrim{position:fixed;inset:0;background:rgba(18,20,18,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:24px}
+.scrim.on{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);width:100%;max-width:560px;box-shadow:0 30px 70px -24px rgba(0,0,0,.45);overflow:auto}
+.modal header{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+.modal header h3{margin:0;font-size:15px;font-weight:700}
+.modal .body{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.modal footer{display:flex;gap:9px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--line)}
+.opt{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer}
+.opt:hover{border-color:var(--ink2);background:var(--sunk)}
+.opt input{width:16px;height:16px;accent-color:var(--teal)}
+.opt .n{font-family:var(--mono);font-size:13px}
+.opt .s{font-size:12px;color:var(--muted)}
+.single{display:none;padding:26px 20px 40px;max-width:900px}
+.single.on{display:block}
+footer.doc{border-top:1px solid var(--line);margin:26px 20px 0;padding-top:14px;font-size:12.5px;color:var(--muted);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand"><span class="mk">图</span><span>图译工坊</span></div>
+  <div class="vswitch" role="group" aria-label="工作台">
+    <button type="button" data-w="bulk" aria-pressed="true">批量改语言</button>
+    <button type="button" data-w="single" aria-pressed="false">单稿工作台</button>
+  </div>
+  <div class="right"><span><i class="dot ok"></i> 本地助手已连接</span><span>Photoshop 2021 · 就绪</span></div>
+</header>
+
+<main id="bulk">
+  <div>
+    <h1>准备素材</h1>
+    <div class="sub">选一个<b>工作文件夹</b>就行。<b>每个子文件夹＝一套要改的 SKU</b>（里面放着这批的 PSD 和它们的译文表），系统自己读、自己配、自己审。</div>
+  </div>
+
+  <div class="pick">
+    <div>
+      <div class="t">工作文件夹</div>
+      <div class="p" id="rootPath">D:\项目\2026Q4_秋季新品</div>
+    </div>
+    <div class="r">
+      <span class="tag mute" id="readTag">尚未读取</span>
+      <button class="btn" type="button" id="btnPickRoot">选择文件夹</button>
+      <button class="btn primary" id="btnRead">读取</button>
+    </div>
+  </div>
+
+  <div id="groups"></div>
+
+  <footer class="doc">
+    <b>读取规则（读文件夹后自动执行，结果都可改）：</b><br>
+    ① 一个<b>子文件夹＝一组</b>；组里的 PSD 与译文表按目录就近配：<b>组内一张表 ⇒ 全组共用</b>；<b>多张表 ⇒ 按同名一对一</b>（<code>SKU-AX1001_主图.psd</code> ↔ <code>SKU-AX1001.xlsx</code>）；<b>配不上的逐条点名</b>，不静默跳过。<br>
+    ② 扫描与审核都<b>在本机做</b>：PSD 与表格正文不上云，只有你点「智能审核」时，译文行才按需发出。<br>
+    ③ 一组最多 12 个 PSD（多了逐条点名）；目录里的非设计稿/非表格文件、软链、超过 6 层的会被跳过，<b>跳过了什么、为什么都会列出来</b>。
+  </footer>
+</main>
+
+<!-- 单稿工作台（原样保留） -->
+<main class="single" id="single">
+  <div>
+    <h1>准备素材</h1>
+    <div class="sub">选择设计文件 · 只读预扫描</div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+    <input class="mono" style="flex:1 1 280px;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;font-size:13.5px" value="D:\项目\draft-a.psd" readonly>
+    <button class="btn">选择文件…</button>
+    <button class="btn primary">扫描</button>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:11px;align-items:center;border:1px solid var(--line2);border-radius:12px;padding:12px 14px;background:var(--surface)">
+    <span style="font-size:18px">📁</span>
+    <div><div class="mono" style="font-size:13.5px;font-weight:600">draft-a.psd</div>
+      <div style="font-size:12px;color:var(--muted)">已扫描　·　3 个文字图层</div></div>
+    <div style="margin-left:auto;display:flex;gap:8px"><button class="btn sm">重新扫描</button><button class="btn sm">移除</button></div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span class="tag" style="background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69;padding:5px 13px;font-size:13px;border-radius:999px">原文</span>
+    <span class="tag" style="padding:5px 13px;font-size:13px;border-radius:999px">德语</span><span class="tag" style="padding:5px 13px;font-size:13px;border-radius:999px">法语</span>
+    <button class="btn sm" style="margin-left:6px">选择语言</button>
+    <button class="btn sm" style="border-color:#d9a84f;color:var(--amber-700);background:var(--amber-soft)">重选译文表</button>
+  </div>
+  <div style="margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);overflow:hidden">
+    <div style="padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+      <strong style="font-size:14px">智能检测</strong>
+      <span class="tag warn" style="margin-left:auto">德语 3 处待确认</span><span class="tag ok">法语已确认</span>
+    </div>
+    <div style="padding:12px 16px">
+      <table class="lst"><thead><tr><th style="width:36px">#</th><th>原文</th><th>译文</th><th style="width:120px">状态</th></tr></thead><tbody>
+        <tr><td class="m">1</td><td>Buy Now</td><td>Jetzt kaufen</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">2</td><td>Free Shipping</td><td>Versand kostenlos</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">3</td><td>30-Day Money-Back Guarantee</td><td></td><td><span class="tag bad">译文为空</span></td></tr>
+        <tr><td class="m">4</td><td>In stock — ships in 24h</td><td>Auf Lager</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">5</td><td>View the Collection</td><td>Die Kollektion ansehen</td><td><span class="tag warn">重复原文</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <footer class="doc" style="margin:22px 0 0"><b>单稿工作台 · 原样保留：</b>本页文案与结构<b>一字不改</b>。批量台只是<b>多一个入口</b>（选一个文件夹，读出 N 组），其余沿用；两个工作台<b>不共用组件</b>。</footer>
+</main>
+</div>
+
+<!-- 选文件夹弹层 -->
+<div class="scrim" id="scrim" role="dialog" aria-modal="true">
+  <div class="modal">
+    <header><h3>选择工作文件夹</h3><button class="btn sm" style="margin-left:auto" id="mClose">关闭</button></header>
+    <div class="body" id="mBody"></div>
+    <footer><button class="btn" id="mCancel">取消</button><button class="btn primary" id="mOk">读取这个文件夹</button></footer>
+  </div>
+</div>
+
+<!-- 抽屉 -->
+<aside class="drawer" id="drawer" aria-label="这一组的详情">
+  <div class="dh">
+    <div style="min-width:0"><h3 id="dTitle">—</h3><div class="p" id="dPath">—</div></div>
+    <button class="btn sm" style="margin-left:auto" id="dClose">关闭</button>
+  </div>
+  <div class="db" id="dBody"></div>
+  <div class="df"><button class="btn primary" id="dAudit">智能审核这一组</button><button class="btn">设计稿校对</button><button class="btn ghost" style="margin-left:auto">确认并生成</button></div>
+</aside>
+
+<script>
+const ROOT='D:\\项目\\2026Q4_秋季新品';
+const ROOTS=[
+ {p:'D:\\项目\\2026Q4_秋季新品',s:'3 个子文件夹 · 12 个 PSD · 11 张表'},
+ {p:'D:\\项目\\2026Q3_夏季清仓',s:'2 个子文件夹 · 7 个 PSD · 6 张表'},
+];
+/* 每组＝一个子文件夹：PSD 列表 + 表列表 + 规则配出来的绑定 */
+const GROUPS=[
+ {dir:'主图', psds:[
+   {n:'SKU-AX1001_主图.psd',ly:12,st:'已扫描',tbl:'AX1001-AX1004_文案主表.xlsx',cov:96},
+   {n:'SKU-AX1002_主图.psd',ly:12,st:'已扫描',tbl:'AX1001-AX1004_文案主表.xlsx',cov:97},
+   {n:'SKU-AX1003_主图.psd',ly:12,st:'已扫描',tbl:'AX1001-AX1004_文案主表.xlsx',cov:95},
+   {n:'SKU-AX1004_主图.psd',ly:12,st:'已扫描',tbl:'AX1001-AX1004_文案主表.xlsx',cov:100}],
+  tbls:['AX1001-AX1004_文案主表.xlsx'], rule:'组内 1 张表 ⇒ 4 个 PSD 共用', done:32, tot:32, problems:[]},
+ {dir:'详情页', psds:[
+   {n:'SKU-AX1005_详情页.psd',ly:9,st:'已扫描',tbl:'AX1005_德法英.xlsx',cov:100},
+   {n:'SKU-BX2077_详情页.psd',ly:16,st:'已扫描',tbl:'BX2077_九语.xlsx',cov:92},
+   {n:'SKU-BX2078_详情页.psd',ly:14,st:'已扫描',tbl:'BX2078_八语.xlsx',cov:100},
+   {n:'SKU-BX2079_详情页.psd',ly:14,st:'已扫描',tbl:null,cov:null}],
+  tbls:['AX1005_德法英.xlsx','BX2077_九语.xlsx','BX2078_八语.xlsx','BX2079_八语.xlsx'],
+  rule:'组内 4 张表 ⇒ 按同名一对一', done:24, tot:32, problems:['SKU-BX2079_详情页.psd 没有配上表（表里有 BX2079_八语.xlsx，但文件名对不上）']},
+ {dir:'长尾', psds:[
+   {n:'SKU-CX3301_长尾页.psd',ly:21,st:'已扫描',tbl:'CX3301_全12语.xlsx',cov:100},
+   {n:'SKU-CX3302_长尾页.psd',ly:18,st:'已扫描',tbl:'CX3302_九语.xlsx',cov:88},
+   {n:'SKU-DX4408_详情页.psd',ly:31,st:'已扫描',tbl:'DX4408_六语.xlsx',cov:71},
+   {n:'SKU-DX4409_长尾页.psd',ly:10,st:'未扫描',tbl:null,cov:null}],
+  tbls:['CX3301_全12语.xlsx','CX3302_九语.xlsx','DX4408_六语.xlsx','促销补充_两句.xlsx'],
+  rule:'组内 4 张表 ⇒ 按同名一对一', done:16, tot:32, problems:['SKU-DX4408_详情页.psd 覆盖率 71%，低于 80%','SKU-CX3302_长尾页.psd 缺语言：PT 意大利语、IT 意大利语（表里没有这两列）']},
+];
+const LANGS=[{c:'DE',n:'德语'},{c:'FR',n:'法语'},{c:'EN',n:'英语'},{c:'ES',n:'西班牙语'},{c:'JA',n:'日语'},{c:'KO',n:'韩语'},
+ {c:'PT',n:'葡萄牙语'},{c:'IT',n:'意大利语'},{c:'RU',n:'俄语'},{c:'AR',n:'阿拉伯语'},{c:'ZH-TW',n:'繁体中文'},{c:'NL',n:'荷兰语'}];
+let read=false, cur=null, included={};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderPick(){
+  $('#mBody').innerHTML=ROOTS.map((r,i)=>`<label class="opt"><input type="radio" name="root" ${i===0?'checked':''} data-i="${i}">
+    <span><span class="n">${esc(r.p)}</span><br><span class="s">${esc(r.s)}</span></span></label>`).join('');
+}
+$('#btnPickRoot').addEventListener('click',()=>{renderPick();$('#scrim').classList.add('on');});
+$('#mClose').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#mCancel').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#mOk').addEventListener('click',()=>{
+  const r=ROOTS[+(document.querySelector('#mBody input:checked')?.dataset.i||0)];
+  $('#rootPath').textContent=r.p; $('#scrim').classList.remove('on');
+  $('#readTag').textContent='读取中…'; $('#readTag').className='tag warn';
+  $('#groups').innerHTML='<div class="note">正在读文件夹…（只读本机，不上传）</div>';
+  setTimeout(()=>{ read=true; GROUPS.forEach(g=>included[g.dir]=true); $('#readTag').textContent='已读取 3 个子文件夹'; $('#readTag').className='tag ok'; render(); },700);
+});
+$('#btnRead').addEventListener('click',()=>$('#btnPickRoot').click());
+
+function render(){
+  if(!read){$('#groups').innerHTML='';return;}
+  $('#groups').innerHTML=GROUPS.map((g,i)=>{
+    const pct=g.tot?Math.round(g.done/g.tot*100):0;
+    const cls=g.problems.length?'warn':'';
+    return `<div class="group ${included[g.dir]?'':'off'}">
+      <div class="hd">
+        <input type="checkbox" class="check" data-g="${i}" ${included[g.dir]?'checked':''}>
+        <span class="name">${esc(g.dir)}</span>
+        <span class="cnt">
+          <span>${g.psds.length} 个 PSD</span>
+          <span>${g.tbls.length} 张表</span>
+          <span>${esc(g.rule)}</span>
+        </span>
+        <div class="r">
+          ${g.problems.length?`<span class="tag warn">${g.problems.length} 处要处理</span>`:'<span class="tag ok">都配上了</span>'}
+          <div class="bar ${cls}"><i class="${cls}" style="width:${pct}%"></i></div>
+          <span class="mono" style="font-size:12.5px;color:var(--muted)">${g.done}/${g.tot} 份已审</span>
+          <button class="btn sm" data-open="${i}">打开这一组</button>
+        </div>
+      </div>
+      <div class="bd">
+        <table class="lst"><thead><tr><th>设计稿</th><th style="width:74px">图层</th><th style="width:90px">状态</th><th>用哪张表</th><th style="width:78px">覆盖率</th></tr></thead><tbody>
+        ${g.psds.map(p=>`<tr>
+          <td class="m">${esc(p.n)}</td><td class="m">${p.ly}</td>
+          <td>${p.st==='已扫描'?'<span class="tag ok">已扫描</span>':'<span class="tag mute">未扫描</span>'}</td>
+          <td class="m">${p.tbl?esc(p.tbl):'<span class="tag bad">没配上表</span>'}</td>
+          <td class="m">${p.cov!==null?p.cov+'%':'—'}</td></tr>`).join('')}
+        </tbody></table>
+        ${g.problems.length?`<div class="note warn" style="margin:11px 0 13px"><b>要处理的</b><ul style="margin:6px 0 0;padding-left:20px">${g.problems.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`:''}
+      </div></div>`;
+  }).join('');
+  $('#groups').querySelectorAll('[data-g]').forEach(cb=>cb.addEventListener('change',()=>{included[GROUPS[+cb.dataset.g].dir]=cb.checked;render();}));
+  $('#groups').querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{cur=GROUPS[+b.dataset.open];openDrawer();}));
+}
+function openDrawer(){
+  $('#drawer').classList.add('open');
+  $('#dTitle').textContent=cur.dir;
+  $('#dPath').textContent=ROOT+'\\'+cur.dir;
+  const langs=['DE','FR','EN','ES','JA','KO','PT','IT'];
+  const rows=langs.map((c,i)=>{
+    const n=cur.psds.length;
+    const done=Math.round(cur.done/n*Math.max(0,1-Math.max(0,(i-4))/14));
+    const state=done>=cur.done/n?'ok':(done===0?'':'warn');
+    return {c,done};
+  });
+  $('#dBody').innerHTML=`
+    <div><h4>这一组的语言进度</h4>
+      <div class="langbar">${rows.map(r=>{
+        const L=LANGS.find(x=>x.c===r.c);
+        const pct=Math.round(r.done/Math.max(1,cur.psds.length)*100);
+        return `<span class="lg-item"><span class="lb">${r.c} ${L.n}</span><span class="bar ${pct>=95?'':'warn'}"><i class="${pct>=95?'':'warn'}" style="width:${pct}%"></i></span><span class="mono" style="font-size:11.5px;color:var(--muted)">${pct}%</span></span>`;
+      }).join('')}</div></div>
+    <div><h4>智能审核（这一组）</h4>
+      <div class="note" style="margin-top:7px">点下面的按钮开始。<b>逐稿逐语种</b>跑，读的是本机的 PSD 与表；<b>只有译文行会按需发出</b>，PSD 与表正文不出本机。</div>
+      <table class="lst" style="margin-top:9px"><thead><tr><th style="width:34px">#</th><th>原文</th><th>译文</th><th style="width:110px">状态</th></tr></thead><tbody>
+        <tr><td class="m">1</td><td>Buy Now</td><td>Jetzt kaufen</td><td><span class="tag ok">正常</span></td></tr>
+        <tr><td class="m">2</td><td>Free Shipping</td><td></td><td><span class="tag bad">译文为空</span></td></tr>
+        <tr><td class="m">3</td><td>30-Day Money-Back Guarantee</td><td>30 Tage Rückgabe</td><td><span class="tag warn">重复原文</span></td></tr>
+        <tr><td class="m">4</td><td>In stock — ships in 24h</td><td>Auf Lager</td><td><span class="tag ok">正常</span></td></tr>
+      </tbody></table></div>
+    ${cur.problems.length?`<div class="note bad"><b>这一组要处理</b><ul style="margin:6px 0 0;padding-left:20px">${cur.problems.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`:'<div class="note ok"><b>这一组没有问题</b>表都配上了、覆盖率也够。</div>'}
+    <div class="note"><b>为什么这样就行</b>：这一组的所有 PSD 与表本来就在<b>同一个子文件夹</b>里，是你自己摆的对应关系 —— 系统不需要猜，只需要照着读。<b>规则是确定的</b>（1 张表全组共用 / 多张表按同名一对一），<b>配不上的会点名</b>。</div>`;
+}
+$('#dClose').addEventListener('click',()=>$('#drawer').classList.remove('open'));
+document.querySelectorAll('.vswitch button').forEach(b=>b.addEventListener('click',()=>{
+  const w=b.dataset.w;
+  document.querySelectorAll('.vswitch button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('#bulk').style.display=w==='bulk'?'flex':'none';
+  $('#single').classList.toggle('on',w==='single');
+}));
+render();
+</script>
+</body>
+</html>

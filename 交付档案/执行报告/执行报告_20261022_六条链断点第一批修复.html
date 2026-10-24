@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>执行报告 · 六条链断点第一批修复 · 2026-10-22</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.35rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+.verdict .label{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warn)}
+.verdict p{margin:0;font-size:1.03rem}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0}
+.muted{color:var(--muted)}.mono{font-family:var(--font-mono);font-size:.86em;overflow-wrap:anywhere}
+.contract{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-2)}
+.contract b{color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-weight:500;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.code,.code{font-family:var(--font-mono);font-size:.84em;overflow-wrap:anywhere}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card .title{font-weight:600}.card p{font-size:.94rem;color:var(--ink-2)}.card .fix{font-size:.9rem}
+.tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 18px;font-size:.94rem;color:var(--ink-2)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout strong{color:var(--ink)}
+ol.plan,ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:10px;color:var(--ink-2)}
+ol.plan li strong,ul.plain li strong{color:var(--ink)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>图译工坊 · 执行报告</span><span class="sep">/</span><span>2026-10-22 12:5x +0800</span><span class="sep">/</span><span>develop <span class="mono">872f532b</span> ＋ <span class="mono">0f93b932</span></span><span class="sep">/</span><span>风险档 Medium（一处回执合同变更）</span></div>
+  <h1>三处修好了，但我上一轮报给您的两个数是错的——已用服务器实测改账</h1>
+  <p class="standfirst">回执等级收敛、学习终选码、超 1500 单位不白屏，三处代码与门全绿。同时必须更正：我把 <span class="mono">STALLED</span>/<span class="mono">EXPIRED</span>（都是<strong>已终态且已结算</strong>）当成了"停在半路"，于是报出"63 个批次停摆、18,574 报价量悬着"。<strong>实测：没有任何一条预占停在 <span class="mono">reserved</span>，钱都退回了。</strong>真问题换成了另一个：测试站 46.4% 的批次以"中止"收口。</p>
+</header>
+
+<div class="verdict">
+  <span class="label">状态：代码与门全绿 ｜ 运行态未变（未部署）</span>
+  <p><strong>验收要等部署复验：</strong>① 制造一次"部分完成"的多语批次，回执不再 400、批次能收口；② 新产生的 <span class="mono">source_binding</span> 信号 <span class="mono">finalCode</span> 非空；③ 导入超 1500 单位的批次，工作台不白屏。这三条我没跑，因为不动部署＝运行态还是旧的。</p>
+</div>
+
+<div class="contract">
+  <div><b>基线</b>：开工 <span class="mono">cad83e4f</span>，落地时别手已推到 <span class="mono">d9f517f5</span></div>
+  <div><b>改动</b>：8 文件 ＋121/−19 行（两笔提交）</div>
+  <div><b>门</b>：<span class="mono">batch-row-contract</span>／<span class="mono">trust-chain</span>／<span class="mono">contracts</span> 全 RC=0</div>
+  <div><b>更正</b>：本会话上一轮 2 条说法被实测推翻，1 条指针第三次读数才准</div>
+</div>
+
+<section>
+  <h2><span class="num">01</span>三处修的是什么</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="head"><span class="title">执行链：同一份枚举被写了两遍并且已漂移</span><span class="tag ok">872f532b</span><span class="tag bad">合同变更</span></div>
+      <p>权威阶梯在 <span class="mono">trust-chain/attempt-state.ts:15-22</span>；批次侧 <span class="mono">execution-batch.ts:2327</span> 自己写了四个值——既漏掉助手实际会上报的 <span class="mono">TEXT_READBACK_VERIFIED</span>（导致 <span class="mono">parseBatchReceipt</span> 返 null ⇒ 回执路由 400），又收着两个不属于阶梯的 <span class="mono">PARTIAL</span>/<span class="mono">FAILED</span>。实测测试站 <strong>37 条语言尝试／811 个指派</strong>卡在这个形状（生产 0）。</p>
+      <p class="fix"><strong>修法不是补一个值</strong>：类型与白名单一律<strong>从权威阶梯导入</strong>；<span class="mono">PARTIAL/FAILED</span> 作为批次汇总值显式保留并注明原因（既有客户端与 6 个 smoke 在用，不能悄悄撤）。<span class="mono">schema.prisma</span> 的取值域注释同步（只改注释 ⇒ 无迁移）。</p>
+      <p class="fix"><strong>钱口径一字未动</strong>：收费门 <span class="mono">:1384-1398</span> 只认 <span class="mono">REOPEN_VERIFIED</span> 且带对象证据摘要，其余等级的 VERIFIED 行一律降级 FAILED。扩大接受面只改变"证据能否落库"。这句写进了提交信息与偏差登记，防下一个读的人误判。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">学习链：终选码只补了一个点，其余四点是我自己砍掉的</span><span class="tag ok">0f93b932</span></div>
+      <p>上一轮我建议"五个采集点都补 <span class="mono">finalCode</span>"。读码后证伪：其中四点的 <span class="mono">actionCode</span> 本身就是 <span class="mono">excluded/ignored/accepted</span>，<strong>没有系统提案可对照</strong>，填进去只会让聚合产出同义反复的假规则并喂进管理端候选队列＝造数据。且 <span class="mono">candidate-aggregator.ts:206</span> 的 eligible 只计 accepted/modified/rejected，排除/忽略类本就不进分母。</p>
+      <p class="fix"><strong>只补 <span class="mono">source_binding</span></strong>（<span class="mono">workbench-view.tsx:2768</span>，唯一带真实 <span class="mono">proposalCode</span> 的点）。新纯函数 <span class="mono">bindingFinalCode</span> 只返回决策码：<span class="mono">candidate_rank_N</span>／<span class="mono">combined_rank_N</span>／<span class="mono">conflict_rank_N</span>／<span class="mono">manual_entry</span>，<strong>不含任何正文</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="title">计费预览：超 1500 单位不再渲染期白屏（#222 部分修）</span><span class="tag warn">有代价</span></div>
+      <p><span class="mono">execute-step.tsx:784-793</span> 的 <span class="mono">useMemo</span> 直调 <span class="mono">quoteCreditsForBatch</span>，而 <span class="mono">rules.ts:153</span> 对 &gt;1500 标准单位直接 throw ⇒ 整页被路由级 error 接管、"重试"再崩、已导入的译表与扫描结果全丢。现降级为 <span class="mono">null</span>，五个渲染点改用<strong>校内既有的一句</strong>「按受理时报价并冻结（此处无预估）」。</p>
+      <p class="fix"><strong>代价如实记着</strong>：没有写"请拆分批次"的新文案——10-22 上午刚踩过中文字体子集门（#166：正确处置是重新生成子集，不是改文案绕过），不为一句新文案重生成 394 KB 资产。所以用户看到的是"无预估"而不是"该分批"，口径等 Owner 定。渲染级 smoke 也未补，均记在 #222。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>端到端证据：断点确实在那个字段</h2>
+  <div class="callout ok"><strong>隔离库实验</strong>（<span class="mono">db/test-&lt;uuid&gt;.db</span>，走项目自带 <span class="mono">scripts/test-db-harness.mjs</span>，不碰共享 dev.db 与两站；探针 <span class="mono">tmp/learning-chain-probe.mjs</span>，<span class="mono">tmp/</span> 已被 <span class="mono">.gitignore:104</span> 忽略）：复刻两站现状（<span class="mono">finalCode</span> 全空）跑 <span class="mono">--apply</span> ⇒ 候选规则 <strong>0 条</strong>；把 6 条 <span class="mono">source_binding</span> 补上 <span class="mono">candidate_rank_0</span> 再跑<strong>同一条</strong> <span class="mono">--apply</span> ⇒ 写出 <strong>1 条</strong> <span class="mono">personal/candidate</span>，建议带着终选码。dry-run 对照：空值打印「建议=(无)」，补值打印「建议=candidate_rank_0」。RC=0。</div>
+  <p class="muted">这组对照同时更正了另一件事：<span class="mono">dry-run</span> 在空值时照样会说"门槛达标、该晋级"（<span class="mono">status=candidate</span>），但 <span class="mono">--apply</span> 一条都不写——所以"看 dry-run 有候选"并不等于"系统在学"。这也是为什么我第一轮只看表行数会低估断点深度。</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span>更正：本轮推翻了本会话上一轮写进飞书的说法</h2>
+  <div class="tablewrap"><table>
+    <tr><th>上一轮我说</th><th>实测反证</th><th>新结论</th></tr>
+    <tr><td>「两站合计 63 个批次停在半路；停摆批次名下报价量 16,727／1,847」</td><td>测试站只读 SQL（12:5x）：STALLED 52 批<strong>全部有结算行</strong>（committed 2,898／released 13,829）、EXPIRED 20 批（292／3,188）、QUOTED 9 批 0／0；<span class="mono">CreditReservation</span> 只有 committed 141／expired 4／released 128，<strong>没有一条停在 <span class="mono">reserved</span></strong></td><td><strong>没有资金敞口，钱都退回了。</strong>我把"已终态"读成了"卡住"。真问题换成：<strong>测试站 46.4% 的批次以中止收口</strong>（生产 40.7%）＝交付成功率问题（#238）</td></tr>
+    <tr><td>「停摆批次没有扫尾的人：<span class="mono">settleExpiredExecutionBatches</span> 无调度 ⇒ 永远停着」</td><td><span class="mono">reconcileStalledBatches</span>（<span class="mono">:1754</span>）与 <span class="mono">reconcileBatchReservations</span>（<span class="mono">:1691-1709</span>）有两条入口（<span class="mono">scripts/reconcile-batch-jobs.mjs:13</span>、<span class="mono">/api/billing/batch/reconcile/route.ts:51</span>）；部署机 <span class="mono">systemctl list-timers</span>（12:49）实测 <span class="mono">tygf-batch-reconcile.timer</span>／<span class="mono">tygf-test-batch-reconcile.timer</span> <strong>每 10 分钟正常触发</strong></td><td><strong>收口链是通的，不需要新挂 timer。</strong>剩下只是 <span class="mono">settleExpiredExecutionBatches</span> 与在跑的那套职责重叠、只被 smoke 调用 ⇒ 降级为<strong>冗余/漂移隐患</strong></td></tr>
+    <tr><td>「测试站正在验台账判错的那一版 <span class="mono">31bed477</span>」</td><td>部署机上测试站备份目录最新一枚是 12:20:05 那次部署的备份（对应 <span class="mono">ad38603f</span>）；站点目录 mtime 12:21；<span class="mono">config/release-identity.json</span> 已是助手 <strong>3.7.22</strong></td><td>测试站现跑 <span class="mono">ad38603f</span>，<strong>已含正确字体修复 <span class="mono">478bae42</span></span>。生产仍 <span class="mono">319bc138</span>（生产版本链接实测）。这条指针本轮读了三次，<strong>以最后一次为准</strong></td></tr>
+  </table></div>
+  <div class="callout warn"><strong>病根留档</strong>：我按 <span class="mono">SETTLED/(全部)</span> 算"终态率"，<strong>没先读收口函数和调度单元就下了"没人扫尾"的结论</strong>。这是"局部都有代码、连起来才看得见"的反面教材——这次连起来之后，发现的是<strong>我自己</strong>把两个已收口状态读成了停摆。已按"整行重写、不逐次打补丁"的方式改账（ISSUES #238 内含本案更正）。</div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>新增的门（不是口头保证）</h2>
+  <ul class="plain">
+    <li><strong>防"再抄第二份枚举"</strong>：<span class="mono">smoke-batch-billing-routes.mjs</span> 新增「阶梯逐等级都必须可解析」6 条 ＋ <span class="mono">PARTIAL/FAILED</span> 兼容 ＋ 原有 <span class="mono">BOGUS</span>／正文字段拒绝不动。</li>
+    <li><strong>钉住"扩大接受面≠扩大收费"</strong>：<span class="mono">smoke-batch-billing-v3.mjs</span> 新增 B5b——<span class="mono">TEXT_READBACK_VERIFIED</span> 下 <span class="mono">verifiedStandardUnits=0</span>、行结果 <span class="mono">reasonCode=EVIDENCE_LEVEL_NOT_TRUSTED</span>、结算 <span class="mono">committedCredits=0/releasedCredits=100</span>。这是 <span class="mono">EVIDENCE_LEVEL_NOT_TRUSTED</span> 在全仓的<strong>第一条断言</strong>（此前只有定义处）。</li>
+    <li><strong>隐私与反伪造</strong>：<span class="mono">smoke-learning-signal-client.mjs</span> 新增第七节——四种形状各一条、终选码必须过服务端形状校验、<strong>正文字符串不得出现在信封里</strong>、排除类采集点<strong>必须保持 null</strong>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">05</span>真实退出码（限定：混合树——同棵树含别手未提交的助手改动）</h2>
+  <div class="tablewrap"><table>
+    <tr><th>命令</th><th>RC</th><th>备注</th></tr>
+    <tr><td class="code">npm run test:batch-row-contract</td><td>0</td><td>all assertions passed（合同变更纪律要求的两道门之一）</td></tr>
+    <tr><td class="code">npm run test:trust-chain</td><td>0</td><td>约 40 段：v15、回执隐私、批次结算等</td></tr>
+    <tr><td class="code">npm run test:contracts</td><td>0</td><td><span class="mono">[zh-font] OK 4 片 1197 码位全覆盖</span>、<span class="mono">[en-font] OK</span>、<span class="mono">smoke-execute-step-reset PASS</span></td></tr>
+    <tr><td class="code">test:batch-billing-routes</td><td>0</td><td>新增 8 条等级断言全绿</td></tr>
+    <tr><td class="code">test:batch-billing-v3</td><td>0</td><td>新增 B5b</td></tr>
+    <tr><td class="code">test:learning-signal-client</td><td>0</td><td>新增第七节</td></tr>
+    <tr><td class="code">test:learning-phase0…4 ＋ typography</td><td>0 ×6</td><td>学习链其余门未因本次改动退化</td></tr>
+    <tr><td class="code">npm run lint</td><td>0</td><td>0 error，36 条既有 warning</td></tr>
+    <tr><td class="code">npx tsc --noEmit</td><td>2</td><td><strong>4 条错误全在别手未跟踪文件</strong> <span class="mono">tests/unit/workbench-scope-runtime.test.tsx</span>（<span class="mono">git ls-files --error-unmatch</span> RC=1 证未跟踪）；tsconfig include 为 <span class="mono">**/*.ts(x)</span> ⇒ 我的文件确被检查且 0 错</td></tr>
+    <tr><td class="code">tmp/learning-chain-probe.mjs</td><td>0</td><td>正控写出 1 条候选、负控 0 条</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>刻意没做与等您的</h2>
+  <p><strong>没做（划界）：</strong>不部署、不上站；不改支付开关（#224）；不动助手侧（别手在飞 <span class="mono">v15-runner.js</span>／<span class="mono">server.js</span>，且改助手须真建 exe＋bump，F-6 留下一轮）；不给排除/忽略类采集点填同义反复的 <span class="mono">finalCode</span>；不新增对外文案（#166 那一课）；不修测试站对账 timer 的 403（#236——要往共享 VM 的 systemd 塞 nginx 门凭证，凭证来源未核实，属共享基础设施＋密钥落盘面）。</p>
+  <ol class="plan">
+    <li><strong>批准部署测试站复验</strong>（判据三条见顶部状态卡）。</li>
+    <li><strong>三个支付开关</strong>：没明批我按红线关回去。</li>
+    <li><strong>测试站对账门凭证</strong>：给一条正确凭证来源，或授权改成本机内网直连不走门。</li>
+    <li><strong>学习链要不要往下接</strong>（#239）：下游仍全断（<span class="mono">rule-resolver</span> 恒空、用户看不到任何学习成果），同意面 92/106 无记录且无自助撤回＝产品与法律语义。</li>
+    <li><strong>46% 中止率要不要当第一优先级攻</strong>：成因②（除回执外的中止）还没逐批归因，需要一轮只读对账。</li>
+  </ol>
+  <p class="muted"><strong>覆盖缺口</strong>：没做真机 Photoshop 执行、没跑浏览器端到端；混合树读数意味着"合在一起的绿"；52 个 STALLED 批次未逐批归因；生产库只读了三组聚合数；助手 exe 未审计；支付回调日志无样本可审。</p>
+  <div class="footer">
+    <div>记账：ISSUES 新增 <span class="mono">#237</span>（已修）／<span class="mono">#238</span>（成功率，含本案更正）／<span class="mono">#239</span>（学习链部分修＋三处待拍），<span class="mono">#222</span> 改为「🟡 部分修」；CHANGELOG 置顶一条技术决策；<span class="mono">docs/HANDOFF.md</span> 偏差登记加一行【合同变更】；TASK_LOG 置顶条目已落（写入自证：delta 7,015 B＝条目 7,013 B＋分隔，H2 419→420，本轮标题恰 1 条，上一轮顶节仍在）。</div>
+    <div>图译工坊内测版 · 执行报告 · 2026-10-22 ｜ 审查者不占人类批准名额</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

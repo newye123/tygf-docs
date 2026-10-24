@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>排版面板入口：对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.meta span{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-size:1.25rem;margin:0;display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;color:var(--accent);letter-spacing:.1em}
+h3{font-family:var(--font-display);font-size:.98rem;margin:0 0 4px}
+p{margin:0}
+.lede{color:var(--ink-2);max-width:70ch}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.verdict .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.verdict p{font-size:1.04rem;font-weight:500}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.panel.yes{border-top:3px solid var(--ok)}
+.panel.no{border-top:3px solid var(--bad)}
+.panel ul{margin:6px 0 0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:.94rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.stat .n{font-family:var(--font-display);font-size:1.8rem;font-weight:700;line-height:1.1}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}.stat.bad .n{color:var(--bad)}
+.callout{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 24%,transparent);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:4px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:560px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.mono,code{font-family:var(--font-mono);font-size:.86em}
+code{background:var(--sunk);border-radius:4px;padding:1px 5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.card .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card p{font-size:.92rem;color:var(--ink-2);margin-top:4px}
+.gates{display:flex;flex-direction:column;gap:8px}
+.gate{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:.92rem}
+.gate .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.gate .st{font-family:var(--font-mono);font-size:.7rem;color:var(--ok)}
+.gate.warn .dot{background:var(--warn)}.gate.warn .st{color:var(--warn)}
+.notes{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:7px;color:var(--ink-2)}
+.notes strong{color:var(--ink)}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+figure img{display:block;width:100%;height:auto;border-radius:6px}
+figcaption{font-size:.76rem;color:var(--muted);padding-top:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>排版面板入口</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>排版面板入口：卡头按钮 + 悬浮球 + 右侧抽屉</h1>
+  <p class="standfirst">测试站为什么没按设计稿走、这次怎么接、接完拿什么证明。结论先说：不是样式没调好，是设计稿从未接到产品。</p>
+  <div class="meta"><span>1440 / 390 真实像素</span><span>tdd 197 + 60 断言</span><span>提交 027118f</span><span>测试站部署待回读</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>设计稿停留在独立模拟台，产品里只有 <code>6ff5c3c</code> 的右下角药丸 + 内联折叠；卡头按钮、悬浮球、360px 抽屉、dialog 语义、Esc 焦点归还都没有落地。</p>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>这次落地的</h3>
+      <ul>
+        <li>卡头右上角入口：T 字标 + 「排版定制」（窄屏「排版」）+ 未保存圆点。</li>
+        <li>右侧中部 44px 悬浮球：仅 ≥1280 渲染，悬停 tooltip，抽屉打开时卸载。</li>
+        <li>右侧 360px / 92vw 抽屉：dialog 语义、Esc、Tab 闭环、背景 inert、锁滚动、焦点归还。</li>
+        <li>「轻量原生碳」：纸面白底 + 碳色描边/文字/T 字标，不做纯黑实心块。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>没有趁机改的</h3>
+      <ul>
+        <li>面板 JSX 挂载点原地不动，位置守卫与 197 条选择器断言口径不变。</li>
+        <li>写回能力口径不变：仍显示「本次不发排版字段 / 仅保存在本机浏览器」。</li>
+        <li>没有推 origin、没有部署生产、没有碰支付 flag。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>证据链</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>事实</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>测试站基线 <code>6ff5c3c</code></td><td class="mono">/api/runtime-provenance → webCommitSha=6ff5c3c1414ff09f3fc4bb8940c462aa3fb2e760</td></tr>
+        <tr><td>该提交只有右下药丸</td><td>提交标题「排版定制加右下角悬浮入口（面板不挪位，避免撞位置守卫与丢配色）」；diff 为 <code>fixed bottom-24 right-4</code> 药丸 + 内联面板</td></tr>
+        <tr><td>设计稿自述未接产品</td><td><code>设计稿说明.md:39</code>：「卡头按钮、悬浮球、抽屉这套入口和埋点尚未接到产品」</td></tr>
+        <tr><td>固定规则</td><td><code>设计稿说明.md:21-25</code>：≥1280 两者同现；&lt;1280 只留卡头；360px / 92vw；球随抽屉隐藏；Esc 焦点归还；背景 inert；关闭再开保留草稿</td></tr>
+        <tr><td>portal 色板坑</td><td><code>workbench-tokens.css</code> 文件头「已知边界」：portal 容器不挂 <code>.wb-brand</code> 会退回旧色板</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>对抗式审查</h2>
+  <div class="cards">
+    <div class="card"><span class="k">A1 位置守卫</span><p>挂载点不动，抽屉在组件内 portal 到 body；位置断言与 picker 断言未改口径。</p></div>
+    <div class="card"><span class="k">A2 令牌丢失</span><p>抽屉外层补 <code>.wb-brand</code>；实测字体为 Tuyigf Source Han Sans 家族。</p></div>
+    <div class="card"><span class="k">A3 键盘语义</span><p>role=dialog、aria-modal、Esc、Tab 闭环、背景 inert、锁滚动、关闭恢复；实测焦点先落关闭按钮。</p></div>
+    <div class="card"><span class="k">A4 窄屏遮挡</span><p>球 <code>hidden xl:block</code>；390 实测 display:none，无横向溢出。</p></div>
+    <div class="card"><span class="k">A5 未保存态</span><p>dirty 按「与已存盘内容是否不同」算，面板回传，两个入口各显示琥珀点。</p></div>
+    <div class="card"><span class="k">A6 草稿保留</span><p>本机偏好只在首次打开读一次；关闭不重置状态，组件保持挂载。</p></div>
+    <div class="card"><span class="k">A7 皮肤口径</span><p>「轻量原生碳」＝纸面承载 + 碳色身份；不做纯黑实心，避免与主操作争注意力。</p></div>
+    <div class="card"><span class="k">A8 部署候选</span><p>本任务提交 027118f；develop 其后落了 6a268fe（助手事故修复）。预检禁止落后打包，候选只能是 6a268fe，会一并带上那笔已提交修复。</p></div>
+  </div>
+  <div class="callout">
+    <span class="lb">A9 像素验证抓到的真问题</span>
+    <p>第一版 Esc 关闭后焦点掉到 <code>body</code>：不是没写 <code>focus()</code>，而是背景还带 <code>inert</code> 时调用被静默丢弃，<code>requestAnimationFrame</code> 抢在 React 被动 effect 清理之前。改为在面板 cleanup 里先移除 inert、再聚焦打开前的 <code>activeElement</code>；复测焦点回到卡头按钮。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>执行方案</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>层</th><th>改动</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">typography-panel.tsx</td><td>受控 props <code>open/onClose/onDirtyChange</code>；关闭不渲染但保持挂载；portal + <code>.wb-brand</code>；遮罩点击/Esc 关闭；Tab 闭环；背景 inert + 锁滚动；关闭归还焦点。</td></tr>
+        <tr><td class="mono">workbench-view.tsx</td><td>新增抽屉开关与 dirty 状态；卡头按钮；44px 悬浮球；删除 6ff5c3c 的右下药丸与 expandSignal；<code>#workbench-surface</code> 供 inert 定位。</td></tr>
+        <tr><td class="mono">typography-picker.test.tsx</td><td>适配新 props；新增 dialog 语义、Esc 关闭、关闭不渲染 3 条。</td></tr>
+        <tr><td>出包</td><td>隔离 worktree 跑预检与 package，避免污染共享工作树；上传 zip + receipt；服务器执行 deploy-test-release.sh；回读 .deploy-commit 与 provenance。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>验证矩阵</h2>
+  <div class="gates">
+    <div class="gate"><span class="dot"></span><span><code>npx tsc --noEmit</code></span><span class="st">rc=0</span></div>
+    <div class="gate"><span class="dot"></span><span><code>npx eslint</code> 三个改动文件</span><span class="st">0 errors</span></div>
+    <div class="gate"><span class="dot"></span><span><code>test:typography-picker</code>：smoke 197 + vitest 6</span><span class="st">PASS</span></div>
+    <div class="gate"><span class="dot"></span><span><code>smoke-typography-customization</code> 60 断言</span><span class="st">PASS</span></div>
+    <div class="gate warn"><span class="dot"></span><span><code>npm run build</code>：编译/TS/128 页/standalone/助手合同全走完；PowerShell 把 Turbopack warning 误报成 NativeCommandError</span><span class="st">单步复跑 rc=0</span></div>
+    <div class="gate"><span class="dot"></span><span>1440×900：按钮 111×30、球 44×44、scrollWidth=1440</span><span class="st">无溢出</span></div>
+    <div class="gate"><span class="dot"></span><span>1440 打开：抽屉 360×900、inert=true、overflow=hidden、球卸载、焦点在关闭按钮</span><span class="st">PASS</span></div>
+    <div class="gate"><span class="dot"></span><span>Esc：抽屉移除、overflow 恢复、inert=false、焦点回卡头按钮</span><span class="st">PASS</span></div>
+    <div class="gate"><span class="dot"></span><span>390×844：按钮 68×30「T 排版」、球 display:none、scrollWidth=390</span><span class="st">无溢出</span></div>
+    <div class="gate"><span class="dot"></span><span>390 打开：抽屉 359×844（92vw）、无横向溢出</span><span class="st">PASS</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>像素证据</h2>
+  <div class="grid2">
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/1440-closed.png" alt="1440 关闭态"><figcaption>1440×900 关闭态：卡头按钮与右侧悬浮球同时存在。</figcaption></figure>
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/1440-open.png" alt="1440 抽屉打开"><figcaption>1440×900 打开态：360px 抽屉，背景 inert，球隐藏。</figcaption></figure>
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/390-closed.png" alt="390 关闭态"><figcaption>390×844 关闭态：只留卡头按钮「排版」，球不渲染。</figcaption></figure>
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/390-open.png" alt="390 抽屉打开"><figcaption>390×844 打开态：92vw 抽屉，单列字段。</figcaption></figure>
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/crop-header-closed.png" alt="卡头按钮特写"><figcaption>卡头按钮特写：白底、碳色 1px 描边、T 字标、chevron。</figcaption></figure>
+    <figure><img src="../执行报告/证据_20261020_排版面板入口/crop-drawer.png" alt="抽屉特写"><figcaption>抽屉特写：标题区、内测徽标、字段与结算口径保持原样。</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>边界与遗留</h2>
+  <ul class="notes">
+    <li><strong>写回未启用</strong>：抽屉仍如实显示「本次不发排版字段 / 仅保存在本机浏览器」。</li>
+    <li><strong>本机助手 404</strong>：dev 未跑助手，字体清单探测为 unsupported，属预期。</li>
+    <li><strong>遮罩浓度</strong>：当前 <code>bg-foreground/35</code> + 1px 模糊；偏好更轻可降到 <code>/25</code>，只改一行样式。</li>
+    <li><strong>部署候选含他人提交</strong>：见 A8，测试站若发 <code>6a268fe</code> 会同时带上助手事故修复。</li>
+    <li><strong>未推 origin</strong>：只提交本地 <code>develop</code>。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>本文件与同名 md 同目录；截图证据在 <code>交付档案/执行报告/证据_20261020_排版面板入口/</code>。</p>
+  <p>代码提交：<code>027118f</code>（develop）。测试站回读结果见执行报告。</p>
+</footer>
+
+</div>
+</body>
+</html>

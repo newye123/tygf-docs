@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录态拆写者 · 运营备注隔离落地</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>登录态拆写者 · 运营备注隔离</span><span class="sep">/</span>
+    <span>2026-10-21</span>
+  </p>
+  <h1>运营备注不再当用户显示名</h1>
+  <p class="standfirst">Owner 定调「先只拆写者」后落地。<strong>后台运营备注不再出现在用户的工作台账号菜单里，也不再随身份接口下发到浏览器</strong>；用户可自设昵称按定调未做，「登录后首页仍显示登录」不在本轮范围。提交 <code>26e84c4</code> ＋ <code>67032ea</code>，<strong>未推远端、未部署</strong>。</p>
+  <div class="meta">
+    <span>develop 26e84c4 ＋ 67032ea</span>
+    <span>改 10 源文件 ＋ 新增 3</span>
+    <span>新 smoke 26 项 ＋ 12 项</span>
+    <span>既有 6 门全绿</span>
+    <span>未推 · 未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">VERDICT：泄漏闭环，用户昵称与首页登录态按约定未做</span>
+    <p>病根不是"少一个字段"，是<strong>一个字段两个写者</strong>：<code>BetaUser.name</code> 既是用户自报姓名，又被后台当"运营备注名"写。运营要抢这一格，是因为所有后台用户资料载荷都过隐私守卫 <code>assertSafeUserProfile</code>，而守卫把 <code>adminNote</code> 列为禁键——<strong>守卫是对的，缺的是给运营备注一个合规位置</strong>。这次补位置，没动守卫。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">26 + 12</span><span class="k">新 smoke 断言<br>源码契约 ＋ 运行时真调路由</span></div>
+    <div class="stat ok"><span class="n">6 门</span><span class="k">既有门全绿<br>含隐私守卫未破</span></div>
+    <div class="stat warn"><span class="n">0 消费者</span><span class="k">本地助手/桌面端<br>不消费 /api/auth/me</span></div>
+    <div class="stat bad"><span class="n">2 项未做</span><span class="k">用户昵称 · 首页登录态<br>＋存量脏数据未清</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">这对你意味着什么</span>
+    <p>你截图里那句被当成用户名显示的运营备注，现在只留在后台：用户在工作台看到的显示名改成了邮箱前缀，浏览器网络面板里也读不到备注。后台那边，运营记事改到独立的「运营备注」栏（只有 owner 能读写、单独记审计），而用户姓名变成只读——运营如果还想改姓名，系统会明确回一句"用户姓名由用户在申请时填写，运营不可改写"，而不是默默吞掉。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>改了什么</h2>
+  <div class="split">
+    <div class="panel">
+      <h3>用户端：切断泄漏</h3>
+      <ul>
+        <li><code>api/auth/me/route.ts:19-27</code>：只回 <code>{email,emailVerified,accountStatus}</code>，注释旁写明"name 属运营字段，不得下发"</li>
+        <li><code>api/auth/login/route.ts:114-122</code>：响应去 <code>name</code></li>
+        <li><code>lib/auth/services/login-user.ts:69-76</code>：服务层结果去 <code>name</code>（结构上防复发）</li>
+        <li><code>workbench/user-account-menu.tsx:76-81</code>：显示名＝邮箱本地部分</li>
+        <li><code>auth/sessions/page.tsx:71-74,173</code>：不再携带 <code>name</code></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>运营端：拆写者</h3>
+      <ul>
+        <li><code>api/admin/users/[id]/route.ts:583-624</code>：<code>update_profile</code> 不再写 <code>name</code>；带不同姓名 → <strong>409 ADMIN_USER_NAME_READONLY</strong>（不静默忽略）</li>
+        <li><strong>新增</strong> <code>api/admin/users/[id]/operator-note/route.ts</code>：备注独立通道（GET/PATCH，owner 限定，审计 <code>user.update_operator_note</code>，唯一写者）</li>
+        <li><code>lib/admin/client.ts:589-601</code>：<code>getOperatorNote</code> / <code>updateOperatorNote</code></li>
+        <li>两个后台界面拆成「用户姓名（只读）」＋「运营备注（仅后台可见）」</li>
+      </ul>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <h3>护栏</h3>
+    <ul>
+      <li><code>scripts/smoke-auth-session-shape.mjs</code>（26 项源码契约）：身份接口键集合、登录/服务层不带 name、三消费者不消费 name、运营改姓名有 409 闸、写库块无 name、备注唯一写者、两个用户资料载荷仍无 adminNote 且仍过隐私守卫；<strong>含两条负控</strong>（喂坏源码确认抓得到，证明断言非假绿）</li>
+      <li><code>scripts/smoke-auth-session-runtime.mjs</code>（12 项运行时）：隔离库真建"姓名＝王先生 / 已付尾款"的脏用户、真登录、真调路由——me 键集合恰为四键且无脏值；改姓名 409 且不落库；资料保存不写 adminNote；备注经独立通道写并读回；360° 详情载荷无 adminNote；<strong>写完备注后再取用户端接口仍无备注</strong></li>
+      <li><code>scripts/smoke-admin-security.mjs</code>：新路由补登 owner 门 / 审计清单 / 路由清单三处</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>验证读数（本会话实跑）</h2>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>命令</th><th>结果</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">npx tsc --noEmit</td><td class="fix">rc=0（改完后复跑）</td></tr>
+        <tr><td class="mono">npx eslint &lt;10 个变更源文件&gt;</td><td class="fix">0 problems</td></tr>
+        <tr><td class="mono">node scripts/smoke-auth-session-shape.mjs</td><td class="fix">PASS (26 checks) rc=0</td></tr>
+        <tr><td class="mono">node --experimental-strip-types --experimental-loader ./scripts/ts-path-loader.mjs scripts/smoke-auth-session-runtime.mjs</td><td class="fix">PASS (12 checks) rc=0</td></tr>
+        <tr><td class="mono">npm run test:auth</td><td class="fix">79/79 通过 rc=0</td></tr>
+        <tr><td class="mono">npm run test:identity-account-gate</td><td class="fix">PASS（15 条高价值路由）rc=0</td></tr>
+        <tr><td class="mono">npm run test:identity-logout-device-semantics</td><td class="fix">PASS rc=0</td></tr>
+        <tr><td class="mono">npm run test:user-profile-privacy</td><td class="fix">PASS rc=0（隐私守卫未破）</td></tr>
+        <tr><td class="mono">npm run test:admin-security</td><td class="fix">PASS rc=0（补登后）</td></tr>
+        <tr><td class="mono">smoke-feedback-studio-deep / smoke-assistant-binding-migration</td><td class="fix">均 passed rc=0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">回归面自查</span>
+    <p>全容器 grep <code>/api/auth/me</code>：消费者只有 4 个网页文件（account-gate / user-account-menu / auth/sessions / auth/login），<strong>没有任何本地助手或桌面端消费它</strong> ⇒ 裁字段不会打断设备绑定；<code>betaUserId/sessionId</code> 客户端零消费。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>没做什么（及为什么）</h2>
+  <ol class="notes">
+    <li><strong>用户可自设昵称</strong>——Owner 定调"先只拆写者"。将来若做，建议<strong>新增 <code>displayName</code></strong> 而非让用户直接改 <code>name</code>（历史行的 name 里存的正是运营备注，用户"第一次改名"等于"擦掉备注"，语义混乱；新字段可零数据迁移）。且按 Owner 第二问"昵称还要给运营在后台认人用"：<strong>认人锚点必须是邮箱 + BetaUser.id + 申请单自报姓名，不能是任何用户可写内容</strong>——否则改个名就换了身份。</li>
+    <li><strong>问题 B（登录后首页仍显示"登录"）</strong>——本轮范围外（需首页服务端注入会话摘要 + 统一会话 Provider + 骨架 + 跨标签同步，即审查报告 P0-3 + P1）。<strong>用户端目前仍会看到"登录"按钮</strong>。</li>
+    <li><strong>存量脏数据</strong>——库里已有若干行的 name 存着运营备注。无法自动区分"用户真名"与"运营备注"，需人工/一次性脚本点名清理，<strong>本轮未连生产库、未做</strong>。</li>
+    <li><strong>两个新 smoke 的 npm 入口</strong>——<code>package.json</code> 当前有别手在飞改动，本轮不碰；直接命令见报告 §7。</li>
+    <li><strong>未推远端、未部署测试站/生产</strong>。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>待 Owner 拍</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body">
+        <strong>问题 B（首页登录态）做不做、做到哪一层</strong>
+        <p>用户端目前仍看到"登录"按钮，与工作台不一致。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <strong>用户昵称将来做不做</strong>
+        <p>若做，按上文"新增 displayName + 认人不以昵称为准"。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <strong>存量脏数据清理口径</strong>
+        <p>哪些行算脏、谁来点；本轮未连生产库。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body">
+        <strong>是否安排测试站部署验证</strong>
+        <p>本轮只有离线证据，两站真机未验。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>执行日期 2026-10-21 12:50　·　提交 develop <code>26e84c4</code> ＋ <code>67032ea</code>　·　未推远端、未部署两站。</p>
+  <p>交付件：<code>交付档案/执行报告/执行报告_20261021_登录态拆写者_运营备注隔离落地.md</code>（＋同名 <code>.html</code> ＋ <code>_飞书版.md</code>，飞书已发）｜审查报告：<code>交付档案/审查报告/审查报告_20261021_登录态UI一致性_对抗式审查与执行方案.md</code>｜模拟件：<code>交付档案/执行方案/模拟_20261021_登录态UI_修复前后.html</code></p>
+  <p>根账：<code>AI_MEMORY/ISSUES.md</code> #216（部分处置）｜<code>AI_MEMORY/CHANGELOG.md</code> 2026-10-21 条｜<code>AI_MEMORY/TASK_LOG.md</code>｜<code>AI_MEMORY/ledger.jsonl</code> UI-LOGINSESSION-01</p>
+</footer>
+
+</div>
+
+</body>
+</html>

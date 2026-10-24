@@ -1,0 +1,340 @@
+<title>PhotoCraft 双路集成方案对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>PhotoCraft 双路集成方案 × L2 策略</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>PhotoCraft 集成方案审查：方向没塌，方案不能建</h1>
+  <p class="standfirst">对 <code>changes/active</code> 两份待批方案（选项 C 执行方案 382 行 + L2 双路策略 75 行）的逐条引证对账与流程推演。全部只读，未修改任何文件，未跑测试（零代码改动，NOT RUN·不适用）。</p>
+  <div class="meta">
+    <span>引证抽验 31 条</span>
+    <span>必断流程 8 处</span>
+    <span>两案互斥 3 处</span>
+    <span>全程只读</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论 · 不通过（打回重修）</span>
+    <p>方向没有塌——无 PS 保底的实测支点全部复核为真。但这 382 行照单实施必断：扫描先死、成功结果无人认领、第 3 分钟被心跳锁死。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>维持成立的</h3>
+      <ul>
+        <li><strong>serve 通道与双根参数</strong>：原型 <code>nops_scan.cjs:11</code> 实跑 4.3s 扫描、36/38 字段覆盖；fork <code>lib.rs:42</code> 旗标在案。</li>
+        <li><strong>doc.open / doc.inspect / batch / engine.execute</strong>：文档与实测双证（<code>architecture.md:468-470</code>、<code>control-protocol.md:44</code>）。</li>
+        <li><strong>12 问门禁与四同步纪律</strong>（策略 §3、方案 §二骨架）：治理要求本身正确——错的是坐标与实现。</li>
+        <li><strong>执行闸与检测语义</strong>：<code>attemptRuntime.acquire</code>（<code>:3348</code>）、<code>detectPsExe</code> 同步返回（<code>:327</code>）、<code>sha256File</code> 导出（<code>working-copy.js:198</code>）全部属实。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>照单实施会死的</h3>
+      <ul>
+        <li><strong>扫描两阶段没进方案</strong>：预扫描 <code>:2712</code> / 就绪 <code>:3211</code> 先于执行，无 PS 机死在 <code>launchExecutor</code> 之前。</li>
+        <li><strong>结果写错合同文件</strong>：写 <code>report/receipt.json</code>（全目录 0 读 0 写），runner 只认 <code>executor-result.json</code>——成功也判死。</li>
+        <li><strong>三分钟心跳锁死</strong>：<code>progress.jsonl</code> 功能不存在（CLI crate 0 命中）→ 看门狗 <code>:1480</code> 判 stall、锁保留，助手不重启不接活。</li>
+        <li><strong>回执四连违规 + 假成功</strong>：SUCCESS/COMMITTED/INFO_READBACK/无 digest 全过不了结算断言；不看 <code>ok/error</code> 硬编码满额 = 静默降级违铁律。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">18</span><span class="k">引证失实（31 抽验）</span></div>
+    <div class="stat bad"><span class="n">8</span><span class="k">必断流程</span></div>
+    <div class="stat warn"><span class="n">3</span><span class="k">两案互斥</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">缺口（含灰度 F-4）</span></div>
+    <div class="stat ok"><span class="n">9</span><span class="k">引证属实</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>必断流程（8 处）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-00</span><strong>扫描/就绪两阶段没进方案</strong><span class="loc">server.js:2712 / :3211</span></div>
+      <p>执行前有两道 PS 扫描闸。方案只改 <code>launchExecutor</code>，无 PS 机在扫描阶段先失败。策略案 <code>:73</code> 自己列了「prepare CLI 等价」后续任务——两份文件一对，方案漏接自家前置。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-01</span><strong>成功结果写进不存在的合同文件</strong><span class="loc">v15-runner.js:134/:144/:56-66</span></div>
+      <p>runner 只认 <code>taskRoot/executor-result.json</code>（schemaVersion/ok/code='SAVE_SUCCEEDED'/count 硬校验），PS 路由 <code>Thin_Executor.jsx:9</code> 写它。方案写 <code>report/receipt.json</code>——全目录 0 读者 0 写者；真链是 <code>journalRoot/receipts/&lt;attemptId&gt;.json</code>（<code>server.js:4334</code>）。照方案写，PC 全对也 ENOENT 判死。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-02</span><strong>计数阈值算错 + 无人结算 → promise 永挂</strong><span class="loc">方案 :66 / v15-runner.js:143</span></div>
+      <p>完成条件 <code>steps.length + 2</code>，但 steps 已含 open/save/inspect/close，回复恒等于 <code>steps.length</code>，永远到不了 +2；且无 <code>exit/close/timeout</code> 的 settle。10min spawn 杀子进程后无人 reject → 任务卡 RUNNING → busy 看门狗锁保留（<code>server.js:1484-1489</code>「确认前不接收新任务」）→ 助手不重启不接活。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-03</span><strong>stdout 分帧脆断 → 进程崩溃风险</strong><span class="loc">方案 :61-63</span></div>
+      <p><code>split('\n')</code> 不留残行 + <code>JSON.parse</code> 无 try，且包在 async 监听器——半行即 unhandled rejection（Node ≥15 默认终止进程）。正确写法就在自家原型：<code>nops_scan.cjs:13-31</code> readline + pending map 按 id + 单行 try。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-04</span><strong>进度文件没人写 → 第 3 分钟必判死</strong><span class="loc">server.js:1480/:188 · attempt-runtime.js:51-58</span></div>
+      <p><code>progress.jsonl</code>「由 CLI 写入」是编造（photocraft-cli crate 全部 .rs grep 0 命中、原型 0 命中）→ onProgress 永不触发 → 初次心跳后 3 分钟（<code>BUSY_TIMEOUT_MS</code>）被 <code>markStalled</code> 判 <code>PHOTOSHOP_HEARTBEAT_STALE</code>（还是 PS 错误码）→ 锁保留。10 分钟硬超时活不到。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-05</span><strong>manifest 键全不存在 → spawn 前即抛 + 存盘绕过发布契约</strong><span class="loc">execution-manifest.js:28-34/:66-71</span></div>
+      <p><code>manifest.masterPath</code> 不存在（exact-keys 白名单）→ <code>path.dirname(undefined)</code> 秒死；<code>output.destination_path</code> 不存在（实为 destination_directory + LOCALE_SUFFIX_V1 + 碰撞策略）→ doc.save 丢 path 键 = 回写文档本体，绕过 <code>WORKING_COPY_THEN_PUBLISH</code> 与 <code>publishVerifiedWorkingCopy</code>；<code>manifest.digest</code> 不存在（现算 <code>server.js:4029</code>）→ 结算 SHA256 必抛。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-06</span><strong>回执四连违规，过不了结算断言</strong><span class="loc">settlement-receipt.ts:19/:73/:83 · attempt-state.ts:14-21</span></div>
+      <p><code>'SUCCESS'</code>（合同要 SUCCEEDED）、<code>'COMMITTED'</code>（枚举无）、<code>'INFO_READBACK'</code>（枚举无）、<code>openResp.timestamp</code>（协议回复只有 id/ok/result，无 timestamp）——任一触发即 TypeError；且 PUBLISHED 还要求 verification ≥ DISK_OUTPUT_VERIFIED，方案的 outputFingerprint 注释说「从 inspectResp 计算」但从未算。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-07</span><strong>不看错误的假成功——违「不得静默降级」铁律</strong><span class="loc">方案 :188-194</span></div>
+      <p>不检查回复 <code>ok/error</code>（协议有错误回执形态 <code>control-protocol.md:35</code>），错误照样计数；attemptStatus 硬编码成功、completedAssignmentCount 硬编码满额、issueCodes 恒 <code>[]</code>——部分失败也报 100%。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">FLOW-08</span><strong>第二分派点（云批次）没覆盖</strong><span class="loc">server.js:4045-4067</span></div>
+      <p><code>server.js</code> 有两处 <code>runV15Execution + launchExecutor</code>：本地 <code>:3456</code>（方案改了）与云批次 <code>:4045/:4061</code>（cloudAttemptId，独立 acquire <code>:4032</code>）——方案通篇未提，批次任务无 PS 依旧原样失败。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>引证对账（31 条 · 属实 9 / 部分 3 / 失实 18 / 冲突 1）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th class="mono">#</th><th>方案声称</th><th>实测结果</th><th class="mono">判</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td class="mono">server.js:187 超时常量</td><td>命中（:186/:189 同在）</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">2</td><td class="mono">:3456 分派块 / :3442 runV15Execution</td><td>两锚点均命中</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">3</td><td class="mono">launchPS 约 1296 后插函数</td><td>launchPS :1207–约 :1298（次函数 runDiagnostic:1299）</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">4</td><td class="mono">receipts.js:39 = executorVersion</td><td>:39 实为 assistantVersion，executorVersion 在 :40</td><td class="mono"><span class="tag warn">部分</span></td></tr>
+        <tr><td class="mono">5</td><td class="mono">working-copy.js:7 sha256File 可 require</td><td>:7 定义、:198 导出</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">6</td><td class="mono">v15-runner:143 = executorVersion:'unknown' 字面量</td><td>:143 是 await launchExecutor；:146 才从 executor-result.json 读</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">7</td><td class="mono">options.executorVersion/scanMethod 注入</td><td>无此合同——现有机制是执行器写文件、runner 读文件，options 注入系编造</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">8</td><td class="mono">src/lib/server/quotation.ts:30-31</td><td>文件不存在（src 递归 *quotation* 0 命中）</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">9</td><td class="mono">settlement-adapter.ts:30-31「executorVersion 唯一性检查」</td><td>实为 trust-chain/ 路径；:30-31 = totalPSD/totalLanguages；映射在 :21；无唯一性检查（三错）</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">10</td><td class="mono">src/lib/server/evidence.ts</td><td>不存在（实为 evidence-foundation.ts / billing-evidence-rows.js 等 4 个别名文件）</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">11</td><td class="mono">workbench/execute/page.tsx</td><td>Test-Path = False</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">12</td><td class="mono">浏览器投影已有 executorVersion/scanMethod</td><td>src 全库仅 trust-chain 2 处命中——是净新增 UI，非同步既有</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">13</td><td class="mono">策略案 server.js:1050 无 PS 即拒</td><td>:1047-1052 是错误消息映射区，不是拒绝闸——改点错位</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">14</td><td class="mono">attemptRuntime.acquire 已有闸</td><td>:1381 创建、:3348/:4032 acquire</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">15</td><td class="mono">existingPsExe(detectPsExe(false)) 调用姿势</td><td>两函数同步返回串（:220/:327-334），无 Promise 恒真坑</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">16</td><td class="mono">manifest.masterPath</td><td>exact-keys 白名单无此键</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">17</td><td class="mono">manifest.output.destination_path</td><td>output 六键无此键（实为 destination_directory 等）</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">18</td><td class="mono">manifest.digest</td><td>manifest 无 digest；现算函数 server.js:4029</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">19</td><td class="mono">serve --automation-read/write-root</td><td>原型 nops_scan.cjs:11 实跑 + fork lib.rs:42 在案</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">20</td><td class="mono">doc.open / doc.inspect / batch</td><td>文档（architecture.md:468-470、ora.md:5）+ 原型实跑双证</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+        <tr><td class="mono">21</td><td class="mono">doc.save 带 path / doc.close</td><td>文档有背书，但原型从未跑这两步，发布语义未验</td><td class="mono"><span class="tag warn">部分</span></td></tr>
+        <tr><td class="mono">22</td><td class="mono">type.edit layer = ledgerEntryId 纯树路径</td><td>与自家实测冲突：run_edit.cjs:5 传 parseInt 整数；文档无参数形态</td><td class="mono"><span class="tag warn">冲突</span></td></tr>
+        <tr><td class="mono">23</td><td class="mono">progress.jsonl 由 CLI 写入</td><td>photocraft-cli crate 全 .rs 0 命中、原型 0 命中——功能不存在</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">24</td><td class="mono">回执落 report/receipt.json</td><td>全目录 0 读 0 写；真链 journalRoot/receipts/:4334</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">25</td><td class="mono">attemptStatus: 'SUCCESS'</td><td>合同三值 SUCCEEDED/FAILED/CANCELLED</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">26</td><td class="mono">artifactDisposition: 'COMMITTED'</td><td>枚举 NONE/WORKING/QUARANTINED/PUBLISHED 无 COMMITTED</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">27</td><td class="mono">verificationLevel: 'INFO_READBACK'</td><td>六值枚举无 INFO_READBACK</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">28</td><td class="mono">startedAt: openResp.timestamp</td><td>协议回复 {id, ok, result} 无 timestamp 字段</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">29</td><td class="mono">PC_SERVE_TIMEOUT_MS 5min 生效（§四.2）</td><td>常量声明后全段无引用（死常量）；§四.2 与 §一代码自相矛盾</td><td class="mono"><span class="tag warn">部分</span></td></tr>
+        <tr><td class="mono">30</td><td class="mono">npm run test:seo-consistency</td><td>本 worktree package.json 无此 script（0 命中，develop 独有）</td><td class="mono"><span class="tag bad">失实</span></td></tr>
+        <tr><td class="mono">31</td><td class="mono">回执取 VERSION</td><td>server.js:87 = '3.6.18'</td><td class="mono"><span class="tag ok">属实</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>两案互斥（3 处）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">M1</span><strong>分派优先级相反</strong><span class="loc">策略 :18/:19/:21 vs 方案 :107-129</span></div>
+      <p>策略：CLI ≥ PS、PS 异常优先 CLI、用户可选无 PS 模式、幽灵进程记 <code>phantom-killed</code>。方案：纯 <code>psAvailable</code> 二选一——PS 永远优先，无用户模式、无幽灵处置。两案同时生效则门禁无法自洽。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">M2</span><strong>门禁 9 与自家实测打架</strong><span class="loc">策略 :59 / 方案 :346 vs run_edit.cjs:5</span></div>
+      <p>两案都要求 type.edit 的 layer 用 ledgerEntryId 纯树路径——但通过门禁 3/6 的原型脚本传的是整数 <code>parseInt(layer,10)</code>。方案与自己批过的实测证据相反，上场前必须实测钉死。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">M3</span><strong>策略引证错位 + 前置任务没进方案</strong><span class="loc">策略 :1050 引证 / :73 vs 方案清单</span></div>
+      <p><code>server.js:1050</code> 实为错误消息映射区（非拒绝闸）；「prepare CLI 等价」（策略 :73）与幽灵进程/用户模式两条触发条件在方案改动清单里零落码（FLOW-00）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>缺口（4 项）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">F-4</span><strong>灰度旗标两案皆无（承 10-15 灰度复审，仍开）</strong></div>
+      <p>两案 grep <code>灰度|featureFlag|flag|白名单|canary</code> 0 命中（上一轮已实测）——无默认 false 旗标、无 SiteSetting 独立覆盖、无服务端分群。按此上线即违反「生产开启必须 SiteSetting 覆盖、永不随部署生效」红线。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">F-7</span><strong>交付/配置面整块缺失</strong></div>
+      <p>exe 入 <code>BUNDLED_DIR/bin</code> 的打包与安装器不在清单；<code>pcExePath/pcExeSha256</code> 无出处（local-assistant 全部 *.js grep <code>pcExe|photocraft</code> 0 命中——从零新增）；PC_* 错误码到用户文案的映射缺失（现有映射区 <code>:1040-1060</code> 只认 PS 族）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">F-8</span><strong>测试清单不构成门禁</strong></div>
+      <p><code>test:seo-consistency</code> 本树不存在；PC 分支零测试 harness（成功/半途错误/超时/缺 exe/哈希不符 5 用例全无）；策略 §2 要求的双引擎 fixture 没落到可执行测试；门禁 1-11 复验动作未进 §六清单。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">F-9</span><strong>上行兼容性未核实（待确认，不判死）</strong></div>
+      <p><code>scanMethod/typeInfoVersion</code> 不在 <code>ServerSettlementReceipt</code> 接口（settlement-receipt.ts:14-31），上行 pass-through 行为与 canonical digest 变化须实测后定。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>重修闸（10 条，改对了才复审）</h2>
+
+  <div class="gates">
+    <div class="gate"><div class="num">1</div><div class="body"><h3>结果通道归位</h3><p>PC 写 <code>executor-result.json</code>（schemaVersion/ok/code='SAVE_SUCCEEDED'/count/executorVersion）——v15-runner 既有链零改动（:146 本就动态读）。方案 §4 整段可删，§2 receipts 三元简化。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><h3>分帧与判错</h3><p>照 <code>nops_scan.cjs:13-31</code>：readline 按行、pending map 按 id、每条判 ok/error、时间戳本地生成。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><h3>完成判定与结算</h3><p>按 steps 的 id 集合判齐（不是 length+2）；<code>child.on('exit'|'error')</code> 必 settle；spawn 超时 reject <code>PHOTOCRAFT_TIMEOUT</code>；清轮询定时器。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><h3>心跳自给</h3><p>每条回复/每轮轮询即 heartbeat（phase='photocraft'），保持 &lt;3min；进度改本地驱动（CLI 无 progress.jsonl）；PS 族错误码改名属合同变更须四层评估。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><h3>路径源与发布链归位</h3><p>从 execution-envelope 取 workingCopyPath+manifest（v15-runner:135-141）；保存交 working copy → reopen → publishVerifiedWorkingCopy 既有链；digest 现算（server.js:4029）。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><h3>回执合同四改</h3><p>SUCCEEDED / PUBLISHED / verification ≥ DISK_OUTPUT_VERIFIED / 本地 canonical ISO 时间戳；落点走 createLocalGenerationReceipt → journalRoot/receipts（server.js:4334）。</p></div></div>
+    <div class="gate"><div class="num">7</div><div class="body"><h3>覆盖补齐 + 两案先对齐</h3><p>prepare :2712 / readiness :3211 CLI 等价（或显式前置分册）；第二分派点 :4045 云批次同步改造；策略三条触发条件落码或明文废止。</p></div></div>
+    <div class="gate"><div class="num">8</div><div class="body"><h3>灰度闸 F-4</h3><p>pcEnabled 默认 false + SiteSetting 独立覆盖 + 分群服务端判定，与 10-15 灰度复审 G1-G5 同闸——没这个不进部署讨论。</p></div></div>
+    <div class="gate"><div class="num">9</div><div class="body"><h3>测试补实</h3><p>新增 smoke-pc-executor 5 用例（假 serve 起步）；fixture 补双引擎两套；清单删 test:seo-consistency 或注明 develop-only。</p></div></div>
+    <div class="gate"><div class="num">10</div><div class="body"><h3>引证全面对账</h3><p>§02 全表逐条更正为实测坐标后回本件复验（轻量复审即可，不必五路）。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>方法与出处</h2>
+  <ul class="notes">
+    <li>只读手段：<code>Select-String</code>（各条附模式与 0 命中证据）、<code>Test-Path</code>、<code>Get-Content -Encoding UTF8</code> 行窗读取（server.js / v15-runner / receipts / execution-manifest / settlement-receipt / settlement-adapter / attempt-state / attempt-runtime）、<code>ConvertFrom-Json</code> 读 package.json scripts；fork 侧同法读 control-protocol / architecture / ora / automation-security 与 photocraft-cli crate .rs。</li>
+    <li>关键否定式均有真实 0 命中证据：<code>receipt\.json</code> 全目录、<code>*quotation*</code>、<code>evidence.ts</code>、<code>execute/page.tsx</code>、<code>progress\.jsonl</code>、<code>pcExe|photocraft</code>、<code>seo</code>、灰度旗标（上轮）。</li>
+    <li>未执行：tsc / lint / 合同 smoke——本轮零代码改动，NOT RUN·不适用。git 只读：两案 <code>??</code> 未跟踪状态未变，业务树未动，两站未碰。</li>
+    <li>判定词典：属实 = 坐标与内容双命中；部分 = 坐标近似或步骤未被原型验证；失实 = 文件/字段/机制不存在或内容错位；冲突 = 与本仓既有实测证据相反。</li>
+  </ul>
+  <div class="callout">
+    <span class="lb">边界</span>
+    <p>本件只改审查结论，不动两份方案文件本身——重修属方案作者/授权会话的下一段工作，改完按 §05 第 10 闸回本件复验。所有行号以 2026-10-15 21:1x 现场实测为准。</p>
+  </div>
+</section>
+
+<footer>
+  <p>对抗式审查 · PhotoCraft 双路集成方案（选项 C）× L2 策略 · 2026-10-15 · 只读无改动</p>
+  <p>同名 md 为归档正本；本 HTML 仅本地查看。复审入口：按 §05 重修闸逐条改完后回本件。</p>
+</footer>
+
+</div>

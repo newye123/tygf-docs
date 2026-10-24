@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>孤儿目录清理 · 对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:44ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>worktrees 孤儿目录</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>孤儿目录清理 · 对抗式审查与执行方案</h1>
+  <p class="standfirst">worktrees/ 下 42 个孤儿目录（约 18GB）的逐类说明、删除影响评估、对抗式审查与执行清单。先对抗式审查、再按方案执行；唯一密钥与历史资料先备份后删，可逆优先。</p>
+  <div class="meta">
+    <span>42 项逐条现场复核</span>
+    <span>23 个 HEAD 对主库核验</span>
+    <span>11 处 junction 已定位</span>
+    <span>1 份真实 .env 待转移</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>可安全回收 40 个，保留 2 个。真正的风险不在"删"，而在三件事：<br>一个直连 develop 的依赖链接、一份全机唯一的密钥、一批只在本地存在的历史资料——都已先处理再动手。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="n">42</span><span class="k">孤儿目录总数</span></div>
+    <div class="stat ok"><span class="n">40</span><span class="k">本轮删除</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">保留（工具状态）</span></div>
+    <div class="stat bad"><span class="n">11</span><span class="k">junction 链接（先摘）</span></div>
+    <div class="stat"><span class="n">≈18GB</span><span class="k">预计回收</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>删了不心疼的</h3>
+      <ul>
+        <li><strong>21/23 个 HEAD 在主库可还原</strong>——第二仓库及其工作树的提交对象 9 成以上随时能 checkout 回来。</li>
+        <li><strong>发布/审计快照的 sha 全在主库</strong>（2b46fbb / 9b3345d / b6c9085 / ca30524）——产物可重建。</li>
+        <li><strong>依赖与构建产物</strong>——重装重建即可，无独有价值。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>先处理才敢删的</h3>
+      <ul>
+        <li><strong>batch1 的 .env</strong>：全机唯一的腾讯 SES 三键、独立支付宝密钥对、伪名化密钥——先移入 <code>.secrets/</code> 保险箱。</li>
+        <li><strong>a6 / a7 两个提交</strong>不在主库——9-12 已存 patch（260KB 归档），git am 可恢复。</li>
+        <li><strong>审计与历史资料</strong>（旧版源码、证据、协议包、对话导出）——先打包进 backups 再删。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>这 42 个是什么 · 逐类说明</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>① 第二仓库本体 + 22 个工作树</h3><span class="tag warn">≈16GB</span></div>
+      <p>8-31 建的独立克隆（integration-develop-…），承载 8–9 月的 A6/A7 收敛、C2C3 集成、批量核心契约、学习观测台等工作。23 个 HEAD 中 21 个已在主库；缺失的 a6/a7 有 patch 保底。10 个目录的 node_modules 是 junction，删前先摘链接。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>② 发布与审计快照、证据</h3><span class="tag ok">≈1.5GB · sha 可检</span></div>
+      <p>release-2b46fbb（637MB）、_release-pack-9b3345d（454MB）、_deploy-b6c9085（333MB）、_audit-old-artifact（90.6MB）、_verification-…-evidence（3.4MB）、_audit-manifest（0.3MB）。源码级全部可检出重建；审计资料先打包进 backups。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>③ 小残留 6 件</h3><span class="tag ok">≈2MB · 先备份</span></div>
+      <p>_chat_archives、TYGF_AGENT_CONTROL_20260901、_g4g5_approved_contract、_protocol_layered、_l3-assistant-backup、tmp/prod-preflight-20260913。全数先打包进 backups 再删；_l3 内的会话票据（凭证类）改移 .secrets/。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>④ 空壳与工具状态</h3><span class="tag warn">含 junction</span></div>
+      <p>user-profile-p0-v2（.next+依赖）、node_modules-partial（61.8MB）、ui-quiet-base-20260925（裸依赖）、index-guard-20260922（无 git 实验壳，node_modules 直连 develop → 先备份代码、摘链接）、scan-timeout-fix（仅一份方案文档 → 归档后删）。<strong>保留 .meta-kim 与 .zcode</strong>（工具状态，10-07 仍活动，几 MB）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>⑤ batch1 的唯一密钥</h3><span class="tag bad">先转移再删</span></div>
+      <p>batch1-web-only-20260904（1.2GB）内的 .env（4778B）：腾讯 SES 三键、独立支付宝密钥对、PROFILE_PSEUDONYM_SECRET 等本机唯一副本。先移入 .secrets/（git 忽略），再删目录。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>⑥ 根目录散件</h3><span class="tag ok">随带清理</span></div>
+      <p>145MB 传输包（已验证冗余，提交在主库）、8-18 旧日志、0 字节空文件、误建的 package.json、4 个克隆排练脚本（先归档）。6 个 9KB PSD 测试件（blk79/blkX）暂留待一句话。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>对抗式审查 · 诚实披露</h2>
+  <div class="gates">
+    <div class="gate">
+      <div class="num">1</div>
+      <div class="body"><h3>junction 穿透风险（最大发现）</h3>
+      <p>11 个目录含 junction，其中 index-guard 的 node_modules 直连 <strong>develop 的 node_modules</strong>；常规递归删除有删空 develop 依赖的可能。执行采用"先摘链接、再删壳"，统一 cmd rmdir（天然不穿透），删后验证 develop 依赖完好。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body"><h3>4 条带未提交改动的分支：本轮不动</h3>
+      <p>fg-learn-wire-20260923、mk1-copy-20260923、seo-geo-integration-20261007、support-source-boundary-20261008-fix——都可能是活工作（后两条不超过 8 天）。本轮只把 diff 打成 patch 存备份（只读），去留等您一句话。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body"><h3>.codex 另有 5 个孤儿（≈2.6GB）</h3>
+      <p>release-develop-clone-20260802 含一个任何 git 库都没有的提交 6da00de（+12.5MB 安装包）。建议下一批：先归档该提交，再删 5 个目录。本轮不动。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body"><h3>约 40 个"已注册但已死"目录</h3>
+      <p>assistant-3.6.22、a6/a7-convergence、各类 gate/发布测试目录等——有注册身份，需逐目录核对合并状态再动。建议专门排下一批。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">5</div>
+      <div class="body"><h3>并行会话与现场复核</h3>
+      <p>今晚另有会话在侦察同一批目录。执行时每个目录先验"现场是否仍与登记一致"，有变化即跳过并登记，不硬删。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">6</div>
+      <div class="body"><h3>不紧急，走保守版</h3>
+      <p>F 盘尚有约 700GB 空闲，这批每月只增几百 MB。因此能备份的备份、能可逆的可逆，不追求一次清光。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>本次执行清单</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body"><h3>备份闸</h3>
+      <p>②③④⑥ 类资料 → <code>backups/worktree-orphan-archive-20261015/</code>（git 忽略）；batch1 .env 与 _l3 票据 → <code>.secrets/</code>；4 条脏分支 diff → 备份区。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body"><h3>junction 闸</h3>
+      <p>11 个 node_modules 链接先行摘除，摘除后立即验证链接目标（develop 等）完好。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body"><h3>删除</h3>
+      <p>40 个目录逐条 cmd rmdir，先小后大，逐条记录结果与耗时。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body"><h3>复验</h3>
+      <p>junction 目标完好；40 项逐条复核；活跃三工作区（develop / production / v1.5-trust-chain）无触碰；跳过与异常如实登记。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">5</div>
+      <div class="body"><h3>收账</h3>
+      <p>TASK_LOG + ledger.jsonl + 飞书台账投影 + 控制面日检；执行结果短报发飞书，并回填本报告。</p></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">可逆性说明</span>
+    <p>源码级全可逆（主库可检出 + patch 归档）；构建产物级需重装重建；历史资料全部有本地存档（backups / .secrets，均不进 git）。唯一不可再生的 a6/a7 提交已由 9-12 patch 覆盖。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>执行结果（2026-10-16 执行完毕）</h2>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">40/40</span><span class="k">计划内目录删除（零残留）</span></div>
+    <div class="stat ok"><span class="n">11</span><span class="k">junction 摘除 · 目标全存活</span></div>
+    <div class="stat ok"><span class="n">2</span><span class="k">密钥移存 .secrets（哈希比对）</span></div>
+    <div class="stat ok"><span class="n">4</span><span class="k">脏分支 patch 只读存档</span></div>
+    <div class="stat"><span class="n">9</span><span class="k">根部散件随清（含 146MB 包）</span></div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>四道闸全部按序通过</h3><span class="tag ok">全部执行</span></div>
+      <p>备份闸（10 目录 + 4 脚本 + 扫描文档归档，_audit-old-artifact 打 87.4MB zip，附 MANIFEST/README）→ 密钥闸（batch1 .env 4778B 与 _l3 票据 2366B，SHA256 前后比对一致）→ 脏分支闸（4 条分支 status + 对 HEAD 完整 diff + 未跟踪文件副本，含暂存项补录）→ junction 闸（11 摘链后 develop、第二仓库、g4g5-ep 三处 node_modules 实样存活）。无一跳过。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>删除与散件</h3><span class="tag ok">delete-log 40/40</span></div>
+      <p>40 个目录逐条 cmd rmdir 全部 gone（日志 delete-log.jsonl 40 行全 gone:true，单目录耗时 1 秒–26 分钟，小文件海量的最慢）。另清 9 件散件：146MB 传输包（已验冗余）、2 个旧日志、0 字节文件、误建 package.json、4 个已归档排练脚本。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>唯一侧效 · 已修复</h3><span class="tag warn">原扫描盲区</span></div>
+      <p>复验发现 assistant-3.6.22-20260907 的 node_modules 原指向已删的 _verify-ca30524——原扫描只查孤儿目录、漏了"注册工作区反向指进孤儿目录"这类链接。已改指 develop 并验证 react 等依赖可用。深度全树扫描因盘速超时，改为逐工作区根深度 1 扫描，确认无其他类似悬挂。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>并行会话偏差 · 已登记未删</h3><span class="tag warn">worktrees/tmp</span></div>
+      <p>删后 worktrees/tmp 被另一会话重建（prisma-probe/client-test.cjs，不在注册表）——按"现场与登记不一致即跳过"纪律未删，留待属主判定。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>最终现场</h3><span class="tag ok">计划内零残留</span></div>
+      <p>worktrees/ 现为：已注册工作区（含 develop / production / v1.5-trust-chain，未触碰）+ 2 个工具状态目录（.meta-kim / .zcode）+ 6 个 PSD 测试件（blk79/blkX）+ 1 个并行会话的 tmp。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">仍等您拍板</span>
+    <p>① 4 条脏分支去留；② 6 个 PSD 测试件（9KB × 6）；③ .codex 下 5 个孤儿（约 2.6GB，下一批，先归档其中独有的提交）；④ 约 40 个"已注册但已死"目录（另排一批逐个核合并状态）。</p>
+  </div>
+</section>
+
+<footer>
+  <p>执行前部分 2026-10-15 深夜成稿；执行结果部分 2026-10-16 回填，全程日志在 C:\Users\ivan\AppData\Local\Temp\opencode\orphan-clean-20261015\（archive-gate / zip-and-secrets / dirty-branch-patches / unlink-junctions / delete-log）。</p>
+  <p>依据：交付档案/交接与对账/盘点报告_20260911_worktrees孤儿目录清单与体积.md · 现场复核（HEAD 可还原性 / junction / .env 扫描）。</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<title>中台：把多线并行收成一条可控的流水线</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:52ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+pre{font-family:var(--font-mono);font-size:.82rem;line-height:1.6;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;margin:0;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>中台 · 多线并行控制面</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>把「多线并行」收成一条可控的流水线</h1>
+  <p class="standfirst">你要的不是「再做一个看板」，是一个控制面。飞书表只是显示窗口——真相放 git、状态靠一个固定状态机、用「限值＋闸门」把在办数量压下来。本件查了 GitHub 六家成熟做法，给出一个能落地的中台方案。</p>
+  <div class="meta">
+    <span>只读盘点 · 未改业务代码</span>
+    <span>在办上限建议 = 2</span>
+    <span>要你拍 3 件</span>
+    <span>取数 2026-10-15 17:5x</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>飞书表管住了「有哪些事」，管不住「同时在办几件、谁在做、做完算不算数」。<strong>补这三件，才是中台。</strong></p>
+  </div>
+
+  <p class="lede">GitHub 上成熟做法几乎一致：<strong>真相放 git，状态靠一个固定的状态机，用「限值＋闸门」把在办数量压下来，看板只是它的一个视图。</strong>所以本方案 = 在现有飞书表之上加一层<strong>最小控制面</strong>，并把「在办上限」从现在的 7 条压到 <strong>2 条</strong>。这是全部建议里唯一真正治本的一条。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>先说你现在的真实缺口</h2>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">7</span><span class="k">名义在办上限（实测无约束力）</span></div>
+    <div class="stat bad"><span class="n">8</span><span class="k">三账停写天数</span></div>
+    <div class="stat warn"><span class="n">107</span><span class="k">同期产品提交（台账却停了）</span></div>
+    <div class="stat"><span class="n">15</span><span class="k">台账里的事（只读窗口）</span></div>
+  </div>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>项</th><th>实测（17:5x）</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>在办「上限」</td><td class="mono">名义 ≤7／编制 ≤8</td><td><strong>宽到没约束力</strong>，且三账已停写 8 天</td></tr>
+      <tr><td>三账最后写入</td><td class="mono">10-06 / 10-08 / 10-07</td><td>治理链休眠 8 天</td></tr>
+      <tr><td>同期产品提交</td><td class="mono">7 天 107 笔</td><td><strong>台账停了，产品照发</strong></td></tr>
+      <tr><td>本地分支</td><td class="mono">59（原 84）</td><td>已合并进 develop 的 15 条可关账</td></tr>
+      <tr><td>worktree 注册 / 目录</td><td class="mono">85 / 132</td><td><strong>孤儿目录约 47</strong></td></tr>
+      <tr><td>develop 脏度</td><td class="mono">8 条</td><td>多 PSD 实验 7 文件 ＋ TASK_LOG</td></tr>
+      <tr><td>飞书台账</td><td class="mono">15 条</td><td>无「在办/到期/认领」</td></tr>
+      <tr><td>独立复验件</td><td class="mono">10-07 后为零</td><td>发布无独立复验（<code>45e7744</code> 无挂号）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>缺口一：没有一层能回答「现在在办几件」</h3>
+      <ul>
+        <li>上面每个数都从不同地方拼的。</li>
+        <li>这就是「顾不过来」的结构性原因。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>缺口二：表答不了「谁领了、到哪步、算不算完」</h3>
+      <ul>
+        <li>只有状态四档，没有<strong>认领者 / 到期 / 证据门</strong>。</li>
+        <li>7 条上限形同虚设——根本没人算。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>盘上能收集到的「各个对话」</h2>
+  <p class="lede">会话收尾会写进 <code>AI_MEMORY/TASK_LOG.md</code>，机器可读。以下是「落在盘上的」，不是「你开着的」。</p>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>来源</th><th>规模</th><th>性质</th></tr></thead>
+    <tbody>
+      <tr><td><code>AI_MEMORY/TASK_LOG.md</code></td><td class="mono">209 条</td><td>各会话收尾记录（自由格式）</td></tr>
+      <tr><td><code>AI_MEMORY/ledger.jsonl</code></td><td class="mono">15 条</td><td>结构化伴生（中台真相层底子）</td></tr>
+      <tr><td><code>总控/日报_20261015.md</code></td><td class="mono">1 件</td><td>总控今早盘面</td></tr>
+      <tr><td><code>交付档案/</code></td><td class="mono">18 目录 100+ 件</td><td>各次任务交付件</td></tr>
+      <tr><td><code>总控/名册_会话与角色_20261007.md</code></td><td class="mono">12 槽</td><td>会话名单（<strong>已过期 8 天</strong>）</td></tr>
+      <tr><td>4 本 <code>ISSUES.md</code></td><td class="mono">691/1373/1410/303 行</td><td>问题账，编号撞号</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">诚实边界</span>
+    <p><strong>你客户端里当下打开的那些对话，本会话看不见、也无法枚举。</strong>这也正是需要中台的原因之一——要把「你脑子里的线」变成「盘上可数的线」。名册自陈「认角色只认本表」，但它 10-07 后再没更新；<code>官制.md:487</code> 写编制 ≤8、<code>:750</code> 挂着「在册 12」的死值。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>GitHub 上人家怎么做「中台」</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>issue-orchestrator</h3><span class="tag ok">headless 控制面</span></div>
+      <p>把 GitHub issue 变成隔离 worktree 里的有界运行，经校验/复验/返修/人工批准四道门才推进。<strong>「Agent 提议、编排器裁决」；Agent 不能合并 PR，人合并；改状态前先重观测。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>open-agentos / agentos</h3><span class="tag ok">GitHub 即操作系统</span></div>
+      <p>issue 走 label 状态机，每次迁移触发 Actions 工作流派发给对应角色。<strong>状态机即路由；每个角色一个最小权限身份；<code>AGENTS.md</code> 是全体 Agent 的操作手册。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>nordinit / agent-hq</h3><span class="tag ok">证据门</span></div>
+      <p><code>task → route → agent run → evidence → outcome → transition</code>。<strong>完成必须交证据，没证据不推进。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>luminik-io / alfred</h3><span class="tag ok">认领状态机</span></div>
+      <p>全在 GitHub 上实现：label 载状态、结构化注释载审计，无共享数据库。<strong>认领/释放原语防止两个执行者重复做同一件；带黏性闸 <code>do-not-pickup</code>／<code>needs:human-scope</code>。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>skdhir / ai-agent-orchestra</h3><span class="tag warn">单人创始人手册</span></div>
+      <p>120+ PR、3 Agent、1 个人。<strong>Agent 之间靠「文件」协调，不靠对话；人是瓶颈不是 Agent——3 个并行是单人复验上限；写码前先给 2–3 个选项等批准。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>ParallelPilot（arXiv 2609.33113）</h3><span class="tag warn">学术综述</span></div>
+      <p>归纳出 <strong>PILOT</strong>（Planning / Isolating / Logging / Observing / Triaging）。<strong>Brooks 定律对 Agent 同样成立</strong>——并行一多，协调开销会超过收益。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">大厂同向（旁证）</span>
+    <p>GitHub 自己把「Agent Control Plane / Mission Control」做成了产品；GitHub Issues 也加了 <strong>approvals / confidence / rationale</strong>（高置信自动应用，中低置信挂起等你批）。⇒ <strong>「控制面」不是我的发明，是行业共识。</strong></p>
+  </div>
+
+  <h3 style="margin-top:6px">六家的共同结论（也是给你的答案）</h3>
+  <ul class="notes">
+    <li><strong>真相必须是「崩了也还在的」外部东西</strong>——首选 git / issue label，不是新数据库或看板。</li>
+    <li><strong>状态机要固定、要有限</strong>——几个枚举状态 + 迁移规则。</li>
+    <li><strong>要有闸门</strong>——完成不等于自报完成，要过证据门/复验门；发布要过人工批准门。</li>
+    <li><strong>要有限值</strong>——同时在办数量必须卡死；跨过就排队。</li>
+    <li><strong>要有认领</strong>——同一件同时只能一个会话在做。</li>
+    <li><strong>看板只是窗口</strong>——先做看板就是第四本没人写的账。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>哪些能搬、哪些不能</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>做法</th><th>能否搬</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td><strong>状态机＋闸门＋认领锁＋证据门</strong></td><td><span class="tag ok">能，最该先做</span></td><td>纯文件＋脚本，零第三方依赖；<code>ledger.jsonl</code> 已是底子</td></tr>
+      <tr><td><strong>在办上限压到 2</strong></td><td><span class="tag ok">能，最治本</span></td><td>一个人就能执行；现有 ≤7/≤8 实测无约束力</td></tr>
+      <tr><td>到期断路器（到期未完成→降级，不占名额）</td><td><span class="tag ok">能</span></td><td>把 Shape Up 单人化</td></tr>
+      <tr><td>借 GitHub label 当状态</td><td><span class="tag warn">暂缓</span></td><td>任务要搬进 Issues，与飞书窗口两处会打架</td></tr>
+      <tr><td>整体照搬 issue-orchestrator / agentos</td><td><span class="tag bad">现在不能</span></td><td>前提是 CI 硬门禁＋PR 文化；本项目 <code>test:seo-consistency</code>／<code>test:admin-security</code> 都不在发布门内</td></tr>
+      <tr><td>另装 Plane / Vikunja / 自托管看板</td><td><span class="tag bad">不装</span></td><td>重复建设；要的是「换窗口看账」，不是再开一本账</td></tr>
+      <tr><td>全自动多 Agent 自治</td><td><span class="tag bad">不做</span></td><td>继承项目既有「三条不做」</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>中台设计：三层 ＋ 五个机制</h2>
+
+  <pre>视图层   飞书多维表格（已有）＋ 每天一条 watchdog 日检
+           ↑ 只读投影，单向
+控制层   中台本体：状态机 · 在办限值 · 五个闸门 · 认领锁   ← 本方案要补的就是这层
+           ↑ 只写 ledger.jsonl
+真相层   git 提交历史 ＋ AI_MEMORY/TASK_LOG.md ＋ AI_MEMORY/ledger.jsonl</pre>
+
+  <div class="callout">
+    <span class="lb">单向原则</span>
+    <p>只有真相层能被写；控制层读真相层算判据；视图层只显示。<strong>「表没更新」不算事故，「git 有而表没有」才算事故。</strong></p>
+  </div>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>认领锁</h3>
+        <p>一个任务同一时刻只有一个会话认领；重复认领必须失败。借自 alfred。→ 解决「谁在做说不清」。</p>
+      </div>
+    </div>
+    <div class="gate first">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>在办限值 = 2</h3>
+        <p>同时在办 ≤2（1 产品 + 1 应急）；超了就排队。借自 Personal Kanban。→ 解决「线太多、顾不过来」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>决策闸</h3>
+        <p>只有 <code>等您定</code> 的才占你的注意力；其余机器干。→ 解决「都想要做」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>证据闸</h3>
+        <p>翻「已交付」必须带证据（<code>file:line</code> + 真实 rc）；自报不算数。借自 agent-hq。→ 解决「做没做到什么地步」。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>发布挂号闸</h3>
+        <p>任何进 <code>main</code> 的合并，同一次提交带一行挂号（sha/包名/时刻/复验件）；查不到即立案。→ 解决今晨发布无台账。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">＋</span>
+      <div class="body">
+        <h3>到期断路器</h3>
+        <p>每条线写到期日；到期未完成 → 自动降级「已搁置」，不占名额。借自 Shape Up。→ 解决线永远挂着不清。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>执行方案（分期，先落最小可用的）</h2>
+
+  <h3>P0 · 今天半天（零第三方依赖，只动 <code>AI_MEMORY/</code> ＋ 一个脚本 ＋ 飞书列）</h3>
+  <ul class="notes">
+    <li><strong>给 <code>ledger.jsonl</code> 加 3 个字段</strong>：<code>wip</code>（是否占在办名额）、<code>due</code>（到期日）、<code>claim</code>（认领者）。历史 15 条不动。</li>
+    <li><strong>写 <code>scripts/control-plane.mjs</code></strong>（纯变换，不 spawn）：读 ledger → 算<strong>在办数 / 超限 / 到期 / 漂移</strong>（git 有无对应提交）→ 出可读文本 ＋ 机器判据 JSON；由 <code>control-plane.sh</code> 编排调 git、调飞书 CLI。</li>
+    <li><strong>一条 watchdog 日检</strong>：每天早上第一条命令，查三件——(a) <code>main</code> 有无发布且是否挂号；(b) ledger 是否漂移；(c) 在办数是否 &gt;2。命中任一即告警。</li>
+    <li><strong>飞书表加一列「到期日」＋一个视图「当前在办（≤2）」</strong>（机器列；「Owner 批注」列依旧只你写）。</li>
+  </ul>
+
+  <h3>P1 · 本周（定了就推）</h3>
+  <ul class="notes">
+    <li><strong>五闸门全上</strong>：认领锁落进写入路径；证据闸写进 <code>AGENTS.md</code>；发布挂号立为硬判据。</li>
+    <li><strong>支线关账</strong>：已合并进 develop 的 15 条 ＋ 孤儿目录约 47 个（<strong>等你批一句</strong>）。</li>
+    <li><strong>会话名册现取重出</strong>：按当天会话列表重出一版。</li>
+  </ul>
+
+  <h3>P2 · 下周（有余力）</h3>
+  <ul class="notes">
+    <li><strong>发布挂号自动判据</strong>：<code>PRODSHA_IN_LEDGER</code> 命中 0 ⇒ 自动立案并冻结对外主张。</li>
+    <li><strong>决策负载看板</strong>：飞书表加「决策重量」列，只统计需要你注意力的件数——目标让这个数连续下降。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>要你拍的（3 件，各一句话）</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>#</th><th>决定</th><th>建议</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">D-1</td><td><strong>在办上限定 2 还是 3</strong></td><td><span class="tag ok">2</span></td><td>单人复验瓶颈的业界经验值就是 2–3；你现在的名义上限是 7</td></tr>
+      <tr><td class="mono">D-2</td><td><strong>15 条已合并分支 ＋ 约 47 个孤儿目录删不删</strong></td><td><span class="tag ok">删</span></td><td>删是你的决定；我只出清单、不动手。内容已在 develop 里</td></tr>
+      <tr><td class="mono">D-3</td><td><strong>治理走 A / B</strong></td><td><span class="tag ok">B</span></td><td>本中台<strong>就是 B 案的落地形态</strong>；这一件决定后面全部，排第一</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="verdict">
+    <span class="lb">D-3 是总闸</span>
+    <p>若你选 <strong>A（续三账）</strong>，本中台要改成「三账的视图」；若选 <strong>B</strong>，本中台就是新的治理本体。B 案不是放弃治理，是<strong>把治理从仪式改成判据</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>未核实 / 边界</h2>
+  <ul class="notes">
+    <li><strong>你客户端里开着的对话，本会话看不到</strong>，无法枚举。</li>
+    <li><strong>中台脚本尚未编写/运行</strong>——本件是方案，不是执行。</li>
+    <li><strong>飞书加列/视图未做</strong>——CLI 已可用，但加列动作未执行。</li>
+    <li><strong>已合并分支删除的安全性</strong>：仅按「已合并进 develop」判断，未逐条核对挂在树上的未提交改动。</li>
+    <li><strong>孤儿目录体积</strong>：<code>du</code> 在百万文件级目录上超时，未测出。</li>
+    <li><strong>GitHub 六家的适用度</strong>：其中 3 家依赖 Actions CI＋PR 流程，本项目 CI 门不完整，<strong>只借概念不搬代码</strong>；判断依据是仓库页与官方文档。</li>
+    <li><strong>「在办上限 2」的实证</strong>：来自业界经验与学术综述，<strong>未在你这套系统上跑过基线</strong>。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>取数：<code>worktrees/develop</code> 实测（17:5x）——HEAD <code>a339ae6</code>、分支 <strong>59</strong>、已合并 <strong>15</strong>、worktree 注册 <strong>85</strong>、目录 <strong>132</strong>、脏 <strong>8</strong>、领先 <code>origin/develop</code> <strong>1</strong>／<code>origin/main</code> <strong>22</strong>；台账 <code>AI_MEMORY/ledger.jsonl</code> 15 条；发布 <code>45e7744</code>（07:50:27）；三账与名册见 <code>总控/日报_20261015.md</code>、<code>总控/名册_会话与角色_20261007.md</code>。</p>
+  <p>本件为方案与只读盘点：未改业务代码、未提交、未部署、未建表、未碰两站、未跑脚本。</p>
+</footer>
+
+</div>

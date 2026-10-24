@@ -1,0 +1,752 @@
+<title>本地助手批量改语言怎么跑通 · PhotoCraft 写侧终验</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  line-height:1.5;
+  margin:0;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+pre{
+  font-family:var(--font-mono);
+  font-size:.78rem;
+  line-height:1.75;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  margin:0;
+  overflow-x:auto;
+  white-space:pre;
+  color:var(--ink-2);
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+.verdict p.sub{font-size:1rem;font-weight:400;color:var(--ink-2);max-width:64ch}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.callout p{max-width:none}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>PhotoCraft 写侧终验</span><span class="sep">/</span>
+    <span>2026-10-13</span>
+  </p>
+  <h1>「本地助手批量改语言」怎么跑通</h1>
+  <p class="standfirst">对「用本地助手跑通批量改语言、且可去掉 Photoshop」这一设想的真机对抗式验证：<strong>PhotoCraft 改字产物 6/6 在真 Photoshop 里打不开</strong>，根因钉到它重生成的 <code>Txt2</code> 文档资源块；写侧健康被独立复现；跑不通的账记在协调层五处实测故障上。</p>
+  <p class="standfirst">本件同时结掉 10-12《总进度与不走PS通道》留下的未决项「PC 存的 PSD 在真 PS 里打开对不对没人验过」。</p>
+  <div class="meta">
+    <span>六臂主矩阵 + 四臂块替换</span>
+    <span>Photoshop 2021 真机 COM 判据</span>
+    <span>隔离实验 · 源件只读</span>
+    <span>未改产品码 · 未提交 · 未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>批量改语言要跑通，修的是协调层，不是写侧。PhotoCraft 当写入后端今天必须判死——它产出的 PSD，客户 Photoshop 打不开。</p>
+    <p class="sub">写侧本身是健康的：本会话用真 PS 读回产品自己的上一批产物，55 个文字层全部是目标语言。卡住批次的一直是验票预算、停批策略未上生产、零产出零报告这三件事。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>已验证健康的</h3>
+      <ul>
+        <li><strong>写侧（真 PS + 助手 JSX）</strong>：产品自己上一批次产物在 PS 2021 打开，55 个文字层全是目标语言日文——本轮独立复现，与 10-12 验收记录一致。</li>
+        <li><strong>PC 读侧</strong>：57 份 / 3525 层零违反（10-12 批测），本会话复跑 <code>info</code> 对两份 90MB+ 大件均 rc=0。</li>
+        <li><strong>停批 / 禁盲重跑策略</strong>：已在 develop 修好并有守卫（<code>batch-error-policy.ts:41-45,81</code>）。</li>
+        <li><strong>PC 的 <code>type.edit</code> 本身</strong>：改字、保留样式、UTF-8 输出、PC 自身读回全部正常——坏的只是它写出的 PSD。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>判死 / 未修的</h3>
+      <ul>
+        <li><strong>PC 写侧</strong>：改过文字的 PSD/PSB，真 PS 2021 打不开 <span class="tag bad">6/6</span>。</li>
+        <li><strong>「保留原 Txt2」方案</strong>：能开，但 <code>textItem</code> 读回仍是旧文字——路线 A 的失败只是推迟到用户点击文字层。</li>
+        <li><strong>验票预算</strong>：<code>server.js:2276</code> 仍是 10s；25s 修复只在 production 未提交 WIP 里。</li>
+        <li><strong>生产部署</strong>：按 10-12 只读读数，生产站停在 09-19 基线 <code>eeb994c</code>/3.6.60，develop 的修复三周多一个没上生产。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>核对总账</h2>
+  <p class="lede">判据只有一个：<strong>真 Photoshop 2021 能否打开 + <code>textItem</code> 读回</strong>（COM <code>app.open</code>，<code>DisplayDialogs=NO</code>）。同一会话、同一实例，原厂件稳定 OK、坏件稳定 FAIL。</p>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">6/6</span><span class="k">PC 改字产物<br>真 PS 打不开</span></div>
+    <div class="stat ok"><span class="n">3/3</span><span class="k">未改字的 PC 臂<br>重存/重排仍可开</span></div>
+    <div class="stat warn"><span class="n">2.2×</span><span class="k">PC 重生成的 Txt2 体积<br>495,751 B vs 222,310 B</span></div>
+    <div class="stat ok"><span class="n">55/55</span><span class="k">产品自产文字层<br>= 目标语言</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">实验纪律</span>
+    <p>全部产物落 <code>C:\Users\ivan\AppData\Local\Temp\opencode\pc-decide</code>，源件只读拷贝，<code>F:\改语言\</code> 与产品代码零改动。实验产生 1.1 GB 临时件，判读完成后已清理至 15 MB（留脚本与合成图供复跑）。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>决定性实验：六臂对照</h2>
+  <p class="lede">客户件 A（97 MB，243 层 / 80 文字层，德文文本）。前 3 臂是 PC「不动文字」的操作，后 3 臂是 PC 改字——分界不在改了多少，而在<strong>动没动文字</strong>。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>#</th><th>PC 做了什么</th><th>PS 2021 打开</th><th>判读</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">1</td>
+          <td>—（原厂 PS 件）</td>
+          <td><span class="tag ok">OK</span></td>
+          <td class="was">基线</td>
+        </tr>
+        <tr>
+          <td class="mono">2</td>
+          <td><code>convert</code> 原样重存</td>
+          <td><span class="tag ok">OK</span></td>
+          <td class="was">重编码本身不致死</td>
+        </tr>
+        <tr>
+          <td class="mono">3</td>
+          <td><code>type.updateAllTextLayers</code>：80 个 TySh 全部由 PC 重生，文字不变</td>
+          <td><span class="tag ok">OK</span></td>
+          <td class="was">重生成 TySh 不致死；该臂 Txt2 与原厂 sha 逐字节相同 <code>37b5fcbd81eb…</code></td>
+        </tr>
+        <tr>
+          <td class="mono">4</td>
+          <td><code>type.edit</code> 层 241：<code>491.0 ± 10.0g</code> → <code>Gewicht: 491,0 g ± 10,0 g (1000 Stück)</code>（变长）</td>
+          <td><span class="tag bad">FAIL</span></td>
+          <td class="was">「常规 Photoshop 错误」</td>
+        </tr>
+        <tr>
+          <td class="mono">5</td>
+          <td>同层 → <code>Gewicht: 491</code>（<strong>等长</strong> 13 字符）</td>
+          <td><span class="tag bad">FAIL</span></td>
+          <td class="was">排除「长度变化」</td>
+        </tr>
+        <tr>
+          <td class="mono">6</td>
+          <td>同层 → <code>Hi</code>（<strong>更短</strong>）</td>
+          <td><span class="tag bad">FAIL</span></td>
+          <td class="was">排除「字节右移 / 截断」</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">泛化 + 形态</span>
+    <p><strong>第二文件</strong>（客户件 B，93 MB / 55 文字层 / 日文，字体 Noto Sans Medium）：原件 PS 打开 OK；PC <code>type.edit</code> 层 173 <code>ID 5857</code> → <code>ID 5857-DE</code> 后 <span class="tag bad">FAIL</span> ⇒ 不是某文件/某字体偶发。<strong>PSB 输出</strong>（同编辑，<code>--out …psb</code>）<span class="tag bad">FAIL</span>（错误码不同：打开选项不正确）。<strong>PC 从零建文件 + <code>type.create</code></strong> <span class="tag bad">FAIL</span>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>根因变量分离：只有 <code>Txt2</code> 块不同</h2>
+  <p class="lede">对失败件做<strong>同文件、同偏移、同块长（495,751 B）的原位等长替换</strong>——只换 <code>Txt2</code> 内容，其余字节一律不动。这是全篇因果链最硬的一步。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>变体</th><th><code>Txt2</code> 块内容</th><th>PS 打开</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">edited33.psd</td>
+          <td>PC 重生成的 Txt2</td>
+          <td><span class="tag bad">FAIL</span></td>
+        </tr>
+        <tr>
+          <td class="mono">edit_txt2zero</td>
+          <td>同长度<strong>全零</strong></td>
+          <td><span class="tag bad">FAIL</span><br><span class="was">PS 严格解析 Txt2；同时排除块长/偏移因素</span></td>
+        </tr>
+        <tr>
+          <td class="mono">edit_txt2orig</td>
+          <td><strong>原厂 PS 写的 Txt2 + 补零</strong></td>
+          <td><span class="tag ok">OK</span></td>
+        </tr>
+        <tr>
+          <td class="mono">edit_txt2flat</td>
+          <td>PC 的 Txt2，把换行/Tab 原位换成空格</td>
+          <td><span class="tag bad">FAIL</span><br><span class="was">不只是空白符问题</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">字节级</span>
+        <h3>PS 的 Txt2 是空格分隔单行 DSL；PC 是换行+Tab 美化排版</h3>
+        <span class="tag bad">根因</span>
+      </div>
+      <p>原厂头 64B：<code>20 2f 39 38 20 3c 3c 20 2f 30 20 37 …</code>（<code> /98 &lt;&lt; /0 7 …</code>，纯空格）。PC 头 64B：<code>0a 0a 2f 39 38 0a 09 3c 3c 0a 09 09 2f 30 …</code>（换行+Tab 缩进）。该块内含 <strong>31,893 个换行、274,878 个 Tab</strong>。上游位置：<code>crates/text/src/psd.rs</code> 的 <code>build_txt2</code> / <code>build_engine_data</code>，经 <code>crates/io/src/psd_export.rs:1556-1595</code> 写出。</p>
+      <p><strong>把换行/Tab 全换成空格仍然 FAIL</strong>：PC 的 Txt2 是 495,751 B vs 原厂 222,310 B（2.2 倍），内容组织方式也不同。⇒ 不是缩进美化，是 <code>build_txt2</code> 的输出结构不对。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">分界自证</span>
+        <h3>OK/FAIL 分界与「有没有重生成 Txt2」完全吻合</h3>
+        <span class="tag ok">已证实</span>
+      </div>
+      <p>臂 3（<code>updateAllTextLayers</code>，80 个 TySh 全重生）：文字没变 ⇒ PC 保留原 Txt2（sha 逐字节同原厂）⇒ OK；臂 4-6 文字变了 ⇒ PC 重生成 Txt2 ⇒ FAIL。<strong>TYSh、EngineData、像素都不是打不开的原因</strong>——原 Txt2 一换回来就能开。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">「保留原 Txt2」</span>
+        <h3>能开，但是路线 A 的僵尸复发</h3>
+        <span class="tag bad">不可用</span>
+      </div>
+      <p><code>edit_txt2orig</code> 在 PS 里打开成功，画布像素确实是新德文（原/新两张 PS 合成图对比：文字区 <strong>9.26% 通道差异 &gt;24</strong>，新文字已渲染进像素）。但 <code>textItem.contents</code> 读回仍是旧文字 <code>491.0 ± 10.0g</code>——PS 从 Txt2 取层文字，<strong>交付物的文字层数据与像素不一致</strong>：用户一点进文字层就翻回旧文。与路线 A「PS 直接丢弃新文字」同款失败，只是延迟爆发。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">附带风险</span>
+        <h3>PC 的写侧不是无损重存</h3>
+        <span class="tag warn">需审计</span>
+      </div>
+      <p>同一 97 MB 文件，<code>convert</code> 重存：97,221,180 → 95,612,740 B（<strong>−1.6 MB</strong>）；10-11 那次 roundtrip：176 MB → 264 MB（<strong>+88 MB</strong>）。两个方向都变 ⇒ 对未触碰内容做了重新编码。即便打开问题修了，也要重做无损审计。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>跑通清单：真凶在协调层</h2>
+  <p class="lede">按「今天还吃不吃产出」排序，五处；全部带本轮实测 file:line 或 10-12 只读读数。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">worktrees/develop/download/local-assistant/server.js:2276</span>
+        <h3>VERIFY_TIMEOUT：验票单跳预算仍 10 秒</h3>
+        <span class="tag bad">未修</span>
+      </div>
+      <p><code>TICKET_VERIFY_ATTEMPT_TIMEOUT_MS = 10000</code>——25s 的修复只在 production 树<strong>未提交 WIP</strong> 里。跨太平洋链路常态超时。10-12 当天：12 语种批次第 5 个语种 10 秒被拒，<strong>整批中断、8 个语种从未执行、用户无任何报告</strong>。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">src/lib/workbench/batch-error-policy.ts:41-45, 81</span>
+        <h3>停批 / 禁盲重跑策略：develop 已修，生产站没上</h3>
+        <span class="tag warn">已修未部署</span>
+      </div>
+      <p><code>VERIFY_TIMEOUT / BATCH_MANIFEST_BINDING_FAILED / BATCH_MANIFEST_BINDING_INVALID / SCRIPT_COMPONENT_STALE / INCOMPLETE_PROVENANCE</code> 已列入 <code>SYSTEMIC_PRE_EXECUTION_CODES</code>（首拒即停批，不再产生孤儿 attempt）；<code>:81</code> 又把 <code>VERIFY_TIMEOUT</code> 列入 <code>UNKNOWN_BATCH_OUTCOME_CODES</code>（禁止盲重跑、先对账）。按 10-12 只读读数，生产站停在 09-19 基线 <code>eeb994c</code>/3.6.60，develop 的修复三周多一个没上生产（本轮未复探两站）。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">Recovery 10.4 · generate.ts 整模块零引用</span>
+        <h3>零产出 ⇒ 零报告耦合</h3>
+        <span class="tag bad">未实现</span>
+      </div>
+      <p>助手侧刻意不建空目录，网页侧「失败报告」设计过、文档写过、代码一天没实现 ⇒ 「什么都没做」和「做砸了」在用户眼里一模一样。10-12 那次 7 语种全灭正是这个形态。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">回执重放 · 自 09-11 起 2 万行日志</span>
+        <h3>重放打本机 <code>::1:3000</code>，每 5 分钟一次 ECONNREFUSED</h3>
+        <span class="tag warn">开放</span>
+      </div>
+      <p>无产出损失，但污染日志与界面；与「回执未确认」提示的回执不完备原因码同族。</p>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <span class="loc">glyph-coverage.js · devDependencies · 产品链路零引用</span>
+        <h3>字体覆盖结论已测出但未接线</h3>
+        <span class="tag warn">已测未接</span>
+      </div>
+      <p>泰文是唯一硬约束语种（10-12：仅 1/4 份爆掉，根因是缺 <code>Adobe Thai</code>）；日文是数值最差（0.82/255 均值、最差 2.88）。fontkit 未装进 exe，从未打过第三方原生模块。接线判据：「逐层判该层字体覆盖不了该层目标文字才换」。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>三条路线，各带复测门</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">A</span>
+      <div class="body">
+        <h3>助手当编排器、真 PS 当写入器 —— 推荐，今天就能跑</h3>
+        <p>写侧已独立复现健康（55/55）。动作只有三件：① 把 <code>server.js:2276</code> 抬到 25–30s（一处常量，随 3.7.16）；② production 树那份在飞 WIP（server.js 25s + execute-step.tsx + failure-report.ts）先收尾提交，别两路一起改；③ develop 已修好的批次策略 + 失败报告部署上生产（授权门：不得从 develop 直建生产）。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">B</span>
+      <div class="body">
+        <h3>PhotoCraft 当写入器 —— 今天不可行</h3>
+        <p>复测门：上游修好 <code>build_txt2</code> 后，用 §09 的命令原样复跑六臂 + 四臂块替换，全绿才重新开题。前置还有三件：泰文/日文排版达标、无损重存审计、67MB exe 进安装包的 SHA 完整性门（同 script-distribution 模式）。在此之前，任何「无 PS 批量改语言」的排期都是把客户交付物押给一个 early-alpha 项目的待修 bug。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">C</span>
+      <div class="body">
+        <h3>交付物改合成图（PNG/JPG）—— 产品决策，不是工程绕路</h3>
+        <p>须 Owner 拍「交付物是否允许非 PSD」。若允许：PC 渲染均值 0.82/255 可接受，但泰文需先解决替代字体问题，且「可编辑文字层」这一卖点消失——这条路是<em>替换</em>现有交付链，不是并存。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">中间收益 · 不改变交付合同</span>
+    <p>PC 的读侧是干净的：可把助手的<strong>扫描 / 预览 / 报价</strong>改为 PC（去掉「预览也要开 PS」的依赖），写侧仍留给 PS。这会改变扫描证据合同，须按 AGENTS.md 合同变更纪律四层同步 + 更新 <code>smoke-batch-row-contract</code> fixture，未跑 <code>test:batch-row-contract</code> 与 <code>test:trust-chain</code> 不得部署测试站。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>对抗式自疑：这些证据能被什么打掉</h2>
+  <ul class="notes">
+    <li><strong>只测了 Photoshop 2021。</strong>分界由内容决定（三变体同长度只换内容），非版本特异性；但严格说未测 2024/2025（2024 已装未启）。部署前按客户实际版本抽样复测。</li>
+    <li><strong>PS 实例当时开着用户文档，COM 失败会不会是实例状态？</strong>已排除：每臂单独 <code>app.open</code>，原厂件与 PC 重存件同会话稳定 OK、坏件稳定 FAIL；单独重试复现同样失败。</li>
+    <li><strong><code>DisplayDialogs=NO</code> 吞掉了字体缺失对话框？</strong>部分排除：同文件原厂件在同样设置下 OK，且 PC 的字体警告是「替代渲染不中断」。未完全排除——可用 <code>DisplayDialogs=ALL</code> 单例复跑（有挂起风险，本轮未做）。</li>
+    <li><strong>改的是 Auto-name 层，改名会不会才是原因？</strong>未单独隔离。但 <code>edit_txt2orig</code> 保留了同样改名且能打开 ⇒ 改名不致死。</li>
+    <li><strong>Txt2 根因只在一个文件上钉死？</strong>三变体同长度同偏移，因果链完整；但 PC <code>build_txt2</code> 为什么产出 2.2 倍体积未逐行定位——属上游 bug，报告材料（头 64B hex 对照 + 三变体矩阵）已备。</li>
+    <li><strong>「PC 不能当生产者」是否推广到所有用途？</strong>不推广。只对「写客户 PSD/PSB 交付物」判死；扫描/预览/报价/参照物生产不受影响。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>修正 10-12 现状报告两条口径</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">10-12《总进度与不走PS通道》§3.2 / §8.1 / §四</span>
+        <h3>「PC 存的 PSD 在真 PS 里打开对不对没人验过」→ 已验，打不开</h3>
+        <span class="tag bad">结案</span>
+      </div>
+      <p>6/6 编辑 + 1 从零 + 1 PSB 全 FAIL。该报告 §四「下一步二选一」的第 ① 项（补 PC 终验）可以结案。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="loc">10-12 §8.1 未投递线索</span>
+        <h3><code>tmp/pc-roundtrip/ps_out.png</code> 不能当「PS 验收通过」旁证</h3>
+        <span class="tag warn">降级</span>
+      </div>
+      <p>本会话复跑同类链路时确认该链路在今天的新构建上不成立；那张图更可能是历史上某次人工打开时留下的，来历不可考，不得作为通过证据引用。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>复跑命令</h2>
+  <p class="lede">全部原样可复现；判据只有「真 PS 2021 能否打开」。</p>
+  <pre>
+$d = "C:\Users\ivan\AppData\Local\Temp\opencode\pc-decide"
+Copy-Item "&lt;真实客户件&gt;" "$d\src33.psd"        # 源件只读
+
+# PC 读结构 / 改字 / 重排（注意：PS 管道会转码，输出用 cmd 重定向保 UTF-8）
+"C:\Program Files\PhotoCraft\photocraft-cli.exe" info "$d\src33.psd" --compact
+... run "$d\src33.psd" --cmd type.edit --params '{\"layer\":241,\"text\":\"Gewicht: 491\"}' --out "$d\edit_same_len.psd"
+... run "$d\src33.psd" --cmd type.updateAllTextLayers --out "$d\updated33.psd"
+
+# 真 PS 打开判据（COM，DisplayDialogs=NO，只开不存）
+$ps = New-Object -ComObject Photoshop.Application; $ps.DisplayDialogs = 3
+$doc = $ps.Open("$d\edit_same_len.psd")   # 抛 COMException = 打不开
+
+# Txt2 三变体（原位等长替换）+ 读回：本轮 tmp 脚本
+#   tyshblocks.cjs / txt2patch.cjs / txt2flat.cjs / cmpcanvas.cjs</pre>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>未做 / 未决</h2>
+  <ul class="notes">
+    <li>未逐行定位 PC <code>build_txt2</code> 产出 2.2 倍体积的原因（上游 bug 报告材料已备）。</li>
+    <li>未用 Photoshop 2024/2025 复测；未开 <code>DisplayDialogs=ALL</code> 复跑。</li>
+    <li>未复测泰文语种在 PC 渲染下的硬约束（沿用 10-12 实测结论）。</li>
+    <li>未动任何产品代码、未提交、未部署、未连库、未改源件；未写 <code>CURRENT_STATUS.md</code>（单写者＝总控长槽）与 <code>docs/HANDOFF.md</code>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">11</span>最后一句</h2>
+  <div class="verdict">
+    <p>跑通的动作在协调层：抬验票预算、停批策略上生产、补失败报告、接字体覆盖。写侧继续用真实 Photoshop。</p>
+    <p class="sub">上游修好 <code>build_txt2</code> 的那天，用 §09 的命令原样复跑六臂即可重新开题；在那之前，「无 PS 批量改语言」不能进任何排期。</p>
+  </div>
+</section>
+
+<footer>
+  <p>六臂主矩阵 + 四臂同长度块替换 + 泛化两文件；判据为 Photoshop 2021 真机 COM 打开与 <code>textItem</code> 读回；根因定位于 PC 重生成的 <code>Txt2</code> 文档资源块。</p>
+  <p>2026-10-13 · 只读审查 + 隔离实验，未改产品码、未提交、未部署；客户件名已匿名化，代码 file:line 为证据指针。配套文字版：<code>审查报告_20261013_本地助手批量改语言跑通_PhotoCraft写侧终验_对抗式审查.md</code></p>
+</footer>
+
+</div>
+

@@ -1,0 +1,483 @@
+<title>GEO 续做第二轮：对抗式审查与执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 · Round 1/3</span><span class="sep">/</span>
+    <span>审我自己上一轮产出</span><span class="sep">/</span>
+    <span>2026-10-21 09:3x</span>
+  </p>
+  <h1>GEO 续做第二轮：撤主体声明、收窄 llms、修五处度量面缺陷</h1>
+  <p class="standfirst">基线 <code>worktrees/develop@670f7cb</code>（工作树含他人未提交 19 文件）｜生产分支 <code>origin/main@6ff5c3c</code> ＝ 线上运行版本（<code>/api/runtime-provenance</code> 实测 BOUND）。三镜头并行取证，子代理结论一律当线索，逐条独立复现后才定级。</p>
+  <div class="meta">
+    <span>撤回 sameAs 六文件</span>
+    <span>llms 多稿句整句撤回</span>
+    <span>度量面五修</span>
+    <span>离线负控 20/20</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>VERDICT 与总账</h2>
+
+  <div class="verdict"><span class="lb">VERDICT</span><p><strong>打回（我上一轮的产出）</strong>——方向没错，但两处对外句子越了证据边界、一处度量面读数会被假信号带偏。<br>风险档 Low（8 文件 +26/−4，全在展示层与只读工具），其中两项属对外主张，必须退回"指得到落点"的那一句。</p></div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">10</span><span class="k">证实缺陷<br>Important 8 ＋ 存量 2</span></div>
+    <div class="stat ok"><span class="n">2</span><span class="k">镜头结论被我证伪<br>孤岛说／robots 洞</span></div>
+    <div class="stat warn"><span class="n">5</span><span class="k">未决<br>逐稿批次·表粒度·上限同值·跨零点·组织页</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>被证实的缺陷（A＝我自己跑出的读数）</h2>
+<div class="scrollx"><table><thead><tr><th>ID</th><th>级</th><th>落点</th><th>失效场景</th><th>证据</th><th>归属</th></tr></thead><tbody><tr><td>AR-1</td><td>🔴 Important</td><td class="mono"><code>worktrees/develop/src/config/site.ts:21</code> ＋四页 <code>sameAs</code></td><td>把<strong>个人 GitHub 账号页</strong>声明为 Organization 的同一实体，等于对外把品牌与 Owner 个人身份直连，并与站内法务原文自相矛盾</td><td>未登录实测 <code>https://github.com/newye123</code> ⇒ <code>&lt;title&gt;newye123 (Not Designer) · GitHub&lt;/title&gt;</code>、<code>data-bio-text=""</code>（bio 空）、无 <code>itemtype="Organization"</code>；站内 <code>src/app/(zh)/privacy/subprocessors/page.tsx:31</code> 原文「主体信息未在本页公示」；<code>AI_MEMORY/ISSUES.md:743</code> 记无 ICP 备案。⇒ 该页公开表征的<strong>首要主体是自然人</strong></td><td>本次引入</td></tr>
+<tr><td>AR-2</td><td>🔴 Important</td><td class="mono"><code>scripts/smoke-seo-consistency.mjs:367,475</code></td><td>断言只钉首页与英文首页，而 <code>sameAs</code> 加在四页；<strong>删掉两个 download 页的 sameAs，门照样绿</strong></td><td>读实现：该脚本本就逐页取回（<code>:278</code>、<code>:539</code> 的六页清单），补断言成本极低但当时没做；另：往数组里加第三个未经取证的 URL 时，门会红、改断言即绿——<strong>准入纪律无机器守卫</strong></td><td>本次引入</td></tr>
+<tr><td>AR-3</td><td>🔴 Important</td><td class="mono"><code>public/llms.txt:13</code>（新加行）／<code>public/llms-full.txt:7,56</code></td><td>句子里「每个设计稿各自对账、各自生成」只有<strong>线上 UI 副标题</strong>支撑（<code>workbench-view.tsx:2708</code>，<code>git grep 各自对账 origin/main</code> 命中 1），逐稿是否各成批次/各出报告<strong>未核</strong>（<code>execute-step.tsx</code> 那段"每个设计稿独立走批次链"属<strong>未提交</strong>改动，不在 origin/main）</td><td>A：origin/main 逐词 grep＋工作树 git status；C：未提交文案不可当既成事实 ⇒ 这半句越界</td><td>本次引入</td></tr>
+<tr><td>AR-4</td><td>🟠 Important</td><td class="mono">同上两文件</td><td>我用「多个设计稿／多稿档」<strong>绕开了自家机扫的禁写正则</strong>（<code>tmp/scan-copy.mjs:14</code> 禁 `多文件批量</td><td>多个 ?PSD<code>；</code>写法定则_20261017…md:18` 记这属"被撤的对外主张"）。机扫 0 命中≠获准</td><td>A：两份文件实扫 TOTAL 可疑行=0；禁写来源原文行号如上。能力侧确实已上线（origin/main 有 <code>MAX_PSD_ENTRIES</code>、<code>listFolderDesigns</code>、<code>parsePastedPsdPaths</code>、<code>选择文件夹</code>），但<strong>撤过的措辞换皮重用必须先由 Owner 明示豁免</strong></td></tr>
+<tr><td>AR-5</td><td>🔴 Important</td><td class="mono"><code>交付档案/GEO测量/geo-audit-daily.mjs:51-58,60</code></td><td>「连续同分」只按<strong>文件里出现过的天数</strong>算，不查日历相邻 ⇒ 10-20 与 10-22 同分（10-21 整日缺失）照样打印「连续同分=2 天」并触发 <code>S1_CRITERION_MET</code>。我今天对外讲的"连续两天"措辞因此<strong>超限</strong></td><td>A：镜头用合成两行实跑复现 streak=2；我读码确认无相邻性判断</td><td>本次引入</td></tr>
+<tr><td>AR-6</td><td>🟠 Important</td><td class="mono"><code>geo-audit-fetch.mjs:102,106,108</code></td><td>① <code>--only=x</code> 会让其余 6 件从旧 manifest 复活（http=200＋旧 sha），<code>core_ok=true</code>、退出 0 ⇒ <strong>"今天一件核心都没抓到"也能录行</strong>；② 非 home 资产<strong>没有形态校验</strong>：CF 挑战页若以 200＋HTML 顶替 robots/llms，闸照过，于是记成 <code>robots_citation_ok</code> FAIL——正是闸门本该挡住的"取数失败当分数下跌"；③ 沿用行不写时间戳、录进行里的 <code>inputs</code> 也不带 <code>fetched_at</code> ⇒ 行上看不出内容新或陈</td><td>A：镜头读 <code>tmp/geo-assets-20261020/manifest.json</code> 实证 7 件里只有 <code>llms</code> 有 <code>fetched_at</code>；我读码确认三处</td><td>本次引入</td></tr>
+<tr><td>AR-7</td><td>🟠 Important</td><td class="mono"><code>geo-audit-self.mjs:149</code>／<code>geo-audit-daily.mjs:64</code></td><td>归一化把 <code>data-cfemail</code>／<code>email-protection#</code> 抹平 ⇒ <strong>邮箱本身被改掉也会被报成"线上未变"</strong>（内容轴答的是"除这两段串外"的内容）</td><td>A：镜头实测"改首页邮箱（cfhex 变、长度同）⇒ 原始 sha 变、归一 sha 相同"；反向灵敏度也实测过（改一个字归一哈希即变）</td><td>本次引入</td></tr>
+<tr><td>AR-8</td><td>🟠 Important</td><td class="mono"><code>geo-audit-daily.mjs:74-75</code></td><td>内容轴用<strong>现在磁盘上</strong>的旧目录文件现算 before，却不校验该文件原始 sha 是否等于上一行记录的 <code>sha256</code> ⇒ 若有人回填/重跑进 <code>tmp/geo-assets-20261020</code>，"线上未变"照样绿</td><td>A：现状侥幸对得上（10-20 home 原始 sha <code>f6f2f8ac9847047d</code> ＝行内记录值，实算）；风险为 D</td><td>本次引入</td></tr>
+<tr><td>AR-9</td><td>🟡 Pre-existing</td><td class="mono"><code>geo-audit-self.mjs:78</code></td><td>分母随内容漂移：首页 0 图时 <code>content_image_alt</code> 不入 <code>assessedMax</code> ⇒ 加一张无 alt 的图会把 83/95=87.4 变成 83/97=85.4，<strong>分数跌但站点没退步</strong>；反向"修一项＋新增一项未过"可互相抵消</td><td>A：算术自算</td><td>存量</td></tr>
+<tr><td>AR-10</td><td>🟡 Pre-existing</td><td class="mono">本树 git 配置</td><td><code>core.autocrlf=true</code> 且 <code>.gitattributes</code> 无 eol 规则 ⇒ <code>git diff</code> 把别人的文件显示成整文件重写（<code>server.js</code> +8108/−8079 等，实际 <code>--ignore-cr-at-eol</code> 后 +29/0）</td><td>A：两条 numstat 对比实跑（memory #33 同族，复现）</td><td>存量</td></tr></tbody></table></div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>二、被证伪的两条（不写进结论，但记下来防再犯）</h2>
+<ul class="notes"><li><strong>「教程页是孤岛，首页没有内链」不成立。</strong> 镜头只 grep 了路由 <code>page.tsx</code>。我实算线上 <code>tmp/geo-assets-20261021/home.txt</code>：偏移 25567 处是<strong>真锚点</strong> <code>&lt;a href="/guide/ps-batch-replace-text"&gt;PS 批量改语言怎么做…</code>，出现 1 次；渲染处 <code>src/components/site/home-view.tsx:816</code>，<code>src/app/sitemap.ts:36</code> 也在列。⇒ 上一轮"不是孤儿页"的说法维持。</li><li><strong>「robots 取失败仍可能录行」这一洞不存在。</strong> 评分实际只依赖 home/robots/llms/llmsfull（<code>dl</code>／<code>en</code>／<code>sitemap</code> 三变量在 <code>geo-audit-self.mjs:19</code> 声明后没有任何 <code>chk</code> 用到，全量 grep 仅该行 1 处命中），G-SITEMAP 判定读的是 robots，而 robots 在 core 闸内。⇒ CORE=4 恰好等于评分依赖集（但 AR-6 的"复活/形态"两洞仍成立）。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>三、更正段（推翻本轮或上一轮我说过的话）</h2>
+<ul class="notes"><li><strong>原说法</strong>（上一轮对外）：「Organization 加 <code>sameAs</code> 指向我们公开 GitHub 主页，补上体检里最重的 −4 分红」。<strong>反证</strong>：AR-1＋AR-2。<strong>新结论</strong>：撤回这四处改动与两条断言；−4 那条<strong>继续挂红</strong>，等 Owner 就"用什么外部页当主体同一性"拍板（组织型主页／等主体落地后再说）。宁可红着，不许把 Owner 个人账号当公司主体对外声明。</li><li><strong>原说法</strong>（根账 #210）：「home 与 en 的原始 sha 差异都来自 <code>data-cfemail</code> 与 <code>email-protection#</code> 两处」。<strong>反证</strong>：实数 <code>email-protection#</code> 在 home <strong>0 次</strong>、en 仅 1 次；home 的差异只由 <code>data-cfemail</code> 造成。<strong>新结论</strong>：#210 句子按资产收窄（同轮勘误，旧行不回改）。</li><li><strong>原说法</strong>（上一轮对外）：「S1 达标——连续两天同分」。<strong>反证</strong>：AR-5 的 streak 算法不查日历相邻。<strong>新结论</strong>：今天只能说「两个自然日各有一行且同分、FAIL 集合一致」，"连续"要等修完算法后的读数；对外措辞降级。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>四、未决（缺什么证据）</h2>
+<ul class="notes"><li>逐稿是否各成批次／各出交付报告：缺 origin/main 的执行面全文比对与一次真实多稿跑（<code>product-specs/workbench-flow.md:58</code> 只写单数"交付报告"）。⇒ 补法：<code>git show origin/main:…execute-step.tsx</code> 比对＋真机/测试站一批两稿的产物清点。</li><li>多稿模式一张表能否配多稿（决定第二篇教程页能不能写）：缺线上表绑定粒度的读码结论。</li><li>12 这个上限在服务端/助手侧是否与浏览器侧同值：只证了浏览器侧 <code>MAX_PSD_ENTRIES=12</code>。</li><li>午夜跨 00:00 跑日基线会否写错日期并抛（<code>geo-audit-daily.mjs:16,49</code> 三处各自算 <code>date_local</code>）：需可注入时钟或 23:59 真窗口。</li><li>GitHub profile 是否存在组织型同一实体页：只取到 title/bio，未逐个翻仓库。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>五、执行方案（只含我能独做的，按依赖序；发版／干净通道／措辞豁免不在内）</h2>
+<p class="lede"><strong>P1 回退对外越界（develop 工作树，改回原样）</strong>：撤 <code>src/config/site.ts</code> 的 <code>ORG_SAME_AS</code>、四页 <code>sameAs</code>、门里两条断言；<code>public/llms*.txt</code> 三处多稿句子<strong>收窄到只留代码落点支撑的部分</strong>（每批最多 12 个设计稿、读不到/超上限/配不上逐条点名不静默跳过、线上有「单个/多个设计稿」两档），删掉「每个设计稿各自对账、各自生成」。</p><p class="lede"><strong>P2 度量面五修</strong>：① streak 改判<strong>日历相邻</strong>（且 <code>today</code> 取不到时不再抛，改为点名退出码 3）；② 内容轴比 before 前先校验磁盘文件原始 sha＝行内记录值，不符则拒比并点名；③ 录行必须每件带 <code>fetched_at</code>，非本轮抓的件<strong>一律不进 core 闸</strong>（<code>--only</code> 补抓后重算 core）；④ 逐件形态校验（robots 须含 <code>user-agent</code>、llms 须以 <code>#</code> 起、sitemap 须含 <code>&lt;urlset</code>），200 但形态不符＝core 不过；⑤ 邮箱敏感度补回：日行里另记 <code>contact_email_sha</code>（取 JSON-LD <code>contactPoint.email</code> 明文哈希），归一化只用于"版面内容轴"，邮箱改动由这一列点名。<code>content_image_alt</code> 之类<strong>分母漂移</strong>不改算法，改为日行新增 <code>fails</code> 集合与上一行做<strong>逐 id 差集</strong>输出（AR-9）。</p><p class="lede"><strong>P3 离线负控（不联网，用两日已存资产当夹具）</strong>：写 <code>geo-audit-self-test.mjs</code>，逐条造反例并验必须判红——改一个字（内容轴必须说变化）／改邮箱（<code>contact_email_sha</code> 必须变）／塞 CF 挑战页冒充 robots（core 必须拒录）／<code>--only</code> 后残留旧件（core 必须拒录）／缺一天（streak 必须=1）／FAIL 集合差一条（必须点名差集）。每条给 rc 断言。</p><p class="lede"><strong>P4 记账</strong>：撤回与收窄在 develop 账与根账各记一笔；根账新案登记 AR-1/AR-2（主体同一性缺外部页，给两选一）与 AR-4（撤过的措辞换皮需豁免，附原文行号）；#210 加同轮勘误。</p><p class="lede"><strong>P5 验证与交付</strong>：<code>node --check</code> 全绿、P3 负控全红→全绿、两份 llms 复扫仍 可疑行=0、<code>npx tsc --noEmit</code>＋六文件 <code>npx eslint</code>（撤改动后必须复跑）；本文件出同名 HTML；台账三条状态更新并投影；飞书发方案。</p><p class="lede"><strong>本轮明确不做</strong>：第二篇教程页（等 AR-4 豁免＋表绑定粒度未决收口）、发版与部署（红线）、RSS/<code>ai.txt</code>（后者与 S6 绑死）、豆包再测（账号自测天数已在第 5 天，再测只会加重污染）。</p>
+</section>
+
+<footer>
+  <p>本轮明确不做：第二篇教程页（等禁写措辞豁免＋表绑定粒度未决收口）、发版与部署（红线）、RSS／ai.txt、豆包再测（账号自测已第 5 天，再测只会加重污染）。</p>
+  <p>2026-10-21 · 本地实测；改动全部未提交、未推送、未部署；账见根账 #211／#212 与 #210 同轮勘误。</p>
+</footer>
+
+</div>
+</body>
+</html>

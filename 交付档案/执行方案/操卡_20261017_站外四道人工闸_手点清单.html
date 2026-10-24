@@ -1,0 +1,486 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>操卡：站外人工闸＋英文面</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{color-scheme:light dark}
+hr.rule{border:0;border-top:1px solid rgba(127,127,127,.35);margin:26px 0}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid rgba(127,127,127,.28);padding:9px 10px;text-align:left;vertical-align:top;font-size:14px}
+h3{margin-top:22px}
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style></head><body><div class="wrap"><div class="masthead"><div class="eyebrow">OPS 2026-10-17</div><div class="standfirst">四道中文人工闸＋英文面发布交接</div><div class="meta"><span class="sn">每张卡给地址、限制读数、点哪个钮、发完怎么自查</span><span class="sn">5</span><span class="sn">2</span></div></div><div class="verdict"><div class="lb">结论</div><p>0</p></div><ul class="notes">
+<li>为什么给你这张卡：本轮实测四个池内平台的可发面，<strong>全部卡在人这一侧</strong>——要么需要账号身份（手机/实名/短信），要么平台发布按钮在自动化下不出提交请求。我一条都不绕，也不代注册。</li>
+<li>每条都给：打开什么 → 点什么 → 会遇到什么平台限制（附我实测的读数与时刻）→ 发完 30 秒怎么自查。</li>
+<li>自查口径四句（每张卡都用它）：<strong>首 120 字里有没有定义句</strong>（"图译工坊（官网 tuyigf.com）是一个把已有译文批量写进 PSD/PSB 文字图层的设计交付工具。它不做翻译。"）；<strong>有没有出现"3 分钟／百分比／已备案／20 语言／OCR 即将支持／Mac 即将支持"</strong>；<strong>"设计稿文件本体"有没有带"本体"两字</strong>；<strong>有没有把客户素材图贴进去</strong>。</li>
+</ul>
+<hr class="rule"/>
+<h2>闸一 · CSDN 首篇（价值最高：池内 34%）</h2>
+<ul class="notes">
+<li>地址：<code>https://editor.csdn.net/md/?articleId=168246942</code>（浏览器标签已在 GEO 任务组里）</li>
+<li>状态读数（17:4x 实测）：正文已整篇重贴并保存，reload 后复验 2,404 字、定义句在位、CSDN 默认模板垃圾已清；标题＝《PS 批量替换文字做多语言：图层体检、译文表、回读核对的完整流程与五个坑》；面板字段＝原创✓／可见范围全部可见✓／模板默认✓／<strong>GitCode 备份未勾</strong>（勾了平台会自动替你注册 GitCode 账号并备份文章，我不代勾）。</li>
+<li>你要点的：顶部 <strong>「发布文章」</strong> → 右侧面板拉到底 → 红色 <strong>「发布文章」</strong>。</li>
+<li>会遇到的两件事（都是我踩过的）：</li>
+</ul>
+<p>  1. <strong>标签</strong>：LV.1 平台提示「博客等级不满足三级，无法创建自定义标签」——自定义会被拒，只能从推荐表点选（我已选「开发工具」，可再加最多 7 个）。</p>
+<p>  2. <strong>我三次点红色按钮都没有发出提交请求</strong>（只有 <code>userstatus</code> 与 <code>risk/check</code> 两个 200，随后站点自己抛 <code>Uncaught (in promise) TypeError</code>）。你手点大概率也是同样结果；如果弹出「创作问题反馈」对话框，那是 CSDN 自己的报错弹窗，点它右上角的 X 关掉即可（<strong>别按回车</strong>，我就是这样误发过一条反馈）。</p>
+<ul class="notes">
+<li>若你这点就出去了：文章地址形如 <code>https://blog.csdn.net/.../article/details/...</code>，把 URL 发我，我登记进台账并在下一轮复测里作为信源核对。</li>
+<li>顺带一条判据（省得白做）：账号现在是 LV.1、原创 0 篇。<strong>CSDN 值不值得继续投入，以"这篇发出去 14 天内有没有自然阅读/搜索来源"为准</strong>；0 阅读就停投，不再往上堆号级成本。</li>
+</ul>
+<h2>闸二 · 头条长文（池内 16%，纠豆包误分类的主力）</h2>
+<ul class="notes">
+<li>地址：<code>https://mp.toutiao.com/profile_v4/manage/draft</code>（草稿箱）</li>
+<li>状态读数（17:0x–17:3x 实测）：草稿箱里<strong>有三份同主题长文</strong>，最新那一份（保存于"刚刚"时刻）是编码与词面都改过的修正版；我此前 automation 点「预览并发布」四次全部零请求、零 DOM 变化，已停手不再试探。</li>
+<li>你要点的：<strong>打开最新那一份</strong>（按保存时间倒排第一份），确认正文里没有 markdown 表格（头条编辑器会掉格式；我这版是散文＋编号，应无表格），再点发布。</li>
+<li>两个取舍要你先定：</li>
+</ul>
+<p>  1. 旧的两份同主题草稿<strong>建议删掉或不再发</strong>（同账号同题多发＝低质判定风险）。删不删由你，我不动你的草稿。</p>
+<p>  2. 「头条首发」我发布前<strong>没有勾</strong>（依据 10-16 记录：放弃 72 小时独家激励，换同题在 CSDN/知乎的发布自由）。要勾就现在勾，反悔成本＝之后不能在别处发同文。</p>
+<ul class="notes">
+<li>自查：发出后打开文章页，看首 120 字是否是定义句（元叙述句要挪到后面）。</li>
+</ul>
+<h2>闸三 · 抖音图文（池内＝字节系，和豆包同源生态）</h2>
+<ul class="notes">
+<li>地址：<code>https://creator.douyin.com/creator-micro/content/publish</code>（图文 tab）</li>
+<li>状态读数（15:1x 实测）：标题/正文/封面已就绪、图片已进编辑器，点「发布」弹出<strong>本人短信验证</strong>（号段 185****<strong>27）。</strong>我没有点「获取验证码」，也没有取消发布**，就停在弹层。</li>
+<li>你要点的：自己点「获取验证码」并填码。这是账号身份验证，我替你收短信/输码这条路不走。</li>
+<li>注意：文案里<strong>不要加"最快/3 分钟/提效 X%"</strong>（无出处，<code>4ddfa59</code> 已撤）；置顶评论那条反分类句必须发（AI 抓评论区权重不低）。</li>
+</ul>
+<h2>闸四 · 搜狐号（池内 9%）</h2>
+<ul class="notes">
+<li>地址：<code>https://mp.sohu.com/</code></li>
+<li>状态读数（15:1x 实测）：URL 实带 <code>message=user no bind mobile</code> ⇒ <strong>账号未绑手机，进不了发布</strong>。</li>
+<li>你要做的：先在账号设置里绑手机号；绑完再决定要不要把那篇长文同步过去（搜狐在池内是第三档，优先级排在 CSDN/头条之后）。</li>
+</ul>
+<hr class="rule"/>
+<h2>英文面（第八轮新增）：两篇英文稿＋GitHub 英文门面，等你登一个账号</h2>
+<p>实测结论先给你：<strong>英文站内漏斗是通的，不用修</strong>。<code>/en</code> 上有「Request beta access」按钮两枚与 <code>mailto:tuyi@tuyigf.com?subject=Beta access request</code>，页面上明写 invite-only beta；<code>/en/download</code> 的安装包实测可下：<code>HEAD</code> 返回 200、<code>Content-Length: 12,432,662</code>、<code>Range 0-1023</code> 返回 <strong>206 实收 1024 字节</strong>；两页里 <code>Mac</code>/<code>macOS</code> 命中 0（没有违禁跨平台承诺）。缺的只是外面没人读到我们。</p>
+<p>已经备好的四件（都过了英文禁写闸 <code>tmp/scan-copy-en.mjs</code>，可疑行各 0）：</p>
+<ul class="notes">
+<li><code>交付档案/宣传与运营/GitHub公开面_20261017_profile_README_EN.md</code>（英文 profile README）</li>
+<li><code>交付档案/宣传与运营/GitHub公开面_20261017_psd_localization_checklist_EN.md</code>（英文交付前清单）</li>
+<li><code>交付档案/宣传与运营/EN稿_20261017_script_vs_tool_psd_text_replacement.md</code>（自写脚本 vs 工具）</li>
+<li><code>交付档案/宣传与运营/EN稿_20261017_packaging_localization_preflight.md</code>（包装/说明书印前六检）</li>
+</ul>
+<p>你要做的只有两步：</p>
+<ul class="notes">
+<li><strong>登录 dev.to</strong>（浏览器已开好标签页，地址 <code>https://dev.to/enter?signup_subforem=1</code>，页面上实测有三个入口：Continue with GitHub / Google / Apple —— 用 GitHub 最快）。顺带也开了 <strong>Medium</strong> 登录页（<code>https://medium.com/m/signin</code>）。我不代注册、不代点任何第三方授权按钮。</li>
+<li>登好告我一声，我把两篇英文稿发出去（GitHub 英文面那两份归你决定放哪个仓，新建 public 仓是对外动作）。</li>
+</ul>
+<p>判据（发完两周看这几个数，不到就不加投）：英文页有无自然访问；<code>tuyi@tuyigf.com</code> 有无英文内测询问；dev.to 那篇有无阅读/评论。<strong>没有就停</strong>，不做 Product Hunt——PH 是一次性曝光事件，我们是邀请制排队（实测页面上写着 invite-only beta），把流量导进等待只会换差评。</p>
+<p>被 Reddit 类板块问到时的答法（那类版规限制自我推广，链接只能被动给）：先答流程与坑（图层体检 → 译文表对账 → 逐处回读 → 报告分组），有人追问工具再给 <code>/en</code>。</p>
+<h2>另外两个池内平台：要不要开号，是你的决定（我不代注册）</h2>
+<div class="scrollx"><table><thead><tr><th>平台</th><th>池内占比</th><th>现状读数（本轮实测）</th><th>开的代价</th><th>我的建议</th></tr></thead><tbody>
+<tr><td>腾讯云开发者社区</td><td>6%</td><td>未登录：<code>developer.cloud.tencent.com/home</code> 页眉实读「登录/注册」、无头像</td><td>需腾讯云账号＋手机实名，且社区有"自媒体同步曝光计划"可复用同一篇</td><td>⑦篇（手写脚本对照）本来就写得像技术稿，<strong>这个平台契合度最高</strong>。你如果愿意开号，我把稿子按社区规范再调一版</td></tr>
+<tr><td>博客园</td><td>6%</td><td>登录态无法确认：探针 URL <code>home.cnblogs.com/u</code> 返回「错误提示 - 园子」页（我用了不带用户名的主页路径，属探针选错），cookie 仅 1 枚 ⇒ <strong>按"未登录/无现成账号"处置</strong></td><td>需注册＋邮箱/手机</td><td>性价比次于腾讯云社区（同稿可同步，边际成本几乎为零）；号不值钱就开</td></tr>
+</tbody></table></div>
+<p>&gt; 占比出处：从业者 2026Q1 实测豆包 45 条引用源分布（样本小、方法学未见全文，<strong>比例数字不外引</strong>，只用来排序）。</p>
+<hr class="rule"/>
+<h2>站内这一侧今天不用你点（但有一条要你定句）</h2>
+<ul class="notes">
+<li>已改未部署三枚提交：<code>e000a69</code>（标题词面）、<code>8bec41e</code>＋<code>e4b63a8</code>（退回时限句精确化、误裹复位）、<code>61d4709</code>＋<code>b39f6f7</code>（llms 两文件补平与精度化）。<strong>都要等一次部署才在线上生效</strong>——部署是你的动作，我没有动。</li>
+<li>要你定一句（ISSUES #160）：官网文案 <code>src/config/siteContent.ts:112-113</code>（及 <code>:93</code>）写着「回读不一致……立即恢复原文，不留下错误内容」，而实现是 <code>fail('READBACK_MISMATCH')</code> ＋ <code>close(SaveOptions.DONOTSAVECHANGES)</code>＝<strong>当场停止、整份不落盘</strong>，失败粒度是"该语言版本本轮不出件"，不是"那一句回滚、其余照常交付"。建议句：「每处写入后回读比对；回读不一致会当场判失败并停止，该语言版本本轮不出件，磁盘上的文件保持原文不被改写。」你点头我就把站内＋已上线的站外四件统一成这一句。</li>
+<li>还有一条等你选（ISSUES #163）：「后面站内改了也白改」的机理已查明＝<code>deepMerge</code> 对数组整组替换（21 分组 / 23 个数组字段）。两条修法二选一：生产 bootstrap Content Studio，或把合并改成字段级（后者是契约层改动）。</li>
+</ul><div class="notes"><p>由同目录 md 生成 · 面向 Owner 的阅读件 · 数字与状态以平台回显及代码 file:line 为准</p></div></div></body></html>

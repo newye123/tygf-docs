@@ -1,0 +1,468 @@
+<title>字体排版定制 · 现状与提案模拟</title>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#fff; --sunk:#eef1f5; --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8; --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e4f3ec; --bad:#ae2318; --bad-soft:#fbeae8; --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --teal:#0f6b63; --teal-soft:#e3f2f0;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0d1015; --surface:#151a22; --sunk:#1b212b; --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f; --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f; --bad:#ff8d80; --bad-soft:#2c1614; --warn:#e0b64a; --warn-soft:#2a2110;
+    --teal:#6fd5c8; --teal-soft:#0f2926; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(20px,4vw,44px) clamp(14px,4vw,36px) 72px;display:flex;flex-direction:column;gap:26px}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(1.5rem,3.6vw,2.1rem);line-height:1.25;margin:.2em 0 .1em;letter-spacing:-.01em}
+.sub{margin:0;color:var(--ink-2);max-width:74ch}
+.lights{display:flex;flex-wrap:wrap;gap:8px}
+.light{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.78rem}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot.g{background:var(--ok)} .dot.r{background:var(--bad)} .dot.y{background:var(--warn)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:.85rem}
+.tab[aria-selected=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(14px,2.4vw,24px);display:flex;flex-direction:column;gap:16px}
+section>h2{margin:0;font-size:1.08rem}
+.hint{margin:0;color:var(--muted);font-size:.82rem}
+.grid{display:grid;gap:14px}
+@media(min-width:820px){.split{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface)}
+.card.tight{padding:11px}
+.badge{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;padding:2px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2);border:1px solid var(--line)}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.badge.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.badge.teal{background:var(--teal-soft);color:var(--teal);border-color:var(--teal)}
+.panel-old{border:1px solid var(--teal);background:var(--teal-soft);border-radius:10px;padding:0}
+.panel-old>header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;font-weight:600;font-size:.92rem}
+.panel-old .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line)}
+.langtabs{display:flex;gap:6px;flex-wrap:wrap}
+.langtab{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 11px;font-size:.8rem;cursor:pointer}
+.langtab[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field span{font-size:.74rem;color:var(--muted)}
+input[type=text],input[type=number],select{height:34px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:0 10px;font-family:var(--body);font-size:.86rem;width:100%}
+input:focus,select:focus,button:focus{outline:2px solid var(--accent);outline-offset:1px}
+.row2{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:8px 14px;font-size:.82rem;cursor:pointer;font-family:var(--body)}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:.78rem;border-radius:8px;padding:9px 12px;border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn)}
+.note.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.mono{font-family:var(--mono);font-size:.76rem}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.num{font-family:var(--mono)}
+.previewbox{border:1px dashed var(--line-strong);border-radius:9px;padding:14px;background:var(--sunk);min-height:74px;overflow:hidden}
+.ruler{position:relative;height:9px;background:var(--sunk);border:1px solid var(--line);border-radius:3px;margin-top:6px}
+.ruler .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.35;border-radius:2px}
+.ruler .cap{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--bad)}
+.metrics{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.76rem;color:var(--ink-2)}
+.metrics b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.receipt{border-left:3px solid var(--line);padding:8px 0 8px 12px;display:flex;flex-direction:column;gap:3px}
+.receipt.ok{border-color:var(--ok)} .receipt.warn{border-color:var(--warn)} .receipt.bad{border-color:var(--bad)}
+.receipt .t{font-size:.8rem;font-weight:600}
+.receipt .d{font-size:.74rem;color:var(--muted)}
+footer{color:var(--muted);font-size:.74rem;border-top:1px solid var(--line);padding-top:16px}
+.kv{display:flex;flex-direction:column;gap:4px}
+.kv .k{font-size:.7rem;color:var(--muted);font-family:var(--mono)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.pillbar{display:flex;gap:4px;flex-wrap:wrap}
+.hidden{display:none !important}
+.slider{width:100%}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">图译工坊内测版 · 模拟件 · 2026-10-17 · 本机 PS 22.0.0 实测驱动</p>
+    <h1>用户字体排版定制：现在长什么样，PS 实际会给什么</h1>
+    <p class="sub">左边是内测站今天真的在跑的面板（<span class="mono">d8f507c</span> 复刻）；右边是同一套输入喂给 Photoshop 之后，PS 22 真机实测到的回读结果。所有判定规则不是设计猜测，是今天 14:58—15:12 在你这台机器上跑出来的<b>七个探针</b>的读数（只碰新建的空白稿，母版未动，结束时打开文档数 0）。</p>
+    <div class="lights" style="margin-top:12px">
+      <span class="light"><i class="dot g"></i>网页侧面板已上测试站</span>
+      <span class="light"><i class="dot r"></i>PS 写回一条都没接（助手不支持）</span>
+      <span class="light"><i class="dot y"></i>字体显示名会被静默换脸（实测）</span>
+      <span class="light"><i class="dot g"></i>字体/字距/行距三样今天都实测跑通</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-view="s1">① 现状面板 + PS 真机反应</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="s2">② 提案面板（档位化 + face 级）</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="s3">③ 执行回执该怎么长</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="s4">④ 实测台账与真数基线</string></button>
+  </div>
+
+  <!-- ======================= S1 ======================= -->
+  <section id="s1">
+    <div>
+      <h2>① 现状：面板收的四个值，PS 只认其中一个</h2>
+      <p class="hint">改下面的输入，右侧「PS 22 实测反应」按真实规则给结论。今天跑完七个探针的净结论：<b>字体、字距、行距三样都能真写进 PS 并读回</b>，但三个字段各有一个必须绕的坑——字体只认 PostScript 脸名，行距必须先关自动行距，字距是唯一没坑的。</p>
+    </div>
+    <div class="grid split">
+      <div class="stack">
+        <div class="panel-old">
+          <header id="oldHead"><span>排版定制（内测预览）<span class="mono" style="font-weight:400;color:var(--muted)"> · tygf:v15:typography</span></span><span class="mono">▾</span></header>
+          <div class="body" id="oldBody">
+            <div class="note" id="oldBar">当前本地助手版本未提供字体清单与写回能力（需助手升级）。以下定制<strong>仅保存在本机浏览器，执行时不会被应用</strong>。</div>
+            <div class="langtabs" id="oldLangs"></div>
+            <div class="row2">
+              <label class="field"><span>字体族（本机已装字体的名称）</span><input type="text" id="inFont" value="Noto Sans SC" maxlength="128"></label>
+              <label class="field"><span>样式 / 粗细（PS 字体样式名）</span><input type="text" id="inStyle" value="Bold" maxlength="64" placeholder="Bold / Regular / Medium"></label>
+              <label class="field"><span>字距 tracking（1/1000 em，−1000…10000；留空=沿用）</span><input type="number" id="inTrack" min="-1000" max="10000" step="10" value="0"></label>
+              <label class="field"><span>行距 leading（pt，1…2000；留空=沿用原图层）</span><input type="number" id="inLead" min="1" max="2000" step="1" value=""></label>
+            </div>
+            <div class="previewbox"><div id="oldPreview" style="font-size:22px">译文排版预览 Sample あA</div></div>
+            <div class="stack" style="flex-direction:row;gap:8px;flex-wrap:wrap">
+              <button class="btn pri" id="btnSave">保存到本机</button>
+              <button class="btn" id="btnClearLead">只改行距（不填字体）</button>
+              <span class="mono" id="saveEcho" style="align-self:center;color:var(--muted)"></span>
+            </div>
+            <div class="note bad hidden" id="saveTrap"></div>
+          </div>
+        </div>
+        <p class="hint">「只改行距」那枚按钮复现今天探针跑出来的一个真实缺陷：不填字体名时整份定制被校验拒绝，<b>而界面照样回显"已保存"</b>。</p>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="kv"><span class="k">PS 22 会把这行字写成什么</span></div>
+          <div id="psVerdict" class="stack" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <div class="kv"><span class="k">图层实测宽度（真公式：Δw = 空格数间隙 × tracking ÷ 1000 × 字号）</span></div>
+          <div style="margin-top:8px"><div class="mono" id="wLine"></div><div class="ruler"><div class="fill" id="wFill"></div><div class="cap" id="wCap"></div></div>
+          <div class="metrics" style="margin-top:7px"><span>原稿预算 <b id="wBudget"></b></span><span>现宽 <b id="wNow"></b></span><span id="wVerdict"></span></div></div>
+        </div>
+        <div class="card tight">
+          <p class="hint" style="margin:0 0 6px">探针原始读数（本机 <span class="mono">tmp/ps-spike-20261017/</span>）</p>
+          <table><thead><tr><th>字段</th><th>写入</th><th>读回</th><th>渲染真变了没</th></tr></thead><tbody>
+            <tr><td class="mono">font = Arial-BoldMT</td><td>不抛错</td><td class="mono ok">Arial-BoldMT</td><td>宽 122→129 ✓</td></tr>
+            <tr><td class="mono">font = Arial（显示名）</td><td>不抛错</td><td class="mono">MyriadPro-Regular</td><td>换脸了 ✗</td></tr>
+            <tr><td class="mono">font = Noto Sans SC</td><td>不抛错</td><td class="mono">AdobeHeitiStd-Regular</td><td>不是你要的脸 ✗</td></tr>
+            <tr><td class="mono">font = 不存在的名字</td><td>不抛错</td><td class="mono">MyriadPro-Regular</td><td>静默回退 ✗</td></tr>
+            <tr><td class="mono">tracking = 500</td><td>不抛错</td><td class="mono">500</td><td>宽 122→242 ✓</td></tr>
+            <tr><td class="mono">leading = 60pt（自动行距还开着）</td><td>「accepted」</td><td>抛「自动行距」</td><td>高 55→55 ✗ 静默无效</td></tr>
+            <tr><td class="mono">useAutoLeading=false → leading=60pt</td><td>accepted</td><td class="mono ok">60 pt</td><td>高 <b>55→133</b> ✓</td></tr>
+            <tr><td class="mono">autoLeadingAmount=300（保留自动）</td><td>accepted</td><td class="mono ok">300</td><td>高 55→85 ✓</td></tr>
+            <tr><td class="mono">Arial 写日文串</td><td>不抛错</td><td class="mono">KozGoPr6N-Regular</td><td>PS 按脚本自己换脸 ✗</td></tr>
+            <tr><td class="mono">关自动后重写 contents / 换字体</td><td>—</td><td class="mono ok">leading 仍 50 pt</td><td>四行 113→163 ✓ 存活</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= S2 ======================= -->
+  <section id="s2" class="hidden">
+    <div>
+      <h2>② 提案：四个数字框换成「一个脸 + 一个档」</h2>
+      <p class="hint">依据两条：本机实测（显示名不可用，必须 face 级 PostScript 名）＋业界形态（Android fonts.xml 按文种只有 elegant/compact 两档、Google Slides 只给三档 AutoFit、Canva 翻译压根不让你选字体——我们现在 4 个框比头部竞品都重）。</p>
+    </div>
+    <div class="grid split">
+      <div class="stack">
+        <div class="card">
+          <div class="langtabs" id="newLangs"></div>
+          <div class="stack" style="margin-top:14px">
+            <label class="field"><span>字体（选到「脸」这一级，名字就是 PS 的 PostScript 名）</span>
+              <select id="selFace"></select></label>
+            <div class="note" style="background:var(--sunk);border-color:var(--line);color:var(--ink-2)" id="faceNote"></div>
+            <label class="field"><span>行距档位（写回＝先关自动行距，再落固定值；档位而不是数字，见第 ④ 节实测）</span>
+              <div class="pillbar" id="leadRow">
+                <button class="btn" data-lead="follow">跟随原图层</button>
+                <button class="btn" data-lead="1.2">紧凑 ×1.2</button>
+                <button class="btn" data-lead="1.5">标准 ×1.5</button>
+                <button class="btn" data-lead="1.9">宽松 ×1.9</button>
+              </div></label>
+            <label class="field"><span>字距 tracking（实测唯一可直接生效的旋钮）<span class="mono" id="trkEcho">0</span></span>
+              <input class="slider" type="range" id="selTrack" min="-50" max="400" step="10" value="0"></label>
+            <div class="row2">
+              <button class="btn" id="btnCopyFrom">套用「德语」这套</button>
+              <button class="btn" id="btnResetFace">恢复跟随原图层</button>
+            </div>
+            <p class="hint" style="margin:0">保存即时生效、无「保存到本机」按钮；本机存一份，登录态同步一份，二者都写清来源。</p>
+          </div>
+        </div>
+        <div class="card tight">
+          <div class="kv"><span class="k">同字串换脸的视觉差（用本机已装字体真渲染）</span></div>
+          <div id="faceLadder" style="margin-top:8px" class="stack"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="kv"><span class="k">译文预览（本机浏览器渲染 = 近似；终态以 PS 回读为准）</span></div>
+          <div class="previewbox" style="margin-top:8px"><div id="newPreview" style="font-size:22px"></div></div>
+          <div class="metrics" style="margin-top:8px"><span>字形覆盖检查 <b id="covVerdict"></b></span><span>预估行宽 <b id="newWidth"></b></span></div>
+        </div>
+        <div class="card tight">
+          <p class="hint" style="margin:0 0 8px"><b>为什么"字体族 + 样式"两个框必须并成一个</b></p>
+          <p class="hint" style="margin:0">本机 PS 字体清单实测：<b>1605 个脸、只有 1319 个不同显示名</b>；<span class="mono">Noto Sans SC</span> 一个名字对应 <span class="mono">NotoSansSC-Thin / Light / DemiLight / Regular / Medium / Bold / Black</span> 七个脸。显示名喂给 <span class="mono">textItem.font</span> 时 PS 自己挑一个，挑中 <span class="mono">-Thin</span> 还是 <span class="mono">-Bold</span> 用户无法控制，读回才知道。<b>所以选择器必须落到脸这一级。</b></p>
+        </div>
+        <div class="card tight">
+          <p class="hint" style="margin:0 0 8px"><b>行距留下的唯一决定：给用户"倍数档"还是"绝对值"</b></p>
+          <p class="hint" style="margin:0">写回路径今天已经跑通两条：<span class="mono">useAutoLeading=false + leading=X pt</span>（绝对值，55→133）与 <span class="mono">autoLeadingAmount=N</span>（保留自动，55→85）。<b>建议对外只给档位</b>（跟随/紧凑/标准/宽松），背后落 <span class="mono">autoLeadingAmount</span> 的百分数——因为母版字号从 12 到 90pt 都有，绝对 pt 值会让小字号层直接散架，而这正是你反对的"要用户动手"。数字版收进"高级"折叠区。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= S3 ======================= -->
+  <section id="s3" class="hidden">
+    <h2>③ 执行回执：用户只该看三个数</h2>
+    <p class="hint">写回之后逐语言给一张回执，按"所设=读回 / 读回≠所设 / 本机没有这个脸"三态分类。缺这一层就是 #66（韩文整页豆腐块还报"完整交付"）的同族病。</p>
+    <div class="grid split">
+      <div class="stack">
+        <div class="card tight"><p class="hint" style="margin:0"><b>旧写法（现在的产品口径）</b><br><span class="mono">对象写入 39/39</span> ——"写入成功"不等于"内容/字体真的变了"，对手 626 层真机数据里 <span class="mono">changed=0</span> 占 19.3% 而 failed=0，同一个弱承诺。</p></div>
+        <div class="card">
+          <div class="kv"><span class="k">回执三态（模拟，按今天实测规则生成）</span></div>
+          <div id="receipts" style="margin-top:10px" class="stack"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="kv"><span class="k">界面只留结论 + 一次选择</span></div>
+          <div class="stack" style="margin-top:10px">
+            <div class="note ok">38 个文字层已按你的字体写完，字距生效。读回与所设逐层一致。</div>
+            <div class="note">1 个层：你要的 <span class="mono">NotoSansSC-Bold</span> 在这台电脑上没装，PS 自动换成了 <span class="mono">KozGoPr6N-Regular</span>。<br><button class="btn" style="margin-top:6px">换个本机有的脸</button> <button class="btn" style="margin-top:6px">就这样，我知道</button></div>
+            <p class="hint" style="margin:0">文案形状抄自 InDesign 缺字体对话框（「使用的字体目前在您的计算机上不可用……关闭此对话框会将缺失字体替换为默认字体」）和 Canva 翻译（「翻译功能并不适用于所有字体……请选择其他字体」），但<b>不喊"请补"、给一次可点的选择</b>——这是你定的第二条。</p>
+        </div>
+        <div class="card tight">
+          <p class="hint" style="margin:0 0 6px"><b>红线自检</b></p>
+          <table><thead><tr><th>会不会</th><th>今天的实测证据</th><th>界面怎么写</th></tr></thead><tbody>
+            <tr><td>静默降级</td><td>显示名→别的脸，不抛错</td><td>读回不等 ⇒ 必须显式「PS 已换脸」</td></tr>
+            <tr><td>假成功</td><td>不关自动行距时 leading 返回"接受"而高 55→55；关掉后 55→133</td><td>落值必须带读回＋包围盒双证，否则只写"未应用"</td></tr>
+            <tr><td>假保存</td><td>只填行距时校验拒绝，UI 仍回显"已保存"</td><td>保存必须有真实落盘回读</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= S4 ======================= -->
+  <section id="s4" class="hidden">
+    <h2>④ 实测台账与真数基线</h2>
+    <div class="card tight">
+      <p class="hint" style="margin:0 0 8px"><b>今天跑的四个探针</b>（只读 + 新建空白稿，测完关闭不保存，结束时打开文档数＝0；母版未碰）</p>
+      <table><thead><tr><th>探针</th><th>回答什么</th><th>结论</th></tr></thead><tbody>
+        <tr><td class="mono">A 只读清单</td><td>app.fonts 名字口径</td><td>PS 22.0.0／1605 脸／1319 显示名；<span class="mono">Font.postScriptName</span> 存在（<b>更正</b>：后续全量转储实测只有 1587 个不同值，18 行重复全在 Cascadia 可变字体 ⇒ 清单须按 PS 名去重），<span class="mono">familyName</span> 不存在</td></tr>
+        <tr><td class="mono">B 写回</td><td>S2 可写性 / S3 读回 / S4 缺字体 / 顺序</td><td>PostScript 名精确往返；显示名与错名一律静默换脸；tracking 生效；leading 静默无效；先设字体后写 contents 字体存活</td></tr>
+        <tr><td class="mono">C 属性普查 + 字形</td><td>TextItem 到底有哪些旋钮</td><td>可用 13 项；<span class="mono">textStyleRange</span>／<span class="mono">orientation</span>／<span class="mono">autoLeading</span> 在 PS 22 不存在；Arial 写日文后读回变 <span class="mono">KozGoPr6N-Regular</span>（PS 按脚本自己换脸）</td></tr>
+        <tr><td class="mono">D/F 行距救场</td><td>ActionDescriptor 能不能写 leading</td><td>三种 AD 写法（<span class="mono">Cmnd/Ldng</span>、<span class="mono">Prpr+stringID leading</span>、<span class="mono">TText&gt;TxtS</span>）在 PS 22 全部抛错 ⇒ AD 路线未跑通；但 <span class="mono">F0</span> 普查到 <span class="mono">useAutoLeading:boolean</span>／<span class="mono">autoLeadingAmount:number</span> 真的存在</td></tr>
+        <tr><td class="mono">G 关自动再写</td><td>leading 到底能不能落</td><td><b>能落</b>：<span class="mono">useAutoLeading=false</span> 后 <span class="mono">leading=60pt</span> ⇒ 读回 60 pt、高 55→133；纯数字 24 也收（55→61）；<span class="mono">autoLeadingAmount=300</span> ⇒ 55→85；关自动后重写 contents／换字体，leading 仍存活（113→163，读回 50 pt）</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card tight">
+      <p class="hint" style="margin:0 0 8px"><b>排版普查真数基线</b>（<span class="mono">docs/records/20260920_排版普查_实测基线.json</span>，369 个「对象×语言」，预算＝母版该层自己落盘的每行实测宽）</p>
+      <table id="censusTable"><thead><tr><th>语言</th><th class="num">对象</th><th class="num">零行变化</th><th class="num">+1 行</th><th class="num">+2 行</th><th class="num">更省行</th><th class="num">字体不可解析</th></tr></thead><tbody></tbody></table>
+      <p class="hint" style="margin-top:8px">"允许译文多占一行"覆盖 <b>93%</b>（227+116+? 见上），数学不可行 <b>0</b>；<b>KO/TH 的 30 个对象字体离线不可解析</b>——正是历史上"字体兜底吃掉超宽风险"那两个语种，回执层必须把它们单独点名。</p>
+    </div>
+    <div class="card tight">
+      <p class="hint" style="margin:0 0 8px"><b>顺手钉死两条闭式（六个独立数据点全部逐位对上，我自己复算的）</b></p>
+      <div class="grid split">
+        <div class="card tight">
+          <p class="mono" style="margin:0 0 6px">h = (n−1) × leading + h₁</p>
+          <p class="hint" style="margin:0">12pt 单行 h₁=13 ⇒ 自动 175%（leading 21）三行 55 ✓、写 60pt 三行 133 ✓、amount 300（36）85 ✓、写 24 得 61 ✓、写 50 三行 113／四行 163 ✓。<br><b>推论：#75「渲染行数」有正解了</b> —— 行数 n = (h − h₁) ÷ leading + 1，而 leading 现在有可靠读法（<span class="mono">useAutoLeading</span> 判型，自动档读 <span class="mono">autoLeadingAmount×size</span>），不必再拿 size×1.2 猜。</p>
+        </div>
+        <div class="card tight">
+          <p class="mono" style="margin:0 0 6px">Δw = 间隙数 × tracking ÷ 1000 × size</p>
+          <p class="hint" style="margin:0">21 字符＝20 间隙、12pt：tracking 500 ⇒ +120pt（实测 122→242 ✓）；tracking −100 ⇒ −24pt（实测 122→98 ✓）。<br><b>推论：tracking 口径 1/1000 em 实锤</b>，且可以拿来直接预测"这一改会不会顶破原稿行宽"，不必等 PS 出图。</p>
+        </div>
+      </div>
+    </div>
+    <footer>
+      证据：<span class="mono">tmp/ps-spike-20261017/outA…outG.json</span>（七个探针，本机 PS 22.0.0，2026-10-17 14:58—15:12）；探针源码 <span class="mono">probeA_readonly / probeB_write / probeC_cleanup_leading / probeD_leading_ad / probeE_leading_descriptor / probeF_leading_retry / probeG_leading_autooff .jsx</span>；面板现状 <span class="mono">src/components/workbench/typography-panel.tsx:129-168</span>；校验 <span class="mono">src/lib/workbench/typography-persistence.ts:36-55</span>；静默保存 <span class="mono">typography-persistence.ts:87-100</span> + <span class="mono">typography-panel.tsx:103-106</span>；保存缺陷探针回显 <span class="mono">tmp/typo-adversarial-20261017/probe-save-silent.mjs</span>。本页只做模拟，未改产品代码。
+    </footer>
+  </section>
+</div>
+</div>
+
+<script>
+(function(){
+  var LANGS=['ja','ko','th','de','en','es','fr','ru','id','vi'];
+  var LANG_LABEL={ja:'日语',ko:'韩语',th:'泰语',de:'德语',en:'英语',es:'西语',fr:'法语',ru:'俄语',id:'印尼语',vi:'越南语'};
+  // 本机 PS 22 实测抓到的真实脸名（PostScript），加少量常见名，全部来自 outA/outB/outC 读数
+  var FACES=[
+    {ps:'Arial-BoldMT',disp:'Arial Bold',w:700,cjk:false},
+    {ps:'ArialMT',disp:'Arial',w:400,cjk:false},
+    {ps:'Helvetica',disp:'Helvetica',w:400,cjk:false},
+    {ps:'MyriadPro-Regular',disp:'Myriad Pro',w:400,cjk:false},
+    {ps:'AdobeHeitiStd-Regular',disp:'Adobe Heiti Std（PS 默认落点）',w:400,cjk:true},
+    {ps:'NotoSansSC-Regular',disp:'Noto Sans SC Regular',w:400,cjk:true},
+    {ps:'NotoSansSC-Bold',disp:'Noto Sans SC Bold',w:700,cjk:true},
+    {ps:'NotoSansSC-Thin',disp:'Noto Sans SC Thin',w:100,cjk:true},
+    {ps:'NotoSerifSC-Regular',disp:'Noto Serif SC',w:400,cjk:true},
+    {ps:'KozGoPr6N-Regular',disp:'小谷哥特 Pr6N（PS 给日文的兜底脸）',w:400,cjk:true},
+    {ps:'YuGothic-Medium',disp:'Yu Gothic Medium',w:500,cjk:true},
+    {ps:'MS-Gothic',disp:'MS Gothic',w:400,cjk:true},
+    {ps:'MalgunGothic-Semilight',disp:'Malgun Gothic Semilight',w:300,cjk:true},
+    {ps:'SourceHanSansJP-Bold',disp:'Source Han Sans JP Bold',w:700,cjk:true}
+  ];
+  var INSTALLED={}; FACES.forEach(function(f){INSTALLED[f.ps]=true;});
+  var SAMPLE='翻訳後のテキスト 3.5in max';
+  var BASE_SIZE=22, BUDGET=240; // 模拟原稿该层落盘宽（pt），仅示意
+  var state={old:{lang:'ja',font:'Noto Sans SC',style:'Bold',tracking:0,leading:null},
+             neu:{lang:'ja',face:'NotoSansSC-Bold',track:0,lead:'follow'}};
+
+  function el(id){return document.getElementById(id);}
+  function tabs(host,arr,active,onPick){
+    host.innerHTML='';
+    arr.forEach(function(code){
+      var b=document.createElement('button');
+      b.className='langtab'; b.type='button'; b.textContent=LANG_LABEL[code]||code;
+      b.setAttribute('aria-pressed',String(code===active()));
+      b.onclick=function(){onPick(code);};
+      host.appendChild(b);
+    });
+  }
+
+  // ---------- PS 22 实测规则（本模拟的判定内核） ----------
+  function psApply(fontInput,tracking,leading){
+    var name=(fontInput||'').trim();
+    var out={requested:name,tracking:tracking,leading:leading};
+    if(!name){ out.landed='(未设，沿用原图层)'; out.state='neutral'; }
+    else if(INSTALLED[name]){ out.landed=name; out.state='exact'; }
+    else {
+      // 显示名 / 不存在名：PS 静默换脸（实测三条：Arial→MyriadPro-Regular、Noto Sans SC→AdobeHeitiStd-Regular、错名→MyriadPro-Regular）
+      var lower=name.toLowerCase();
+      if(/sans sc|noto/.test(lower)){ out.landed='AdobeHeitiStd-Regular'; out.state='fallback'; }
+      else if(/arial/.test(lower)){ out.landed='MyriadPro-Regular'; out.state='fallback'; }
+      else { out.landed='MyriadPro-Regular'; out.state='revert'; }
+    }
+    out.widthChanged=(tracking!==null&&tracking!==0&&tracking!=='');
+    out.leadNoop=(leading!==null&&leading!=='');
+    return out;
+  }
+  function widthOf(tracking,sizeFactor){
+    // Δw = 间隙数 × tracking/1000 × 字号；间隙数≈字符数-1（实测 21 字串 20 间隙，tracking 500 → +120pt @12pt）
+    var gaps=SAMPLE.replace(/\s+$/,'').length-1;
+    var t=(tracking===null||tracking==='')?0:Number(tracking);
+    return Math.round((gaps*t/1000*BASE_SIZE + 168)*10)/10;
+  }
+
+  // ---------- S1 现状面板 ----------
+  function renderOld(){
+    tabs(el('oldLangs'),LANGS,function(){return state.old.lang;},function(c){state.old.lang=c;renderOld();});
+    el('inFont').value=state.old.font; el('inStyle').value=state.old.style;
+    el('inTrack').value=state.old.tracking; el('inLead').value=state.old.leading==null?'':state.old.leading;
+    var p=psApply(state.old.font,state.old.tracking,state.old.leading);
+    var st={fontFamily:/^(Arial|Helvetica|Tahoma|Verdana)$/.test(p.requested)?'Arial':(INSTALLED[p.landed]?'"'+p.landed+'"':undefined),
+            letterSpacing:(p.tracking?p.tracking/1000+'em':null)};
+    var pv=el('oldPreview'); pv.textContent=SAMPLE;
+    pv.style.fontFamily=st.fontFamily||'inherit'; pv.style.letterSpacing=st.letterSpacing||'normal';
+    pv.style.fontWeight=/Bold/.test(p.landed)?700:400;
+    var map={exact:['ok','PS 读回＝所设','脸名精确往返，宽随字距真变'],
+             fallback:['bad','PS 换了别的脸','显示名不是 PS 的键：读回是 '+p.landed],
+             revert:['bad','本机没有这个名字','PS 不抛错，回退到 '+p.landed],
+             neutral:['','未设字体','沿用原图层字体']};
+    var m=map[p.state]||map.neutral;
+    var html='<div class="receipt '+(p.state==='exact'?'ok':(p.state==='neutral'?'':'bad'))+'">';
+    html+='<div class="t">'+m[1]+' <span class="badge '+(p.state==='exact'?'ok':'bad')+'">'+p.landed+'</span></div>';
+    html+='<div class="d">'+m[2]+'</div></div>';
+    html+='<div class="receipt '+(p.widthChanged?'ok':'warn')+'"><div class="t">字距 tracking '+(p.tracking||0)+' <span class="badge '+(p.widthChanged?'ok':'')+'">'+(p.widthChanged?'生效（实测 122→242 @500）':'0＝沿用')+'</span></div>';
+    html+='<div class="d">'+(p.widthChanged?'实测：写入不抛错、读回相等、包围盒真变。口径就是 1/1000 em（20 个间隙 ×0.5em ×12pt = +120pt，与实测 122→242 对得上）。':'0＝沿用原图层。口径实测为 1/1000 em：20 间隙 @12pt 下 500 ⇒ +120pt（实测 122→242）、−100 ⇒ −24pt（实测 122→98）。')+'</div></div>';
+    html+='<div class="receipt '+(p.leadNoop?'warn':'')+'"><div class="t">行距 leading '+(p.leadNoop?(p.leading+'pt'):'沿用')+' <span class="badge '+(p.leadNoop?'warn':'')+'">'+(p.leadNoop?'直接写＝静默无效':'未设')+'</span></div>';
+    html+='<div class="d">'+(p.leadNoop?'实测：只写 <span class="mono">leading</span> 时赋值返回"接受"、读回抛「文本设置为自动行距」、包围盒 55→55 不动；<b>先 <span class="mono">useAutoLeading=false</span> 再写 60pt</b> ⇒ 读回 60 pt、高 55→133。保留自动的话走 <span class="mono">autoLeadingAmount</span>（300 ⇒ 55→85）。':'留空即沿用原图层（PS 新建文字层默认自动、amount=175）。')+'</div></div>';
+    el('psVerdict').innerHTML=html;
+    var w=widthOf(state.old.tracking);
+    el('wLine').textContent='图层包围盒宽（示意）';
+    el('wBudget').textContent=BUDGET+'pt';
+    el('wNow').textContent=w+'pt';
+    el('wFill').style.width=Math.min(100,w/BUDGET*100)+'%';
+    el('wCap').style.left=(BUDGET/BUDGET*100)+'%';
+    el('wVerdict').innerHTML=(w>BUDGET?'<span class="badge bad">超原稿预算 → 需多占一行</span>':'<span class="badge ok">在原稿预算内</span>');
+  }
+  ['inFont','inStyle','inTrack','inLead'].forEach(function(id){
+    el(id).addEventListener('input',function(e){
+      if(id==='inFont')state.old.font=e.target.value;
+      if(id==='inStyle')state.old.style=e.target.value;
+      if(id==='inTrack')state.old.tracking=e.target.value===''?0:Number(e.target.value);
+      if(id==='inLead')state.old.leading=e.target.value===''?null:Number(e.target.value);
+      renderOld();
+    });
+  });
+  el('btnSave').onclick=function(){
+    var bad=!String(state.old.font||'').trim();
+    if(bad){ el('saveEcho').textContent='界面回显：已保存到本机浏览器（这就是被实测复现的那句假回显）';
+      el('saveTrap').classList.remove('hidden');
+      el('saveTrap').innerHTML='<b>实测陷阱</b>：这条被 <span class="mono">validateTypographyProfilesByLanguage</span> 判 <span class="mono">ok=false</span>（字体名必填），<span class="mono">saveTypographyProfiles</span> 直接 return，localStorage 字节<b>一字未变</b>；探针 <span class="mono">tmp/typo-adversarial-20261017/probe-save-silent.mjs</span> 回显 <span class="mono">bytes_unchanged=true</span>。可界面上面那行"已保存"照样出来了。';
+    } else { el('saveEcho').textContent=''; el('saveTrap').classList.add('hidden'); }
+  };
+  el('btnClearLead').onclick=function(){ state.old.font=''; state.old.leading=24; state.old.tracking=0; renderOld(); };
+  el('oldHead').onclick=function(){ var b=el('oldBody'); b.classList.toggle('hidden'); };
+
+  // ---------- S2 提案面板 ----------
+  function renderNew(){
+    tabs(el('newLangs'),LANGS,function(){return state.neu.lang;},function(c){state.neu.lang=c;renderNew();});
+    var sel=el('selFace'); sel.innerHTML='';
+    var g=document.createElement('option'); g.value='__follow__'; g.textContent='跟随原图层（不改字体）'; sel.appendChild(g);
+    FACES.forEach(function(f){
+      var o=document.createElement('option'); o.value=f.ps; o.textContent=f.disp+'  ·  '+f.ps; if(f.ps===state.neu.face)o.selected=true; sel.appendChild(o);
+    });
+    if(state.neu.face==='__follow__')sel.value='__follow__';
+    var face=FACES.filter(function(f){return f.ps===state.neu.face;})[0];
+    el('faceNote').innerHTML=face?('<span class="mono">'+face.ps+'</span> 就是写进 <span class="mono">textItem.font</span> 的那个值，读回来还是它 —— 只有脸级名字有这一个保证。'):'不写字体，沿用原图层的脸。';
+    var pv=el('newPreview');
+    pv.textContent=(state.neu.lead==='follow')?SAMPLE:SAMPLE+' 第二行 第三行 第四行';
+    pv.style.fontFamily=face?('"'+face.ps+'", "Noto Sans SC", sans-serif'):'"Noto Sans SC", sans-serif';
+    pv.style.fontWeight=face&&face.w>=600?700:(face&&face.w<=300?300:400);
+    pv.style.letterSpacing=(state.neu.track/1000)+'em';
+    pv.style.lineHeight=state.neu.lead==='follow'?'1.4':state.neu.lead;
+    el('trkEcho').textContent=' '+state.neu.track+'（1/1000 em）';
+    el('covVerdict').textContent=face?(face.cjk?'该脸含中日韩字形':'拉丁脸：写日文时 PS 会自己换脸（实测 Arial+日文 → KozGoPr6N-Regular）'):'—';
+    el('newWidth').textContent=widthOf(state.neu.track)+'pt（预算 '+BUDGET+'pt）';
+    var lad=el('faceLadder'); lad.innerHTML='';
+    FACES.slice(5,11).forEach(function(f){
+      var d=document.createElement('div');
+      d.style.fontFamily='"'+f.ps+'", sans-serif'; d.style.fontSize='15px';
+      d.innerHTML='<span class="mono" style="color:var(--muted)">'+f.ps+'</span> 翻訳 Noto 思源 12345';
+      lad.appendChild(d);
+    });
+    Array.prototype.forEach.call(el('leadRow').children,function(b){
+      b.setAttribute('class','btn'+(b.getAttribute('data-lead')===state.neu.lead?' pri':''));
+    });
+  }
+  el('selFace').onchange=function(e){ state.neu.face=e.target.value; renderNew(); };
+  el('selTrack').oninput=function(e){ state.neu.track=Number(e.target.value); renderNew(); };
+  Array.prototype.forEach.call(el('leadRow').children,function(b){ b.onclick=function(){ state.neu.lead=b.getAttribute('data-lead'); renderNew(); }; });
+  el('btnCopyFrom').onclick=function(){ var f=state.neu.face,t=state.neu.track,l=state.neu.lead; state.neu.lang='de'; state.neu.face=f;state.neu.track=t;state.neu.lead=l; renderNew(); };
+  el('btnResetFace').onclick=function(){ state.neu.face='__follow__'; state.neu.track=0; state.neu.lead='follow'; renderNew(); };
+
+  // ---------- S3 回执 ----------
+  function renderReceipts(){
+    var rows=[
+      {s:'ok',t:'38 层 所设＝读回',d:'脸名精确往返、字距生效、包围盒与预估一致 ±3% 内'},
+      {s:'warn',t:'1 层 PS 已换脸',d:'要 NotoSansSC-Bold，读回 KozGoPr6N-Regular —— 这台电脑没装那个脸（PS 不抛错，实测）'},
+      {s:'warn',t:'1 层 行距按"跟随"跳过',d:'该层是自动行距（amount=175）。写回必须先 useAutoLeading=false 才落得住（实测：不关＝55→55 静默无效，关了＝55→133）；用户选"跟随原图层"时不许报"已应用"'},
+      {s:'warn',t:'KO/TH 30 对象 离线不可解析字体',d:'普查里 fontUnresolved=30，历史上这两语的超宽风险被字体兜底吃掉，需单独点名'}
+    ];
+    el('receipts').innerHTML=rows.map(function(r){
+      return '<div class="receipt '+r.s+'"><div class="t">'+r.t+'</div><div class="d">'+r.d+'</div></div>';
+    }).join('');
+  }
+
+  // ---------- S4 普查表（真数，抄自 JSON） ----------
+  var CENSUS=[['JA',39,25,10,1,3,0],['KO',9,8,0,0,1,30],['TH',9,8,0,0,1,30],['DE',39,22,12,4,1,0],['EN',39,25,13,0,1,0],
+              ['ES',39,25,13,0,1,0],['FR',39,20,18,0,1,0],['ID',39,22,16,0,1,0],['IT',39,23,15,1,1,0],
+              ['MS',39,22,15,1,1,0],['VI',39,25,13,0,1,0],['ZH',39,27,4,0,8,0]];
+  el('censusTable').querySelector('tbody').innerHTML=CENSUS.map(function(r){
+    return '<tr><td>'+r[0]+'</td><td class="num">'+r[1]+'</td><td class="num">'+r[2]+'</td><td class="num">'+r[3]+'</td><td class="num">'+r[4]+'</td><td class="num">'+r[5]+'</td><td class="num">'+(r[6]||0)+'</td></tr>';
+  }).join('');
+
+  // ---------- tabs ----------
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){
+    b.onclick=function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.setAttribute('aria-selected',String(x===b));});
+      ['s1','s2','s3','s4'].forEach(function(id){ el(id).classList.toggle('hidden',id!==b.getAttribute('data-view')); });
+    };
+  });
+  renderOld(); renderNew(); renderReceipts();
+})();
+</script>

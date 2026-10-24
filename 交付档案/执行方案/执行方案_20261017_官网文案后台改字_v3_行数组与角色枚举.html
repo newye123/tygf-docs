@@ -1,0 +1,385 @@
+<title>官网文案后台改字 v3 · 对抗式审查后重定模型</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.35rem);line-height:1.26;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.75rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.25rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:74ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+a{color:var(--accent)}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:13px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.1vw,1.16rem);line-height:1.62;max-width:58ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.55rem;font-weight:500;line-height:1.1}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.85rem;min-width:680px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.69rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.73rem;color:var(--muted)}
+.card p{font-size:.91rem;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.notes li{font-size:.9rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--font-mono);font-size:.73rem;color:var(--muted);line-height:1.85}
+/* 对照台 */
+.mock{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.mockbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:11px 14px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.mockbar .ttl{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--surface);color:var(--ink-2);font-family:var(--font-body);font-size:.81rem;padding:6px 11px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+.stage{padding:16px;background:var(--bg);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.pane{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px;display:flex;flex-direction:column;gap:9px}
+.pane .cap{font-family:var(--font-mono);font-size:.69rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pane h4{margin:0;font-size:.93rem;font-family:var(--font-display)}
+.row{display:flex;gap:7px;align-items:center}
+.row input{flex:1;font-family:var(--font-body);font-size:.92rem;padding:7px 9px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);color:var(--ink);min-width:0}
+.row input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.row .idx{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);width:16px;flex:none}
+.row button{appearance:none;border:1px solid var(--line);background:var(--sunk);color:var(--ink-2);border-radius:5px;font-size:.72rem;padding:4px 7px;cursor:pointer;font-family:var(--font-mono);flex:none}
+.row button:hover{border-color:var(--accent);color:var(--accent)}
+.addbtn{appearance:none;border:1px dashed var(--line-strong);background:var(--bg);color:var(--ink-2);border-radius:6px;padding:6px 11px;font-size:.8rem;cursor:pointer;align-self:flex-start}
+.addbtn:hover{border-color:var(--accent);color:var(--accent)}
+select{font-family:var(--font-body);font-size:.84rem;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink)}
+.ticks{display:flex;flex-wrap:wrap;gap:2px;font-size:.9rem;line-height:1.9}
+.ticks span{border-right:1px dotted var(--line-strong);padding:0 1px}
+.ticks span.last{border-right:0}
+.ticks span.brk{border-right:2px solid var(--accent);background:var(--accent-soft)}
+.ticks span.bad{border-right-color:var(--bad);background:var(--bad-soft)}
+.res{border-radius:8px;padding:10px 12px;font-size:.85rem;border:1px solid;display:flex;flex-direction:column;gap:5px}
+.res.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.res.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.res.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.res .who{font-family:var(--font-mono);font-size:.69rem;opacity:.85}
+.vp{display:flex;flex-direction:column;gap:6px}
+.vp .lbl{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.vp .box{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px;overflow:hidden}
+.vp .t{font-family:var(--font-display);font-weight:700;letter-spacing:-.04em;line-height:1.08;margin:0}
+.vp .t .ln{display:block}
+.vp .t .nw{white-space:nowrap}
+.vp .t strong{color:var(--accent)}
+.raw{font-family:var(--font-mono);font-size:.76rem;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px 10px;white-space:pre-wrap;word-break:break-all;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:13px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:33px;height:33px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.9rem;color:var(--ink-2)}
+.gate.first{border-left:3px solid var(--accent)}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow"><span>执行方案 v3 · 对抗式审查后重定模型</span><span class="sep">/</span><span>2026-10-17 17:0x</span><span class="sep">/</span><span>只读，生产站零写入</span></div>
+  <h1>运营要的是版式权限，业界的答案是"给受控枚举，不给语法"</h1>
+  <p class="standfirst">
+    这一轮我让两路调研互相打，它们<strong>结论相反</strong>：一路说"断行应该做成数据（行数组 + CSS 决定是否生效）"，另一路说"断行根本不该给运营，交给 CSS <code>text-wrap:balance</code>，运营只选样式角色"。
+    我用线上实测裁定了它：<strong>balance 会把中文从词中间切断</strong>。所以 v3 的模型是"断点作数据 + 版式作角色枚举 + 内容里不留任何私有语法"。
+  </p>
+  <div class="meta"><span>develop @ 4e4cdd4</span><span>生产 BOUND 4fa9d4f（未动）</span><span>测试站 BOUND ee05c9a</span><span>取数 15:14—17:0x</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>对抗式审查：v2 被推翻的六条（三条是我自己的错）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>v2 的说法</th><th>这轮查到的</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr><td class="was">用 <code>[[短语]]</code> 私有哨兵表达"不折行"</td><td class="now">我上一版刚批评 Tina 把换行存成私有 <code>\</code>，自己却造了同类语法。业界有公开出处的写法是 remark directive，但更根本的解法是<strong>根本不放进内容</strong>——用样式角色承担（Webflow / Dato 都是这么隔离的）</td><td><span class="tag bad">自相矛盾，撤</span></td></tr>
+        <tr><td class="was">"零迁移"</td><td class="now">批注协议注释明写「改动需两侧同步」（<code>inline-edit-context.tsx:6</code>），且首页硬编码断行/不折行手段实测 <strong>47 处</strong>（<code>&lt;wbr/&gt;</code> 8、<code>&lt;br/&gt;</code> 7、断行 span 16、<code>nowrap</code>/<code>phrase</code> 16）</td><td><span class="tag bad">说轻了</span></td></tr>
+        <tr><td class="was">"真正的失效区是 561—1080px"</td><td class="now"><strong>方向搞反</strong>。实测三档：1281px 字号 77px、标题列宽 597px ⇒ 11 字溢出 202px；1001px 字号 60px、列宽 938px ⇒ 不溢出；701px 字号 50px、列宽 654px ⇒ 不溢出。风险集中在 <strong>&gt;1080px 的两栏布局</strong></td><td><span class="tag bad">实测推翻</span></td></tr>
+        <tr><td class="was">（我 v2 没考虑）"也许该换 Tiptap/Lexical 做所见即所得"</td><td class="now">不换，三条硬理由：① 95 个键 × 每键一个编辑器实例，<code>useEditor</code> 生命周期 + <code>immediatelyRender:false</code> + SSR <code>generateHTML</code> 全要跑一遍；② 发布前 before→after 清单与审计要从"字符串 diff"改成"节点树 diff"，那是重写；③ ProseMirror 作者自己在文档里写「If you're looking for a simple drop-in rich text editor component, ProseMirror is probably not what you need」</td><td><span class="tag ok">已排除</span></td></tr>
+        <tr><td class="was">"现成套件也许能替我们那 700 行"</td><td class="now">替不了：Tina 必须跑它的 GraphQL 层、Sanity <code>&lt;VisualEditing/&gt;</code> 依赖 stega + Studio、Payload 依赖 Admin Panel、Directus visual-editing 仓库 <strong>2026-04-22 已归档</strong>、<code>react-contenteditable</code> 最后发布 2023-02。<strong>我们那 700 行不是重复造轮子，是这一层的常态</strong></td><td><span class="tag ok">已排除</span></td></tr>
+        <tr><td class="was">（新发现，v2 完全漏掉）</td><td class="now"><code>text-wrap: stable</code> 是 MDN 明写"专为 contenteditable 设计、光标前的行不跳动"的能力——<strong>正好治就地编辑时的抖动</strong>，v2 一字未提</td><td><span class="tag warn">补进方案</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>裁定两路冲突的那条实测</h2>
+  <div class="verdict">
+    <span class="lb">verdict</span>
+    <p>「撤掉手动断点、交给 <code>text-wrap:balance</code>」这条路在中文站<strong>不成立</strong>：balance 是在 UAX#14 合法断点上选点，而中文每个字都可断，它优化的是行宽均匀，不是词完整性。</p>
+    <div class="scrollx">
+      <table>
+        <thead><tr><th>线上标题（合并碎片后）</th><th>balance 实测断点</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">别让已经确定的版本生产一直占着下一份设计的时间</td><td class="mono">…生产一 / 直占着…</td><td><span class="tag bad">切坏「一直」</span></td></tr>
+          <tr><td class="mono">批量不是一键全自动确定的先走，拿不准的先停</td><td class="mono">…全自动确定 / 的先走…</td><td><span class="tag bad">断在「的」前</span></td></tr>
+          <tr><td class="mono">轻松，不是不用改是手上少做，眼里少找…</td><td class="mono">…手上少 / 做，眼里…</td><td><span class="tag bad">切坏「少做」</span></td></tr>
+          <tr><td class="mono">改一个语言不难难的是每个语言都要从头来</td><td class="mono">不断（收成 1 行）</td><td><span class="tag warn">两行节奏丢失</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.92rem;font-weight:400;color:var(--ink-2)">所以：<strong>断点必须由作者控制</strong>（这条两路调研都不反对），但控制方式不是往字符串里塞语法，而是<strong>把"一行"做成数据</strong>；版式（字号、是否折行）另做成设计侧声明的角色枚举。这也正是 Webflow Editor 与 Dato visual editing 的共同边界——Dato 官方直白：编辑者<strong>只能改字段值，版式与样式不可经该工具修改</strong>；Webflow 的可编辑范围由设计者在 Element settings 的 <strong>Editor permissions</strong> 预先声明。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>五层模型对照台（同一句中文标题，五种给法）</h2>
+  <p class="lede">点着比。每档都写清"运营能做什么 / 会怎么坏 / 我们抄不抄"。出处用官方文档名，不编。</p>
+  <div class="mock">
+    <div class="mockbar">
+      <span class="ttl">模型</span>
+      <div class="seg" data-seg="model">
+        <button data-v="now" aria-pressed="true">现状：断点在 JSX</button>
+        <button data-v="lines" aria-pressed="false">行数组（推荐）</button>
+        <button data-v="mark" aria-pressed="false">内容塞标记（我 v2）</button>
+        <button data-v="blocks" aria-pressed="false">块级组件枚举</button>
+        <button data-v="css" aria-pressed="false">运营直改 CSS</button>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="pane">
+        <span class="cap">运营看到的样子</span>
+        <div data-editor></div>
+      </div>
+      <div class="pane">
+        <span class="cap">存进内容树的东西</span>
+        <div class="raw" data-store></div>
+        <span class="cap" style="margin-top:4px">这一档的取舍</span>
+        <div data-tradeoff></div>
+        <div class="res" style="border:0;background:none;padding:0;font-size:.78rem;color:var(--muted)">注：<code>nowrap</code> 在 v3 里是<strong>角色属性</strong>，不是全局规则——选「小标签」整行不许折，选「大标题行」则行内允许自动折行（所以不会再出现"改长就被裁"）。预览里宽屏两档保留线上 <code>nowrap</code> 语义，只为对比现状。</div>
+      </div>
+      <div class="pane">
+        <span class="cap">三视口预览（按线上实测参数复刻）</span>
+        <div class="vp" data-vp></div>
+        <div data-guard></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>v3 模型：三件事，内容里不留语法</h2>
+  <div class="cards">
+    <div class="card"><div class="top"><h3>① 断点＝数据（行数组），不是标记</h3><span class="tag ok">核心</span></div>
+      <p>一个文案键从 <code>string</code> 升成 <code>string[]</code>（每元素一个视觉行）。<strong>Owner 在输入框里回车＝新增一行</strong>，他的直觉本来就是对的；不需要 <code>\n</code> 语义、不需要哨兵。CSS 决定是否真的按这些断点断（<code>&gt;1080px</code> 用手动行，窄屏改自动折行）——这是 CSS-Tricks《Injecting a Line Break》的公开做法，不是我们发明的。</p>
+      <p class="loc">现有 33 个碎片键（<code>titleL2a/L2b/L2c</code> 等）正好一一折成数组元素，迁移是机械的</p></div>
+    <div class="card"><div class="top"><h3>② 版式＝角色枚举，由设计侧声明可用集</h3><span class="tag ok">核心</span></div>
+      <p>每个键带一份 <code>roles</code> 白名单（设计侧写死），运营在框里选：<code>大标题行 / 副标题行 / 强调行 / 不折行短语 / 小标签</code>。role 决定字号与是否折行，<strong>运营永远看不到 px 和 CSS 类名</strong>。同族做法：Figma Text styles（官方口径：覆盖字体/字重/字号/行高/字距/大小写/OpenType，<strong>不含对齐与颜色</strong>，且可作用于层内一段）、Apostrophe <code>styles:[{label,tag,class}]</code>、Sanity <code>styles/marks</code> 的 <code>{title,value}</code>。</p>
+      <p class="loc">顺带解决"字体"这条：他要的"调字体"在单字体站里的真实含义是"这句要更重/更大/别断开"——role 全覆盖，且不破坏设计语言</p></div>
+    <div class="card"><div class="top"><h3>③ 守卫＝词边界提示 + 溢出实测，不承诺正确</h3><span class="tag warn">辅助</span></div>
+      <p><code>Intl.Segmenter('zh',{granularity:'word'})</code> 本机可用（实测），可以把词边界画成刻度、并在断点落进词内时提示。但实测它 3 例只抓到 1 例（「一直」抓到，「少做」「确定的」漏掉，因为它把很多单字当词）⇒ <strong>只当提示，不当保证</strong>。硬判据用真实 DOM：行宽 <code>scrollWidth&gt;clientWidth</code> 即拦发布；编辑区加 <code>text-wrap:stable</code> 防光标跳动。</p></div>
+  </div>
+  <div class="callout">
+    <span class="lb">明确不做</span>
+    <p>不做内容里的转义符/markdown 标记（v2 那条撤了）；不换 Tiptap/Lexical；不给运营字号数字；不做"换行只在 ≥某视口生效"的字段语义——<strong>两路调研都查不到任何 CMS 提供这个</strong>（记为未核实），视口差异交给 CSS 与 role，不交给内容。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>执行顺序 v3</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body">
+      <h3>行数组 + 角色枚举 + 三视口预览（估 3—4 天，不碰生产写锁）</h3>
+      <p>内容树允许 <code>string | string[]</code>（读侧兼容，写侧白名单同步）；编辑弹层改成"一行一个输入框 + 增删/上下移"；每键带 <code>roles</code> 白名单；预览加 1281/1001/560 三档（按实测参数复刻）；发布前用真实 DOM 拦溢出。<strong>JSON-LD 侧与长度上限按"剥离行结构后的可见文字"计</strong>（否则 <code>smoke-seo-consistency:363</code> 会红）。</p>
+      <p style="color:var(--muted);font-size:.85rem">验收：三视口实测无裁字；<code>test:seo-consistency</code> 0 FAIL；<code>test:content-studio-v1</code> 加"行数组读写 + 溢出拦截 + 角色白名单越权被拒"用例；负控——非白名单 role 被拒、空行超 2 行被拦。</p>
+    </div></div>
+    <div class="gate"><span class="num">2</span><div class="body">
+      <h3>把 47 处硬编码断行手段逐处判"撤 / 搬进数据"（估 1—2 天）</h3>
+      <p>不是全撤：<code>&lt;wbr/&gt;</code> 8 处与 <code>&lt;br/&gt;</code> 7 处多数可被"行数组"取代；<code>.nowrap</code>/<code>.phrase</code> 16 处应转成 role。每撤一处都要截图回归（<code>scrollWidth</code>/<code>clientWidth</code> 全等）。键名变更走"新键并存 + 自愈迁移"，<strong>不能直接改名</strong>（白名单按当前内容树算，旧值会失配）。</p>
+    </div></div>
+    <div class="gate"><span class="num">3</span><div class="body">
+      <h3>覆盖与漏标守卫（估 2 天）</h3>
+      <p>页脚 8 处、下载页、EN 站打键；抄 <code>eslint-plugin-i18next</code> 的 <code>no-literal-string</code> 拦未标注中文文本节点。</p>
+    </div></div>
+    <div class="gate"><span class="num">4</span><div class="body">
+      <h3>生产放行（上一版刀一，仍排最后）</h3>
+      <p>它只是把能力从测试站搬到生产，不解决你缺的那一层；且触碰生产库写入，等你明令。</p>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>待你拍两件</h2>
+  <div class="split">
+    <div class="card"><div class="top"><h3>① 行内强调要不要留</h3><span class="tag warn">需拍</span></div>
+      <p>撤掉标记后，"这句话里某个词更重"只剩两条路：<strong>（推荐）把它拆成单独一行，行 role 选"强调行"</strong>——零新语法，现状首屏第二行就是这么做的（<code>titleLine2</code> 包在 <code>&lt;strong&gt;</code> 里）；或者<strong>允许标准 markdown <code>**词**</code></strong>——业界通用、有 remark 解析器，但内容里就有语法了，守卫面要扩。默认按前者做，除非你常需要句中强调。</p></div>
+    <div class="card"><div class="top"><h3>② 开工顺序</h3><span class="tag warn">需拍</span></div>
+      <p>刀一（行数组 + 角色 + 三视口，3—4 天）先做，还是先补覆盖面（页脚/下载页/EN）。我建议刀一——它才是你说的那个"最基本的"。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>未核实清单（两路调研都明确要求别引用的）</h2>
+  <ul class="notes">
+    <li><strong>DatoCMS <code>styleOptions</code> / Storyblok <code>style_options</code></strong>：一路说存在、另一路按官方 Field API 实测参数表里<strong>查不到</strong>（只有 <code>nodes/marks/heading_levels/blocks_start_collapsed/show_links_target_blank/show_links_meta_editor</code>）⇒ 记未核实，v3 不依赖它。</li>
+    <li><strong>Framer 面板具体名、Keystatic <code>inlineField</code>、Statamic 就地编辑、Apostrophe areas 正文</strong>：均取不到官方原文 ⇒ 未核实。</li>
+    <li><strong>Tina 存盘的 <code>\</code> 是否渲染成 <code>&lt;br&gt;</code></strong>、<strong>Sanity Studio 里怎么敲出 <code>\n</code></strong> ⇒ 未核实。</li>
+    <li><strong>「没有任何 CMS 提供"换行只在 ≥某视口生效"的字段语义」</strong>＝两路一致结论，但属"查不到"而非"官方声明不存在"，措辞按未核实处理。</li>
+    <li><strong>未实测</strong>：行数组改造对 <code>test:seo-consistency</code> 的真实影响面（只读到断言原文）；「存 <code>\n</code>」链路未走真编辑层（需 owner 会话 + 测试站开开关）。</li>
+    <li><strong>工时为估算</strong>，按现存代码规模（编辑层 881 行、95 键、47 处硬编码断行手段）推，不是历史回归。</li>
+  </ul>
+</section>
+
+<footer>
+  本轮实测（15:14—17:0x，全部只读；生产站零写入）：<br>
+  三视口溢出曲线（线上本地 DOM 试算后还原）：1281px ⇒ 字号 76.88px、列宽 597px、11 字 scrollWidth 799px＝溢出 202px；1001px ⇒ 60.08px / 938px / 不溢出；701px ⇒ 50px / 654px / 不溢出；≤560px ⇒ <code>@media(max-width:560px)</code> 已把 <code>.hero-title-line</code> 改 <code>white-space:normal</code>（<code>home-v17.css:312</code>）<br>
+  balance 切词实验：合并 6 个 <code>.section-title</code> 碎片后用 Range 逐字定位断点 ⇒ 4 例有问题（切坏「一直」/断在「的」前/切坏「少做」/两行收成一行），全部无横向溢出<br>
+  <code>Intl.Segmenter('zh',{granularity:'word'})</code>：本机可用，3 个坏断点里抓到 1 个（「一直」），漏「少做」「确定的」⇒ 只当提示<br>
+  计数：硬编码断行手段 47（<code>grep -oE "&lt;wbr */?&gt;"</code>=8、<code>&lt;br&gt;</code>=7、<code>className="(title-line|hero-title-line)"</code>=16、<code>className="(nowrap|phrase)"</code>=16）；碎片键 33；<code>text-wrap:</code> 13 处、<code>line-break:</code> 8 处；<code>siteContent.ts</code> 含真实转义 <code>\n</code> 的行＝0；<code>sc('a','b')</code> 多键元素 8 处；编辑层无视口预览（只有 <code>resize</code> 重定位监听 :572/:612）<br>
+  引擎侧：Tiptap <code>@tiptap/extension-hard-break</code>/<code>setHardBreak()</code>/StarterKit 禁键 <code>heading:false,link:false,undoRedo:false</code>（<strong>「ContentKit」不存在</strong>）；Lexical <code>LineBreakNode</code> 文档原话"绝不要把 <code>'\n'</code> 留在 TextNode 里"；ProseMirror 作者自陈非 drop-in；Directus visual-editing 仓库 2026-04-22 归档<br>
+  排版语义：MDN <code>text-wrap</code>（balance Chromium≤6行 / Firefox≤10行；<code>stable</code> 为 contenteditable 设计；<code>avoid-orphans</code> 无浏览器支持）；Notion 官方 Enter 换块 / Shift+Enter 块内换行；Webflow Editor permissions 由设计者预先声明；Dato visual editing 官方"编辑者只能改字段值，版式与样式不可经该工具修改"；Figma Text styles 覆盖范围（不含对齐/颜色）
+</footer>
+
+</div>
+
+<script>
+(function(){
+  const TITLE = { now: ['让设计师改语言','变轻松'], lines: ['让设计师改语言','变轻松'] };
+  const ROLES = ['大标题行','强调行','副标题行','小标签'];
+  const mock = document.querySelector('.mock');
+  const ed = mock.querySelector('[data-editor]');
+  const store = mock.querySelector('[data-store]');
+  const trade = mock.querySelector('[data-tradeoff]');
+  const vp = mock.querySelector('[data-vp]');
+  const guard = mock.querySelector('[data-guard]');
+  let model = 'now', lines = TITLE.lines.slice(), role = '大标题行';
+
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const strip = s => s.replace(/\*\*|:nowrap\[|\]\]/g,'').replace(/^\s*:/,'');
+
+  function renderEditor(){
+    if(model==='now'){
+      ed.innerHTML = `<div class="res warn"><span>两个独立输入框，对应 <code>titleLine1</code> / <code>titleLine2</code> 两个键。<strong>断点位置由 JSX 的 <code>&lt;wbr/&gt;</code> 和 <code>display:block</code> 决定，你改不了。</strong></span></div>
+        <div class="row"><span class="idx">1</span><input value="${esc(lines[0]||'')}" readonly><span class="tag warn">titleLine1</span></div>
+        <div class="row"><span class="idx">2</span><input value="${esc(lines[1]||'')}" readonly><span class="tag warn">titleLine2</span></div>
+        <div class="row"><span class="idx">3</span><input placeholder="加不了行——键是写死的" disabled></div>`;
+      Array.from(ed.querySelectorAll('input')).forEach((inp,i)=>{ if(i<2) inp.onchange=e=>{lines[i]=e.target.value; paint();}; });
+    }
+    if(model==='lines'){
+      ed.innerHTML = lines.map((l,i)=>`<div class="row"><span class="idx">${i+1}</span><input data-i="${i}" value="${esc(l)}">
+        <button data-up="${i}" title="上移">↑</button><button data-dn="${i}" title="下移">↓</button><button data-del="${i}" title="删掉这一行">删</button></div>`).join('')
+        + `<button class="addbtn" data-add>＋ 加一行（等价于在上一行按回车）</button>
+           <div class="row"><span class="idx">R</span><select data-role>${ROLES.map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select><span class="tag ok">role 决定字号与是否折行</span></div>`;
+      Array.from(ed.querySelectorAll('input[data-i]')).forEach(inp=>inp.onchange=e=>{ lines[+e.target.dataset.i]=e.target.value; paint(); });
+      const bind=(attr,fn)=>Array.from(ed.querySelectorAll('button[data-'+attr+']')).forEach(b=>b.onclick=()=>{fn(+b.dataset[attr]); paint();});
+      bind('up',i=>{ if(i>0) [lines[i-1],lines[i]]=[lines[i],lines[i-1]]; });
+      bind('dn',i=>{ if(i<lines.length-1) [lines[i+1],lines[i]]=[lines[i],lines[i+1]]; });
+      bind('del',i=>{ if(lines.length>1) lines.splice(i,1); });
+      ed.querySelector('[data-add]').onclick=()=>{ lines.push('新的一行'); paint(); };
+      ed.querySelector('[data-role]').onchange=e=>{ role=e.target.value; paint(); };
+    }
+    if(model==='mark'){
+      ed.innerHTML = `<div class="row"><span class="idx">1</span><input value="${esc(lines.join('\n'))}" readonly></div>
+        <div class="res bad"><span>我 v2 的做法：一个框，靠 <code>↵</code> 与 <code>[[短语]]</code>、<code>**词**</code> 表达排版。<strong>被推翻</strong>——它把版式塞进内容，且是私有语法（我刚用它批评过 Tina）。</span></div>`;
+    }
+    if(model==='blocks'){
+      ed.innerHTML = `<div class="res warn"><span>调色板式加块：标题块 / 强调块 / 标签块，块内再选样式。这是 Storyblok/Payload blocks 的形态。</span></div>
+        <div class="row"><span class="idx">1</span><input value="标题块 · 大标题行" readonly></div>
+        <div class="row"><span class="idx">2</span><input value="标题块 · 强调行" readonly></div>
+        <div class="res bad"><span>代价：首页 95 键要拆成组件枚举并迁内容，回归面大。<strong>本轮不做</strong>，只在个别真需要"桌面断两处、手机不能断"的区块单点用。</span></div>`;
+    }
+    if(model==='css'){
+      ed.innerHTML = `<div class="row"><span class="idx">字号</span><input value="78px" readonly><span class="tag bad">自由输入</span></div>
+        <div class="row"><span class="idx">折行</span><input value="white-space: nowrap" readonly><span class="tag bad">自由输入</span></div>
+        <div class="res bad"><span>Webflow Designer / Framer 画布这一层。失控最高：一次改错全站标题就没了。业界（含 Webflow 自己的 Editor 定位「更新内容、不碰 Designer」）都把它挡在运营之外。</span></div>`;
+    }
+  }
+  function renderStore(){
+    const map = {
+      now: { 'homeV17.hero.titleLine1': lines[0], 'homeV17.hero.titleLine2': lines[1] },
+      lines: { 'homeV17.hero.title': lines, 'homeV17.hero.title.role': role },
+      mark: { 'homeV17.hero.title': lines.join('\n') },
+      blocks: { 'homeV17.hero.title': [{_type:'line', text:lines[0], style:'h1-line'},{_type:'line', text:lines[1], style:'accent-line'}] },
+      css: { 'homeV17.hero.title': lines.join(' '), '_style': { fontSize:'78px', whiteSpace:'nowrap' } }
+    };
+    store.textContent = JSON.stringify(map[model], null, 1);
+  }
+  const TRADE = {
+    now: ['bad','运营能做什么：改两行各自的字。<strong>不能</strong>：加一行、挪断点、改突出。会怎么坏：把第二行改长 → 宽屏被裁（实测溢出 202px）。'],
+    lines: ['ok','运营能做什么：加行、删行、移行、选角色（字号与是否折行跟着 role 走）。会怎么坏：加太多行把首屏撑高 → 用"每角色行数预算 + 真实宽度"拦。'],
+    mark: ['bad','运营能做什么：同上，但要记语法。会怎么坏：写错一个方括号就变成页面上的字面字符；且版式进了内容，窄屏无法降级。<strong>已撤</strong>。'],
+    blocks: ['warn','运营能做什么：加块、换块类型。会怎么坏：块类型被堆成意大利面。代价：首页 JSX 要拆成组件枚举 + 内容迁移，数天到一周。'],
+    css: ['bad','运营能做什么：什么都能改，包括改坏。业界一致把它挡在运营工具之外。']
+  };
+  function renderTrade(){ const [k,t]=TRADE[model]; trade.innerHTML=`<div class="res ${k}"><span>${t}</span></div>`; }
+
+  const VIEWS = [
+    { label:'1281px（两栏，标题列 597px / 字号 77px）', w:597, fs:77, wrap:false, scale:0.42 },
+    { label:'1001px（单栏，列宽 938px / 字号 60px）', w:938, fs:60, wrap:false, scale:0.28 },
+    { label:'560px 以下（已改 white-space:normal）', w:520, fs:43, wrap:true, scale:0.4 }
+  ];
+  function renderVp(){
+    const nowrapRole = role === '小标签';
+    vp.innerHTML = VIEWS.map((v,i)=>{
+      const inner = lines.map((l,j)=>{
+        const txt = esc(l).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+        const nw = (nowrapRole || model==='now' || model==='mark' || model==='css') && !v.wrap;
+        return `<span class="ln ${nw?'nw':''}">${txt}</span>`;
+      }).join('');
+      const fs = Math.round(v.fs * v.scale);
+      const boxW = Math.round(v.w * v.scale);
+      return `<div class="lbl"><span>${v.label}</span><span>列宽 ${v.w}px</span></div>
+        <div class="box" style="max-width:${boxW+20}px"><div class="t" style="font-size:${fs}px">${inner}</div></div>`;
+    }).join('');
+  }
+  function renderGuard(){
+    if(model==='blocks' || model==='css'){ guard.innerHTML=''; return; }
+    const joined = lines.join('');
+    let words = null;
+    try { words = [...new Intl.Segmenter('zh',{granularity:'word'}).segment(joined)].map(x=>x.segment); } catch(e){}
+    const bounds = new Set(); let acc = 0;
+    (words||[]).forEach(w=>{ acc += w.length; bounds.add(acc); });
+    const cuts = []; let pos = 0;
+    lines.slice(0,-1).forEach(l=>{ pos += l.length; cuts.push(pos); });
+    const bad = cuts.filter(c=>!bounds.has(c));
+    const ticks = [...joined].map((ch,i)=>{
+      const isCut = cuts.includes(i+1), isB = bounds.has(i+1);
+      return `<span class="${isCut?'brk':(isB?'':'')}${isCut&&bad.includes(i+1)?' bad':''}">${esc(ch)}</span>`;
+    }).join('');
+    guard.innerHTML = `<div class="res ${bad.length?'warn':'ok'}">
+      <span>${bad.length ? `断点落在词内 ${bad.length} 处（词边界刻度只能提示，不保证：实测它抓到「一直」，漏掉「少做」）` : '断点都在词边界上'}
+      <span class="who">刻度＝Intl.Segmenter('zh',{granularity:'word'})；蓝线＝你的断点；红底＝切在词内</span></span></div>
+      <div class="ticks">${ticks}</div>`;
+  }
+  function paint(){ renderEditor(); renderStore(); renderTrade(); renderVp(); renderGuard(); }
+  mock.querySelectorAll('[data-seg="model"] button').forEach(b=>b.onclick=()=>{
+    model=b.dataset.v; lines=TITLE.lines.slice(); role='大标题行';
+    mock.querySelectorAll('[data-seg="model"] button').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
+    paint();
+  });
+  paint();
+})();
+</script>

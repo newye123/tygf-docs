@@ -1,0 +1,446 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>执行方案：GEO 第九轮</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{color-scheme:light dark}
+hr.rule{border:0;border-top:1px solid rgba(127,127,127,.35);margin:26px 0}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid rgba(127,127,127,.28);padding:9px 10px;text-align:left;vertical-align:top;font-size:14px}
+h3{margin-top:22px}
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style></head><body><div class="wrap"><div class="masthead"><div class="eyebrow">PLAN 2026-10-17</div><div class="standfirst">可发现性收尾与分支不对称</div><div class="meta"><span class="sn">补两条引擎目录链接，否决三次顺手改</span><span class="sn">4</span><span class="sn">4</span></div></div><div class="verdict"><div class="lb">结论</div><p>0</p></div><ul class="notes">
+<li>授权：Owner 第五次「使用对抗式审查后给个执行方案，然后按方案执行」</li>
+<li>红线：不部署、不合并分支、不翻闸、不碰支付、不代登录</li>
+<li>号界：本件＝「第九轮·可发现性收尾（砚/Qoder）」；同日另有「第八轮·业界算法对标」（别手）与我的「第八轮·英文面」，引用一律用文件全名</li>
+</ul>
+<hr class="rule"/>
+<h2>00 实测三条（本轮全部动作都由这三条决定）</h2>
+<div class="scrollx"><table><thead><tr><th>#</th><th>实测</th><th>读数</th></tr></thead><tbody>
+<tr><td>1</td><td>线上 sitemap 与英文法律页</td><td><code>sitemap.xml</code> 200／2,960 B／<strong>8 个 <code>&lt;url&gt;</code></strong>，<code>/en/terms</code> 带 <code>hreflang="en"</code>＋<code>x-default</code> 互指；<code>/en/terms</code>、<code>/en/privacy</code>、<code>/en/privacy/subprocessors</code> 三页线上全 <strong>200</strong></td></tr>
+<tr><td>2</td><td>引擎面两份文件的页面清单</td><td><code>llms.txt</code> 的 <code>English pages:</code> 只列 <code>/en</code> 与 <code>/en/download</code>；<code>llms-full.txt</code> 的 <code>## 主要页面</code> 同样只有"英文首页／英文下载页" ⇒ <strong>两份都漏了已上线的英文条款与英文隐私页</strong>（中文侧却列了 terms/privacy）</td></tr>
+<tr><td>3</td><td>develop ↔ main 的形状</td><td><code>git -C worktrees/develop merge-base --is-ancestor 5bf18c8 develop</code> → <strong>rc=1（不在）</strong>；main 有 <code>src/app/en/{terms,privacy,privacy/subprocessors}/page.tsx</code>，develop 的 <code>src/app/en/</code> 只有 <code>page/download/layout/not-found</code>；整支双向差 <code>develop...main</code> ＝ <strong>26 与 19</strong>（main 独有 19 笔含英文法律页那一族）</td></tr>
+</tbody></table></div>
+<h2>01 对抗式审查：四条候选，砍两条</h2>
+<div class="scrollx"><table><thead><tr><th>#</th><th>候选</th><th>反证</th><th>裁定</th></tr></thead><tbody>
+<tr><td>K1 把英文条款/隐私两链补进 <code>llms.txt</code> 与 <code>llms-full.txt</code></td><td>引擎把 llms 当目录读，缺链＝少两条可被抓的英文正式页；改动是<strong>列已上线页面的链接</strong>，不新增任何主张</td><td>生产也漏（main 的同两份文件同样缺）⇒ 这是<strong>双向都对</strong>的修补，不是把 develop 的错推向 main</td><td><strong>做</strong>（4 条链接，改后两份各过中英文两道闸）</td></tr>
+<tr><td>K2 顺手把 develop 的 <code>sitemap.ts</code> 也补成 8 条</td><td>看着"对齐了"</td><td><strong>砍</strong>：develop 根本没有那三张英文法律页（§00-3 实测），补链只会让<strong>测试站 sitemap 指向 404</strong>——制造假可发现性。正修是先有页面再有链，即先做分支对齐（K3）</td><td><strong>不做</strong>，理由写进 #167</td></tr>
+<tr><td>K3 现在把 main 合并进 develop，消掉 19 笔差</td><td>这是根因的正解</td><td>但那是<strong>跨会话的合流动作</strong>：develop 树上有别会话未提交现场（实测 <code>src/app/(zh)/layout.tsx</code> 等 5 个 M 文件＋2 未跟踪），且第八轮我已因"裹挟他笔"出过一次事故；合并的评审面、冲突解法该由合流窗口做，不该由我此刻做</td><td><strong>不执行</strong>，立案 #167 给出安全配方与判据，等 Owner/派工口排窗</td></tr>
+<tr><td>K4 把 <code>/privacy/subprocessors</code> 也写进 llms 页面清单"提升可发现性"</td><td>页面确实线上 200</td><td>实测该页代码 <code>page.tsx:19 robots: { index:false, follow:true }</code>、线上 meta <code>noindex, follow</code>、main 的 sitemap 注释明写它不收录 ⇒ <strong>它被刻意排除，不是遗漏</strong>。写进引擎目录等于教引擎去抓一个我们标了 noindex 的页</td><td><strong>不做</strong>，并在两份文件保持现状（llms.txt 正文里已有指向它的说明链接，供人读，不诱导抓取）</td></tr>
+</tbody></table></div>
+<h2>02 执行序</h2>
+<ul class="notes">
+<li><code>public/llms.txt</code> 的 <code>English pages:</code> 补 2 条（英文条款／英文隐私）；<code>public/llms-full.txt</code> 的 <code>## 主要页面</code> 补 2 条。</li>
+<li>两份各过 <code>tmp/scan-copy.mjs</code>（中文闸）与 <code>tmp/scan-copy-en.mjs</code>（英文闸）——英文闸这一关是第八轮新立的，本轮第一次同时跑双闸。</li>
+<li><code>git diff --stat</code> 核对＝我只动了这 2 文件、行数对得上；逐文件 <code>git add</code> 这 2 个（当前 develop 树上这两文件不在别人现场里，先 <code>git status</code> 证其干净）。</li>
+<li>提交并按 #165 的方式推（若本地压着他笔，就用孤立树 cherry-pick，不推本地 tip）。<strong>不部署。</strong></li>
+<li>ISSUES 立案 #167（分支不对称＋K2/K3/K4 三条否决理由），并落 ledger／TASK_LOG／飞书。</li>
+</ul>
+<h2>03 验收判据</h2>
+<ul class="notes">
+<li>内容：<code>grep -c "en/terms\|en/privacy" public/llms.txt public/llms-full.txt</code> 各 ≥2；两份文件双闸可疑行 0。</li>
+<li>一致性：<code>/en/terms</code>、<code>/en/privacy</code> 线上 200（已实测，本轮不重复声称）。</li>
+<li>边界：<code>llms</code> 两份都<strong>不含</strong> subprocessors 页面清单项（<code>grep -c</code> 期望值按现状核：正文说明链接可有，目录清单不可加）。</li>
+<li>分支：#167 里每条读数都带可复跑原式（merge-base rc、ls-tree 文件清单、rev-list 计数）。</li>
+</ul><div class="notes"><p>由同目录 md 生成 · 面向 Owner 的阅读件 · 数字与状态以平台回显及代码 file:line 为准</p></div></div></body></html>

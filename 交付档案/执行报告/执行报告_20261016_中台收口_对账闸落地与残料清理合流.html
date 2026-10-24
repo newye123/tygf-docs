@@ -1,0 +1,146 @@
+<title>执行报告 · 中台收口：对账闸落地 + 残料清理合流</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,54px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.3rem);line-height:1.25;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+p{margin:0;max-width:68ch}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.3vw,1.14rem);line-height:1.6;max-width:56ch;font-weight:500}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:var(--font-mono);font-size:.8rem;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.1}
+.stat .l{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:.86rem;font-weight:500;color:var(--accent);background:var(--accent-soft);min-width:44px;height:32px;padding:0 8px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate p{font-size:.91rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告</span><span class="sep">/</span><span>中台收口</span><span class="sep">/</span><span>2026-10-15 夜 → 16 晨</span></p>
+  <h1>对账闸落地 + 残料清理合流</h1>
+  <p class="standfirst">Owner 令「对抗式审查之后，给我一个方案，然后按你的方案去执行」。结果：闸已装好、验证过、正在服役；18GB 残料归档双保险完成，删除侧由并行会话以 junction 安全法收尾（避开了一个会伤到 develop 依赖的陷阱）。全程无不可逆动作。</p>
+  <div class="meta"><span>P0 闸：夹具 29/29 · 空跑 update=0 · control-plane 双绿</span><span>归档：1.7GB + 并行会话 backups 双份</span><span>删除：32/40 已清，余 8 在办</span></div>
+</header>
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 两项均推进到位</span>
+    <p><strong>① 你手改飞书机器列再也不会被静默盖掉——闸已装好、验证过、在真实链路服役（你改的行会被拦下点名，而不是覆盖）。② 18GB 残料的保命数据双份归档、删除安全推进——过程中考证出「22 个孤儿实为一个克隆的注册 worktree」与「junction 穿透陷阱」两个关键事实，本会话据此主动放弃了危险删法。</strong></p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">02</span>A 项 · 投影前对账闸（已交付）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>三值比对（逐格）</th><th>判定</th><th>动作</th></tr></thead>
+      <tbody>
+        <tr><td>台账 L ＝ 飞书 F</td><td>全等</td><td>整行跳过，不发写命令（幂等二跑 <code>update=0</code>）</td></tr>
+        <tr><td>L≠F 且 F ＝ 上次投影 P</td><td>正常待投影</td><td>放行照常写</td></tr>
+        <tr><td>L≠F 且 L ＝ 上次投影 P</td><td><strong>人手改（你改的）</strong></td><td><strong>整行拦下、点名，不覆盖</strong></td></tr>
+        <tr><td>两边都动</td><td>冲突</td><td>拦下</td></tr>
+        <tr><td>无快照且 L≠F</td><td>无法判断</td><td>保守拦下（<code>--force</code> 显式强推）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">顺带修复（既有缺陷）</span>
+    <p>原执行段数的是「计划行数」、只看最后一条命令退出码——<strong>中间任何失败会被静默吞掉</strong>。现在每条命令带 <code>[ok]/[fail]</code> 标记：失败即响亮报错、且不提升快照（下次可重试）。快照 <code>tmp/readback/last-projected.ndjson</code> 只在全成功时提升；被拦行存台账值，保证下次仍正确识别为手改。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">验证（全实跑）</span>
+    <p>夹具 29/29 断言；真表播种（bootstrap 全等 skip=23 → 快照落地）；复跑 <code>update=0</code>（stateFound=true）；control-plane 双段全绿（表 23/台账 23、漂移 0/重复 0/缺行 0）。旁证：并行会话随后用新脚本投影 PHOTO-PLAN，实跑 <code>update=1 skip=22 held=0</code> 正常通过。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">03</span>B 项 · 残料清理（归档完成，删除在办）</h2>
+  <div class="callout">
+    <span class="lb">关键发现 1</span>
+    <p><strong>22 个「孤儿目录」其实是一个独立克隆的注册 worktree</strong>（integration-develop 克隆，23 分支）——以集群为单位打包整体处置，不能散删。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">关键发现 2 · junction 穿透风险</span>
+    <p>11 个目录的 <code>node_modules</code> 是 Windows 快捷方式（index-guard 直连 develop 的 node_modules）——常规递归删除可能<strong>删穿到活工作区依赖</strong>。本会话据此主动停止本方删除预案（原用 rm 法），删除侧改由并行会话以 <code>cmd rmdir</code>（不穿透）执行；删后复验 develop 依赖完好（658 项、.bin/next 在册）。已登记 <code>ISSUES #146</code>。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>归档（双保险）</th><th>内容</th><th>体量</th></tr></thead>
+      <tbody>
+        <tr><td><strong>本会话</strong><br><span class="mono">archives/支线残料归档_20261015</span></td><td>集群 <code>bundle --all</code>（67 refs，a6/a7 真 ref 在册）+ 4 分支 bundle（verify 全过）+ 3 tar + 6 处 dirty 补丁/未跟踪件 + SHA256SUMS</td><td class="mono">1.7GB</td></tr>
+        <tr><td><strong>并行会话</strong><br><span class="mono">backups/worktree-orphan-archive-20261015</span></td><td>README+MANIFEST、审计 zip 87MB、4 分支补丁包、排练脚本、文档原样；敏感件入 <code>.secrets/</code></td><td class="mono">~90MB+</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>删除进度（截至 08:1x）</strong>：40 个待删目录已清 <strong>32</strong>，余 8（wave1、a7〔处理中〕、batch1-web-only、c2c3、g4g5-evidence、l9、_verify-ca30524、hub）+ 根下散件在办——由并行会话收尾并出「执行结果短报」。空间：F 盘可用 502G → 506G（仍在增长）。</p>
+  <div class="callout">
+    <span class="lb">分歧处置（诚实披露）</span>
+    <p>本会话原方案对 4 条脏分支 / <code>.meta-kim</code>+<code>.zcode</code> / 6 个 blk 小件为「归档后删」；并行会话取保守版保留。最终按<strong>留存</strong>处理——两案冲突时取可逆者；且其一发现了硬风险（junction），说明「慢一步」是对的。分支打包已就绪，随时可恢复。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">04</span>数字</h2>
+  <div class="stats">
+    <div class="stat"><span class="n">29/29</span><span class="l">夹具断言</span></div>
+    <div class="stat"><span class="n">update=0</span><span class="l">空跑（幂等）</span></div>
+    <div class="stat"><span class="n">67 refs</span><span class="l">集群 bundle（含 a6/a7）</span></div>
+    <div class="stat"><span class="n">32/40</span><span class="l">删除进度（在办 8）</span></div>
+    <div class="stat"><span class="n">125→96</span><span class="l">worktrees 条目</span></div>
+    <div class="stat"><span class="n">502G→506G</span><span class="l">F 盘可用（增长中）</span></div>
+  </div>
+  <div class="callout">
+    <span class="lb">记录落位</span>
+    <p><code>AI_MEMORY/TASK_LOG.md</code>（置顶）、<code>CHANGELOG.md</code>（置顶）、<code>ISSUES.md #146</code>、<code>AGENTS.md</code> 第 6 条（对账闸纪律）、<code>ledger.jsonl</code>（HUMAN-EDIT-GOV → 待复验，飞书已同步）。</p>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">05</span>你现在可以做的</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">十秒</span><div class="body"><h3>复验闸</h3><p>在飞书表随手改一格机器列 → 下次同步会把它<strong>拦下并点名</strong>（而不是盖掉）。想立刻看效果，跟我说「验一下」。</p></div></div>
+    <div class="gate"><span class="num">一句</span><div class="body"><h3>定去留</h3><p>4 条脏分支（打包已就绪）与 6 个 blk 小文件：留还是清。</p></div></div>
+    <div class="gate"><span class="num">下批</span><div class="body"><h3>队列（并行会话）</h3><p><code>.codex</code> 下 5 个孤儿（~2.6GB）与约 40 个「已注册但已死」的历史目录，不在本次范围。</p></div></div>
+  </div>
+</section>
+<section>
+  <h2><span class="sn">06</span>边界与已知限制</h2>
+  <div class="callout">
+    <span class="lb">Notes</span>
+    <p>① 对账那一瞬你恰好在键字，理论上仍可能读到中间态（与 Jira 生态公认限制同级；闸只缩窗口不追完美）。② 被拦下的手改行会在日检里继续显示「漂移」——属提醒闭环，采纳后即消失。③ 今后一切 worktrees 清理：先摘链接、再 <code>cmd rmdir</code>（禁递归 rm 穿透 junction），见 #146。</p>
+  </div>
+</section>
+<footer>
+  <p>2026-10-15 夜 → 16 晨 · 执行（方案发出即执行）· P0 闸已交付并在役；残料清理归档双保险完成、删除由并行会话收尾（32/40，余 8 在办）。</p>
+  <p>证据：夹具输出、真表播种/空跑、control-plane 双绿、bundle verify、SHA256SUMS、MANIFEST、删除前后 df 对照。</p>
+</footer>
+</div>

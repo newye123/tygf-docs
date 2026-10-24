@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>内存不足时受理前拦停：对抗式审查与落地（2026-10-20）</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#16181d; --muted:#5b6472; --line:#e3e6ea;
+    --accent:#2f6feb; --ok:#177245; --warn:#9a6a00; --bad:#b3261e;
+    --ok-bg:#eaf6ef; --warn-bg:#fdf5e3; --bad-bg:#fdeceb; --code:#f1f3f6;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1216; --panel:#151a20; --ink:#e8eaee; --muted:#9aa4b2; --line:#252b33;
+      --accent:#7aa2ff; --ok:#4cc38a; --warn:#e0b252; --bad:#ff7b72;
+      --ok-bg:#13251c; --warn-bg:#2a2312; --bad-bg:#2b1716; --code:#1b222a;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 64px}
+  header.top{margin-bottom:28px}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{font-size:28px;line-height:1.3;margin:10px 0 8px;font-weight:700}
+  .sub{color:var(--muted);font-size:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin:18px 0}
+  h2{font-size:17px;margin:0 0 12px;font-weight:700}
+  h3{font-size:14px;margin:18px 0 8px;font-weight:650;color:var(--muted);letter-spacing:.02em}
+  p{margin:10px 0}
+  .verdict{display:grid;grid-template-columns:1fr;gap:12px}
+  .verdict .headline{font-size:20px;font-weight:700;line-height:1.45}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;vertical-align:middle;margin:0 6px 4px 0}
+  .pill.ok{background:var(--ok-bg);color:var(--ok)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn)}
+  .pill.bad{background:var(--bad-bg);color:var(--bad)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .stat{background:var(--code);border-radius:10px;padding:12px 14px}
+  .stat .n{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;letter-spacing:.04em;color:var(--muted);font-weight:650;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  code{background:var(--code);border-radius:5px;padding:1px 6px;font-size:12.5px;
+    font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+  .gates{display:grid;gap:10px}
+  .gate{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:start;
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--code)}
+  .gate .tag{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+  .callout{border-left:3px solid var(--accent);background:var(--code);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout.bad{border-left-color:var(--bad)}
+  .callout.ok{border-left-color:var(--ok)}
+  .notes{font-size:13px;color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  footer.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  @media (max-width:760px){ .stats{grid-template-columns:repeat(2,1fr)} .two{grid-template-columns:1fr} h1{font-size:23px} .wrap{padding:26px 16px 48px} .gate{grid-template-columns:1fr} table{font-size:12.5px} th,td{padding:8px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">图译工坊 · 执行方案 · 对抗式审查 + 已落地</div>
+    <h1>内存被占满再运行会卡死：怎么拦？</h1>
+    <div class="sub">基线 <code>develop@bd2c860</code> · 真机 PS 22.0.0 · 2026-10-20 · 未打包、未发布、未部署</div>
+  </header>
+
+  <section class="card verdict">
+    <div class="headline">结论：拦在「受理之前」，不拦在「跑一半」。稿件边界不是执行器进度里的某一行，而是每一次 <code>/v1.5/batch/execute</code> 受理；执行器内部没有任何外部可控的停止通道，硬杀就会把用户推进需要技术人员的恢复锁。已按此落地并通过真机自检。</div>
+    <div>
+      <span class="pill warn">VERDICT 有条件放行</span>
+      <span class="pill bad">原挂点被打回（我自己的方案）</span>
+      <span class="pill ok">闸已在真机生效</span>
+      <span class="pill ok">计费代码零改动</span>
+      <span class="pill warn">未打包 / 未部署</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">3,254 MB</div><div class="l">本机拦截线（10% × 32.5 GB）</div></div>
+      <div class="stat"><div class="n">2,851.7 MB</div><div class="l">真机此刻可用内存 ⇒ 已判拦停</div></div>
+      <div class="stat"><div class="n">19 + 22</div><div class="l">新自检 / 读数自检（均 rc=0）</div></div>
+      <div class="stat"><div class="n">0 处</div><div class="l">结算与计费代码改动</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>审查头部</h2>
+    <table>
+      <tbody>
+        <tr><th>VERDICT</th><td>有条件放行：A 的原挂点打回并重写后放行；B 放行；单语链不在本轮范围</td></tr>
+        <tr><th>范围</th><td>提案审查 → 落地；基线 <code>develop@bd2c860</code>｜Round 1/3</td></tr>
+        <tr><th>改动</th><td>新增 2 文件 + 改 8 文件（助手 4、前端 3、自检 1）；不改 JSX、不改执行器、不改结算</td></tr>
+        <tr><th>风险档</th><td>Medium（新增用户可见拒绝条件；账务面复用既有「未接受即零副作用」形状）</td></tr>
+        <tr><th>已证实</th><td>6 条 Important ＋ 1 条 Pre-existing（读数盲区，上一份方案已登记）</td></tr>
+        <tr><th>未决</th><td>3 条：用户机可用内存分布、低内存必败边界、执行恢复锁的自助出口（涉计费语义，需 Owner 授权）</td></tr>
+        <tr><th>覆盖缺口</th><td>未真起助手服务（会与在跑的助手抢端口）；未跑浏览器端实机交互；未覆盖单语链；未打包发布</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>1 · 先证伪：我上一轮那句「挂点现成」是错的</h2>
+    <table>
+      <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>F-A1</td><td>Important</td><td><code>TYGF_V15_Thin_Executor.jsx:184/:222</code></td><td>以为能在 Node 解析 <code>ASSIGNMENT_DONE</code> 处拦下一稿；实际那行是 PS 进程内循环自己打的，Node 只 tail 进度，此刻没有「下一稿」可拦</td><td>A</td></tr>
+        <tr><td>F-A2</td><td>Important</td><td><code>server.js:1893/:2068-2076/:2411-2441</code></td><td>中途只能 <code>taskkill</code> wscript 树；被杀后故意不 resolve ⇒ 落恢复锁，用户只能「交由技术人员核对」</td><td>A</td></tr>
+        <tr><td>F-A3</td><td>Important</td><td><code>batch-error-policy.ts:8-10</code></td><td>批次级拒绝若当单语言失败继续派发 ⇒ 复制 DISPATCHING 孤儿（2026-09-13 事故 6 连拒 6 孤儿）</td><td>A</td></tr>
+        <tr><td>F-A4</td><td>Important</td><td><code>v3-batch-flow.ts:664-666</code></td><td>中止句直接吐原因码 <code>（LOCAL_MEMORY_LOW）</code>，用户读不懂</td><td>A</td></tr>
+        <tr><td>F-A5</td><td>Important</td><td><code>memory-probe.cjs:196</code></td><td>阈值是 D 级推断：没有用户机可用内存分布，单次采样低谷会误伤能跑成的批次</td><td>A＋D</td></tr>
+        <tr><td>F-A6</td><td>Important</td><td><code>server.js:6376</code></td><td>单语链 <code>/v1.5/execute/run</code> 同一风险仍在，本轮不加闸（账务面不同，需单独审）</td><td>A</td></tr>
+        <tr><td>F-B1</td><td>Nit</td><td><code>memory-probe.cjs:180-200</code></td><td>私有内存只能另起 PowerShell 采；必须与 tasklist 并发、1.5 s 硬超时、失败为 null，且不 bump schemaVersion（分析器按版本过滤行，单独 bump 会静默丢读数）</td><td>A</td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad">
+      <strong>更正（不推翻结论，推翻我自己的挂点）：</strong>原说法「<code>server.js:7458-7462</code> 解析 <code>ASSIGNMENT_DONE</code> 那里就能判内存」已被证伪；真实的稿件边界是一次 HTTP 受理（<code>v3-batch-flow.ts:387/:524</code> → <code>local-assistant-client.ts:1856</code>，一批最多 12 语，<code>batch-limits.ts:6</code>）。闸因此落在受理入口。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2 · 落地后的行为（逐层）</h2>
+    <div class="gates">
+      <div class="gate"><div class="tag">判据</div><div>线＝<code>max(2,048 MB, 10% × 总内存)</code>；本机 32.5 GB → 3,254 MB，16 GB → 2,048 MB。连续两次采样（间隔 400 ms）都低于线才拦；单次低谷不拦。</div></div>
+      <div class="gate"><div class="tag">助手</div><div><code>/v1.5/batch/execute</code> 在取执行锁之前返回 <code>503 code=LOCAL_MEMORY_LOW</code>，句子里带实测 MB 与线；同时写一行 <code>[memory-gate] block</code>（只有数字与 attemptId，无文件名/路径）。</div></div>
+      <div class="gate"><div class="tag">副作用</div><div>不建 journal、不调 acceptance、不 acquire 锁 ⇒ 该语言的 attempt 停在 DISPATCHING，由服务端 reaper 终态化为 <code>ATTEMPT_ABANDONED_NEVER_DISPATCHED</code>；整批按实际交付单位结算，未执行的部分退回，全部未执行即 <code>RELEASED</code> 全额释放（<code>execution-batch.ts:1655-1658/:2060-2070</code>）。计费代码一行没改。</div></div>
+      <div class="gate"><div class="tag">前端</div><div>新码进 <code>SYSTEMIC_PRE_EXECUTION_CODES</code> 与 funnel 码集（服务端合同同批加，跨层自检已过）；首拒即停止后续语言派发；批次文案改用助手那句带实测数的中文（不加静态映射，否则会把数字盖掉——已写成自检负控）。</div></div>
+      <div class="gate"><div class="tag">读数</div><div><code>memory-probe.cjs</code> 新增 <code>psPrivateTotalMB</code> / <code>psPrivateMaxMB</code>；PowerShell 取不到时两字段为 null 且整行读数仍写。</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 · 真机证据（2026-10-20 17:15—17:19，非夹具）</h2>
+    <table>
+      <thead><tr><th>项目</th><th>实测读数</th></tr></thead>
+      <tbody>
+        <tr><td>系统总内存 / 可用</td><td>32,538.5 MB / 2,851.7–2,856 MB</td></tr>
+        <tr><td>拦截线</td><td>3,254 MB ⇒ <code>assessLocalMemory()</code> 返回 <code>allowed:false</code>、reason <code>LOW_FREE_MEMORY</code></td></tr>
+        <tr><td>为什么此刻会拦</td><td>上午的 2.53 GB 大稿测试后，Photoshop 仍占私有内存 12,426 MB（单实例）、工作集 7,832.7 MB ⇒ 可用被压到线以下。闸现在就在生效，而不是硬开下一稿。</td></tr>
+        <tr><td>工作集 vs 私有内存</td><td>合计 7,832.7 MB vs 13,567.2 MB（1.73 倍）——只看任务管理器会低估</td></tr>
+        <tr><td>自检</td><td>内存闸 <code>19 checks</code> rc=0；读数 <code>22 checks</code> rc=0；<code>v3 batch flow</code> 通过（含新案例 T7b）；<code>local-assistant-errors</code>/<code>attempt-runtime</code>/<code>v15-runner</code>/<code>execute-step-reset</code> 均 rc=0；<code>npx tsc --noEmit</code> 空输出 rc=0</td></tr>
+        <tr><td>过程中抓到的自己的错</td><td>第一次 tsc 报 1 处 <code>TS2367</code>（在复位之后比较字面量联合类型）；改为复位前取快照后清零。注：那一条当时打印的 <code>RC=0</code> 是管道假象，真实判据是重跑后的空输出＋rc=0</td></tr>
+      </tbody>
+    </table>
+    <div class="callout ok">
+      <strong>这条闸现在就在您这台机器上生效：</strong>可用内存低于 3,254 MB 时，批量执行会在启动 Photoshop 之前被拒，界面说清「当前还剩多少、需要多少、未执行的语言不扣费、重启 Photoshop 后再点全部执行」。它不清缓存、不杀进程、不动任何已完成的稿子。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4 · 没做的部分（说在前面）</h2>
+    <div class="two">
+      <div>
+        <h3>本轮刻意不做</h3>
+        <p class="notes">不给单语链加闸（账务面不同，需单独审）；不改执行器 JSX；不做「跑到一半暂停再续」——那需要先把执行恢复锁的人工出口补上，而那条动回执与计费语义，得您点头。</p>
+      </div>
+      <div>
+        <h3>还没验证</h3>
+        <p class="notes">没有真起助手服务做端到端 HTTP 验证（会与正在运行的助手抢 49152 端口），验证方式是纯函数真机调用＋静态接线断言；没有浏览器实机点击验证中止文案；阈值线缺用户机分布数据；改动未打包、未发布、未 bump 助手版本。</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <strong>要出厂还差两拍：</strong>助手侧行为要落到用户机上必须真建 exe 并同步版本身份（9 文件＋1 exe），那是发布线的独立动作；本轮只到「源码＋自检」。
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>图译工坊 · 批量执行内存闸线 · 对抗式审查＋落地</span>
+    <span>2026-10-20 · 基线 develop@bd2c860 · 未提交</span>
+  </footer>
+
+</div>
+</body>
+</html>

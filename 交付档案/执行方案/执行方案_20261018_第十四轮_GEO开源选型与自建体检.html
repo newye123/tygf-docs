@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GEO 开源选型与自建体检 · 作业面（2026-10-18 第十四轮）</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#12161d;--surface:#1a2029;--sunk:#141a22;--ink:#e8edf5;--ink-2:#b7c2d2;--muted:#8a97aa;--line:#2a3342;--line-strong:#3a465a;--accent:#7aa7f0;--accent-soft:#1d2942;--ok:#67d3a6;--ok-soft:#14301f;--bad:#f08b82;--bad-soft:#331a18;--warn:#e6bd6a;--warn-soft:#312714}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.62;font-size:15px}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(21px,3.3vw,31px);line-height:1.22;margin:6px 0 8px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:10px;padding:14px 16px;margin:14px 0 20px}
+.verdict b{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:16px 0 22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .n{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1.1}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+.stat.good .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5}
+nav button{font:inherit;font-size:13px;padding:7px 13px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);cursor:pointer}
+nav button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+section{display:none}section.on{display:block}
+h2{font-family:var(--font-display);font-size:19px;margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:16px 0 6px}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;margin:10px 0 18px}
+th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--sunk);font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+code,kbd{font-family:var(--font-mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong)}
+.p-ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.p-bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.p-warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.p-na{background:var(--sunk);color:var(--muted);border-color:transparent}
+ul.notes{padding-left:20px;margin:8px 0 16px}ul.notes li{margin:5px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin:10px 0}
+.card.cut{border-left:4px solid var(--bad)}
+.card.keep{border-left:4px solid var(--ok)}
+.cmd{display:flex;gap:8px;align-items:center;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0}
+.cmd code{flex:1;background:none;padding:0;white-space:nowrap;overflow:auto}
+.cmd button{font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.bar{height:9px;background:var(--sunk);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+label.task{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);margin:7px 0;cursor:pointer}
+label.task:hover{border-color:var(--line-strong)}
+label.task input{margin-top:4px;flex:none}
+label.task.done{opacity:.62;background:var(--sunk)}
+label.task .who{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">图译工坊 · GEO 与对外文案线 · 第十四轮 · 2026-10-18 上午</div>
+  <h1>GEO 开源工具选型、对抗式审查与自建体检（作业面）</h1>
+  <div class="eyebrow">Owner 令：到 GitHub 与网上看开源参考与其他解决方案 → 对抗式审查 → 执行方案 → 更进一步的 HTML</div>
+</header>
+
+<div class="verdict">
+  <b>一句话结论：开源生态能借的是「规范与度量形状」，不是「再装一个工具」。</b><br>
+  我们页面结构按对方 rubric v2 已得 <b>87.4/100（Excellent 档）</b>，而百度 <code>site:tuyigf.com</code> <b>0 条收录</b>、品牌词前排 <b>0 条本站</b>。
+  分数测的是「页面准备好了没」，不测「你在不在场」——所以清单上任何一款工具都解决不了当前的真瓶颈。
+</div>
+
+<div class="stats">
+  <div class="stat good"><div class="n">87.4</div><div class="l">结构体检归一分（83/95，自建脚本，非对方工具）</div></div>
+  <div class="stat bad"><div class="n">0</div><div class="l">百度 site: 收录条数（双次复采）</div></div>
+  <div class="stat bad"><div class="n">0 / 20</div><div class="l">品牌词「图译工坊」前排本站命中</div></div>
+  <div class="stat warn"><div class="n">1.3%</div><div class="l">四词 76 条前排里产品/工具页形态占比</div></div>
+  <div class="stat"><div class="n">8</div><div class="l">已评估开源仓库（含 1 个许可不明、1 个无 LICENSE）</div></div>
+  <div class="stat"><div class="n">5</div><div class="l">对抗式审查砍掉/降级的自我提案</div></div>
+</div>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-t="s1">① 选型评估</button>
+  <button role="tab" aria-selected="false" data-t="s2">② 缺口映射</button>
+  <button role="tab" aria-selected="false" data-t="s3">③ 体检读数</button>
+  <button role="tab" aria-selected="false" data-t="s4">④ 对抗式审查</button>
+  <button role="tab" aria-selected="false" data-t="s5">⑤ 作业面（可勾选）</button>
+  <button role="tab" aria-selected="false" data-t="s6">⑥ 待拍与红线</button>
+</nav>
+
+<section id="s1" class="on">
+  <h2>候选仓库逐一判定（元数据本轮实测于 api.github.com）</h2>
+  <table>
+    <thead><tr><th>仓库</th><th>★/fork/issue</th><th>许可</th><th>最近推送</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td><code>Auriti-Labs/geo-optimizer-skill</code></td><td>1114 / 125 / 5</td><td>MIT</td><td>2026-10-17</td><td><span class="pill p-ok">借 rubric v2</span> <span class="pill p-bad">不装代码</span><br><span style="font-size:12.5px;color:var(--muted)">README 自注 llms.txt「ignored by Google Search」，并带 geoready.dev UTM 对照表 ⇒ 分数口径厂商自定义</span></td></tr>
+      <tr><td><code>elmohq/elmo</code></td><td>466 / 104 / <b>131</b></td><td>MIT</td><td>2026-10-17</td><td><span class="pill p-bad">否决</span> 平台型需自托管＋131 未闭 issue＝新增运维面</td></tr>
+      <tr><td><code>ai-search-guru/getcito-…</code></td><td>491 / 97 / 12</td><td><b>NOASSERTION</b></td><td>2026-09-28</td><td><span class="pill p-bad">排除</span> 许可不明，不得进任何链路</td></tr>
+      <tr><td><code>mverab/eGEOagents</code></td><td>204 / 58 / 2</td><td>MIT</td><td>2026-10-17</td><td><span class="pill p-na">暂不看</span> 依赖各家 LLM key，与"无 key"现状不匹配</td></tr>
+      <tr><td><code>alexpospekhov/searchstack-aeo</code></td><td>107 / 14 / 8</td><td>MIT</td><td>2026-09-29</td><td><span class="pill p-na">低优先</span> 海外覆盖为主</td></tr>
+      <tr><td><code>fenjo26/OpenGSC</code></td><td>45 / 28 / 0</td><td>MIT</td><td>2026-10-16</td><td><span class="pill p-warn">待拍</span> 对上真缺口（回看节拍），但要 GSC OAuth＋常驻服务＋新上云面</td></tr>
+      <tr><td><code>Hormold/indexplease</code></td><td>6 / 1 / 1</td><td><b>无 LICENSE</b></td><td>2025-12-16</td><td><span class="pill p-na">只当形状</span> 我们已有 <code>scripts/submit-indexnow.mjs</code></td></tr>
+      <tr><td><code>waahah/pushSitemapUrls</code>／<code>CalmXin/xin-push-baidu</code></td><td>9／2</td><td>Apache-2.0／—</td><td>2023／2022</td><td><span class="pill p-ok">不必借壳</span> 百度推送＝一个 POST＋token，三十行自写更可控</td></tr>
+    </tbody>
+  </table>
+  <h3>中文商业侧（"其他解决方案"）</h3>
+  <p>软文街 GEO 监测、GEOBase、AIDSO 爱搜、ImpetaAI、Profound、Daydrm、GoodieAI、Ahrefs BrandRadar、Semrush AI Toolkit、Writesonic BrandMonitor。共同形态＝仪表盘＋订阅（文中出现 $19/月、$95/月起价，<b>均为厂商口径、未核价</b>）。Owner 既定"不投放、轻资产"，且这类工具要我们的品牌词表与内容权限 ⇒ <b>本轮不选</b>，只抄它们的指标口径（下一节）。</p>
+</section>
+
+<section id="s2">
+  <h2>把候选对着真缺口摆一遍</h2>
+  <table>
+    <thead><tr><th>真缺口（实测出处）</th><th>开源能否补</th><th>处置</th></tr></thead>
+    <tbody>
+      <tr><td>百度收录 0 条、品牌词 0 命中（测量记录 §三）</td><td><span class="pill p-bad">不能</span> 没有任何工具能替我们拿到收录</td><td>归 Owner 两格；我只备脚本</td></tr>
+      <tr><td>提交后零回看零基线（根账 ISSUES.md:87 #138）</td><td>部分能（<code>geo history/drift</code>、OpenGSC）</td><td>自建基线脚本，不装别人代码</td></tr>
+      <tr><td>缺教程型承接页（根账 #179，本轮新立）</td><td><span class="pill p-na">无关工具</span></td><td>产品决策，等拍</td></tr>
+      <tr><td>AI 是否引用我们／引用谁／排第几</td><td><code>geo citations</code> 要 BYO key，provider 列表<b>没有豆包</b></td><td>用我们自己的 Tabbit 真账号适配器，升到 n=5＋位次＋引用源</td></tr>
+      <tr><td>结构可读性打分</td><td><span class="pill p-ok">能</span>（rubric 公开）</td><td><b>本轮已自建实现</b>（见 ③）</td></tr>
+      <tr><td>llms.txt 是否陈旧</td><td>能（<code>geo llms</code> exit 1）</td><td>并入自建体检项，不进仓库门</td></tr>
+    </tbody>
+  </table>
+  <h3>只从商业工具抄这三件口径</h3>
+  <ul class="notes">
+    <li><b>提及率 / Top3 推荐率 / 首位推荐率</b>——我们现在的复测只有"有没有提到"。</li>
+    <li><b>信源溯源</b>（citation hosts）——首页 DOM 里 0 个 <code>&lt;a&gt;</code>，须走网络响应捕获。</li>
+    <li><b>位次</b>（品牌落在回答第几段）＋<b>每问采样 5 次</b>（对方 README 明写"AI answers vary run to run"）——昨日 3/3 是单发读数，形状不够硬。</li>
+  </ul>
+</section>
+
+<section id="s3">
+  <h2>自建体检读数（<code>tmp/geo-audit-self.mjs</code>，输入＝本地已抓 11 个公开资产，零网络零第三方代码）</h2>
+  <table>
+    <thead><tr><th>类别</th><th>得分 / 已评满分</th><th>类满分</th><th>未评</th></tr></thead>
+    <tbody>
+      <tr><td>google_ai</td><td>20 / 20</td><td>20</td><td>1</td></tr>
+      <tr><td>robots</td><td>14 / 14</td><td>14</td><td>0</td></tr>
+      <tr><td>schema</td><td>12 / 14</td><td>14</td><td>0</td></tr>
+      <tr><td>content</td><td>11 / 12</td><td>14</td><td>1</td></tr>
+      <tr><td>brand_entity</td><td>6 / 11</td><td>12</td><td>1</td></tr>
+      <tr><td>meta</td><td>11 / 11</td><td>11</td><td>0</td></tr>
+      <tr><td>llms</td><td>6 / 6</td><td>6</td><td>0</td></tr>
+      <tr><td>signals</td><td>3 / 6</td><td>6</td><td>0</td></tr>
+      <tr><td>ai_discovery</td><td>0 / 1</td><td>3</td><td>2</td></tr>
+    </tbody>
+  </table>
+  <p><b>TOTAL 83 / 已评 95 ⇒ 归一 87.4</b>（对方分档 Excellent）。<span class="pill p-warn">警告</span> 该分含 3 项代理判据（word count／front-loading／brand coherence），5 项未评<b>不冒充 0 分</b>；且我方只解析静态 HTML（无 JS 渲染 DOM）⇒ <b>不可与上游工具分数互比</b>，只用于同脚本前后对比。</p>
+  <h3>7 条真 FAIL</h3>
+  <ul class="notes">
+    <li><code>schema_article</code> −2：全站无 Article/BlogPosting（因为我们没有任何内容页可标）。</li>
+    <li><code>content_links</code> −1：<b>首页零站外引用链接</b>（实测 0 条）。</li>
+    <li><code>brand_kg_readiness</code> −4：schema 无 <code>sameAs</code>（外部主体页尚不存在，填了就是假信号）。</li>
+    <li><code>geo_identity</code> −1：无主体/地址信息（无主体是既成事实，不伪造）。</li>
+    <li><code>signals_rss</code> −1：<code>feed.xml</code> 线上 404。</li>
+    <li><code>signals_freshness</code> −2：<b>无 datePublished/dateModified ⇒ 新鲜度不可证</b>。</li>
+    <li><code>ai_txt</code> −1：<code>/ai.txt</code> 404。</li>
+  </ul>
+  <h3>两条我自己的假阴性（当场纠掉，比分数值钱）</h3>
+  <ul class="notes">
+    <li><code>content_numbers</code> 原判 0 ⇒ 实际正文有「12 语种／12 个／48 个」，我的正则不容空格。<b>已修并重跑</b>。</li>
+    <li><code>about_contact</code> 原判 0 ⇒ 线上 JSON-LD 里本就有 <code>contactPoint</code>（<code>tuyi@tuyigf.com</code>＋availableLanguage zh-CN/en），页面还有"联系作者／微信 tuyigf／小红书 图译工坊"，我只查了 <code>mailto:</code> 锚点。<b>已修并重跑</b>。</li>
+  </ul>
+  <h3>CI 门槛形状已验</h3>
+  <div class="cmd"><code>node tmp/geo-audit-self.mjs /tmp/site --threshold=90 &amp;&amp; echo PASS</code><button data-cmd="node tmp/geo-audit-self.mjs /tmp/site --threshold=90">复制</button></div>
+  <p style="font-size:13px;color:var(--muted)">实测：带 <code>--threshold=90</code> ⇒ exit 1；不带 ⇒ exit 0。原始 stdout 落盘 <code>tmp/geo-audit-out.txt</code>。</p>
+</section>
+
+<section id="s4">
+  <h2>对抗式审查：审我自己刚提的方案</h2>
+  <div class="card cut"><b>砍 1｜我本来想直接 <code>uvx --from geo-optimizer-skill geo audit</code> 跑一把。</b><br>
+  <code>uvx</code> 在是"能不能"，不是"该不该"。那是<b>在 Owner 机器上执行第三方代码</b>：它会抓我们的 URL／robots／llms，并可能写 <code>~/.geo-optimizer/</code> 下的 sqlite（其 <code>config.py:90-91</code> 就定义 <code>TRACKING_DB_PATH</code>／<code>SNAPSHOTS_DB_PATH</code>）。仓库纪律＝不擅自装系统级依赖、只动授权目录。⇒ 改为<b>读规范原文＋跑我们自己的脚本</b>：信息量一样（权重表 100% 取到），执行风险归零。</div>
+  <div class="card cut"><b>砍 2｜差点把它给的分数当成我们的"排名"。</b> 厂商自定义权重（llms 只值 6 分）与我们实测结论（在场才是瓶颈）不同轴。⇒ 分数<b>禁止</b>写进对外主张或台账当排名，只作同脚本前后比。</div>
+  <div class="card cut"><b>降级 3｜顺手接 OpenGSC／Plausible 补"无统计"。</b> 自托管分析会<b>新增一类上云数据</b>，必须先改隐私政策与 <code>/privacy/subprocessors</code>（LEGAL-1 家族）＝对外承诺面变更 ⇒ 待拍，不擅动。</div>
+  <div class="card cut"><b>排除 4｜许可雷。</b> getcito <code>NOASSERTION</code>、indexplease 无 LICENSE ⇒ 只看 star 数就引进来，等于把身份不明授权写进链路。</div>
+  <div class="card cut"><b>砍 5｜"再建一个门"的诱惑。</b> 已有 <code>smoke-seo-consistency</code>、#172 sitemap 对等门、<code>tmp/scan-copy</code> 13 类禁写机扫、<code>geo-retest-v2.js</code>。再加一份重叠守卫＝多一处会腐烂的断言 ⇒ 体检脚本<b>留 tmp/ 不进仓库</b>。</div>
+  <div class="card keep"><b>保留：把"分数高 × 在场为零"这个对照做成对外叙事。</b> 这是本轮唯一能同时解释 #179（缺承接形态）与 #138（零回看）的一句话，也是下一次拍板排序的依据。</div>
+</section>
+
+<section id="s5">
+  <h2>作业面（勾选存本机浏览器，可导出）</h2>
+  <div class="bar"><i id="pbar"></i></div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:8px"><span id="ptext">0 / 0</span> · 进度只存本机 localStorage，不上传</div>
+  <div id="tasks"></div>
+  <h3>命令面板</h3>
+  <div class="cmd"><code>node tmp/geo-audit-self.mjs /tmp/site</code><button data-cmd="node tmp/geo-audit-self.mjs /tmp/site">复制</button></div>
+  <div class="cmd"><code>node tmp/check-deeplink.mjs</code><button data-cmd="node tmp/check-deeplink.mjs">复制</button></div>
+  <div class="cmd"><code>node tmp/serp-classify.js "F:/工具开发/图译工坊内测版/tmp"</code><button data-cmd="node tmp/serp-classify.js &quot;F:/工具开发/图译工坊内测版/tmp&quot;">复制</button></div>
+  <div class="cmd"><code>node scripts/send-feishu-report.mjs &lt;报告.md&gt; &lt;标题&gt;</code><button data-cmd="node scripts/send-feishu-report.mjs 交付档案/执行方案/执行方案_20261017_第十四轮_GEO开源选型与自建体检.md &quot;GEO 第十四轮 · 开源选型与自建体检&quot;">复制并带参数</button></div>
+  <button id="exp" style="font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;margin-top:6px">导出勾选状态（JSON）</button>
+  <button id="clr" style="font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);cursor:pointer;margin-top:6px">清空本机进度</button>
+</section>
+
+<section id="s6">
+  <h2>待 Owner 拍（四格）与红线</h2>
+  <table>
+    <thead><tr><th>#</th><th>要拍什么</th><th>代价／不做后果</th></tr></thead>
+    <tbody>
+      <tr><td>S3</td><td>教程型承接页建不建（#179）</td><td>不建＝站外稿继续替 CSDN/知乎挣流量；建＝新增对外承诺页，须逐条过禁写清单，且首页要给分类入口（否则孤儿页）</td></tr>
+      <tr><td>S4</td><td>百度站长 token</td><td>给了即接 <code>submit-baidu.mjs</code>（自写，不借旧仓）。另：出包须盯 IndexNow 密钥 <code>develop=N／main=Y</code>（根账 ISSUES.md:981），从 develop 出包会断链</td></tr>
+      <tr><td>S5</td><td>GSC／Bing 回看节拍归谁（#138 剩余）</td><td>10-14 实拍后无第二次读数；若要常驻看板，OpenGSC 是唯一像样开源件，但带来自托管服务＋新上云面（隐私页须同步）</td></tr>
+      <tr><td>S6</td><td>是否继续给 llms.txt 加码</td><td><span class="pill p-ok">建议不加</span> 已满分 6/6；对方 rubric 自注「Google 搜索忽略」＝第三方口径，Google 官方页本机 <code>curl http=000</code> 取不到 ⇒ 官方原文未核实</td></tr>
+    </tbody>
+  </table>
+  <h3>红线（本轮与后续都适用）</h3>
+  <ul class="notes">
+    <li>不部署生产、不翻支付 flag、不碰生产 Content Studio 写锁、不删档。</li>
+    <li>不在 Owner 机器上擅自安装/执行第三方代码（本轮已按此砍掉第一条）。</li>
+    <li>许可不明（NOASSERTION／无 LICENSE）的开源件不得进入任何链路。</li>
+    <li>新增任何上云数据类别前，必须先改隐私政策与第三方处理方清单。</li>
+    <li>密钥只走环境变量或后台 ApiCredential；<code>sameAs</code> 等外部主体页不存在时不得预填。</li>
+  </ul>
+  <h3>未核实清单（不写成结论）</h3>
+  <ul class="notes">
+    <li>Google 官方对 llms.txt / meta keywords 的口径（本机取不到原文）。</li>
+    <li>Google／Bing／360／搜狗侧收录与 SERP 形态（本轮只测百度）。</li>
+    <li>商业 GEO 工具的价格与效果数字（全部厂商口径）。</li>
+    <li><code>summary.json</code> 与 markdown negotiation（curl 超时／未做，记未评不记 0）。</li>
+  </ul>
+</section>
+
+<footer>
+  产物：方案 <code>交付档案/执行方案/执行方案_20261018_第十四轮_GEO开源选型与自建体检.md</code> ｜ 本作业面同名 <code>.html</code><br>
+  规范原文：/tmp/rubric.md（12,218 B）、/tmp/cfg.py（39,475 B，权重块 :562-610）、/tmp/geo_skill_readme.md（32,630 B）｜ 读数：/tmp/site/（11 个公开资产）、tmp/geo-audit-out.txt<br>
+  上一轮：第十二轮（册子对表＋页面归属表）、第十三轮（第二链接＋门槛判据）；两处自我更正已落文件。<br>
+  结构体检与选型读数为 2026-10-18 上午本会话实测；SERP 形态与百度收录在场性读数为 2026-10-17 夜本会话实测（见第十二/十三轮）。勾选项只存本机。
+</footer>
+</div>
+
+<script>
+const TASKS=[
+ {id:'S1',who:'我（今天可做）',t:'自建体检脚本升级为每日基线：跑一次落一行 JSON（normalized/fails/as_of），连续两天同分才算基线成立'},
+ {id:'S2',who:'我（明日）',t:'geo-retest-v2.js 升三列：位次（第几段／是否 Top3 推荐）、citation_hosts（走网络响应捕获）、每问 n=5 采样取最频值'},
+ {id:'S3',who:'Owner 拍',t:'教程型承接页 /guide/psd-batch-replace-text 建不建；建则首页须给分类入口'},
+ {id:'S4',who:'Owner 给 token',t:'百度站长主动推送：我自写 submit-baidu.mjs（约 30 行，不借旧仓），并挂 npm 入口'},
+ {id:'S5',who:'Owner 拍',t:'GSC/Bing 回看节拍归属：每月打开覆盖报告＋拍三件套基线（site: 数、品牌词 SERP、AI 引用源）'},
+ {id:'S6',who:'建议不做',t:'llms.txt 继续加码（已满分 6/6，对方口径称 Google 搜索忽略）'},
+ {id:'V1',who:'我已做完',t:'8 个开源仓元数据实测＋rubric v2 权重全取（含许可排查：1 个 NOASSERTION、1 个无 LICENSE）'},
+ {id:'V2',who:'我已做完',t:'自建体检跑通：83/95＝87.4，7 条 FAIL，2 条假阴性当场纠掉，--threshold 形状 exit 1 已验'},
+ {id:'V3',who:'我已做完',t:'对抗式审查砍掉/降级 5 条自我提案（含"直接 uvx 跑第三方代码"）'},
+];
+const KEY='ytgf-r14-tasks';
+const store=JSON.parse(localStorage.getItem(KEY)||'{}');
+const box=document.getElementById('tasks');
+function render(){
+  box.innerHTML='';let done=0;
+  TASKS.forEach(k=>{
+    const on=!!store[k.id];if(on)done++;
+    const l=document.createElement('label');l.className='task'+(on?' done':'');
+    l.innerHTML='<input type="checkbox" '+(on?'checked':'')+'><span><b>'+k.id+'</b> · '+k.t+'<br><span class="who">'+k.who+'</span></span>';
+    l.querySelector('input').addEventListener('change',e=>{store[k.id]=e.target.checked;if(!e.target.checked)delete store[k.id];localStorage.setItem(KEY,JSON.stringify(store));render();});
+    box.appendChild(l);
+  });
+  document.getElementById('pbar').style.width=(done/TASKS.length*100)+'%';
+  document.getElementById('ptext').textContent=done+' / '+TASKS.length+' 已勾';
+}
+render();
+document.getElementById('exp').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify({as_of:new Date().toISOString(),store},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='geo-r14-progress.json';a.click();
+});
+document.getElementById('clr').addEventListener('click',()=>{localStorage.removeItem(KEY);render();});
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b?'true':'false'));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));
+}));
+document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(b.dataset.cmd);const o=b.textContent;b.textContent='已复制';setTimeout(()=>b.textContent=o,1200);}catch(e){b.textContent='复制失败';}
+}));
+</script>
+</body>
+</html>

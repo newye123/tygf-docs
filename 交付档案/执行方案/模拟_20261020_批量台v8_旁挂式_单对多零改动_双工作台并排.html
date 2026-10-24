@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量台 v8 · 旁挂式（单对多工作台零改动）· 双工作台并排模拟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f7f7f5;--surface:#fff;--sunk:#f0efec;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;
+ --line:#e2e3df;--line2:#d3d5cf;--teal:#009588;--teal-soft:#e2f3f1;--emerald:#009767;--emerald-soft:#e3f5ee;
+ --amber:#9a6505;--amber-soft:#fff7e7;--rose:#b3261e;--rose-soft:#fbeae8;--blue:#1b5bd0;--blue-soft:#e8effc;
+ --violet:#6b3fa0;--violet-soft:#f0e9fa;
+ --r:16px;--r-sm:12px;--font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+ --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.68;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1560px;margin:0 auto;padding:22px 18px 70px}
+.doc{display:flex;flex-direction:column;gap:11px;margin-bottom:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.28rem,2.6vw,1.7rem);line-height:1.28;font-weight:700;max-width:48ch;text-wrap:balance}
+.standfirst{margin:0;max-width:94ch;color:var(--ink2);font-size:.92rem}
+.premise{background:#fff8e6;border:1px solid #e6c98a;border-left:3px solid #b07c1a;border-radius:var(--r-sm);padding:13px 16px;font-size:.88rem;color:#6b4a09}
+.premise b{color:#4d3406}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);align-self:flex-start}
+.tabs button{border:0;background:transparent;padding:7px 15px;border-radius:999px;font-size:.85rem;font-weight:600;color:var(--ink2)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.pair{display:grid;grid-template-columns:minmax(0,0.86fr) minmax(0,1.14fr);gap:14px;align-items:start}
+.pane{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.pane-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--line);background:#fbfbfa}
+.pane-h .t{font-size:.92rem;font-weight:700}
+.pane-h .r{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pane-b{padding:14px 15px;display:flex;flex-direction:column;gap:12px}
+.frozen{background:repeating-linear-gradient(135deg,#fbfbf9,#fbfbf9 9px,#f4f4f0 9px,#f4f4f0 18px);border-top:1px dashed var(--line2);padding:7px 13px;font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:7px}
+.card{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.88rem;font-weight:700;margin:0 0 3px}
+.card-s{font-size:.76rem;color:var(--muted);margin:0 0 9px}
+.stack{display:flex;flex-direction:column;gap:11px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:6px 12px;font-size:.82rem;font-weight:600;color:var(--ink)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.amber{border-color:#d9a84f;color:var(--amber);background:var(--amber-soft)}
+.btn.sm{padding:3px 8px;font-size:.75rem;border-radius:8px}
+.input{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 11px;font-size:.84rem;font-family:var(--mono);background:var(--surface);color:var(--ink)}
+.pill{font-family:var(--font-mono);font-size:.66rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.blue{background:var(--blue-soft);border-color:#c3d6f5;color:#12408f}
+.pill.violet{background:var(--violet-soft);border-color:#d5c2ee;color:#4a2778}
+.pill.gray{background:var(--sunk);color:var(--muted)}
+.note{font-size:.77rem;color:var(--muted);max-width:96ch}
+.filecard{border:1px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:11px}
+.filecard .fn{font-family:var(--mono);font-size:.86rem;font-weight:600}
+.filecard .sub{font-size:.75rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:3px 11px}
+.filecard .sp{margin-left:auto;display:flex;gap:7px}
+.langrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.lchip{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:4px}
+.lchip.src{border-color:var(--teal);color:#0a6f69;background:var(--teal-soft)}
+.lchip.on{border-color:var(--teal);background:var(--teal);color:#fff}
+.lchip.on.unconfirmed{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}
+.lchip.off{color:var(--muted);border-style:dashed;background:transparent}
+.lchip .pk{font-family:var(--mono);font-size:.64rem;opacity:.85}
+table.plain{border-collapse:collapse;width:100%;font-size:.78rem}
+table.plain th{font-family:var(--font-mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line2);background:var(--sunk);white-space:nowrap}
+table.plain td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plain td.m{font-family:var(--font-mono);font-size:.74rem}
+table.plain tr:last-child td{border-bottom:none}
+.st{font-size:.7rem;font-family:var(--mono);padding:1px 6px;border-radius:999px;display:inline-block}
+.st.ok{background:var(--emerald-soft);color:#0a5a41}.st.empty{background:var(--rose-soft);color:var(--rose)}
+.st.dup{background:var(--amber-soft);color:var(--amber)}.st.conflict{background:var(--amber-soft);color:var(--amber)}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.7rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--font-mono);font-size:.63rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:5px 2px;text-align:center;min-width:52px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:9px;min-width:160px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:4px 9px;border-right:1px solid var(--line);min-width:160px;font-weight:500}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f5fbfb}
+.cell{border:0;background:transparent;width:100%;min-height:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px}
+.cell .cs{font-family:var(--mono);font-size:.67rem;font-weight:600}
+.cell .cb{font-size:.55rem;color:var(--muted);line-height:1}
+.cell.sel{outline:2px solid var(--ink);outline-offset:-2px}
+.sc-def{background:#eef4f1;color:#245043}
+.sc-slice{background:var(--blue-soft);color:#12408f}
+.sc-ovr{background:var(--violet-soft);color:#4a2778}
+.sc-sup{background:var(--amber-soft);color:var(--amber)}
+.sc-none{background:transparent;color:#b3b8b3}
+.sc-miss{background:transparent;color:var(--rose);box-shadow:inset 0 0 0 1px var(--rose)}
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:420px}
+.ev{border-radius:var(--r-sm);padding:8px 11px;font-size:.8rem;display:flex;flex-direction:column;gap:2px}
+.ev.ok{background:var(--emerald-soft);border:1px solid #b8e0cd;color:#0a5a41}
+.ev.warn{background:var(--amber-soft);border:1px solid #eec87c;color:var(--amber)}
+.ev.info{background:var(--blue-soft);border:1px solid #c3d6f5;color:#12408f}
+.ev.plain{background:var(--sunk);border:1px solid var(--line);color:var(--ink2)}
+.ev b{font-weight:700}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:11px}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;display:flex;flex-direction:column;gap:5px}
+.gate .n{font-family:var(--font-mono);font-size:.68rem;color:var(--teal);letter-spacing:.08em}
+.gate h3{margin:0;font-size:.9rem;font-weight:700}
+.gate p{margin:0;font-size:.8rem;color:var(--ink2)}
+.gate code{background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.76em}
+footer.docf{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;font-size:.77rem;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+@media (max-width:1200px){.pair{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow"><span>对抗式审查 · 第五轮</span><span class="sep">/</span><span>批量台 v8 · 旁挂式</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>前提：单对多工作台不能改，批量台只能「旁挂」</h1>
+  <p class="standfirst">Owner 定的硬前提：<b>现在的单对多工作台不能修改调整，一定要保留</b>。查代码发现这条前提<b>仓库里早就有成文标准</b>——<span class="mono">app-shell.tsx:41-47</span>「#workbench：单文件工作台，多稿能力一律不渲染（<b>与原行为逐字节一致</b>）」、<span class="mono">workbench-view.tsx:252-258</span>「这从结构上杜绝了『多 PSD 实验顶替原工作台』再次发生」。<b>我前五轮违反了它</b>：我在改共享组件（<span class="mono">csv-step.tsx</span> 的多选语义、<span class="mono">buildRowsByLang()</span>、<span class="mono">review-step.tsx</span> 的回写键）——即使加了 <span class="mono">batchMode</span> 分支，共用文件一改，单文件台就有被顺带改到的风险。这一版改成<b>只加不改</b>。</p>
+
+  <div class="premise">
+    <b>本轮形态：旁挂（side-by-side），不是改造共享组件。</b><br>
+    <b>单对多工作台</b> ＝ 现在的样子，<b>零改动</b>（新能力一行不加、一行不改、不加新分支、不引新依赖）；<b>多对多工作台</b> ＝ 新代码（<b>新组件 + 新模块</b>），只在 <span class="mono">batchMode</span> 分支里挂载。两者<b>并列</b>，互不引用。
+  </div>
+
+  <div class="tabs" role="group" aria-label="视图切换">
+    <button type="button" data-view="pair" aria-pressed="true">并排对照（单对多 ｜ 多对多）</button>
+    <button type="button" data-view="gates" aria-pressed="false">不变式清单与四道闸</button>
+  </div>
+</header>
+
+<!-- ① 并排 -->
+<section id="v-pair">
+  <div class="pair">
+
+    <!-- 左：单对多工作台（原样保留） -->
+    <div class="pane">
+      <div class="pane-h">
+        <span class="t">单对多工作台</span>
+        <span class="pill gray">#workbench</span>
+        <span class="pill teal">本次零改动</span>
+        <div class="r"><span class="pill gray">与原行为逐字节一致</span></div>
+      </div>
+      <div class="pane-b">
+        <div class="row">
+          <strong style="font-size:.95rem">准备素材</strong>
+          <span class="mono" style="font-size:.75rem;color:var(--muted)">draft-a.psd · 原文 · 德语 · 法语</span>
+        </div>
+        <div class="card plain">
+          <p class="card-t">选择设计文件 · 只读预扫描</p>
+          <p class="card-s">选一个设计文件，只读预扫描。</p>
+          <div class="stack">
+            <div class="row">
+              <input class="input" style="flex:1 1 200px" value="D:\项目\draft-a.psd" readonly>
+              <button class="btn">选择文件…</button>
+              <button class="btn primary">扫描</button>
+            </div>
+            <div class="filecard">
+              <span style="font-size:18px">📁</span>
+              <div style="min-width:0">
+                <div class="fn">draft-a.psd</div>
+                <div class="sub"><span>已扫描</span><span>3 个文字图层</span></div>
+              </div>
+              <div class="sp"><button class="btn sm">重新扫描</button><button class="btn sm">移除</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="card plain">
+          <div class="row">
+            <span class="lchip src">原文</span>
+            <span class="lchip on unconfirmed">德语 <span class="pk">待确认</span></span>
+            <span class="lchip on">法语</span>
+            <button class="btn sm">选择语言</button>
+            <button class="btn sm amber">重选译文表</button>
+          </div>
+        </div>
+        <div class="card plain">
+          <p class="card-t">智能检测 · 逐语言审查</p>
+          <p class="card-s">德语 3 处待确认　·　法语已确认</p>
+          <div class="scroller" style="max-height:230px">
+            <table class="plain">
+              <thead><tr><th style="width:32px">#</th><th>原文</th><th>译文</th><th style="min-width:120px">状态</th></tr></thead>
+              <tbody>
+                <tr><td class="m">1</td><td>Buy Now</td><td>Jetzt kaufen</td><td><span class="st ok">正常</span></td></tr>
+                <tr><td class="m">2</td><td>Free Shipping</td><td>Versand kostenlos</td><td><span class="st ok">正常</span></td></tr>
+                <tr><td class="m">3</td><td>30-Day Money-Back Guarantee</td><td></td><td><span class="st empty">译文为空</span></td></tr>
+                <tr><td class="m">4</td><td>In stock — ships in 24h</td><td>Auf Lager</td><td><span class="st ok">正常</span></td></tr>
+                <tr><td class="m">5</td><td>View the Collection</td><td>Die Kollektion ansehen</td><td><span class="st dup">重复原文</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="frozen"><span class="pill teal">🔒</span><span>本次改造<b>不碰这个工作台</b>：不新增 UI、不改文案、不加分支、不引依赖、不改共享组件的默认行为。</span></div>
+    </div>
+
+    <!-- 右：多对多工作台（旁挂） -->
+    <div class="pane">
+      <div class="pane-h">
+        <span class="t">多对多工作台</span>
+        <span class="pill blue">#batch</span>
+        <span class="pill amber">本次改造全部落在这里</span>
+        <div class="r">
+          <span class="pill gray">12 稿</span><span class="pill gray">12 语种</span><span class="pill gray">144 份交付物</span>
+        </div>
+      </div>
+      <div class="pane-b">
+        <div class="row">
+          <strong style="font-size:.95rem">准备素材</strong>
+          <span class="mono" style="font-size:.75rem;color:var(--muted)">12 SKU · 8 张表</span>
+          <div class="row" style="margin-left:auto;gap:6px">
+            <button class="btn sm">全部扫描（按顺序）</button>
+            <button class="btn sm">配表提案</button>
+          </div>
+        </div>
+
+        <div class="card plain">
+          <p class="card-t">来源矩阵 · 每格从哪张表取行</p>
+          <p class="card-s">新组件 <span class="mono">source-matrix.tsx</span>（批量台专用，单文件台不挂载）。格＝一份交付物；第二行＝关系类型。</p>
+          <div id="mxHost"></div>
+          <div class="row" style="margin-top:8px;gap:12px;font-size:.72rem;color:var(--muted)">
+            <span><i class="lg" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#eef4f1;border:1px solid var(--line2)"></i> 默认（主表）</span>
+            <span><i class="lg" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--blue-soft);border:1px solid #c3d6f5"></i> 切片</span>
+            <span><i class="lg" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--violet-soft);border:1px solid #d5c2ee"></i> 语种覆盖</span>
+            <span><i class="lg" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--amber-soft);border:1px solid #eec87c"></i> 补充表</span>
+          </div>
+        </div>
+
+        <div class="card plain">
+          <p class="card-t">选中格详情</p>
+          <p class="card-s">点上面任一格。这里显示这一格合并后的行集与冲突检查。</p>
+          <div id="cellPanel"></div>
+        </div>
+
+        <div class="card plain">
+          <p class="card-t">例外配置（用户只有三种操作）</p>
+          <div class="row">
+            <button class="btn sm">换这稿的主表</button>
+            <button class="btn sm">把某几门语言指到别的表</button>
+            <button class="btn sm">给这稿加一张补充表</button>
+            <span class="note" style="flex:1 1 220px">其余 144 格由系统推导并画出来——<b>例外驱动，零操作起步</b>。</span>
+          </div>
+        </div>
+      </div>
+      <div class="frozen" style="border-top-style:solid;border-top-color:var(--teal);background:var(--teal-soft)"><span class="pill teal">＋</span><span>全部是<b>新文件</b>：新组件 <span class="mono">source-matrix.tsx</span> / <span class="mono">review-cell-panel.tsx</span> ＋ 新模块 <span class="mono">src/lib/workbench/binding/*</span>。对既有文件只做「加默认 prop」与「batchMode 分支」，<b>单文件台的路径不经过这些代码</b>。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 不变式 -->
+<section id="v-gates" hidden>
+  <div class="stack">
+    <div class="card plain">
+      <p class="card-t">不变式：单对多工作台「与原行为逐字节一致」</p>
+      <p class="card-s">这条不是口号，是<b>四个可执行的闸</b>。任何一条不过，改造不许合入。</p>
+      <div class="gates">
+        <div class="gate"><span class="n">闸 1 · 结构</span><h3>入口那一行不许动</h3><p><code>app-shell.tsx</code> 的 <code>{view === 'workbench' &amp;&amp; &lt;WorkbenchView /&gt;}</code> 与 <code>{view === 'batch' &amp;&amp; … &lt;WorkbenchView batchMode /&gt;}</code> <b>这一行不改</b>（现 <code>:46-47</code>）。单文件台仍然<strong>不传</strong> <code>batchMode</code>。</p></div>
+        <div class="gate"><span class="n">闸 2 · 渲染</span><h3>多稿能力一律包在 batchMode 里</h3><p>来源矩阵、逐稿编排、覆盖率矩阵、批量动作、来源矩阵的样式 —— <b>必须</b>在 <code>batchMode &amp;&amp;</code> 内或 <code>if (!batchMode) return …</code> 之后。现成先例：<code>workbench-view.tsx:1766/1786/1802</code>。</p></div>
+        <div class="gate"><span class="n">闸 3 · 行为</span><h3>快照比对（可执行）</h3><p>在 <code>batchMode=false</code> 下渲染 <code>#workbench</code>，对<b>关键 DOM 节点数 / 文案集合 / 按钮集合</b>做快照，与基线<b>逐字节</b>比对，差异即失败。加一条本地可跑的断言脚本，纳入提交前门。</p></div>
+        <div class="gate"><span class="n">闸 4 · diff</span><h3>改既有文件必须逐条带上下文</h3><p>批量台改造<b>优先只新增文件</b>；对既有文件的改动必须落在 <code>batchMode</code> 块内或只是<strong>加带默认值的 prop</strong>（默认走原路径）。提交前用 <code>git diff</code> 逐条核，凡是无法说明「为什么不会影响单文件台」的行，不许合入。</p></div>
+        <div class="gate"><span class="n">闸 5 · 单一真值</span><h3>「哪个模式」只能有一个真值来源</h3><p>渲染形态<strong>只认视图传下来的 <code>batchMode</code></strong>；禁止任何第二真值（编译期 featureFlag 常量、URL 参数、全局开关）能单独决定它。<b>先例：ISSUES #151</b>——<code>design-file-card.tsx:74-83</code> 的注释记着「原先把是否渲染多选 UI 绑在编译期静态值上，而 workbench-view 读的是运行时 <code>useFeatureFlags()</code> ⇒ 静态与运行时两套语义 ⇒ 出现『文件卡还是单选、但矩阵与编排已按多稿走』的错位」。<b>本轮改造不能再引入第二真值。</b></p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-t">文件级落点（按「只加不改」重新分类）</p>
+      <div class="scroller">
+        <table class="plain">
+          <thead><tr><th>文件</th><th>动法</th><th>怎么保证单文件台不受影响</th></tr></thead>
+          <tbody>
+            <tr><td class="m">新 src/components/workbench/source-matrix.tsx</td><td><span class="pill teal">新增</span></td><td>批量台专用组件，单文件台<strong>不挂载</strong></td></tr>
+            <tr><td class="m">新 src/components/workbench/review-cell-panel.tsx</td><td><span class="pill teal">新增</span></td><td>批量台按格审查；<code>review-step.tsx</code> <strong>不改</strong></td></tr>
+            <tr><td class="m">新 src/lib/workbench/binding/*.ts</td><td><span class="pill teal">新增</span></td><td>绑定/切片/合并全是新模块，旧模块不动</td></tr>
+            <tr><td class="m">新 src/components/workbench/table-batch-importer.tsx</td><td><span class="pill teal">新增</span></td><td><b>批量台的「多表分给多稿」导入器</b>；单文件台继续用 <code>csv-step.tsx</code>（多选＝按语言合并）<strong>一行不改</strong></td></tr>
+            <tr><td class="m">components/workbench/workbench-view.tsx</td><td><span class="pill amber">加分支</span></td><td>只在 <code>batchMode</code> 为真时挂载新组件；<b>单文件分支零改动</b>（闸 1/2/3/4 覆盖）</td></tr>
+            <tr><td class="m">components/workbench/execute-step.tsx（<code>buildRowsByLang</code>）</td><td><span class="pill amber">加分支</span></td><td><b>新增</b>批量专用的「按格合并行集」实现，原实现保留给单文件台；只在 <code>batchMode</code> 分支切换</td></tr>
+            <tr><td class="m">components/workbench/design-file-card.tsx</td><td><span class="pill gray">不动</span></td><td>批量台的多稿 UI 已在 <code>batchMode &amp;&amp; multiSelection &amp;&amp; onMultiSelectionChange</code>（<code>:933</code>）之内就地分流；<b>本轮不碰此文件</b>，只复用</td></tr>
+            <tr><td class="m">lib/workbench/coverage.ts</td><td><span class="pill teal">加函数</span></td><td><b>只新增</b>「每格一行集」的取数函数，旧的 <code>calcCoverageMatrixForDraftTables</code> 与 <code>calcCoverage</code> <strong>不改</strong>（三档口径原样）</td></tr>
+            <tr><td class="m">components/workbench/csv-step.tsx</td><td><span class="pill gray">不动</span></td><td><b>整份文件零改动</b>——批量台用新导入器，不复用它</td></tr>
+            <tr><td class="m">components/workbench/review-step.tsx</td><td><span class="pill gray">不动</span></td><td><b>整份文件零改动</b>——批量台用新面板</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-t">这一轮对抗式审查对自己的攻击</p>
+      <div class="stack">
+        <div class="ev bad"><b>攻击 1｜我前五轮的做法本身违反前提</b>我一直在改<b>共享组件</b>（<code>csv-step.tsx</code> 的多选语义、<code>buildRowsByLang()</code>、<code>review-step.tsx</code> 的回写键）。加 <code>batchMode</code> 分支看着安全，但<b>共用文件一改，单文件台就有被顺带改到的风险</b>——而这个项目里共享组件正是两个工作台的交汇点。<b>处置：改为「只加不改」——批量台的自有能力一律新组件/新模块实现；共用组件要么整份不动，要么只加带默认值的 prop。</b></div>
+        <div class="ev warn"><b>攻击 2｜「零改动」要不要连「共享组件加默认 prop」也禁掉？</b>严格讲，加 prop 也是改这个文件。⇒ 判定：<b>加带默认值的 prop 是允许的</b>，但默认路径必须<b>逐字节等价</b>（闸 3 的快照比对能证明）；凡是需要改既有 prop 的处理逻辑的 ⇒ <b>一律改成新组件</b>。本轮已把 <code>csv-step.tsx</code> 与 <code>review-step.tsx</code> 降级为「整份不动」。</div>
+        <div class="ev warn"><b>攻击 3｜「并排」会不会变成两个各自为政的产品？</b>若两台各自演化，用户会遇到两套心智模型。⇒ 缓解：<b>共享的是「概念」，不是「代码」</b>——两个工作台用同一套文案与同一套术语（原文／译文表／语种／交付物）；代码不共享是因为<b>共享代码正是顶替与串改的源头</b>（仓库自己的注释就是这么写的：<code>design-file-card.tsx:600</code> 的就地 return「整体换掉」单文件工作台）。</div>
+        <div class="ev info"><b>攻击 4｜那"两台逻辑一样"的部分要不要抽公共库？</b>可以抽<b>纯函数</b>（解析、合并、切片、覆盖率口径）——纯函数没有渲染副作用，抽出来<strong>不会</strong>影响任一工作台的行为。<b>但仍不抽「UI 组件」</b>（组件带渲染路径，抽了就等于让两台再次交汇）。⇒ 抽纯函数、不抽组件。</div>
+        <div class="ev ok"><b>攻击 5｜那"每稿一表/N:M"这套，用户在单文件台怎么用？</b>单文件台<strong>不需要</strong>：它就是「1 稿 : 1 表」的特例，来源矩阵是 1 行 12 格。<b>但按前提，这一版不在单文件台做这个</b>——单文件台继续用它现在那套「选表 → 语言 → 逐语言审查」，与批量台各自最优。</div>
+        <div class="ev plain"><b>结论</b>本轮把改造形态从「改共享组件」改成「<b>旁挂新组件 + 四道不变式闸</b>」。代价是要多写一份批量台专用的导入器与审查面板外壳（≈ 少量重复），换来的是<b>单对多工作台可以拿「零改动」这个硬承诺去交付</b>。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="docf">
+  <p>2026-10-20 · <b>方案模拟</b>（非线上界面）；左侧单对多工作台为<b>示意</b>，其文案与结构取自现有 <code>siteContent.ts</code>／<code>review-step.tsx:1146-1163</code>；右侧多对多工作台为本轮改造后的形态。</p>
+  <p>代码依据 <span class="mono">worktrees/develop@99baaf6</span>：<span class="mono">app-shell.tsx:41-47</span>（两台并列／与原行为逐字节一致）·<span class="mono">workbench-view.tsx:252-258</span>（batchMode 语义与「杜绝顶替」）·<span class="mono">workbench-view.tsx:1766/1786/1802</span>（<code>if (!batchMode) return</code> 先例）·<span class="mono">design-file-card.tsx:74-83</span>（ISSUES #151：静态 flag vs 运行时 flag 两套语义）+ <span class="mono">:933</span>（多稿 UI 就地分流）·<span class="mono">csv-step.tsx:140-186</span>（多选＝合并）·<span class="mono">review-step.tsx:88-124,1146-1163</span>·<span class="mono">execute-step.tsx:792-807</span>·<span class="mono">coverage.ts:43-96,169-185</span>·<span class="mono">binding-core.ts:657,930-939</span>。</p>
+</footer>
+</div>
+
+<script>
+const LANGS=[{c:'de',n:'德语'},{c:'fr',n:'法语'},{c:'en',n:'英语'},{c:'es',n:'西班牙语'},{c:'ja',n:'日语'},{c:'ko',n:'韩语'},
+ {c:'pt',n:'葡萄牙语'},{c:'it',n:'意大利语'},{c:'ru',n:'俄语'},{c:'ar',n:'阿拉伯语'},{c:'zh-TW',n:'繁体中文'},{c:'nl',n:'荷兰语'}];
+const LMAP=Object.fromEntries(LANGS.map(l=>[l.c,l.n]));
+const ALL=LANGS.map(l=>l.c);
+const TABS={'M':'主表M_通用8语','W':'合表W_12SKU×12语','05':'SKU-05_德法英','06':'SKU-06_英西','11':'SKU-11_六语','JP':'日语专表','KR':'韩语专表','SUP':'补充文案_2行'};
+const D=[
+ {id:'SKU-01',base:'M',mode:'默认',ov:{},sc:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-02',base:'M',mode:'默认',ov:{ko:'KR'},sc:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-03',base:'M',mode:'默认',ov:{},sc:['de','fr','en','es']},
+ {id:'SKU-04',base:'M',mode:'默认',ov:{},sc:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-05',base:'05',mode:'默认',ov:{ja:'JP',ko:'KR'},sc:['de','fr','en','ja','ko'],sup:true},
+ {id:'SKU-06',base:'06',mode:'默认',ov:{ja:'JP'},sc:['en','es','ja']},
+ {id:'SKU-07',base:'W',mode:'切片',ov:{},sc:['de','fr','en','es','ja','ko','ru','ar','zh-TW']},
+ {id:'SKU-08',base:'W',mode:'切片',ov:{},sc:['de','fr','en','es','ja','ko','pt','it']},
+ {id:'SKU-09',base:'W',mode:'切片',ov:{},sc:ALL},
+ {id:'SKU-10',base:'W',mode:'切片',ov:{},sc:ALL},
+ {id:'SKU-11',base:'11',mode:'默认',ov:{},sc:['de','fr','en','es','ja','ko']},
+ {id:'SKU-12',base:null,mode:null,ov:{},sc:[]},
+];
+let sel={id:'SKU-05',lang:'ja'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dOf=id=>D.find(x=>x.id===id);
+function cellOf(d,lang){
+  if(!d.sc.length) return {m:'none',lab:'—',sub:''};
+  if(!d.sc.includes(lang)) return {m:'none',lab:'—',sub:''};
+  if(d.ov[lang]) return {m:'ovr',lab:d.ov[lang],sub:'覆盖'};
+  if(d.base==='M'||d.base==='05'||d.base==='06'||d.base==='11'){
+    const t={M:['de','fr','en','es','ja','ko','pt','it'],'05':['de','fr','en'],'06':['en','es'],'11':['de','fr','en','es','ja','ko']}[d.base];
+    if(!t.includes(lang)) return {m:'miss',lab:'缺列',sub:''};
+    if(d.sup) return {m:'sup',lab:d.base+'+SUP',sub:'补充'};
+    return {m:'def',lab:d.base,sub:'默认'};
+  }
+  if(d.base==='W') return {m:'slice',lab:'W',sub:'切片'};
+  return {m:'none',lab:'—',sub:''};
+}
+function renderMatrix(){
+  const head=`<thead><tr><th>稿 \\ 语种</th>${LANGS.map(l=>`<th>${l.n}</th>`).join('')}</tr></thead>`;
+  const body=D.map(d=>{
+    const cells=ALL.map(l=>{
+      const c=cellOf(d,l);
+      const isSel=sel.id===d.id&&sel.lang===l;
+      return `<td><button class="cell sc-${c.m}${isSel?' sel':''}" data-c="${d.id}|${l}" title="${d.id} × ${LMAP[l]}">`
+        +`<span class="cs">${c.lab}</span>${c.sub?`<span class="cb">${c.sub}</span>`:''}</button></td>`;
+    }).join('');
+    return `<tr><th><span class="mono" style="font-size:.75rem">${d.id}</span></th>${cells}</tr>`;
+  }).join('');
+  $('#mxHost').innerHTML=`<div class="scroller"><table class="mx">${head}<tbody>${body}</tbody></table></div>`;
+  $('#mxHost').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const [id,l]=b.dataset.c.split('|'); sel={id,lang:l}; renderMatrix(); renderCell();
+  }));
+}
+function renderCell(){
+  const d=dOf(sel.id), c=cellOf(d,sel.lang);
+  if(c.m==='none'||c.m==='miss'){
+    $('#cellPanel').innerHTML=`<div class="ev plain"><b>${sel.id} × ${LMAP[sel.lang]}</b>${c.m==='miss'?'这一门语言在它绑的表里<b>没有列</b> ⇒ 这份交付物做不出来。':'这一稿<b>不做这一门语言</b> ⇒ 没有来源。'}</div>`;
+    return;
+  }
+  const main=d.ov[sel.lang]?d.ov[sel.lang]:d.base;
+  const rows=[];
+  if(d.ov[sel.lang]) rows.push([TABS[main],'语种覆盖：这一门语言整门从这张表取','12 行']);
+  else{
+    rows.push([TABS[d.base],'主表（默认）',d.base==='W'?'51 行':'42 行']);
+    if(d.sup) rows.push([TABS['SUP'],'补充表：只并进主表里没有的那 2 句','2 行']);
+  }
+  rows.push(['合并后 → 送进 fragments 前的最终行集','（与写入层现有冲突检查同一套）',''+(d.sup?'44':'42')]);
+  $('#cellPanel').innerHTML=`<div class="stack">
+    <div class="row"><span class="pill ${c.m==='ovr'?'violet':c.m==='sup'?'amber':c.m==='slice'?'blue':'teal'}">${c.sub}</span>
+      <span class="mono" style="font-size:.84rem;font-weight:600">${sel.id} × ${LMAP[sel.lang]}</span>
+      <span class="pill gray">来源 ${TABS[main]}</span></div>
+    <div class="scroller" style="max-height:200px"><table class="plain">
+      <thead><tr><th>来源</th><th>为什么</th><th>行数</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td class="m">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="m">${esc(r[2])}</td></tr>`).join('')}</tbody></table></div>
+    <div class="ev ok"><b>冲突检查：通过</b>合并后本格无「同原文不同译文」。<b>非本稿行</b>由助手判 <span class="mono">EXCLUDED</span>、不写入、单位 0。</div>
+  </div>`;
+}
+function show(v){
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.view===v)));
+  ['pair','gates'].forEach(k=>document.getElementById('v-'+k).hidden=(k!==v));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+renderMatrix(); renderCell();
+</script>
+</body>
+</html>

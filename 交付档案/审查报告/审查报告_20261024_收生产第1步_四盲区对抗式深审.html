@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>收生产第 1 步：四盲区对抗式深审</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">审查报告<span class="sep">/</span>交付档案<span class="sep">/</span>2026-10-24<span class="sep">/</span>只读深审 · 并车令有效 · 未推未部署</div>
+  <h1>收生产第 1 步：四个盲区的对抗式深审</h1>
+  <p class="standfirst">承接上午方案审查与下午 Flash 工单（冲突面／preflight／迁移可逆性）之后的第三轮，只审前两轮没覆盖的面：语义层悬空引用、发布门的死线、第二笔提交的决策卡、悬空出处定案。全部结论基于实测命令与实读文件。</p>
+  <div class="meta">
+    <span>审查 GLM-5.3 主会话</span>
+    <span>2026-10-24 15:3x–16:0x</span>
+    <span>基底 319bc138（origin/main）</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>第 1 步藏着一个<strong>10-26 23:40 的死线</strong>：P-02 真机验收门要求验收记录 14 天内有效，main 树唯一记录是 3.7.15、2026-10-12 23:40 录的——过时不补，生产出包必红（方案未安排此事）。同时，第二笔提交（ecd7e998 撤限额）建议<strong>移出第 1 步</strong>：发布集可从"3 笔含 1 笔脏"瘦身成"2 笔全可解"。悬空引用审查全绿：1316bf34 在 main 基底的符号依赖全部在场。"ExecutionAttempt 仅 6 条"全库无出处，定案待确认。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><div class="n">10-26</div><div class="k">23:40 前须完成生产出包，否则 P-02 验收门必红</div></div>
+    <div class="stat ok"><div class="n">8/8</div><div class="k">悬空符号溯源全绿（1316bf34/5b9d8738 依赖在 main 全在场）</div></div>
+    <div class="stat warn"><div class="n">3→7</div><div class="k">若坚持带 ecd7e998：须连带快照配额系列 4 笔，冲突面扩大</div></div>
+    <div class="stat ok"><div class="n">1</div><div class="k">main→develop 新增迁移仅 1 个（即随行的 20261022120000），无牵连</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">一</span>P-02 真机验收门带死线（最重要发现）</h2>
+  <p class="lede">判定链：门禁 <code>check-acceptance-record.mjs:37</code> 定 14 天时效；release 分支（main＋三笔）携带的验收记录＝main 树唯一一条 <code>3.7.15_2026-10-12_win11-laptop-dcbf37fd.json</code>（recordedAt＝2026-10-12 23:40）；release 的 identity＝main 的 3.7.15（三笔不含 release-identity.json）⇒ 版本匹配但时效只剩到 <strong>2026-10-26 23:40</strong>。该门只在 production 档拦（preflight :155：test 不拦、production 必拦）——方案第 1 步只写了"test 档跳过"，未安排生产档的验收补位。</p>
+  <div class="split">
+    <div class="panel yes">
+      <h3>解法 A：赶在死线前</h3>
+      <ul>
+        <li>并车窗口若落在 10-25／10-26，直接完成生产出包，门自然过。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>解法 B：补一条验收记录</h3>
+      <ul>
+        <li>用 3.7.15 助手对 release 构建跑五项（安装／配对／扫描／批跑／报告），按 <code>docs/acceptance/_template.json</code> 落新记录<strong>提交进 release 分支</strong>（记录必须进仓才被门读到）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">风险提示</span>
+    <code>deploy/deploy-release.sh</code> 实测不含 preflight 调用（grep 0 命中）——这道门靠"出包前手跑 <code>npm run release:preflight</code>"的流程纪律执行。守规矩就会在 10-26 后撞红；不守规矩则门形同虚设。并车清单须点名。
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">二</span>悬空引用审查：全部在场</h2>
+  <p class="lede">前轮已证 release 分支上没有 525559c4（v12 执行前确认）等 develop 侧提交——1316bf34 的代码在"有它们"的环境里写，要在"没有它们"的 main 上跑。悬空引用会让修复静默失效（照旧全表报价）或崩溃。逐符号溯源结果全绿：</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>1316bf34 依赖的符号</th><th>main 现状</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td><code>estimateBilling</code> 的 <code>ignored</code> 字段</td><td><span class="tag ok">早已支持</span></td><td>main 版 rules.ts :13 <code>ignored?: boolean</code>、:80 <code>if (input.ignored)</code></td></tr>
+        <tr><td><code>ignoredTranslationRowIds</code></td><td><span class="tag ok">9 处在场</span></td><td>main 版 execute-step grep 计数</td></tr>
+        <tr><td><code>unmatchedTranslationRowIds</code></td><td><span class="tag ok">5 处在场</span></td><td>同上</td></tr>
+        <tr><td><code>stableRowIds</code></td><td><span class="tag ok">6 处在场</span></td><td>同上</td></tr>
+        <tr><td><code>submitV15Execution</code> 的行忽略参数</td><td><span class="tag ok">diff 上下文即 main 形态</span></td><td>1316bf34 diff @ local-assistant-client:1467</td></tr>
+        <tr><td><code>billing-scope.ts</code>（mergeSkipRowIds 等）</td><td><span class="tag ok">随笔自带（新文件）</span></td><td>1316bf34 文件清单</td></tr>
+        <tr><td><code>confirmPhotoshopExecution</code> 的 billingScope 参数</td><td><span class="tag ok">纯可选、向后兼容</span></td><td>diff：可选参数＋可选请求体字段</td></tr>
+        <tr><td>5b9d8738 的 <code>jobSummary</code> 展示字段</td><td><span class="tag ok">基座在场</span></td><td>main 版 credits-badge 已有 evidenceLevel/ledger 9 处</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="notes">
+    <li><strong>残留检验点（如实）</strong>：符号在场≠运行正确；release worktree 未装依赖，本轮未做编译/运行验证。真正的检验＝清脏后在 release 分支首跑 <code>test:contracts</code>（其中 smoke-v2-billing-scope 是 1316bf34 自带守卫，将第一次在"main＋三笔"组合上跑）。并车前置清单加一项：release worktree <code>npm ci</code> ＋ <code>npx tsc --noEmit</code> ＋ <code>test:contracts</code> 首跑。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">三</span>ecd7e998 决策卡：main 的闸本身带已知缺陷</h2>
+  <p class="lede">两版实测对照：main 版＝<code>MAX_SNAPSHOTS_PER_INSTALL = 100</code> 硬闸、超限 429；其缺陷（快照配额系列四笔的立项原因）是把过期删不掉的空壳行也计入＝每台设备一道终身闸，12 稿 × 12 语 ＝ 144 份必撞上限（10-22 测试站实撞）。ecd7e998 版＝按 Owner 2026-10-22「不需要限额」令撤闸改观察模式，配额记账挪进 main 上不存在的独立模块（即前轮 2 个 DU 冲突来源）。</p>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">选项 A（方案原样）</span><span class="tag warn">发布集 3→7 笔</span></div>
+      <p>带上 ecd7e998 ＝ 必须连带快照配额系列 4 笔（9c3dd890／a4a4bc1f／20382ecb／746ddaff），冲突面与解冲突工作量显著扩大。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">选项 B（本轮推荐）</span><span class="tag ok">第 1 步瘦身</span></div>
+      <p>ecd7e998 移出第 1 步，随第 2 步功能线走。第 1 步只上 1316bf34＋5b9d8738 两笔资金修复本体，全部冲突可机械解（package.json 拼接＋HANDOFF 追记＋顺序依赖）。代价：生产保留带缺陷的 100 硬闸一个窗口期——但第 1 步不含多稿功能，单语单稿场景远离上限，实际撞不上。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">选项 C</span><span class="tag warn">两头不占</span></div>
+      <p>只修计数缺陷（带 9c3dd890）不带撤闸——发布集同样要加笔，且与 Owner「不需要限额」令打折扣。</p>
+    </div>
+  </div>
+  <ul class="notes">
+    <li>推荐 B 的核心理由：ecd7e998 是"撤限额"而非资金修复本体；把它捆进第 1 步是方案目前最大的复杂度来源。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">四</span>"ExecutionAttempt 仅 6 条"无出处定案 ＋ 附带两小项</h2>
+  <ul class="notes">
+    <li><strong>悬空出处</strong>：全库 grep（交付档案＋AI_MEMORY）唯一命中＝方案自身（:14）。所引报告只有"82 条报价、最近 2026-09-19 14:29"。时间线自洽（14:29 报价→14:30 attempt）但无独立出处——按"否定式断言须出处"纪律标<strong>待确认</strong>；其支撑的结论（零执行止血窗口）另有报告侧独立证据，不受影响。</li>
+    <li><strong>迁移面唯一性</strong>：origin/main..origin/develop 新增迁移目录仅 1 个（20261022120000_quote_billing_scope），正是随行那个——无漏带无牵连。</li>
+    <li><strong>deploy 脚本不自动跑 preflight</strong>（grep 0 命中）——发布门全靠流程纪律，与盲区一互为表里。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">五</span>并车前置清单（三轮汇总）</h2>
+  <div class="gates">
+    <div class="gate"><div class="num">1</div><div class="body"><p>清 develop 4 项脏文件（消 preflight 两道红，含 ISSUES.md:1557 EOF 空行）。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><p><strong>P-02 死线处置</strong>：10-26 23:40 前完成生产出包，或补一条 3.7.15 验收记录进 release 分支。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><p><strong>ecd7e998 去留拍板</strong>（推荐 B：移出第 1 步）。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><p>release worktree <code>npm ci</code> ＋ <code>npx tsc --noEmit</code> ＋ <code>test:contracts</code> 首跑。</p></div></div>
+    <div class="gate"><div class="num">5</div><div class="body"><p>按 1316bf34 → 5b9d8738 顺序解冲突（若采 B；package.json 拼接＋HANDOFF 追记）。</p></div></div>
+    <div class="gate"><div class="num">6</div><div class="body"><p>测试站＋一笔真实对账 → 合 main → 生产 → <code>/api/runtime-provenance</code> 回读确认。</p></div></div>
+  </div>
+</section>
+
+<footer class="masthead">
+  <div class="meta">
+    <span>三轮链路：方案审查（上午）→ Flash 工单·冲突面/preflight/迁移（下午）→ 本轮四盲区深审</span>
+  </div>
+  <div class="eyebrow">证据文件：同名 .md · 同目录 · 2026-10-24</div>
+</footer>
+
+</div>
+</body>
+</html>

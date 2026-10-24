@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>免 PS 写回：对抗式审查与执行方案</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 · 执行方案</span><span class="sep">/</span>
+    <span>免 PS 写回 · PSD Txt2</span><span class="sep">/</span>
+    <span>2026-10-20</span>
+  </p>
+  <h1>免 PS 写回：判决复审与执行方案</h1>
+  <p class="standfirst">10-19 的判决书结论是「写回继续走 Photoshop，免 PS 只做扫描」。本轮真机复验把根因定位到引擎保存时自写的 <code>Txt2</code> 块：剥掉它，PS 2026 27.10 能打开、显示新文字、重排后仍是新文字——3 个夹具全部通过。同时，上游 <code>#6968</code> 的修复 PR #7220 已被作者在 PS 2026 实测确认。</p>
+  <p class="standfirst"><strong>结论：</strong>「0.7.0 直出不可用」成立；「免 PS 做不到」不成立。按 Gate 1→2→3 验证后开放写回。</p>
+  <div class="meta">
+    <span>PS 2026 27.10 真机</span>
+    <span>3 个夹具 / 9 次打开测试</span>
+    <span>零构建验证</span>
+    <span>未改产品代码 · 未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>判决书的下半句越界了：<strong>「0.7.0 直出打不开」是事实</strong>，但把它推成「免 PS 写回做不到」不成立——<strong>坏的是引擎自写的 Txt2 块，不是整条路</strong>。</p>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>判决定得住的部分</h3>
+      <ul>
+        <li><strong>证据链完整</strong>：6 组对照、同一 PS 实例、改名副本、纯往返产物，全部同一 HRESULT <code>0x80042260</code>——排除偶发、占用、特定层。</li>
+        <li><strong>方法学这次是对的</strong>：.ps1 脚本化 COM、重试循环、LayerType 用 Int32、画板递归、ag-psd 交叉一致（137=137）。</li>
+        <li><strong>「rc=0 ≠ 文件能用」</strong>：本轮再次验证——<code>tx-out.psd</code> 引擎 rc=0、PS 能开、文字却仍是旧的。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>判决定不住的部分</h3>
+      <ul>
+        <li><strong>「上游修不修不由我们排期」</strong>：上游 10-18 已修（PR #7220），作者已在 PS 2026 实测通过；我们用的是 0.7.0，落后三个版本。</li>
+        <li><strong>「写回不能开放」</strong>：只对 0.7.0 直出成立；剥掉 Txt2 后，3 个夹具全部通过。</li>
+        <li><strong>「只扫描、不预览写回」</strong>：把可修的实现缺陷当成能力边界。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>事实底稿</h2>
+  <p class="lede">判决书、上游状态、本机复验三份证据，逐项可复核。</p>
+  <div class="stats">
+    <div class="stat ok"><span class="n">3 / 3</span><span class="k">夹具剥掉 Txt2 后<br>PS 打开 + 新文字</span></div>
+    <div class="stat bad"><span class="n">0x80042260</span><span class="k">引擎直出<br>PS 2026 打不开</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">样式字段差异<br>AutoKerning / TextComposer</span></div>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>事实</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">引擎版本</td><td>本地 0.7.0（<code>792616159</code>，10-11）；上游 0.10.0（<code>8407d9c</code>，10-18）、0.9.0（10-14）</td><td><span class="tag warn">落后三版</span></td></tr>
+        <tr><td class="mono">#6968</td><td>PS 打开崩溃；修复 PR <strong>#7220</strong>：保留原 Txt2 对象、替换文本、重排 runs</td><td><span class="tag bad">open · critical</span></td></tr>
+        <tr><td class="mono">PR #7220</td><td>issue 作者 10-18 在 PS 2026 27.10 实测：「修好了，文字是新串」；维护者已 approve；进入集成批次 #7482</td><td><span class="tag warn">open · 未进 0.10.0</span></td></tr>
+        <tr><td class="mono">#6971</td><td>旧命名键 Txt2 布局导致静默旧文；PR #7220 明确不覆盖</td><td><span class="tag bad">open</span></td></tr>
+        <tr><td class="mono">#6129 / #2717</td><td>13+ 样式字段丢失 / 复杂 PSB 往返失败</td><td><span class="tag warn">open</span></td></tr>
+        <tr><td class="mono">许可</td><td>Apache-2.0（可改、可分发；需 LICENSE/NOTICE，移除 ArtCraft 商标资产）</td><td><span class="tag ok">允许</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">关键读数</span>
+    <p>原件 <code>in.psd</code> 的 global blocks 只有 <code>FMsk</code>/<code>artd</code>/<code>cinf</code>——<strong>没有 Txt2</strong>；引擎保存时新生成了 <strong>38,191 B</strong> 的 <code>Txt2</code>（块总长 38,204）。<code>layer_effects.psd</code> 原件本来就有 Txt2，引擎改写后同样炸。⇒ 问题不在「原文件有没有」，在「引擎怎么写」。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>真机复验（PS 2026 27.10）</h2>
+  <p class="lede">同一台机器、同一个 PS 实例、同一套 COM 探针；每个文件打开后读取全部文字层，再关闭不保存。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>文件</th><th>打开</th><th>文字层</th><th>目标层文字</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">in.psd（原件）</td><td><span class="tag ok">OK</span></td><td>137</td><td><span class="was">79.6mm（旧）</span></td></tr>
+        <tr><td class="mono">out.psd（引擎直出）</td><td><span class="tag bad">0x80042260</span></td><td>—</td><td>—</td></tr>
+        <tr><td class="mono">out-no-txt2.psd</td><td><span class="tag ok">OK</span></td><td>137</td><td><span class="fix">TYGF-PROBE-99（新）</span></td></tr>
+        <tr><td class="mono">layer_effects.psd（原件）</td><td><span class="tag ok">OK</span></td><td>11</td><td><span class="was">Bevel（旧）</span></td></tr>
+        <tr><td class="mono">le-out.psd（引擎直出）</td><td><span class="tag bad">0x80042260</span></td><td>—</td><td>—</td></tr>
+        <tr><td class="mono">le-out-no-txt2.psd</td><td><span class="tag ok">OK</span></td><td>11</td><td><span class="fix">Bevex（新）</span></td></tr>
+        <tr><td class="mono">text.psd（原件）</td><td><span class="tag ok">OK</span></td><td>1</td><td><span class="was">Line 1 / 2 / 3…（旧）</span></td></tr>
+        <tr><td class="mono">tx-out.psd（引擎直出）</td><td><span class="tag ok">OK</span></td><td>1</td><td><span class="tag bad">仍是旧文（#6971）</span></td></tr>
+        <tr><td class="mono">tx-out-no-txt2.psd</td><td><span class="tag ok">OK</span></td><td>1</td><td><span class="fix">Hello（新）</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">两件必须一起看的事</span>
+    <p><strong>① 重排后仍是新文：</strong>在 <code>out-no-txt2.psd</code> 上把目标层字号写回同值触发重排，<code>Contents</code> 仍是 <code>TYGF-PROBE-99</code>——#6971 那种「碰一下就变回旧文」不复现。</p>
+    <p><strong>② 样式保真：</strong>字号 / 字体 / 对齐 / 缩放三组夹具逐项相同；但 <code>AutoKerning</code> 1→2、<code>TextComposer</code> 1→空——这正是 #6129 的表征，也是「剥离」与「精准修补」的分水岭。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>对抗式审查</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">越界 1</span><h3>把「等待上游」说成了「不能」</h3><span class="tag bad">事实错误</span></div>
+      <p>判决称「上游是第三方开源项目，修不修不由我们排期」。事实：上游 <strong>10-18</strong> 就给出了修复方向（PR #7220），issue 作者当天在 PS 2026 27.10 实测通过；我们落后三个版本。许可允许自建/分发。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">越界 2</span><h3>把「一个版本的缺陷」写成了「能力边界」</h3><span class="tag bad">结论过宽</span></div>
+      <p>「写回不能开放」只对 0.7.0 直出成立。剥掉 Txt2 后 3/3 夹具通过——同一台 PS、同一套探针。<strong>这不叫「做不到」，叫「还没修」。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">越界 3</span><h3>没测的空白被当成已测</h3><span class="tag warn">缺项</span></div>
+      <p>未测：去掉 Txt2、上游修复版、0.8–0.10、PS 重排后的行为、PS 2023/2024、复杂 PSB。判决把「直出失败」直接记成了「免 PS 失败」。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">真实风险</span><h3>不粉饰：还有四件事没过</h3><span class="tag warn">未解决</span></div>
+      <p>① 样式字段（AutoKerning/TextComposer）；② 字体回退（Adobe Heiti Std / Koz Go Pr6N 未装）；③ 复杂 PSB（#2717）；④ Txt2 语义（PS 重建后的长期行为）。这些是 <strong>Gate 2/3 的输入</strong>，不是「做不到」的证据。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>四条路线</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>路线</th><th>做法</th><th>成本</th><th>验证程度</th><th>风险</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A. Txt2 剥离</strong></td><td>保存后删除 global Txt2，修正 Layer&amp;Mask 段长；fail-closed</td><td>~80 行 / 半天</td><td><span class="tag ok">3/3 夹具真机通过</span></td><td>两项样式字段差异；PS 重建行为需真实稿</td></tr>
+        <tr><td><strong>B. Txt2 精准修补</strong></td><td>按 #7220：保留对象/视图/样式，换文本，按 UTF-16 重排 runs</td><td>1–2 天（Node）</td><td><span class="tag ok">上游作者 PS 实测同一算法</span></td><td>EngineData 实现细节；需回归</td></tr>
+        <tr><td><strong>C. 上游修复版</strong></td><td>构建 main+#7220 或等 #7482 合入/下一版</td><td>1–2 天（需 Rust）</td><td><span class="tag warn">上游验证，我们未构建</span></td><td>本机无 Rust；#6971 仍不覆盖</td></tr>
+        <tr><td><strong>D. 只扫描</strong></td><td>维持现状</td><td>0</td><td>—</td><td>产品承诺缩水；仅 Gate 1 失败时保留</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">推荐</span>
+    <p><strong>A（今天）→ B（1–2 天）→ C（长期）。</strong>A 是零构建、已验证的止血；B 用上游同一算法把保真补回来；C 跟上游版本，不做长期分叉。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>执行步骤（Gate 制）</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>今天 · A 档落地与复验（半天）</h3>
+        <p>S1 把剥离逻辑并入 <code>pc-executor.js</code> 保存后步骤（<code>doc.save</code> 之后、回执之前），解析失败/长度不自洽一律 fail-closed；S2 新增 <code>smoke-pc-txt2-fix.mjs</code>（无 PS：无 Txt2、段长自洽、ag-psd 回读一致、无 Txt2 文件幂等）；S3 真机复验 3 夹具 + 2 份真实稿，判据：能开、新串、重排后仍新串、字号/字体/对齐/缩放不变。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>+1–2 天 · B 档保真修补</h3>
+        <p>解析 Txt2（EngineData）→ 定位目标层对象 → 保留对象/视图/样式键 → 替换文本 → 按 UTF-16 长度重排 runs。判据：<code>AutoKerning</code>/<code>TextComposer</code> 与原件一致；打开/重排仍新串；三夹具 + 真实稿全过。B 落地后，A 降级为兜底。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>+1 周 · C 档上游版本（可选）</h3>
+        <p>跟踪 #7482 合并与下一版发布；构建/下载 Windows 版；同夹具回归（#6971/#6129/#2717）；切换前校验引擎版本、SHA-256、release-identity、三键默认值。长期把本轮夹具与方法回馈上游。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>解冻与灰度（Gate 2 之后，另行审批）</h3>
+        <p>同笔改写 <code>smoke-pc-wiring-freeze.mjs</code> 负向断言（注释带 #6968/#6971 证据与引擎版本）；三键用 <code>pc-enable-on-machine.cjs</code> 开启（缺省仍全关）；灰度名单默认空。回滚：一键关三键 + 保留 PS 通道；失败不得静默降级。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>口径纠正（立即）</h2>
+  <div class="verdict">
+    <span class="lb">对外</span>
+    <p>❌ 不说「免 PS 写回已支持」。<br>❌ 不说「免 PS 做不到」。<br>✅ 说：<strong>「阻塞点已定位到引擎保存层的 Txt2 块；真机复验已找到可行修复路径，正在按 Gate 验证；验证通过前不开放写回。」</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>证据与复现</h2>
+  <ul class="notes">
+    <li><strong>夹具</strong>：<code>%TEMP%\tygf-typeedit-probe\</code>（in/out/out-no-txt2/min-edit/resave）；<code>%TEMP%\tygf-upstream-fixtures\</code>（layer_effects.psd 735,149 B、text.psd 93,949 B，psd-tools <code>02e6adc</code>）。</li>
+    <li><strong>脚本</strong>（<code>tmp/research-1020/</code>）：<code>psd-txt2.cjs</code>（解析/剥离）、<code>ps-open-probe4.ps1</code>（打开 + 文字层）、<code>ps-touch-probe.ps1</code>（重排后复查）、<code>ps-style-probe.ps1</code>（样式字段）。</li>
+    <li><strong>上游</strong>：issues/6968、pull/7220、issues/6971、releases/tag/v0.10.0（<code>8407d9c</code>）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>红线与遗留</h2>
+  <ul class="notes">
+    <li>不碰生产、不翻支付 flag、不动三键默认值；解冻写回必须同笔改 <code>smoke-pc-wiring-freeze.mjs</code>。</li>
+    <li>不抬 <code>assistantVersion</code>/<code>assistantBuildId</code>（会硬拦旧安装）；引擎 Apache-2.0 随包需 LICENSE/NOTICE + 移除商标资产。</li>
+    <li>不抢 PC-NOPS-EXEC 线的隔离树 <code>pc-port-20261017</code>；实现走独立分支/worktree。</li>
+    <li>遗留：PS 2023/2024、Txt2 两轮另存稳定性、真实客户稿 3–5 份、字体回退策略、上游 #7482 时间点。</li>
+  </ul>
+  <div class="verdict">
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">最后一句：这次不是「免 PS 做不到」，是「引擎把一个块写坏了，而我们刚好有两条路能修——一条今天就能验，一条上游已经替我们验过」。</p>
+  </div>
+</section>
+
+<footer>
+  <p>对抗式审查 + PS 2026 27.10 真机复验 · 2026-10-20 · 只读调查，未改产品代码、未出包、未部署、未碰生产。</p>
+  <p>证据可复现：夹具、脚本、命令与输出见 <code>tmp/research-1020/</code> 与本报告 §08。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

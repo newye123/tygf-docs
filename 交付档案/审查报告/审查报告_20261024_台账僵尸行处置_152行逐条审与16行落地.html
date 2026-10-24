@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台账僵尸行处置 — 2026-10-24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#fff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(34px,5vw,52px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,4.4vw,2.4rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:20px 22px}
+.verdict .label{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+.verdict strong{font-family:var(--font-display);font-size:1.18rem;color:var(--warn)}
+.verdict p{margin:6px 0 0;color:var(--ink-2)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stat .n{font-family:var(--font-display);font-weight:600;font-size:1.7rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.82rem;color:var(--muted);margin-top:2px}
+.stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+h2{font-family:var(--font-display);font-size:1.24rem;margin:0 0 4px;letter-spacing:-.005em}
+h3{font-family:var(--font-display);font-size:1.02rem;margin:0 0 6px}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{margin:0;color:var(--ink-2)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-weight:600;font-size:.8rem;letter-spacing:.03em;color:var(--ink-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td code,li code,p code{font-family:var(--font-mono);font-size:.84em;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.72rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);white-space:nowrap}
+.tag.ok{color:var(--ok);border-color:var(--ok);background:var(--ok-soft)}
+.tag.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.tag.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-soft)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.card .why{margin:8px 0 0;color:var(--ink-2);font-size:.92rem}
+.card .ev{margin:10px 0 0;font-family:var(--font-mono);font-size:.76rem;color:var(--muted);overflow-wrap:anywhere}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:18px 20px}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout p{margin:0 0 10px} .callout p:last-child{margin:0}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
+.gate .dot{width:10px;height:10px;border-radius:50%;background:var(--line-strong);margin-left:6px}
+.gate.ok .dot{background:var(--ok)} .gate.warn .dot{background:var(--warn)} .gate.bad .dot{background:var(--bad)}
+.gate .who{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);white-space:nowrap}
+.notes{display:flex;flex-direction:column;gap:8px;margin:0;padding-left:20px;color:var(--ink-2)}
+.notes li::marker{color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.82rem;display:flex;flex-direction:column;gap:6px}
+.footer code{font-family:var(--font-mono);font-size:.78em;overflow-wrap:anywhere}
+@media (max-width:560px){.verdict{grid-template-columns:1fr}.gate{grid-template-columns:20px 1fr}.gate .who{grid-column:2}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>对抗式审查 · Round 1/3</span><span class="sep">/</span>
+      <span>AI_MEMORY/ledger.jsonl</span><span class="sep">/</span>
+      <span>2026-10-24 13:15 +08:00</span>
+    </div>
+    <h1>台账僵尸行处置：152 行在办逐条审，落地 16 行</h1>
+    <p class="standfirst">清掉 11 个不用再跟的任务，把 4 个的验收句改到当下事实。同步时发现一处两天没动的闸：一行非法的更新时间让整个投影快照停摆，连带 19 个别手的任务无法同步。</p>
+  </header>
+
+  <div class="verdict">
+    <div class="label">Verdict</div>
+    <div>
+      <strong>有条件放行</strong>
+      <p>台账已按证据改完并投影，飞书 15/16 行落地。剩 1 行为对账闸连带滞留；根因是他人行的非法时间戳，需属主补一行后自动解锁。</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="stats">
+      <div class="stat ok"><div class="n">16</div><div class="k">追加行（15 个任务）</div></div>
+      <div class="stat ok"><div class="n">11</div><div class="k">关闭／搁置任务</div></div>
+      <div class="stat warn"><div class="n">143</div><div class="k">仍在办（清理后现读）</div></div>
+      <div class="stat bad"><div class="n">20</div><div class="k">被对账闸拦下（19 行非本会话）</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>契约头部</h2>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>范围</th><td><code>ledger.jsonl</code> L449–L465 追加 16 行；飞书回读 208 条记录</td></tr>
+          <tr><th>改动</th><td>1 个文件 +17 / −0 行（16 行处置 + 1 行本任务记录）；风险档 Low（只追加台账，不动代码、不部署）</td></tr>
+          <tr><th>已证实</th><td>7 条（Important 3 / Nit 2 / Pre-existing 2）</td></tr>
+          <tr><th>未决</th><td>2 条（原始时间戳；其余 188 行未做三值比对）</td></tr>
+          <tr><th>覆盖缺口</th><td>非 GEO/SEO、非逾期的约 80 行未逐条审；未核 Owner 批注；未验证排名与收录</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>证据</th><th>等级</th><th>来源</th></tr></thead>
+        <tbody>
+          <tr><td>F1</td><td><span class="tag ok">Important·已修</span></td><td>L449–451、L464–465</td><td>5 个已完成任务仍写待办，飞书看着还欠活</td><td>CSDN 200/332,190 B、2 处纯文本域名、0 可点链接；教程页 200/33,441 B、4 H2、TechArticle；首页 title 逐字一致；<code>merge-base --is-ancestor 26de3ade HEAD</code> rc=0</td><td>A</td><td>本次</td></tr>
+          <tr><td>F2</td><td><span class="tag ok">Important·已修</span></td><td>L457–L462</td><td>6 个任务前提已失效仍挂在办，每轮重扫</td><td>1500 上限经 <code>55ba87a7</code> 撤除且 src 0 命中；<code>sanitizePsdFile</code> 在两条执行器链 0 调用；字距闸 <code>pc-executor.js:466/:477</code></td><td>A</td><td>本次</td></tr>
+          <tr><td>F3</td><td><span class="tag">Nit·已修</span></td><td>L453–L456</td><td>验收句停在旧前提（#172 未合流等）</td><td><code>package.json:169</code> 有 parity 门；llms 两份已列教程页；<code>/en/page.tsx:37</code>、<code>/en/download/page.tsx:46</code> contactPoint 在场</td><td>A</td><td>本次</td></tr>
+          <tr><td>F4</td><td><span class="tag bad">Important·未修</span></td><td>L367</td><td><code>updatedAt=2026-10-22 20:1x</code> 被飞书拒收 ⇒ 快照冻结 ⇒ 二次改动永久判"人手改"</td><td>两次真跑均 <code>[fail] update USAGE-LIMIT-TRIAGE</code>；快照 mtime=10-22 16:47；<code>sync-task-ledger.mjs:198-215</code></td><td>A／D</td><td>存量（他人）</td></tr>
+          <tr><td>F5</td><td><span class="tag bad">Important·未修</span></td><td>L464 / 飞书 <code>reczz28OjdSkTCex</code></td><td>真相层已交付，飞书仍待复验</td><td>13:13 回读 status=待复验、更新于 13:10；同批其余 14 行已落地</td><td>A</td><td>本次（F4 连带）</td></tr>
+          <tr><td>F6</td><td><span class="tag">Nit·未修</span></td><td>L342</td><td>同 taskId 下挂异题标题，按末行检索会读到错题</td><td>逐行解析 L341–343：同 ID 三行，L342 标题与另两行无关</td><td>A</td><td>存量（他人）</td></tr>
+          <tr><td>F7</td><td><span class="tag warn">Pre-existing</span></td><td>全量</td><td>74 行无到期日；38 行已到期或过期（23 行严格过期）</td><td><code>tmp/ledger-review-20261024.mjs</code> 现跑：203 任务 / 143 在办 / overdue 38 / noDue 74</td><td>A</td><td>存量</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>16 行怎么处置的</h2>
+    <div class="cards">
+      <div class="card">
+        <span class="tag ok">关闭 5</span>
+        <h3>证据到了就关</h3>
+        <p class="why">CSDN 首篇已上线；教程页底座已上线（19 行词面增量另挂 <code>GUIDE-WORDFACE-PSD</code>）；首页标题与关键词已按验收句上线；GEO 交接件前置已合流。</p>
+        <p class="ev">CSDN 200 / 332,190 B ｜ 教程页 200 / 33,441 B / 4 H2 ｜ title 逐字一致</p>
+      </div>
+      <div class="card">
+        <span class="tag warn">搁置 6</span>
+        <h3>前提没了就停</h3>
+        <p class="why">1500 单位上限被整体撤下；Txt2 净化方向被推翻（存活件 <code>PC-KERNING-REWRITE</code>）；GEO-R3 已拆成三个子任务；SEO-P2 缺可判定验收句。每行都写了复活条件。</p>
+        <p class="ev">55ba87a7 ｜ grep BATCH_MAX_STANDARD_UNITS src rc=1 ｜ sanitizePsdFile 0 调用</p>
+      </div>
+      <div class="card">
+        <span class="tag">收窄 4</span>
+        <h3>任务留着，验收句换新的</h3>
+        <p class="why">GEO-ALGO-R8 去掉 #172 旧前提；SEO-R14 两笔增量已在树，余下是度量渠道；GEO-OFFSITE-QUEUE 首篇已发；GUIDE-FORMS-R15 的 A 形态已交付。</p>
+        <p class="ev">26de3ade 祖先 rc=0 ｜ package.json:169 ｜ llms.txt:21 ｜ /en contactPoint</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>那个卡了两天的闸</h2>
+    <div class="callout bad">
+      <p><strong>规则原样：</strong>同步脚本只要有一次写入失败，就把整份投影快照留在这个状态，下次重试（<code>sync-task-ledger.sh</code> 里 <code>FAILS&gt;0 ⇒ exit 1，快照未提升</code>）。</p>
+      <p><strong>触发物：</strong>别手的一行 <code>USAGE-LIMIT-TRIAGE</code>，更新时间写成 <code>2026-10-22 20:1x</code>，飞书拒收。快照从此停在 <strong>2026-10-22 16:47</strong>（实测 mtime）。</p>
+      <p><strong>连带后果：</strong>任何行只要在飞书侧改过一次、又要改第二次，就会被三值比对判成 conflict（<code>scripts/sync-task-ledger.mjs:209</code> 只放行 P=F）；本次 20 行被拦，19 行属于别的手。</p>
+      <p><strong>为什么不替它改：</strong>真实钟点只有属主知道，盘上只能证到 20:00–20:59 区间；替它填一个时间就是往台账写假数。建议属主追加一行合法时间戳。</p>
+      <p><strong>13:2x 后续（代贴已获授权）：</strong>时间取服务器部署收据 <code>deploy-20261022_200455-557fe7670371</code> ⇒ 20:04，source 注明代贴与时区。重跑后该行写入成功、快照从 10-22 16:47 推进到 13:24，但 <strong>19 行一行未解锁</strong>，类别从 <code>no-snapshot</code> 变成 <code>human-edit</code>——原因见下方更正段。</p>
+      <p><strong>根治方案已有稿：</strong>台账里挂着 <code>LEDGER-SNAPSHOT-GATE</code>（源头挡坏日期／按行提升快照／held 行不污染基准／恒失败点名 ＋ 三验收判据），出稿方在等 O1–O4 四个字母。本轮未动脚本——那是中台写面，且同批 held 含 Owner 手改行，不能全量 <code>--force</code>。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>下一步</h2>
+    <div class="gates">
+      <div class="gate warn"><span class="dot"></span><span>教程页 19 行「PSD 批量替换文字」增量：现在提交随下一班发布，还是等下一批？（线上现读该节不在页）</span><span class="who">你拍</span></div>
+      <div class="gate warn"><span class="dot"></span><span>CSDN 文里官网是两处纯文本、0 可点链接，要不要改（需手点编辑）</span><span class="who">你拍</span></div>
+      <div class="gate warn"><span class="dot"></span><span>少数派／搜狐号开号决定；抖音卡在本人短信验证是否继续</span><span class="who">你拍</span></div>
+      <div class="gate bad"><span class="dot"></span><span><code>USAGE-LIMIT-TRIAGE</code> 已代贴（20:04）；<code>ASSISTANT-STATE-GUARD</code> 的 <code>2026-10-23 22:3x</code> 同类坏值仍未修，现只被排除点名、不再拖累整表</span><span class="who">属主</span></div>
+      <div class="gate warn"><span class="dot"></span><span>19 行已锁成 <code>human-edit</code>：等 C3＋迁移（把基准改成飞书现值），<code>ZHIHU-COPY</code> 那行是你手改的，不自动覆盖</span><span class="who">夜间</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>覆盖缺口</h2>
+    <ul class="notes">
+      <li>非 GEO/SEO、非逾期的约 80 行在办未逐条审，去留仍是未知。</li>
+      <li>未动其他会话任何台账行，未动 <code>CURRENT_STATUS.md</code>（单写者令）。</li>
+      <li>未核 Owner 在飞书「Owner 批注」列的内容，本轮只读机器列。</li>
+      <li>未验证任何线上排名、收录、外链权重；判据只到"页面可访问／字节数／结构／代码命中"这一层。</li>
+      <li>未部署、未提交代码、未发布任何内容。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>更正（13:2x 追记）</h2>
+    <div class="callout bad">
+      <p><strong>原说法：</strong>"那一行一合法，快照就能提升，19 行连带解锁"（已发的飞书卡片里也是这句）。</p>
+      <p><strong>反证：</strong>代贴后真跑 <code>update=1 skip=183 heldCount=20</code>、无 <code>[fail]</code>，快照 mtime 13:24 / 159,457 字节；紧接着第二次 <code>update=0 skip=184 heldCount=20</code>——一行未解锁，类别由 <code>no-snapshot</code> 全变 <code>human-edit</code>。</p>
+      <p><strong>根因：</strong><code>scripts/sync-task-ledger.mjs:317</code> 在 held 分支也把台账值 L 推进快照 ⇒ 下次 <code>P==L≠F</code> ⇒ 判 <code>human-edit</code>（<code>:210-212</code>）。即"快照提升"本身会把 held 行永久锁死，这就是方案里的 C3。</p>
+      <p><strong>同日已做（Owner 批准的第一步）：</strong>新增 <code>isLegalTime()</code>，出计划前校验 <code>更新时间</code>／<code>到期日</code>，坏行排除＋<code>errors</code> 点名＋<code>invalidRowCount</code>，其余行照常。夹具新增例 8：<code>PASS=35 FAIL=0</code>；负控短路校验后 <code>PASS=30 FAIL=5</code>。真账本 dry-run 又抓出 <code>ASSISTANT-STATE-GUARD</code> 的 <code>2026-10-23 22:3x</code>（L434）。C2/C3/C4＋迁移按"观察一天、夜间做"未动。</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>台账 SHA-256（13:15:25 复算，与 13:13:56 同值）：<code>1b6a9f5725cf54d93e0aad2c2f4218cc2c77e399d63989c6f51a2ccfc743885d</code>（351,904 字节）</span>
+    <span>台账 SHA-256（13:16:58，含本任务记录行）：<code>e2f9fa2b2780db447c9ebaba6fea570ac2542fd4a85013f8d2fe5ba8d8990a6b</code>（352,616 字节；464 条非空行／204 个任务）</span>
+    <span>台账 SHA-256（13:27:49 收笔现读，此后他手再写入即过期）：<code>3f64348c30f2eb32c33ffcfb7f0d8fdaad38cb598fc0b7b47332666937c7d8e7</code>（354,461 字节；469 条物理行／205 个任务／在办 143）</span>
+    <span>证据快照：<code>tmp/ledger-review-20261024.json</code>、<code>tmp/readback/records-1024b.ndjson</code>、<code>tmp/sync-20261024-1310.log</code>、<code>tmp/sync-20261024-1312.log</code>、<code>tmp/geo-prod-guide-1024.html</code>、<code>tmp/home-live-1024.html</code>、<code>tmp/csdn-live-check2.html</code></span>
+    <span>更正：有 1 条（见上「更正」段：原判"补行即可连带解锁 19 行"被实测推翻）</span>
+  </footer>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>排版可用与多稿一次导入 · 执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:70ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.acc{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:68ch}
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{display:grid;grid-template-columns:26px 1fr;gap:16px;padding-bottom:22px;position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:12px;top:22px;bottom:0;width:1px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.dot{width:11px;height:11px;border-radius:50%;margin:7px 0 0 7px;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);position:relative;z-index:1}
+.dot.ok{background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft)}
+.dot.warn{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{font-size:.86rem;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:66ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.warn{background:var(--warn-soft);border-color:var(--warn-soft)}
+.callout.warn .lb{color:var(--warn)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:72ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+/* ───────── mockups ───────── */
+.mockwrap{background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:clamp(10px,2.4vw,18px);display:flex;flex-direction:column;gap:10px}
+.mocklabel{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mocklabel .n{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;color:var(--accent)}
+.mocklabel .t{font-size:.9rem;font-weight:600}
+.mocklabel .s{font-size:.78rem;color:var(--muted)}
+.shot{background:#f7f8fa;border:1px solid #d9dee6;border-radius:11px;overflow:hidden;box-shadow:0 14px 34px rgba(15,23,42,.10);color:#111827;font-family:var(--font-body);font-size:13px;line-height:1.55}
+.shot *{box-sizing:border-box}
+.shot-bar{height:34px;display:flex;align-items:center;gap:7px;padding:0 12px;background:#eceff4;border-bottom:1px solid #d9dee6}
+.shot-bar i{width:9px;height:9px;border-radius:50%;background:#c9cfd9;display:block}
+.shot-bar .url{margin-left:8px;flex:1;background:#fff;border:1px solid #dde2ea;border-radius:6px;height:21px;display:flex;align-items:center;padding:0 9px;font-family:var(--font-mono);font-size:10px;color:#6b7280}
+.shot-body{padding:16px;display:flex;flex-direction:column;gap:12px;background:#f8f9fb}
+.step{display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;flex-wrap:wrap}
+.step b{color:#111827;font-weight:600}
+.step .on{background:#111827;color:#fff;border-radius:999px;padding:2px 9px;font-weight:600}
+.wb-card{background:#fff;border:1px solid #e5e8ee;border-radius:10px;padding:13px 14px;display:flex;flex-direction:column;gap:9px}
+.wb-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.wb-t{font-weight:700;font-size:13.5px;color:#111827}
+.wb-s{font-size:11px;color:#6b7280}
+.wb-path{font-family:var(--font-mono);font-size:11px;background:#f3f4f7;border:1px solid #e5e8ee;border-radius:6px;padding:5px 8px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{border:1px solid #cfd5df;background:#fff;color:#111827;border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn.primary{background:#111827;border-color:#111827;color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:#4b5563}
+.btn.amber{background:#fef3c7;border-color:#f59e0b;color:#78350f}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.chip.ok{background:#e7f6ee;color:#0d6f4a}
+.chip.warn{background:#fbf1dc;color:#8a5a00}
+.chip.bad{background:#fbeae8;color:#ae2318}
+.chip.gray{background:#eef1f5;color:#4b5563}
+.sum{display:flex;flex-wrap:wrap;gap:6px}
+.kv{background:#f3f4f7;border:1px solid #e5e8ee;border-radius:7px;padding:5px 9px;font-size:10.5px;color:#4b5563}
+.kv b{color:#111827;font-family:var(--font-mono);font-weight:500}
+.rows{display:flex;flex-direction:column;border:1px solid #e5e8ee;border-radius:8px;overflow:hidden;background:#fff}
+.row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.15fr) 96px 74px;gap:9px;align-items:center;padding:8px 11px;border-bottom:1px solid #eef0f4;font-size:11.5px}
+.row:last-child{border-bottom:none}
+.row.head{background:#f7f8fa;color:#6b7280;font-size:10px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+.row .fn{font-family:var(--font-mono);font-size:10.8px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sub{display:block;font-family:var(--font-body);font-size:10px;color:#8b93a1;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tb{font-family:var(--font-mono);font-size:10.5px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tb.blank{color:#b45309;font-family:var(--font-body);font-weight:600}
+.row .act{display:flex;justify-content:flex-end;gap:5px}
+.row.note{grid-template-columns:1fr;background:#fffbeb;color:#78350f;font-size:11px}
+.footbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:2px}
+.footbar .hint{font-size:10.5px;color:#6b7280;max-width:56ch}
+.overlay{position:relative}
+.dialog{background:#fff;border:1px solid #d9dee6;border-radius:12px;box-shadow:0 18px 44px rgba(15,23,42,.18);padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
+.dialog-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.dialog-t{font-weight:700;font-size:14px}
+.dialog-s{font-size:11px;color:#6b7280;margin-top:2px}
+.select{display:flex;align-items:center;justify-content:space-between;gap:6px;border:1px solid #cfd5df;border-radius:6px;padding:4px 7px;font-family:var(--font-mono);font-size:10.5px;background:#fff;min-width:0;overflow:hidden}
+.select span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.select.empty{border-color:#f0a4a0;background:#fff7f6;color:#ae2318;font-family:var(--font-body);font-weight:600}
+.select i{font-style:normal;color:#9aa3b2;flex:none}
+.queue{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#eef4ff;border:1px solid #d6e2fb;border-radius:8px;padding:7px 10px;font-size:11.5px;color:#1e3a8a}
+.queue b{font-weight:700}
+.mini{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:#4b5563}
+.mini .box{background:#fff;border:1px solid #e5e8ee;border-radius:6px;padding:3px 8px;font-weight:600;color:#111827}
+.mini .arr{color:#9aa3b2;font-family:var(--font-mono)}
+.mini .box.dark{background:#111827;color:#fff;border-color:#111827}
+.mock-note{font-size:.78rem;color:var(--muted);line-height:1.6}
+.mock-note b{color:var(--ink-2)}
+@media (max-width:620px){
+  .row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 70px}
+  .row .act{display:none}
+  .row.head span:last-child{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 · 执行方案</span><span class="sep">/</span>
+    <span>排版写回 · 多稿表格</span><span class="sep">/</span>
+    <span>2026-10-21</span>
+  </p>
+  <h1>排版可用 + 多稿一次导入表格</h1>
+  <p class="standfirst">你在测试站遇到的两件事，根因都不在界面：排版是助手把「未开放」写死了，而执行器早就会写；多稿表格是「读完文件夹」与「装表」之间断了一刀。这份方案给出修法、真实界面模拟、验收判据与不做什么。</p>
+  <div class="meta">
+    <span>基线 develop@525559c</span>
+    <span>r4 源提交 c570c9b</span>
+    <span>8 条发现 · 5 条 Important</span>
+    <span>只动测试站</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">VERDICT · 有条件放行</span>
+    <p>排版可以今天修好，但必须换一个助手安装包——开关在 exe 里，网页改不了。多稿表格可以一次导入，但只修上传还不够，审查门仍按稿拦，要配一条「审下一稿」的队列。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">1.2.0</span><span class="k">出厂执行器<br>已经会应用排版</span></div>
+    <div class="stat bad"><span class="n">false</span><span class="k">助手自报的能力位<br>与实际能力相反</span></div>
+    <div class="stat warn"><span class="n">12 → 1</span><span class="k">逐稿装表<br>改为一次导入</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">单稿工作台<br>计划改动</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>已经是对的</h3>
+      <ul>
+        <li><strong>执行器会写排版。</strong>文字写完并核对后，它按「字体 → 自动字距 → 行距 → 字距 → 仿粗/仿斜」的顺序应用，并逐层回读。<code>TYGF_V15_Thin_Executor.jsx:221</code></li>
+        <li><strong>r4 里带着它。</strong>r4 源提交 <code>c570c9b</code> 包含执行器提交 <code>e9f639f</code>，祖先判定返回 0。</li>
+        <li><strong>v7 的存储本来就是每稿一张表。</strong><code>parsedTables</code> 按稿键存放，缺的只是批量入口。</li>
+        <li><strong>文件夹扫描已经知道表在哪。</strong>每张表带着 <code>relPath</code> 与 <code>dir</code> 回到前端，只是界面没用来绑定。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>现在卡住的</h3>
+      <ul>
+        <li><strong>能力位写死 false。</strong><code>server.js:1426</code>。网页三个入口读的都是它，所以你看不到排版按钮。</li>
+        <li><strong>表格入口只认当前稿。</strong>换一稿就要再选一次文件，12 稿就是 12 轮。</li>
+        <li><strong>配对信息被丢掉。</strong>扫描结果用完即清，表格面板拿不到根目录与表清单。</li>
+        <li><strong>审查门按稿 × 语言。</strong>即使一次装完表，仍要逐稿确认；没有「下一稿」的引导。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">为什么不能在网页上直接把入口打开</span>
+    <p>那会在「助手自报的能力位」之外再造一个真相源：今天 r4 恰好带着执行器，明天一个不带执行器的同版本包就会被网页当成可用，结果是点了按钮、字却没变，而且没有任何提示。仓库里两条冒烟就是防这个的——不删断言，不放宽判据。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>审查发现</h2>
+  <p class="lede">全部为本次实读：能力位、执行器、多稿存储、文件夹扫描、执行前审查门。行号取自 <code>worktrees/develop@525559c</code> 的当前工作树。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>性质</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">F1</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">server.js:1426</td>
+          <td>能力位写死 false，而 <code>TYGF_V15_Thin_Executor.jsx:221</code> 已无条件应用排版。用户永远看不到入口，以为功能没做。</td>
+          <td><span class="tag bad">过期</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F2</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">c570c9b ⊃ e9f639f</td>
+          <td>r4 出厂件已含执行器 1.2.0，却仍报 false；今天装的这一版「用不了」不是缺能力。</td>
+          <td><span class="tag bad">本次实测</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F3</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:346<br>typography-panel.tsx:375</td>
+          <td>入口、面板、字体探测三处读同一个 false；翻 true 后同时打开，不需要改界面。</td>
+          <td><span class="tag warn">存量设计</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F4</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:1618<br>:3190</td>
+          <td>唯一的表格入口只写当前稿；12 稿需要 12 次切换 + 选择文件。</td>
+          <td><span class="tag bad">本次主诉</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F5</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">design-file-card.tsx:935<br>:1033 / :1126</td>
+          <td>扫描已知每张表的子目录与相对路径，界面明说「不会自动绑定」，随后清空扫描结果。</td>
+          <td><span class="tag warn">能力闲置</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F6</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:1985-2020</td>
+          <td>执行前要求每稿每语言都有审查摘要；只做批量上传，用户仍要切 12 次稿。</td>
+          <td><span class="tag warn">顺序风险</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F7</td><td><span class="tag warn">Nit</span></td>
+          <td class="mono">server.js:5114</td>
+          <td>表格清单截到 200 条，却没有回传「被截断」标志；超量时会把「没返回」误报成「没配上」。</td>
+          <td><span class="tag warn">存量</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F8</td><td><span class="tag warn">Nit</span></td>
+          <td class="mono">design-file-card.tsx:129</td>
+          <td>扫描结果是组件内状态，表格面板拿不到根目录；批量导入需要把根目录交上去。</td>
+          <td><span class="tag warn">存量</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">覆盖缺口</span>
+    <p>没有在真机 Photoshop 上跑排版写回；没有读完 opencode 会话里 659 条助手回复，只读了你的 19 条原话与关键结论；没有从 r4 安装包抽出执行器逐字节核对，1.2.0 是由提交祖先关系与出包脚本反推；12 张 5MB 表连续读取的内存峰值没有实测。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>排版怎么修</h2>
+  <p class="lede">四步，按顺序。前两步是代码，第三步是机器时间，第四步需要你装一次。</p>
+
+  <div class="gates">
+    <div class="gate">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>把开关改成 true，并改掉过期注释</h3>
+        <p><code>server.js:1426</code> 的 <code>TYPOGRAPHY_APPLY_READY</code> 改为 true；上面那句「执行器照略」已经与事实相反，同笔改掉。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>把两条「必须为 false」的冒烟翻方向</h3>
+        <p><code>smoke-fonts-catalog.mjs:59-60</code> 与 <code>smoke-typography-wiring.mjs:122-123</code> 改成「为 true 时执行器必须 ≥1.2.0」。原来那条配对闸保留，方向反过来。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>版本前进到 3.7.17，出 r5</h3>
+        <p>同步身份门要求的全部落点：身份文件、环境样例两处、部署脚本、<code>server.js</code> 的 VERSION、安装器脚本、助手 package.json。在干净隔离树出包，更新发布清单，挂到测试站下载页。</p>
+        <p class="after">同一个版本号不能对应两种能力；发布脚本也拒绝用同版本覆盖旧包。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">4</div>
+      <div class="body">
+        <h3>部署测试站，你装 r5，跑一批</h3>
+        <p>部署后旧助手会明确提示升级。你装完确认托盘版本 3.7.17，选一个稿、一门语言，设一个一眼能看出的字体或行距，跑一批，打开产物看一眼。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">验收时我会一起看</span>
+    <p>执行结果里的 <code>typographyRequested</code> 与 <code>typographyIssues</code>。如果这台机器没装你选的字体，它会逐层说「没有这个字体，已用回退」，不会假装成功。字体回退是可解释的；静默不写才是故障。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>多稿工作台 · 真实界面模拟</h2>
+  <p class="lede">目标只有一个：读完文件夹之后，表已经配好；你只需要确认一次。下面是按现有工作台样式做的三屏模拟，新增处用蓝色标注。</p>
+
+  <div class="mockwrap">
+    <div class="mocklabel">
+      <span class="n">屏幕 1 / 3</span>
+      <span class="t">读完文件夹，直接给出配对结果</span>
+      <span class="s">替代「只报 12 个 PSD，表自己一个个装」</span>
+    </div>
+    <div class="shot">
+      <div class="shot-bar"><i></i><i></i><i></i><span class="url">tygf-test…/workbench#batch</span></div>
+      <div class="shot-body">
+        <div class="step"><span class="on">1 准备素材</span><span>›</span><span>2 译文表</span><span>›</span><span>3 智能审核</span><span>›</span><span>4 对账</span><span>›</span><span>5 交付</span></div>
+
+        <div class="wb-card">
+          <div class="wb-h">
+            <span class="wb-t">多个设计稿</span>
+            <span class="wb-s">一次最多 12 个；子文件夹＝一组</span>
+            <span style="margin-left:auto" class="chip gray">批量模式</span>
+          </div>
+          <div class="wb-path">D:\项目\2026Q4_秋季新品</div>
+          <div class="wb-h">
+            <button class="btn">重新读取</button>
+            <button class="btn primary">加入这 12 稿并导入表格</button>
+            <span class="wb-s" style="margin-left:auto">读取只在本机进行，不上云</span>
+          </div>
+          <div class="sum">
+            <span class="kv"><b>12</b> 个设计稿</span>
+            <span class="kv"><b>8</b> 张表</span>
+            <span class="kv"><b>10</b> 稿已配对</span>
+            <span class="kv" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412"><b>2</b> 稿待选</span>
+            <span class="kv"><b>0</b> 个超出上限</span>
+          </div>
+        </div>
+
+        <div class="rows">
+          <div class="row head"><span>设计稿</span><span>译文表</span><span>依据</span><span style="text-align:right">状态</span></div>
+          <div class="row">
+            <span class="fn">SKU-AX1001_主图.psd<span class="sub">主图 / 01_秋冬</span></span>
+            <span class="tb">SKU-AX1001.xlsx</span>
+            <span><span class="chip ok">同名</span></span>
+            <span style="text-align:right"><span class="chip ok">已配对</span></span>
+          </div>
+          <div class="row">
+            <span class="fn">SKU-AX1002_主图.psd<span class="sub">主图 / 01_秋冬</span></span>
+            <span class="tb">SKU-AX1002.xlsx</span>
+            <span><span class="chip ok">同名</span></span>
+            <span style="text-align:right"><span class="chip ok">已配对</span></span>
+          </div>
+          <div class="row">
+            <span class="fn">SKU-AX1003_主图.psd<span class="sub">主图 / 01_秋冬</span></span>
+            <span class="tb">SKU-AX1003.csv</span>
+            <span><span class="chip ok">同名</span></span>
+            <span style="text-align:right"><span class="chip ok">已配对</span></span>
+          </div>
+          <div class="row">
+            <span class="fn">详情页_01.psd<span class="sub">详情页 / 02_主推</span></span>
+            <span class="tb">详情页_01.xlsx</span>
+            <span><span class="chip ok">同名</span></span>
+            <span style="text-align:right"><span class="chip ok">已配对</span></span>
+          </div>
+          <div class="row">
+            <span class="fn">详情页_02.psd<span class="sub">详情页 / 02_主推</span></span>
+            <span class="tb">—</span>
+            <span><span class="chip warn">同目录 3 张表</span></span>
+            <span style="text-align:right"><span class="chip warn">待选</span></span>
+          </div>
+          <div class="row note"><span>详情页 / 02_主推 里有 3 张表，名字都对不上「详情页_02」。点「加入」后可以逐行选，不会被猜一张套上。</span></div>
+        </div>
+
+        <div class="footbar">
+          <span class="hint">配不上的会逐条点名；没配的表也会列出来，不会静默丢掉。</span>
+          <span class="mini"><span class="box">选文件夹</span><span class="arr">→</span><span class="box">确认配对</span><span class="arr">→</span><span class="box dark">一次导入</span></span>
+        </div>
+      </div>
+    </div>
+    <p class="mock-note"><b>新增：</b>扫描后先算配对，再一次性回显；不再需要「加入 12 稿 → 切 12 次 → 装 12 张表」。</p>
+  </div>
+
+  <div class="mockwrap">
+    <div class="mocklabel">
+      <span class="n">屏幕 2 / 3</span>
+      <span class="t">导入前确认：每稿用哪张表，可改</span>
+      <span class="s">免上传，但不免确认</span>
+    </div>
+    <div class="shot">
+      <div class="shot-bar"><i></i><i></i><i></i><span class="url">tygf-test…/workbench#batch</span></div>
+      <div class="shot-body">
+        <div class="overlay">
+          <div class="dialog">
+            <div class="dialog-h">
+              <div>
+                <div class="dialog-t">确认每个设计稿用哪张表</div>
+                <div class="dialog-s">默认已按「同目录唯一 / 同名前缀」配好；下面每一项都可以改。</div>
+              </div>
+              <button class="btn ghost">✕</button>
+            </div>
+            <div class="rows">
+              <div class="row head"><span>设计稿</span><span>译文表（可改）</span><span>依据</span><span style="text-align:right">状态</span></div>
+              <div class="row">
+                <span class="fn">SKU-AX1001_主图.psd</span>
+                <span><span class="select"><span>SKU-AX1001.xlsx</span><i>▾</i></span></span>
+                <span><span class="chip ok">同名</span></span>
+                <span style="text-align:right"><span class="chip ok">就绪</span></span>
+              </div>
+              <div class="row">
+                <span class="fn">SKU-AX1002_主图.psd</span>
+                <span><span class="select"><span>SKU-AX1002.xlsx</span><i>▾</i></span></span>
+                <span><span class="chip ok">同名</span></span>
+                <span style="text-align:right"><span class="chip ok">就绪</span></span>
+              </div>
+              <div class="row">
+                <span class="fn">详情页_01.psd</span>
+                <span><span class="select"><span>详情页_01.xlsx</span><i>▾</i></span></span>
+                <span><span class="chip ok">同名</span></span>
+                <span style="text-align:right"><span class="chip ok">就绪</span></span>
+              </div>
+              <div class="row">
+                <span class="fn">详情页_02.psd</span>
+                <span><span class="select empty"><span>请选择这一稿的表</span><i>▾</i></span></span>
+                <span><span class="chip warn">3 张候选</span></span>
+                <span style="text-align:right"><span class="chip warn">待选</span></span>
+              </div>
+              <div class="row">
+                <span class="fn">详情页_03.psd</span>
+                <span><span class="select empty"><span>暂不导入</span><i>▾</i></span></span>
+                <span><span class="chip warn">留空</span></span>
+                <span style="text-align:right"><span class="chip gray">稍后</span></span>
+              </div>
+            </div>
+            <div class="footbar">
+              <span class="hint">将导入 <b>8</b> 张表 · <b>10</b> 稿就绪 · <b>2</b> 稿留空。留空的稿在执行前仍会被点名拦下。</span>
+              <span style="display:flex;gap:6px">
+                <button class="btn">取消</button>
+                <button class="btn primary">导入 8 张表</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="mock-note"><b>规则：</b>只在同一子文件夹里配；唯一表共用；多表按同名前缀；对不上就留空让你选。永远不跨文件夹猜。</p>
+  </div>
+
+  <div class="mockwrap">
+    <div class="mocklabel">
+      <span class="n">屏幕 3 / 3</span>
+      <span class="t">装完之后：每条表状态 + 审查队列</span>
+      <span class="s">审查门一条不放宽，只是不用你自己找下一稿</span>
+    </div>
+    <div class="shot">
+      <div class="shot-bar"><i></i><i></i><i></i><span class="url">tygf-test…/workbench#batch</span></div>
+      <div class="shot-body">
+        <div class="wb-card">
+          <div class="wb-h">
+            <span class="wb-t">译文表 · 每个设计稿一张</span>
+            <span class="wb-s"><b>8 / 12</b> 稿已导入</span>
+            <button class="btn" style="margin-left:auto">一次导入整组表格</button>
+          </div>
+          <div class="queue">
+            <span>还有 <b>6</b> 稿没确认审查</span>
+            <span style="color:#93a4c4">·</span>
+            <span>当前稿：SKU-AX1001_主图.psd</span>
+            <button class="btn" style="margin-left:auto">审下一稿 →</button>
+          </div>
+          <div class="rows">
+            <div class="row head"><span>设计稿</span><span>译文表</span><span>审查</span><span style="text-align:right">操作</span></div>
+            <div class="row">
+              <span class="fn">SKU-AX1001_主图.psd<span class="sub">当前稿 · 12 语言</span></span>
+              <span class="tb">SKU-AX1001.xlsx<span class="sub">86 行 · 12 语言</span></span>
+              <span><span class="chip ok">12 / 12 已确认</span></span>
+              <span class="act"><button class="btn ghost">当前稿</button></span>
+            </div>
+            <div class="row">
+              <span class="fn">SKU-AX1002_主图.psd<span class="sub">12 语言</span></span>
+              <span class="tb">SKU-AX1002.xlsx<span class="sub">86 行 · 12 语言</span></span>
+              <span><span class="chip warn">0 / 12 已确认</span></span>
+              <span class="act"><button class="btn">审这一稿</button></span>
+            </div>
+            <div class="row">
+              <span class="fn">SKU-AX1003_主图.psd<span class="sub">12 语言</span></span>
+              <span class="tb">SKU-AX1003.csv<span class="sub">86 行 · 12 语言</span></span>
+              <span><span class="chip warn">0 / 12 已确认</span></span>
+              <span class="act"><button class="btn">审这一稿</button></span>
+            </div>
+            <div class="row">
+              <span class="fn">详情页_02.psd<span class="sub">未选语言</span></span>
+              <span class="tb blank">未导入译文表</span>
+              <span><span class="chip bad">缺表</span></span>
+              <span class="act"><button class="btn amber">选表</button></span>
+            </div>
+          </div>
+          <div class="footbar">
+            <span class="hint">译表、语言、审查确认与对账证据只属于各自的稿；换表会清掉这一稿的审查确认，不会动其它稿。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="mock-note"><b>不变：</b>执行前仍然要求每稿每语言都有审查摘要；覆盖率闸、指纹、按稿目录切换、失败即停全部原样保留。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>配对规则与安全边界</h2>
+
+  <div class="split">
+    <div class="panel yes" style="border-top-color:var(--accent)">
+      <h3 style="color:var(--accent)">配对（纯函数，可单测）</h3>
+      <ul>
+        <li>只在同一子文件夹里配，<strong>永远不跨文件夹取表</strong>。</li>
+        <li>同目录只有 1 张表 ⇒ 这一组共用，标「共用」。</li>
+        <li>同目录多张 ⇒ 表名是 PSD 名的前缀，按 <code>_</code>、<code>-</code>、空格、括号断开，标「同名」；多个都对上取最长。</li>
+        <li>对不上或同时对上多张 ⇒ <strong>不猜</strong>，标「待选」，列出同目录候选。</li>
+        <li>一张表可被同组多稿共用；一稿最多一张主表。</li>
+        <li>大小写不敏感、Unicode 规范化；顺序固定；没用上的表单列。</li>
+      </ul>
+    </div>
+    <div class="panel no" style="border-top-color:var(--warn)">
+      <h3 style="color:var(--warn)">取表（本机只读接口）</h3>
+      <ul>
+        <li>必须带扫描票据，无票拒绝。</li>
+        <li>只读本次扫描根目录之内：相对路径判定，出现 <code>..</code> 或绝对路径即拒。</li>
+        <li>软链接不读，与目录扫描同规矩。</li>
+        <li>只允许 csv / tsv / txt / xlsx / xls；单文件 ≤5MB。</li>
+        <li>不写日志、不缓存内容；逐张顺序读，不并发拉 12 张。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="lb">为什么必须由助手读</span>
+    <p>网页只能拿到「路径字符串」，拿不到文件内容。文件夹是助手弹窗选的，绝对路径也只在助手侧。所以批量装表必须有一个「按路径取表」的本机接口——它同时是这次唯一的新增攻击面，上面五条是它的硬边界。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>实施顺序</h2>
+
+  <div class="tl">
+    <div class="tl-item">
+      <div class="dot ok"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>P0 · 排版可用</strong><span class="tag ok">今天</span><span class="after">约 25 分钟代码 + 10 分钟出包 + 10 分钟部署</span></div>
+        <p>开关、两条冒烟、版本前进、隔离树出 r5、发布清单、测试站换版。出包是机器时间，期间并行写 P1 的配对纯函数与单测。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>P1 · 多稿一次导入</strong><span class="tag acc">2—3 小时</span></div>
+        <p>配对纯函数与单测 → 只读取表接口与安全冒烟 → 文件夹根目录上报 → 配对确认弹层 → 一次导入与逐稿落表 → 审查队列 → 单稿回归。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot warn"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>P2 · 组卡片与组级审查</strong><span class="tag warn">不排今天</span></div>
+        <p>定稿里那套「子文件夹＝一组」的组级进度与组级审查表。方向不变，但不是这次卡点的前置；P1 的配对函数与取表接口就是它的地基。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>验收判据</h2>
+  <ul class="notes">
+    <li><code>npx tsc --noEmit</code>、<code>npm run lint</code> 退出码 0。</li>
+    <li><code>smoke-fonts-catalog</code>、<code>smoke-typography-wiring</code>、<code>check-release-identity</code> 退出码 0；新断言钉住「true 必须配执行器 ≥1.2.0」。</li>
+    <li>配对单测覆盖：单表共用、同名一对一、最长匹配、多候选不猜、不跨目录、大小写、未用表。</li>
+    <li>取表冒烟覆盖：无票据拒绝、根目录外拒绝、软链拒绝、超 5MB 拒绝、扩展名拒绝。</li>
+    <li>浏览器实测：一个 12 稿文件夹一次导入后 12 稿都有表；改一稿的表不影响其它稿；单稿工作台按钮与流程与改动前一致。</li>
+    <li>真机：你跑一批排版，产物里目标层的字体或行距确实变了；执行结果没有未解释的排版问题。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="lb">可复跑 · 不做口头通过</span>
+    <p>上面每一条都会附命令原式与真实退出码。没有跑过的项写「未核实」，不写成「通过」。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>风险、回滚与本次不做</h2>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>风险与回滚</h3>
+      <ul>
+        <li><strong>r5 装不上或新版被拒：</strong>网页与 r5 同批上；回滚用测试站上一版目录，助手回装 r4。</li>
+        <li><strong>字体回退：</strong>执行器逐层报「没有这个字体，已用回退」，先换字体，不改执行逻辑。</li>
+        <li><strong>配错表：</strong>确认清单可见可改；执行前覆盖率与审查门仍在；不做模糊猜测。</li>
+        <li><strong>大表慢：</strong>顺序读、逐张解析、解析完即丢弃原始字节；进度可见、可取消。</li>
+        <li><strong>旧助手被拒：</strong>这是有意的。先挂 r5 下载，再换网页；旧助手会明确提示升级。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>本次不做</h3>
+      <ul>
+        <li>不碰生产站、不推送、不改历史、不轮换凭据。</li>
+        <li>不改执行链、报价、结算、匹配键、信任链。</li>
+        <li>不做 v13 组卡片与组级审查表。</li>
+        <li>不把单稿工作台改成多稿，也不把多稿塞进单稿。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="lb">未决 · 还缺的证据</span>
+    <p><strong>U1</strong> 执行器在 PS 22 真机上写回字体与行距的结果——要一次真机整批 + 产物目视。<strong>U2</strong> 你的真实文件夹命名是否都能被「同名/同目录唯一」覆盖——要一份脱敏目录清单或一句命名确认。<strong>U3</strong> 12 张 5MB 表连续读取的内存峰值——要真实大表夹具。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>需要你做的三件</h2>
+  <div class="gates">
+    <div class="gate">
+      <div class="num">1</div>
+      <div class="body"><h3>装 r5</h3><p>我会把本地路径与测试站下载链接一起给你。装完在助手托盘确认版本是 3.7.17。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body"><h3>跑一次排版</h3><p>测试站，一个稿、一门语言，设一个一眼能看出的字体或行距，跑一批，打开产物看一眼。</p></div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body"><h3>确认文件夹命名</h3><p>你的真实目录是不是「每个子文件夹一套 SKU，PSD 与表同名前缀」。是的话，配对规则不用再改。</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>基线：<code>worktrees/develop@525559c</code>；r4 源提交 <code>c570c9b</code>；执行器 <code>TYGF_V15_Thin_Executor.jsx</code> 1.2.0。所有行号为本轮实读，未在真机 Photoshop 上执行排版写回。</p>
+  <p>本方案只部署测试站。生产站、git 历史、凭据、执行链与计费口径均不在本次改动范围。</p>
+</footer>
+
+</div>
+</body>
+</html>

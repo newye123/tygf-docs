@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>支线过多怎么收口 · GitHub 公开实践调研</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+a{color:var(--accent)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.card ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:7px}
+.card li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>调研 ＋ 处置建议</span><span class="sep">/</span>
+    <span>支线过多怎么收口</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>支线过多怎么收口 · GitHub 公开实践调研</h1>
+  <p class="standfirst">先实测本项目支线真实数量（不猜），再查公开一手资料，最后判断哪些能搬、哪些不能搬。取数时刻 15:0x–15:3x（本机钟）；只读：未删任何分支、未动任何文件、未提交。</p>
+  <div class="meta">
+    <span>本地分支 84</span>
+    <span>可关账 40</span>
+    <span>历史一次性 34</span>
+    <span>孤儿目录约 45</span>
+    <span>公开来源 8 处</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>你的问题不是"支线开得多"，是<strong>"开了不关"</strong>。84 条分支里 74 条是沉淀，不是在跑的线——感觉兼顾不过来，很大一部分是账面没关干净造成的心理负担。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">40</span><span class="k">已合并进 develop、可直接关账</span></div>
+    <div class="stat warn"><span class="n">34</span><span class="k">历史 codex/* 一次性支线</span></div>
+    <div class="stat bad"><span class="n">45</span><span class="k">worktree 孤儿目录（git 已不认）</span></div>
+    <div class="stat warn"><span class="n">2</span><span class="k">建议的在办上限（现在是 7 且无约束力）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>现场实测（全部命令可复跑）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>读数</th><th>取法</th></tr></thead>
+      <tbody>
+        <tr><td>本地分支总数</td><td><strong>84</strong></td><td class="mono">git branch | wc -l</td></tr>
+        <tr><td>远端分支总数</td><td><strong>21</strong></td><td class="mono">git branch -r | wc -l</td></tr>
+        <tr><td>已合并进 develop、可直接关账</td><td><strong>40</strong></td><td class="mono">branch --merged develop</td></tr>
+        <tr><td>未合并进 develop、要人判断</td><td><strong>43</strong></td><td class="mono">branch --no-merged develop</td></tr>
+        <tr><td>└ 其中历史 <code>codex/*</code> 一次性支线</td><td><strong>34</strong></td><td class="mono">按前缀分组</td></tr>
+        <tr><td>└ 其中 <code>worktree-agent-*</code></td><td><strong>4</strong></td><td class="mono">grep -c worktree-agent-</td></tr>
+        <tr><td>worktree 注册数</td><td><strong>85</strong></td><td class="mono">git worktree list | wc -l</td></tr>
+        <tr><td>worktrees 目录下子目录数</td><td><strong>130</strong></td><td class="mono">ls -d ../*/ | wc -l</td></tr>
+        <tr><td>⇒ 孤儿目录（目录有、git 不认）</td><td><strong>约 45</strong></td><td class="mono">130 − 85</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">读法</span>
+    <p>84 条里 74 条（40 已合并 ＋ 34 历史 codex）是<strong>沉淀</strong>，真正需要你判断的只有个位数。每次打开分支列表看到 84 条，都会以为有 84 件事在飞。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>别人怎么做（GitHub 上可查到的四类做法）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">做法一</span><h3>限制在办数量（WIP limit）——最直接对应你的问题</h3></div>
+      <ul>
+        <li><strong>Personal Kanban</strong>（Jim Benson / Tonianne DeMaria）只有两条规则：<strong>可视化你的工作</strong> ＋ <strong>限制在办数量</strong>。原话："Agree how much can be in 'Doing' at once so people can focus, finish, and learn, instead of juggling too much, finishing too little, and drowning in half-done work."　<a href="https://personalkanban.com/">personalkanban.com</a></li>
+        <li><strong>Atlassian WIP 限值说明</strong>：同时办太多会直接过载。　<a href="https://www.atlassian.com/agile/kanban/wip-limits">atlassian.com/agile/kanban/wip-limits</a></li>
+        <li><strong>GitHub Projects 原生支持</strong>看板列 WIP 上限，超了给警告；官方建议"别让看板变成垃圾场，不再相关的 issue 要归档或关掉"。</li>
+        <li>业界口号：<strong>"Stop starting, start finishing"</strong>。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">做法二</span><h3>干脆不要 backlog —— Shape Up 的"赌注制"</h3></div>
+      <p>Basecamp 的 Shape Up（免费在线书 <a href="https://basecamp.com/shapeup">basecamp.com/shapeup</a>）三条核心：</p>
+      <ul>
+        <li><strong>时间固定、范围浮动</strong>：先定"这事值多少时间"（appetite），再决定这么长时间里做到什么版本。原话对照："Estimates start with a design and end with a number. Appetites start with a number and end with a design."</li>
+        <li><strong>没有 backlog</strong>：这一轮没选上的提议<strong>不自动结转</strong>，想做要重新提一次——避免"越攒越多、没人敢删"的坟场。</li>
+        <li><strong>断路器</strong>：到期没做完<strong>默认不延期</strong>，项目直接砍掉；要接着做必须重新拍一次，不能靠惯性拖。</li>
+        <li>配套 <strong>6 周干 ＋ 2 周冷却</strong>：冷却期不排新活，只修 bug、清尾。理由很直白——没有冷却期，疲劳和小毛病会一直堆。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">做法三</span><h3>分支短命、合完就删</h3></div>
+      <ul>
+        <li><strong>Trunk-Based Development</strong>（Paul Hammant，<a href="https://trunkbaseddevelopment.com/">trunkbaseddevelopment.com</a>，源仓库 <a href="https://github.com/paul-hammant/tbd">github.com/paul-hammant/tbd</a>）：主干一条，<strong>抵制建长期分支</strong>，每人至少每 24 小时往主干合一次；需要长周期的变更用 <strong>feature flag</strong> 或 <strong>branch by abstraction</strong>，而不是开一条活三个月的分支。发布分支"发完就删"。</li>
+        <li><strong>GitHub 官方 GitHub Flow</strong>（<a href="https://docs.github.com/en/get-started/using-github/github-flow">docs.github.com</a>）：开分支 → 改 → 提 PR → 合 → <strong>删掉分支</strong>。两条原话对你特别对症：
+          <br>① "Make a separate branch for each set of unrelated changes… <strong>if there is a delay in one set of changes, your other changes aren't also delayed</strong>."
+          <br>② "After you merge your pull request, <strong>delete your branch</strong>. This indicates that the work on the branch is complete and <strong>prevents you or others from accidentally using old branches</strong>."</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag ok">做法四</span><h3>把"完成"定义清楚——只有"已合并 ＋ 已验证"才算完</h3></div>
+      <ul>
+        <li>一个真实开源仓库的治理文档把状态分为 Done / In progress / Design / Not started / Experimental / <strong>Deferred</strong> / <strong>Rejected（不做，保留理由）</strong>，并写明：<strong>"只把 PR 已合并称为 Done，不要把'有人提出'或'代码已开分支'当作完成。"</strong>　<a href="https://github.com/askdkc/dsh-cli/blob/04ee532f649a508ec22a9ede413f25e8eae3a1e5/docs/community-management.md">github.com/askdkc/dsh-cli</a></li>
+        <li>另一份 GitHub 上的路线图方法文档主张默认用 <strong>Now / Next / Later</strong> 三档，且明确区分"roadmap 是一组赌注，backlog 是可能工作的库存"，Later 保持不确定、写清非目标。　<a href="https://github.com/stylusnexus/agent-plugins/blob/main/plugins/product-strategy/skills/pm-roadmap/SKILL.md">github.com/stylusnexus/agent-plugins</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">附加</span><h3>Owner 自己的精力边界</h3></div>
+      <p>GitHub 官方 Open Source Guides 有一篇专讲维护者过载（<a href="https://opensource.guide/maintaining-balance-for-open-source-maintainers/">opensource.guide</a>），把"<strong>Not saying 'no'</strong>"（不会说不）列为过载的首要成因之一，建议把"我做什么、不做什么"写进 README 当作挡需求的凭据。原话："You can't say yes to every request."</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>哪些能搬、哪些不能搬（对抗式审查）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>做法</th><th>能不能搬</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>WIP 限值（限在办数量）</td><td><span class="tag ok">能，最该先做</span></td><td>不依赖工具与团队规模，一个人就能执行；你已有类似规则（三账 ≤30KB/周、每周新签任务书 ≤7）但<strong>宽到没约束力</strong>，且实测已停写 8 天</td></tr>
+        <tr><td>合完即删分支</td><td><span class="tag ok">能</span></td><td>40 条已合并分支零风险可关；GitHub 官方原话就是"标记完成 ＋ 防止误用旧分支"</td></tr>
+        <tr><td>没有 backlog / 不自动结转</td><td><span class="tag ok">能，但要你定</span></td><td>你现在的事实是"每条线都自动结转、永远挂着"；改掉需要你接受"有些线会主动砍掉"</td></tr>
+        <tr><td>断路器（到期默认不延期）</td><td><span class="tag warn">改一半能用</span></td><td>Shape Up 假设有团队和固定周期；你是单人 ＋ 随时插生产问题。可改成"每条线给到期日，到期没完降级为暂缓、不占名额"</td></tr>
+        <tr><td>6 周干 ＋ 2 周冷却</td><td><span class="tag warn">改成一周粒度</span></td><td>单人做不了 6 周节奏。等价物＝<strong>每周留 1 天不接新线，只收尾</strong></td></tr>
+        <tr><td>Trunk-Based Development（直接合主干）</td><td><span class="tag bad">现在不能照搬</span></td><td>TBD 前提是 CI 硬门禁（提交后自动验证没破坏构建）。本项目实测 <code>test:seo-consistency</code> 与 <code>test:admin-security</code> <strong>都不在发布门内</strong>，高频提交会放大风险</td></tr>
+        <tr><td>删分支 / 删 worktree 目录</td><td><span class="tag bad">不是我的决定</span></td><td>按项目红线与 SOUL 约定：删分支、删文件是你的决定。我只出清单和建议，不代拍</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>处置建议</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>今天就能做完（零风险，只需你点头删）</h3>
+        <p>① <strong>关账 40 条已合并分支</strong>——内容已在 develop 里，删掉不丢任何代码；② <strong>清 45 个孤儿 worktree 目录</strong>——git 已不认，占空间也占注意力，清单我出、删除等你批；③ <strong>给剩下 43 条未合并分支打标签</strong>——分成"还要（≤3 条）／暂缓／不做（留理由）"，34 条历史 <code>codex/*</code> 大概率直接进暂缓。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>设闸（这周定）</h3>
+        <p>④ <strong>把在办上限从 7 条压到 2 条</strong>——同一时间只允许 2 条活跃线（1 条产品 ＋ 1 条应急），超了必须先关一条才能开新的。这是全部建议里唯一真正治本的一条。<br>⑤ <strong>改"完成"的定义</strong>——只有"已合并 ＋ 已验证 ＋ 已登记"才算完成；<strong>"开了分支"不算、"报告写完了"不算、"发出去了"才算</strong>。你现在的 5 件产出没发出、今早发版没挂号，就是这条定义缺失的直接后果。<br>⑥ <strong>加一条到期规则</strong>——每条线开工时写到期日，到期没完自动降级为暂缓、<strong>不占在办名额</strong>，想接着做就重新拍一次。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>每周一次（5 分钟）</h3>
+        <p>⑦ <strong>每周留一天"冷却"</strong>——不接新线，只做收尾：把做完的登记、把发出的确认、把没做的降级。</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>要你定的三件</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>决定</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td>40 条已合并分支 ＋ 45 个孤儿目录，删不删</td><td>删是你的决定；我只出清单，不动手</td></tr>
+        <tr><td class="mono">D2</td><td>在办上限定 2 条还是 3 条</td><td>建议 2；你现在是 7 条上限但实测无约束力</td></tr>
+        <tr><td class="mono">D3</td><td>未做完的线是否接受"到期自动降级"</td><td>这条会真的砍掉一些线，需要你同意</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>未核实 / 边界</h2>
+  <ol class="notes">
+    <li><strong>40 条已合并分支是否全部可安全删除</strong>：只验证了"已合并进 develop"，<strong>未逐条核对是否有未提交的 worktree 改动挂在上面</strong>（部分分支关联的 worktree 目录可能还开着）。删除前需逐条查 <code>git worktree list</code> 与 <code>status</code>。</li>
+    <li><strong>45 个孤儿目录的实际体积与内容</strong>：本轮只数了目录数，<strong>未测体积、未查是否含未备份产物</strong>。2026-09-11 有一份孤儿目录盘点报告可作底稿，但已过期一个月。</li>
+    <li><strong>34 条 <code>codex/*</code> 是否真的都无用</strong>：按前缀与提交时间推断，<strong>未逐条看 diff</strong>。</li>
+    <li>Shape Up 官网（basecamp.com/shapeup）本机直取返回空白（页面靠 JS 渲染），其规则由三个独立来源交叉印证；<strong>未读到原书逐字原文</strong>。</li>
+  </ol>
+</section>
+
+<footer>
+  <p>本轮只读：未删除任何分支或目录、未修改任何文件、未提交。全部数字可复跑，命令见 §02 表格。</p>
+  <p>2026-10-15 · 取数时刻 15:0x–15:3x（本机钟）· 公开来源 8 处，均为本轮实取。</p>
+</footer>
+
+</div>
+</body>
+</html>

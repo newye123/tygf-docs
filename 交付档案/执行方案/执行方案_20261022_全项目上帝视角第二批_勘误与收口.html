@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全项目上帝视角审查 · 第二批执行方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+    --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;
+    --accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;
+    --bad:#ff8d80;--bad-soft:#2c1614;
+    --warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;
+  --ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;
+  --accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;
+  --bad:#ff8d80;--bad-soft:#2c1614;
+  --warn:#e0b64a;--warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict.done{border-left-color:var(--ok)}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict.done .lb{color:var(--ok)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:44ch;font-weight:500;text-wrap:balance}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.was{color:var(--muted)}
+.now{color:var(--ok);font-weight:500}
+.keep{color:var(--warn);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.65;color:var(--ink-2)}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>全项目上帝视角审查 · 第二批</span><span class="sep">/</span>
+    <span>2026-10-22</span>
+  </p>
+  <h1>第二批：先更正上游报告三处错判，再把剩下的断点分两栏收口</h1>
+  <p class="standfirst">上午那份全项目对抗式审查给了 8 条建议动作，第一批四项已改完代码（未部署）。本方案处理第二批——并且<strong>在动手前先证伪了报告自己的三条结论</strong>，因为照错的去找会白修一处、漏修一处。</p>
+  <div class="meta">
+    <span>风险档 Medium</span>
+    <span>落笔前实测 13:46–14:31</span>
+    <span>本方案不改代码、不动服务器</span>
+    <span>A 组待一句"按这个做"</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">目标句（做完的判据）</span>
+    <p>不是"又改了几处代码"，而是：<strong>回执 outbox 不再无声丢账</strong>、<strong>生产库有定时备份且恢复脚本被真跑过一次</strong>、<strong>报告三处错判就地更正</strong>、<strong>支付开关与学习同意这两件"对外承诺 vs 代码事实"的矛盾摆到 Owner 面前并拿到一句话</strong>。</p>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">3</span><span class="k">报告结论被本轮实测推翻</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k">生产真到账笔数（入口全开）</span></div>
+    <div class="stat ok"><span class="n">4</span><span class="k">A 组：不需拍板可直接做</span></div>
+    <div class="stat warn"><span class="n">5</span><span class="k">B 组：必须 Owner 拍</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">00</span>先更正上游报告（不改就是让下一位照着错的去找）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>报告原话</th><th>本轮实测</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>F-11</strong>「批量服务端跳过助手 ping／版本校验」</td>
+          <td>路径就写错了（<code>src/lib/workbench/batch-execution-mode.ts</code> 不存在，实际在 <code>src/lib/server/</code>）。批量浏览器链 <code>batch-execution-client.ts:189-191</code> 调 <code>detectAssistant()</code>，两条分支都执行 <code>assertAssistantCompatible</code>（<code>local-assistant-client.ts:621/628</code>），不匹配抛 <code>ASSISTANT_UPDATE_REQUIRED</code>／<code>_CONTRACT_MISMATCH</code> 并禁用批量（<code>:231-236</code>）。服务端对 canary/production 不 ping 是 <code>:208-210</code> 注释言明的<strong>分工</strong>（浏览器直连检查），<code>local_test</code> 走全套。</td>
+          <td><span class="tag bad">证伪</span></td>
+        </tr>
+        <tr>
+          <td><strong>F-9</strong>「测试站部署了台账判为错误处置的绕行版 <code>31bed477</code>」</td>
+          <td><code>git merge-base --is-ancestor 478bae42 ad38603f</code> ⇒ <strong>rc=0</strong>；测试站此刻跑的正是 <code>ad38603f</code>（13:46 实测 <code>BOUND</code>）⇒ 正确修复<strong>已在现役构建里</strong>。</td>
+          <td><span class="tag ok">已闭环</span></td>
+        </tr>
+        <tr>
+          <td><strong>F-12</strong>「生产无恢复脚本、无备份 timer」</td>
+          <td>恢复脚本<strong>在生产机上就有</strong>：<code>/var/www/tygf-releases/319bc13…/deploy/restore-release.sh</code> 与上一版各一枚（<code>find</code> 实测）。"无应用库备份 timer"这半句成立——唯一的 <code>*backup*</code> 定时是系统自带的 <code>dpkg-db-backup.timer</code>，与业务库无关；<code>db-backup/</code> 最新一枚 <code>pre-schema-20261021-111708-319bc1384a36.db</code> ＝ <strong>部署时手动快照</strong>。</td>
+          <td><span class="tag warn">半句证伪</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">另记一条口径冲突（不是证伪）</span>
+    <p><strong>F-1</strong> 说"五个采集点都不传 <code>finalCode</code>"，而 develop <code>0f93b932</code> 的裁定是"其中四点 actionCode 本身就是 excluded/ignored/accepted、没有 proposalCode 可对照，<strong>填了＝造数据</strong>"。现况＝1/5 有终选码（<code>workbench-view.tsx:2774</code>）。要不要更多分歧点是产品语义问题 ⇒ 见 §02 P-4。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>A 组 · 不需拍板，我按纪律做</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">T-5</span><span class="loc">report-outbox.js:6/7-12/79/82-92/95-100</span></div>
+      <p><strong>回执 outbox 不再静默丢账。</strong>实测：终态码集合不含 <code>SETTLEMENT_*</code> ⇒ 结算被拒走重试；<code>retryFailure</code> <strong>只有指数退避、没有次数上限</strong>；真正的出口是 10 天保留窗——超期项被<em>静默滤掉</em>；丢弃只 <code>console.warn</code> <strong>无持久留痕</strong>；再加两条旁证：<code>slice(-100)</code> 溢出丢最旧、drain 末尾"整体替换文件"会让本次没重试到的条目一起消失。</p>
+      <p>一句话后果：<strong>用户交完稿、回执被拒、10 天后本地记录蒸发，谁都不知道扣过钱。</strong>修法三层（重试上限＋终局留痕、结算 409 与永久失败分开计、溢出先落痕再丢）。<strong>动回执语义 ⇒ 合同变更四层＋fixture＋两门必跑</strong>，并与第一批同批追认。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">T-6</span><span class="loc">生产服务器侧</span></div>
+      <p><strong>生产库定时备份 ＋ 恢复演练。</strong>用 <code>sqlite3 .backup</code>（不是 cp，避免热库撕裂）每日一份、留 14 天滚动、0600；<strong>先在测试站</strong>把"备份→删→恢复→健康检查"真跑一遍并留证据；顺手给探针加一条"最新备份 ≤ 26 小时"，让"备份有没有在跑"不靠人记。<strong>要您点的只有一件：允许在生产装一个每日 timer。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">T-7</span><span class="loc">审查报告 md＋html</span></div>
+      <p><strong>就地勘误。</strong>把 §00 三条追加进报告的"更正"节（带 <code>file:line</code> 与命令），<strong>不删原文</strong>；F-9 标结案、F-11 标证伪、F-12 改判为"缺定时备份与演练"。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">T-8</span><span class="loc">ISSUES #216／CURRENT_STATUS／全景</span></div>
+      <p><strong>治理基线回写。</strong>#216 标题仍写"未修"而代码已修（<code>auth/me/route.ts:22-27</code>）⇒ 就地改状态词。<code>CURRENT_STATUS.md</code> 第 1 行还停在 10-20 的三枚 SHA、<code>产品功能全景</code> 还是 <code>_20261003</code>（落后 324 笔）⇒ <strong>属总控长槽的写面，只投递不代做</strong>。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>B 组 · 必须您拍（我不擅自动）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">P-1</span><div class="body">
+      <h3>第一批要不要现在上测试站</h3>
+      <p>三笔已在 develop（<code>872f532b</code>／<code>0f93b932</code>／<code>985f53b4</code>），因动回执合同而未部署。<strong>不上的代价</strong>：部分完成回执仍被 400 拒收、超 1500 单位仍白屏——两个都是用户可见故障。<strong>上的代价</strong>：一次部署 ＋ 两门必跑（约 6–8 分钟）。</p>
+    </div></div>
+    <div class="gate"><span class="num">P-2</span><div class="body">
+      <h3>三个支付开关（红线）</h3>
+      <p>14:31:42（服务器钟）实测生产运行值：<code>creditPacksEnabled=1</code>、<code>manualQrFallbackEnabled=1</code>、<code>manualPaymentConfirmationEnabled=1</code>；同库订单＝created 9／cancelled 5／<strong>credited 0</strong>。⇒ <strong>入口全开、一笔真钱都没走过。</strong>请给一句：① 保持开（内测人工收款，对外不得写"可支付"）；还是 ② 关掉对外支付入口直到第一笔 credited。</p>
+    </div></div>
+    <div class="gate"><span class="num">P-3</span><div class="body">
+      <h3>学习同意的自助撤回</h3>
+      <p>实测：consent 路由<strong>只有 GET</strong>，页眉写明产品决策 v0.2「注册即同意、无独立关闭开关、撤回＝停止使用服务」；唯一写入口在管理端。<strong>但 <code>consent-gate.ts:4</code> 的注释仍写"用户可随时自助关闭"⇒ 两份文件互相矛盾</strong>，而对外法律文本按哪一份走还没定。给不给自助关闭＝产品语义＋合规口径，给了法律页同步改。</p>
+    </div></div>
+    <div class="gate"><span class="num">P-4</span><div class="body">
+      <h3>学习链要不要更多分歧采集点</h3>
+      <p>见 §00 末的口径冲突。要"越用越准"这条主张成立，得先定：什么算一次"分歧"。</p>
+    </div></div>
+    <div class="gate"><span class="num">P-5</span><div class="body">
+      <h3>生产恢复演练窗口</h3>
+      <p>T-6 的测试站演练我可以直接做；<strong>生产侧真删真恢复要窗口</strong>（红线）。</p>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>明确不做 · 顺序 · 现场核验</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>本轮不做</h3>
+      <ul>
+        <li>不动 <code>CURRENT_STATUS</code>／全景本体（单写者纪律，只投递）。</li>
+        <li>不擅自翻支付 flag、不碰历史账务、不给任何用户补投回执。</li>
+        <li><strong>不做"把版本判据补到批量服务端"</strong>——§00 已证伪其前提，<strong>先不修不存在的问题</strong>。</li>
+        <li>不重跑全项目体检（季度动作，本批只处理已立案项）。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>顺序与依赖</h3>
+      <ul>
+        <li><strong>T-7 勘误</strong>（无依赖，先做，防下一位照错的去修）</li>
+        <li><strong>P-2／P-3 拍板</strong>（并行问您）</li>
+        <li><strong>T-5</strong>（与第一批同批追认 ⇒ 依赖 P-1）</li>
+        <li><strong>T-6</strong>（依赖 P-5 的一半）</li>
+        <li><strong>T-8</strong>（随时可做）</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">落笔前实测（本会话，命令输出）</span>
+    <p>生产 flag 五格逐格 <code>json_extract</code> 取值（<strong>未 dump 整行值</strong>，避免带出支付配置）：三枚支付开关＋两枚功能开关全为 1；订单 created 9／cancelled 5／credited 0；<code>merge-base --is-ancestor 478bae42 ad38603f</code> rc=0；<code>find</code> 到两枚 <code>restore-release.sh</code>；<code>list-timers</code> 只有系统 <code>dpkg-db-backup.timer</code>；<code>db-backup/</code> 最新为 <code>pre-schema-&lt;日期&gt;-&lt;sha&gt;</code> 形态；探针 13:46:22 <code>FAIL=0 WARN=1</code> rc=0。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">T-5 的高风险状态机自查（摘要）</span>
+    <p>12 问逐条答在 md 版 §04。要点：只新增 outbox 的终局态（<code>ABANDONED</code>＋留痕），<strong>不改 Job/Attempt 状态机、不动计费权威</strong>；把"整体替换文件"改成"读改写带差集"，否则并发下丢条目；证伪判据＝<code>test:batch-row-contract</code> ＋ <code>test:trust-chain</code> ＋ 一条新的 outbox 负控（构造超上限条目，断言留痕存在而非消失）。</p>
+  </div>
+</section>
+
+<footer>
+  <p>上游：<code>交付档案/审查报告/审查报告_20261022_全项目上帝视角_对抗式审查.md</code>（VERDICT 打回，12＋3 条，8 条建议动作）。第一批：<code>交付档案/执行方案/执行方案_20261022_六条链断点第一批修复_对抗式审查与执行.md</code>（已执行未部署）。本方案 md 与 HTML 同目录，飞书版已发。</p>
+  <p>本方案本身不改任何代码、不动服务器；A 组等一句"按这个做"即开工，B 组等您逐条给方向。</p>
+</footer>
+
+</div>
+</body>
+</html>

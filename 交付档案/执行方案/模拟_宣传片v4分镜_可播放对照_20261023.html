@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>图译工坊 · 宣传片 v4 分镜模拟片（可播放对照）· 20261023</title>
+<style>
+@font-face{font-family:'TYGFSans';src:url('../../video/intro-20261018/assets/fonts/NotoSansHans-Regular.otf') format('opentype');font-weight:400}
+@font-face{font-family:'TYGFSans';src:url('../../video/intro-20261018/assets/fonts/NotoSansHans-Medium.otf') format('opentype');font-weight:500}
+@font-face{font-family:'TYGFSans';src:url('../../video/intro-20261018/assets/fonts/NotoSansHans-Bold.otf') format('opentype');font-weight:700}
+:root{
+  --bg:#f6f4ef;--ink:#16150f;--mut:#7a7466;--line:#e2ded1;--card:#fff;
+  --ok:#16694c;--warn:#9a6207;--bad:#9e2b2f;--accent:#16694c;--pill:#141310;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:#0d0d0f;color:#e8e6e1;font-family:'TYGFSans','Source Han Sans SC','Noto Sans SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5}
+header{padding:14px 20px;border-bottom:1px solid #23232a;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.02em}
+header .tag{font-size:11px;color:#9a958a;border:1px solid #2e2e36;border-radius:999px;padding:2px 8px}
+main{display:grid;grid-template-columns:minmax(520px,1fr) 430px;gap:16px;padding:16px 20px 0}
+@media(max-width:1080px){main{grid-template-columns:1fr}}
+.stagewrap{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stagebox{background:#151517;border:1px solid #26262d;border-radius:10px;padding:14px;display:flex;justify-content:center;align-items:center;min-height:340px}
+.film{position:relative;overflow:hidden;background:var(--bg);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.film[data-ar="169"]{width:100%;aspect-ratio:16/9;max-height:62vh}
+.film[data-ar="916"]{height:min(74vh,116vw);aspect-ratio:9/16}
+.cam{position:absolute;inset:0;will-change:transform}
+.pad{position:absolute;inset:0;padding:clamp(14px,4.2%,34px);display:flex;flex-direction:column}
+.masthead{display:flex;justify-content:space-between;font-size:.72em;color:var(--mut);letter-spacing:.06em}
+.brand{font-weight:500}
+.counter{font-variant-numeric:tabular-nums}
+.body{flex:1;display:flex;align-items:center;gap:clamp(12px,3%,30px);min-height:0}
+.body.col{flex-direction:column;justify-content:center;text-align:center}
+.body.col .visual{flex:0 0 auto;width:100%}
+.copy{flex:0 0 34%;display:flex;flex-direction:column;gap:.5em}
+.copy.lead{flex:0 0 30%}
+.eyebrow{font-size:.78em;color:var(--mut);letter-spacing:.08em}
+.en{font-size:.8em;color:var(--mut);letter-spacing:.16em;text-transform:uppercase}
+.head{font-size:1.9em;font-weight:700;line-height:1.22;letter-spacing:-.01em;text-wrap:balance}
+.plain{font-size:.92em;color:#3d3a31;line-height:1.55}
+.centered .head{font-size:2.5em}
+.centered .plain{font-size:1.05em;color:var(--mut)}
+.visual{flex:1 1 auto;min-width:0;align-self:center;width:100%;transform:scale(var(--uiscale,1));transform-origin:center}
+.hidden{visibility:hidden}
+.subs{position:absolute;left:0;right:0;bottom:0;padding:clamp(10px,3%,22px);display:flex;justify-content:center;pointer-events:none}
+.subs span{background:rgba(20,19,16,.86);color:#fff;font-size:1.02em;font-weight:500;padding:.34em .8em;border-radius:6px;max-width:88%;text-align:center;line-height:1.4}
+.foot{position:absolute;left:clamp(14px,4.2%,34px);right:clamp(14px,4.2%,34px);bottom:clamp(30px,7%,54px);display:flex;justify-content:space-between;font-size:.68em;color:var(--mut)}
+.cursor{position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(22,105,76,.22);border:2px solid var(--accent);transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+.ripple{position:absolute;width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+.zoomring{position:absolute;border:2px dashed rgba(22,105,76,.55);border-radius:8px;pointer-events:none;opacity:0}
+.hl{position:absolute;border:2px solid #9e2b2f;border-radius:6px;background:rgba(158,43,47,.07);pointer-events:none;opacity:0}
+/* 高亮挂在真行上：表格一居中，绝对坐标就框错行（实测框到了「角标·新品」) */
+tr.hlrow td{transition:background .35s ease,box-shadow .35s ease}
+.film.hl-on tr.hlrow td{background:rgba(158,43,47,.08);box-shadow:inset 0 0 0 2px rgba(158,43,47,.85)}
+/* 竖版是重排不是裁切：网格改两列放大、页脚让位给字幕 */
+.film[data-ar="916"] .grid{grid-template-columns:repeat(2,1fr)}
+.film[data-ar="916"] .file{font-size:.86em}
+.film[data-ar="916"] .foot{bottom:clamp(74px,13%,118px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:clamp(10px,2.4%,18px);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h4{margin:0 0 .6em;font-size:.95em}
+.row{display:flex;gap:.5em;align-items:center;font-size:.78em;color:#3d3a31}
+.btn{background:var(--accent);color:#fff;border-radius:6px;padding:.35em .7em;font-size:.74em;font-weight:500}
+.btn.ghost{background:#fff;color:#3d3a31;border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:.3em}
+.chip{border:1px solid #bfe0d1;color:var(--ok);background:#f2faf6;border-radius:999px;font-size:.66em;padding:.16em .55em}
+table.ui{width:100%;border-collapse:collapse;font-size:.68em}
+table.ui th{background:#f3f1ea;color:#6a655a;text-align:left;font-weight:500;padding:.35em .5em;border-bottom:1px solid var(--line);white-space:nowrap}
+table.ui td{padding:.34em .5em;border-bottom:1px solid #efece3;color:#2f2d27;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:14em}
+.ok{color:var(--ok);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.warn{color:var(--warn);font-weight:700}
+.rail{display:flex;flex-direction:column;gap:.42em;font-size:.76em}
+.rail div{display:flex;gap:.5em;align-items:center;padding:.42em .6em;border-radius:8px;color:#57534a}
+.rail div.done::before{content:'✓';color:var(--ok);font-weight:700}
+.rail div.cur{background:var(--pill);color:#fff;font-weight:500}
+.rail div.cur::before{content:attr(data-n);background:#fff;color:#141310;border-radius:50%;width:1.35em;height:1.35em;display:grid;place-items:center;font-size:.85em}
+.rail div.todo::before{content:attr(data-n);color:#a8a396;border:1px solid var(--line);border-radius:50%;width:1.35em;height:1.35em;display:grid;place-items:center;font-size:.85em}
+.bar{height:6px;border-radius:999px;background:#e8e5db;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4em}
+.file{border:1px solid var(--line);border-radius:7px;background:#fff;padding:.45em;font-size:.62em;color:#4a473e}
+.file b{display:block;font-size:1.05em;color:var(--ink)}
+.file .txt{margin-top:.3em;background:#f6f4ef;border-radius:4px;padding:.25em .35em;font-size:.92em;line-height:1.3;word-break:keep-all}
+.endcard{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.45em;text-align:center}
+.endcard .big{font-size:2.2em;font-weight:700}
+.endcard .sm{font-size:.85em;color:var(--mut);letter-spacing:.1em}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#151517;border:1px solid #26262d;border-radius:10px;padding:10px 12px}
+.controls button,select{background:#22222a;color:#e8e6e1;border:1px solid #32323c;border-radius:6px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer}
+.controls button.on{background:var(--ok);border-color:var(--ok);color:#fff}
+input[type=range]{flex:1 1 160px;min-width:120px;accent-color:#16694c}
+.tl{display:flex;flex-direction:column;gap:6px;background:#151517;border:1px solid #26262d;border-radius:10px;padding:10px 12px}
+.tl .lab{font-size:11px;color:#9a958a;display:flex;justify-content:space-between}
+.strip{display:flex;height:16px;border-radius:4px;overflow:hidden;background:#22222a}
+.strip i{display:block;height:100%;border-right:1px solid #0d0d0f}
+.strip i.ui{background:#1f7a58}
+.strip i.tx{background:#4b4237}
+.strip i.ex{background:#3a3a44}
+aside{display:flex;flex-direction:column;gap:12px;min-width:0;padding-bottom:20px}
+.panel{background:#151517;border:1px solid #26262d;border-radius:10px;padding:12px 14px}
+.panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em;color:#9a958a;font-weight:500;text-transform:uppercase}
+.shot{display:grid;grid-template-columns:22px 1fr auto;gap:8px;padding:7px 6px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+.shot:hover{background:#1d1d22}
+.shot.act{background:#122a22;border-color:#1f7a58}
+.shot .n{color:#8c877b;font-variant-numeric:tabular-nums;font-size:12px}
+.shot .t{font-size:12.5px;font-weight:500}
+.shot .w{font-size:11px;color:#9a958a;margin-top:2px}
+.shot .m{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;color:#8c877b;white-space:nowrap}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.dot.ui{background:#1f7a58}.dot.tx{background:#8a7a55}.dot.ex{background:#55555f}
+.gates li{margin:0 0 5px;font-size:12px;color:#cfcac0}
+.gates{margin:0;padding-left:18px}
+.pill{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid #32323c;color:#9a958a}
+.pill.pass{border-color:#1f7a58;color:#5fc79a}
+.pill.fail{border-color:#8b3236;color:#e08a8e}
+pre{margin:0;background:#0f0f12;border:1px solid #26262d;border-radius:8px;padding:10px;font-size:11px;line-height:1.45;max-height:190px;overflow:auto;color:#b9b4a8;font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap}
+.note{font-size:11.5px;color:#9a958a}
+kbd{background:#22222a;border:1px solid #32323c;border-radius:4px;padding:0 5px;font-size:11px}
+/* ---- 出片模式：?film=1 时整页只剩画面，供 render 逐帧 seek 用（与产品片同一契约） ---- */
+body.film-mode{background:#000;overflow:hidden}
+body.film-mode header,body.film-mode aside,body.film-mode .controls,body.film-mode .tl{display:none!important}
+body.film-mode main{display:block;padding:0;grid-template-columns:none;gap:0}
+body.film-mode .stagewrap{gap:0}
+body.film-mode .stagebox{border:0;border-radius:0;padding:0;min-height:0;display:block;background:#000}
+body.film-mode .film[data-ar="169"],body.film-mode .film[data-ar="916"]{width:100vw;height:100vh;max-height:none;aspect-ratio:auto}
+body.film-mode[data-ar="169"] .film,body.film-mode .film{font-size:calc(100vw/56)}
+body.film-mode.vert .film{font-size:calc(100vw/30)}
+body.film-mode .subs span{font-size:1.15em}
+</style>
+</head>
+<body>
+<header>
+  <h1>图译工坊 · 宣传片 v4 分镜模拟片</h1>
+  <span class="tag">可播放 · 不是成片</span>
+  <span class="tag">画面为示意壳（虚构数据），真片由产品真实组件渲染</span>
+  <span class="tag">字体＝片内冻结的思源黑体</span>
+  <span class="tag">2026-10-23</span>
+</header>
+
+<main>
+  <section class="stagewrap">
+    <div class="stagebox"><div class="film" id="film" data-ar="169"></div></div>
+    <div class="controls">
+      <button id="play">▶ 播放</button>
+      <input type="range" id="scrub" min="0" max="38" step="0.01" value="0">
+      <span id="clock" style="font-variant-numeric:tabular-nums;font-size:12px;min-width:78px">0.00 / 38.00s</span>
+      <button id="prev">‹ 上一镜</button>
+      <button id="next">下一镜 ›</button>
+      <select id="ar"><option value="169">16:9 主版</option><option value="916">9:16 竖版（重排）</option></select>
+      <button id="subsBtn" class="on">烧录字幕</button>
+      <button id="slow">0.5×</button>
+      <button id="dump">导出渲染计划 JSON</button>
+    </div>
+    <div class="tl">
+      <div class="lab"><span>v3 现役（35s／10 镜）— 绿＝有界面像素，褐＝纯文字</span><span id="v3stat"></span></div>
+      <div class="strip" id="v3strip"></div>
+      <div class="lab"><span>v4 提案（38s／11 镜）— 灰＝片尾落版，按判据豁免</span><span id="v4stat"></span></div>
+      <div class="strip" id="v4strip"></div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="panel">
+      <h3>逐镜 · 点一行跳过去</h3>
+      <div id="shotlist"></div>
+    </div>
+    <div class="panel">
+      <h3>机械判据自检（本页实时计算）</h3>
+      <ul class="gates" id="gates"></ul>
+      <div class="note">这五条是从对抗式审查里长出来的：判据必须能机器复跑，不能靠"看起来更好"。</div>
+    </div>
+    <div class="panel">
+      <h3>本镜要证明什么</h3>
+      <div id="intent" class="note"></div>
+    </div>
+    <div class="panel">
+      <h3>红线（画面里不许出现的字）</h3>
+      <div class="note" id="redline"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const SFX={};
+// ---------- 分镜数据（v4） ----------
+// ui: 该镜是否有界面像素 | exempt: 片尾落版豁免 | claim: 是否含对外能力主张 | src: 依据指针
+const SHOTS=[
+ {id:'v4-01',s:0,e:2.4,ui:1,claim:1,head:'一份稿，12 个语种版',en:'ONE FILE, TWELVE LANGUAGES',
+  sub:'字还在原来的位置上。',cue:'一份稿，12 个语种版，字还在原来的位置。',
+  intent:'开场 2 秒就给结果，不给 logo。业界量化依据：Google/Kantar ABCD 要求前 5 秒钩住并尽早亮品牌；Product Hunt 官方口径一句「Show the UI」。',
+  src:'src/lib/workbench/batch-limits.ts:6 BATCH_MAX_LANGUAGES=12；docs/宣传方案.md:170 记 09-13 测试站 12 语 252/252 真实验收',
+  scene:'delivergrid'},
+ {id:'v4-02',s:2.4,e:4.2,ui:0,claim:0,head:'翻译公司交回表格',en:'THE SHEY YOU DREAD',
+  sub:'图层还得一格一格贴。',cue:'翻译公司交回表格，图层还得一格一格贴。',
+  intent:'痛点镜，纯文字但压在 2.5 秒内（判据一豁免档）。',src:'无主张，不涉及能力断言',scene:'title'},
+ {id:'v4-03',s:4.2,e:7.2,ui:1,claim:1,head:'四步，我知道自己在第几步',en:'FOUR STAGES',
+  sub:'做完的打勾，当前这步反白。',cue:'整个流程四步，做完的打勾，当前这步反白。',
+  intent:'把产品自己的信息架构当转场，不用花哨效果。',src:'product-specs/workbench-flow.md WF-001 四步；组件 stage-rail.tsx（真码）',scene:'rail'},
+ {id:'v4-04',s:7.2,e:11.6,ui:1,claim:1,head:'表格拖进来，它先替我看一遍',en:'DROP THE SHEET',
+  sub:'行数、语言列、前 5 行预览，确认了才往下走。',cue:'译文表拖进来，先给出行数、语言列和前 5 行预览。',
+  intent:'这一镜要放 ui-focus-zoom：镜头推到「语言候选列 12 列」那一格，配光标点击。v3 有 click 音效但画面没有点击＝音画断裂，本轮补。',
+  src:'src/config/siteContent.ts csvOkTable/csvMetaRowCount/csvMetaLangColCount/csvPreviewTitle（行号需现读，10-23 已漂移）',
+  scene:'importcard',zoom:{x:79,y:41,w:22,h:11},click:{x:79,y:74,t:1.9}},
+ {id:'v4-05',s:11.6,e:15.4,ui:1,claim:1,head:'12 个语种逐个过',en:'LANGUAGE BY LANGUAGE',
+  sub:'哪个过了、哪个卡住，一眼看完。',cue:'12 个语种逐个检查，哪个过了、哪个卡住，一眼看完。',
+  intent:'展示批量而非单点，避免"演示一个语种冒充十二个"。',src:'语言卡状态在 review 侧真实渲染（口径清单 f05 同源）',scene:'langcards'},
+ {id:'v4-06',s:15.4,e:19.6,ui:1,claim:1,head:'拿不准的，它不硬写',en:'IT STOPS AND ASKS',
+  sub:'单独留一栏等你，附一句原因。',cue:'拿不准的不硬写：单独留一栏等你，附一句原因。',
+  intent:'这是可信度镜——主动承认边界。Owner 定的产品口径：缺译/歧义留一栏，不静默替换。',
+  src:'prepare-check-labels.ts:97 组合歧义；review-step.tsx:710 缺译文补写；readiness-board.tsx:107/140 阻断清单',
+  scene:'triage',click:{x:88,y:62,t:2.6}},
+ {id:'v4-07',s:19.6,e:24.4,ui:1,claim:1,head:'替换写入，在本机 Photoshop 完成',en:'WRITTEN BACK IN PLACE',
+  sub:'一层一层落回原位。',cue:'替换写入在本机 Photoshop 完成，一层一层落回原位。',
+  intent:'⚠ 本镜文案是对抗式审查改出来的：v3 眉标写「扫描与写入在你自己电脑上跑」，被 docs/宣传方案.md:19 判为禁列的数据去向声明（"扫描"会被读成含 OCR/智能检测，那两条确实出到第三方）。改后只讲写入、不提扫描。',
+  src:'siteContent.ts「Photoshop 将在本机生成当前语言版本」；写回面现役＝PS 驱动链路，免 PS 引擎被 scripts/smoke-pc-wiring-freeze.mjs:11-19 刻意冻结（#6968/#6971/#6129＋#276）',
+  scene:'exec'},
+ {id:'v4-08',s:24.4,e:29.4,ui:1,claim:1,head:'写完都读回来对一遍',en:'READ IT BACK',
+  sub:'不一致的单列一行，不混在成功里。',cue:'保存后重新打开，逐层读回来比对；不一致的单列，不混在成功里。',
+  intent:'★ 全片最重要的一镜：v3 把它拍成了纯文字（3.4 秒零界面像素），恰好撞上业界点名的失败模式「demo 超出产品实际」。v4 必须给报告画面——三列：设了什么／读回什么／是否一致。本镜禁用镜头放大：实测一放大就把左右两列裁出画外，证据镜反而看不清。',
+  src:'attempt-state.ts:18 终态 TEXT_READBACK_VERIFIED（我实测 grep）；逐对象比对实现位置＝待确认（别手指 execution-manifest.js:316-318，我 grep 0 命中）',
+  scene:'readback',hl:{at:1.6}},
+ {id:'v4-09',s:29.4,e:32.4,ui:1,claim:1,head:'交付：文件加一份核对报告',en:'WHAT YOU GET',
+  sub:'每语种一份 PSD/PSB，加预览图和报告。',cue:'交付：每语种一份 PSD 或 PSB，加预览图和一份核对报告。',
+  intent:'落回买家视角的"我拿到什么"。',src:'交付目录形态见 reference-tygf-run-evidence（报告 HTML＋psb＋jpg）',scene:'deliver'},
+ {id:'v4-10',s:32.4,e:34.4,ui:0,claim:0,head:'还不敢说一次必成',en:'NOT A PROMISE',
+  sub:'所以每一步都留了证据。',cue:'还不敢说一次必成——所以每一步都留了证据。',
+  intent:'自曝边界收口。Owner 口味：要"自曝边界"的窄而真，不把我主场拔高。压 2.0 秒（判据一豁免档）。',
+  src:'docs/宣传方案.md:22 明写"不承诺一次必成功"',scene:'title'},
+ {id:'v4-11',s:34.4,e:38,ui:0,exempt:1,claim:0,head:'图译工坊',en:'TYIGF · INTERNAL BETA',
+  sub:'内测中',cue:'图译工坊 · 内测中',
+  intent:'落版 end card，按判据一显式豁免（业界通行结构：title card → scenes → outro）。',
+  src:'口径统一"内测中"，禁"正式发布"（官制 09-24 代拍第 3 条）',scene:'endcard'}
+];
+const DUR=38;
+// ---------- v3 现役（对照用，取自 video/intro-20261018/plan.json 实测） ----------
+const V3=[['f01',0,2.2,0],['f02',2.2,4.6,0],['f03',4.6,7.2,1],['f04',7.2,11.2,1],['f05',11.2,15.6,1],
+          ['f06',15.6,19.6,1],['f07',19.6,23.8,1],['f08',23.8,28.8,1],['f09',28.8,32.2,0],['f10',32.2,35,0]];
+const REDLINE=['不出本机／只在本机／不上传／不保存（数据去向声明，宣传方案.md:19 禁列）',
+ '免 PS 写回／无需 Photoshop／写回保真（#276 未解，ISSUES 处置②禁称）',
+ '一键／完全自动／100%／越用越准／及以上／正式发布／永久（RG-008＋MK-2）',
+ '价格·积分数·退款承诺（09-24 代拍第 1 条：只说"按实际完成量结算，未完成的自动退回"）',
+ '真实客户稿与真实 SKU（禁 F:\\改语言、F:\\工具开发\\自动改语言 下任何工程）'];
+
+// ---------- 画面壳（虚构数据） ----------
+function scene(k,t,sh){
+  const p=(a,b)=>Math.min(1,Math.max(0,(t-a)/(b-a||1)));
+  switch(k){
+    case 'title':return `<div class="body col"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>`;
+    case 'endcard':return `<div class="endcard"><div class="big">${sh.head}</div><div class="sm">${sh.sub}</div><div class="eyebrow">内测中 · 非耗时承诺</div></div>`;
+    case 'delivergrid':{const L=['DE','FR','ES','IT','PT','RU','JA','KO','AR','TH','VI','ID'];
+      return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="grid">${L.map((c,i)=>`<div class="file" style="opacity:${p(0.25+i*0.05,0.6+i*0.05)}"><b>袖口_${c}.psb</b><div class="txt">${['Jetzt kaufen','Acheter maintenant','Comprar ahora','Acquista ora','Comprar agora','Купить сейчас','今すぐ購入','지금 구매','اشترِ الآن','ซื้อเลย','Mua ngay','Beli sekarang'][i]}</div></div>`).join('')}</div></div></div>`;}
+    case 'rail':return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="card"><div class="rail">
+      <div class="done">准备素材</div><div class="done">智能检测</div><div class="cur" data-n="3">设计稿校对</div><div class="todo" data-n="4">生成交付</div>
+      </div></div></div></div>`;
+    case 'importcard':return `<div class="body"><div class="copy lead"><div class="eyebrow">第 1 步 · 准备素材</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="card"><h4>第 1 步：添加译文</h4>
+      <div class="row" style="margin-bottom:.6em"><span class="btn">导入表格</span><span class="btn ghost">粘贴文本</span><span class="ok" style="margin-left:auto">✓ 表格解析成功</span></div>
+      <div class="row"><div class="card" style="flex:1;padding:.4em">原文列名<br><b>原文</b></div><div class="card" style="flex:1;padding:.4em">数据行数<br><b>8 行</b></div><div class="card" style="flex:1;padding:.4em">语言候选列<br><b class="ok">12 列</b></div></div>
+      <div class="chips" style="margin:.5em 0">${['德语','法语','西班牙语','意大利语','葡萄牙语','俄语','日语','韩语','阿拉伯语','泰语','越南语','印尼语'].map(c=>`<span class="chip">${c}</span>`).join('')}</div>
+      <table class="ui"><tr><th>#</th><th>原文</th><th>德语</th><th>日语</th></tr>
+      <tr><td>1</td><td>Buy Now</td><td>Jetzt kaufen</td><td>今すぐ購入</td></tr>
+      <tr><td>2</td><td>Free Shipping</td><td>Kostenloser Versand</td><td>送料無料</td></tr>
+      <tr><td>3</td><td>View Collection</td><td>Kollektion ansehen</td><td>コレクションを見る</td></tr></table>
+      <div class="row" style="margin-top:.6em;justify-content:flex-end"><span class="btn" data-cta>进入原文与译文审查 ›</span></div>
+      </div></div></div>`;
+    case 'langcards':return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="grid" style="grid-template-columns:repeat(3,1fr)">${['DE','FR','ES','IT','PT','RU','JA','KO','AR'].map((c,i)=>`<div class="file"><b>${c}</b><div style="margin-top:.25em">${i<6?'<span class="ok">已检查</span>':(i<8?'<span class="warn">2 处待确认</span>':'<span class="bad">1 处阻断</span>')}</div><div class="bar" style="margin-top:.3em"><i style="width:${[100,100,100,96,100,100,88,92,70][i]}%"></i></div></div>`).join('')}</div></div></div>`;
+    case 'triage':return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="card"><h4>就绪检查 · 还差 1 处要你决定</h4>
+      <div class="row" style="padding:.45em 0;border-bottom:1px solid var(--line)"><span class="bad">要你决定</span><div style="flex:1"><b>详情 · 材质卖点</b><div style="font-size:.9em;color:var(--mut)">文字图层 / 副标题 · 缺少目标文本</div></div><span class="btn ghost" data-cta>前往补全</span></div>
+      <div class="row" style="padding:.45em 0"><span class="ok">5 项可以不管</span><div style="flex:1;color:var(--mut)">不影响继续生成，可在对象清单中查看</div><span class="btn ghost">查看</span></div>
+      </div></div></div>`;
+    case 'exec':{const n=Math.round(p(0.35,0.9)*175);
+      return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="card"><h4>Photoshop 正在写入当前语言</h4>
+      <div class="row" style="margin-bottom:.5em"><div class="bar" style="flex:1"><i style="width:${n/1.75}%"></i></div><span>${n}/175 层</span></div>
+      <table class="ui"><tr><th>图层</th><th>状态</th></tr>
+      <tr><td>标题 · 主推</td><td class="ok">已写入</td></tr>
+      <tr><td>副标 · 材质</td><td class="ok">已写入</td></tr>
+      <tr><td>按钮 · 购买</td><td class="ok">已写入</td></tr>
+      <tr><td>规格表 · 尺寸</td><td>${n>120?'<span class="ok">已写入</span>':'<span style="color:var(--mut)">排队中</span>'}</td></tr></table>
+      </div></div></div>`;}
+    case 'readback':return `<div class="body col" style="align-items:stretch;gap:.6em"><div><div class="eyebrow">${sh.en}</div><div class="head" style="font-size:1.55em">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual" style="width:100%"><div class="card"><h4>核对报告 · 重新打开后逐层读回（示例稿 175 层）</h4>
+      <table class="ui"><tr><th>文字层</th><th>设了什么</th><th>读回什么</th><th>一致</th></tr>
+      <tr><td>标题 · 主推</td><td>Jetzt kaufen</td><td>Jetzt kaufen</td><td class="ok">✓</td></tr>
+      <tr><td>副标 · 材质</td><td>100% Baumwolle</td><td>100% Baumwolle</td><td class="ok">✓</td></tr>
+      <tr><td>按钮 · 购买</td><td>In den Warenkorb</td><td>In den Warenkorb</td><td class="ok">✓</td></tr>
+      <tr class="hlrow"><td>尺码表 · 胸围</td><td>Brustumfang</td><td><span class="bad">Brustumfang </span>(尾空格)</td><td class="bad">✗ 单列</td></tr>
+      <tr><td>角标 · 新品</td><td>NEU</td><td>NEU</td><td class="ok">✓</td></tr></table>
+      <div class="row" style="margin-top:.5em"><span class="ok">174 一致</span><span class="bad">1 不一致（单独列出，不混在成功里）</span><span style="margin-left:auto;color:var(--mut)">非耗时承诺</span></div>
+      </div></div></div>`;
+    case 'deliver':return `<div class="body"><div class="copy"><div class="eyebrow">${sh.en}</div><div class="head">${sh.head}</div><div class="plain">${sh.sub}</div></div>
+      <div class="visual"><div class="card"><h4>袖口_ALL_12LANG/</h4>
+      <table class="ui"><tr><th>文件</th><th>大小</th><th>核对</th></tr>
+      <tr><td>袖口_DE.psb</td><td>268 MB</td><td class="ok">✓ 已回读</td></tr>
+      <tr><td>袖口_JA.psb</td><td>266 MB</td><td class="ok">✓ 已回读</td></tr>
+      <tr><td>袖口_DE.jpg</td><td>4.1 MB</td><td class="ok">预览图</td></tr>
+      <tr><td>图译工坊执行报告.html</td><td>312 KB</td><td class="ok">175 层逐条</td></tr></table>
+      </div></div></div>`;
+  }
+  return '';
+}
+
+// ---------- 渲染 ----------
+const film=document.getElementById('film');
+let T=0,playing=false,speed=1,subsOn=true,ar='169';
+function shotAt(t){for(const s of SHOTS)if(t>=s.s&&t<s.e)return s;return SHOTS[SHOTS.length-1];}
+function cueAt(sh,t){const d=sh.e-sh.s;const cut=Math.min(d-0.35,d*0.42);const rel=t-sh.s;
+  if(!subsOn)return '';return rel<cut?sh.head:sh.cue;}
+function render(t){
+  const sh=shotAt(t),rel=t-sh.s,dur=sh.e-sh.s;
+  const enter=Math.min(1,rel/0.45), ez=1-Math.pow(1-enter,3);
+  let cam=`scale(${1+0.05*(rel/dur)})`;
+  if(ar==='916')cam=`scale(${1+0.02*(rel/dur)})`;
+  if(sh.zoom&&ar==='169'){const z=Math.min(1,Math.max(0,(rel-1.0)/0.9)),e=1-Math.pow(1-z,3);
+    const cx=sh.zoom.x+sh.zoom.w/2,cy=sh.zoom.y+sh.zoom.h/2;
+    cam=`translate(${Math.max(-14,Math.min(14,(50-cx)*e*0.42))}%, ${Math.max(-10,Math.min(10,(50-cy)*e*0.42))}%) scale(${1+0.3*e})`;}
+  const cls=['pad',sh.ui?'':'centered'];
+  film.innerHTML=`<div class="cam" style="transform:${cam}">
+    <div class="${cls.join(' ')}" style="--uiscale:${ar==='916'?0.92:1}">
+      <div class="masthead"><span class="brand">图译工坊</span><span class="counter">${String(SHOTS.indexOf(sh)+1).padStart(2,'0')} / ${SHOTS.length}</span></div>
+      ${sh.ui?scene(sh.scene,rel,sh):scene(sh.scene,rel,sh)}
+      <div class="foot"><span>图译工坊 · 内测中</span><span>示例数据 · 非耗时承诺</span></div>
+    </div></div>
+    <div class="subs">${cueAt(sh,rel)?`<span>${cueAt(sh,rel)}</span>`:''}</div>
+    ${sh.click?cursorLayer(sh,rel):''}
+  </div>`;
+  film.classList.toggle('hl-on',!!(sh.hl&&rel>=sh.hl.at));
+  if(sh.click){const tgt=film.querySelector('[data-cta]');
+    if(tgt){const fr=film.getBoundingClientRect(),r=tgt.getBoundingClientRect();
+      const x=((r.left+r.width/2-fr.left)/fr.width*100).toFixed(2),y=((r.top+r.height/2-fr.top)/fr.height*100).toFixed(2);
+      film.querySelectorAll('[data-cur]').forEach(el=>{el.style.left=x+'%';el.style.top=y+'%'});}}
+  if(ar==='916'){film.querySelectorAll('.body').forEach(b=>{b.classList.add('col');b.style.alignItems='stretch';b.style.gap='.7em';const v=b.querySelector('.copy');if(v)v.style.flex='0 0 auto';});}
+  document.getElementById('clock').textContent=`${t.toFixed(2)} / ${DUR.toFixed(2)}s`;
+  document.getElementById('scrub').value=t;
+  document.querySelectorAll('.shot').forEach(el=>el.classList.toggle('act',+el.dataset.i===SHOTS.indexOf(sh)));
+  const it=document.getElementById('intent');
+  it.innerHTML=`<b>${sh.head}</b>（${dur.toFixed(1)} 秒）<br>${sh.intent}<div style="margin-top:6px;color:#8c877b">依据：${sh.src}</div>`;
+}
+// 光标落点不写死坐标：渲染后量真按钮的包围盒再摆（竖版重排后位置会变，写死必跑偏）
+function cursorLayer(sh,rel){
+  const c=sh.click,lead=0.55;
+  if(rel<c.t-lead)return '';
+  const a=Math.min(1,(rel-(c.t-lead))/0.35),fade=rel>c.t+1.2?Math.max(0,1-(rel-c.t-1.2)/0.5):1;
+  const rip=rel>=c.t?`<div class="ripple" data-cur style="opacity:${Math.max(0,(1-(rel-c.t)/0.55))*fade};transform:translate(-50%,-50%) scale(${1+(rel-c.t)*3.2})"></div>`:'';
+  return `<div class="cursor" data-cur style="opacity:${a*fade}"></div>${rip}`;
+}
+// ---------- 判据自检 ----------
+function gates(){
+  const txt=SHOTS.filter(s=>!s.ui&&!s.exempt),txtDur=txt.reduce((a,s)=>a+(s.e-s.s),0);
+  const g=[];
+  g.push(['一 · 纯文字镜单镜 ≤2.5s（落版豁免）',txt.every(s=>s.e-s.s<=2.5),txt.map(s=>`${s.id} ${(s.e-s.s).toFixed(1)}s`).join('、')||'无纯文字镜']);
+  g.push(['二 · 非落版纯文字总长 ≤4s',txtDur<=4,`${txtDur.toFixed(1)}s（v3 同口径＝10.8s／31%）`]);
+  g.push(['三 · 有主张的镜必须有界面像素',SHOTS.filter(s=>s.claim&&!s.ui).length===0,SHOTS.filter(s=>s.claim&&!s.ui).map(s=>s.id).join('、')||'全部满足（v3 违例：f02、f09）']);
+  g.push(['四 · 字幕 ≤12 字/秒',SHOTS.every(s=>cps(s)<=12),`最险 ${Math.max(...SHOTS.map(s=>cps(s))).toFixed(1)} 字/秒（v3 实测 8/20 枚 cue 超限，最险 17.7）`]);
+  const banned=SHOTS.flatMap(s=>REDLINE.filter(r=>{const k=r.split('／')[0];return (s.head+s.sub+s.cue).includes(k)}).map(r=>`${s.id}→${k}`));
+  g.push(['五 · 画面文案不含禁列串',banned.length===0,banned.join('、')||'0 命中（禁词表见右下；画面像素文字仍需 OCR 闸，未建）']);
+  return g;
+}
+function cps(s){return s.cue.replace(/[\s，。、·（）—]/g,'').length/(s.e-s.s);}
+// ---------- UI 装配 ----------
+function strip(el,data,total){
+  el.innerHTML=data.map(d=>`<i class="${d[3]?(d[4]?'ex':'ui'):'tx'}" style="width:${(d[2]-d[1])/total*100}%" title="${d[0]}"></i>`).join('');
+}
+function build(){
+  document.getElementById('shotlist').innerHTML=SHOTS.map((s,i)=>
+    `<div class="shot" data-i="${i}"><span class="n">${i+1}</span><div><div class="t"><span class="dot ${s.exempt?'ex':(s.ui?'ui':'tx')}"></span>${s.head}</div><div class="w">${s.claim?'含对外主张':'无主张'} · ${cps(s).toFixed(1)} 字/秒</div></div><span class="m">${(s.e-s.s).toFixed(1)}s<br>${s.s.toFixed(1)}</span></div>`).join('');
+  document.querySelectorAll('.shot').forEach(el=>el.onclick=()=>{seek(SHOTS[+el.dataset.i].s+0.01)});
+  const g=gates();
+  document.getElementById('gates').innerHTML=g.map(([n,ok,d])=>`<li><span class="pill ${ok?'pass':'fail'}">${ok?'PASS':'FAIL'}</span> ${n}<div class="note" style="margin-left:2px">${d}</div></li>`).join('');
+  strip(document.getElementById('v3strip'),V3.map(v=>[v[0],v[1],v[2],v[3]]),35);
+  strip(document.getElementById('v4strip'),SHOTS.map(s=>[s.id,s.s,s.e,s.ui?1:0,s.exempt?1:0]),DUR);
+  const v3no=V3.filter(v=>!v[3]).reduce((a,v)=>a+v[2]-v[1],0);
+  const v4no=SHOTS.filter(s=>!s.ui&&!s.exempt).reduce((a,s)=>a+s.e-s.s,0);
+  document.getElementById('v3stat').textContent=`无界面 ${v3no.toFixed(1)}s／${(v3no/35*100).toFixed(0)}%`;
+  document.getElementById('v4stat').textContent=`无界面 ${v4no.toFixed(1)}s／${(v4no/DUR*100).toFixed(0)}%（落版另计）`;
+  document.getElementById('redline').innerHTML=REDLINE.map(r=>`· ${r}`).join('<br>');
+}
+function seek(t){T=Math.max(0,Math.min(DUR-0.001,t));render(T);}
+let last=performance.now();
+function loop(now){const dt=(now-last)/1000;last=now;if(playing){T+=dt*speed;if(T>=DUR){T=DUR-0.001;playing=false;document.getElementById('play').textContent='▶ 播放'}render(T)}requestAnimationFrame(loop)}
+document.getElementById('play').onclick=e=>{playing=!playing;if(T>=DUR-0.01)T=0;e.target.textContent=playing?'⏸ 暂停':'▶ 播放'};
+document.getElementById('scrub').oninput=e=>{playing=false;document.getElementById('play').textContent='▶ 播放';seek(+e.target.value)};
+document.getElementById('prev').onclick=()=>{const s=shotAt(T);const i=SHOTS.indexOf(s);seek(SHOTS[Math.max(0,T-s.s<0.4?i-1:i)].s+0.01)};
+document.getElementById('next').onclick=()=>{const i=SHOTS.indexOf(shotAt(T));seek(SHOTS[Math.min(SHOTS.length-1,i+1)].s+0.01)};
+document.getElementById('ar').onchange=e=>{ar=e.target.value;film.dataset.ar=ar;render(T)};
+document.getElementById('subsBtn').onclick=e=>{subsOn=!subsOn;e.target.classList.toggle('on',subsOn);render(T)};
+document.getElementById('slow').onclick=e=>{speed=speed===1?0.5:1;e.target.classList.toggle('on',speed===0.5);e.target.textContent=speed===1?'0.5×':'1×'};
+document.getElementById('dump').onclick=()=>{
+  const plan={schema:'tygf-film-plan/v4',width:1920,height:1080,fps:30,duration:DUR,
+    shots:SHOTS.map(s=>({id:s.id,start:s.s,end:s.e,layout:s.ui?(s.scene==='readback'?'band':'panel'):'centered',
+      headline:s.head,headlineEn:s.en,plainExplanation:s.sub,claim:!!s.claim,uiPixels:!!s.ui,exempt:!!s.exempt,
+      subtitleCue:s.cue,cueCharsPerSec:+cps(s).toFixed(1),intent:s.intent,source:s.src,
+      ...(s.zoom?{zoom:s.zoom}:{}) , ...(s.click?{click:s.click}:{})}))};
+  const j=JSON.stringify(plan,null,1);
+  document.getElementById('gates').innerHTML=`<li><span class="pill pass">已生成</span> ${SHOTS.length} 镜 / ${DUR}s — 可直接喂给 render.mjs 的 plan.json</li>`+
+    `<li style="margin-top:8px"><pre>${j.slice(0,2400)}${j.length>2400?'\n…（完整 JSON 见控制台）':''}</pre></li>`;
+  console.log(j);
+  try{navigator.clipboard.writeText(j)}catch(e){}
+};
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.getElementById('play').click()}
+  if(e.code==='ArrowLeft')seek(T-0.5);if(e.code==='ArrowRight')seek(T+0.5)});
+window.seek=seek;
+if(/[?&]film=1/.test(location.search)){
+  document.body.classList.add('film-mode');
+  const q=new URLSearchParams(location.search);
+  if(q.get('vert')==='1'){ar='916';film.dataset.ar='916';document.body.classList.add('vert');film.style.font=''}
+  playing=false;
+}
+build();seek(0);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<title>飞书多维表格方案 · 自我对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+    --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(38px,6vw,60px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.28rem;line-height:1.35;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:50ch;font-weight:500;text-wrap:balance}
+.verdict.bad{border-left-color:var(--bad)}
+.verdict.bad .lb{color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1.05rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:18px;font-size:.83rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>自我对抗式审查</span><span class="sep">/</span>
+    <span>飞书多维表格方案</span><span class="sep">/</span>
+    <span>2026-10-15</span>
+  </p>
+  <h1>把刚出的那份方案，再审一遍</h1>
+  <p class="standfirst">方法：把方案里每一处「我写了但没验证」的假设拿回现场实测，并检查方案内部是否自洽。结果：方向成立，但 P0′ 五步里<strong>三步要改</strong>——抓到 1 处内部矛盾、3 处假设被推翻、4 处遗漏。</p>
+  <div class="meta">
+    <span>假设推翻 3 条</span>
+    <span>内部矛盾 1 处</span>
+    <span>遗漏 4 条</span>
+    <span>未安装 · 未建表 · 只读核验</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict bad">
+    <span class="lb">结论</span>
+    <p>方向与主结论（B+C 组合、git 为准、只放 20–40 行）<strong>经受住了审查</strong>；但三处偷懒假设被实测推翻，一处内部矛盾不解决会在上线当天出问题。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">3</span><span class="k">处假设被实测推翻</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="k">处内部矛盾</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">处遗漏</span></div>
+    <div class="stat warn"><span class="n">3 / 5</span><span class="k">P0′ 步骤需修订</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>被实测推翻的假设</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>「从 TASK_LOG 读条目、约百行脚本」<span class="tag bad">严重低估</span></h3>
+        <p>方案步 3 写「输入：<code>TASK_LOG.md</code> 条目……约百行」。实测该文件：</p>
+        <div class="scrollx" style="margin:8px 0">
+        <table>
+          <thead><tr><th>项</th><th>实测</th></tr></thead>
+          <tbody>
+            <tr><td>总条目数</td><td class="mono"><strong>209</strong></td></tr>
+            <tr><td>含「- **目标**」</td><td class="mono">31（14.8%）</td></tr>
+            <tr><td>含「- **测试结果**」</td><td class="mono">52（24.9%）</td></tr>
+            <tr><td>含「- **下一步**」</td><td class="mono now">7（3.3%）</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p>⇒ TASK_LOG 是<strong>自由格式</strong>：字段名不统一，绝大多数条目根本没有这些结构字段。把 209 条异构文本解析成结构化行，<strong>不是百行的活，且格式会继续漂移</strong>——今天我刚写的新条目格式就与旧条目不同。</p>
+        <p><strong class="fix">修正</strong>：不解析历史。改为「AI 收尾时直接产出一行结构化记录（追加 <code>AI_MEMORY/ledger.jsonl</code>），脚本只做 JSONL → 表格的搬运」，脚本确实只有几十行。历史 209 条<strong>不回溯</strong>。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>「CLI 装好可复用 connector 授权」<span class="tag bad">基本否定</span></h3>
+        <p>原方案列为「待确认」，实测后应升级为「基本确定需重新登录」：WorkBuddy 的 connector 凭据存于 <code>~/.workbuddy-ai/connectors/&lt;userId&gt;/</code>，该目录 README 自述「本目录包含 <strong>WorkBuddy 连接器</strong>的本地凭据」；<code>connector-states.v3.json</code> 的 <code>connectors</code> 键实测为 <code>["github","feishu"]</code>，加密方案含 <code>scheme/kdf/salt</code>，密钥是本目录 <code>.master.key</code>。</p>
+        <p>⇒ connector 授权由 <strong>WorkBuddy 自己加密管理</strong>，与 <code>lark-cli</code> 的 auth 是<strong>两套独立存储</strong>。</p>
+        <p><strong class="fix">修正</strong>：步 1 描述与耗时都改（10 分钟 → 15–20 分钟）。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>「约半天」<span class="tag bad">低估</span></h3>
+        <p>拆解：装 CLI（含 Windows/权限/版本排错）＋ 建表（试模板、对字段）＋ 脚本 ＋ 改 <code>AGENTS.md</code> ＋ 验证与降级。</p>
+        <p><strong class="fix">修正</strong>：<strong>1–2 天</strong>，且第一版应接受「半自动」（先手工触发，稳定后再接自动）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>内部矛盾 · 最要紧</h2>
+
+  <div class="verdict bad">
+    <span class="lb">矛盾</span>
+    <p>「单向投影、git 为准」与表格里的「状态」列<strong>互相打架</strong>。</p>
+  </div>
+
+  <p>您要的正是「<strong>哪些做没做到什么地步</strong>」——您很可能想在表格里直接改状态。这正是多维表格的价值。但一旦人工改状态：表格就从「只读投影」变成「写入源」，「git 为准」失效；且与下一次投影<strong>互相覆盖</strong>（投影按 git 写回，会抹掉您的手改）。</p>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>选项甲 · 纯投影</h3>
+      <ul>
+        <li>状态列<strong>只读</strong>；改状态必须回 git（改 TASK_LOG / ledger）。</li>
+        <li>安全、无歧义；代价是您不能直接改。</li>
+        <li><strong>我的建议</strong>：选甲，<strong>但加一个例外</strong>——单独设一列「<strong>Owner 批注</strong>」（自由文本，只由您在表格里写，投影永不覆盖）。既保留您的输入通道，又不破坏「git 为准」。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>选项乙 · 双写</h3>
+      <ul>
+        <li>允许表格改状态，约定「表格状态优先，投影不回写状态列」。</li>
+        <li>顺手；但表格与 git 分歧时<strong>无法自动判定谁对</strong>。</li>
+        <li>与项目「不得静默降级」的精神有张力。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>遗漏 4 条</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>权限面变化没提示 <span class="tag bad">安全</span></h3>
+        <p><code>lark-cli</code> 的授权身份是 <strong>user</strong>（插件配置 <code>statusMatchJson.identity = "user"</code>），不是 bot。而 connector 带 <strong>28 个</strong> <code>lark-*</code> skill，其中包含 <code>lark-mail</code>、<code>lark-drive</code>、<code>lark-doc</code>、<code>lark-calendar</code>。</p>
+        <p>⇒ 装完 CLI 并扫码后，<strong>本机任何能执行命令的 AI 会话，都能读写您的飞书邮件、云盘、文档、日历</strong>。这是实质的权限边界扩大，而原方案只说了「凭据不进仓库」，<strong>完全没提这一层</strong>。</p>
+        <p><strong class="fix">缓解</strong>：① 至少要让您知道；② 可考虑「用时登录、用完 <code>auth logout</code>」；③ 评估能否改用 <code>--as bot</code>（代价：bot 建的表您可能看不到，需另做分享）。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>自动化 workflow 被一刀切掉 <span class="tag warn">过度收缩</span></h3>
+        <p>原方案问 8 写「不做仪表盘、不做甘特图、不做自动化 workflow」。但「<strong>状态变成『等您定』时自动推一条到飞书群</strong>」恰恰是您最需要的——您就不用天天打开表格看。我把它连同仪表盘一起砍掉，属于过度收缩。</p>
+        <p><strong class="fix">修正</strong>：P0 保留<strong>一条</strong>最简自动化（<code>状态 = 等您定</code> → 推群），其余不做。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">6</span>
+      <div class="body">
+        <h3>BaseApp（应用模式）没提</h3>
+        <p><code>lark-base</code> skill 明确：BaseApp（AppMode）通过 Page 和组件组织 Base 数据，是<strong>应用界面</strong>，不是 Base 的别名。它可能比「裸表格」更贴合「打开就能看」。</p>
+        <p><strong class="fix">修正</strong>：步 2 增加一步——评估 BaseApp 形态再决定。</p>
+      </div>
+    </div>
+
+    <div class="gate">
+      <span class="num">7</span>
+      <div class="body">
+        <h3>任务 ID 从哪来没定义</h3>
+        <p>原方案说「用稳定键（如 <code>T-20261015-01</code>）」，但<strong>没写谁生成、怎么保证唯一</strong>。多会话并行时两方可能生成同一个 ID。</p>
+        <p><strong class="fix">修正</strong>：定义生成规则（日期 + 会话槽 + 序号），脚本里做去重校验。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>顺带确证的两件事</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">好消息</span><h3>npm 包核实无误（原「待确认」可关闭）</h3></div>
+      <div class="scrollx" style="margin-top:6px">
+      <table>
+        <thead><tr><th>项</th><th>值</th></tr></thead>
+        <tbody>
+          <tr><td>最新版本</td><td class="mono">1.0.98（插件要求 ≥1.0.97 <span class="tag ok">满足</span>）</td></tr>
+          <tr><td>license</td><td class="mono">MIT</td></tr>
+          <tr><td>维护者</td><td>bytedance 官方（<code>bnpm@bytedance.com</code> 等 9 人）</td></tr>
+          <tr><td>供应链</td><td>带 <strong>SLSA provenance</strong> 签名</td></tr>
+          <tr><td>平台</td><td class="mono">darwin / linux / win32；x64 / arm64 / riscv64</td></tr>
+          <tr><td>包体</td><td class="mono">unpackedSize 147 KB</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p><strong>一个提示</strong>：它声明了 <code>postinstall: node scripts/install.js</code>——<strong>安装时会执行脚本</strong>。官方 + SLSA 签名，风险可控，但值得知道（安装前可先 <code>npm view</code> 核对）。</p>
+    </div>
+
+    <div class="card">
+      <div class="top"><span class="tag warn">顺手记一笔</span><h3>本机已存在明文凭据文件</h3></div>
+      <p>connector 目录的 README 自述：<code>.credentials.json</code> 是「<strong>旧版本明文凭据</strong>（保留作为回滚兜底，不会再被写入）」。这与本项目「密钥只放环境变量或后台、禁明文」的红线存在张力。<strong>不是本方案引入的问题</strong>，但供您判断是否要清理。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>修订后的 P0′</h2>
+
+  <div class="scrollx">
+  <table>
+    <thead><tr><th>步</th><th>原方案</th><th>修订后</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">1</td>
+        <td class="was">装 CLI + 授权（10 分钟）</td>
+        <td class="fix">装 CLI + <strong>重新扫码登录</strong>（15–20 分钟）；<strong>并明确告知权限面扩大到 user 身份</strong></td>
+      </tr>
+      <tr>
+        <td class="mono">2</td>
+        <td class="was">建 Base（7 列）</td>
+        <td class="fix">建 Base（7 列 <strong>+ 1 列「Owner 批注」</strong>）；<strong>评估 BaseApp 形态</strong></td>
+      </tr>
+      <tr>
+        <td class="mono">3</td>
+        <td class="was">脚本读 TASK_LOG（约百行）</td>
+        <td class="fix"><strong>改为读 <code>ledger.jsonl</code></strong>（AI 收尾时生成，脚本只做搬运）；<strong>历史不回溯</strong></td>
+      </tr>
+      <tr>
+        <td class="mono">4</td>
+        <td class="was">接进 AGENTS 收尾</td>
+        <td class="fix">同，<strong>并新增「生成 ledger 行」这一步</strong></td>
+      </tr>
+      <tr>
+        <td class="mono">5</td>
+        <td class="was">验证与降级</td>
+        <td class="fix">同，<strong>加一条自动化：状态=等您定 → 推群</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">工期</span>
+    <p>半天 → <strong>1–2 天</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>待确认（更新版）</h2>
+  <ul class="notes">
+    <li>CLI 登录后是 <strong>user</strong> 身份还是可选 bot（决定权限面与表格可见性）。</li>
+    <li>BaseApp 是否比裸表格更适合您的查看习惯。</li>
+    <li>飞书自动化 workflow 的配额与限制。</li>
+    <li><strong>您是否接受「状态列只读 + 单独设批注列」这个设计</strong>——这是矛盾项的裁决，需您拍。</li>
+    <li>是否要清理本机那个旧版明文凭据文件（非本方案引入）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>自评</h2>
+  <p>这轮自我审查的价值集中在两点：</p>
+  <div class="split">
+    <div class="panel yes">
+      <h3>推翻了三个偷懒假设</h3>
+      <ul>
+        <li>TASK_LOG 好解析 —— 如果没查，落地时会直接卡在步 3。</li>
+        <li>授权能复用 —— 会让第一步反复失败。</li>
+        <li>半天够 —— 会让排期失信。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>揪出一个内部矛盾</h3>
+      <ul>
+        <li>只读投影 vs 您要改状态 —— 这个不解决，表格上线当天就出问题。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">未被推翻的</span>
+    <p>原方案的<strong>方向与主结论</strong>——B+C 组合、git 为准、只放 20–40 行——<strong>经受住了审查</strong>。</p>
+  </div>
+</section>
+
+<footer>
+  <p>本件为只读核验：<strong>未安装 CLI、未建表、未改业务代码、未提交、未碰两站</strong>。</p>
+  <p>审查对象：<code>交付档案/执行方案/执行方案_20261015_飞书多维表格任务台账_对抗式审查.{md,html}</code>。实测来源：<code>AI_MEMORY/TASK_LOG.md</code>、<code>~/.workbuddy-ai/connectors/</code>、npm registry、飞书插件配置。</p>
+  <p>2026-10-15 · 容器根现场实测。</p>
+</footer>
+
+</div>

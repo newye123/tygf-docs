@@ -1,0 +1,467 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>执行方案：GEO 第五轮</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{color-scheme:light dark}
+hr.rule{border:0;border-top:1px solid rgba(127,127,127,.35);margin:26px 0}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid rgba(127,127,127,.28);padding:9px 10px;text-align:left;vertical-align:top;font-size:14px}
+h3{margin-top:22px}
+
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></style></head><body><div class="wrap"><div class="masthead"><div class="eyebrow">OPENS 2026-10-17</div><div class="standfirst">CSDN 转正·两篇稿·站内词面落地</div><div class="meta"><span class="sn">对抗式审查砍掉四个候选，两个改道</span><span class="sn">4</span><span class="sn">8</span></div></div><div class="verdict"><div class="lb">结论</div><p>0</p></div><ul class="notes">
+<li>授权：Owner「使用对抗式审查后给个执行方案，然后按方案执行」＋长期授权「应该要发布的内容你直接处理就好」</li>
+<li>红线不变：部署生产、翻闸、支付 flag、删档、绕过平台身份验证（短信/验证码）</li>
+<li>关联：<code>调研报告_20261017_SEO_GEO第三轮_新证据与站外信源转向.md</code>（引用池读数）、<code>写法定则_20261017_对外文稿七条与发布前机扫清单.md</code>（写法与机扫）</li>
+</ul>
+<hr class="rule"/>
+<h2>00 本轮新实测到的四条（先摆证据，方案按这些改）</h2>
+<ul class="notes">
+<li><strong>CSDN 是登录态——我上一轮的判断错了。</strong> 实读 <code>context.cookies('https://csdn.net')</code> 命中 <code>UserName / UserToken / UserInfo / UN / SESSION</code>（tab 1903871516，<code>editor.csdn.net/md/</code>）。所以当时发布只出 <code>passport.csdn.net/v1/api/user/risk/check</code>、没出提交请求，拦路的是<strong>发布接口风控</strong>，不是"没登录"。这条更正直接把 CSDN 从"等 Owner"改成"我这轮能打"。</li>
+<li><strong>title 只有一处，且不受后台覆盖。</strong> <code>src/app/(zh)/layout.tsx:8</code>；<code>批量把PSD文字改成多国语言</code> 在 <code>src/lib/server/site-settings.ts</code>、<code>src/config/siteContent.ts</code> 各 <strong>0 命中</strong>（grep 原式见 §05）；生产 <code>/</code> 实渲 <code>&lt;title&gt;图译工坊｜批量把PSD文字改成多国语言（单批 12 语种）&lt;/title&gt;</code>（curl 200、95,308 B），与该行逐字符一致。⇒ <strong>#130 那类"代码改对了、库里冻结旧值"的漂移风险，对 title 这一项不成立</strong>；改这行就会生效，前提是部署。另：<code>keywords</code> metadata 在 <code>src/app/</code>、<code>src/config/</code> <strong>0 命中</strong>＝纯新增，不动既有断言。</li>
+<li><strong>产品自己就是"jsx 派"。</strong> 助手侧生成 <code>.jsx</code> 并经 VBScript 调 <code>ps.DoJavaScriptFile</code> 驱动 Photoshop（<code>worktrees/develop/download/local-assistant/server.js:1208</code>、<code>script-fetcher.js:132</code>）。⇒ 第⑦篇"跟手写脚本比"必须承认同一技术路线，否则不诚实；<strong>也正因如此，内部机制（脚本分发、命名、自删、看门狗）一律不许写进对外稿</strong>——那是外泄面（#95–#101 同族）。</li>
+<li><strong>知乎不在豆包引用池的观测名单上。</strong> 三轮报告引的从业者实测是 45 条引用源：CSDN 34%／今日头条 16%／搜狐 9%／腾讯云·博客园·网易各 6%／企业官网 0%——<strong>知乎 0 条</strong>。今天 4 篇全压在知乎。样本只有 45 条、比例不外引，但<strong>方向够用</strong>：下一篇该进 CSDN，不是再加知乎。</li>
+</ul>
+<hr class="rule"/>
+<h2>01 对抗式审查：八个候选，逐个砍</h2>
+<div class="scrollx"><table><thead><tr><th>#</th><th>候选</th><th>反证／会翻车的地方</th><th>裁定</th></tr></thead><tbody>
+<tr><td>A1</td><td>第⑦篇（手写 jsx 成本对照）发知乎</td><td>知乎在观测池里 0 条；同账号今日已 3 专栏＋1 回答（自设上限 4）</td><td><strong>做，但首发改到 CSDN</strong>（池内最大 34%、且已登录）；知乎版留明天第二落点</td></tr>
+<tr><td>A2</td><td>第⑤篇（包装／说明书）</td><td>印刷代价、重印风险是行业常识，<strong>我方零一手包装项目证据</strong>；写成案例＝编造</td><td><strong>做，但只写坑与边界，全文零案例主张、零"我们做过"</strong>；明天发知乎</td></tr>
+<tr><td>A3</td><td>站内 title 换词（Owner 令"PS 批量改语言"更合搜索习惯）</td><td>①该词面字面歧义（可指"改 PS 界面语言"），可能引错人群；②<strong>没有任何搜索量证据</strong>，Owner 个人习惯≠数据；③改了要部署才生效，部署是红线</td><td><strong>做代码那一半</strong>：title 换成"PS 批量改语言"＋同句保留 PSD 文字图层语义（消歧）、补 keywords 数组；跑 tsc＋lint；逐文件单独提交；<strong>不部署、不声称已生效</strong></td></tr>
+<tr><td>A4</td><td>再发一条微头条</td><td>同题<strong>长文还压在头条草稿箱没发</strong>；先补短的、长的继续躺着＝顺序错</td><td><strong>不做</strong>，等 Owner 手点长文</td></tr>
+<tr><td>A5</td><td>抖音图文</td><td>卡在本人短信验证（185\*\*\*\*\*\*27）＝身份闸</td><td><strong>不碰、不绕、不撤稿</strong>，稿子留在原位</td></tr>
+<tr><td>A6</td><td>搜狐号（池内 9%）</td><td>tab 实读 URL 带 <code>message=user no bind mobile</code>＝账号未绑手机</td><td><strong>不做</strong>，登记为 Owner 侧一句话项</td></tr>
+<tr><td>A7</td><td>再动 llms.txt／站内结构</td><td>Ahrefs：97% 域名零 llms.txt 请求、检索 bot 约 1.1%（与 AR-38/AR-52 同律）；站内四轮已做完</td><td><strong>不做</strong></td></tr>
+<tr><td>A8</td><td>10-23 复测判据</td><td>我上一版写成"豆包不再说 ImageTrans"——新语料进池要 60–120 天，这条在两周内必然"未通过"，是<strong>假绿判据</strong></td><td><strong>改判据</strong>：看"我们发的内容有没有出现在豆包的引用源列表里"（可数、可证伪），不看它改不改口</td></tr>
+</tbody></table></div>
+<p>另立一条<strong>本轮自查闸</strong>（针对我自己）：A1 那篇的标题不能写成"手写 jsx 不行"。事实是我们也走 jsx，差别只在写完有没有人核对、失败谁来收。把它写成"脚本派 vs 工具派"的对立，是我在骗读者，也会被懂行的人一句话拆穿。</p>
+<hr class="rule"/>
+<h2>02 执行序（本方案批完我直接跑，不再逐环请示）</h2>
+<ul class="notes">
+<li>CSDN 草稿箱核查（防同题重复稿）→ 第⑦篇 CSDN 形态成稿（结论前置＋算账，零内部机制）→ 过 §04 机扫 → 填编辑器 → <strong>试发布</strong>；一旦出现验证码／风控人机校验，立刻停手交 Owner，不绕。</li>
+<li>第⑤篇知乎底稿成稿 → 机扫 → 落 <code>交付档案/宣传与运营/</code>，明天发。</li>
+<li><code>src/app/(zh)/layout.tsx:8</code> title 换词 ＋ 补 <code>keywords</code> → <code>npx tsc --noEmit</code> ＋ lint → <strong>只 <code>git add</code> 这一个文件</strong>单独提交到 develop → 不部署。</li>
+<li>ISSUES 立案一条：<code>src/app/api/local-assistant/config/route.ts:13</code>、<code>src/lib/server/local-assistant.ts:11</code> 里有开发机绝对路径默认值（<code>F:\工具开发\批量改语言系统\...</code>），属可外泄的开发者机器信息，本轮只登记不改动（不在授权写入面）。</li>
+<li>TASK_LOG 置顶＋ledger 追加并投影＋人话版直发飞书。</li>
+</ul>
+<p><strong>不做</strong>：头条长文手点、抖音验证码、搜狐号绑手机、生产部署——四项全在 Owner 侧。</p>
+<hr class="rule"/>
+<h2>03 交付判据（可复跑，不接受"应该没问题"）</h2>
+<ul class="notes">
+<li>CSDN：发布成功＝拿到文章 URL，且线上正文首 120 字含定义句；失败＝如实记"风控拦在哪一步、页面停在什么状态、稿有没有留"。</li>
+<li>代码：<code>git show --stat HEAD</code> 只含 1 个文件；<code>npx tsc --noEmit</code> exit 0；生产 <code>&lt;title&gt;</code> <strong>仍是旧句</strong>——这一条必须写出来，它是"没部署"的证据而不是遗漏。</li>
+<li>台账：ledger 投影 <code>errors=[]</code>，HELD 只允许 ZHIHU-COPY 那一行（Owner 手改，不强推）。</li>
+</ul>
+<hr class="rule"/>
+<h2>04 发布前机扫（沿用写法定则第 4 节原式）</h2>
+<p><code>[\d.]+ ?%</code>／<code>\d+ ?(分钟|秒|小时)</code>／<code>(所有|全部|每种|任意|任何语言)</code>／<code>(保证|确保|无误|不会出错)</code>／<code>(高效|专业|一站式|赋能|打造|助力|无缝|极致|完美|显著|大幅|提升|降低)</code>／<code>(综上所述|总而言之|值得注意的是)</code>／禁写词 <code>54 ?种|平均 ?3 ?分钟|必须.{0,4}UTF-8|多文件批量|多个 ?PSD|按行收|按语种收|\d+ ?元|术语库|已备案|macOS 即将|OCR 识别</code></p>
+<p>＋<strong>本轮追加两条</strong>：内部机制词 <code>DoJavaScript|VBS|看门狗|自删|script-fetcher|分发脚本</code>；案例主张词 <code>我们做过|服务过|客户案例|某包装客户</code>。</p>
+<h2>05 证据原式</h2>
+<ul class="notes">
+<li>cookie 实读：<code>tabbit-cli nodejs</code>，<code>await context.cookies('https://csdn.net')</code> → <code>AU,BT,HMACCOUNT,SESSION,UN,UserInfo,UserNick,UserName,UserToken,...</code></li>
+<li>title 单源：<code>grep -rn "批量把PSD文字改成多国语言" src/ scripts/ tests/ docs/</code> → 仅 <code>src/app/(zh)/layout.tsx:8</code></li>
+<li>生产渲染：<code>curl -s https://tuyigf.com/</code>（200、95,308 B）→ <code>&lt;title&gt;</code> 与 :8 逐字符一致</li>
+<li>jsx 路线：<code>download/local-assistant/server.js:1208</code> <code>ps.DoJavaScriptFile "${vbsString(jsxPath)}"</code>；<code>script-fetcher.js:132</code> 生成随机名 <code>.jsx</code></li>
+<li>三态与恢复原文（对外稿可引）：<code>src/config/siteContent.ts:112-113</code>（回读不一致→立即恢复原文，不留下错误内容）、<code>:93</code>、<code>:98-99</code>、<code>:158-161</code>、<code>:171</code>、<code>:190-191</code>；报告可追到图层 <code>src/lib/report/generate.ts:52</code>（渲染 <code>layerNames</code>）；上限 12＝<code>src/lib/workbench/batch-limits.ts:6</code></li>
+</ul><div class="notes"><p>由同目录 md 生成 · 面向 Owner 的阅读件 · 数字与状态以平台回显及代码 file:line 为准</p></div></div></body></html>

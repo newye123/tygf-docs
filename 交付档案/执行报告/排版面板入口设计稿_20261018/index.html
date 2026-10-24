@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>排版面板入口设计稿 · 卡头 + 悬浮球 · 2026-10-18</title>
+<style>
+  :root {
+    --ink: #18181b;
+    --muted: #52525b;
+    --faint: #a1a1aa;
+    --line: #e4e4e7;
+    --paper: #ffffff;
+    --wash: #f7f7f8;
+    --teal: #0f766e;
+    --teal-soft: #f0fdfa;
+    --teal-line: #99f6e4;
+    --amber: #b45309;
+    --amber-soft: #fffbeb;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(24, 24, 27, .05), 0 12px 32px rgba(24, 24, 27, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #f4f4f5; --muted: #a1a1aa; --faint: #71717a;
+      --line: #3f3f46; --paper: #18181b; --wash: #09090b;
+      --teal: #5eead4; --teal-soft: #042f2e; --teal-line: #115e59;
+      --amber: #fcd34d; --amber-soft: #271c05;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--ink); background: var(--wash);
+    font-family: "IBM Plex Sans", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+    line-height: 1.7; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+  a { color: var(--teal); }
+  header.hero { padding: 64px 0 36px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .eyebrow { margin: 0 0 12px; color: var(--teal); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.2; letter-spacing: -.02em; }
+  .lede { max-width: 780px; margin: 16px 0 0; color: var(--muted); font-size: 15px; }
+  .verdict {
+    display: grid; grid-template-columns: 128px 1fr; gap: 18px; align-items: start;
+    margin-top: 28px; padding: 20px 22px; border: 1px solid var(--teal-line); border-radius: var(--radius);
+    background: var(--teal-soft);
+  }
+  .verdict .tag { display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--teal); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+  .verdict strong { display: block; font-size: 16px; }
+  .verdict p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+  main { padding: 36px 0 72px; }
+  section + section { margin-top: 44px; }
+  h2 { margin: 0 0 6px; font-size: 24px; letter-spacing: -.01em; }
+  h2 .num { color: var(--faint); font-variant-numeric: tabular-nums; margin-right: 8px; }
+  .section-note { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; }
+  .rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .rule { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+  .rule h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .06em; color: var(--faint); font-weight: 700; }
+  .rule p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .rule b { color: var(--ink); font-weight: 600; }
+  .mini-compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  figure { margin: 0; }
+  .thumb {
+    display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper); box-shadow: var(--shadow);
+  }
+  figcaption { margin-top: 8px; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+  figcaption b { color: var(--ink); }
+  .draft { padding-top: 30px; border-top: 1px solid var(--line); }
+  .draft-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 12px; margin-bottom: 4px; }
+  .badge { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--teal); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+  .badge.alt { background: var(--ink); }
+  .badge.quiet { background: var(--line); color: var(--muted); }
+  .draft-head h2 { margin: 0; font-size: 22px; }
+  .draft-sub { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; max-width: 860px; }
+  .shots-desktop { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 14px; align-items: start; }
+  .shots-narrow { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 18px; margin-top: 18px; }
+  .shots-narrow .thumb { border-radius: 16px; }
+  .caption-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 14px; }
+  .caption-grid figcaption { min-height: 2.6em; }
+  .why { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+  .why div { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  .why h3 { margin: 0 0 5px; font-size: 13px; }
+  .why p { margin: 0; color: var(--muted); font-size: 13px; }
+  .callout { margin-top: 28px; padding: 20px 22px; border-left: 3px solid var(--amber); border-radius: 0 12px 12px 0; background: var(--amber-soft); }
+  .callout h3 { margin: 0 0 6px; font-size: 14px; color: var(--amber); }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  footer { padding: 26px 0 48px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; }
+  @media (max-width: 900px) {
+    .rules, .mini-compare, .shots-desktop, .caption-grid, .why { grid-template-columns: 1fr; }
+    .shots-narrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .verdict { grid-template-columns: 1fr; gap: 10px; }
+    .caption-grid { display: none; }
+    .shots-desktop figcaption { margin-bottom: 8px; }
+  }
+  @media (max-width: 520px) {
+    .wrap { width: calc(100% - 24px); }
+    header.hero { padding-top: 40px; }
+    .shots-narrow { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">设计稿 · 2026-10-18 · 模拟台真实渲染</p>
+    <h1>排版入口：卡头按钮 + 悬浮球</h1>
+    <p class="lede">
+      同一套入口骨架，三种视觉细稿。卡头按钮负责“看见并进入”，右侧悬浮球负责“滚远了也能回来”。
+      截图直接来自模拟台里的整页工作台，1280 桌面与 360 窄屏各一组；不是手绘示意图。
+    </p>
+    <div class="verdict">
+      <span class="tag">推荐 A</span>
+      <div>
+        <strong>同族青：像一个工具入口，而不是第二个主按钮。</strong>
+        <p>
+          青绿是产品里已有的“工具/预览”色（抽屉图标、内测徽标），卡头按钮用浅青底描边、球用青绿实心，
+          既不抢“下一步”和“重新检查”的主操作，也比纯文字链接更容易被发现。B 原生碳更醒目，适合把入口当推广位；
+          C 轻量纸片最安静，但在白卡上容易看起来像不可点。
+        </p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="rules-title">
+    <h2 id="rules-title">这套入口怎么工作</h2>
+    <p class="section-note">三条规则固定，皮肤只换颜色与形状；桌面与窄屏的取舍也在这里写死。</p>
+    <div class="rules">
+      <div class="rule">
+        <h3>桌面 ≥ 1280</h3>
+        <p><b>卡头按钮 + 悬浮球同时出现。</b>按钮在「Photoshop 就绪检查」卡头右上角；球固定在右侧中部，44×44，
+        滚动后卡头离开视口，球仍可用。</p>
+      </div>
+      <div class="rule">
+        <h3>窄屏 &lt; 1280</h3>
+        <p><b>只留卡头按钮，球收起。</b>单列内容没有右侧留白，球会压住卡片；卡头按钮就在入口原处，
+        窄屏文案缩成「排版」。</p>
+      </div>
+      <div class="rule">
+        <h3>抽屉</h3>
+        <p><b>桌面 360px，窄屏 92vw，满高。</b>球和按钮共用同一个抽屉；打开时球隐藏，Esc 关闭，
+        焦点回到刚才点的按钮或球；背景 inert，未保存草稿保留。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="compare-title">
+    <h2 id="compare-title">三套皮肤，一眼对比</h2>
+    <p class="section-note">1280 桌面、同一状态（未展开抽屉）下的真实渲染。点开大图可看细节。</p>
+    <div class="mini-compare">
+      <figure>
+        <a href="1280-teal-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-teal-closed.png" alt="同族青：浅青描边卡头按钮与青绿悬浮球" loading="lazy" /></a>
+        <figcaption><b>A · 同族青（推荐）</b><br />浅青底、青绿描边，球为青绿实心。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-native-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-native-closed.png" alt="原生碳：黑色卡头按钮与深色悬浮球" loading="lazy" /></a>
+        <figcaption><b>B · 原生碳</b><br />黑色实心按钮，与工作台主按钮同族。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-light-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-light-closed.png" alt="轻量纸片：白底描边卡头按钮与白色悬浮球" loading="lazy" /></a>
+        <figcaption><b>C · 轻量纸片</b><br />白底细描边，球为白色圆形。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="draft" aria-labelledby="a-title">
+    <div class="draft-head">
+      <span class="badge">A · 推荐</span>
+      <h2 id="a-title">同族青</h2>
+    </div>
+    <p class="draft-sub">
+      入口读作“内测工具”，与抽屉标题里的青色图标、内测徽标连成一套。浅青底保证在白卡上有边界，
+      又不至于像主操作那样抢视线；球用青绿实心，远看仍能被注意到。
+    </p>
+    <div class="shots-desktop">
+      <figure>
+        <a href="1280-teal-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-teal-closed.png" alt="同族青 1280 未展开" loading="lazy" /></a>
+        <figcaption><b>1280 · 初始。</b>卡头按钮与球同时在场，球不压阶段内容，也不压底部主栏。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-teal-hover.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-teal-hover.png" alt="同族青 1280 悬停提示" loading="lazy" /></a>
+        <figcaption><b>1280 · 悬停。</b>球固定在右侧中部，悬停显示「排版定制（内测预览）」；准备素材阶段在 1280×900 内完整可见，没有需要滚动遮挡的场景。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-teal-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-teal-drawer.png" alt="同族青 1280 抽屉打开" loading="lazy" /></a>
+        <figcaption><b>1280 · 抽屉。</b>360px 右侧抽屉，背景压暗并 inert，球隐藏。</figcaption>
+      </figure>
+    </div>
+    <div class="shots-narrow">
+      <figure>
+        <a href="360-teal-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-teal-closed.png" alt="同族青 360 窄屏" loading="lazy" /></a>
+        <figcaption><b>360 · 未展开。</b>球收起，卡头按钮缩成「排版」。</figcaption>
+      </figure>
+      <figure>
+        <a href="360-teal-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-teal-drawer.png" alt="同族青 360 抽屉" loading="lazy" /></a>
+        <figcaption><b>360 · 抽屉。</b>92vw 满高，字符字段改为单列 12 行。</figcaption>
+      </figure>
+    </div>
+    <div class="why">
+      <div><h3>为什么推荐它</h3><p>青色在产品里已经代表“可选工具/内测能力”，用户不会把它误读成下一个流程步骤；对比度足够，入口不隐身。</p></div>
+      <div><h3>代价</h3><p>比黑色主按钮弱一档。如果这个入口承担拉新/推广任务，B 更合适；如果只是内测者的顺手工具，A 足够。</p></div>
+    </div>
+  </section>
+
+  <section class="draft" aria-labelledby="b-title">
+    <div class="draft-head">
+      <span class="badge alt">B</span>
+      <h2 id="b-title">原生碳</h2>
+    </div>
+    <p class="draft-sub">
+      把入口当成工作台的原生主按钮：黑色实心、白色 T 字标、圆角方形球。它和“下一步：执行与报告”“进入工作台”同一视觉族，
+      存在感最强，也最容易被一眼发现。
+    </p>
+    <div class="shots-desktop">
+      <figure>
+        <a href="1280-native-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-native-closed.png" alt="原生碳 1280 未展开" loading="lazy" /></a>
+        <figcaption><b>1280 · 初始。</b>黑色按钮在卡头右侧，球为深色圆角方。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-native-hover.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-native-hover.png" alt="原生碳 1280 悬停提示" loading="lazy" /></a>
+        <figcaption><b>1280 · 悬停。</b>球的位置与 A 相同，只换皮肤；提示文案一致。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-native-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-native-drawer.png" alt="原生碳 1280 抽屉打开" loading="lazy" /></a>
+        <figcaption><b>1280 · 抽屉。</b>抽屉内容与 A 完全一致，入口皮肤不进入抽屉。</figcaption>
+      </figure>
+    </div>
+    <div class="shots-narrow">
+      <figure>
+        <a href="360-native-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-native-closed.png" alt="原生碳 360 窄屏" loading="lazy" /></a>
+        <figcaption><b>360 · 未展开。</b>黑色「排版」按钮在卡头右上角。</figcaption>
+      </figure>
+      <figure>
+        <a href="360-native-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-native-drawer.png" alt="原生碳 360 抽屉" loading="lazy" /></a>
+        <figcaption><b>360 · 抽屉。</b>入口皮肤不改变抽屉内部。</figcaption>
+      </figure>
+    </div>
+    <div class="why">
+      <div><h3>适合</h3><p>希望用户第一次就注意到排版能力；或后续把入口作为内测转化位来运营。</p></div>
+      <div><h3>代价</h3><p>卡头黑色按钮会和文件选择、语言选择争主操作；在「准备素材」阶段，入口显得比任务本身更重。</p></div>
+    </div>
+  </section>
+
+  <section class="draft" aria-labelledby="c-title">
+    <div class="draft-head">
+      <span class="badge quiet">C</span>
+      <h2 id="c-title">轻量纸片</h2>
+    </div>
+    <p class="draft-sub">
+      白色圆角纸片、细描边、白底球。目标是“不打断准备素材”，把入口降到工具级；但在白色卡片与白色页面背景上，
+      边界主要靠一圈 1px 描边和浅阴影，远看容易消失。
+    </p>
+    <div class="shots-desktop">
+      <figure>
+        <a href="1280-light-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-light-closed.png" alt="轻量纸片 1280 未展开" loading="lazy" /></a>
+        <figcaption><b>1280 · 初始。</b>白底纸片按钮与白色圆形球，视觉最安静。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-light-hover.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-light-hover.png" alt="轻量纸片 1280 悬停提示" loading="lazy" /></a>
+        <figcaption><b>1280 · 悬停。</b>白底球靠一圈描边和阴影立住，悬停提示仍清晰。</figcaption>
+      </figure>
+      <figure>
+        <a href="1280-light-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="1280-light-drawer.png" alt="轻量纸片 1280 抽屉打开" loading="lazy" /></a>
+        <figcaption><b>1280 · 抽屉。</b>抽屉不变；皮肤只作用于入口件。</figcaption>
+      </figure>
+    </div>
+    <div class="shots-narrow">
+      <figure>
+        <a href="360-light-closed.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-light-closed.png" alt="轻量纸片 360 窄屏" loading="lazy" /></a>
+        <figcaption><b>360 · 未展开。</b>白色纸片按钮在白卡上最安静，也最容易被忽略。</figcaption>
+      </figure>
+      <figure>
+        <a href="360-light-drawer.png" target="_blank" rel="noreferrer"><img class="thumb" src="360-light-drawer.png" alt="轻量纸片 360 抽屉" loading="lazy" /></a>
+        <figcaption><b>360 · 抽屉。</b>入口皮肤不改变抽屉内部。</figcaption>
+      </figure>
+    </div>
+    <div class="why">
+      <div><h3>适合</h3><p>入口已经通过别处（例如引导、公告）被用户知道，这里只想保留一个安静的回头路。</p></div>
+      <div><h3>代价</h3><p>首次发现成本最高；在低对比显示器或亮环境下，按钮与球都可能被忽略。</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="measured-title">
+    <h2 id="measured-title">实测读数与边界</h2>
+    <p class="section-note">以下数字来自本轮 Playwright 自动检查，不是估算。</p>
+    <div class="rules">
+      <div class="rule">
+        <h3>1280 桌面</h3>
+        <p>卡头按钮 <b>110 × 30</b>；球 <b>44 × 44</b>；阶段宽 <b>828px</b>、高 <b>338px</b>（1280×900 视口内完整可见）；球不压阶段内容、不压底部主栏；
+        抽屉宽 <b>360px</b>。</p>
+      </div>
+      <div class="rule">
+        <h3>360 窄屏</h3>
+        <p>卡头按钮可见；抽屉宽 <b>331px（92vw）</b>；字体控件宽 <b>≥ 110px</b>；文档与抽屉均无横向溢出；
+        球不渲染。</p>
+      </div>
+      <div class="rule">
+        <h3>交互</h3>
+        <p>抽屉带 <b>role=dialog / aria-modal</b>，焦点进入并限制在抽屉内，Esc 关闭后回到触发件；
+        关闭再开保留未保存草稿。</p>
+      </div>
+    </div>
+    <div class="callout">
+      <h3>这是模拟稿，不是已上线入口</h3>
+      <p>
+        本页截图来自独立模拟台，是真实渲染。产品里的排版面板已经挂在「准备素材」阶段，但目前仍是内联展开；
+        卡头按钮、悬浮球、抽屉这套入口和埋点尚未接到产品。三种皮肤共用同一套结构与行为，只换视觉。
+        你定下哪套后，再把它接到产品「准备素材」阶段的卡头，并继续受 <code>featureAccess.typographyCustomization</code> 灰度门控制。
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    图译工坊 · 排版面板入口设计稿 · 2026-10-18 · 模拟台 107 项检查通过 ·
+    截图目录：交付档案/执行报告/排版面板入口设计稿_20261018
+  </div>
+</footer>
+</body>
+</html>

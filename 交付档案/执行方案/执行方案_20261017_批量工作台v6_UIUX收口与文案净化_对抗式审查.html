@@ -1,0 +1,188 @@
+<!doctype html>
+<title>执行方案 · 批量工作台 v6：UI/UX 收口 × 文案净化（对抗式审查）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --sunk:#eef1f5;
+  --ink:#131820; --ink-2:#3d4757; --muted:#657084;
+  --line:#dde2ea; --line-strong:#c3cbd8;
+  --accent:#1b5bd0; --accent-soft:#e8effc;
+  --ok:#0d6f4a; --ok-soft:#e6f4ec;
+  --bad:#ae2318; --bad-soft:#fbeae8;
+  --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --teal:#0d7f74; --teal-soft:#e0f2f0;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px); --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+    --teal:#5eead4; --teal-soft:#0e2a27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(36px,6vw,56px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.2vw,2.3rem);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:68ch;color:var(--ink-2);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.22rem;line-height:1.4;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:72ch}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(16px,3.4vw,24px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.7;max-width:64ch;font-weight:500;text-wrap:balance}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.9rem;line-height:1.65;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)} .stat.warn .n{color:var(--warn)} .stat.bad .n{color:var(--bad)} .stat.acc .n{color:var(--accent)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.card.hot{border-left:3px solid var(--accent)}
+.card.teal{border-left:3px solid var(--teal)}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card p{font-size:.92rem;color:var(--ink-2);max-width:72ch}
+table.rule{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.rule th{background:var(--sunk);font-size:.72rem;padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-weight:600}
+table.rule td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);line-height:1.7}
+table.rule tr:last-child td{border-bottom:none}
+.flag-ok{color:var(--ok);font-weight:700}
+.flag-no{color:var(--bad);font-weight:700}
+.gates{display:flex;flex-direction:column;gap:10px}
+.gate{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);background:var(--surface);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.gate b{color:var(--ink)}
+.notes{display:flex;flex-direction:column;gap:9px}
+.note{font-size:.86rem;color:var(--ink-2);line-height:1.75;padding-left:14px;position:relative}
+.note::before{content:"—";position:absolute;left:0;color:var(--line-strong)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:7px}
+.callout .lb{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer p{max-width:76ch}
+</style>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>图译工坊 · 执行方案</span><span class="sep">/</span><span>批量工作台 v6</span><span class="sep">/</span><span>UI/UX 收口 × 文案净化</span><span class="sep">/</span><span>对抗式审查</span><span class="sep">/</span><span>2026-10-17 晚</span></div>
+    <h1>框架已定，收掉最后三类话：不该说的字、看不见的表、点不动的钮</h1>
+    <p class="standfirst">Owner 两件实测发现＋一处定位：「引擎字眼全部不要」「表怎么上传？没看到」「框架差不多了，就差 UI/UX」。本方案把两件事钉成验收尺——界面零引擎字眼（口径 TASK_LOG:297 早已生效，v5 模拟违反、已作废）、译文表导入入口复刻单文件台同款（csv-step.tsx＋siteContent.ts:428-436）——并附带十二处 UI/UX 对抗审查与产品态模拟 v6（真机全绿）。</p>
+    <div class="meta">
+      <span>状态：待 Owner 批（主方案 5 条待决不变＋本方案 2 条建议值）</span>
+      <span>模拟：模拟方案_20261017_多对多工作台整链重整_最真实模拟_v6.html（mockv6-1017b 全绿）</span>
+      <span>性质：方案与模拟件（未动业务代码、未动两站、未触计费合同）</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="sn">01</span>两件实事的落点裁定</h2>
+    <div class="split">
+      <div class="panel no">
+        <h3>禁用字眼：口径早已生效，v5 是我违的</h3>
+        <ul>
+          <li>Owner 三令「界面不提引擎只显示『扫描中』」落账 <code>TASK_LOG.md:297</code>；处置原则（错误码去主语／指引去工具名／等待态中性化）在同件 <code>:298</code>。</li>
+          <li>Owner 指出的两串字眼出自我上一版模拟 v5：<code>v5:218</code>「● PhotoCraft 0.7.0 · 免 PS 就绪｜或 Photoshop 2024」、<code>v5:360-361/:397/:407/:629</code>（引擎身份／来源绑定／读回校验／执行口径句）。判词：<b>违反已生效口径，v5 作废</b>。</li>
+          <li>范围：本次只处置工作台界面与模拟件；真实产品 20+ 处旧句已由 PC 线执行序 D 段接管（TASK_LOG.md:297-298），不重复开工，但「零引擎字眼」写入批量台 UI 验收尺。</li>
+        </ul>
+      </div>
+      <div class="panel yes">
+        <h3>译文表上传：真机早有入口，模拟缺了</h3>
+        <ul>
+          <li>真实产品单文件台第 1 步「添加译文」：两页签「导入表格／粘贴文本」、「选择或拖入表格文件」、支持 Excel／CSV／TSV／TXT 可多选合并 —— <code>siteContent.ts:428-436</code>；解析在 <code>csv-step.tsx:101-168</code>（accept 见 <code>:404</code>）。</li>
+          <li>下游门文案「导入译文表后开始」＝ <code>workbench-view.tsx:1897</code>。</li>
+          <li>裁定：批量台<b>多稿共用一张表</b>（与现链路一致），入口直接复用单文件台同款组件与文案，避免双实现漂移。v6 已做进模拟并接线。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">02</span>对抗式审查：v5 → v6 逐条判词</h2>
+    <table class="rule">
+      <thead><tr><th>#</th><th>判词</th><th>证据 / 落点</th></tr></thead>
+      <tbody>
+        <tr><td>F-1</td><td><span class="flag-no">阻断级</span> 引擎字眼回归×5 处 —— 违反已生效口径</td><td>v5:218/:360-361/:397/:407/:629 → v6 零出现（全页扫描断言 0 命中）</td></tr>
+        <tr><td>F-2</td><td>「执行口径以引擎匹配为准」与净化冲突</td><td>v5:272/:629 → v6「预检粗估 · 以执行时校验为准」</td></tr>
+        <tr><td>F-3</td><td>回执徽章行（来源绑定／读回校验）上桌</td><td>v5:397/:407 → v6 只留「18 格终态 · 标准单位 528」；展示撤下≠证据撤下（数据面身份照留）</td></tr>
+        <tr><td>F-4</td><td><span class="flag-no">阻断级</span> 译文表入口缺失（Owner 直接命中）</td><td>v5 无入口 → v6 表卡（两页签＋拖入空态＋解析进度＋已导入态＋更换）</td></tr>
+        <tr><td>F-5</td><td>更换表语义无接线</td><td>真实＝重新对账 <code>workbench-view.tsx:2231-2247</code> → v6 对话框＋确认后联动失效重置</td></tr>
+        <tr><td>F-6</td><td>矩阵无门控：表未导入也显示百分比＝非真</td><td>v6 → 未导入：矩阵空态＋顶带「译文表未导入 ▾」琥珀钮（点击定位表卡）</td></tr>
+        <tr><td>F-7</td><td>死控件×3（粘贴路径／添加 PSD／清空）</td><td>v5:266-268 无接线（:621 假处理器）→ v6 全部真接线（对话框／真 file input／确认对话框）</td></tr>
+        <tr><td>F-8</td><td>顶带无表状态位</td><td>v6 顶带增「表：译文表_1017.xlsx · 176 单元／未导入」</td></tr>
+        <tr><td>F-9</td><td>锁定提示不含表条件</td><td>真实门「导入译文表后开始」→ v6 导轨提示三分形（都缺／只缺表／只缺扫）</td></tr>
+        <tr><td>F-10</td><td>低格汇总缺失</td><td>v6 矩阵标题「N 格低于 95%」徽章（未扫完标「待定」；全达标转绿）</td></tr>
+        <tr><td>F-11</td><td>明细行显示内部 id（F2/F4 大写）</td><td>v5:629 → v6 一律文件全名（「04_弹窗 × 泰语：88% 命中」）</td></tr>
+        <tr><td>F-12</td><td>回执／顶带计数写死</td><td>v5 写死 4 稿/12 格/408 → v6 全随稿数动态（演示态 6 稿 18 格 · 528 单位）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="sn">03</span>v6 演示态计数字典（自洽核对）</h2>
+    <div class="stats">
+      <div class="stat acc"><span class="n">6×3</span><span class="k">稿单×语言＝18 格（预扫描 3 ＋ 待扫 1 ＋ 粘贴加入 2）</span></div>
+      <div class="stat acc"><span class="n">176</span><span class="k">表单元＝Σ 各稿 40+40+31+25+22+18</span></div>
+      <div class="stat acc"><span class="n">528</span><span class="k">标准单位＝176×3（口径同单文件台）</span></div>
+      <div class="stat warn"><span class="n">2 格</span><span class="k">低于 95%（02×韩 92.5% · 04×泰 88%）</span></div>
+      <div class="stat ok"><span class="n">17+1→18</span><span class="k">检测：17 过＋1 需确认→修正后全过</span></div>
+      <div class="stat ok"><span class="n">3→续跑</span><span class="k">稿 3 失败→不重跑守卫→续跑→18 格全完成</span></div>
+    </div>
+    <div class="notes">
+      <p class="note">校对：02（3 条表行未命中）＋04（_系统_水印 排除）→ 对齐 6/6；队列与回执全部随稿数动态。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">04</span>真机实测（tabbit mockv6-1017b）</h2>
+    <div class="verdict">
+      <span class="lb">Verdict</span>
+      <p>全绿：59s、32 项断言逐项过、consoleErrors=[]；<b>禁用词全页扫描两时点均 0 命中</b>（PhotoCraft／Photoshop／免PS／引擎／来源绑定／读回校验／dev build／0.7.0 正则）。</p>
+    </div>
+    <div class="notes">
+      <p class="note">初始 3/4＋矩阵空态＋「译文表未导入 ▾」→ 导入后 176 单元、12 格「未扫描」→ 粘贴加入→6 稿 18 格 → 扫描 6/6、04×泰 88%、汇总「2 格低于 95%」→ 检测 17+1→确认 18/18 → 校对 6/6 → 勾选前 exec 禁用→放行后可执行 → 稿 3 失败＋守卫 2＋「第 3/6 稿失败…不重跑」→ 续跑→回执 18 格＋「首次失败 → 续跑成功」＋顶带「✓ 全部完成 18/18」→ 更换表对话框取消不破坏回执。</p>
+      <p class="note">如实登记：首轮 mockv6-1017 曾红 1 次——测试脚本在交付阶段点素材阶段的「更换」按钮（元素不可见），系测试缺陷非应用缺陷；修正后重跑全绿。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sn">05</span>待决</h2>
+    <div class="gates">
+      <div class="gate"><b>继承 5 条不变</b>（主方案 §6）：全稿检测费用口径／身份文案（本口径下唯一合法形态＝中性过程词）／失败续跑／聚合回执导出／放行位置。</div>
+      <div class="gate"><b>新增建议值 ①</b>：批量台表导入＝直接复用单文件台 CsvStep 同款（同文案、同解析、同多文件合并）。</div>
+      <div class="gate"><b>新增建议值 ②</b>：更换表失效口径＝同单文件台（重新对账；检测/校对/队列下游全部失效，需重新检测）。</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>模拟件：<code>交付档案/执行方案/模拟方案_20261017_多对多工作台整链重整_最真实模拟_v6.html</code>（v5 作废保留对照）。未动业务代码、未推未部署、未碰两站、未触计费与合同四层。</p>
+    <p>口径出处：<code>AI_MEMORY/TASK_LOG.md:297-298</code>；表导入真实实现：<code>csv-step.tsx:101-168</code>、<code>siteContent.ts:428-436</code>、<code>workbench-view.tsx:1897/:2231-2247</code>。</p>
+  </footer>
+
+</div>
+</body>
+</html>
