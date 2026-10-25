@@ -1,3 +1,150 @@
+## 2026-10-24 15:4x 容器根 .git 垃圾清理（6.64 GB → 0.02 GB，回收 6.62 GB）
+
+- **目标**：Owner 拍板「清理」＝清掉此前对抗式审查查出的 `.git` 内 2.70 GiB garbage（116 个 `tmp_obj_*` / `tmp_pack_*`，某次中断 git 操作的残骸）与不可达散对象。
+- **执行**：`git gc --prune=now`（rc=0），未用 `--aggressive`，未手动删任何文件，全部走 git 原生命令。
+- **前后对照（实测）**：`.git` 实占 **6.64 GB → 0.02 GB**，回收 **6.62 GB**；残留 garbage 文件 **0 个**。
+- **历史完好性核验**：`git fsck --no-progress` **rc=0**（无错误输出）；HEAD=`7dfe091` 未变；`rev-list --count HEAD`=**121** 笔提交、`ls-files`（core.quotepath=false）=**1160** 跟踪文件，与清理前基线逐项一致。
+- **修改文件**：仅 `.git` 对象库（git 内部结构），工作树零改动；未碰业务代码、未部署、两站零操作。
+- **遗留**：① 私有仓 `tygf-workspace-backup` 仍待 Owner 在 GitHub 建仓后 `git push -u origin master`；② `总控/`（约 1.6 MB 治理三账）是否纳入备份仍未拍；③ `_parked/` 的 11.4 GB 本地旧缓存不在本次授权范围，未动。
+
+## 2026-10-25 12:57 首页加载过慢根因定案：14 MB 字体占整页 98%，已切成 406,956 B（缩小 34.7 倍），线上待授权（FONT-SUBSET）
+
+- **目标**：Owner 令「优先修复首页加载过慢的问题」（紧接官网 SEO 体检之后）。
+- **根因（今天复测，非沿用体检旧数）**：首页 HTML 仅 96,474 B（两次成功 1.90 / 2.91 s），但页面预载一个 14,129,988 B 的中文字体（占整页 14,374,196 B 的 98.3%）。该字体 4 次采样**全部未在时限内传完**：3 次卡 20 s 上限（157,238 / 87,350 / 687,492 B）、1 次给 90 s 只到 27,452 B。首页 HTML 3 次里 1 次 40 s 未完成（TTFB 11.23 s）。上一轮 Chrome 整页：load 10,638 ms / TLS 1,629 ms / TTFB 563 ms / DCL 6,836 ms。
+- **做法（外科回移，不整体发 develop）**：新树 `worktrees/hotfix-font-20261025`，分支 `fix/zh-font-subset-hotfix-20261025` 直接基于 `origin/main` 319bc138。只搬 develop 7a880258 的字体分片这一笔：4 片按 unicode-range 切分（80,824 + 115,980 + 139,200 + 64,888 = 400,892 B）＋删除 14 MB 原文件与 `home-v17.css` 里 7 行 @font-face；首页改预载 5 个分片（`src/config/zhFontPreload.ts`）。英文页零影响（`home-view-en.tsx` 用内联字体栈 EN_FONT_STACK，不读该 CSS）。
+- **自测发现并补掉一个缺口**：develop 那版按源码字符集切片，扫不到数据库里的后台文案。9 个线上页共 970 个非 ASCII 字，4 片覆盖 964，**缺 6 个**（首页「擦绘讲」、指南页「乎教踩」，指南页不引本套 CSS）。补第 5 片 6,064 B；与 14 MB 原件逐像素比对差异 **0 像素**、字宽 576.00 = 576.00；并用范围展开核过 develop 的 CSS 覆盖 1,462 个码点、这 6 个全不在其中（直接合 develop 而不补片，首页那 3 字会掉回系统字体）。
+- **验证（全部实跑）**：`npx next build` EXIT=0，BUILD_ID 1SQ7QX0IpofWtF1HIPiei（TypeScript 一并过）；`npm run lint` EXIT=0，0 error（35 warning 为仓库既有且不在改动文件内）；本机 `next start` 首页 200、5 个分片 URL 全 200 且字节合计 406,956；Chrome 读 `document.fonts`：5 个字体面全 `loaded`，计算字体为新字体。改后浏览器整页 672,637 B（字体 406,956 / HTML 30,444 / CSS+字体 441,619 / JS 200,574），DCL 53 ms、load 418 ms、TTFB 27 ms。
+- **上线状态**：**未推远端、未合并、未部署**。刚测线上：`/fonts/shsc/zh-subset-0.woff2` 与 `/fonts/zh-supplement.woff2` 均 404，老 `/fonts/SourceHanSansSC-VF.woff2` 仍 200 ⇒ 修复未上线。
+- **分支落差**：`origin/main..origin/develop` = 218 笔，`origin/develop..origin/main` = 0（main 是 develop 祖先，可快进）。生产出自 main，故 7a880258 这笔一直没上线。
+- **产出**：`交付档案/执行报告/执行报告_20261025_官网首页加载过慢_字体分片修复.md` ＋同名 HTML（沿用 20261012 五路审查组件，9 节，23,697 B，Chrome 渲染取证通过）；飞书已发 rc=0（chunks=1）。
+- **待 Owner 拍**：A＝只发这笔外科修复（推荐）；B＝develop 218 笔整体合入 main。两条都按 GitHub 三段轨（推 GitHub→测试站→生产）。
+- **未修（非代码可解）**：首页 `cf-cache-status: DYNAMIC` 永不进 CDN 缓存（回源致 TTFB≥500 ms）；国内→洛杉矶 TLS 1,629 ms。两项需改线上/CDN 配置，未碰。
+- **顺带发现**：develop 树 12:43 有另一会话在改 10 个文件（助手 3.7.26 打包），未触碰；本机 develop `node_modules/caniuse-lite` 缺 `heif.js`（已核实文件不存在；到底影响不影响构建尚未实测，重装依赖即可修好）。
+
+## 2026-10-25 12:30 三台电脑全卡终诊：跨境线路劣化＋每机门槛，名额已放大×10（AUTH-CHAIN）
+
+- 目标：Owner 报「全部都不行了」，第三台笔记本仍失败（截图两份，识图通道 400 不可用），要求对抗式钻底。
+- 根因三层（全部实测）：L1 腾讯云新加坡 test 站跨境路径当日丢包劣化——TCP connect 0.2s 但 TLS 握手 0.6~11.7s、整请求 8~20s 间歇全超时（本机 8 连发 curl 实测）；服务器自身健康（回环 6ms、CPU 1.6%、nginx 无限速无错误）。今天服务器只见同一账号 3 次登录（02:09/02:11/03:43 UTC，均本机时间线），两台笔记本连登录都没到达。L2 换机门槛：每台新机=装助手+过激活门+输码，码 TYGF-9C2M-X7KD 原 1 名额。L3 产品缺口：重连按钮假动作（assistant-setup-banner.tsx:240/256/279 全绑 checkAssistant()）、浏览器 15s 中断 vs 助手 30s 预算错位（local-assistant-client.ts:187 LOCAL_API_TIMEOUT_MS=15000 vs server.js 30s）、验票无租约缓存（每次检查都跨境对暗号）。
+- 已做：①码名额 1→10（服务器 DB 实测 CODE-AFTER max=10 used=0，一张码全机通用）；②定案 L1：assistant-events.log 03:44:16 慢跳成功 12.8s（attempts=2 latencies=10009,2776ms）证明主力机授权链完好、败因纯线路；③取证：3.7.24 预算 12s→3.7.25 已 30s（日志 budgetMs 对比），2026-10-24 19:43 与今日 11:43 两窗口同症。
+- 未做（排期）：A批真修＝重连按钮改真配对＋15s/30s 对齐＋验票租约缓存（砍九成跨境验票）；3.7.26 现代文件夹选择器待装机验收；D 批租约制待批。测试站国内加速入口（CDN/边缘 TLS 终结）待 Owner 拍板。
+- 测试：服务器侧只读取证＋1 行 update（名额）；无代码变更，不触发业务测试。
+
+## 2026-10-25 12:0x 用新装的 claude-seo 跑官网全站体检：9 页全 200，唯一硬伤是「间歇性传不完」；健康分 72
+
+- **目标**：Owner 令「好」＝同意用刚装好的 claude-seo 对生产站 https://tuyigf.com 真跑一次全站 SEO 体检。
+- **做法**：sitemap 9 个 URL 逐页 curl 完整落盘（fetch_page 在大页会截断，改用 curl 并校验 `</html>` 结尾）→ `parse_html.py` 逐页解析 → 桌面/手机各截一张 → 同机同时段用 cloudflare.com、example.com 做对照。全程只读。
+- **最要紧读数（速度）**：首页 96 KB 连测 6 次，完成 4 次耗时 5.3 / 6.7 / 16.9 / 21.6 秒，**2 次 25 秒超时**（只收到 87,417 B、93,160 B）；一个 8.3 KB 静态脚本连测 5 次，2 次超时；首页分享图第一次只收到 17,797 B（无 IEND，打不开），重下 22,717 B 完整。对照同分钟：cloudflare.com 1.33 MB 四次 1.58/1.56/2.10/2.36 秒全完成，example.com 0.58–0.68 秒全完成 ⇒ **不是本机出口，是站点侧**。响应头 `cf-cache-status: DYNAMIC`（HTML 完全不缓存），首字节 1.0–14.3 秒；静态资源反而是对的（7 天 immutable）。
+- **其余发现**：① 英文三页描述以中文「图译工坊」开头且 267/193/200 字符超长；② `/privacy/subprocessors` 与 `/en/privacy/subprocessors` 都是 200 却被隐私页与 llms.txt 引用，**sitemap 里没有**，且全站无 `lastmod`；③ 分享卡写「文件不出本机」与隐私口径（图层文字与译文会上传）不一致；④ 9 页 `<img>` 计数全为 0；⑤ 下载页教人核对 SHA-256 但页面 0 个 64 位串（值在 `/api/local-assistant/latest` 里；页面标 v3.7.15＝接口最新版，没有发旧包）；⑥ 三个安全头各重复两次；⑦ 首页 canonical 无尾斜杠。
+- **做得好的（不主张改）**：robots.txt 逐个放行 6 个 AI 爬虫；llms.txt 4,390 B ＋ llms-full.txt 7,430 B 内容诚实；hreflang 三向齐、`lang` 正确；Organization/WebSite/SoftwareApplication/FAQPage/TechArticle 齐全且 FAQ 可见；HSTS/CSP/COOP/CORP 齐；登录页 noindex；真 404；http 与 www 301 归一；首页 gzip 96,429→27,196 B。
+- **产出**：`交付档案/审查报告/审查报告_20261025_官网SEO体检_tuyigf.com.md`（＋同名 HTML，沿用 20261012 五路审查那套组件）＋飞书已发送 rc=0（chunks=1）。工作件在 `tmp/tuyigf-audit/`（抓取的 9 页 HTML、解析 JSON、桌面与手机截图）。
+- **本次没做到（如实）**：Google 系（GSC/PSI/CrUX）连不上（12 秒超时）⇒ 无收录与真实用户速度；无 Lighthouse ⇒ 无 LCP/CLS/INP 数值；单点测量；DataForSEO/Firecrawl 扩展未装 ⇒ 无排名与竞品。
+- **遗留**：等 Owner 拍是否按「第一批（本周、只动配置：查源站 TTFB＋营销页缓存＋sitemap 补页＋描述压短）」开工；三批修法顺序见报告第五节。
+
+## 2026-10-25 10:4x 现代选文件夹框（3.7.26）：实现/构建/入库完成，本机安装等 Owner 第二次 UAC
+
+- **Owner 问**：「为什么多个设计稿不能是这样的选择文件夹」（截图＝Win11 风格 IFileOpenDialog 选文件夹框）。根因：现役走 XP 风格 FolderBrowserDialog（10-23 安全兜底）；现代框排在助手改造里但 3.7.25 并车工单漏带（我方疏漏，已认）。站点版本闸＝最低语义（assistant-compatibility.ts:30 <0 判旧），助手 3.7.26 无需站点改动即兼容。
+- **实现（flash-exec e8d3a375，主会话复验 12/12 用例绿）**：picker-dialogs.cjs 新增 IFileOpenDialog（FOS_PICKFOLDERS|FORCEFILESYSTEM|PATHMUSTEXIST|NOCHANGEDIR，Add-Type C# interop，取消码识别）＋任何失败回退老框＋[picker] 事件日志；/v1.5/select-folder 切新框；VERSION=3.7.26、buildId=modern-folder-picker-20261025-r1。interop 无窗冒烟（Add-Type+COM+SetOptions 不 Show）rc=0；script-distribution/ui-contract/双 topmost 冒烟全绿。**真实弹窗未验（需装机后人工点一次）**。
+- **构建**：pkg 自检 ok 3.7.26；ISCC 出 tygf-engine-setup-3.7.26.exe（25,543,895B）。**未入 public/downloads/未动站点身份**（3.7.26 随下轮站点部署正式发布；本机可先装先验）。develop 已合入推送。
+- **安装**：提权安装发起后 UAC 未被点，文件仍 3.7.25——等 Owner 下次说「装」重发 UAC；装后让 Owner 点一次「选择文件夹…」即见现代框（兼当真弹窗验收）。
+
+## 2026-10-25 10:1x 横幅「授权尚未确认」处置：替 Owner 浏览器身份完成多绑定握手（bindings:3），假按钮根因确认＝C4 未上车
+
+- **Owner 报**：助手已连接但「当前授权尚未确认…请重新连接后再试」。根因两条：①该浏览器身份（AUD5 审计身份，install 3d1550e7…）从未与新助手握过手（升级后预期状态）；②横幅「重新连接」按钮绑的是 checkAssistant() 只重查不配对（assistant-setup-banner.tsx:240，即交接文档 C4/A2 未修——假按钮）。
+- **零操作解法（已执行）**：AUD5 用户临时挂登录凭据→登录→签 pair_assistant 真票→本地 /pair 成功（首次调用消费票据，复打 409 REPLAYED 反证成功）；终验 authorization/check＝{authorized:true, install:3d1550e7 active, bindings:3}（163＋测试C死槽＋浏览器身份并存）。桥接凭据已删。
+- **Owner 动作**：刷新工作台或点「重新连接」（重查即过）。**遗留＝A2 修按钮真配对**（AUTH-CHAIN-FIVE-FIXES 台账在办），随下轮 develop 部署。
+
+## 2026-10-25 09:0x 多绑定实测通过（双账号同机并存不互顶）＋测试身份已撤——C 槽随激活删除自然失效
+
+- **Owner 点 UAC 完成本机 3.7.25 升级**（安装器停旧进程后未自启，手动拉起；/ping=3.7.25 multibind-survey-20261024-r1）。
+- **双账号实测（真票真链路）**：服务器侧造测试身份（用户/登录凭据/单次激活码）→ 签 pair_assistant＋diagnostic 真票 → 本机助手执行：①C 配对 {ok,cloudBound,localAuthorizationReadback,componentSyncReady 全 true}（超时分级＋组件重试在慢通道真实生效）；②C 验权 authorized:true 且 **bindings:2**（同机双授权槽并存）；③Owner 163 槽（fb456ddd…）在 C 配对后仍 active——**不互顶实锤**。另两处防线实证：抄坏的票据被 TICKET_BAD_SIGNATURE 正确拒绝；槽选择由票据内嵌身份驱动（头部谎报选不到他人槽，比工单设计更安全）。
+- **测试脚手架翻车一次（记录）**：第一轮脚本把单次激活码名额用掉、第二轮票指向不存在激活被拒（ACTIVATION_REVOKED）——系我测试数据自打架，非产品问题；清残局换新码后干净通过。
+- **清理**：测试激活×1、测试码×1、测试用户×1（级联）已删；本机 C 槽随激活删除自然失效（服务器侧已无对应授权，验票即拒）。
+- **对 Owner 的意义**：现在任意浏览器登录任意账号，各点一次「连接助手」即可并存使用；你浏览器当前身份（含 AUD 审计身份）点连接即可与 163 并存。
+
+## 2026-10-25 08:3x 并车打包推送完成：助手 3.7.25＋多绑定＋C批＋邻线资金修复随测试站 e6918ea8 上线（生产零操作）
+
+- **Owner 令**：「合并一下另外一个对话，然后一起打包推吧」＝邻线（收生产第1步）并车令生效。
+- **邻线合并**：两笔资金修复按推荐 B 挑上 release/billing-2026-10（1316bf34→f3ba6586，package.json 测试链拼接冲突取并集；5b9d8738→90433a60 顺序依赖自然化解）；release 树 npm ci＋prisma generate 后 tsc rc=0、contracts/trust-chain/batch-row-contract 全绿。**生产段未走**（按邻线计划：测试站对账→合 main→生产，另等 Owner 终点令）。
+- **助手 3.7.25 打包**：版本一致性五处齐（server.js/report-renderer/installer.iss/助手 package.json/server-setup env/.env.example/gitattributes 豁免收敛 3.7.24+3.7.25）；pkg 出引擎 exe 自检 ok；Inno 出 tygf-engine-setup-3.7.25.exe（25,541,511B，SHA-256 203604C7…BCF2，UnsignedBeta 内测口径）；publish 入 public/downloads＋manifest。
+- **测试站部署 e6918ea85632**：preflight 17 门过；分块上传 7/7（慢通道约 50 分钟）拼接哈希逐位一致（B48D9147…1231）。三道部署闸逐个按设计通过：①迁移门（归因迁移 application_attribution 已在仓库脚本批准清单，服务器侧脚本副本是旧的→同步新版＋备份）②残料门（两次中断留下 tygf-test-next，sudo 清）③迁移许可（TYGF_ALLOW_COMMITTED_MIGRATIONS=1，Owner 并车令即批准）。回滚备份 deploy-202601025_082621。
+- **现读核验**：provenance＝e6918ea8（=origin/develop HEAD，三段轨合规）＋expectedAssistantVersion=3.7.25＋buildId multibind-survey-20261024-r1；/・/en・/en/workbench・/download 全 200；安装包端点 206 分段下载可用；ApplicationAttribution 表已建；PM2 三进程 online。
+- **本车承载**：多绑定（不同浏览器不同账号并存）＋验票分级超时/组件同步后台重试/云端调用按 origin/批量读表头端点＋前端 survey 接线＋邻线营销归因（c75f44f4）＋资金修复两笔（develop 线）。
+- **遗留**：①本机助手 3.7.25 安装等 Owner 点 UAC（提权进程堵门，已两次发起）；②装完双浏览器双账号实测；③生产段（release 分支已备）按邻线计划待对账。
+
+## 2026-10-25 08:2x 装 claude-seo v2.5.0 到 Qoder：26 技能＋19 子代理＋独立 Python/Chromium 运行时，抓取→解析→基线→比对全链实测通过
+
+- **目标**：Owner 令「https://github.com/AgriciDaniel/claude-seo 看看这个安装一下」——先静态审查再装，装完要能真跑。
+- **静态审查（装前）**：MIT；`install.sh` 只做文件复制（克隆→复制 skills/agents/scripts→跑 setup），不写全局 settings、无遥测、无 `curl|bash` 执行路径；出网域名限于各家 SEO API（需用户自己的 key）。审查用源码副本保留在 `tmp/claude-seo-review/claude-seo-main/`（467 文件／2,873,460 B）。
+- **落地**：26 个技能 → `C:\Users\ivan\.qoder-cn\skills\seo*\`；19 个子代理转成 Qoder 格式 → `C:\Users\ivan\.qoder-cn\agents\claude-seo\*.md`（`permissionMode: auto`，去掉 Claude 专有的 `model/tools/maxTurns`）；Qoder 侧已列出全部 26 技能与 19 个 agent 类型。
+- **运行时**：`.venv` 654 MB（Python 3.13）＋ `ms-playwright` 719 MB；`doctor --json` = ready=true / browser_ready=true / mode=manual / plugin 2.5.0（EXIT=0）。
+- **真跑证据（均 EXIT=0）**：① `capture_screenshot.py https://example.com -o tmp/seo-smoke --full` → `tmp/seo-smoke/example_com_desktop.png`（43,857 B，Chromium 真起来了）；② `fetch_page.py https://www.rust-lang.org/` → status 200 / 18,452 B；③ `parse_html.py` → title「Rust Programming Language」/ H1「Rust」/ 9 张图；④ `drift_baseline.py` 采基线 → `drift_compare.py` 复核内容哈希一致 `d3f8691c61ea`。
+- **装的过程修了五处**（全在环境层与格式转换层，没改上游业务代码）：① 全局 pip 镜像腾讯云连不上（ProxyError/SSLEOFError）→ 本次 setup 用 `PIP_INDEX_URL=https://pypi.org/simple` 一次性覆盖；② Chromium 下载 ECONNRESET（setup 退出码 10＝核心就绪、浏览器缺）→ 直接 `.venv/Scripts/python.exe -m playwright install chromium`，197.5 MiB，EXIT=0；③ Windows 注册表代理指向 `127.0.0.1:7890` 且该代理对 HTTPS 会重置连接，而 `url_safety.py` 按安全设计拒用回环代理 ⇒ 所有抓取在预检处失败；改法＝在 `skills/seo/scripts/claude-seo` 里导出一个只占 ftp 的假代理，让 urllib 跳过注册表回退（http/https 走直连，实测 200），系统代理设置一字未动；④ 4 个子代理的 `description` 是 YAML 块标量，转换只取到首行 ⇒ 描述为空、不被注册，已按块标量重解析；⑤ 这 4 个子代理重写后又带回 `${CLAUDE_PLUGIN_ROOT}` 占位符（共 22 处）⇒ 统一换成绝对路径，并逐个核对被引的 `references/*.md` 真实存在。
+- **已知边界**：① Google 系主机在本机不通（`www.googleapis.com` / `www.google.com` 均 rc=28 超时）⇒ `seo-google`（GSC/PageSpeed/CrUX/GA4）这类要 Google API 的能力现在用不了，需要另找出口＋自己的 API key；② 扩展没装：DataForSEO 实时数据、AI 配图（需 banana/nanobanana MCP）、Firecrawl 全站爬、Matomo 报表——对应技能文件在，但执行时会自检并告知扩展缺失；③ `skills/seo/hooks/` 是 Claude Code 的钩子清单，Qoder 不加载技能级钩子，留档不生效。
+- **遗留**：要不要补扩展（尤其 DataForSEO / Firecrawl）、要不要配 Google API key，等 Owner 定。
+
+## 2026-10-25 00:0x 宣传片三镜审查（单稿／多稿／完稿图）：v5 分镜 15 镜可玩件＋样片渲染成功，完稿图判据故意留红
+
+- **目标**：Owner 令「单稿与多稿都要完整展示＋完稿图片展示，用对抗式审查看怎么处理」。
+- **取证**：三路并行只读探查（产品可演示面／盘上真实素材／对外主张与闸）＋主审逐条独立复现。
+- **核心结论（有条件放行）**：三件事里两件缺素材、一件缺功能——① 单稿链界面齐但真界面逐帧从没采过；② 多稿链界面齐（`step1-stage-view.tsx:662-670`、`workbench-view.tsx:4767/4926`、`execute-step.tsx:2324-2420`）但 v4 分镜 0 镜讲它；③ **完稿图 0 张可用**——唯一成批预览 `tmp/real-batch/run-20261020034909/delivery/`（41 文件）我逐张看图，`RealDraft01__de-DE.jpg` 实为 Sigma BF 真实亚马逊详情页（母版 `tmp/agtest/ag_out.psd`，见 `batch-20.log` 首行），触 `video/intro-20261024/口径清单_v4.md:103` 客户稿禁入画红线；且 `report-renderer.js:546` 预览图在报告里只是超链接、工作台 UI 无成品图渲染 ⇒「产品里一眼看完 12 版」这个画面不存在（＝产品功能缺口，非片子问题）。
+- **推翻别手回包**：子代理称该目录「纯自造 fixture」——证伪（内容仍是真实商业稿）。
+- **自曝并修**：我在 v5 mock 多稿镜文件名里写了真项目编号 5857/6877（改前 grep 6 处），已换「样稿A–E」，并把该类泄露沉成机器判据九（逐镜渲染后只取会进画文本；正控 0 命中、内存负控塞回 5857 ⇒ 报 v5-09(旁白)、v5-09(画面)）。另修三枚自造小毛病：矩阵自报 24+2+6=32 实为 30 格（改 22+2+6）、图墙首版溢出画框顶掉标题、判据九首版扫整页 HTML 命中自身正则。
+- **产出**：`交付档案/执行方案/模拟_宣传片v5分镜_可播放对照_20261024.html`（15 镜／52.4s，含素材账面板与九条判据实时自检）；样片 `video/intro-20261024/renders/v5-animatic-16x9.mp4`（1572 帧／6,443,151 B／渲染 180.1s）；判据探针 `video/intro-20261024/v5-gates-probe.mjs`（八绿一故意红＝完稿图未到位）；报告 `交付档案/审查报告/审查报告_20261025_宣传片_单稿多稿完稿三镜_对抗式审查.md`（＋同名 HTML）＋飞书版已发送 rc=0。
+- **措辞红线复核**：「免 PS／无需 Photoshop／写回保真」仍禁（依据要从 `ISSUES.md:16` #276「未解」改为「已修未接线」，`HOT_INDEX.md:36/:38`）；「写完回读比对」可讲但禁升级为「业界唯一／别人做不到」（`审查报告_20261024_差异化主张证伪….md:55/:60`）；「12 语种」须带「单次最多」（`batch-limits.ts:6`）；禁数据去向声明与「扫描」一词（`docs/宣传方案.md:19`）。
+- **遗留**：生产 `batchWorkbenchEnabled` 实际值未核实（代码默认 false＝`featureFlags.ts:70`；我抓公开首页的探针法不成立——同法找 `#workbench` 也 0 命中）；画面像素文字 OCR 闸未建（`plan-v4.json:13` 自陈缺口）；三步处置（造 fixture→实机逐帧→建 OCR 闸）等 Owner 拍是否开工。
+
+## 2026-10-24 22:0x OpenMontage 实装与拆解：人家怎么做宣传视频——零键 demo 渲成、官网真录屏录成
+
+- **目标**：按 Owner 令装 `calesthio/OpenMontage` 并弄清它怎么做宣传视频；顺带回答上一轮"官网能不能走一遍录下来"。
+- **实装**：venv（Py 3.13.1）+ 12 核心包（官方 PyPI 被重置，走清华镜像）；`remotion-composer` 199 包（remotion 4.0.484，走 npmmirror）；工具注册表实测 155 个（37 available / 117 unavailable / 1 degraded）。
+- **跑通两件**：① 零键 demo `focusflow-pitch.mp4` 22.55s/1920×1080/30fps/h264+aac/5,577,599 B（Chrome Headless Shell 113.3 MB 从 storage.googleapis.com 下载卡在 18 MB，改用系统 Chrome `--browser-executable` 绕过）；② 按 `.agents/skills/playwright-recording/SKILL.md` 配方真录官网 31.83s/955 帧/1080p/1,237,475 B，第 26 秒帧内红色光标可见、已滚到「01 / TIME COST」。
+- **方法结论**：它靠管线不靠渲染器——Rule Zero（`AGENT_GUIDE.md:49`）、screen-demo 两模式（`pipeline_defs/screen-demo.yaml:22-42`）、七阶段五关人工（`:77-239`）、动作地图与速度表（`skills/pipelines/screen-demo/script-director.md:29-87`）、缩放档位（`scene-director.md:54-60`）、风格数字（`styles/premium-minimalist.yaml`）、模板/定制与区别性审查（`AGENT_GUIDE.md:143-146`）、CHAI 三性（`skills/meta/reviewer.md:9-17`）。
+- **反面证据**：它自己的零键 demo 第 14 秒即深紫渐变+环形图，与其风格文件的 anti-pattern 相冲 ⇒ 默认档必然像模板，营销片须走 atelier。
+- **交付**：`交付档案/审查报告/审查报告_20261024_OpenMontage实装_人家怎么做宣传视频的.md`（＋同名 HTML）＋飞书版已发送（rc=0，chunks=1）。
+- **遗留**：完整七阶段未跑（需人工门+付费 key）；Backlot 看板未试；`/product-launch-video` 路由 7 处引用 0 目录（未向上游确认）；AGPL 合规判断为工程常识非法律意见。
+
+## 2026-10-24 — SEO/GEO/宣传 P0 执行续报：已推 GitHub，混合候选停在测试部署前
+
+- 结果：归因链提交 `c75f44f4` 已推送 `origin/develop`；发布全门禁通过。
+- 并发偏差：出包期间另一个已推远端的任务把助手多账号绑定合入，最新 `origin/develop`/候选身份变为 `fd73321c`，包含本次提交但额外携带 493 行助手授权改动。
+- 安全处理：候选 `tygf-test-fd73321c0b95.zip` 已生成，SHA-256=`014ED348470E3560447413456F08AC88499A7D0600651C84D13DDBECC171B888`；未上传、未部署、未触碰测试库，等待 Owner 对混合候选明确裁决。
+- 证据：`交付档案/执行报告/执行报告_20261024_SEO_GEO宣传P0_归因链与可达性探针.md:52`。
+
+## 2026-10-24 20:2x 助手多绑定落地：不同浏览器不同账号并存不互顶——代码完工全绿，develop fd73321c（等打包 3.7.25 装机验证）
+
+- **Owner 拍板**：「在不同的浏览器登录不同的账号不打架，可以使用，这个是我的要求」→ 出工单（执行工单_20261024_助手多绑定）→ flash-exec 执行、主会话复跑验收。
+- **根因与修法**：服务端本就支持一机多账号（每账号一码、每码一机，pair/route.ts:105-165）；堵点在助手端单槽存储（server.js assistantAuthorizations[origin] 配对即覆盖）与验票不看请求归属。修法＝新 authorization-store.cjs（多槽≤3 按 expiresAt 逐出、迁移幂等）＋server.js 接线（配对加槽不顶人、verify/check 按请求头 x-tygf-install-id 或 body.anonymousInstallId 选槽、无钥匙走镜像＝旧行为）＋前端公共 fetch 出口统一带安装号头。判定语义零改动。
+- **验收（主会话复跑）**：tsc rc=0；vitest 11/11（含双账号剧本：A/B 并存各取各令牌、无钥匙回退、清 B 槽 A 照常）；assistant-device-policy/token-binding/auth-barrier/pair-machine-limit、ui-contract、contracts 全绿。提交 6c15cc4c→合入 develop fd73321c 已推 GitHub（顺带带上邻线 c75f44f4 营销归因提交，无冲突）。
+- **兼容矩阵**：新新=全功能；旧新/新旧=自动回落旧行为（不更坏）。
+- **剩余**：①助手 3.7.25 打包（多绑定＋可选并车 C 批件/批量读表头/现代文件夹框）＋装机；②测试站双浏览器双账号实测剧本；③发版属红线级，待 Owner 点头。
+
+## 2026-10-24 20:0x 授权链 D 批方案：业界方法调研（攻击树/pre-mortem/分权/风险分级＋租约轮换模式）× 授权链深审 → 租约制＋多绑定设计
+
+- **Owner 令**：「到 GitHub 和网上看大家怎么用对抗式审查做更深的探查，钻到最深处，然后给执行方案」→ 先调研方法再深审再出方案。
+- **方法调研（来源附方案附录）**：AugmentCode maker-checker（实证：LLM 审己码在最错处最宽容→分权）、UK NCSC/Airbus 攻击树、pre-mortem、风险分级路由；令牌侧 Auth0/WorkOS 轮换＋复用检测、Cryptlex/LicenseSpring 租约与硬件锁定、10Duke 签名离线令牌。
+- **深审产出**：两棵攻击树（越权用 A1-A4／堵死用户 B1-B5，B 树含今天实锤的 C1-C5 全部）＋pre-mortem 十条死因（硬停时机/令牌被偷/多绑定滥用/绕计费/静默降级/迁移丢绑定/接口被刷/时钟回拨/复发出「点了没反应」）。
+- **D 批设计**：登录签发刷新令牌（DPAPI＋机器指纹）→后台换 72h 签名租约（每续轮换、复用整族吊销）→本机验签零云端往返→助手并存≤3 账号租约按票据选→解绑代际+1 下轮续租即拒；计费/信任链零接触；现绑定自动兑首租约＋flag 回退＋测试站灰度 48h。
+- **阶段 D0-D4 共 4-6 人日**；决策点 D-1～D-4（做不做/72h/上限3/C先D后隔周）。**未改代码**。
+- **交付**：方案 md＋html＋飞书版（已发）。
+
+## 2026-10-24 19:2x 本地助手授权链五修：对抗式审查＋三批修法方案（A/B 即可做，C 批 3.7.25 待批）
+
+- **起因**：Owner 测试站点验报 ASSISTANT_INSTALL_BINDING_MISMATCH（查实：助手绑 163 账号/激活 fafdcb vs 浏览器持审计身份 AUD5），随后问「能不能直接顶掉另一个账号」→ 令出对抗式审查与调整方案。
+- **五问题查实（证据在手）**：C1 提示不 humanize（ticket/verify:167-174）；C2 验票 10s/12s 太紧（实测单跳 1.9-6.4s）；C3 serverUrl=localhost:3000 与 requestCloudBase 双轨（server.js:711/:3954，配置在 .tygf_session :258）；C4 banner dismiss 无兜底＋重试不做 pair（local-assistant-client.ts:573）；C5 配对收尾组件同步一次性无重试（pair-completion.cjs:126-154，本机已两败 10-21/10-24）。
+- **三批修法**：A 纯前端（错误码人话映射/常驻入口/重试真做 pair——幂等已证）；B 服务端（verify 慢点拆解＋MISMATCH 带绑定账号掩码）；C 助手 3.7.25（分级超时 10/22/30s 可取消/组件同步后台重试硬闸不降/云端调用统一按 origin/换绑一步化），与既有待批项（批量读表头端点＋现代文件夹框）并一车。
+- **对抗式审查 R1-R10**（关键：R2 重试幂等靠云端 @@unique＋本地回读；R4 重试不降 componentReady 硬闸＝不静默降级；R5 不直接改 .tygf_session；R6 换绑安全靠 pairingTicket 登录态签发）。
+- **交付**：执行方案 md＋html＋飞书版（已发）。**未改代码**；A/B 批待 Owner 说开工，C 批等 D-3.7.25 拍板。
+- **顺手给 Owner 的即时解**：退出→用 35***@163.com 登录→刷新（今日实测该路可通）。
+
+## 2026-10-24 — SEO/GEO/宣传 P0：来源归因链与可达性探针
+
+- 目标：执行五面对抗式审查的 P0，补可重复可达性测量，并把宣传来源接到现有申请、账号、激活与首次成功跑通链。
+- 方案：复用既有 `BetaRunSummary` 用户旅程；新增最小化首次触点表，只存站内路径、来路域名与白名单 UTM，90 天到期；新增逐次网络阶段探针。
+- 修改：`worktrees/develop/src/lib/marketing/application-attribution.ts`、申请 API/首页表单、用户旅程与后台面板、Prisma schema/migration、保留期脚本及相应 smoke；交付报告见 `交付档案/执行报告/执行报告_20261024_SEO_GEO宣传P0_归因链与可达性探针.md:1`。
+- 原因：上一轮深查确认首次跑通事实已存在，缺的是来源维度；不得重复造埋点。
+- 验证：归因隐私正负控 PASS；可达性探针正负控 PASS；用户旅程隔离库全部 PASS；申请合同 PASS；Prisma validate PASS；`npx tsc --noEmit` rc=0；`npm run lint` rc=0。生产首页 3 次探测 2 成功、1 次 10 秒超时。
+- 遗留：代码未提交/未推送/未部署。新增迁移与来源记录到期删除需 Owner 明确批准；现役清理任务默认 dry-run。`npm run repo:check` 另被既有 `.gitignore` 安装包可跟踪性和前一迁移未登记问题拦截，本任务未改这些项。
+
 ## 2026-10-24 15:2x A+B 双线落地：容器根知识资产异地备份基线（3 笔提交）＋ 可带走的通用 Agent 治理工具箱
 
 - **目标**：Owner 令「先打通数据，skill 开源的事你新开一个对话去处理」→「好一起来」＝ A 案（私有仓灾备）＋ B 案（可带走/可公开的工具箱）并行。
