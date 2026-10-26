@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对抗式审查 · 本会话结论五路复核</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+<p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>基线 3ae696f2</span><span class="sep">/</span><span>2026-10-26</span></p>
+<h1>我这一轮对你说的话，哪些站得住</h1>
+<p class="standfirst"><strong>裁定 CONCERNS</strong>：代码层面的交付声明基本站得住（提交、门、包哈希、上线证据均重跑过）；但三条诊断里两条被证伪、一条方向说反，已全部撤回；我自己写的一个测试是自指的，已换成能红的断言并补负控。</p>
+<div class="meta"><span>五路只读并行取证</span><span>主审逐条复跑</span><span>三轮负控</span><span>一处误报被驳回并还原</span></div>
+</header>
+<section><p>承接：你问「单稿和多稿不会是两套系统吧？以上全部内容帮我对抗式审查一遍」。</p><p>方法：基线钉在 develop <code>3ae696f2</code>（工作树干净，远端同点）；五路只读并行取证（服务器侧只允许 cat/grep/只读 SQL），我逐条复跑证伪，不改代码；确证的问题当场修掉并补负控。</p><p>一句话结论：<strong>代码层面的交付声明基本站得住（6 笔提交、门、包哈希、上线证据我重跑过都真）；但我对你做的三条诊断里，有两条被证伪、一条说反了方向，已全部撤回。裁定 CONCERNS。</strong></p></section>
+<section><h2><span class="sn">§</span>一、先回答你的问题：是不是一套系统</h2><p>是一套。同一份表仓库、同一批步骤组件。决定性的一行是 <code>workbench-view.tsx:502</code>：单稿不是独立状态，只是同一张表仓库里"单稿槽"那一个格子；第 2 步组件里"批量模式"这个变量出现 <strong>0 次</strong>（我 grep 复跑过），也就是第 2 步根本不分模式。第 3、4 步也是同一批组件，只多传一个模式参数。</p><p>但确实有<strong>四处平行实现</strong>，其中三处以后会静默不一致：</p><p>1. 积分估算分两路。批量链用一个函数，另一条链用另一个函数（<code>execute-step.tsx:817-828</code>），而且分岔开关不是"单稿/多稿"，是另一条链路标志。也就是说：同一份表，两条路算出来的积分可以不同，而界面各自显示各自的那个数。</p><p>2. 覆盖率就绪闸在单稿不生效。<code>workbench-view.tsx:3474</code> 第一行就是"不是批量模式就直接返回空"，格子为空 ⇒ 那道"覆盖率不够就不许执行"的闸在单稿永远为假（:2347）。</p><p>3. 阈值有一份具名常量（全仓用了 18 次），但矩阵里"就绪"的 95 是写死的（<code>table-inventory.ts:257</code>）。改常量 ⇒ 矩阵变色、闸不变。</p><p>4. 两个"开始"按钮两把门（:2458 与 :2849）：一把含覆盖闸和批量就绪位，一把只有开关和上限。</p><p><strong>最要紧的负结论：没有任何一条测试断言这两个模式算出同一个数。</strong> 我按规矩先自证探针——"批量模式"这个词在测试里能命中（1 个文件），所以零命中是真零命中；而单稿那个槽的键在 <code>tests/</code> 和 <code>scripts/</code> 里 <strong>0 命中</strong>（源码 23 处引用）。今天两边一致，靠的是没人动，不是有东西钉着。</p></section>
+<section><h2><span class="sn">§</span>二、我撤回什么（这一段是本次审查的主要产出）</h2><p><strong>撤回 1：扫描失败的根因链。</strong> 我对你说"验票超时→用同一张票重试→服务端判重放→403→扫描中断"。三条都错：重放那条返回的是 <strong>200 不是 403</strong>（<code>ticket/verify/route.ts:419</code>，我自己复读到这行）；而<strong>读类操作（含扫描）在 30 秒窗口内、同一装机是被放行的</strong>（<code>ticket-replay-window.ts:39</code> 加只读清单里明确有 <code>preparation_scan</code>），所以那两次 nonce 撞库根本杀不死扫描；更关键的是云端整份日志里今天<strong>零条</strong>扫描类请求（正控命中 163 条验票，证明探针是活的）——扫描走的是浏览器↔本机助手，云端没法杀死它。<strong>你的扫描为什么失败：我现在不知道，未核实。</strong> 需要你那句红字原文或截图。旁证一条：库里 18:00 那次执行是通的（37 个对象全部成功、报价冻结 67），所以不是全局坏掉。</p><p><strong>撤回 2：字体那件我说反了方向。</strong> 我说"归一模块只接在读/扫描侧，写回侧没接"。实情更糟：<strong>这个模块零个生产调用者</strong>——全仓只有两个开发期脚本 require 它，扫描侧那处命中是一句<strong>注释</strong>（<code>pc-scanner.js:209</code>），我把 grep 命中当成了接线。另外"大小会被改"也不成立：字号、水平垂直缩放都在<strong>禁改清单</strong>里（<code>typography-profile.js:25-27</code>），写回从不碰 size。字重会掉是真的，但机制在别处：选字族时如果目标族里没有同字重的脸，就<strong>静默落到 Regular</strong>（<code>typography-capabilities.ts:383-391</code>，而且有一条冒烟测试钉住了这个回落行为）。逐层保字重的函数（<code>pickWeightMatch</code>）存在但没人调用，更麻烦的是<strong>通道本身是按语言存的，不是按层</strong>，要接得先把通道改掉。</p><p><strong>修正 3：计费 67 的算术。</strong> 我给你的"112−44=68 行塌缩成 67、机制我核实不了"是错的，两处：一是不存在"塌缩"——参与计价的行至少算 1 个单位；二是这个数<strong>完全可复现</strong>，我不该 hedge。实算（服务器只读 SQL）：快照 112 行、作用域里 44 行标了"不翻译"、剩 68 行、其中第 81 行原文和译文都是空所以不参与计价 ⇒ <strong>67 行计费，每行都不到 200 字符 ⇒ 67 个单位 = 67 积分</strong>。而<strong>你说的 37 我找到了</strong>：它是图层对象数（那次执行 37 个对象、37 个完成），从来不在计价轴上。所以"改 37 行收 67"不是多收，是<strong>两个数在说两件事</strong>：67 是"这一门要写回的行数"，37 是"这一稿被换掉的文字层数"。缺的是界面没把这句话说明白。</p><p><strong>修正 4：门红了几天。</strong> 我说"至少 6 天"，是从一条旧验收记录反推的。查提交史：守卫最后被改是 10-21（<code>16ed125c</code>），把那句文案换成 i18n 写法是 10-23（<code>ec86425f</code>），修好是 10-26 ⇒ <strong>红了 3 天</strong>。结论不变（它不在契约链里，所以能一直没人碰），已把 ISSUES #283 里那个数字勘误，并写下我是怎么推错的。</p><p><strong>我自己写的一个测试是假的。</strong> "份数只认内核"那条断言，我在测试里用和组件一模一样的表达式重算一遍再比——自己跟自己比，永远不会红。已改成两条能互证伪的：同一夹具下一张表都没读（就绪格必须=0）而份数=3。并补了负控：把内核求和换回数格子，测试立刻红（<code>expected '6' to be '3'</code>），跑完文件逐字节还原。顺带记一条我自己差点犯的错：<strong>第一次负控我用了含换行的锚点，在这棵 CRLF 树上没替换成功，却把"通过"报了出去</strong>——发现后重做，才有上面这条。</p><p><strong>我驳回子路的一条误报。</strong> 有一条说"第四处地方还在无条件说『没有语言列』"（<code>coverage-matrix.tsx:157</code>）。我去看了那段的前置条件：能走到那一行说明这张表<strong>已经解析过</strong>（上面两层判断已经排除了没表、没扫描），所以那句话是真话，不是假话。我先跟着改了措辞，核对后<strong>改回原样</strong>，没留下这处无根据的"修复"。</p></section>
+<section><h2><span class="sn">§</span>三、还站得住的部分</h2><p>6 笔提交内容与描述相符；包在本机可证（54,270,929 字节，收据哈希与 <code>sha256sum</code> 一致）；测试站上线证据我这一轮又重取了一次：现役提交 <code>3ae696f2…</code>、回滚备份目录存在、站内健康 200；本轮相关门全部重跑通过（守卫 39 项、归组冒烟 9/9、批量台线 35 项＋103 例、类型检查 0 错）。矩阵按语言取表、未读不说"没有语言列"、折叠不删格这三件，都有能红的负控或反证断言。</p></section>
+<section><h2><span class="sn">§</span>四、没查到的（不留白）</h2><p>真机跑一整批仍未做，读表取数那条循环只有单测证据；助手事件日志从 10-25 21:35 起就没再写，所以任何"慢/重试"的说法只能是推断；这台机器和你用的是同一台，我没核实；跨模式同值断言我列了三处、还没补；Photoshop 真实写回我没观察过；"覆盖率闸在单稿不生效"到底是故意的还是漏的，代码里没写答案。</p></section>
+<section><h2><span class="sn">§</span>五、给你的选项（带推荐）</h2><p>A：<strong>收"两套算法"的口</strong>——阈值改用具名常量、两个开始按钮合并成一把门、补三条"同一份表单稿与多稿必须算出同一个数"的断言。不碰钱、不碰协议，我建议先做这个。</p><p>B：<strong>把"只选字族不改字重"真做完</strong>——逐层配脸，需要把"按语言存"的通道改成"按层存"，动浏览器、助手证据、服务端、结算四层加夹具。要你点头。</p><p>C：<strong>计费说明</strong>——每单加一个逐行推导的折叠明细（数据已能复现，纯展示），让"67 怎么来的"在界面里能看到。可以并入 A 一起做。</p><p>D：<strong>扫描失败</strong>——我不再猜了，等你把屏幕那句原文给我，或我直接在你机器上跑一次诊断。</p><p>推荐顺序：A + C 一起做（今天能完），D 等你的原话，B 单独排。</p></section>
+<section><h2><span class="sn">§</span>本次没动什么</h2><p>没动生产站、没动 <code>main</code>、没翻任何支付或功能开关、没跑构建、没删任何远端文件。审查期间没有改业务代码；改动只有三处，且都是为修被证实的问题：一个自指测试（已换成能红的断言并跑过负控）、ISSUES #283 里那个天数勘误、以及一处我核对后<strong>主动还原</strong>的措辞改动。</p>
+</section>
+</div>
+</body>
+</html>

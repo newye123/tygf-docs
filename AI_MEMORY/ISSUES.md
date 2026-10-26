@@ -2201,7 +2201,9 @@
 - **#282 进展（2026-10-25 22:1x，第三稿，界面架构层面）**：Owner 对第二稿判「步骤一二三都没区别」。最深根因＝**我写错了产品四步的名字**（真名 准备素材/智能检测/**设计稿校对**/生成交付，`worktrees/develop/src/lib/workbench/terms.ts:26-31`），于是第三步按「审核」理解、塞进交付物矩阵，导致第 1/3 步画同一张格子表（`workbench-view.tsx:5226` 证明第三步是按 PSD 文字层渲染的）。修法：四步各归一种单位（文件／行／图层／份），交付物矩阵只留第 4 步、第 1 步折叠保留；语言 tab 改为真过滤（14 列→4 列）；八行阶段条改紧凑 chips。新负控＝**DOM 指纹**（每屏的矩阵/表/图层/组清单计数必须不同），44 条 jsdom 断言全绿 EXIT=0；该负控当场抓到第 3 步复用第 1 步样式类。模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_文件到行到图层到份.html`。
 
 
-## #283　守门脚本自己过期：`test:batch-workbench-guards` 死抠已被 i18n 迁移改写的模板字符串原文，连红至少 6 天且不在 `test:contracts` 链里　🟢 已修（2026-10-26 15:1x develop，断言改行为级＋该门接进 contracts，三条负控实测会红）
+## #283　守门脚本自己过期：`test:batch-workbench-guards` 死抠已被 i18n 迁移改写的模板字符串原文，连红 3 天且不在 `test:contracts` 链里　🟢 已修（2026-10-26 15:1x develop `edec3f11`，断言改行为级＋该门接进 contracts，三条负控实测会红）
+
+- **勘误（2026-10-26 18:5x 对抗式审查，改的是本条我自己写错的数字）**：原写「连红至少 6 天」是**我从 `AI_MEMORY/ISSUES.md:1403`（#190 的 10-20 验收记录）反推的**，没去查是哪一笔改坏的。实查提交史：该守卫脚本最后被改＝`16ed125c`（2026-10-21），把那句原文换成 `t('…{ordinal}/{length}…')` 的 i18n 提交＝`ec86425f`（**2026-10-23**），修好＝`edec3f11`（2026-10-26）⇒ **红 3 天，不是 6 天**。机制结论不变（不在 `test:contracts` 链里＝它能长期没人碰的原因）。
 
 - **现象**：`npm run test:batch-workbench-guards` 退出码 **1**，抛 `AssertionError: 失败/卡住必须停下点名（第 x/n 个 + 文件名，绝不静默跳过）`，位置 `scripts/smoke-batch-workbench-guards.mjs:108`。
 - **根因**：该断言用 `card.includes('队列已停止：第 ${ordinal}/${q.steps.length} 个设计稿（${basenameOf(entry.masterPath)}）')` 抠**源码原文**；而 `src/components/workbench/design-file-card.tsx:763` 早已改成 i18n 形式 `t('队列已停止：第 {ordinal}/{length} 个设计稿（{value2}）…')`，模板串不再存在。
