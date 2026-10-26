@@ -1,9 +1,60 @@
-## #279　生产首页从当前探针链路出现“能回 200 但 20 秒不收尾／直接连不上”的不稳定读数　🟠 中高（2026-10-24 新发现，范围待隔离）
+## #280　工作台同一屏两句话打架（「授权尚未确认」＋「无法连接本地助手」）根因＝助手 CORS 放行头漏 x-tygf-install-id　🟢 已修（2026-10-25 develop c0478308；生效需 3.7.28 装机）
+
+- **现象**：工作台上半「本地助手已连接，但当前授权尚未确认：需要本机授权的操作已暂停」，下半「无法连接本地助手（http://127.0.0.1:49152）」。助手本身健康（`/ping` 200、3.7.27、activationStatus=active、3 个绑定槽有效、过期 2026-11-08）。
+- **根因**：3.7.25 多绑定（6c15cc4c，2026-10-24 20:06）让客户端每个请求无条件带 `x-tygf-install-id`（`src/lib/workbench/local-assistant-client.ts:408` 定义、`:279` 注入、18 处调用），而助手 `download/local-assistant/server.js:2690`（修复前 `:2686`）的 `Access-Control-Allow-Headers` 仍只有 `Content-Type, x-tygf-ticket` ⇒ Chrome 预检失败，请求 0 到达（助手 `engine.log`／`assistant-events.log` 对浏览器请求 0 命中）。
+- **同请求 A/B 实测（同一浏览器）**：不带该头 → HTTP 403 `ASSISTANT_TOKEN_MISSING` 121 ms（能读到响应）；带该头 → `TypeError: Failed to fetch` 31/35 ms。受控 mock 双向对照：ACAH 不含该头→拒，含→200 且 `sawInstallId=true`。
+- **为什么反复修错层（四层放大器）**：① 助手健康让每轮排查判「助手没问题」；② `ASSISTANT_UNREACHABLE` 未在 `src/lib/workbench/error-messages.ts:263-271` 网络类码表内 ⇒ 归授权口径；③ 横幅把连不上说成「授权尚未确认」（`src/components/workbench/assistant-setup-banner.tsx:157-165`）、重连按钮只重查不配对（`:240`／`:256`）；④ 既有门不覆盖 CORS（`scripts/verify-client-assistant-contract.cjs` 只查 prepare 字段）。
+- **处置**：① 放行头补齐（附注释）；② `ASSISTANT_UNREACHABLE` 归网络类码表；③ 新回归门 `scripts/smoke-assistant-cors-preflight.mjs`（从客户端源码现取实发头 → 起真实 server.js → 同语义 OPTIONS 预检断言覆盖），接入 `test:assistant-auth-barrier`（属 `scripts/release-preflight.cjs:172` 发布门链）。负控：修复前红（EXIT=1，报缺 `x-tygf-install-id`）／修复后绿（EXIT=0，4 项断言）。
+- **未关闭部分**：改动只在源码里，Owner 机器已装 3.7.27 不含此改动 ⇒ 需 3.7.28 打包＋UAC 装机；且 CORS 通了之后云端验票会重新暴露（一次真实探针 `elapsedMs=9001`，预算 30 s；历史 `VERIFY_TIMEOUT` 10010 ms，见 #142）。
+- **判据**：装机后在真实站点跑一次「选文件夹 → 预扫描」，助手日志出现对应请求且界面不再报「无法连接本地助手」，本条才转关闭。
+- **2026-10-25 18:0x 进展**：3.7.28 已出厂（`tygf-engine-setup-3.7.28.exe` 25,545,674 B，SHA `458D25EB…420A1F0`）并部署测试站（现役 `d317bb7f`，健康 200，latest 接口返回 3.7.28）。出厂件本体在 49318 端口实测 OPTIONS 预检 HTTP 204 且放行头三件齐。**剩 Owner 点一次 UAC 安装 + 真机复验**；详见 `交付档案/执行报告/执行报告_20261025_本地助手3.7.28_CORS修复与测试站部署.md:1`。
+- **2026-10-25 18:0x 进展二（装机后第二层根因暴露并已修）**：3.7.28 装机后 CORS 层实测通过（`GET /ping`=3.7.28／`cors-preflight-20261025-r1`；OPTIONS 204 且放行头含 `x-tygf-install-id`；`assistant-events.log` 17:44–17:51 新增 6 条 `POST /v1.5/authorization/check`，修复前 0 条）。但 6 条 check **全部 403 `ASSISTANT_INSTALL_BINDING_MISMATCH`**（网页登录账号 ≠ 本机助手绑定账号，服务器侧判定见 `worktrees/develop/src/app/api/local-assistant/ticket/verify/route.ts:174`；本机 `.tygf_session` 镜像槽 `3d1550e7…`／激活账号 `cmvlw259…`），且该码不在 `REPAIRABLE_ASSISTANT_CODES` ⇒ 横幅「重新授权」只重查不配对，永远修不好。**修法**：把 `ASSISTANT_INSTALL_BINDING_MISMATCH` 加入 `worktrees/develop/src/lib/workbench/local-assistant-client.ts:706` 的可修集合，配对只写当前 origin 槽位（不改授权/计费/执行判定本身）。改动 `a7c530bb` 已推 `origin/develop`，出包 `release/test/tygf-test-a7c530bb30b8.zip`（SHA `5A912692…55C067`）部署测试站 DEPLOY_EXIT=0，客户端 chunk `1rq56nwqxcbon.js` byte 28769 已含新码（实证在线上 bundle）。回归门 `scripts/smoke-assistant-binding-migration.mjs` 断言改为"取集合源码片段再判成员"，负控先红后绿；`tsc` 0／`lint` 0 error／`test:assistant-auth-barrier` PASS／`release:preflight:test` 17 门 PASS。**剩 Owner 硬刷新测试站真机复验**：日志须出现 `POST /pair` 且其后 check 不再回该码，才转关闭。
+- **报告**：`交付档案/审查报告/审查报告_20261025_本地助手授权未确认_根因对抗式审查.md:1`。
+
+## #281　网站慢的三层根因已定位到最深处：广州→CF 边缘落 LAX 丢包 50%（主因）＋首页永不回源缓存＋1.34MB 要 23 次往返　🟠 major（待 Owner 拍方案 A/B/C；2026-10-25 本会话对抗式分层实测）
+
+- **一句话**：慢的不是网站（服务器回环 16 ms 吐完 98 KB），是「广州 → Cloudflare 洛杉矶边缘」这段网线（50% 丢包）＋首页每次跨洋回源＋23 个文件互相排队。
+- **第 1 层（主因，改代码解决不了）**：本机＝广州联通 AS17623（`ipinfo.io` 163.125.214.150）；`CF-RAY` 4/4 落 **LAX**；ping `104.21.11.101` **12 发 6 收＝50% 丢包，RTT 272/299/312 ms**。**负控**：同一 IP 从源站（新加坡）ping **8 发 8 收＝0% 丢包，RTT 2.076 ms**，`CF-RAY` 3/3 落 **SIN** ⇒ CF 就近调度正常，问题在「中国出海→边缘」的运营商路由。20 次连测：TCP 建连 15 成 / 5 败（p50 234 ms）；完整下载首页 **14 全 / 6 半**；速度 1.4–16 KB/s；真浏览器 `https://tuyigf.com/` → **`ERR_TIMED_OUT`**。协议 5 次：h1 3 成 / **h2 0 成**（高丢包下多路复用反而更糟）。
+- **第 2 层（可改，代码层）**：`src/app/(zh)/page.tsx:12` `export const dynamic = 'force-dynamic'`，因要读 cookie 注入登录态（`:35`）、合并开关（`:38`）、判编辑态（`:42`）⇒ 响应头 `no-store` + `cf-cache-status: DYNAMIC` **永不缓存**；源站 Singapore、边缘 LAX ⇒ 每次回源跨太平洋。**交错采样（扣掉握手，HIT vs ORIG）**：中位 +0.6~1.6 s，长尾 +5.71 s、+18.48 s（超时）。源站回环 **16 ms** ⇒ 源站无辜。
+- **第 3 层**：源站直连取稳定结构＝**23 个资源 / 1,341,513 B**（JS 15 个 760,613 + CSS 3 个 173,944 + 字体 5 个 406,956），HTML 文本 98,126 B、18 个 `<script>`。15 KB/s 下 ≈ **89.4 s**；150 KB/s 也要 8.9 s。**字体源站头 `Cache-Control: public, max-age=0`** ⇒ CF 每次 `REVALIDATED` 回源校验（JS 是对的 `max-age=604800, public, immutable`）。
+- **真浏览器现场（最硬的一条）**：性能时间线显示首页 HTML **TTFB 1,458 ms**（这步不慢），但 **8 个 JS chunk 同时在 t=11,449 ms 发起、同时等到 t=134,323 ms 才有首字节，整批拖到 263,506 ms（4 分 24 秒）**；取数时 `readyState=loading`、`domInteractive`/`DCL`/`load` **全为 0** ⇒ **页面从未加载完成**。8 个同时卡、同时恢复＝**HTTP/2 队头阻塞**指纹（与 h2 0/5 实测互证）。
+- **方案（待拍）**：**A** 改代码（首页对未登录访客可边缘缓存／字体 immutable／合 chunk 减往返／关 h3 未核实）——**治标，去掉回源等待但去不掉 50% 丢包**；**B** 换路径（CF 中国网络需 Enterprise+京东云+ICP／国内 CDN 需备案／优选 CF IP 低成本但不稳／源站迁港）——**治本**；**C** 先补测量（多点位、CF Browser Insights、nginx 加 `$request_time`——实测当前 access.log 是默认格式无耗时字段）。**建议 A 立刻做 + C1，再拍 B。**
+- **判据（对齐 #279 三路口径）**：第三路「另一网络」完成后，若同样红→全国性问题走 B；若绿→联通局部，仍需 B 但优先级可降。A 落地后复测：首页 `cf-cache-status` 由 `DYNAMIC` 转 `HIT`，且回源增量从 0.6~18 s 降到 ~0。
+- **缺口**：仅广州联通一个测点；「现在更慢」的时间对比无同条件基线（只有 `AI_MEMORY/CHANGELOG.md` 文字记录）⇒ **待确认**；HTTP/3 未测（本机 curl 报 `the installed libcurl version does not support this`，但 `alt-svc: h3=":443"` 显示站点支持）。
+- **报告**：`交付档案/审查报告/审查报告_20261025_打开网站慢_对抗式分层探查.md:1`（md + 同名 HTML，已发飞书）。
+
+### 2026-10-25 21:4x A 方案落地进展（A2 ✅ 已改并上测试站｜A1·A4 ⏳ 待 Owner 在 CF 后台点｜A3 ❌ 负控否掉）
+
+- **A2（字体缓存，唯一纯代码可做项）✅**：`next.config.ts` 的 `headers()` 新增 `/fonts/:path*` → `public, max-age=3600, stale-while-revalidate=86400`（提交 `cdc40807`）。改前实测：源站直连 `public, max-age=0` + ETag；经 CF 同一路径 6 次里 4 次 `cf-cache-status: REVALIDATED`（`/fonts/zh-supplement.woff2` 5/6），对照 `/_next/static/*` = `HIT` + `Age 6566` + immutable。分片 5 个共 406,956 B ⇒ 每次冷访问多 5 次 LAX↔SIN 条件请求。不上 immutable 的原因：文件名不带 hash（`public/fonts/shsc/manifest.json` 只记 sha256）。
+- **部署回读（同机前后对照）**：包 `tygf-test-cdc40807b858.zip`（54,231,836 B / SHA-256 `6FAD4269…D28C8F3`）→ 包内脚本 rc=0、`.deploy-commit=cdc40807b858…`、备份 `deploy-20261025_215404-cdc40807b858`、健康 `http=200`、PM2 三进程 online/↺0；服务器 `curl -I 127.0.0.1:3001/fonts/shsc/zh-subset-0.woff2` **改前 `public, max-age=0` → 改后新头**，首页 HTML 仍 `no-store`、`/_next/static` 仍 immutable。
+- **A1（首页进边缘缓存）⏳ 只出操作单**：`force-dynamic` 不是可简单去掉的开关——首页要读草稿模式与会话摘要（`src/app/(zh)/page.tsx:32,35`），HTML 里带登录态 ⇒ 缓存 HTML 必须与 CF Cache Rule「带 cookie 绕过」成对上线。操作单（可直接粘贴）：路径 `in {"/" "/en"}`，排除 `tygf_user_session`、`__prerender_bypass`、查询串 `_rsc`、`edit`、请求头 `not any(http.request.headers["rsc"][*] eq "1")`；Edge TTL = Ignore cache-control → 5 分钟。钥匙不在本机：`CLOUDFLARE_API_TOKEN` / `CF_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` 在 User/Machine/Process 三处均不存在（仓库内唯一读取处 `scripts/configure-mail-routing.mjs:35-36`）。
+- **A3（合 chunk 减往返）❌ 否掉**：字体预载 `waste = 0`（首页 585 码位散落在全部 5 个分片：155/179/173/76/2）；线上 JS 203 KB 里 73/43 KB 是 React/Next 运行时、40 KB 是 `noModule`（现代浏览器不下载）、framer-motion 已在懒加载工作台包；3 个 CSS 合并只省 2 请求、**0 字节**。真大头是字体 407 KB（占全站 712 KB 的 57%），属产品字符集，不动。
+- **A4（协议）方向更正**：上一版「关 h3」说反了。真浏览器 23 资源全 `h2`；8 chunk 同时 t=11.4 s 发起、同时 t=134.3 s 首字节（h2 队头阻塞指纹）；h1 3/5 成 vs h2 0/5 成；`alt-svc: h3=":443"` 由 CF 注入（源站直连无）⇒ h3 侧是开的，只是这段链路没跑起来（疑本机联通拦 UDP 443）。「关 HTTP/2 退回 h1.1」在免费版不可行（CF 官方文档：Free 计划不能关闭 HTTP/2）。验证只能换网络做（手机热点看 `nextHopProtocol`）。
+- **新增天花板实测**：CF **已命中 HIT** 的 `05noaa5fb1i77.css` 也出现 43.2 s 首字节、2/3 次 60 s 超时；源站直连同文件 1.01 s 首字节 / 2.5 s 下完 80 KB ⇒ 减少回源能压次数，压不掉广州→LAX 那一跳，**B 仍是治本项**。
+- **A2 的 CF 命中未在公网证到（缺口如实）**：测试站对外是访问门控（本机直接 `403`），且**现役 nginx 与仓库 `deploy/nginx.test.conf` 不是同一件**（`sudo grep -c tygf_test_token /etc/nginx/sites-enabled/tygf-test` = 0，现役只有一行 `return 403`）⇒ 测试站既测不出 `HIT`、也不宜按仓库那版去推断。判据改为：**生产发布后** `curl -I https://tuyigf.com/fonts/shsc/zh-subset-0.woff2` 出现 `cf-cache-status: HIT` 且 `Cache-Control` 含 `max-age=3600`。
+- **报告**：`交付档案/执行方案/执行方案_20261025_网站慢A方案落地_字体缓存与CF两处开关.md:1`（md + 同名 HTML，已发飞书）。
+
+### 2026-10-26 08:1x A2 上生产并验到 HIT（生产 `df93c257 → 80eb4263`，只挑一笔）
+
+- **发了什么**：`origin/main` 快进 `df93c257 → 80eb4263`（`cdc40807` 挑单笔，`git diff` 仅 `next.config.ts` +17 行）。develop 其余 225 笔、两条库迁移（`BillingQuote` 两列 / `ApplicationAttribution` 新表）**未上生产**——合并预演 4 处冲突全在字体/首页区域（main `df93c257` 与 develop 新版字体实现撞车），属另一件事。
+- **门禁**：生产预检 **18 门全 PASS**；`acceptance-record` = 3.7.15 / 13.3d / 5 项 pass（该记录 2026-10-26 23:40 到期）；`UnsignedBeta` 按 09-13 Owner A 案 override，收据 `assistantSignatureStatus=UnsignedBeta`（包内安装包与生产现役逐字节相同，无新未签名产物）。
+- **A2 生产实测（决定性）**：`/fonts/shsc/zh-subset-0.woff2` 公网三连取 = `EXPIRED` → **`HIT`+`Age 2`** → **`HIT`+`Age 4`**；`/fonts/zh-supplement.woff2` = `EXPIRED` → **`HIT`+`Age 1`**。**改前同路径每次 `REVALIDATED`**（本条上文基线）⇒ A2 生效，5 个分片不再每次冷启动回源。
+- **对照未误伤**：`/` 仍 `private, no-store` + `cf-cache-status: DYNAMIC`；`/_next/static/*` 仍 `immutable` + `HIT`。
+- **运行面**：`tygf-current → 80eb4263…`；systemd `tygf`/`tygf-auth-mail`/`tygf-smart-review` active；健康 200（29ms）；provenance **BOUND**（`webCommitSha=80eb4263…`、`expectedAssistantVersion=3.7.15`）。
+- **真浏览器**：重载后 `readyState=complete`、`domInteractive 3014ms`、`load 3022ms`、5 个字体 `transferSize=0`（浏览器缓存命中）；`navProto` 仍 **h2**（A4 未生效）。**注意**：今早链路本身很好（27MB 上传 30 秒），3 秒加载不能全归因 A2。
+- **仍缺**：A1（首页进边缘缓存，需 CF 凭据或 Owner 手点 Cache Rule）；A4（需另一条网络验 h3）；B（换路径/换节点，Owner 未定）；生产助手仍 3.7.15（3.7.28 的 CORS 与账号失配自愈只在测试站）。
+
+## #279　生产首页从当前探针链路出现“能回 200 但 20 秒不收尾／直接连不上”的不稳定读数　🟠 中高（2026-10-24 新发现，范围待隔离；2026-10-25 三路判据已完成 2/3 → 见 #281）
 
 - **现象**：在 `worktrees/develop` 运行 `$env:SEO_TARGET='https://tuyigf.com'; npm run test:seo-consistency`，SEO 结构断言 `0 FAIL`，但首页 1 次抓取失败，最终 `rc=2`；随后 `1..5 | % { curl.exe -sS --max-time 20 -o NUL -w ... https://tuyigf.com/ }`，5 次里 2 次拿到 HTTP 200 且分别已收 90,778 B／83,147 B 但 20 秒内未正常结束，另 3 次连接阶段超时、HTTP 000。
 - **不能据此扩大说法**：这组读数只覆盖当前机器到 Cloudflare 的一条出口（成功请求的 `CF-RAY` 落到 LAX），未做另一网络、不同地区与服务器回源对照；目前只能说“当前探针链路不稳定”，不能写成“所有用户都打不开”或“源站已故障”。
 - **影响**：SEO/GEO 的结构面即使全绿，抓取器与真实访客仍可能拿不到完整响应；若不先隔离这一层，继续发内容会把新增访问导向一个可达性未证稳的入口。
 - **判据**：当前机器／另一网络／服务器回源各连续 20 次，逐次记录 DNS、连接、TTFB、完整收尾、状态码与字节；三路都无超时且响应字节稳定，才可关闭。若只某一路红，按出口／边缘节点处置；若回源也红，再查 Next 进程与源站资源。
+- **2026-10-25 进展（三路判据已完成 2/3，结论指向出口／边缘节点）**：
+  - **路 1 当前机器 20 次 → 红**：TCP 建连 15 成 / 5 败；完整收尾 **14 拿全 / 6 只拿一半**（状态码全 200，但 6 次 25 s 超时截断）；速度 1.4–16 KB/s；ping CF 任播 **50% 丢包、RTT 299 ms**；`CF-RAY` 全 **LAX**；真浏览器 `ERR_TIMED_OUT`。
+  - **路 3 服务器回源 → 绿**：源站回环 `http://127.0.0.1:3000/` 3 次 TTFB **15.7–16.6 ms**；服务器经 CF 访问自己 **TLS 38 ms / 全程 99 ms**、`CF-RAY` 全 **SIN** ⇒ **Next 进程与源站资源均无问题**，本条「再查 Next 进程与源站资源」这一支已排除。
+  - **路 2 另一网络 → 未做**（我只有广州联通一个点）。按本条判据，两红一绿的当前组合已经指向**「按出口／边缘节点处置」**。
+  - **根因已下钻到三层并出方案**，见 **#281** 与 `交付档案/审查报告/审查报告_20261025_打开网站慢_对抗式分层探查.md:1`。本条在路 2 完成前**不关闭**。
 - **报告**：`交付档案/审查报告/审查报告_20261024_SEO_GEO与宣传下一步_五面对抗式审查.md:11`。
 
 ## #277　读回通道与投影脚本对同一张飞书台账读出不同结果；我连跑三次投影有造重复行的风险　🟡 中（内部台账卫生，不碰产品）
@@ -2135,3 +2186,27 @@
 - **触发链**：4 项脏文件之一（ISSUES.md 工作副本末尾多一空行）→ diff --check rc=2 → helper 硬退。清脏（收生产方案第四节）可消本次红，但缺陷对任何未来非零 rc 的 git 调用都会复发。
 - **修法方向（未动）**：git() 失败改回传 `{status,stdout,stderr}` 交调用点入 errors 汇总（仓内已有同形 `gitSoft()` :15-19），或至少失败时同时回显 stdout+stderr 再走汇总退出；属发布轨工具缺陷，修复时应跑 `release:preflight:test` 双态验证（干净树绿／脏树红且可诊断）。
 - **证据**：交付档案/执行报告/执行报告_20261024_收生产第一步_本地暴露冲突面与preflight实跑.md 第二节（node --trace-exit 定位 :10，单独复跑 git diff --check 取证 DIFFCHECK-RC=2）。
+
+## #282　批量台「一稿 12 张语言表单张绑」结构上做不出 Owner 的数据：144 张里只读得到 12 张、只能出 12/144 份交付物　🟠 major（功能缺口；2026-10-25 真实探针实测，非推断）
+
+- **现象（Owner 原话）**：「这里不行操作太复杂了，这里应该直接默认全部选中的，不然如果全部PSD都有12个语言，要用户选到什么时候？」截图＝「选择这张稿的译文表」弹窗 12 行、每行一个「选」，并注明「未读 · 没有语言列 — 未用」。
+- **根因（不是弹窗排版，是数据模型）**：① 候选只按 SKU＋交付物筛、**语言不参与身份**（`worktrees/develop/src/lib/workbench/sku-attribution.ts:331-339`），多候选一律 conflict（`:366-375`）⇒ 每稿 12 张全成候选；② **一稿一表**在导入时硬拦（`src/components/workbench/workbench-view.tsx:3119`，`assignments: Record<string, ParsedCsv>`）⇒ 第 2 张起全进不来；③ 读表队列默认只取 12 张（`src/lib/workbench/table-inventory.ts:233-237`），助手批量读表头端点 >12 张直接抛 `SURVEY_TABLES_TOO_MANY`（`src/lib/workbench/local-assistant-client.ts:1413-1414`）⇒ 144 张读不完，132 张永远「未读」；④ 合并引擎结构不一致时**整批拒**（`src/lib/workbench/merge-tables.ts:65-94`）。
+- **实测数字（`tmp/probe-20261025-group-bind.mjs`，EXIT=0）**：12 稿×12 表=144 张 ⇒ `auto=0 / conflict=12`；矩阵 144 格仅 **12 格非 na（8.3%）**；读表队列 **144→12**；合并引擎 12 语言×67 行正常（每张「匹配 67 行」）。
+- **必须同时改的三处静默行为（本轮新发现）**：① 两张表同语言 ⇒ 现在**不报错**、先到优先 + 一条 note（可能静静用错表，应升级为冲突）；② 6 张 67 行 / 6 张 66 行（无严格多数）⇒ 现在**不拦**，134 行进 134 行出（应拦）；③ 12 张完全对不上 ⇒ 被 `CSV_TOO_MANY_ROWS`(330) 拦住，但错误码说的是「行太多」而不是「表对不上」（话术误导）。
+- **假绿灯（同源，已在 #190 家族内）**：ES 格绑 TH 表时 `status=na`、抽屉 `issues` 为空 ⇒ 渲染「这一份就绪」（`src/components/workbench/step1-stage-view.tsx:1300-1313,1375-1379`）；未读表也写「没有语言列」（`table-picker-dialog.tsx:155`、`table-inventory-list.tsx:185`）。
+- **修法方向（方案已出，未施工）**：绑定 `string → string[]`（一稿一组），导入时复用现成 `mergeParsedTables` 合并回一张多语言表（下游形状不变）；读表分轮（每轮 12 张）；异常按单表拦。施工序 P0–P4 见报告；**P0–P4 均不触碰执行链、报价、结算闸、助手协议、行身份与信任链匹配键**。
+- **证据**：`交付档案/审查报告/审查报告_20261025_批量台默认全选_一稿多语言表_对抗式深挖.md`（判定 BLOCK）；模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_全自动归组_交付物矩阵.html`（jsdom 34/34 PASS，EXIT=0）。
+- **状态**：**已修（2026-10-26 develop `7c3f3f8f`＋`f6d140ae`，未 push 未部署）**。Owner 2026-10-26 把那三件拍完（组内缺一门＝只排除这一门／同门两张＝让人选／合并基准＝行数最多优先、并列按文件名），外加组准入①（文件名 SKU 硬门槛）进 P0、矩阵放第 4 步。落地：归组内核 `table-grouping.ts` 五条准入＋逐张给原因＋读完归位；合并层 `group-merge.ts`（基准可复跑、结构离群只剔那一张）；`merge-tables.ts` 三处静默行为全部升级为点名报错（同语言冲突／无严格多数拦／原文对不上专用码 `CSV_MERGE_NO_OVERLAP`）；第 1 步三栏接上，读表按整组读、合成一张写回原形状 ⇒ 下游执行链/报价/结算/回执/助手协议一字未动。**剩余**：矩阵归位第 4 步与第 3 步 1:N（P3）、份数与例外收口（P4）、真机端到端＋出包＋测试站（P5）——本条不结案，等 P5 真机证据再改 🟢。
+
+- **#282 进展（2026-10-25 22:1x，第三稿，界面架构层面）**：Owner 对第二稿判「步骤一二三都没区别」。最深根因＝**我写错了产品四步的名字**（真名 准备素材/智能检测/**设计稿校对**/生成交付，`worktrees/develop/src/lib/workbench/terms.ts:26-31`），于是第三步按「审核」理解、塞进交付物矩阵，导致第 1/3 步画同一张格子表（`workbench-view.tsx:5226` 证明第三步是按 PSD 文字层渲染的）。修法：四步各归一种单位（文件／行／图层／份），交付物矩阵只留第 4 步、第 1 步折叠保留；语言 tab 改为真过滤（14 列→4 列）；八行阶段条改紧凑 chips。新负控＝**DOM 指纹**（每屏的矩阵/表/图层/组清单计数必须不同），44 条 jsdom 断言全绿 EXIT=0；该负控当场抓到第 3 步复用第 1 步样式类。模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_文件到行到图层到份.html`。
+
+
+## #283　守门脚本自己过期：`test:batch-workbench-guards` 死抠已被 i18n 迁移改写的模板字符串原文，连红至少 6 天且不在 `test:contracts` 链里　🟠 开放（假红门／闸失效；2026-10-26 本会话跑 P2 回归时实测）
+
+- **现象**：`npm run test:batch-workbench-guards` 退出码 **1**，抛 `AssertionError: 失败/卡住必须停下点名（第 x/n 个 + 文件名，绝不静默跳过）`，位置 `scripts/smoke-batch-workbench-guards.mjs:108`。
+- **根因**：该断言用 `card.includes('队列已停止：第 ${ordinal}/${q.steps.length} 个设计稿（${basenameOf(entry.masterPath)}）')` 抠**源码原文**；而 `src/components/workbench/design-file-card.tsx:763` 早已改成 i18n 形式 `t('队列已停止：第 {ordinal}/{length} 个设计稿（{value2}）…')`，模板串不再存在。
+- **不是本线引入**：`git diff HEAD -- src/components/workbench/design-file-card.tsx` 空输出（该文件自 HEAD 起未变），即 HEAD 上跑同一门也是红的。`AI_MEMORY/ISSUES.md:1403`（#190 验收记录）在 2026-10-20 还写着它「37 checks rc=0」⇒ 红是在那之后、i18n 迁移那一笔引入的。
+- **为什么一直没人看见**：`npm run test:contracts` 的串联里**不含**这一门（`node -e "require('./package.json').scripts['test:contracts']"` 里 grep `workbench-guards` 命中 0），所以每次契约链全绿也不会碰到它。
+- **真实风险**：这条断言守的是「扫描队列失败必须停下点名、绝不静默跳过」——正是本项目反复点名的红线。门红着不动 ⇒ 这句保护现在**没有任何自动检查**；同时它教会下一个读者「includes(源码原文) 是判据」，而原文会随文案层漂走。同类病已在 #190 家族记过一次（判据写死字符串）。
+- **修法（未动，等授权）**：把抠原文的两条断言改成**行为级**判据——从 `t('…')` 的 key 里取，或断言该分支同时含 `ordinal`、`q.steps.length`、`basenameOf(entry.masterPath)` 三个标识与「未扫描」剩余数；并把这一门接进 `test:contracts`，红就不可能再潜伏。本会话未擅自改别人的闸。
+- **复跑判据（本会话实跑）**：`cd worktrees/develop && npm run test:batch-workbench-guards; echo $?` ⇒ 期望修前 rc=1（停在 `:108`），修后 rc=0 且 checks 数不少于 37。

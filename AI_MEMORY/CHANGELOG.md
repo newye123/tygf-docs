@@ -1,3 +1,39 @@
+## 2026-10-26 14:5x　批量台第一步换成「一稿一组语言表」（决策级：为什么合并放在读表之后、下游形状不变）
+
+- **变化**：第 1 步从「一稿只能绑一张表」改成「一稿自动成组、组内每门语言一张表」，读完整组后合成**一张多语言表**写回 `parsedTables[稿]`。develop 两笔提交 `7c3f3f8f`（纯函数内核）＋ `f6d140ae`（界面与读表接线），未 push、未部署、生产未动。
+- **为什么这么切**：Owner 的真是事是「一个文件夹 12 稿 × 12 语＝144 张表」，旧结构下 144 张只读得到 12 张、只能交 12/144 份（ISSUES #282 实测）。把「归组」与「合并」做成无 IO 的纯函数层，界面只渲染同一套判据 ⇒ 执行链、报价、结算、回执、助手协议**一个字都不用改**，合同变更纪律四层不触发（施工图 §10 判定）。
+- **三条默认与两条硬闸（Owner 2026-10-26 拍）**：组准入①文件名 SKU 是硬门槛（唯一能挡「同原文、别稿译文」F14 的门）；同门两张**不替用户挑**、界面原地点开选；结构差一行**只拦那一张**、其余照常合并与交付；合并基准＝**行数最多优先、并列按文件名**（否则行序由扫描顺序悄悄决定，同批数据两次合并结果不同）。
+- **三处静默行为升级为点名报错**：同一门两张译文不同 → `CSV_MERGE_LANGUAGE_CONFLICT`（原来先到静默赢）；没有严格多数 → `CSV_MERGE_STRUCTURE_SPLIT`（原来 6:6 照合，134 进 134 出）；原文几乎对不上 → `CSV_MERGE_NO_OVERLAP`（原来误报「行数超 300」）；第 13 门话术改为点名那张表并给出路。
+- **表级事实必须单独存**：`stageTableParses`（归一表身份 → 这张表自己的语言/行数）。踩过的坑：拿稿级合并结果反推会让基准表冒充 12 门、其余 11 张被算成「没被用到」，`deriveStageChoices` 交出的基准与真合并基准也会分家。表册改为接受调用方算好的那一份（`table-inventory-list.tsx` 不再自己按一稿一表重算第二套事实）。
+- **同批修的口径**：`normalizeTableId` 补消 `.`／`..` 段——同一张表两种写法曾得两个身份，排除项重扫会静默复活；「读全部表头」改为循环到队列空（助手单次上限 12 张，144 张要 12 轮，原来点一次只读前 12 张）。
+- **界外（本决策不覆盖）**：矩阵归位第 4 步、第 2 步语言 tab 真过滤、第 3 步 1:N（P3）；份数口径与例外收口（P4）；真机端到端＋出包＋测试站（P5）。读表 worker 的取数循环目前只有单测与投影级证据，真助手＋真文件夹未跑。
+- **关联**：ISSUES #282（本条为其落地记录，待 P5 真机证据才结案）、ISSUES **#283**（顺带查出的假红门：`test:batch-workbench-guards` 抠已被 i18n 改写的源码原文，连红至少 6 天且不在 `test:contracts` 链里）；方案 `交付档案/执行方案/执行方案_20261025_批量台一稿一组语言表_五轮审查后施工图.md`。
+
+## 2026-10-25 21:4x　官网字体分片改为「1 小时边缘新鲜 + 1 天后台刷新」（决策级：为什么不用 immutable）
+
+- **决策**：`next.config.ts` 的 `headers()` 为 `/fonts/:path*` 统一下发 `Cache-Control: public, max-age=3600, stale-while-revalidate=86400`（提交 `cdc40807`，develop）。
+- **理由**：源站对 `public/` 静态文件默认 `public, max-age=0` + ETag，Cloudflare 因此每次请求都回源做条件校验（实测同一路径 6 次里 4 次 `REVALIDATED`；对照 `/_next/static/*` 为 `HIT` + immutable）。首页冷访问要拉 5 个字体分片（406,956 B），等于每次多 5 次 LAX↔SIN 跨洋往返，而源站在新加坡、边缘落洛杉矶。
+- **为什么不是 immutable**：分片文件名不带内容 hash（`public/fonts/shsc/manifest.json` 只记 sha256），一旦给一年缓存，字体更新后老用户会长期拿旧文件。折中值＝更新最迟约 1 小时进边缘、常规访问 0 回源。
+- **界外（未随本决策改变）**：首页 HTML 仍 `no-store`——首页读草稿模式与会话摘要（`src/app/(zh)/page.tsx:32,35`），把 HTML 做成可缓存必须与 Cloudflare Cache Rule 的「带 cookie 绕过」成对上线，属 CF 后台动作，未在本次落地（见 ISSUES #281 进展）。
+- **上生产（2026-10-26 08:1x，发布挂号 `main` = `80eb4263`）**：`origin/main` 从 `df93c257` 快进到 `80eb4263`（`cdc40807` 挑单笔，`git diff` 仅 `next.config.ts`）；生产预检 18 门全 PASS（UnsignedBeta 按 09-13 A 案 override，包内安装包与现役同字节），包 `tygf-production-80eb4263390d.zip`（27,472,661 B，SHA-256 `6124A5EF…E90F`），`deploy-release.sh` rc=0，`tygf-current → 80eb4263`、systemd 三单元 active、健康 200、provenance BOUND。**生产实测**：`/fonts/*` 由每次 `REVALIDATED` 变为 `EXPIRED → HIT`（`Age 2/4`），`/` 仍 `no-store + DYNAMIC`、`/_next/static/*` 仍 immutable。
+- **关联**：ISSUES #281；报告 `交付档案/执行方案/执行方案_20261025_网站慢A方案落地_字体缓存与CF两处开关.md:1`、`交付档案/执行报告/执行报告_20261026_网站慢A2上生产_字体边缘缓存.md:1`。
+
+## 2026-10-25 本地助手 3.7.28 出厂：浏览器预检放行头补齐（多绑定引入的隐性断点），测试站 `d317bb7f`
+
+- **变化**：助手 `cors()` 的 `Access-Control-Allow-Headers` 补 `x-tygf-install-id`（3.7.25 多绑定起客户端每个请求都带它，名单没跟上＝Chrome 预检直接拒，请求从未到达助手）；`ASSISTANT_UNREACHABLE` 归入网络类错误码表，不再按授权失效提示；新增回归门 `scripts/smoke-assistant-cors-preflight.mjs`（从客户端源码现取实发头 → 起真 server.js → OPTIONS 预检断言），接入 `test:assistant-auth-barrier`（发布门链内）。
+- **版本链**：8 处同号升 3.7.28（identity/`server.js` VERSION/助手 package.json/report-renderer buildId `cors-preflight-20261025-r1`/installer.iss/.env.example/server-setup.sh ×4/.gitattributes 豁免行）。
+- **证据**：17 道发布闸全 PASS；出厂件本体在 49318 端口实测 OPTIONS → 204 且三头齐；测试站 `d317bb7f` 健康 200、latest 接口 3.7.28、安装包 SHA `458D25EB…420A1F0` 与服务器逐位一致。
+- **取舍**：生产站未动（仍 `origin/main`）；安装包未签名；云端验票慢链与 `serverUrl=localhost:3000` 的积压回执另案。
+- **台账**：`AI_MEMORY/ISSUES.md` #280；报告 `交付档案/执行报告/执行报告_20261025_本地助手3.7.28_CORS修复与测试站部署.md:1`。
+
+## 2026-10-25 生产站首页字体改为按字集分片（14.13 MiB → 406,956 B），main `df93c257`
+
+- **变化**：首页不再预载整包思源黑体 VF，改为 4 个 `unicode-range` 分片（400,892 B）＋ 6 字补充片（6,064 B）；文件名不变、URL 不变，仅首页预载，其它路由不受影响。
+- **部署**：测试站 `dbc434ff` → 生产 `df93c257`（父提交即原生产 `319bc138`，前进 1 笔、落后 0 笔）；两站字体件 200、旧 VF 404、provenance BOUND。
+- **效果**：真浏览器读得 5 个字体面全部 loaded（277–446 ms）；整页从 14.37 MB 降到 446,865 B。
+- **仍存在的瓶颈**：Cloudflare `cf-cache-status: DYNAMIC`（首页每次回源，首字节 3.0–4.4 s）与跨洋链路截断（12 次复测 5 次 20 秒只传一半），属 CDN/网络配置层，未动线上配置。
+- **回滚**：`/var/www/tygf-current` 切回 `319bc138` 的发布目录即可（部署脚本保留上一版目录）。
+
 ## 2026-10-23 英文站 i18n 接缝定在三处出口（`useSiteCopy` 出口 / 术语 getter / t 占位符），并加两道静态守卫
 
 - **决策**：① 站点文案在 `src/lib/workbench/site-copy.ts` 的 `useSiteCopy` **出口**统一本地化一次，而不是逐个组件包 t()（200+ 调用点、局部变量名各不相同，逐个包必漏）；② `WB_ACTIONS` 的 label/hint 用 **getter**，保证在"渲染取值那一刻"求值——模块级常量会在 import 时被定格成中文；③ 动态消息（含本机助手地址）走 `t('...{url}...', { url })`，不再拼中文模板。
