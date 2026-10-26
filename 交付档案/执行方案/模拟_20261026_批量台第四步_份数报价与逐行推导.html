@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟件 · 批量台第 4 步：生成交付（单位＝份）</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --sunk:#f0f2f4; --sunk2:#e9ecef;
+  --ink:#16181c; --ink2:#3a4049; --muted:#6b7280; --faint:#9aa1ab;
+  --line:#e2e5ea; --strong:#cbd1d8;
+  --accent:#1f5fd0; --accent-soft:#eaf0fb; --accent-line:#b9cdf3;
+  --ok:#0f7a4d; --ok-soft:#e7f4ed; --warn:#8a5a00; --warn-soft:#fbf2dd;
+  --bad:#ad2a20; --bad-soft:#fbeae8;
+  --row:30px; --r:7px;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161a20; --sunk:#1c2128; --sunk2:#232a33;
+    --ink:#e8ebf0; --ink2:#c3cad4; --muted:#8f98a5; --faint:#6f7885;
+    --line:#262d37; --strong:#3a4350;
+    --accent:#79a6ff; --accent-soft:#182437; --accent-line:#2f4a75;
+    --ok:#5ccf9b; --ok-soft:#12291f; --warn:#e0b64a; --warn-soft:#2a2210;
+    --bad:#ff8f82; --bad-soft:#2c1714;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.app{height:100vh;display:grid;grid-template-rows:44px 38px minmax(0,1fr) 30px}
+.topbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:12px;font-weight:700}
+.crumb{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--ink2);font-weight:600}
+.counters{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.counters b{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.counters .k{color:var(--muted)}
+.iconbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--muted);display:grid;place-items:center;font-size:12px}
+.iconbtn:hover{border-color:var(--strong);color:var(--ink)}
+.stepper{display:flex;align-items:center;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow:hidden}
+.stepper button{display:flex;align-items:center;gap:6px;padding:0 14px;height:38px;font-size:12.5px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.stepper button .n{width:16px;height:16px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:10px;font-family:var(--mono)}
+.stepper button[aria-current="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.stepper button[aria-current="true"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stepper button.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.stepper .sep{width:14px;height:1px;background:var(--line);flex:0 0 auto}
+.main{display:grid;grid-template-columns:238px minmax(0,1fr) 318px;min-height:0}
+.rail{min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--panel);border-right:1px solid var(--line)}
+.rail.right{border-right:0;border-left:1px solid var(--line)}
+.rail-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rail-head b{color:var(--ink2);font-weight:600}
+.rail-head .tag{margin-left:auto}
+.drow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+.drow:hover{background:var(--sunk)}
+.drow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.drow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.drow.t-warn .dot{background:var(--warn)}
+.drow.t-bad .dot{background:var(--bad)}
+.drow.off{opacity:.55}
+.drow .sku{font-family:var(--mono);font-size:12.5px;font-weight:600}
+.drow .sub{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.drow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.drow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.drow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.stage{min-height:0;overflow:auto;padding:14px 16px 24px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--strong);border-radius:6px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+.scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px}
+.scope b{font-size:13.5px;font-weight:600}
+.scope .n{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--accent-line);border-radius:5px;padding:1px 6px;color:var(--accent)}
+.scope .sub{color:var(--ink2);font-size:12px}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-t{font-size:13px;font-weight:600;margin:0;padding:11px 14px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card-s{font-size:11.5px;color:var(--muted);margin:3px 14px 9px}
+.pad{padding:11px 14px;display:flex;flex-direction:column;gap:9px}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--strong);color:var(--muted)}
+.badge.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.badge.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.badge.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.scroller{overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);max-height:360px;background:var(--panel)}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--strong);padding:6px 3px;text-align:center;min-width:46px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:10px;min-width:150px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;padding:5px 10px;border-right:1px solid var(--line);min-width:150px;font-weight:500;font-size:11.5px}
+.cell{border:0;background:transparent;width:100%;min-height:31px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 2px}
+.cell .cv{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.cell .cs{font-size:9.5px;color:var(--muted);line-height:1.1}
+.c-ok{background:var(--ok-soft)}.c-warn{background:var(--warn-soft)}.c-bad{background:var(--bad-soft)}.c-off{background:transparent;opacity:.5}
+.cell:hover{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);padding:8px 14px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.lg2{width:11px;height:11px;border-radius:3px;border:1px solid var(--strong);display:inline-block}
+.lg2.ok{background:var(--ok-soft);border-color:#a9d5bf}.lg2.warn{background:var(--warn-soft);border-color:#e6c47f}
+.lg2.bad{background:var(--bad-soft);border-color:#e6b3ad}.lg2.off{background:var(--panel);border-style:dashed}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px;padding:10px 14px 12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.stat .v{font-family:var(--mono);font-size:15px;font-weight:600}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--warn)}.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
+@media (max-width:1080px){.grid2{grid-template-columns:1fr}}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:9px 11px;overflow:auto;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink2);margin:0}
+.tblwrap{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table.derive{border-collapse:collapse;width:100%;font-size:11.5px}
+table.derive th,table.derive td{border-bottom:1px solid var(--line);padding:3px 7px;text-align:left;white-space:nowrap}
+table.derive thead th{position:sticky;top:0;background:var(--sunk);font-family:var(--mono);font-size:10px;color:var(--muted);z-index:2}
+table.derive td.n{font-family:var(--mono);text-align:right}
+table.derive tr.skip td{color:var(--faint);background:var(--sunk)}
+table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bottom:0}
+.q{display:flex;align-items:baseline;gap:8px;padding:9px 14px;border-top:1px solid var(--line);background:#fbfcfe}
+.q .big{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
+.q .sub{font-size:11.5px;color:var(--muted)}
+.qlist{display:flex;flex-direction:column;gap:3px;padding:9px 14px 12px;font-size:11.5px;color:var(--ink2)}
+.log{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:170px;overflow:auto}
+.log .warn{color:var(--warn)}.log .bad{color:var(--bad)}.log .ok{color:var(--ok)}
+.progress{height:6px;border-radius:99px;background:var(--sunk2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.exc{border-bottom:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+.exc.done{background:var(--panel)}
+.exc-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;line-height:1.45}
+.exc-head .no{font-family:var(--mono);font-size:10.5px;width:16px;height:16px;border-radius:4px;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;flex:0 0 auto}
+.exc.done .exc-head{font-weight:500;color:var(--muted)}
+.exc p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;justify-content:center}
+.decision{font-size:11.5px;color:var(--ok);display:flex;gap:6px;align-items:center}
+.decision .undo{margin-left:auto;color:var(--muted);text-decoration:underline;font-size:11px}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px}
+.callout b{display:block;margin-bottom:2px}
+.callout.grey{border-left-color:var(--strong);background:var(--sunk)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.nextbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.nextbar .hint{font-size:11.5px;color:var(--muted)}
+details.ev{border-top:1px solid var(--line)}
+details.ev summary{cursor:pointer;padding:8px 14px;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary::before{content:"▸";font-size:9px;color:var(--faint)}
+details.ev[open] summary::before{content:"▾"}
+.evbody{padding:2px 14px 12px;display:flex;flex-direction:column;gap:6px}
+.evbody .li{display:grid;grid-template-columns:74px 1fr;gap:8px;font-size:12px;color:var(--ink2)}
+.evbody .li b{color:var(--muted);font-weight:500}
+.statusbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.statusbar .path{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.statusbar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+.statusbar b{color:var(--ink2);font-weight:600;font-family:var(--mono)}
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.42);display:none;place-items:center;padding:20px;z-index:50}
+.modal[data-open="true"]{display:grid}
+.sheet{width:min(700px,100%);max-height:82vh;overflow:auto;background:var(--panel);border:1px solid var(--strong);border-radius:12px;padding:18px 20px}
+.sheet h2{margin:0 0 10px;font-size:15px}
+.sheet h3{margin:14px 0 5px;font-size:12.5px;color:var(--ink2)}
+.sheet p,.sheet li{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.sheet ul{margin:0;padding-left:16px}
+.sheet .close{margin-top:16px}
+@media (max-width:1180px){ .main{grid-template-columns:200px minmax(0,1fr) 286px} }
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{height:auto;grid-template-rows:44px 38px auto auto}
+  .main{grid-template-columns:1fr}
+  .rail{max-height:min(42vh,300px);border-right:0;border-bottom:1px solid var(--line)}
+  .rail.right{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .statusbar{position:sticky;bottom:0}
+  .stepper button{padding:0 9px;font-size:11.5px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="mark" aria-hidden="true">图</span>
+    <span class="brand">图译工坊 <span style="color:var(--faint);font-weight:400">/ 批量处理</span></span>
+    <span class="crumb">第 4 步 生成交付 · 单位是<b>份</b></span>
+    <div class="counters">
+      <span><span class="k">可交付</span> <b id="cOut">0</b> 份</span>
+      <span><span class="k">预计</span> <b id="cCredit">0</b> 积分</span>
+      <span><span class="k">待处理</span> <b id="cPend">0</b> 件</span>
+    </div>
+    <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
+  </div>
+
+  <div class="stepper" role="tablist" aria-label="四步">
+    <button data-step="1" class="done"><span class="n">1</span>准备素材</button>
+    <span class="sep"></span>
+    <button data-step="2" class="done"><span class="n">2</span>智能检测</button>
+    <span class="sep"></span>
+    <button data-step="3" class="done"><span class="n">3</span>设计稿校对</button>
+    <span class="sep"></span>
+    <button data-step="4" aria-current="true"><span class="n">4</span>生成交付</button>
+  </div>
+
+  <div class="main">
+    <aside class="rail left" aria-label="稿">
+      <div class="rail-head"><b>稿</b><span id="railCount">12 份</span><span class="tag mono" id="railTag">按份</span></div>
+      <div id="draftList"></div>
+    </aside>
+    <section class="stage" id="stage"></section>
+    <aside class="rail right" aria-label="要你处理的">
+      <div class="rail-head"><b>要处理的</b><span id="excLeft">—</span><span class="tag mono" id="excTag">—</span></div>
+      <div id="excList"></div>
+    </aside>
+  </div>
+
+  <div class="sr" aria-live="polite" id="announce"></div>
+  <div class="statusbar">
+    <span class="path">完整表-20261003 · 交付件写到设计稿旁边，不覆盖原文件</span>
+    <span class="r" id="sbRight"></span>
+  </div>
+</div>
+
+<div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
+  <div class="sheet">
+    <h2>这是第 4 步的可玩件，不是截图</h2>
+    <p>前三步定完：文件归好组、行确认完、层校对完。这一步只算一件事——<b>144 份交付物（12 稿 × 12 门）里，哪几份能交、要多少积分、按什么顺序跑</b>。交付物矩阵从第 1 步搬到这里来了，全流程只在这一屏出现一次。</p>
+    <h3>为什么份在这里才算</h3>
+    <p>份＝稿 × 语言。今天执行侧的份数来自 <span class="mono">execute-step.tsx:2326</span>（<span class="mono">totalEntries</span>＝稿数）与 <span class="mono">:2329-2332</span>（格数），报价按语言聚合成标准单位（<span class="mono">:2698-2702</span>），<b>界面上看不到逐行怎么算出来的</b>。所以你上次问「改 37 行为什么收 67」，只能来问我。这一屏把那份推导摊开。</p>
+    <h3>67 这件事的真实算法（已实测复算）</h3>
+    <ul>
+      <li>快照 112 行 → 排除 44 行（人点了不翻的）→ 参与计价 68 行 → 其中 1 行原文译文都空（<span class="mono">SOURCE_EMPTY</span>）→ <b>67 行计价</b></li>
+      <li>每行 <span class="mono">billingCharacters = max(原文字符, 译文字符)</span>，<span class="mono">standardRows = max(1, ceil(字符/200))</span>（<span class="mono">src/lib/server/billing/rules.ts:119-122</span>）</li>
+      <li>所以 67 行 × 每行 1 个单位 ＝ 67 单位 ＝ 67 积分那一门；<b>37 是图层对象数</b>（<span class="mono">ExecutionAttempt.totalAssignmentCount</span>），从来不在计价轴上</li>
+    </ul>
+    <h3>要你拍的三件事</h3>
+    <ul>
+      <li>逐行推导明细：默认收起（现在这样），还是默认展开？</li>
+      <li>某一份失败：只重跑那一份（现在这样），还是整批重跑？</li>
+      <li>「本批不做某门语言」的入口放这一屏（份），还是放第 1 屏（文件）？</li>
+    </ul>
+    <h3>不会发生的事</h3>
+    <p>不连服务器、不扣积分、不写文件。支付总闸仍是关的。数字都从状态派生，刷新即重置。</p>
+    <button class="btn close" data-act="info-close">知道了</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═════════ 同一套夹具 ═════════ */
+const LANGS = ['ES','FR','ID','IT','JP','MS','NL','PL','RU','TH','TL','VI'];
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521'];
+const ROWS = 67;
+const STOP_LANG = { '6896':['VI'], '5660':['ID'] };
+const hasLang = (s,l) => !(STOP_LANG[s]||[]).includes(l);
+const cellUsable = (s,i,l) => hasLang(s,l) && !((s.length*7 + i*11 + l.length*13) % 97 === 0);
+
+/* ═════════ 报价：逐行推导（照 rules.ts 的公式）═════════ */
+const UNIT_CHARS = 200;
+function rowBilling(sku, lang, i){
+  // 长行按真实语料形态造（说明文案一栏能到 200 字以上），否则 200 字符进位这条规则永远不触发
+  const longRow   = i % 9 === 3;
+  const srcChars  = longRow ? 208 + (i % 5) * 46 : 14 + ((SKUS.indexOf(sku)+i) % 3) * 9;
+  const tgtChars  = cellUsable(sku,i,lang) ? Math.round(srcChars * (1.1 + ((i*7)%5)/10)) : 0;
+  const srcEmpty  = !longRow && ((SKUS.indexOf(sku)+1)*13 + i*17) % 251 === 0;
+  // 4602 这份在第 2 步被点掉了大部分行，用来触发「不足 20 按 20 起」那条
+  const excluded  = i % 11 === 5 || (sku === '4602' && i < 57);
+  if (excluded)  return { row:i+1, reason:'IGNORED', chars:0, units:0 };
+  if (srcEmpty)  return { row:i+1, reason:'SOURCE_EMPTY', chars:0, units:0 };
+  if (!tgtChars) return { row:i+1, reason:'TARGET_EMPTY', chars:0, units:0 };
+  const chars = Math.max(srcChars, tgtChars);
+  return { row:i+1, reason:'', chars, units: Math.max(1, Math.ceil(chars/UNIT_CHARS)) };
+}
+function deriveOf(sku, lang){
+  const rows = [];
+  for (let i=0;i<ROWS;i++) rows.push(rowBilling(sku,lang,i));
+  const billable = rows.filter(r=>!r.reason);
+  const units = billable.reduce((n,r)=>n+r.units,0);
+  const credits = Math.max(20, units);
+  return { rows, billable, units, credits, skipped: rows.length-billable.length };
+}
+/* 一次缓存，界面只认这一份算出来的数 */
+const DERIVE = {};
+SKUS.forEach(s=>LANGS.forEach(l=>{ if (hasLang(s,l)) DERIVE[`${s}/${l}`] = deriveOf(s,l) }));
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  active:'5857',
+  showAll:false,
+  drop:{},                 // 'sku/LANG' -> true  本批不做这一份
+  confirm:{},              // 'sku' -> true       覆盖率没满的那一稿，你确认照跑
+  detail:null,             // 'sku/LANG' 展开逐行推导
+  running:false, done:false, idx:0, log:[], results:{}, draftResult:{},
+};
+
+const inScope = (s,l) => hasLang(s,l) && !S.drop[`${s}/${l}`];
+const cellsAll = () => SKUS.length*LANGS.length;                      // 144
+const outCount = () => SKUS.reduce((n,s)=>n+LANGS.filter(l=>inScope(s,l)).length,0);
+const creditTotal = () => SKUS.reduce((n,s)=>n+LANGS.filter(l=>inScope(s,l)).reduce((m,l)=>m+DERIVE[`${s}/${l}`].credits,0),0);
+function coverageOf(sku){ return LANGS.filter(l=>hasLang(sku,l.code!==undefined?l:l)).length; }
+function lowCoverage(){ return [] }
+/* 待处理：覆盖率不足且未确认的稿（一稿一语缺表时那一稿不足 12 门） */
+function pendingCount(){
+  return SKUS.filter(s=>{
+    const bound = LANGS.filter(l=>inScope(s,l)).length;
+    return bound < 12 && !S.confirm[s];
+  }).length;
+}
+
+function renderCounters(){
+  document.getElementById('cOut').textContent = outCount();
+  document.getElementById('cCredit').textContent = creditTotal();
+  document.getElementById('cPend').textContent = pendingCount();
+  document.getElementById('railCount').textContent = `${SKUS.length} 份稿`;
+  document.getElementById('railTag').textContent = `144 格里 ${outCount()}`;
+  document.getElementById('excLeft').textContent = pendingCount()?`${pendingCount()} 件`:'没有要处理的';
+  document.getElementById('excTag').textContent = S.done ? (Object.values(S.draftResult).filter(v=>v==='FAILED').length?`失败 ${Object.values(S.draftResult).filter(v=>v==='FAILED').length}`:'全部完成') : S.running?`跑第 ${S.idx+1} 稿`:'未开跑';
+  document.getElementById('sbRight').innerHTML =
+    `<span>份 <b>${outCount()}</b>/${cellsAll()} · 排除 <b>${cellsAll()-outCount()}</b> 份 · 标准单位合计 <b>${SKUS.reduce((n,s)=>n+LANGS.filter(l=>inScope(s,l)).reduce((m,l)=>m+DERIVE[`${s}/${l}`].units,0),0)}</b></span>`;
+}
+
+function renderDrafts(){
+  document.getElementById('draftList').innerHTML = SKUS.map(s=>{
+    const n = LANGS.filter(l=>inScope(s,l)).length;
+    const cr = LANGS.filter(l=>inScope(s,l)).reduce((m,l)=>m+DERIVE[`${s}/${l}`].credits,0);
+    const res = S.draftResult[s];
+    const tone = res==='FAILED'?'t-bad':(n<LANGS.length?'t-warn':'t-ok');
+    const pill = res==='FAILED' ? '有失败' : res==='OK' ? `已交 ${n} 份` : n<LANGS.length?`${n}/12 门`:`${n} 份`;
+    return `<button class="drow ${tone} ${n===0?'off':''}" data-act="pick-draft" data-sku="${s}" aria-current="${String(s===S.active)}">
+      <span class="dot"></span>
+      <span><span class="sku">${s}</span><span class="sub">${n} 份 · ${cr} 积分</span></span>
+      <span class="pill">${pill}</span>
+    </button>`;
+  }).join('');
+}
+
+function matrixHTML(){
+  const head = LANGS.map(l=>`<th>${l}</th>`).join('');
+  const body = SKUS.map(s=>{
+    const cells = LANGS.map(l=>{
+      const key = `${s}/${l}`;
+      let cls='c-ok', v='✓', cs='实证';
+      if (!hasLang(s,l)){ cls='c-bad'; v='缺'; cs='没这张表' }
+      else if (S.drop[key]){ cls='c-off'; v='—'; cs='不做' }
+      else {
+        const d = DERIVE[key];
+        if (d.skipped>0){ cls='c-warn'; v=String(d.credits); cs=`${d.units} 单位` }
+        else { v=String(d.credits); cs=`${d.units} 单位` }
+        if (S.results[key]) { cls = S.results[key]==='FAILED'?'c-bad':'c-ok'; cs = S.results[key]==='FAILED'?'失败':'已交' }
+      }
+      return `<td class="${cls}"><button class="cell" data-act="pick-cell" data-key="${key}"><span class="cv">${v}</span><span class="cs">${cs}</span></button></td>`;
+    }).join('');
+    const bound = LANGS.filter(l=>inScope(s,l)).length;
+    return `<tr><th>${s} · 主副图 <span class="badge ${bound<12?'warn':'ok'}">${bound} 份</span></th>${cells}</tr>`;
+  }).join('');
+  return `<div class="scroller"><table class="mx"><thead><tr><th>设计稿 / 交付物</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <div class="legend">
+      <span><i class="lg2 ok"></i>可交（有实证）</span><span><i class="lg2 warn"></i>可交但本批有行不参与计价</span>
+      <span><i class="lg2 bad"></i>缺表 / 失败</span><span><i class="lg2 off"></i>本批不做</span>
+    </div>`;
+}
+
+function detailHTML(){
+  if (!S.detail || !DERIVE[S.detail]) return '';
+  const key = S.detail, [sku,lang] = key.split('/');
+  const d = DERIVE[key];
+  const rowsShown = S.showAll ? d.rows : d.rows.slice(0,12);
+  const trs = rowsShown.map(r=>`<tr class="${r.reason?'skip':''}">
+    <td class="n">${r.row}</td>
+    <td class="n">${r.chars||'—'}</td>
+    <td class="n">${r.units||'—'}</td>
+    <td>${r.reason||'按 max(原文,译文) 字符折算'}</td>
+  </tr>`).join('');
+  return `<div class="card" id="deriveCard">
+    <p class="card-t">${sku} / ${lang} 这一份为什么是 <b style="font-family:var(--mono)">${d.credits}</b> 积分
+      <button class="btn sm" data-act="toggle-all" style="margin-left:auto">${S.showAll?`只看前 12 行`:`展开全部 ${ROWS} 行`}</button>
+    </p>
+    <p class="card-s">这一份共 ${ROWS} 行：参与计价 <b>${d.billable.length}</b> 行、不参与 <b>${d.skipped}</b> 行；折算出 <b>${d.units}</b> 个标准单位，不足 20 按 20 起（<span class="mono">rules.ts:119-122</span> 的 max(20, 单位数)）。</p>
+    <div class="tblwrap"><table class="derive">
+      <thead><tr><th>行</th><th>计费字符</th><th>标准单位</th><th>不计价的话怎么说</th></tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr><td>合计</td><td class="n">${d.billable.reduce((n,r)=>n+r.chars,0)}</td><td class="n">${d.units}</td><td>${d.credits} 积分</td></tr></tfoot>
+    </table></div>
+    <details class="ev"><summary>为什么行数不等于积分数（3 条，点开看）</summary><div class="evbody">
+      <div class="li"><b>逐行折算</b><span>每行至少 1 个单位，长句按 200 字符一档进位；所以单位数 ≥ 参与计价行数时才大于行数。</span></div>
+      <div class="li"><b>不计价的行</b><span>人点了不翻（IGNORED）、原文为空（SOURCE_EMPTY）、译文为空（TARGET_EMPTY）三类都不进金额。</span></div>
+      <div class="li"><b>37 是什么</b><span>那是设计稿里的文字图层对象数（<span class="mono">ExecutionAttempt.totalAssignmentCount</span>），跟价格无关，只是执行进度看着像它。</span></div>
+    </div></details>
+  </div>`;
+}
+
+function scopeHTML(){
+  return `<div class="card"><div class="q">
+      <span class="big">${creditTotal()}</span><span class="sub">积分（合计）</span>
+      <span class="sub" style="margin-left:auto">份数 <b class="mono">${outCount()}</b>/${cellsAll()} · 每份按逐行折算</span>
+    </div>
+    <div class="qlist">
+      交付物＝稿 × 语言 ＝ 12 × 12 ＝ 144<br>
+      ${Object.entries(STOP_LANG).flatMap(([s,ls])=>ls.map(l=>`− ${s} / ${l}（第 1 步已排除：${STOP_LANG[s][0]==='VI'?'找不到这门表':'这张表 66 行，与这份稿对不上'}）`)).join('<br>')}
+      ${Object.keys(S.drop).filter(k=>S.drop[k]).map(k=>`− ${k}（你点了本批不做）`).join('<br>') || ''}
+      ＝ <b class="mono">${outCount()}</b> 份
+    </div>
+    <p class="card-s" style="padding:0 14px 12px">点矩阵任意一格，下面摊开这一份的逐行推导。今天界面只有合计，没有这一段（<span class="mono">execute-step.tsx:2698-2702</span>），这就是你上次问「67 怎么来的」的原因。</p>
+  </div>`;
+}
+
+function runHTML(){
+  const total = outCount();
+  const pct = S.running||S.done ? Math.round(S.idx/Math.max(1,SKUS.length)*100) : 0;
+  return `<div class="card"><p class="card-t">执行队列（串行，一稿一稿跑）<span class="badge">${S.done?'已结束':S.running?`第 ${S.idx+1}/${SKUS.length} 稿`:'未开始'}</span></p>
+    <div class="pad">
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="log">${S.log.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('') || '<div>（还没开跑）</div>'}</div>
+      <div class="acts">
+        <button class="btn primary" data-act="run" ${(pendingCount()>0||S.running||S.done)?'disabled':''}>${S.done?'已完成':'开始生成 '+total+' 份'}</button>
+        ${S.done && Object.values(S.results).some((v,k)=>v==='FAILED')?'<button class="btn" data-act="retry-failed">只重跑失败的那几份</button>':''}
+      </div>
+      <p class="card-s" style="padding:0">${S.done?'回执按语言分开记：一份失败不影响其余，重跑只补那一门。':'开跑前会先报价、再让你确认范围——这一段协议一个字都不改。'}</p>
+    </div>
+    ${S.done&&Object.values(S.results).includes('FAILED')?`<div class="callout bad" style="margin:0 14px 12px"><b>4521 / RU 执行超时</b>这一门单独回执失败，其他份不受影响。重跑只补这一门——不是整批重跑。</div>`:''}
+  </div>`;
+}
+
+function renderStage(){
+  const s = S.active;
+  const bound = LANGS.filter(l=>inScope(s,l)).length;
+  document.getElementById('stage').innerHTML = `
+    <div class="scope">
+      <b>生成交付</b>
+      <span class="n">${outCount()} 份</span>
+      <span class="n">${creditTotal()} 积分</span>
+      <span class="sub">这一屏只看份。文件、行、层前三步已经定完了。</span>
+    </div>
+    <div class="card">
+      <p class="card-t">交付物矩阵 · ${cellsAll()} 格 <span class="badge grey">全流程只有这里出现矩阵</span></p>
+      <p class="card-s">点任意格：这一份从哪张表来、要多少积分、为什么红。</p>
+      ${matrixHTML()}
+    </div>
+    ${detailHTML()}
+    <div class="grid2">
+      <div>${scopeHTML()}</div>
+      <div>
+        <div class="card"><p class="card-t">这一稿的范围 <span class="badge ${bound<12?'warn':'ok'}">${bound}/12 门</span></p>
+          <div class="acts" style="padding:9px 14px 12px">
+            ${LANGS.map(l=>{
+              const on = inScope(s,l);
+              return `<button class="btn sm" data-act="drop" data-key="${s}/${l}" aria-pressed="${String(!hasLang(s,l)?false:!S.drop[`${s}/${l}`])}" ${hasLang(s,l)?'':'disabled'} title="${hasLang(s,l)?(on?'本批不做这一份':'已标本批不做，点回来'):'这一门没有表'}">${l}${S.drop[`${s}/${l}`]?' ✕':''}</button>`;
+            }).join('')}
+          </div>
+        </div>
+        ${runHTML()}
+      </div>
+    </div>`;
+}
+
+function renderExc(){
+  const low = SKUS.filter(s=>LANGS.filter(l=>inScope(s,l)).length<12 && !S.confirm[s]);
+  const doneList = SKUS.filter(s=>LANGS.filter(l=>inScope(s,l)).length<12 && S.confirm[s]);
+  let html = '';
+  low.forEach(s=>{
+    const n = LANGS.filter(l=>inScope(s,l)).length;
+    html += `<div class="exc" data-exc="cov-${s}">
+      <div class="exc-head"><span class="no">!</span>${s} 只有 ${n}/12 门</div>
+      <p>这一稿有语言没配上表或你点了不做。确认一下我就照 ${n} 份跑，不补猜。</p>
+      <div class="acts"><button class="btn sm primary" data-act="confirm-cov" data-sku="${s}">照 ${n} 份跑</button><button class="btn sm" data-act="focus-draft" data-sku="${s}">看这一稿</button></div>
+    </div>`;
+  });
+  doneList.forEach(s=>{
+    html += `<div class="exc done" data-exc="cov-${s}">
+      <div class="exc-head"><span class="no">✓</span>${s} 已确认照 ${LANGS.filter(l=>inScope(s,l)).length} 份跑</div>
+      <div class="decision">已确认<button class="undo" data-act="unconfirm" data-sku="${s}">改</button></div>
+    </div>`;
+  });
+  html += `<div class="callout grey" style="margin:11px"><b>只三类告知</b>缺表的那一门、你点了不做的份、执行失败的那一门。别的都静默按对上的一致处理。</div>`;
+  document.getElementById('excList').innerHTML = html || `<div class="exc done"><div class="exc-head"><span class="no">✓</span>没有要处理的</div><p>可以直接开跑。</p></div>`;
+}
+function render(){ renderCounters(); renderDrafts(); renderStage(); renderExc() }
+const esc = (s)=>String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ═════════ 跑批（纯本地演示）═════════ */
+function run(failedSku, failedLang){
+  if (S.running) return;
+  S.running = true; S.done = false; S.idx = 0; S.log = []; S.results = {}; S.draftResult = {};
+  tick(failedSku, failedLang);
+}
+function tick(failedSku, failedLang){
+  if (S.idx >= SKUS.length){ S.running=false; S.done=true; render(); return }
+  const s = SKUS[S.idx];
+  const langs = LANGS.filter(l=>inScope(s,l));
+  if (!langs.length){ S.idx++; render(); tick(failedSku, failedLang); return }
+  let work = [...langs];
+  const step = ()=>{
+    const l = work.shift();
+    if (l === undefined){
+      const anyFail = langs.some(x=>S.results[`${s}/${x}`]==='FAILED');
+      S.draftResult[s] = anyFail?'FAILED':'OK';
+      S.log.push({k:anyFail?'warn':'ok', t:`${s} ${anyFail?'有 1 门失败':'完成'} · ${langs.length} 份`});
+      S.idx++; render(); tick(failedSku, failedLang); return;
+    }
+    const fail = failedSku===s && failedLang===l;
+    S.results[`${s}/${l}`] = fail?'FAILED':'OK';
+    S.log.push({k:fail?'bad':'ok', t:`${s}/${l} ${fail?'执行超时（回执失败）':'已写出交付件'}`});
+    render();
+    setTimeout(step, 20);
+  };
+  step();
+}
+
+document.addEventListener('click',(e)=>{
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act==='pick-draft'){ S.active=b.dataset.sku; render(); return }
+  if (act==='focus-draft'){ S.active=b.dataset.sku; render(); return }
+  if (act==='pick-cell'){ S.detail = S.detail===b.dataset.key ? null : b.dataset.key; render(); return }
+  if (act==='toggle-all'){ S.showAll=!S.showAll; render(); return }
+  if (act==='drop'){
+    const k=b.dataset.key; if(!DERIVE[k]) return;
+    if (S.drop[k]) delete S.drop[k]; else S.drop[k]=true;
+    delete S.confirm[k.split('/')[0]]; render(); return
+  }
+  if (act==='confirm-cov'){ S.confirm[b.dataset.sku]=true; render(); return }
+  if (act==='unconfirm'){ delete S.confirm[b.dataset.sku]; render(); return }
+  if (act==='run'){ run('4521','RU'); return }
+  if (act==='retry-failed'){
+    const fails = Object.keys(S.results).filter(k=>k.includes('/') && S.results[k]==='FAILED').map(k=>k.split('/')[1]);
+    S.log.push({k:'warn', t:`只重跑失败的那些份：${fails.join('、')}`});
+    render(); return
+  }
+  if (act==='info'){ document.getElementById('info').dataset.open='true'; return }
+  if (act==='info-close'){ document.getElementById('info').dataset.open='false'; return }
+});
+document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') document.getElementById('info').dataset.open='false' });
+function announce(t){ document.getElementById('announce').textContent=t }
+window.__sim = { S, LANGS, SKUS, ROWS, DERIVE, deriveOf, inScope, hasLang, outCount, creditTotal, pendingCount, UNIT_CHARS, render };
+render();
+</script>
+</body>
+</html>

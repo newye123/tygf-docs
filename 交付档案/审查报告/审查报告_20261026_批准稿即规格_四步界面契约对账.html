@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>对抗式审查 · 批准稿＝规格吗？为什么"讨论好了"还是没做出来</title>
+<style>
+:root{
+  --bg:#f6f6f4;--panel:#fff;--sunk:#f0efec;--ink:#14161a;--ink2:#3a4049;--muted:#6b7280;--faint:#9aa1ab;
+  --line:#e2e5ea;--strong:#cbd1d8;--accent:#1f5fd0;--accent-soft:#eaf0fb;
+  --ok:#0f7a4d;--ok-soft:#e7f4ed;--warn:#8a5a00;--warn-soft:#fbf2dd;--bad:#ad2a20;--bad-soft:#fbeae8;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;--mono:"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1216;--panel:#161a20;--sunk:#1c2128;--ink:#e8ebf0;--ink2:#c3cad4;--muted:#8f98a5;--faint:#6f7885;--line:#262d37;--strong:#3a4350;--accent:#79a6ff;--accent-soft:#182437;--ok:#5ccf9b;--ok-soft:#12291f;--warn:#e0b64a;--warn-soft:#2a2210;--bad:#ff8f82;--bad-soft:#2c1714}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.7 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 18px 70px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{margin:6px 0 4px;font-size:clamp(1.3rem,2.6vw,1.9rem);line-height:1.3;letter-spacing:-.01em}
+.stand{margin:0 0 16px;color:var(--ink2);max-width:96ch}
+.verdict{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--bad);background:var(--bad-soft);border-radius:10px;padding:12px 15px;margin-bottom:16px}
+.verdict b{font-family:var(--mono);font-size:16px;color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:16px}
+.split .col{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;border-left:3px solid var(--accent)}
+.split .col.new{border-left-color:var(--warn)}.split .col.same{border-left-color:var(--strong)}
+.split b{display:block;font-size:13px;margin-bottom:2px}
+.split p{margin:0;font-size:12.5px;color:var(--ink2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:18px}
+.stat{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:9px 11px}
+.stat .v{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1.2}
+.stat .l{font-size:11.5px;color:var(--muted)}
+.stat.ok .v{color:var(--ok)}.stat.warn .v{color:var(--warn)}.stat.bad .v{color:var(--bad)}
+h2{margin:24px 0 8px;font-size:16px;letter-spacing:-.01em}
+table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+thead th{background:var(--sunk);font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+td.n{font-family:var(--mono);white-space:nowrap}
+td.hit{background:var(--ok-soft);color:var(--ok);font-weight:600;white-space:nowrap}
+td.like{background:var(--warn-soft);color:var(--warn);font-weight:600;white-space:nowrap}
+td.none{background:var(--bad-soft);color:var(--bad);font-weight:600;white-space:nowrap}
+code,.mono{font-family:var(--mono);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px}
+.card b{display:block;font-size:13px;margin-bottom:3px}
+.card p{margin:0;font-size:12.5px;color:var(--ink2)}
+.gates{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden}
+.gates .g{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center}
+.gates .g:last-child{border-bottom:0}
+.pill{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--strong);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.notes{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 14px}
+.notes ul{margin:0;padding-left:18px}.notes li{margin-bottom:5px;font-size:12.5px;color:var(--ink2)}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:9px;padding:10px 13px;font-size:13px;margin:12px 0}
+.callout b{display:block;margin-bottom:2px}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--muted)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="eyebrow">对抗式审查 · 2026-10-26 · 基线 worktrees/develop@48e72757（测试站 3ae696f2）· 五路只读＋主审复跑</div>
+<h1>批准稿＝规格吗？——为什么"讨论好了"还是没做出来</h1>
+<p class="stand">Owner 问：「我要怎么描述你才能做出我想要的多设计稿工作台？我们不是讨论好了怎么做吗？」审查对象是刚才聊的全部内容＋你批准的第 1 步模拟件。结论：<b>不用改描述，批准稿就是规格；缺的是一把拿它当规格的闸。</b>我上一轮报的「P1 三栏界面已落地」是过度声明——落地的是布局壳与内核，批准稿 14 条交互契约只有 1 条完全命中。</p>
+
+<div class="verdict"><b>VERDICT: BLOCK</b><span>对「已交付第 1 步界面」这一条 ／ 对项目整体为 CONCERNS：功能缺口 1 处（剔除通道没接）＋机制缺口 1 处（无一致性门）</span></div>
+
+<div class="split">
+  <div class="col"><b>为什么看不到新界面</b><p>默认门 <code>featureFlags.ts:70</code> 是 false，测试站靠运营台覆盖；入口只剩页内那枚「单个／多个设计稿」切换（导航侧 10-18 起已撤）。</p></div>
+  <div class="col new"><b>就算进去了也认不出</b><p>批准稿的辨识元素——三计数、扫描并自动配对、四阶段进度、语言勾选剔除、例外按钮、撤销／改、做法对照与点击计数——在代码里 0 命中或仅形似。</p></div>
+  <div class="col same"><b>真功能缺口</b><p><code>workbench-view.tsx:2117</code> 调归组绑定时<b>不传 excluded</b>，而形参与槽态都在（<code>group-binding.ts:89/205-209</code>）⇒「取消勾选真的从绑定里剔除」在产品里做不到。</p></div>
+</div>
+
+<div class="stats">
+  <div class="stat bad"><div class="v">1/14</div><div class="l">批准稿契约完全命中</div></div>
+  <div class="stat warn"><div class="v">7</div><div class="l">形似而实不同</div></div>
+  <div class="stat bad"><div class="v">6</div><div class="l">0 命中（没做）</div></div>
+  <div class="stat ok"><div class="v">135</div><div class="l">新模拟件断言全绿</div></div>
+  <div class="stat ok"><div class="v">12</div><div class="l">负控实测会红</div></div>
+</div>
+
+<h2>一、批准稿 vs 真代码：逐条判</h2>
+<table>
+<thead><tr><th>批准稿里的东西</th><th>判定</th><th>证据</th></tr></thead>
+<tbody>
+<tr><td>顶栏「手工选表 N 次」</td><td class="none">没有</td><td><code>grep -rF "手工选表" src/</code> ⇒ 0 行；顶栏实为 8 张统计卡 <code>step1-stage-view.tsx:522-577</code></td></tr>
+<tr><td>顶栏「已绑定 N/144 格」</td><td class="none">没有</td><td>0 命中；最近似是两张独立卡（<code>:543</code>／<code>:557</code>）</td></tr>
+<tr><td>顶栏「可交付 N 份」</td><td class="like">形似</td><td>字串在组卡 <code>:844</code> 与左栏 <code>:1472</code>，不在顶栏</td></tr>
+<tr><td>空态「还没扫描这个文件夹」＋四条说明</td><td class="none">没有</td><td>0 命中；实为一句 <code>:828</code></td></tr>
+<tr><td>扫描四阶段清单＋进度条</td><td class="none">没有</td><td>只有一条状态条 <code>:1219-1250</code></td></tr>
+<tr><td>「扫描并自动配对」一键</td><td class="none">没有</td><td>0 命中；工具行是「全部扫描」「读全部表头」<code>:1149/:1157</code></td></tr>
+<tr><td>语言 chip <code>role=checkbox</code> ＋ 取消勾选真的剔除</td><td class="none">没有</td><td>两个属性全 src 0 命中；<b>且 <code>excluded</code> 通道没接</b>（见上）</td></tr>
+<tr><td>「全选回来」</td><td class="none">没有</td><td>0 命中</td></tr>
+<tr><td>折叠「凭什么归到这一组（3 条证据）」</td><td class="like">形似</td><td>结构对（无 open、三条留 DOM <code>:913-941</code>），标题原文是「看依据」</td></tr>
+<tr><td>四条例外各自按钮</td><td class="like">形似</td><td>①有「用这张」<code>:966-996</code>；②<b>纯文字无按钮</b> <code>:1040-1056</code>；③静态句无按钮 <code>:999-1013</code>；④有「读这张表再判」但缺「归属不明→移出本批」两态</td></tr>
+<tr><td>处置后「已按默认」＋撤销／改</td><td class="like">形似</td><td>计数在 <code>:851</code>，已决卡 <code>:1058-1076</code> 只读，<b>卡上没有撤销／改</b></td></tr>
+<tr><td>「一组表 vs 今天的做法」对照＋数点击</td><td class="none">没有</td><td>分段是「单个／多个设计稿」<code>workbench-view.tsx:4322-4349</code>；对照与计数 0 命中</td></tr>
+<tr><td>「下一步」按待处置件数禁用</td><td class="like">形似</td><td>按钮 <code>:1124-1140</code> 的 <code>gate</code>（<code>workbench-view.tsx:3055-3077</code>）<b>不含 pendingCount</b>；只有组卡底部 <code>:942-956</code> 用了</td></tr>
+<tr><td>左栏每稿状态 pill（整组停／待定／缺 N／拦 N／N 门）</td><td class="hit">有</td><td><code>step1-stage-view.tsx:1470</code> ＋ <code>group-binding.ts:276-294</code></td></tr>
+</tbody>
+</table>
+
+<h2>二、推翻我自己那句（不静默改口）</h2>
+<div class="callout bad"><b>「P1 三栏界面已落地」＝过度声明</b>落地的是三栏壳＋归组内核＋份数口径。病根三条：① 没有拿模拟件当规格的闸——批准稿自带 74 条 jsdom 断言，却只跑模拟件自己，从没跑过真组件，全仓 0 处机器检查"界面像不像批准稿"；② 我自己的测试会自指（同一表达式重算再比，已在 <code>48e72757</code> 修掉，本轮又抓到两处同类空断言）；③ 把"布局出现"当成验收口径，而不是"14 条契约逐条命中"。</div>
+
+<h2>三、本轮新出的三份模拟件（都真跑过）</h2>
+<div class="gates">
+  <div class="g"><span>第 2 步 行清单与真过滤 · <code>49</code> 条断言 · 负控 3 条（不裁列／偏长改拦人／一键吃已决行）</span><span class="pill ok">ALL GREEN rc=0</span></div>
+  <div class="g"><span>第 3 步 图层与逐层字重 · <code>40</code> 条断言 · 负控 4 条（不算缺档／换族动字号／12 门全假装可写／告知类改拦人）</span><span class="pill ok">ALL GREEN rc=0</span></div>
+  <div class="g"><span>第 4 步 份数报价与逐行推导 · <code>46</code> 条断言 · 负控 5 条（去 20 起／不进位／ceil→floor／不做只改显示／一份失败标整稿）</span><span class="pill ok">ALL GREEN rc=0</span></div>
+  <div class="g"><span>真浏览器 Chromium 1440×900 逐屏点过：页签点 RU 只剩三列 · 缺档字族当场点名「会回落成 Regular，字重就丢了」且字号行距字重读数一字未变 · 144 格矩阵与 9424 合计同屏</span><span class="pill ok">3/3 通过</span></div>
+</div>
+<div class="callout warn"><b>两条当场抓到又改掉的假绿（本轮自纠）</b>① 第 3 步"不可写门"的断言第一版挑的是 12 门全可写的样本层，怎么假都抓不住；改成按状态挑层后同一条负控才会红。② 第 4 步夹具第一版全是短行、每份单位数都 &gt;20，「200 字符进位」与「20 起价」两条规则从未被触发，两条负控假绿；补出长行样本与一份 12 单位的小单后才会红。</div>
+
+<h2>四、第 2/3/4 步现状（模拟件的底）</h2>
+<div class="cards">
+  <div class="card"><b>第 2 步：同一屏三套口径</b><p>确定性行告警 <code>review-step.tsx:205</code>、智能检测结论 <code>:333-344</code>、父层逐语言状态条 <code>workbench-view.tsx:5303-5338</code>。语言页签<b>不过滤</b>，只换整屏作用域（<code>:967-1060</code> → <code>:5262-5265</code>）。</p></div>
+  <div class="card"><b>第 3 步：按层渲染，但没有逐层排版入口</b><p>1:N 已有表达（<code>object-inspector.tsx:124-136</code>、<code>billing-preview.ts:18</code>）；排版面板只按语言，面板内 <code>layerId/objectId</code> 0 命中（退出码 1）。</p></div>
+  <div class="card"><b>第 4 步：报价只给合计</b><p>份数 <code>execute-step.tsx:2326</code>、格数 <code>:2329-2332</code>、逐语言标准单位 <code>:2698-2702</code>；逐行推导在 <code>computeBatchLanguageBilling:802-812</code> 算完就丢——所以你问「67 怎么来的」只能来问人。</p></div>
+  <div class="card"><b>三处共用同一根单稿数据</b><p><code>parsed = parsedTables[activeDraftKey] ?? null</code>（<code>workbench-view.tsx:502</code>）。单稿与多稿是一套系统，但四处平行实现仍未收（另案）。</p></div>
+</div>
+
+<h2>五、回答"我要怎么描述你才能做出来"</h2>
+<div class="callout"><b>描述不用再改，批准稿就是规格。</b>缺的是把它变成硬约束那一步：把批准稿断言翻译成对<b>真组件</b>的守卫 <code>scripts/smoke-step1-mock-contract.mjs</code>（同夹具、同状态机、逐条 DOM 指纹），四步各一份，接进 <code>test:contracts</code>；谁改界面必须同时改模拟件，否则红；负控＝故意拆一个契约元素，门必须红。这一步不需要你拍口径，我可以直接做。</div>
+
+<h2>六、要你拍的四件</h2>
+<div class="notes"><ul>
+  <li><b>第 1 步</b>：批准稿 14 条契约照单补齐（含把 <code>excluded</code> 通道接上），逐条给 DOM 读数。</li>
+  <li><b>第 2 步</b>：下一步的门认不认「12 稿全部行确认完才放行」；「疑似没翻」要不要在这里拦；一键处置留不留。</li>
+  <li><b>第 3 步</b>：字重走不走「排版通道从按语言改成按层」（真保住字重，代价＝合同变更四层＋夹具）；缺档时当场点名回落，还是干脆不让选。</li>
+  <li><b>第 4 步</b>：逐行推导默认收起还是展开；失败只重跑那一份还是整批；「本批不做某门」入口放份这一屏还是文件那一屏。</li>
+</ul></div>
+
+<h2>七、覆盖缺口（不省略）</h2>
+<div class="notes"><ul>
+  <li>三份模拟件的数字是按真实语料形态造的样本（12×12×67、四条例外、72 层↔67 行、长行与小单），不是从你磁盘读的；接线后要用真文件夹复验。</li>
+  <li>第 1 步对账只做界面契约层；<code>excluded</code> 接上后份数、报价、合并基准会不会跟着变，未测。</li>
+  <li>批准稿那 74 条断言我没有逐条复跑（只核了存在与条数）；翻译成组件守卫时才会真跑。</li>
+  <li>「三套口径合一」在模拟件里是设计表达，真代码三处数据源能否合成一句，未核实。</li>
+  <li>扫描失败根因仍未核实（已派助手日志那一单）。</li>
+</ul></div>
+
+<footer>
+本次未动：业务代码、构建与门、部署、生产站与 <code>main</code>、任何 flag（支付 flag 保持 false）、远端文件删除、按镜像名杀进程。改动只有三份新模拟件＋同名说明＋三个自检脚本（<code>交付档案/执行方案/</code>、<code>tmp/</code>）＋两份任务书（计费线 BILL-ROW-DERIVE-1、助手线 ASSIST-LOG-DEAD-1）。<br>
+同名 md：<a href="审查报告_20261026_批准稿即规格_四步界面契约对账.md">审查报告_20261026_批准稿即规格_四步界面契约对账.md</a>
+</footer>
+</div>
+</body>
+</html>

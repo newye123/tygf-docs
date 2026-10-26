@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟件 · 批量台第 2 步：智能检测（单位＝行）</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --sunk:#f0f2f4; --sunk2:#e9ecef;
+  --ink:#16181c; --ink2:#3a4049; --muted:#6b7280; --faint:#9aa1ab;
+  --line:#e2e5ea; --strong:#cbd1d8;
+  --accent:#1f5fd0; --accent-soft:#eaf0fb; --accent-line:#b9cdf3;
+  --ok:#0f7a4d; --ok-soft:#e7f4ed; --warn:#8a5a00; --warn-soft:#fbf2dd;
+  --bad:#ad2a20; --bad-soft:#fbeae8;
+  --row:30px; --r:7px;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161a20; --sunk:#1c2128; --sunk2:#232a33;
+    --ink:#e8ebf0; --ink2:#c3cad4; --muted:#8f98a5; --faint:#6f7885;
+    --line:#262d37; --strong:#3a4350;
+    --accent:#79a6ff; --accent-soft:#182437; --accent-line:#2f4a75;
+    --ok:#5ccf9b; --ok-soft:#12291f; --warn:#e0b64a; --warn-soft:#2a2210;
+    --bad:#ff8f82; --bad-soft:#2c1714;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.app{height:100vh;display:grid;grid-template-rows:44px 38px minmax(0,1fr) 30px}
+.topbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:12px;font-weight:700}
+.crumb{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--ink2);font-weight:600}
+.counters{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.counters b{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.counters .k{color:var(--muted)}
+.iconbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--muted);display:grid;place-items:center;font-size:12px}
+.iconbtn:hover{border-color:var(--strong);color:var(--ink)}
+
+.stepper{display:flex;align-items:center;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow:hidden}
+.stepper button{display:flex;align-items:center;gap:6px;padding:0 14px;height:38px;font-size:12.5px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.stepper button .n{width:16px;height:16px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:10px;font-family:var(--mono)}
+.stepper button[aria-current="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.stepper button[aria-current="true"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stepper button.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.stepper .sep{width:14px;height:1px;background:var(--line);flex:0 0 auto}
+
+.main{display:grid;grid-template-columns:238px minmax(0,1fr) 318px;min-height:0}
+.rail{min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--panel);border-right:1px solid var(--line)}
+.rail.right{border-right:0;border-left:1px solid var(--line)}
+.rail-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rail-head b{color:var(--ink2);font-weight:600}
+.rail-head .tag{margin-left:auto}
+
+.drow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+.drow:hover{background:var(--sunk)}
+.drow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.drow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.drow.t-warn .dot{background:var(--warn)}
+.drow.t-bad .dot{background:var(--bad)}
+.drow .sku{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.drow .sub{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.drow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.drow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.drow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+.stage{min-height:0;overflow:auto;padding:14px 16px 24px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--strong);border-radius:6px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+.scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px}
+.scope b{font-size:13.5px;font-weight:600}
+.scope .n{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--accent-line);border-radius:5px;padding:1px 6px;color:var(--accent)}
+.scope .sub{color:var(--ink2);font-size:12px}
+
+.tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--strong);border-radius:999px;background:var(--panel)}
+.tabs button{border:0;background:transparent;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;color:var(--ink2);display:inline-flex;align-items:center;gap:4px}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.tabs .d{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tabs .d.warn{background:var(--warn)}.tabs .d.bad{background:var(--bad)}
+
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-t{font-size:13px;font-weight:600;margin:0;padding:11px 14px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card-s{font-size:11.5px;color:var(--muted);margin:3px 14px 9px}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--strong);color:var(--muted)}
+.badge.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.badge.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.badge.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+.tblwrap{max-height:min(52vh,470px);overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+table.rows{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+table.rows th,table.rows td{border-bottom:1px solid var(--line);padding:0;text-align:left;vertical-align:middle}
+table.rows thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);padding:6px 8px;white-space:nowrap;border-bottom:1px solid var(--strong)}
+table.rows td{padding:0}
+table.rows .cellbtn{display:block;width:100%;text-align:left;padding:6px 8px;line-height:1.4;min-height:var(--row)}
+table.rows .cellbtn:hover{background:var(--sunk)}
+table.rows .no{font-family:var(--mono);font-size:11px;color:var(--faint);width:38px;padding:6px 4px 6px 10px}
+table.rows .src{max-width:250px;font-size:11.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 8px}
+td.miss{background:var(--bad-soft)}
+td.miss .cellbtn{color:var(--bad);font-family:var(--mono);font-size:11px}
+td.same{background:var(--warn-soft)}
+td.long{background:var(--sunk2)}
+td.ok .cellbtn{color:var(--ink)}
+td.dim{color:var(--faint)}
+tr.active td{background:var(--accent-soft)}
+tr.active td.no{color:var(--accent);font-weight:700}
+.rowflags{display:inline-flex;gap:4px;margin-left:6px}
+
+.detail{padding:11px 14px;display:flex;flex-direction:column;gap:8px}
+.detail h3{margin:0;font-size:12.5px}
+.kv{margin:0;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
+.kv>div{display:flex;gap:7px}
+.kv dt{width:78px;flex:none;color:var(--muted)}
+.kv dd{margin:0;min-width:0;flex:1;word-break:break-word}
+.langlist{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lg{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:5px 9px;border-bottom:1px solid var(--line);font-size:11.5px;text-align:left;width:100%}
+.lg:last-child{border-bottom:0}
+.lg:hover{background:var(--sunk)}
+.lg .cd{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.lg .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg.miss{background:var(--bad-soft)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;justify-content:center}
+
+.exc{border-bottom:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+.exc.done{background:var(--panel)}
+.exc-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;line-height:1.45}
+.exc-head .no{font-family:var(--mono);font-size:10.5px;width:16px;height:16px;border-radius:4px;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;flex:0 0 auto}
+.exc.done .exc-head{font-weight:500;color:var(--muted)}
+.exc p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.exc .why{color:var(--muted);font-size:11px}
+.decision{font-size:11.5px;color:var(--ok);display:flex;gap:6px;align-items:center}
+.decision .undo{margin-left:auto;color:var(--muted);text-decoration:underline;font-size:11px}
+
+.nextbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.nextbar .hint{font-size:11.5px;color:var(--muted)}
+
+details.ev{border-top:1px solid var(--line)}
+details.ev summary{cursor:pointer;padding:8px 14px;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary::before{content:"▸";font-size:9px;color:var(--faint)}
+details.ev[open] summary::before{content:"▾"}
+.evbody{padding:2px 14px 12px;display:flex;flex-direction:column;gap:6px}
+.evbody .li{display:grid;grid-template-columns:64px 1fr;gap:8px;font-size:12px;color:var(--ink2)}
+.evbody .li b{color:var(--muted);font-weight:500}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px}
+.callout b{display:block;margin-bottom:2px}
+.callout.grey{border-left-color:var(--strong);background:var(--sunk)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px;padding:0 14px 12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel)}
+.stat .v{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1.2}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--warn)}.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}
+
+.statusbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.statusbar .path{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.statusbar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+.statusbar b{color:var(--ink2);font-weight:600;font-family:var(--mono)}
+
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.42);display:none;place-items:center;padding:20px;z-index:50}
+.modal[data-open="true"]{display:grid}
+.sheet{width:min(660px,100%);max-height:82vh;overflow:auto;background:var(--panel);border:1px solid var(--strong);border-radius:12px;padding:18px 20px}
+.sheet h2{margin:0 0 10px;font-size:15px}
+.sheet h3{margin:14px 0 5px;font-size:12.5px;color:var(--ink2)}
+.sheet p,.sheet li{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.sheet ul{margin:0;padding-left:16px}
+.sheet .close{margin-top:16px}
+
+@media (max-width:1180px){ .main{grid-template-columns:200px minmax(0,1fr) 286px} }
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{height:auto;grid-template-rows:44px 38px auto auto}
+  .main{grid-template-columns:1fr}
+  .rail{max-height:min(42vh,300px);border-right:0;border-bottom:1px solid var(--line)}
+  .rail.right{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .statusbar{position:sticky;bottom:0}
+  .stepper button{padding:0 9px;font-size:11.5px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <span class="mark" aria-hidden="true">图</span>
+    <span class="brand">图译工坊 <span style="color:var(--faint);font-weight:400">/ 批量处理</span></span>
+    <span class="crumb">第 2 步 智能检测 · 单位是<b>行</b> · <b id="crumbScope">142 份</b></span>
+    <div class="counters">
+      <span><span class="k">问题行</span> <b id="cBad">0</b>/<span id="cRows">67</span></span>
+      <span><span class="k">待你确认</span> <b id="cPend">0</b> 件</span>
+      <span><span class="k">已填格</span> <b id="cCells">0</b>/<span id="cCellsTotal">0</span></span>
+    </div>
+    <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
+  </div>
+
+  <div class="stepper" id="stepper" role="tablist" aria-label="四步">
+    <button data-step="1" class="done"><span class="n">1</span>准备素材</button>
+    <span class="sep"></span>
+    <button data-step="2" aria-current="true"><span class="n">2</span>智能检测</button>
+    <span class="sep"></span>
+    <button data-step="3" disabled title="先做完这一步"><span class="n">3</span>设计稿校对</button>
+    <span class="sep"></span>
+    <button data-step="4" disabled title="先做完这一步"><span class="n">4</span>生成交付</button>
+  </div>
+
+  <div class="main">
+    <aside class="rail left" aria-label="稿">
+      <div class="rail-head"><b>稿</b><span id="railCount">12 份 · 全部主副图</span><span class="tag mono" id="railTag">按行</span></div>
+      <div id="draftList"></div>
+    </aside>
+
+    <section class="stage" id="stage"></section>
+
+    <aside class="rail right" aria-label="检测结论">
+      <div class="rail-head"><b>结论</b><span id="excLeft">—</span><span class="tag mono" id="excTag">—</span></div>
+      <div id="excList"></div>
+    </aside>
+  </div>
+
+  <div class="sr" aria-live="polite" id="announce"></div>
+
+  <div class="statusbar">
+    <span class="path">完整表-20261003 · 142 份已绑定 · 只读，不会改你的文件</span>
+    <span class="r" id="sbRight"></span>
+  </div>
+</div>
+
+<div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
+  <div class="sheet">
+    <h2>这是第 2 步的可玩件，不是截图</h2>
+    <p>接着第 1 步的结果走：12 份稿、12 门语言、每稿 67 行，第 1 步定完是 <b>142 份可交付</b>（6896 缺越南语已排除、5660 印尼语那张 66 行已单独拦下）。这一步只看一件事——<b>表里的每一行，12 门各自有没有可用译文</b>。表是怎么归到稿上的，这里不再谈。</p>
+    <h3>为什么这一屏主角是「行」</h3>
+    <p>产品四步各看一种东西：第 1 步文件、第 2 步行、第 3 步图层、第 4 步份（四步名与顺序 <span class="mono">terms.ts:26-31</span>）。今天第 2 步把这些都摊在同一屏上，而且<b>三套口径并列</b>：确定性行告警（<span class="mono">review-step.tsx:205</span>）、智能检测结论（<span class="mono">review-step.tsx:333-344</span>）、父层逐语言状态条（<span class="mono">workbench-view.tsx:5303-5338</span>）——所以你看到的数字对不上。这一稿只留一套。</p>
+    <h3>真的（代码里已有）</h3>
+    <ul>
+      <li>逐行缺译统计：<span class="mono">review-step.tsx:319-321</span>（emptyTranslationCount）</li>
+      <li>「N 行缺少译文」这句头条：<span class="mono">review-step.tsx:709-712</span></li>
+      <li>AI 建议表（行号/目标/原因三列）：<span class="mono">review-step.tsx:1062-1129</span></li>
+      <li>「需要处理的行」表（#/原文/译文/状态）：<span class="mono">review-step.tsx:1131-1246</span></li>
+      <li>语言页签今天<b>不过滤</b>，只换整屏作用域：<span class="mono">review-step.tsx:967-1060</span> → <span class="mono">workbench-view.tsx:5262-5265</span></li>
+    </ul>
+    <h3>提案（还没实现）</h3>
+    <ul>
+      <li>语言页签改成<b>真过滤</b>：点「RU」就只剩 原文＋RU＋这一行状态，列数当场变</li>
+      <li>默认只列<b>有问题的行</b>，满行的「全 12 门都齐」折起来，想看再展开</li>
+      <li>三套口径合成<b>一句结论</b>，每个数字都能点开看它从哪张表哪一列来</li>
+      <li>处置落在<b>行</b>上（这一行本批不翻／按原文保留／去补全），不落在语言上</li>
+    </ul>
+    <h3>不会发生的事</h3>
+    <p>按钮不碰你的文件，也不连服务器。所有数字都是从状态派生的，刷新即重置。</p>
+    <button class="btn close" data-act="info-close">知道了</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═════════ 真实口径（与第 1 步批准稿同一套常量）═════════ */
+const LANGS = [
+  {code:'ES',zh:'西班牙语'},{code:'FR',zh:'法语'},{code:'ID',zh:'印度尼西亚语'},{code:'IT',zh:'意大利语'},
+  {code:'JP',zh:'日语'},{code:'MS',zh:'马来语'},{code:'NL',zh:'荷兰语'},{code:'PL',zh:'波兰语'},
+  {code:'RU',zh:'俄语'},{code:'TH',zh:'泰语'},{code:'TL',zh:'菲律宾语'},{code:'VI',zh:'越南语'},
+];
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521'];
+const ROWS = 67, FOLDER = '完整表-20261003';
+
+/* 第 1 步定完的绑定结果（照批准稿的默认：缺门排除、错行拦下） */
+const STOP_LANG = { '6896':['VI'], '5660':['ID'] };
+const BOUND = SKUS.reduce((n,s)=>n+(LANGS.length-(STOP_LANG[s]||[]).length),0); // 142
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  active:'5857',
+  langView:'all',            // 'all' | 语言码
+  onlyProblems:true,         // 默认只看有问题的行
+  activeRow:null,            // 展开详情的行（0 基）
+  decided:{},                // 'sku/row' -> {kind:'skip'|'asis'|'fix', count}
+  clicks:0,
+};
+
+/* ═════════ 行与格：确定性派生，不用随机 ═════════ */
+function srcText(i){
+  const head = ['型号','材质','尺寸','包装清单','使用提示','保养方式','注意事项','适配机型','颜色','重量','产地','保修','安装步骤','清洁建议','赠品','电池','接口','防尘','售后','图案说明'][i%20];
+  return `${head}：第 ${i+1} 条原文说明，含数字 3.5 与单位 mm，长度按行号递增。`.slice(0, 14 + (i%3)*9);
+}
+const hasLang = (sku,l) => !(STOP_LANG[sku]||[]).includes(l);
+/* 缺译：按 (稿,行,语言) 稳定散列，稀疏出现 */
+function cellEmpty(sku,i,l){
+  if (!hasLang(sku,l)) return false;
+  const seed = (SKUS.indexOf(sku)+1)*7 + i*11 + LANGS.findIndex(x=>x.code===l)*13;
+  return seed % 97 === 0;
+}
+/* 译文＝原文（疑似没翻） */
+function cellSame(sku,i,l){
+  if (!hasLang(sku,l)) return false;
+  if (cellEmpty(sku,i,l)) return false;
+  const seed = (SKUS.indexOf(sku)+1)*5 + i*3 + LANGS.findIndex(x=>x.code===l)*2;
+  return seed % 103 === 0;
+}
+/* 译文偏长（会撑不破行，第 3 步才处理，这里只告知） */
+function cellLong(sku,i,l){
+  if (!hasLang(sku,l)) return false;
+  if (cellEmpty(sku,i,l)) return false;
+  const seed = (SKUS.indexOf(sku)+1)*3 + i*2 + LANGS.findIndex(x=>x.code===l)*5;
+  return seed % 89 === 0;
+}
+/* 原文这一格本身是空的（与第 4 步报价里被排除的那一类同源） */
+const srcEmptyRows = (sku) => {
+  const out = [];
+  for (let i=0;i<ROWS;i++) if (((SKUS.indexOf(sku)+1)*13 + i*17) % 251 === 0) out.push(i);
+  return out;
+};
+function rowIssues(sku,i){
+  const out = [];
+  if (srcEmptyRows(sku).includes(i)) out.push('src-empty');
+  const es = LANGS.filter(l=>cellEmpty(sku,i,l.code));
+  if (es.length) out.push('empty');
+  const sm = LANGS.filter(l=>cellSame(sku,i,l.code));
+  if (sm.length) out.push('same');
+  const lg = LANGS.filter(l=>cellLong(sku,i,l.code));
+  if (lg.length) out.push('long');
+  return out;
+}
+function problemRows(sku){
+  const out = [];
+  for (let i=0;i<ROWS;i++) if (rowIssues(sku,i).length) out.push(i);
+  return out;
+}
+function filledCells(sku){
+  let n = 0;
+  for (let i=0;i<ROWS;i++) for (const l of LANGS) {
+    if (!hasLang(sku,l.code)) continue;
+    if (srcEmptyRows(sku).includes(i)) continue;
+    if (!cellEmpty(sku,i,l.code) && !cellSame(sku,i,l.code)) n++;
+  }
+  return n;
+}
+const cellsTotal = () => SKUS.reduce((n,s)=>n+ROWS*LANGS.filter(l=>hasLang(s,l.code)).length,0);
+function decidedCount(sku){ return Object.keys(S.decided).filter(k=>k.startsWith(sku+'/')).length }
+/* 待确认＝这一行有「缺译」或「疑似没翻」，且还没处置。
+   偏长只告知不拦（第 3 步排版才管）；原文空的行系统已排除计价，也不拦。 */
+function needDecide(sku,i){
+  const iss = rowIssues(sku,i);
+  if (iss.includes('src-empty')) return false;
+  return iss.includes('empty') || iss.includes('same');
+}
+function pendingRows(sku){
+  let n = 0;
+  for (let i=0;i<ROWS;i++) if (needDecide(sku,i) && !S.decided[`${sku}/${i}`]) n++;
+  return n;
+}
+function pendingDrafts(){ return SKUS.filter(s=>pendingRows(s)>0).length }
+const pendingTotal = () => SKUS.reduce((n,s)=>n+pendingRows(s),0);
+
+/* ═════════ 顶部计数 ═════════ */
+function renderCounters(){
+  const sku = S.active;
+  document.getElementById('cBad').textContent = problemRows(sku).length;
+  document.getElementById('cRows').textContent = ROWS;
+  document.getElementById('cPend').textContent = pendingTotal();
+  document.getElementById('cCells').textContent = SKUS.reduce((n,s)=>n+filledCells(s),0);
+  document.getElementById('cCellsTotal').textContent = cellsTotal();
+  document.getElementById('crumbScope').textContent = `${BOUND} 份`;
+  document.getElementById('railTag').textContent = S.langView==='all' ? '全部语言' : `只看 ${S.langView}`;
+  const tag = document.getElementById('excTag');
+  tag.textContent = pendingTotal()===0 ? '都确认完了' : `${SKUS.reduce((n,s)=>n+problemRows(s).length,0)-pendingTotal()} 件已定`;
+  document.getElementById('excLeft').textContent = pendingTotal()===0 ? '结论：无' : `${pendingTotal()} 件`;
+  const sb = document.getElementById('sbRight');
+  sb.innerHTML = `<span>这一稿 <b>${problemRows(sku).length}</b> 行有问题 · 已处置 <b>${decidedCount(sku)}</b> 行</span>`;
+}
+
+/* ═════════ 左栏：稿 ＋ 这一稿有几行要处理 ═════════ */
+function renderDrafts(){
+  document.getElementById('draftList').innerHTML = SKUS.map(sku=>{
+    const p = pendingRows(sku), bad = problemRows(sku).length, langN = LANGS.filter(l=>hasLang(sku,l.code)).length;
+    const tone = p===0 ? (bad? 't-ok':'t-ok') : (bad>10?'t-bad':'t-warn');
+    const label = p===0 ? (bad ? `已确认 ${bad}` : '满行齐') : `待确认 ${p}`;
+    return `<button class="drow ${tone}" data-act="pick-draft" data-sku="${sku}" aria-current="${String(sku===S.active)}" title="${sku} · ${langN} 门 · ${ROWS} 行">
+      <span class="dot"></span>
+      <span><span class="sku">${sku}</span><span class="sub">${langN} 门 · 问题行 ${bad} · 已填 ${filledCells(sku)} 格</span></span>
+      <span class="pill">${label}</span>
+    </button>`;
+  }).join('');
+}
+
+/* ═════════ 中栏：行表 ═════════ */
+function tabsHTML(sku){
+  const inScope = LANGS.filter(l=>hasLang(sku,l.code));
+  const one = (code)=>{
+    let n=0;
+    for (let i=0;i<ROWS;i++){ if (cellEmpty(sku,i,code)) n++; if (cellSame(sku,i,code)) n++; }
+    return n;
+  };
+  const buttons = [`<button data-act="lang" data-lang="all" aria-pressed="${S.langView==='all'}">全部 ${inScope.length} 门</button>`];
+  for (const l of inScope){
+    const miss = one(l.code);
+    const tone = miss===0 ? 'ok' : (miss<=4 ? 'warn':'bad');
+    buttons.push(`<button data-act="lang" data-lang="${l.code}" aria-pressed="${S.langView===l.code}" title="${l.zh}：缺译与疑似未翻合计 ${miss} 行"><i class="d ${tone}"></i>${l.code}</button>`);
+  }
+  return buttons.join('');
+}
+function headHTML(sku){
+  const shown = S.langView==='all' ? LANGS.filter(l=>hasLang(sku,l.code)) : LANGS.filter(l=>l.code===S.langView);
+  const single = shown.length===1;
+  return `<tr><th style="width:38px">#</th><th>原文</th>${shown.map(l=>`<th>${l.code}</th>`).join('')}${single?'':'<th style="width:74px">这一行</th>'}</tr>`;
+}
+function rowHTML(sku,i){
+  const shown = S.langView==='all' ? LANGS.filter(l=>hasLang(sku,l.code)) : LANGS.filter(l=>l.code===S.langView);
+  const iss = rowIssues(sku,i);
+  const srcBlank = iss.includes('src-empty');
+  const cells = shown.map(l=>{
+    if (srcBlank) return `<td class="dim"><span class="cellbtn mono">原文空·不计</span></td>`;
+    if (cellEmpty(sku,i,l.code)) return `<td class="miss"><button class="cellbtn mono" data-act="open-row" data-row="${i}" title="这一门没有译文">缺译</button></td>`;
+    if (cellSame(sku,i,l.code)) return `<td class="same"><button class="cellbtn mono" data-act="open-row" data-row="${i}" title="译文和原文一模一样">＝原文</button></td>`;
+    if (cellLong(sku,i,l.code)) return `<td class="long"><button class="cellbtn" data-act="open-row" data-row="${i}">${esc(short(l.code,i))}<small style="color:var(--muted)"> 偏长</small></button></td>`;
+    return `<td class="ok"><button class="cellbtn" data-act="open-row" data-row="${i}">${esc(short(l.code,i))}</button></td>`;
+  }).join('');
+  const flag = srcBlank ? '<span class="badge">原文空</span>'
+    : iss.length ? `<span class="badge ${iss.includes('empty')?'bad':(iss.includes('same')?'warn':'')}">${iss.includes('empty')?'缺译':iss.includes('same')?'疑似未翻':'偏长'}</span>`
+    : '<span class="badge ok">齐</span>';
+  return `<tr class="${i===S.activeRow?'active':''}"><td class="no">${i+1}</td><td class="src" title="${esc(srcText(i))}">${esc(srcText(i))}</td>${cells}${S.langView==='all'?`<td>${flag}</td>`:''}</tr>`;
+}
+function short(code,i){
+  const m = {ES:'Texto traducido',FR:'Texte traduit',ID:'Teks terjemahan',IT:'Testo tradotto',JP:'翻訳テキスト',MS:'Teks terjemahan',NL:'Vertaalde tekst',PL:'Przetłumaczony tekst',RU:'Переведённый текст',TH:'ข้อความแปล',TL:'Isinalinong teksto',VI:'Văn bản đã dịch'};
+  return `${(m[code]||code)} ${i+1}`;
+}
+function detailHTML(sku){
+  if (S.activeRow===null) return '';
+  const i = S.activeRow, iss = rowIssues(sku,i);
+  const es = LANGS.filter(l=>hasLang(sku,l.code)&&cellEmpty(sku,i,l.code));
+  const sm = LANGS.filter(l=>hasLang(sku,l.code)&&cellSame(sku,i,l.code));
+  const lg = LANGS.filter(l=>hasLang(sku,l.code)&&cellLong(sku,i,l.code));
+  const key = `${sku}/${i}`;
+  const dec = S.decided[key];
+  return `<div class="card" id="rowDetail">
+    <p class="card-t">第 ${i+1} 行 · 逐门看 <span class="badge ${iss.length?'warn':'ok'}">${iss.length?`${es.length+sm.length+lg.length} 门要留意`:'12 门都可写'}</span></p>
+    <p class="card-s">原文：<span class="mono">${esc(srcText(i))}</span></p>
+    <div class="detail">
+      <dl class="kv">
+        <div><dt>这一行</dt><dd>${srcBlank(iss)?'<span style="color:var(--warn)">原文这一格是空的——系统已经不把它算进报价，也不用你处理</span>':`${LANGS.filter(l=>hasLang(sku,l.code)).length} 门里 ${es.length} 门缺译、${sm.length} 门疑似没翻、${lg.length} 门偏长`}</dd></div>
+        <div><dt>表来自</dt><dd>${sku} 这一组共 ${LANGS.filter(l=>hasLang(sku,l.code)).length} 张表，第 1 步已合成一张（<span class="mono">merge-tables.ts:103-231</span>）</dd></div>
+        <div><dt>处置落在</dt><dd>行，不是语言。这里定完，12 门一起生效。</dd></div>
+      </dl>
+      <div class="langlist">
+        ${LANGS.filter(l=>hasLang(sku,l.code)).map(l=>{
+          const st = srcBlank(iss)?['dim','原文空']: cellEmpty(sku,i,l.code)?['miss','缺译']: cellSame(sku,i,l.code)?['miss','译文＝原文']: cellLong(sku,i,l.code)?['','偏长']:['','可写'];
+          return `<button class="lg ${st[0]==='miss'?'miss':''}" data-act="lang-focus" data-lang="${l.code}">
+            <span class="cd">${l.code}</span>
+            <span class="tx">${st[0]==='miss'?'（没有可用译文）':esc(short(l.code,i))}</span>
+            <span class="badge ${st[0]==='miss'?'bad':(st[1]==='偏长'?'':'ok')}">${st[1]}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      ${srcBlank(iss)?'<div class="callout grey"><b>不用处置</b>原文空的行不参与计价（与第 4 步报价里的排除同一口径）。</div>'
+        : !needDecide(sku,i)?'<div class="callout grey"><b>不用处置</b>偏长由第 3 步排版管，这一屏不拦你。</div>':`
+      <div class="acts">
+        ${dec?`<span class="decision">已处置：${dec.kind==='skip'?'这一行本批不翻':dec.kind==='asis'?'按原文保留':'记为要去补全'}<button class="undo" data-act="undo-row" data-row="${i}">撤销</button></span>`:`
+        <button class="btn sm" data-act="decide" data-row="${i}" data-kind="skip">这一行本批不翻</button>
+        ${sm.length?'<button class="btn sm" data-act="decide" data-row="'+i+'" data-kind="asis">疑似没翻的，按原文保留</button>':''}
+        <button class="btn sm primary" data-act="decide" data-row="${i}" data-kind="fix">记下来，我去补译文</button>`}
+      </div>`}
+    </div>
+    <details class="ev"><summary>凭什么这么说（3 条依据，点开看）</summary><div class="evbody">
+      <div class="li"><b>缺译</b><span>那一门那一格是空字符串（今天这句就是界面头条「N 行缺少译文」，<span class="mono">review-step.tsx:709-712</span>）</span></div>
+      <div class="li"><b>疑似没翻</b><span>译文与原文逐字相等（合并后仍等，才判它没翻）</span></div>
+      <div class="li"><b>偏长</b><span>译文长度超过原文 1.6 倍——第 3 步排版才管它，这一步只告知</span></div>
+    </div></details>
+  </div>`;
+}
+const srcBlank = (iss) => iss.includes('src-empty');
+
+function renderStage(){
+  const sku = S.active;
+  const prob = problemRows(sku);
+  const list = S.onlyProblems ? prob : Array.from({length:ROWS},(_,i)=>i);
+  const shown = list.map(i=>rowHTML(sku,i)).join('');
+  document.getElementById('stage').innerHTML = `
+    <div class="scope">
+      <b>${sku} · 主副图</b>
+      <span class="n">${ROWS} 行</span>
+      <span class="n">${LANGS.filter(l=>hasLang(sku,l.code)).length} 门</span>
+      <span class="sub">这一屏只看行。第 1 步的文件与归组已经定完了，这里不再出现「选表」。</span>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px 9px">
+        <p class="card-t" style="margin:0;padding:0">行清单</p>
+        <div class="tabs" role="group" aria-label="只看某一门">${tabsHTML(sku)}</div>
+        <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <span class="badge ${prob.length?'warn':'ok'}">问题行 ${prob.length}</span>
+          <button class="btn sm" data-act="toggle-scope" aria-pressed="${String(S.onlyProblems)}">${S.onlyProblems?`全看 ${ROWS} 行`:`只看 ${prob.length} 行`}</button>
+        </span>
+      </div>
+      <p class="card-s">${S.langView==='all'
+        ? `12 门并排。点任意一格，下面展开那一行的逐门读数。`
+        : `现在只看 <b>${S.langView} ${zhOf(S.langView)}</b>：表里只有「原文 ＋ 这一门 ＋ 状态」三列，别的列真的不在页面上（今天的页签只换整屏作用域，不裁列，见 <span class="mono">workbench-view.tsx:5262-5265</span>）。`}</p>
+      <div class="tblwrap"><table class="rows"><thead>${headHTML(sku)}</thead><tbody id="rowBody">${shown}</tbody></table></div>
+      <p class="card-s" style="padding:9px 14px 12px;margin:0">
+        ${S.onlyProblems
+          ? `<button class="link" data-act="toggle-scope">展开看全部 ${ROWS} 行</button>（满行齐的 ${ROWS-prob.length} 行现在不占屏幕）`
+          : `当前显示全部 ${ROWS} 行，其中问题行 ${prob.length} 行。`}
+        实际出行 <b class="mono">${list.length}</b> 行。
+      </p>
+    </div>
+    ${detailHTML(sku)}
+    <div class="callout grey"><b>这一步不做的事</b>不合并表（第 1 步已合）、不排版（第 3 步）、不报价（第 4 步）。所以这里不会出现「组卡」「144 格矩阵」「图层树」。</div>
+    <div class="nextbar">
+      <button class="btn primary" data-act="next" ${pendingTotal()>0?'disabled':''}>${pendingTotal()>0?`还有 ${pendingTotal()} 行要确认`:'下一步：设计稿校对'}</button>
+      <span class="hint">${pendingTotal()>0?`分布在 ${pendingDrafts()} 稿里；顶栏那个数就是它，逐稿确认完才放行`:'12 稿的行都定完了。'}</span>
+    </div>`;
+  syncRows();
+}
+function syncRows(){
+  const body = document.getElementById('rowBody');
+  if (!body) return;
+  const sku = S.active;
+  const prob = problemRows(sku);
+  const list = S.onlyProblems ? prob : Array.from({length:ROWS},(_,i)=>i);
+  if (list.length !== body.querySelectorAll('tr').length) {
+    body.innerHTML = list.map(i=>rowHTML(sku,i)).join('');
+  }
+}
+const zhOf = (l) => (LANGS.find(x=>x.code===l)||{}).zh || l;
+
+/* ═════════ 右栏：一句结论 ＋ 逐条 ═════════ */
+function renderExc(){
+  const sku = S.active;
+  const groups = [
+    {kind:'empty', t:'缺译（那一门那一格是空的）', badge:'bad'},
+    {kind:'same',  t:'疑似没翻（译文＝原文）', badge:'warn'},
+    {kind:'long',  t:'译文偏长（第 3 步排版才管）', badge:''},
+    {kind:'src-empty', t:'原文这一格为空（已不参与计价）', badge:''},
+  ];
+  const items = groups.map((g,idx)=>{
+    const rows = [];
+    for (let i=0;i<ROWS;i++) if (rowIssues(sku,i).includes(g.kind)) rows.push(i);
+    if (!rows.length) return '';
+    const langs = new Set();
+    rows.forEach(i=>LANGS.forEach(l=>{
+      if (!hasLang(sku,l.code)) return;
+      if (g.kind==='empty' && cellEmpty(sku,i,l.code)) langs.add(l.code);
+      if (g.kind==='same' && cellSame(sku,i,l.code)) langs.add(l.code);
+      if (g.kind==='long' && cellLong(sku,i,l.code)) langs.add(l.code);
+    }));
+    /* 只有 empty / same 两组拦人；long 与 src-empty 属告知 */
+    const blocking = g.kind==='empty' || g.kind==='same';
+    const pend = rows.filter(i=>blocking && needDecide(sku,i) && !S.decided[`${sku}/${i}`]);
+    const gotoRow = pend.length ? pend[0] : rows[0];
+    const done = blocking && pend.length===0;
+    return `<div class="exc ${done?'done':''}" data-exc="${g.kind}">
+      <div class="exc-head"><span class="no">${idx+1}</span>${g.t}${blocking?`<span class="badge ${done?'ok':(rows.length>10?'bad':'warn')}" style="margin-left:auto">${done?`${rows.length} 行 · 已定`:`${rows.length} 行 · 待确认 ${pend.length}`}</span>`:`<span class="badge" style="margin-left:auto">${rows.length} 行</span>`}</div>
+      <p>${sku} 这一稿里有 <b>${rows.length}</b> 行命中，牵涉 ${langs.size} 门${langs.size?`（${[...langs].slice(0,4).join('、')}${langs.size>4?` 等 ${langs.size} 门`:''}）`:''}。第 ${gotoRow+1} 行起。</p>
+      ${!blocking
+        ? `<p class="why">${g.kind==='src-empty'?'原文空的行不参与计价，也不用你处置——与第 4 步报价里排除的那一行同一口径。':'偏长到第 3 步排版再管，这一屏不拦你。'}</p>`
+        : done
+          ? `<div class="decision">已逐行处置完<button class="undo" data-act="open-row" data-row="${rows[0]}">重看</button></div>`
+          : `<div class="acts"><button class="btn sm" data-act="jump-row" data-row="${gotoRow}">跳到第 ${gotoRow+1} 行</button><button class="btn sm primary" data-act="bulk" data-row-list="${pend.join(',')}" data-kind="${g.kind==='empty'?'skip':'asis'}">这几行（${pend.length}）${g.kind==='empty'?'本批都不翻':'按原文保留'}</button></div>`}
+    </div>`;
+  }).filter(Boolean).join('');
+  document.getElementById('excList').innerHTML = items || `<div class="exc done"><div class="exc-head"><span class="no">✓</span>这一稿没有要确认的行</div><p>可以进第 3 步。</p></div>`;
+}
+
+function render(){ renderCounters(); renderDrafts(); renderStage(); renderExc(); }
+
+const esc = (s)=>String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.addEventListener('click',(e)=>{
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act==='pick-draft'){ S.active=b.dataset.sku; S.activeRow=null; render(); return }
+  if (act==='lang'){ S.langView=b.dataset.lang; render(); return }
+  if (act==='toggle-scope'){ S.onlyProblems=!S.onlyProblems; render(); return }
+  if (act==='open-row'){ S.activeRow=Number(b.dataset.row); render(); return }
+  if (act==='jump-row'){ S.onlyProblems=false; S.activeRow=Number(b.dataset.row); render(); announce(`已跳到第 ${S.activeRow+1} 行`); return }
+  if (act==='lang-focus'){ S.langView=b.dataset.lang; render(); return }
+  if (act==='decide'){
+    const i=Number(b.dataset.row), k=`${S.active}/${i}`;
+    S.decided[k]={kind:b.dataset.kind}; S.clicks++; render(); announce(`第 ${i+1} 行已处置`); return
+  }
+  if (act==='undo-row'){ delete S.decided[`${S.active}/${b.dataset.row}`]; render(); return }
+  if (act==='bulk'){
+    b.dataset.rowList.split(',').forEach(r=>{ S.decided[`${S.active}/${r}`]={kind:'skip'}; S.clicks++ });
+    render(); announce('这几行标为本批不翻'); return
+  }
+  if (act==='next'){ announce('可玩件到第 2 步为止：第 3 步是另一份模拟件'); return }
+  if (act==='info'){ document.getElementById('info').dataset.open='true'; return }
+  if (act==='info-close'){ document.getElementById('info').dataset.open='false'; return }
+});
+document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') document.getElementById('info').dataset.open='false' });
+function announce(t){ document.getElementById('announce').textContent=t }
+window.__sim = { S, LANGS, SKUS, ROWS, BOUND, problemRows, rowIssues, hasLang, cellEmpty, cellSame, cellLong, srcEmptyRows, filledCells, cellsTotal, pendingRows, pendingTotal, decidedCount, render };
+render();
+</script>
+</body>
+</html>

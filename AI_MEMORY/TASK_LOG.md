@@ -1,3 +1,34 @@
+## 2026-10-26 19:4x 对抗式审查「批准稿＝规格」＋第 2/3/4 步模拟件三份（BATCH-GROUP-BIND）
+
+- **触发**：Owner「我要怎么描述你才能做出我想要的多设计稿工作台？我们不是讨论好了怎么做了吗？为什么还是做不出来？…继续给出 2 3 4 步模拟方案来吧，其他的你派活出去吧，你重点是这个」。基线 `worktrees/develop @ 48e72757`（测试站 `3ae696f2`；`coverage-matrix.tsx` 那行 ` M` 经 `git diff --exit-code` rc=0 证实是 CRLF 幻脏）。
+- **审查方法**：五路只读（批准稿契约抽取／真代码逐元素对账／入口门控／第 2-3-4 步现状清册／我自己声明复验）＋主审逐条复跑探针（`手工选表`、`扫描并自动配对`、`还没扫描这个文件夹`、`全选回来`、`今天的做法` 在 `src/` 全部 0 命中；`role="checkbox"`／`aria-checked` 0 命中；正控 `一稿一张表` 1 命中、`SINGLE_DRAFT_KEY` 源码 23 处／tests＋scripts 0 处）。
+- **核心结论（推翻我自己）**：上轮所报「P1 三栏界面已落地」＝**过度声明**。批准稿 14 条交互契约里 **1 条命中、7 条形似而实不同、6 条 0 命中**。真功能缺口：`workbench-view.tsx:2117` 调 `buildGroupBindings` **不传 `excluded`**（形参 `group-binding.ts:89`、槽态 `:205-209`）⇒ 批准稿的「取消勾选那张真的从绑定里剔除」在产品里做不到。机制根因：批准稿自带 74 条 jsdom 断言（`tmp/check-mock-step1.cjs`）**只跑模拟件自己、从没跑过真组件**，全仓 0 处机器检查"界面像不像批准稿"。
+- **Owner 那三问的答复**：看不到新界面＝① `featureFlags.ts:70` 默认 false＋`app-shell.tsx:50` 硬门；② 唯一入口是页内「单个／多个设计稿」切换（`workbench-view.tsx:4322-4349`，导航侧 10-18 起不表达该维度）；③ 进去了也认不出——辨识元素全 0 命中。
+- **第 2/3/4 步现状底**：第 2 步 `review-step.tsx` 同一屏**三套口径并列**（`:205`／`:333-344`／`workbench-view.tsx:5303-5338`），语言页签**不过滤**只换作用域（`:967-1060`→`:5262-5265`）；第 3 步按层渲染（`workbench-view.tsx:5402-5726`）1:N 已有（`object-inspector.tsx:124-136`、`billing-preview.ts:18`）但**无逐层排版入口**（面板内 `layerId/objectId` 0 命中 rc=1）；第 4 步报价只到逐语言标准单位（`execute-step.tsx:2698-2702`），逐行推导算完就丢（`computeBatchLanguageBilling:802-812`）。
+- **交付三份新模拟件＋同名说明＋三个自检脚本**（均按批准稿的视觉语言：`.app` 44/38/1fr/30、`.main` 238/1fr/318、`--accent #1f5fd0`、暗色双主题）：
+  - `交付档案/执行方案/模拟_20261026_批量台第二步_行清单与真过滤.{html,md}` — 单位＝行；页签**真裁列**；三套口径并成一句；处置落在行；下一步按全局 pendingTotal 放行。jsdom **49 条全绿 rc=0**；负控 3 条会红（不裁列⇒10/11/13；偏长改拦人⇒35/38/41/42/47；一键吃已决行⇒32）。
+  - `…_第三步_图层与逐层字重.{html,md}` — 单位＝图层；72 层↔67 行；字号行距字重字距四项锁；缺档字族**当场点名会回落成 Regular** 并给 `typography-capabilities.ts:383-391`＋提案（通道按语言→按层）；告知只三类。jsdom **40 条全绿**；负控 4 条会红。
+  - `…_第四步_份数报价与逐行推导.{html,md}` — 单位＝份；矩阵搬来（144 格，142 可交）；**逐行推导明细**（行号／计费字符／标准单位／不计价原因）＋「不足 20 按 20 起」可见；一份失败只染那一格、重跑只补那一门。jsdom **46 条全绿**；负控 5 条会红。
+- **两条自纠（不许静默）**：① 第 3 步"不可写门"断言第一版挑了 12 门全可写的样本层＝探针失灵，负控假绿，改成按状态挑层后才会红；② 第 4 步夹具第一版全是短行且每份单位数 >20，「200 字符进位」与「20 起价」两条规则从未触发，两条负控假绿，补长行样本与一份 12 单位小单后才会红。全部还原后逐文件 md5 与改前一致（step2 `9fdd960c…`／step3 `3ddf16a0…`／step4 `9a1253d7…`）。
+- **真浏览器复验**：Chromium 1440×900 三屏逐一点过——第 2 步点 RU 只剩三列（顶栏 22/67、待确认 178、已填格 9279/9514）；第 3 步点带 ⚠ 的 Adobe Gothic Std 出 `callout warn`「这套族里没有 Medium…回落成 Regular」且锁定读数一字未变（12pt/16pt/Medium/0）；第 4 步 144 格矩阵与 9424 积分、`144−2=142` 算式同屏。
+- **派活两件（写入面与本线划开）**：`总控/任务书_BILL-ROW-DERIVE-1_计费逐行推导明细_20261026.md` → 会话 `aae03b97`（计费系统）；`总控/任务书_ASSIST-LOG-DEAD-1_助手事件日志停写调查_20261026.md` → 会话 `0e24ae40`（本地助手调整），均 supervise 回执。**A 案（四处平行实现收口）自留**——它改的就是 `workbench-view.tsx`/`step1-stage-view.tsx`，同树两会话并发写会互相吞。
+- **给 Owner 的机制解**：把批准稿断言翻译成对真组件的守卫 `scripts/smoke-step1-mock-contract.mjs`（同夹具同状态机逐条 DOM 指纹），四步各一份接进 `test:contracts`，谁改界面必须同时改模拟件否则红；这一步不需要他拍口径。
+- **未核实／缺口**：模拟件数字是按真实语料形态造的样本（未从磁盘读）；`excluded` 接上后份数／报价／合并基准是否跟着变未测；批准稿那 74 条断言未逐条复跑；「三套口径合一」真代码能否合成一句未核实；扫描失败根因仍未核实。
+- **未做**：没动业务代码、没跑构建与门、没部署、没碰生产站与 `main`、没翻 flag（支付 flag 保持 false）、没删远端文件、没按镜像名杀进程。
+- **交付件**：`交付档案/审查报告/审查报告_20261026_批准稿即规格_四步界面契约对账.{md,html}`（飞书 SENT rc=0）。三账本轮增量约 9 KB（TASK_LOG 5.6／ledger 1 行／待投递指令 2.9）。
+
+## 2026-10-26 19:4x｜BILL-ROW-DERIVE-1 批量报价逐行推导明细（纯展示层，派工执行）
+
+- 目标：回应 Owner「改 37 行为什么收 67」——把「这一单为什么是这个数」摊成可展开的逐行推导表。已实算定案（签发会话）：67＝参与计价行数（快照 112−44 忽略−1 原文空）×每行 ≤200 字符＝1 标准行；37 是 PSD 文字图层对象数，不在计价轴上。
+- 前提核验（任务书坑 1 的停车条件**不成立**）：服务端报价回包本就带逐行单位（`quoteExecutionBatch` → `billingBreakdown.standardUnitsByRowToken/ByRowAndLanguage`，`src/lib/server/execution-batch.ts:251-256`）；展示点（预览区）用与该公式同构的 `buildBillingPreviewRows` 投影（既有 #85 架构，parity smoke 把守）。展示层全部复用 `src/lib/billing` 共享函数，**零新增计费算术**。
+- 修改（worktrees/develop，基于 48e72757）：
+  - 新增 `src/lib/workbench/billing/row-derivation.ts`：逐行推导投影——单位取 `computeRowLanguageStandardUnits`（服务端同入口）、字符按 `normalizeBillingText` 计费口径；原因分类 IGNORED/UNMATCHED/SOURCE_EMPTY/TARGET_EMPTY（全语言译文皆空的 INCLUDED 行由「单位全 0」推出）。
+  - `src/components/workbench/execute-step.tsx`：批量报价展开块内新增「逐行推导」二级展开——参与计价/不替换也不计费两组各带小计表（行号/原文字符/译文字符/计费字符/标准行/不计价原因），合计行直接渲染 `batchBillingPreview.totalStandardUnits`（与既有合计同一变量，结构上不可能出现两个数）。
+  - `src/lib/i18n/dict-en.json`：13 条新词条（纯文本追加，纯增量 13+/0−；首轮 JSON.parse→stringify 会合并文件里既有的两条重复键，已还原原字节改走文本追加）。
+  - 新增 `tests/unit/billing-row-derivation.test.ts`：6 用例——112=67+44+1 fixture、五列推导事实、TARGET_EMPTY（全空）/部分语言 0 单位、负控（200→201 字符 ⇒ 行 1→2 单位、合计 67→68）、与 `computeBatchLanguageBilling` 整批合计逐位相等。
+- 判据回执：vitest 6/6 rc=0；`npx tsc --noEmit` rc=0；`npm run test:batch-row-contract` rc=0；`npm run test:trust-chain` rc=0（表头微调后在最终文件状态重跑）；另跑 4 枚链外读 execute-step 的 smoke（batch-limits/entry-modes/timeout-messaging/workbench-guards）全 rc=0；`smoke-user-visible-copy` 49 断言 rc=0（新文案避开全部禁词）。
+- 未做与边界：未改任何计费算法/口径/结算闸/金额；未碰另一会话五文件（coverage-matrix.tsx 的在飞改动留在工作区未staged）；未浏览器实测渲染（需登录＋真实译表，风险低——纯展示且 tsc/单测覆盖数字正确性）；v2 BLOCKED 原因在本轴不产生（v3 对超长行是封顶不是拦截，batch-v3.ts #86(b)），表中不显示该类；交付金额轴与语言子集轴的合计一致性由「同一变量渲染」保证。
+
 ## 2026-10-26 19:0x 对抗式审查本会话全部结论：撤回两条诊断、修掉一个自指导、驳回一条误报（BATCH-GROUP-BIND）
 
 - **触发**：Owner「单个设计稿跟多个设计稿不会是两套系统吧？以上的全部内容你使用对抗式审查帮我看看」。基线钉 `worktrees/develop @ 3ae696f2`（工作树干净、`origin/develop` 同点，实测 `git status --porcelain | wc -l`=0）。

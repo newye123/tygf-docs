@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟件 · 批量台第 3 步：设计稿校对（单位＝图层）</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --sunk:#f0f2f4; --sunk2:#e9ecef;
+  --ink:#16181c; --ink2:#3a4049; --muted:#6b7280; --faint:#9aa1ab;
+  --line:#e2e5ea; --strong:#cbd1d8;
+  --accent:#1f5fd0; --accent-soft:#eaf0fb; --accent-line:#b9cdf3;
+  --ok:#0f7a4d; --ok-soft:#e7f4ed; --warn:#8a5a00; --warn-soft:#fbf2dd;
+  --bad:#ad2a20; --bad-soft:#fbeae8;
+  --row:30px; --r:7px;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161a20; --sunk:#1c2128; --sunk2:#232a33;
+    --ink:#e8ebf0; --ink2:#c3cad4; --muted:#8f98a5; --faint:#6f7885;
+    --line:#262d37; --strong:#3a4350;
+    --accent:#79a6ff; --accent-soft:#182437; --accent-line:#2f4a75;
+    --ok:#5ccf9b; --ok-soft:#12291f; --warn:#e0b64a; --warn-soft:#2a2210;
+    --bad:#ff8f82; --bad-soft:#2c1714;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.app{height:100vh;display:grid;grid-template-rows:44px 38px minmax(0,1fr) 30px}
+.topbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:12px;font-weight:700}
+.crumb{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--ink2);font-weight:600}
+.counters{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.counters b{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.counters .k{color:var(--muted)}
+.iconbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--muted);display:grid;place-items:center;font-size:12px}
+.iconbtn:hover{border-color:var(--strong);color:var(--ink)}
+
+.stepper{display:flex;align-items:center;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow:hidden}
+.stepper button{display:flex;align-items:center;gap:6px;padding:0 14px;height:38px;font-size:12.5px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.stepper button .n{width:16px;height:16px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:10px;font-family:var(--mono)}
+.stepper button[aria-current="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.stepper button[aria-current="true"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stepper button.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.stepper .sep{width:14px;height:1px;background:var(--line);flex:0 0 auto}
+
+.main{display:grid;grid-template-columns:262px minmax(0,1fr) 318px;min-height:0}
+.rail{min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--panel);border-right:1px solid var(--line)}
+.rail.right{border-right:0;border-left:1px solid var(--line)}
+.rail-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rail-head b{color:var(--ink2);font-weight:600}
+.rail-head .tag{margin-left:auto}
+.treegrp{padding:6px 10px;font-size:11px;color:var(--muted);background:var(--sunk);border-bottom:1px solid var(--line);font-family:var(--mono)}
+.lrow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+.lrow:hover{background:var(--sunk)}
+.lrow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.lrow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.lrow.t-warn .dot{background:var(--warn)}
+.lrow.t-bad .dot{background:var(--bad)}
+.lrow .nm{font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+.lrow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.lrow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.lrow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.lrow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.lrow.skip{opacity:.6}
+
+.stage{min-height:0;overflow:auto;padding:14px 16px 24px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--strong);border-radius:6px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+.scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px}
+.scope b{font-size:13.5px;font-weight:600}
+.scope .n{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--accent-line);border-radius:5px;padding:1px 6px;color:var(--accent)}
+.scope .sub{color:var(--ink2);font-size:12px}
+
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-t{font-size:13px;font-weight:600;margin:0;padding:11px 14px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card-s{font-size:11.5px;color:var(--muted);margin:3px 14px 9px}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--strong);color:var(--muted)}
+.badge.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.badge.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.badge.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.badge.lock{background:var(--sunk2);color:var(--ink2)}
+
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:7px;padding:10px 14px 12px}
+.ro{border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.ro .l{font-size:10.5px;color:var(--muted)}
+.ro .v{font-family:var(--mono);font-size:12.5px;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ro.locked{border-style:dashed;background:var(--sunk)}
+.ro.face{grid-column:1/-1}
+
+.kv{margin:0;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
+.kv>div{display:flex;gap:7px}
+.kv dt{width:78px;flex:none;color:var(--muted)}
+.kv dd{margin:0;min-width:0;flex:1;word-break:break-word}
+.langlist{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lg{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:5px 9px;border-bottom:1px solid var(--line);font-size:11.5px;text-align:left;width:100%}
+.lg:last-child{border-bottom:0}
+.lg:hover{background:var(--sunk)}
+.lg .cd{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.lg .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg.miss{background:var(--bad-soft)}
+.pad{padding:11px 14px;display:flex;flex-direction:column;gap:9px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;justify-content:center}
+.decision{font-size:11.5px;color:var(--ok);display:flex;gap:6px;align-items:center}
+.decision .undo{margin-left:auto;color:var(--muted);text-decoration:underline;font-size:11px}
+
+.exc{border-bottom:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+.exc.done{background:var(--panel)}
+.exc-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;line-height:1.45}
+.exc-head .no{font-family:var(--mono);font-size:10.5px;width:16px;height:16px;border-radius:4px;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;flex:0 0 auto}
+.exc.done .exc-head{font-weight:500;color:var(--muted)}
+.exc p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.exc .why{color:var(--muted);font-size:11px}
+.tell{border-bottom:1px solid var(--line);padding:9px 11px;font-size:11.5px;color:var(--ink2);display:flex;flex-direction:column;gap:3px}
+.tell b{font-size:12px}
+.tell .why{color:var(--muted);font-size:11px}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px}
+.callout b{display:block;margin-bottom:2px}
+.callout.grey{border-left-color:var(--strong);background:var(--sunk)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.nextbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.nextbar .hint{font-size:11.5px;color:var(--muted)}
+details.ev{border-top:1px solid var(--line)}
+details.ev summary{cursor:pointer;padding:8px 14px;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary::before{content:"▸";font-size:9px;color:var(--faint)}
+details.ev[open] summary::before{content:"▾"}
+.evbody{padding:2px 14px 12px;display:flex;flex-direction:column;gap:6px}
+.evbody .li{display:grid;grid-template-columns:74px 1fr;gap:8px;font-size:12px;color:var(--ink2)}
+.evbody .li b{color:var(--muted);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px;padding:0 14px 12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel)}
+.stat .v{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1.2}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--warn)}.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}
+
+.statusbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.statusbar .path{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.statusbar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+.statusbar b{color:var(--ink2);font-weight:600;font-family:var(--mono)}
+
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.42);display:none;place-items:center;padding:20px;z-index:50}
+.modal[data-open="true"]{display:grid}
+.sheet{width:min(680px,100%);max-height:82vh;overflow:auto;background:var(--panel);border:1px solid var(--strong);border-radius:12px;padding:18px 20px}
+.sheet h2{margin:0 0 10px;font-size:15px}
+.sheet h3{margin:14px 0 5px;font-size:12.5px;color:var(--ink2)}
+.sheet p,.sheet li{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.sheet ul{margin:0;padding-left:16px}
+.sheet .close{margin-top:16px}
+
+@media (max-width:1180px){ .main{grid-template-columns:230px minmax(0,1fr) 286px} }
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{height:auto;grid-template-rows:44px 38px auto auto}
+  .main{grid-template-columns:1fr}
+  .rail{max-height:min(42vh,300px);border-right:0;border-bottom:1px solid var(--line)}
+  .rail.right{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .statusbar{position:sticky;bottom:0}
+  .stepper button{padding:0 9px;font-size:11.5px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <span class="mark" aria-hidden="true">图</span>
+    <span class="brand">图译工坊 <span style="color:var(--faint);font-weight:400">/ 批量处理</span></span>
+    <span class="crumb">第 3 步 设计稿校对 · 单位是<b>图层</b> · <b id="crumbDraft">5857</b></span>
+    <div class="counters">
+      <span><span class="k">文字层</span> <b id="cLayers">0</b> 个</span>
+      <span><span class="k">对上行</span> <b id="cMatch">0</b></span>
+      <span><span class="k">要你看的</span> <b id="cPend">0</b> 处</span>
+    </div>
+    <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
+  </div>
+
+  <div class="stepper" role="tablist" aria-label="四步">
+    <button data-step="1" class="done"><span class="n">1</span>准备素材</button>
+    <span class="sep"></span>
+    <button data-step="2" class="done"><span class="n">2</span>智能检测</button>
+    <span class="sep"></span>
+    <button data-step="3" aria-current="true"><span class="n">3</span>设计稿校对</button>
+    <span class="sep"></span>
+    <button data-step="4" disabled title="先做完这一步"><span class="n">4</span>生成交付</button>
+  </div>
+
+  <div class="main">
+    <aside class="rail left" aria-label="图层树">
+      <div class="rail-head"><b>图层</b><span id="railCount">12 份稿</span><span class="tag mono" id="railTag">按层</span></div>
+      <div class="treegrp" id="treeGrp">5857 / 主图 / 文案组</div>
+      <div id="layerList"></div>
+    </aside>
+
+    <section class="stage" id="stage"></section>
+
+    <aside class="rail right" aria-label="要你看的与告知">
+      <div class="rail-head"><b>要你看的</b><span id="excLeft">—</span><span class="tag mono" id="excTag">—</span></div>
+      <div id="excList"></div>
+    </aside>
+  </div>
+
+  <div class="sr" aria-live="polite" id="announce"></div>
+
+  <div class="statusbar">
+    <span class="path">(B级)Amazon-5857-主副图-8-祝叶子.psb · 只读，写回前不会动原文件</span>
+    <span class="r" id="sbRight"></span>
+  </div>
+</div>
+
+<div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
+  <div class="sheet">
+    <h2>这是第 3 步的可玩件，不是截图</h2>
+    <p>接着第 2 步走：表已经合成、行已经确认。这一步只看一件事——<b>PSD 里每一个文字层，对上表的哪一行，会写进什么</b>。这里不谈「几份」，也不谈「表是怎么归来的」。</p>
+    <h3>为什么这一屏主角必须是「图层」</h3>
+    <p>今天第 3 步确实是按文字层渲染的（<span class="mono">workbench-view.tsx:5402-5726</span>，子件 <span class="mono">readiness-board.tsx</span> / <span class="mono">object-inspector.tsx:94</span>）。但产品名之前被我写错过，于是矩阵被塞进过第三步，第 1 步和第 3 步画成了同一张格子表。这一稿把矩阵挪去第 4 步，第三步只留图层。</p>
+    <h3>行数不等于层数（真的）</h3>
+    <ul>
+      <li>一行原文可以被<b>多个</b>文字层消费，计费字段就叫「这一行要写进几个对象」：<span class="mono">billing-preview.ts:18</span></li>
+      <li>「一个层对多行」「多图层认领同一组行」的裁决今天已有：<span class="mono">object-inspector.tsx:124-136</span></li>
+      <li>这一屏的夹具是 <b>67 行 ↔ 72 层</b>：4 行各被第二个层消费，另有 1 个层表里没有原文</li>
+    </ul>
+    <h3>只换字族、不动字号字重——现状说清楚</h3>
+    <ul>
+      <li>字号真的不会被动：<span class="mono">typography-profile.js:25-27</span> 把 <span class="mono">fontSize / size / horizontalScale / verticalScale</span> 列入锁定</li>
+      <li><b>但字重会掉</b>：选不到同档字族脸时回落 Regular（<span class="mono">typography-capabilities.ts:383-391</span>），而且这回落被 <span class="mono">scripts/smoke-typography-picker.mjs:119</span> 钉成了既定行为</li>
+      <li>按族改写的模块<b>零个生产调用者</b>：全仓只有两个开发期脚本引用它；排版面板现在<b>只按语言</b>存（<span class="mono">typography-persistence.ts:156</span>），面板里没有 layerId 命中</li>
+      <li>所以「逐层保留字重」不是改一行代码，是要把排版通道从<b>按语言</b>改成<b>按层</b>——这是提案，画在下面那一屏里，等你点头再动</li>
+    </ul>
+    <h3>不会发生的事</h3>
+    <p>不连 Photoshop、不碰你的文件、不报价（第 4 步）。数字都从状态派生，刷新即重置。</p>
+    <button class="btn close" data-act="info-close">知道了</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═════════ 与第 1/2 步同一套夹具 ═════════ */
+const LANGS = [
+  {code:'ES',zh:'西班牙语'},{code:'FR',zh:'法语'},{code:'ID',zh:'印度尼西亚语'},{code:'IT',zh:'意大利语'},
+  {code:'JP',zh:'日语'},{code:'MS',zh:'马来语'},{code:'NL',zh:'荷兰语'},{code:'PL',zh:'波兰语'},
+  {code:'RU',zh:'俄语'},{code:'TH',zh:'泰语'},{code:'TL',zh:'菲律宾语'},{code:'VI',zh:'越南语'},
+];
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521'];
+const ROWS = 67;
+const STOP_LANG = { '6896':['VI'], '5660':['ID'] };
+const hasLang = (sku,l) => !(STOP_LANG[sku]||[]).includes(l);
+const cellEmpty = (sku,i,l) => ((SKUS.indexOf(sku)+1)*7 + i*11 + LANGS.findIndex(x=>x.code===l)*13) % 97 === 0 && hasLang(sku,l);
+const srcEmpty  = (sku,i)   => ((SKUS.indexOf(sku)+1)*13 + i*17) % 251 === 0;
+const cellSame  = (sku,i,l) => hasLang(sku,l) && !cellEmpty(sku,i,l) && ((SKUS.indexOf(sku)+1)*5 + i*3 + LANGS.findIndex(x=>x.code===l)*2) % 103 === 0;
+const cellUsable= (sku,i,l) => hasLang(sku,l) && !srcEmpty(sku,i) && !cellEmpty(sku,i,l) && !cellSame(sku,i,l);
+
+/* ═════════ 图层模型：67 行 ↔ 72 层 ═════════ */
+const FACE = {
+  'PingFang SC':{ Regular:'PingFangSC-Regular', Medium:'PingFangSC-Medium', Semibold:'PingFangSC-Semibold' },
+  'Source Han Sans SC':{ Regular:'SourceHanSansSC-Regular', Medium:'SourceHanSansSC-Medium', Bold:'SourceHanSansSC-Bold' },
+  'Adobe Gothic Std':{ Regular:'AdobeGothicStd-Bold' },
+  'Microsoft YaHei':{ Regular:'MicrosoftYaHei', Bold:'MicrosoftYaHei-Bold' },
+  'HarmonyOS Sans SC':{ Regular:'HarmonyOSSansSC-Regular', Bold:'HarmonyOSSansSC-Bold' },
+};
+const FAMILIES = Object.keys(FACE);
+function layerModel(){
+  const out = [];
+  for (let row=0; row<ROWS; row++){
+    out.push({ row, second:false, kind:'text' });
+    if (row<4) out.push({ row, second:true, kind:'text' });   // 4 行各被第二个层消费
+  }
+  out.push({ row:null, second:false, kind:'text' });          // 1 层表里没有原文
+  out.push({ row:8,  second:false, kind:'smart' });           // 智能对象里的文字
+  out.push({ row:23, second:false, kind:'raster' });          // 已栅格化
+  return out;
+}
+const LAYERS = layerModel();
+const layerName = (i)=>`文字层-${String(i+1).padStart(2,'0')}`;
+function layerStyle(i){
+  const fam = FAMILIES[i%FAMILIES.length];
+  const tiers = Object.keys(FACE[fam]);
+  const weight = tiers[i%tiers.length];
+  return {
+    family: fam, weight,
+    face: FACE[fam][weight],
+    size: [11,12,14,16,18,20,24,28,32,36][i%10],
+    leading: [14,16,18,22,26,30,34,40,44,48][i%10],
+    track: (i%3)-1,
+  };
+}
+const tierRank = { Regular:0, Medium:1, Semibold:2, Bold:3 };
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  active:'5857',
+  activeLayer:0,
+  familyTarget:{},      // layerIndex -> 目标字族（人点的）
+  resolved:{},          // layerIndex -> 'skip' | 'manual'（对不上的层的处置）
+  clicks:0,
+};
+const keyOf = (i)=>`${S.active}/${i}`;
+
+function familyMissing(idx, fam){
+  const cur = layerStyle(idx);
+  const tiers = FACE[fam] || {};
+  return !tiers[cur.weight];
+}
+/* 要人看的＝对不上原文的文字层（还没处置的）。栅格化与智能对象属告知，不拦人。 */
+function pendingLayers(sku){
+  return LAYERS.reduce((n,l,idx)=>{
+    if (l.kind!=='text' || l.row!==null) return n;
+    return S.resolved[`${sku}/${idx}`] ? n : n+1;
+  },0);
+}
+const contested = () => LAYERS.filter(l=>l.second).length;      // 4 行被第二个层消费
+const usedRows  = () => new Set(LAYERS.filter(l=>l.row!==null && l.kind==='text').map(l=>l.row)).size;
+const textLayers= () => LAYERS.filter(l=>l.kind==='text').length;
+
+/* ═════════ 顶部计数 ═════════ */
+function renderCounters(){
+  document.getElementById('cLayers').textContent = textLayers();
+  document.getElementById('cMatch').textContent  = textLayers() - LAYERS.filter(l=>l.kind==='text'&&l.row===null).length;
+  document.getElementById('cPend').textContent   = pendingLayers(S.active);
+  document.getElementById('crumbDraft').textContent = S.active;
+  document.getElementById('railCount').textContent = `${SKUS.length} 份稿`;
+  document.getElementById('railTag').textContent = `${textLayers()} 层 · ${usedRows()} 行`;
+  const pend = pendingLayers(S.active);
+  document.getElementById('excLeft').textContent = pend ? `${pend} 处` : '没有要看的';
+  document.getElementById('excTag').textContent  = `争夺 ${contested()}`;
+  document.getElementById('sbRight').innerHTML =
+    `<span>本稿 <b>${textLayers()}</b> 层 · 表里 <b>${ROWS}</b> 行 · 只换字族 <b>${Object.keys(S.familyTarget).length}</b> 层</span>`;
+}
+
+/* ═════════ 左栏：图层树 ═════════ */
+function renderLayers(){
+  document.getElementById('treeGrp').textContent = `${S.active} / 主图 / 文案组`;
+  document.getElementById('layerList').innerHTML = LAYERS.map((l,idx)=>{
+    const st = layerStyle(idx);
+    let tone='t-ok', pillTxt;
+    if (l.kind==='raster'){ tone='t-bad'; pillTxt='已栅格化' }
+    else if (l.kind==='smart'){ tone='t-warn'; pillTxt='智能对象' }
+    else if (l.row===null){ tone='t-warn'; pillTxt='表里没有' }
+    else pillTxt = l.second ? `第 ${l.row+1} 行 · 第2个层` : `第 ${l.row+1} 行`;
+    const skipped = S.resolved[keyOf(idx)]==='skip';
+    return `<button class="lrow ${skipped?'skip ':''}${tone}" data-act="pick-layer" data-idx="${idx}" aria-current="${String(idx===S.activeLayer)}" title="${layerName(idx)} · ${st.family} ${st.weight}">
+      <span class="dot"></span>
+      <span><span class="nm">${layerName(idx)}</span><span class="sub">${st.family} ${st.weight} · ${st.size}pt</span></span>
+      <span class="pill">${skipped?'已跳过':pillTxt}</span>
+    </button>`;
+  }).join('');
+}
+
+/* ═════════ 中栏：这一层的读数与写入 ═════════ */
+function writePreview(idx){
+  const l = LAYERS[idx];
+  if (l.kind!=='text') return '';
+  const target = S.familyTarget[keyOf(idx)];
+  return LANGS.map(lang=>{
+    const usable = l.row===null ? false : cellUsable(S.active, l.row, lang.code);
+    const miss = l.row===null ? '表里没有原文'
+      : srcEmpty(S.active,l.row) ? '原文这一格为空'
+      : cellEmpty(S.active,l.row,lang.code) ? '这一门没有可用译文'
+      : cellSame(S.active,l.row,lang.code) ? '译文＝原文（第 2 步你已确认）'
+      : null;
+    return `<button class="lg ${usable?'':'miss'}" data-act="lang-none" ${usable?'':'aria-disabled="true"'}>
+      <span class="cd">${lang.code}</span>
+      <span class="tx">${usable?esc(`${sample(lang.code,l.row)}${target?` · ${target}`:''}`):esc(miss)}</span>
+      ${usable?'<span class="badge ok">会写入</span>':'<span class="badge">跳过</span>'}
+    </button>`;
+  }).join('');
+}
+function sample(code,i){
+  const m = {ES:'Texto',FR:'Texte',ID:'Teks',IT:'Testo',JP:'翻訳',MS:'Teks',NL:'Tekst',PL:'Tekst',RU:'Текст',TH:'ข้อความ',TL:'Teksto',VI:'Văn bản'};
+  return `${m[code]||code} ${i+1}`;
+}
+function familyPicker(idx){
+  const cur = layerStyle(idx);
+  return FAMILIES.map(f=>{
+    const miss = familyMissing(idx,f);
+    const on = (S.familyTarget[keyOf(idx)]||cur.family)===f;
+    return `<button class="btn sm" data-act="set-family" data-idx="${idx}" data-family="${esc(f)}" aria-pressed="${String(on)}" title="${miss?`这套族里没有 ${cur.weight}，今天会回落成 Regular`:'同档齐全'}">${esc(f)}${miss?' ⚠':''}</button>`;
+  }).join('');
+}
+function renderStage(){
+  const idx = S.activeLayer, l = LAYERS[idx], st = layerStyle(idx);
+  const target = S.familyTarget[keyOf(idx)];
+  const miss = target ? familyMissing(idx,target) : false;
+  const sameRow = LAYERS.filter(x=>x.row===l.row && x.kind==='text');
+  const dec = S.resolved[keyOf(idx)];
+  document.getElementById('stage').innerHTML = `
+    <div class="scope">
+      <b>${S.active} · 主副图</b>
+      <span class="n">${textLayers()} 层</span>
+      <span class="n">${usedRows()} 行</span>
+      <span class="sub">这一屏只看层。行在第 2 步已确认，份在第 4 步才算。</span>
+    </div>
+    <div class="card">
+      <p class="card-t">${layerName(idx)} <span class="badge ${l.kind==='text'?(l.row===null?'warn':'ok'):(l.kind==='smart'?'warn':'bad')}">${l.kind==='text'?(l.row===null?'表里没有原文':`对上第 ${l.row+1} 行`):(l.kind==='smart'?'智能对象':'已栅格化')}</span></p>
+      <p class="card-s">${l.kind==='text'
+        ? l.row===null ? '这一层在设计稿里有文字，但表里没有和它逐字相等的原文——匹配是<b>原文逐字相等</b>，不做模糊猜。'
+        : `对上表第 ${l.row+1} 行；<b>这一行会写进 ${sameRow.length} 个层</b>${sameRow.length>1?'（这就是行数≠层数）':''}。`
+        : l.kind==='smart' ? '文字在智能对象内部，写回要先进对象——今天这类层不改，界面如实标出来。'
+        : '这一层已经是位图，没有可写文字——今天这类层不改，界面如实标出来。'}</p>
+      <div class="readout">
+        <div class="ro face"><div class="l">现在的字族／字重（PostScript 脸名才是 Photoshop 认的那个）</div><div class="v">${esc(st.face)}</div></div>
+        <div class="ro locked"><div class="l">字号 <span class="badge lock">锁</span></div><div class="v">${st.size} pt</div></div>
+        <div class="ro locked"><div class="l">行距 <span class="badge lock">锁</span></div><div class="v">${st.leading} pt</div></div>
+        <div class="ro locked"><div class="l">字重 <span class="badge lock">锁</span></div><div class="v">${st.weight}</div></div>
+        <div class="ro locked"><div class="l">字距 <span class="badge lock">锁</span></div><div class="v">${st.track} /1000</div></div>
+      </div>
+      <div class="pad">
+        <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <b style="font-size:12.5px">只换字族</b>
+          <span class="note" style="font-size:11.5px;color:var(--muted)">点一套族，只改脸名；字号行距字重一律不动。</span>
+        </div>
+        <div class="acts">${familyPicker(idx)}</div>
+        ${target?`<div class="callout ${miss?'warn':'grey'}" style="margin:0">
+          <b>${target}${miss?'  ⚠ 这套族里没有 '+st.weight:''}</b>
+          ${miss
+            ? `今天会发生的事：<b>回落成 Regular</b>，字重就丢了（<span class="mono">typography-capabilities.ts:383-391</span>，且 <span class="mono">smoke-typography-picker.mjs:119</span> 把这回落钉成了既定行为）。<br>提案：这一层保留 <b>${st.weight}</b>，缺档时用伪粗体或换一套同档族，而不是默默降字重——这需要把排版通道从「按语言」改成「按层」（<span class="mono">typography-persistence.ts:156</span>）。`
+            : `同档齐全，写回 ${st.face.replace(/-(\w+)$/,'-'+st.weight)}，字号与字重不变。`}
+        </div>`:''}
+      </div>
+      ${target?`<details class="ev" open><summary>这一层的写入计划（1 条）</summary><div class="evbody">
+        <div class="li"><b>写什么</b><span>脸名换成 ${esc(target)} 的 ${st.weight} 档；字号 ${st.size}pt、行距 ${st.leading}pt、字重 ${st.weight} 全部不动。</span></div>
+      </div></details>`:''}
+    </div>
+    ${l.kind==='text'?`<div class="card">
+      <p class="card-t">这一层 12 门各自会写什么 <span class="badge">${LANGS.filter(x=>l.row!==null && cellUsable(S.active,l.row,x.code)).length} / 12 门可写</span></p>
+      <p class="card-s">不可写的格子标出来但不拦你——缺的行在第 2 步已经处置，这里不重复问。</p>
+      <div class="langlist">${writePreview(idx)}</div>
+    </div>`:''}
+    ${l.row===null?`<div class="card"><div class="pad">
+      <b style="font-size:12.5px">这一层要对不上，两条路</b>
+      <p class="card-s" style="margin:2px 0 8px;padding:0">它不写任何译文，也不会因此卡住别的层——这是今天已有的行为（<span class="mono">object-inspector.tsx</span> 的匹配与跳过）。</p>
+      ${dec?`<div class="decision">已选：${dec==='skip'?'这一层本批不动':'手工指到某一行'}<button class="undo" data-act="undo-resolve" data-idx="${idx}">撤销</button></div>`:`
+      <div class="acts">
+        <button class="btn sm primary" data-act="resolve" data-idx="${idx}" data-kind="skip">这一层本批不动</button>
+        <button class="btn sm" data-act="resolve" data-idx="${idx}" data-kind="manual">我知道它该对第几行，手工指</button>
+      </div>`}
+    </div></div>`:''}
+    <div class="nextbar">
+      <button class="btn primary" data-act="next" ${pendingLayers(S.active)>0?'disabled':''}>${pendingLayers(S.active)>0?`还有 ${pendingLayers(S.active)} 处要看的`:'下一步：生成交付'}</button>
+      <span class="hint">${pendingLayers(S.active)>0?'对不上的层处置完才放行；只换字族不算处置，它随时可撤':'这一稿层都看完了。'}</span>
+    </div>`;
+}
+
+/* ═════════ 右栏：要看的＋告知 ═════════ */
+function renderExc(){
+  const sku = S.active;
+  const un = LAYERS.map((l,i)=>({l,i})).filter(x=>x.l.kind==='text' && x.l.row===null);
+  const smart = LAYERS.map((l,i)=>({l,i})).filter(x=>x.l.kind==='smart');
+  const raster= LAYERS.map((l,i)=>({l,i})).filter(x=>x.l.kind==='raster');
+  const sec = LAYERS.map((l,i)=>({l,i})).filter(x=>x.l.second);
+  const cards = [];
+  un.forEach(({l,i})=>{
+    const done = Boolean(S.resolved[keyOf(i)]);
+    cards.push(`<div class="exc ${done?'done':''}" data-exc="unmatched-${i}">
+      <div class="exc-head"><span class="no">1</span>${layerName(i)} 表里没有原文</div>
+      <p>它不参与写入，也不会拖住别的层。处置一下我就把它记进这一稿的说明里。</p>
+      ${done?`<div class="decision">已处置<button class="undo" data-act="jump-layer" data-idx="${i}">改</button></div>`
+            :`<div class="acts"><button class="btn sm" data-act="jump-layer" data-idx="${i}">看这一层</button><button class="btn sm primary" data-act="resolve" data-idx="${i}" data-kind="skip">本批不动</button></div>`}
+    </div>`);
+  });
+  cards.push(`<div class="tell"><b>争夺：${sec.length} 行各有 2 个层认领</b>
+    <p style="margin:0">同一行会被写进多个文字层（计费里那叫「这一行要写进几个对象」，<span class="mono">billing-preview.ts:18</span>）。裁决今天已有：<span class="mono">object-inspector.tsx:124-136</span>。</p>
+    <p class="why">这里不重复问，只让你看见；点进去能跳到那第二个层。</p>
+    <span><button class="link" data-act="jump-layer" data-idx="${LAYERS.findIndex(x=>x.second)}">跳到第 1 个「第二个层」</button></span></div>`);
+  cards.push(`<div class="tell"><b>不进写回的层：${smart.length} 智能对象 · ${raster.length} 已栅格化</b>
+    <p style="margin:0">这两类今天就不改，界面如实标出来就停在这里——不给你"要不要试一下"的假选择。</p>
+    <span><button class="link" data-act="jump-layer" data-idx="${LAYERS.findIndex(x=>x.kind==='raster')}">看那个已栅格化的层</button></span></div>`);
+  cards.push(`<div class="tell"><b>缺的行不在这里问</b>
+    <p style="margin:0">哪一行哪一门没译文，第 2 步已经处置完；这一屏只把它翻译成「这一层会不会写」。</p>
+    <p class="why">告知只有三类：栅格化、智能对象、对不上的层——和现在产品定下来的一样，不加新的告知项。</p></div>`);
+  document.getElementById('excList').innerHTML = cards.join('');
+}
+
+function render(){ renderCounters(); renderLayers(); renderStage(); renderExc(); }
+const esc = (s)=>String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.addEventListener('click',(e)=>{
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act==='pick-layer'){ S.activeLayer=Number(b.dataset.idx); render(); return }
+  if (act==='jump-layer'){ S.activeLayer=Number(b.dataset.idx); render(); announce(`已跳到 ${layerName(S.activeLayer)}`); return }
+  if (act==='set-family'){
+    const i=Number(b.dataset.idx), f=b.dataset.family;
+    const cur = layerStyle(i).family;
+    if (f===cur) delete S.familyTarget[keyOf(i)]; else S.familyTarget[keyOf(i)]=f;
+    S.clicks++; render(); return
+  }
+  if (act==='resolve'){ S.resolved[keyOf(Number(b.dataset.idx))]=b.dataset.kind; S.clicks++; render(); return }
+  if (act==='undo-resolve'){ delete S.resolved[keyOf(Number(b.dataset.idx))]; render(); return }
+  if (act==='next'){ announce('可玩件到第 3 步为止：第 4 步是另一份模拟件'); return }
+  if (act==='info'){ document.getElementById('info').dataset.open='true'; return }
+  if (act==='info-close'){ document.getElementById('info').dataset.open='false'; return }
+});
+document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') document.getElementById('info').dataset.open='false' });
+function announce(t){ document.getElementById('announce').textContent=t }
+window.__sim = { S, LAYERS, LANGS, SKUS, ROWS, FAMILIES, FACE, layerModel, layerStyle, familyMissing, pendingLayers, contested, usedRows, textLayers, cellUsable, cellEmpty, srcEmpty, cellSame, hasLang, render, keyOf };
+render();
+</script>
+</body>
+</html>
