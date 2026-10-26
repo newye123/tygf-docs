@@ -322,6 +322,10 @@ table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bo
     <span class="mark" aria-hidden="true">图</span>
     <span class="brand">图译工坊 <small>/ 批量处理</small></span>
     <span class="crumb">一个文件夹 · <b id="crumbDrafts">12 份稿</b> · <b id="crumbStep">第 1 步 准备素材</b></span>
+    <div class="seg" role="group" aria-label="对照：今天 vs 改完之后">
+      <button data-act="mode" data-mode="today" aria-pressed="false">今天的真工作台</button>
+      <button data-act="mode" data-mode="after" aria-pressed="true">改完之后</button>
+    </div>
     <div class="counters" id="counters"></div>
     <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
   </div>
@@ -358,8 +362,11 @@ table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bo
     <ul>
       <li>① <b>没确认完全部语言时，整屏只有一句灰字</b>：「确认全部语言译文后开放与设计稿对账」（<span class="mono">workbench-view.tsx:5722-5724</span>，开关 <span class="mono">workbench-machine.ts:42</span>）。</li>
       <li>② <b>一切就绪时它会自动跳走到第 4 步</b>，你根本停不住（<span class="mono">workbench-view.tsx:3969-3978</span>）。这一件我在这屏放了开关，默认关掉自动跳，让你看清它本来有什么。</li>
-      <li>③ 顺带一条：那个「重新检测」按钮<b>不重跑检测</b>，实为跳回第 1 步（<span class="mono">workbench-view.tsx:4179-4185</span>）。</li>
+      <li>③ 更正一条我上一版写错的话：那个按钮现在叫「<b>重新扫描</b>」（<span class="mono">terms.ts:78</span>），点它回到第 1 步重新扫描设计稿，语义一致，<b>不是错标</b>（<span class="mono">workbench-view.tsx:4179-4185</span>）。</li>
     </ul>
+    <h3>顶栏那两颗按钮是什么</h3>
+    <p>「<b>今天的真工作台</b>」＝按当前代码复原的今天（块序、文案、门的开合，每条带 <span class="mono">file:line</span>）。「<b>改完之后</b>」＝本会话要改成的样子。两侧用同一套数据，所以在任一步切过去，数字指的是同一批稿。</p>
+    <p>为什么「今天」这一侧不是截图：抓取用的浏览器是独立配置，没有你 Chrome 里的登录 cookie，本机打开只到「请先登录图译工坊」（<span class="mono">account-gate.tsx:170</span>）。所以它按代码复原，请你对着自己发来的 4 张截图看。</p>
     <h3>哪些是真的，哪些是我提的</h3>
     <p>真的：四步名与顺序（<span class="mono">terms.ts:26-31</span>）、第 3 步的块序与门（上面那些行号）、按 SKU 与交付物归组、多表单语言合并引擎、逐行报价公式（<span class="mono">billing/rules.ts:119-122</span>）、一行可被多个文字层消费（<span class="mono">billing-preview.ts:18</span>）。提的：第 1 步那 14 条交互契约补齐、第 2 步默认不拦人、第 4 步七处 UIUX、第 3 步撤掉自动跳走。</p>
     <p><b>一个字不改</b>：执行链、报价口径、结算闸、助手协议、行身份。</p>
@@ -387,6 +394,7 @@ const hasLang=(s,l)=>!isMiss(s,l);
 /* ═════════ 状态 ═════════ */
 const S = {
   step:1,
+  mode:'after',
   /* 第 1 步 */
   phase:'idle', scanIdx:-1, active:'5857',
   excluded:{}, dupPick:null, missPolicy:null, badPolicy:null, orphan:'unknown',
@@ -549,7 +557,7 @@ function stepHint(n){
 }
 function renderStepper(){
   document.getElementById('stepper').innerHTML = STEP_NAMES.map(([n,name,unit],i)=>{
-    const step=i+1, unlocked=stepUnlocked(step);
+    const step=i+1, unlocked=S.mode==='today'?true:stepUnlocked(step);
     const done = step===1 ? (S.phase==='ready'&&pendingTotal()===0)
       : step===2 ? allLanguagesReviewed() && S.step>2
       : step===3 ? reconcileComplete() && S.step>3 : false;
@@ -557,9 +565,10 @@ function renderStepper(){
       `<button data-act="goto" data-step="${step}" ${unlocked?'':'disabled'} aria-current="${String(S.step===step)}" title="${stepHint(step)||('这一屏只管'+unit)}"><span class="n${done?' ok':''}">${done?'✓':n}</span>${name}</button>`;
   }).join('') + `<span class="gate" id="gateHint"></span>`;
   const g=document.getElementById('gateHint');
-  g.textContent = stepHint(S.step) || (S.step===3 && !reconcileOpen() ? '' : `单位＝${STEP_NAMES[S.step-1][2]}`);
+  g.textContent = S.mode==='today' ? '今天这一侧：步骤自由切换，门开没开写在正文里' : (stepHint(S.step) || (S.step===3 && !reconcileOpen() ? '' : `单位＝${STEP_NAMES[S.step-1][2]}`));
 }
 function renderCounters(){
+  if (S.mode==='today') return todayCounters();
   const box=document.getElementById('counters');
   const bits=[];
   if (S.step===1){
@@ -588,6 +597,7 @@ function renderCounters(){
     : `<span>当前稿 <b>${S.active}</b></span>`;
 }
 function renderLeft(){
+  if (S.mode==='today') return todayLeft();
   const rail=document.getElementById('railLeft');
   const head=(b,t,tag)=>`<div class="rail-head"><b>${b}</b><span>${t}</span><span class="tag mono">${tag}</span></div>`;
   const rows=SKUS.map(sku=>{
@@ -602,6 +612,7 @@ function renderLeft(){
   rail.innerHTML = head(S.step===3?'图层':'稿', S.step===3?`${SKUS.length} 份稿`:`${SKUS.length} 份 · 全部主副图`, S.step===3?`${textLayers()} 层 · ${rowsUsed()} 行`:'按'+['文件','行','图层','份'][S.step-1]) + rows;
 }
 function renderRight(){
+  if (S.mode==='today') return todayRight();
   const rail=document.getElementById('railRight');
   if (S.step===1) rail.innerHTML=`<div class="rail-head"><b>要你定的</b><span>${pendingTotal()?pendingTotal()+' 件':'都处置完了'}</span><span class="tag mono">${4-pendingTotal()}/4</span></div><div id="excList">${excHTML()}</div>`;
   else if (S.step===2) rail.innerHTML=`<div class="rail-head"><b>结论</b><span>${S.confirmMode==='auto'?'一句告知':'待你确认'}</span><span class="tag mono">${S.confirmMode==='auto'?'不拦人':pendingTotal2()+' 件'}</span></div><div id="excList">${conclHTML()}</div>`;
@@ -770,7 +781,7 @@ function renderStep3(){
     ${blocked?'':`<div class="callout ok"><b>已全部对齐</b>${textLayers()} 个文字层都对上了行，没有要你处理的东西。今天真界面在这里就只剩这一句统计（<span class="mono">workbench-view.tsx:5630-5633</span>）。</div>`}
     <div class="callout warn"><b>这一屏有两个地方让你觉得"没起作用"，都是真的</b>
       ① 门没开时整屏只有一句灰字（上面那个状态）。② 一切就绪时 <span class="mono">workbench-view.tsx:3969-3978</span> 会<b>自动跳走到第 4 步</b>，你来不及看——本件默认关掉自动跳，你可以停在这里。<br>
-      ③ 另外那个「重新检测」按钮<b>不重跑检测</b>，实为跳回第 1 步（<span class="mono">workbench-view.tsx:4179-4185</span>）。</div>
+      ③ <b>更正上一版我写错的一条</b>：那个按钮现在叫「重新扫描」（<span class="mono">terms.ts:78</span>），点它是回第 1 步重新扫描设计稿，语义一致，<b>不是错标</b>（<span class="mono">workbench-view.tsx:4179-4185</span>）。</div>
     <div class="card"><p class="card-t">差集确认 <span class="badge ok">0 项</span></p><p class="card-s">表里有原文、稿里没有对应层的行——今天这一项为 0 时整块不显示（<span class="mono">:5424-5461</span> 的条件门）。</p></div>
     <div class="card"><p class="card-t">要你决定 <span class="badge ok">0 项</span></p><p class="card-s">原文变化、重复文案、无效目标三类；全为 0 时这块也不显示（<span class="mono">:1182-1186</span>）。这就是"多数时候这一屏是空的"的第二层原因。</p></div>
     <div class="card"><p class="card-t">版式需复核 <span class="badge warn">8 行译文偏长</span></p><p class="card-s">偏长不拦你：不写坏行，但第 3 步之后要看一眼排版。今天这块有内容时才出现（<span class="mono">:5517-5538</span>）。</p></div>
@@ -909,9 +920,271 @@ function tick(){
   step();
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   对照面 A：今天的真工作台
+   证据口径：文案、块序、门的开合逐条取自当前代码（每条右侧标 file:line），
+   叠加 Owner 2026-10-26 发来的 4 张真界面截图核对。
+   **不是运行中的截图**：抓取用的浏览器是独立配置，没有 Owner Chrome 里的
+   登录 cookie，本机 dev 打开只到「请先登录图译工坊」（account-gate.tsx:170）。
+   ═══════════════════════════════════════════════════════════════════ */
+const TODAY_N = {
+  drafts: SKUS.length,        // 12 份稿
+  slots: SKUS.length * LANGS.length, // 144 个格位（一份稿 × 一门语言）
+  tables: 143,                // 144 个格位里有 143 张表（缺 VI 那张），另有 1 张孤表
+  boundToday: SKUS.length,    // 今天一稿只绑一张表 ⇒ 12 格
+};
+const todayCredit = (sku) => (DERIVE[key(sku, 'ES')] || {}).credits || 0;
+const todayUnits = (sku) => (DERIVE[key(sku, 'ES')] || {}).units || 0;
+const todayCreditsAll = () => SKUS.reduce((n, s) => n + todayCredit(s), 0);
+const todayUnitsAll = () => SKUS.reduce((n, s) => n + todayUnits(s), 0);
+
+function todayBanner(step) {
+  return `<div class="callout warn"><b>这一屏是「今天」的真界面，按代码复原——不是截图</b>
+    <p class="note" style="margin:2px 0 0">块序、文案、门的开合逐条取自当前代码，每条右侧标了 <span class="mono">file:line</span>。真机 DOM 这次没取到：抓取用的浏览器是独立配置，没有你 Chrome 里的登录 cookie，本机打开只到「请先登录图译工坊」（<span class="mono">account-gate.tsx:170</span>）。请拿你发我的 4 张截图对着看；哪一块排得不像，告诉我，我按截图改。</p></div>`;
+}
+function srcTag(s) { return `<span class="tag mono" style="margin-left:auto">${s}</span>`; }
+
+/* ───── 今天 · 第 1 步 ───── */
+function todayStep1() {
+  const stage = document.getElementById('stage');
+  const rows = SKUS.map((sku, i) => {
+    const lang = CODES[i % CODES.length];
+    const dup = sku === EX.dup.sku;
+    return `<div class="drow t-ok" style="cursor:default">
+      <span class="dot"></span>
+      <span><span class="sku">${sku} · 主副图</span><span class="sub">已绑 1 张：${lang} ${zhOf(lang)}-${sku}.xlsx${dup ? '（同门还有一张，今天必须二选一）' : ''}</span></span>
+      <span class="pill">1 张表</span></div>`;
+  }).join('');
+  stage.innerHTML = `<div class="stack">
+    ${todayBanner(1)}
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <p class="card-t" style="margin:0">设计文件准备 ${srcTag('step1-stage-view.tsx')}</p>
+        <div class="row" style="gap:6px">
+          <button class="btn sm" data-act="today-noop">全部扫描（按顺序）</button>
+          <button class="btn sm" data-act="today-noop">读全部表头</button>
+        </div>
+      </div>
+      <p class="card-s">左边选一份稿，这里显示它的一整组语言表。这两颗按钮只扫文件名与表头，不读译文。</p>
+      <div class="stats">
+        ${[['12', '设计稿'], ['12', '语种（全批并集）'], ['12', '本批要做的交付物'], ['11', '就绪格'], ['1', '待检查格'], ['0', '有问题格'], ['0', '读表失败表数'], ['12', '矩阵格数']]
+          .map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}
+      </div>
+      <p class="note" style="padding:0 14px 12px">这 8 张卡就是今天的全部概览（<span class="mono">step1-stage-view.tsx:522-577</span>）。注意「矩阵格数 12」：一稿只绑一张表，所以是 12 格，不是 144。</p>
+    </div>
+
+    <div class="card">
+      <p class="card-t">稿 → 表：今天一稿只能有一张表 ${srcTag('workbench-view.tsx:3119')}</p>
+      <p class="card-s">你把一个文件夹扔进来，里面有 143 张单语言表。今天系统只会给你一稿配一张，剩下的表要你自己再绑——或者手工把 12 张合成一张。</p>
+      <div class="dlist">${rows}</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card plain">
+        <p class="card-t">读表：一次只排 12 张</p>
+        <pre>文件夹里 144 个格位 · 143 张表
+一次读表请求最多 12 张（table-inventory.ts:233-237）
+客户端表头探测硬上限 12 张（local-assistant-client.ts:1413-1414）
+⇒ 要读完这一组，得排 12 轮</pre>
+        <p class="note" style="margin-top:6px">今天没有「读齐了再进下一步」这道闸：读失败的格子只是显示成待检查。</p>
+      </div>
+      <div class="card plain">
+        <p class="card-t">抽屉里的绿灯说早了</p>
+        <p class="note">抽屉会显示「这一份就绪」，但它成立的条件只是这一份绑上了<b>一张</b>表——另外 11 门没有表也算就绪（<span class="mono">step1-stage-view.tsx:1300-1313</span>）。</p>
+        <div class="callout grey" style="margin:8px 0 0"><b>你今天的实际代价</b>
+          什么都不额外做 → 可交 <b>12 份</b>（12 稿 × 1 门）。<br>
+          要交满 144 份 → 得逐稿把 12 张表手工合成一张，12 份稿就是 12 轮，每轮 12 张。</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ───── 今天 · 第 2 步 ───── */
+function todayStep2() {
+  const stage = document.getElementById('stage');
+  const sku = S.active;
+  const bad = problemRows(sku).length;
+  const need = autoHandled(sku);
+  const tabs = CODES.map(c => `<button class="tb" data-act="today-lang" data-lang="${c}" aria-pressed="false">${c}</button>`).join('');
+  const rowsHTML = Array.from({ length: 12 }, (_, i) => {
+    const idx = (i * 5) % ROWS;
+    const iss = rowIssues(sku, idx);
+    const kind = iss.includes('empty') ? '缺译' : iss.includes('same') ? '译文＝原文' : '过长';
+    return `<div class="li"><b>第 ${idx + 1} 行 · ${kind}</b><span>${esc(srcText(idx))}</span>
+      <span class="row" style="gap:4px"><button class="btn sm" data-act="today-noop">保留原文</button><button class="btn sm" data-act="today-noop">跳过</button><button class="btn sm" data-act="today-noop">改译文</button></span></div>`;
+  }).join('');
+  stage.innerHTML = `<div class="stack">
+    ${todayBanner(2)}
+    <div class="card">
+      <p class="card-t">智能检测 ${srcTag('review-step.tsx')}</p>
+      <p class="card-s">这一屏今天的表达方式：先给一句结论，再把完整统计折起来，最后逐条问你要不要处理。</p>
+      <div class="stats">
+        <div class="stat warn"><div class="v">${need}</div><div class="l">行缺少译文</div></div>
+        <div class="stat ok"><div class="v">${ROWS - bad}</div><div class="l">要翻的行都有译文了</div></div>
+        <div class="stat"><div class="v">${ROWS * LANGS.length}</div><div class="l">完整检测统计（格）</div></div>
+      </div>
+      <p class="note" style="padding:0 14px 12px">三个数各说一件事：<b>${need} 行缺少译文</b>（<span class="mono">review-step.tsx:709-712</span>）、<b>要翻的行都有译文了</b>（同屏标题）、<b>完整检测统计</b>（折叠项摘要，<span class="mono">review-step.tsx:319-321</span>）。它们分别是「缺的行／齐的门／格」。同一屏三个口径，谁也没说清谁是谁。</p>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px">
+        <p class="card-t" style="margin:0">${sku} · 主副图 ${srcTag('review-step.tsx:967-1060')}</p>
+        <div class="tabs">${tabs}</div>
+      </div>
+      <p class="card-s">今天就点一下 <b>ES</b> 看看会发生什么。</p>
+      <div class="tblwrap"><table class="tt"><thead><tr><th style="width:34px">#</th><th>原文</th>${CODES.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>${Array.from({ length: 8 }, (_, i) => {
+          const idx = (i * 7) % ROWS;
+          return `<tr><td class="no">${idx + 1}</td><td class="src">${esc(srcText(idx))}</td>${CODES.map(c => {
+            const v = cellEmpty(sku, idx, c);
+            return `<td class="${v ? 'miss' : ''}">${v ? '缺' : '译文'}</td>`;
+          }).join('')}</tr>`;
+        }).join('')}</tbody></table></div>
+    </div>
+
+    <div class="card">
+      <p class="card-t">需要处理的行 ${srcTag('review-step.tsx:1131-1246')}</p>
+      <p class="card-s">今天这一份稿就有 ${need} 行要你逐条点；12 份稿加起来是 ${autoTotal()} 行。你问的「一键确认」就是从这里来的。</p>
+      <div class="dlist">${rowsHTML}</div>
+    </div>
+  </div>`;
+}
+
+/* ───── 今天 · 第 3 步 ───── */
+function todayStep3() {
+  const stage = document.getElementById('stage');
+  const open = reconcileOpen();
+  stage.innerHTML = `<div class="stack">
+    ${todayBanner(3)}
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <p class="card-t" style="margin:0">设计稿校对 ${srcTag('workbench-view.tsx:5710-5730')}</p>
+        <span class="badge ${open ? 'ok' : 'lock'}">${open ? '门开着' : '门关着'}</span>
+      </div>
+      ${open ? `<p class="card-s">门开着的今天是这一屏（照代码还原）。</p>` : `<div class="callout grey" style="margin:10px 0 0"><b>今天的这一屏，只有这一句灰字</b>
+        <p class="note" style="margin:2px 0 0">「确认全部语言译文后开放与设计稿对账」——门是 <span class="mono">reconcileOpen = designReady &amp;&amp; allLanguagesReviewed</span>（<span class="mono">workbench-machine.ts:42</span>），第 2 步没把每一门都确认完，这里就什么都没有。</p></div>`}
+    </div>
+
+    <div class="card">
+      <p class="card-t">门开了之后，今天的块序（按代码）</p>
+      <div class="dlist">
+        <div class="li"><b>确认本次替换范围</b><span>「译文表里没有对应行的文字对象有 3 处。默认：这 3 处保留原文。只需确认一次，不在每种语言重复处理。」<br>按钮：<b>就用这个默认</b> ／ <b>我来逐个填（3）</b></span></div>
+        <div class="li"><b>要你决定</b><span>「同一问题在多种语言里只列一次；下面每一处都要你决定，不决定就不能生成。」<br>分组：「原文变化 2 处 · 逐项确认」「重复文案 4 处 · 选择目标」「ES：缺 1 条目标译文」</span></div>
+        <div class="li"><b>版式需复核</b><span>「版式需复核：2 处译文写进去会丢内容」「要收只有三种做法：缩字号、精简译文，或把该层改成段落文本框。」</span></div>
+        <div class="li"><b>每门语言一个圆点</b><span>「✓ ES 已全部对齐」／「ES 有 2 项与设计稿对不上」</span></div>
+      </div>
+      <p class="note" style="padding:0 14px 12px">这些块都有（<span class="mono">workbench-view.tsx:5424-5633</span>），但它们的单位是「处／条／项」，<b>没有一处告诉你这是哪个图层、对上表的第几行</b>。</p>
+    </div>
+
+    <div class="callout bad"><b>你说的「第 3 步好像没起作用」，机制就在这里</b>
+      <p class="note" style="margin:2px 0 0">① 一切对得上时，这一屏只剩每门语言一句「✓ 已全部对齐」，没有任何可看的东西；<br>
+      ② 而一旦全部对上、PS 也就绪，它会<b>自动跳到第 4 步</b>（<span class="mono">workbench-view.tsx:3969-3978</span>），你连停都停不住；<br>
+      ③ 它不是没用——它是唯一知道你哪个文字层对不上、哪一行被两个层抢、哪个层是栅格图、哪层缺字重的地方，只是从来没把这些<b>按图层</b>摆出来。<br>
+      <b>顺带一条更正</b>：我上一版说「重新检测按钮不重跑检测」是错的。那个按钮现在叫「重新扫描」（<span class="mono">terms.ts:78</span>），点它是回第 1 步重新扫描设计稿，语义一致，不是错标（<span class="mono">workbench-view.tsx:4179-4185</span>）。</p></div>
+  </div>`;
+}
+
+/* ───── 今天 · 第 4 步 ───── */
+function todayStep4() {
+  const stage = document.getElementById('stage');
+  const units = todayUnitsAll();
+  const credits = todayCreditsAll();
+  stage.innerHTML = `<div class="stack">
+    ${todayBanner(4)}
+    <div class="card">
+      <p class="card-t">生成交付 ${srcTag('execute-step.tsx')}</p>
+      <p class="card-s">今天的范围选择和报价在同一块里，形如：</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn sm" data-act="today-noop" aria-pressed="false">逐个语言</button>
+        <button class="btn sm" data-act="today-noop" aria-pressed="true" style="background:var(--accent);color:#fff;border-color:transparent">全部 12 个语言一次执行</button>
+      </div>
+      <p class="note">「全部 12 个语言一次执行」是今天的原话（<span class="mono">siteContent.ts:782</span>）。</p>
+    </div>
+
+    <div class="card">
+      <p class="card-t">报价：今天只有合计 ${srcTag('execute-step.tsx:2683-2720')}</p>
+      <ul class="ph" style="list-style:none;padding:0;margin:0 0 8px">
+        <li><span class="s">›</span>预计花 ${credits} 积分（成功后按实际扣，失败自动退回）<em>查看计费明细</em></li>
+      </ul>
+      <div class="callout grey"><b>点开「查看计费明细」就只有这三行</b>
+        <p class="note" style="margin:2px 0 0">「全部 12 个语言 · 合计 ${units} 标准单位 · 预计冻结 ${credits} 积分」<br>
+        再下面是一排每门的合计：ES ${todayUnits('5857')} 单位 · FR …（<span class="mono">execute-step.tsx:2698-2702</span>）</p></div>
+      <p class="note">今天的界面里没有「哪一行算钱、哪一行不算、为什么」。你上次问的 37 和 67 差在哪，就是在这里答不出来的。</p>
+    </div>
+
+    <div class="card">
+      <p class="card-t">开始执行</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn sm" data-act="today-noop">开始执行（本批 ${TODAY_N.boundToday} 份 · 逐份）</button>
+        <span class="note">点了会先弹「确认开始执行」，再逐份跑（<span class="mono">execute-step.tsx:2519</span>）。</span>
+      </div>
+      <p class="note" style="margin-top:8px">今天没有交付物矩阵：你没法在这一步看见「哪一份能交、哪一份为什么交不了」，只能等回执。</p>
+    </div>
+  </div>`;
+}
+
+/* ───── 今天：左右栏 / 顶栏数字 ───── */
+const TODAY_PROBLEMS = {
+  1: [
+    { t: '一稿只能绑一张表', d: '一格一表，143 张表要你自己绑；不绑就是 12 份而不是 144 份。→ 改完之后：一组表＝一次绑定。', src: 'workbench-view.tsx:3119 · 本次改动不含 buildGroupBindings 的 excluded 通道' },
+    { t: '读表一次只排 12 张', d: '没有「读齐再进下一步」，读失败只显示成待检查。→ 改完之后：分轮读到齐，整组才算就绪。', src: 'table-inventory.ts:233-237' },
+    { t: '抽屉绿灯说早了', d: '绑上一张表就显示「这一份就绪」，另外 11 门没表也算就绪。→ 改完之后：就绪＝整组齐。', src: 'step1-stage-view.tsx:1300-1313' },
+    { t: '例外没有专门的清单', d: '同门两张、缺一门、错行、归属不明，混在普通格子里。→ 改完之后：只有这几件留给你，其余默认全选。', src: '本会话提案（未实现）' },
+  ],
+  2: [
+    { t: '逐条确认拦人', d: `这一批 ${autoTotal()} 行要你一条条点。→ 改完之后：默认不拦（缺译＝不翻不计价／译文＝原文就保留原文），想逐条看再切。`, src: 'review-step.tsx:1131-1246' },
+    { t: '语言页签不裁列', d: '点 ES 不是只留 ES 这一列，而是整屏换成单稿单语。→ 改完之后：页签真的裁列。', src: 'review-step.tsx:967-1060 · workbench-view.tsx:5262-5265' },
+    { t: '三个数各说一件事', d: '缺的行／齐的门／格，同屏出现且不互相解释。→ 改完之后：一个数：按默认处理 N 处。', src: 'review-step.tsx:319-321 · 709-712' },
+  ],
+  3: [
+    { t: '没确认完就只有一句灰字', d: '「确认全部语言译文后开放与设计稿对账」。→ 改完之后：例外先摆出来，没问题的折一行。', src: 'workbench-view.tsx:5722-5724 · workbench-machine.ts:42' },
+    { t: '就绪即自动跳走', d: '全部对上 + PS 就绪 → 自动进第 4 步，停不住。→ 改完之后：默认不自动跳。', src: 'workbench-view.tsx:3969-3978' },
+    { t: '只有「处／条」，没有图层', d: '不说哪个层、对上第几行、为什么。→ 改完之后：每条例外给图层路径 + 行号 + 原因。', src: 'workbench-view.tsx:5424-5633' },
+    { t: '「行数＝层数」的错觉', d: '一行可被多个文字层消费，界面上没有任何一处说这件事。→ 改完之后：×层 ↔ ×行 写清。', src: 'billing-preview.ts:18' },
+  ],
+  4: [
+    { t: '没有交付物矩阵', d: '144 格只在提案里有；今天看不到哪份能交。→ 改完之后：矩阵在这一步，点格看证据。', src: '本会话提案（未实现）' },
+    { t: '报价只有合计', d: '只有「合计 N 标准单位」，没有逐行。→ 改完之后：逐行推导（已写进 develop 树，未部署）。', src: 'execute-step.tsx:2683-2720 → :2727' },
+    { t: '例外不进报价视图', d: '点了不做的那些份，报价里只是数字变小，不点名。→ 改完之后：点名到份。', src: '本会话提案（未实现）' },
+  ],
+};
+function todayRight() {
+  const rail = document.getElementById('railRight');
+  const items = TODAY_PROBLEMS[S.step] || [];
+  rail.innerHTML = `<div class="rail-head"><b>今天的毛病</b><span>${items.length} 条</span><span class="tag mono">代码里读的</span></div>
+    <div id="excList">${items.map((p, i) => `<div class="tell"><b>${i + 1}. ${p.t}</b><p class="why">${p.d}</p><p class="why mono" style="font-size:10.5px">${p.src}</p></div>`).join('')}
+    <div style="padding:10px"><button class="btn primary" style="width:100%" data-act="mode" data-mode="after" data-step="${S.step}">看这一屏改完之后 ›</button></div></div>`;
+}
+function todayLeft() {
+  const rail = document.getElementById('railLeft');
+  const rows = SKUS.map(sku => `<button class="drow t-ok" data-act="pick-draft" data-sku="${sku}" aria-current="${String(sku === S.active)}">
+      <span class="dot"></span><span><span class="sku">${sku}</span><span class="sub">1 张表 · 11 门没绑</span></span><span class="pill">1 门</span></button>`).join('');
+  rail.innerHTML = `<div class="rail-head"><b>稿</b><span>12 份 · 全部主副图</span><span class="tag mono">今天</span></div>${rows}`;
+}
+function todayCounters() {
+  const box = document.getElementById('counters');
+  let bits = [];
+  if (S.step === 1) {
+    bits = [`<span>已绑 <b id="tBound">${TODAY_N.boundToday}</b>/${TODAY_N.slots} 格</span>`,
+      `<span>可交付 <b id="tOut">${TODAY_N.boundToday}</b> 份</span>`,
+      `<span>没读的表 <b>${TODAY_N.tables - TODAY_N.boundToday}</b> 张</span>`];
+  } else if (S.step === 2) {
+    bits = [`<span>逐条确认 <b>${autoTotal()}</b> 行</span>`, `<span>这一稿问题行 <b>${problemRows(S.active).length}</b>/${ROWS}</span>`];
+  } else if (S.step === 3) {
+    bits = [`<span>文字层 <b>${textLayers()}</b></span>`, `<span>对上 <b>${textLayers() - unmatchedLayers()}</b></span>`,
+      `<span>门 <b>${reconcileOpen() ? '开着' : '关着'}</b></span>`];
+  } else {
+    bits = [`<span>可交付 <b>${TODAY_N.boundToday}</b> 份</span>`, `<span>预计 <b>${todayCreditsAll()}</b> 积分</span>`];
+  }
+  box.innerHTML = bits.join('');
+  document.getElementById('crumbStep').textContent = `第 ${S.step} 步 ${STEP_NAMES[S.step - 1][1]} · 今天`;
+  document.getElementById('sbRight').innerHTML = `<span>今天这一侧：按代码复原（无登录态）</span>`;
+}
+function todayStage() { ({ 1: todayStep1, 2: todayStep2, 3: todayStep3, 4: todayStep4 })[S.step](); }
+
 /* ═════════ 渲染总入口 ═════════ */
-function render(){ renderStepper(); renderCounters(); renderLeft(); renderRight(); ({1:renderStep1,2:renderStep2,3:renderStep3,4:renderStep4})[S.step](); tpRender() }
-function goto(n){ if(!stepUnlocked(n)&&n!==S.step) return false; S.step=n; if(n===2)S.seen2=true; if(n===3)S.seen3=true; if(n===4)S.seen4=true; if(n===3&&S.layer===0) S.layer=LAYERS.findIndex(x=>x.kind==='text'&&x.row===null); render(); return true }
+function render(){ renderStepper(); renderCounters(); renderLeft(); renderRight(); if (S.mode==='today') todayStage(); else ({1:renderStep1,2:renderStep2,3:renderStep3,4:renderStep4})[S.step](); tpRender() }
+function goto(n){ if(S.mode!=='today'&&!stepUnlocked(n)&&n!==S.step) return false; S.step=n; if(n===2)S.seen2=true; if(n===3)S.seen3=true; if(n===4)S.seen4=true; if(n===3&&S.layer===0) S.layer=LAYERS.findIndex(x=>x.kind==='text'&&x.row===null); render(); return true }
 function announce(t){ document.getElementById('announce').textContent=t }
 
 document.addEventListener('click',(e)=>{
@@ -920,6 +1193,9 @@ document.addEventListener('click',(e)=>{
   if (a==='info'){ document.getElementById('info').dataset.open='true'; return }
   if (a==='info-close'){ document.getElementById('info').dataset.open='false'; return }
   if (a==='goto'){ goto(Number(b.dataset.step)); return }
+  if (a==='mode'){ S.mode=b.dataset.mode; if(b.dataset.step) S.step=Number(b.dataset.step); render(); announce(S.mode==='today'?'切到今天的真界面（按代码复原）':'切到改完之后的效果'); return }
+  if (a==='today-noop'){ announce('今天这里就是这样：可玩件没有接后端，点了不会动'); return }
+  if (a==='today-lang'){ announce('今天点语言页签不是只裁列，而是把整屏换成单稿单语（review-step.tsx:967-1060）；改完之后才会真裁列'); return }
   if (a==='next'){
     if (S.step===1){ if(pendingTotal()>0) return; goto(2); return }
     if (S.step===2){ if(pendingTotal2()>0) return; goto(3); return }
@@ -1115,6 +1391,7 @@ window.__sim={ S, LANGS, CODES, SKUS, ROWS, LAYERS, DERIVE, EX,
   problemRows, rowIssues, needDecide, pendingRows, pendingTotal2, autoHandled, autoTotal, allLanguagesReviewed, filledCells, cellsTotal, srcEmptyRow, cellEmpty, cellSame, hasLang, isBad,
   textLayers, unmatchedLayers, contestedRows, rowsUsed, reconcileOpen, reconcileComplete, deliveryOpen, layerStyle,
   inScope, outCount, creditTotal, pendingCount4, stepUnlocked, UNIT_CHARS, slotBound, render, goto,
+  TODAY_N, todayCreditsAll, todayUnitsAll, todayUnits,
   TP, tpRender, tpCur, tpSetCount, tpReadOnly, TP_POS_KEY, TP_DATA_KEY };
 render();
 </script>
