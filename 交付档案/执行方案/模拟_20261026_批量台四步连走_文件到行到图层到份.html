@@ -272,6 +272,39 @@ table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bo
 .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
 @media (max-width:1080px){.grid2{grid-template-columns:1fr}}
+/* ── 排版定制悬浮面板：照真实现 src/components/workbench/typography-panel.tsx 还原 ── */
+.tp{position:fixed;z-index:60;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 34px -14px rgba(16,24,40,.34);display:flex;flex-direction:column}
+.tp.docked{display:none}
+.tp-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:grab;user-select:none;font-size:12.5px;font-weight:600}
+.tp-head:active{cursor:grabbing}
+.tp-tag{font-size:10px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-line)}
+.tp-dirty{font-size:10.5px;color:var(--warn)}
+.tp-btns{margin-left:auto;display:flex;gap:4px}
+.tp-btns button{width:22px;height:22px;border:1px solid var(--line);border-radius:5px;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.tp-btns button:hover{border-color:var(--strong);color:var(--ink)}
+.tp-sum{padding:6px 10px;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line);cursor:pointer}
+.tp-body{max-height:min(72vh,640px);overflow-y:auto;padding:9px 10px;display:flex;flex-direction:column;gap:8px}
+.tp-note{font-size:11.5px;color:var(--ink2);line-height:1.65;margin:0}
+.tp-warn{border:1px solid var(--warn);border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:7px;padding:7px 9px;font-size:11.5px}
+.tp-readonly{border:1px dashed var(--strong);background:var(--sunk);border-radius:7px;padding:6px 9px;font-size:11.5px;color:var(--muted)}
+.tp fieldset{border:1px solid var(--line);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:7px;margin:0;min-width:0}
+.tp fieldset:disabled{opacity:.6}
+.tp-langs{display:flex;flex-wrap:wrap;gap:4px}
+.tp-langs button{border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px;font-family:var(--mono)}
+.tp-langs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tp-langs button.set::after{content:"·";margin-left:3px;color:var(--ok)}
+.tp-rows{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.tp-cell{border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:11px;color:var(--muted)}
+.tp-cell .v{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-face{font-family:var(--mono);font-size:11px;color:var(--ink2);word-break:break-all}
+.tp-settle{display:flex;justify-content:space-between;font-size:11.5px;border-top:1px dashed var(--line);padding-top:6px}
+.tp-settle b{font-family:var(--mono)}
+.tp details summary{cursor:pointer;font-size:11.5px;color:var(--muted);list-style:none}
+.tp details summary::-webkit-details-marker{display:none}
+.tp details summary::before{content:"▸ ";font-size:9px}
+.tp details[open] summary::before{content:"▾ "}
+.tp-handle{position:fixed;z-index:60;display:flex;align-items:center;gap:4px;border:1px solid var(--strong);background:var(--panel);padding:6px 5px;font-size:11px;font-weight:700;font-family:var(--mono);box-shadow:0 8px 22px -12px rgba(16,24,40,.4);writing-mode:vertical-rl}
+.tp-edge{position:fixed;z-index:59;top:64px;bottom:44px;width:40px;border:2px dashed var(--accent);border-radius:10px;background:var(--accent-soft);opacity:.75}
 @media (max-width:1180px){ .main{grid-template-columns:200px minmax(0,1fr) 286px} }
 @media (max-width:900px){
   html,body{height:auto;min-height:100%}
@@ -307,6 +340,8 @@ table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bo
     <span class="r" id="sbRight"></span>
   </div>
 </div>
+
+<div id="tpHost"></div>
 
 <div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
   <div class="sheet">
@@ -875,7 +910,7 @@ function tick(){
 }
 
 /* ═════════ 渲染总入口 ═════════ */
-function render(){ renderStepper(); renderCounters(); renderLeft(); renderRight(); ({1:renderStep1,2:renderStep2,3:renderStep3,4:renderStep4})[S.step]() }
+function render(){ renderStepper(); renderCounters(); renderLeft(); renderRight(); ({1:renderStep1,2:renderStep2,3:renderStep3,4:renderStep4})[S.step](); tpRender() }
 function goto(n){ if(!stepUnlocked(n)&&n!==S.step) return false; S.step=n; if(n===2)S.seen2=true; if(n===3)S.seen3=true; if(n===4)S.seen4=true; if(n===3&&S.layer===0) S.layer=LAYERS.findIndex(x=>x.kind==='text'&&x.row===null); render(); return true }
 function announce(t){ document.getElementById('announce').textContent=t }
 
@@ -936,11 +971,151 @@ document.addEventListener('click',(e)=>{
 });
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') document.getElementById('info').dataset.open='false' });
 S.activeRow=null;
+
+/* ═════════ 排版定制悬浮面板（照真实现还原）═════════
+   真源：src/components/workbench/typography-panel.tsx（1194 行）
+   持久化：src/lib/workbench/typography-persistence.ts:52 键 tygf:v15:typography（按语言一份）
+   窗口态键：tygf.typographyPanelPos.v1 形状 {x,y,dock,collapsed,folded}（:285）
+   四步都能打开：workbench-view.tsx:5108-5109 原句「四个步骤都能打开——面板本体 portal 到 body」 */
+const TP = {
+  pos: { x: 940, y: 72 },
+  dock: null, folded: false, open: true, nearEdge: null,
+  activeLang: 'ES', profiles: {}, search: '', dirty: false,
+}
+const TP_POS_KEY = 'tygf.typographyPanelPos.v1'
+const TP_DATA_KEY = 'tygf:v15:typography'
+const TP_FACES = {
+  ES: { family: 'Source Han Sans SC', style: 'Medium', face: 'SourceHanSansSC-Medium', leading: '120%', tracking: '0', baseline: '0%' },
+  JP: { family: 'Adobe Gothic Std', style: 'Bold', face: 'AdobeGothicStd-Bold', leading: '110%', tracking: '+2', baseline: '0%' },
+  RU: { family: 'Microsoft YaHei', style: 'Regular', face: 'MicrosoftYaHei', leading: 'auto', tracking: '0', baseline: '2%' },
+}
+function tpLoad() {
+  try {
+    const p = JSON.parse(localStorage.getItem(TP_POS_KEY) || 'null')
+    if (p && Number.isFinite(p.x)) { TP.pos = { x: p.x, y: p.y }; TP.dock = p.dock || null; TP.folded = !!p.folded; TP.open = p.collapsed !== false }
+  } catch {}
+  try {
+    const d = JSON.parse(localStorage.getItem(TP_DATA_KEY) || 'null')
+    if (d && typeof d === 'object') TP.profiles = d
+  } catch {}
+}
+function tpSavePos() { try { localStorage.setItem(TP_POS_KEY, JSON.stringify({ x: TP.pos.x, y: TP.pos.y, dock: TP.dock, collapsed: TP.open, folded: TP.folded })) } catch {} }
+function tpSaveData() { try { localStorage.setItem(TP_DATA_KEY, JSON.stringify(TP.profiles)) } catch {} }
+const tpReadOnly = () => S.running || S.done
+const tpSetCount = () => Object.keys(TP.profiles).filter((k) => TP.profiles[k]).length
+function tpCur(code) {
+  const base = TP_FACES[code] || { family: 'PingFang SC', style: 'Regular', face: 'PingFangSC-Regular', leading: 'auto', tracking: '0', baseline: '0%' }
+  const over = TP.profiles[code]
+  return over ? Object.assign({}, base, over) : base
+}
+function tpHTML() {
+  if (!TP.open) return ''
+  const readOnly = tpReadOnly()
+  const code = TP.activeLang
+  const cur = tpCur(code)
+  const langs = LANGS.map((l) => {
+    const on = l.code === code
+    const set = Boolean(TP.profiles[l.code])
+    return '<button data-tp="lang" data-code="' + l.code + '" aria-pressed="' + String(on) + '" class="' + (set ? 'set' : '') + '" title="' + (set ? '这一门已设过' : '这一门沿用原稿') + '">' + l.code + '</button>'
+  }).join('')
+  const known = Object.values(FACE).some((m) => Object.values(m).includes(cur.face))
+  const pseudoB = Boolean(TP.profiles[code] && TP.profiles[code].fakeBold)
+  const pseudoI = Boolean(TP.profiles[code] && TP.profiles[code].fakeItalic)
+  let html = '<section class="tp' + (TP.dock ? ' docked' : '') + '" id="tp" style="left:' + TP.pos.x + 'px;top:' + TP.pos.y + 'px" aria-label="排版定制">'
+  html += '<div class="tp-head" data-tp="drag"><span>排版定制</span><span class="tp-tag">内测预览</span>' + (TP.dirty ? '<span class="tp-dirty">· 有未保存改动</span>' : '')
+  html += '<span class="tp-btns"><button data-tp="fold" data-no-drag aria-label="' + (TP.folded ? '展开排版定制正文' : '折叠排版定制正文') + '" title="折叠/展开正文">' + (TP.folded ? '▸' : '▾') + '</button><button data-tp="close" data-no-drag aria-label="关闭排版定制">×</button></span></div>'
+  if (TP.folded) html += '<div class="tp-sum" data-tp="fold">已设 ' + tpSetCount() + ' 种语言 · 本次会发 ' + tpSetCount() + ' 项（点此展开）</div>'
+  html += '<div class="tp-body" id="tpBody" style="' + (TP.folded ? 'display:none' : '') + '">'
+  html += '<p class="tp-note">按语言设置字体与样式。保存后，以后<b>每一稿在本机执行时都会沿用这套设置</b>（只存你这台浏览器，不上传）。</p>'
+  if (readOnly) html += '<div class="tp-readonly" id="tpReadonly">执行中或已授权本次执行——本面板只读。</div>'
+  html += '<fieldset id="tpFieldset"' + (readOnly ? ' disabled' : '') + '>'
+  html += '<p class="tp-note" style="color:var(--muted)">先选一门语言，再改它这一门的排版。<b>没有单独设过的语言沿用原稿。</b></p>'
+  html += '<div class="tp-langs" role="group" aria-label="语言">' + langs + '</div>'
+  html += '<input data-tp="search" data-no-drag placeholder="搜字体名（本机清单）" value="' + esc(TP.search) + '" style="height:26px;border:1px solid var(--strong);border-radius:6px;padding:0 8px;font-size:12px;background:var(--panel);color:var(--ink)" />'
+  html += '<div class="tp-face">脸名读数：<b id="tpFace">' + esc(cur.face) + '</b>' + (known ? '' : '（不在本次清单）') + '</div>'
+  html += '<div class="tp-rows">'
+  html += '<div class="tp-cell"><div>字体族</div><div class="v">' + esc(cur.family) + '</div></div>'
+  html += '<div class="tp-cell"><div>样式</div><div class="v">' + esc(cur.style) + '</div></div>'
+  html += '<div class="tp-cell"><div>行距</div><div class="v">' + esc(cur.leading) + '</div></div>'
+  html += '<div class="tp-cell"><div>自动字距</div><div class="v">—</div></div>'
+  html += '<div class="tp-cell"><div>字距</div><div class="v">' + esc(cur.tracking) + '</div></div>'
+  html += '<div class="tp-cell"><div>基线偏移</div><div class="v">' + esc(cur.baseline) + '</div></div></div>'
+  html += '<div style="display:flex;gap:5px"><button class="btn sm" data-tp="pseudo-b" data-no-drag aria-pressed="' + String(pseudoB) + '">伪粗 T</button><button class="btn sm" data-tp="pseudo-i" data-no-drag aria-pressed="' + String(pseudoI) + '">伪斜 I</button></div>'
+  if (!known) html += '<div class="tp-warn">这个名字没匹配到助手清单里的 PostScript 脸名 ⇒ 本次<b>不会改字体</b>；写非脸名会被静默换成 MyriadPro-Regular 且不报错（真实现原话 <span class="mono">typography-panel.tsx:1156</span>）。</div>'
+  html += '<div class="tp-settle"><span>本次会发 <b>' + tpSetCount() + '</b> 项 · 已设 <b>' + tpSetCount() + '</b> 种语言</span><span>上限 16 门</span></div>'
+  html += '<div class="acts"><button class="btn sm primary" data-tp="save" data-no-drag>保存到本机</button><button class="btn sm" data-tp="clear" data-no-drag>清除当前语言</button><button class="btn sm" data-tp="reset" data-no-drag>全部沿用原稿</button></div>'
+  html += '</fieldset>'
+  html += '<details id="tpAdv"><summary>高级与结算明细</summary><div style="padding:6px 0 0;font-size:11.5px;color:var(--ink2)">'
+  html += '<p style="margin:0 0 4px">生效粒度＝<b>按语言</b>（存储 <span class="mono">TypographyProfilesByLanguage</span>，<span class="mono">typography-persistence.ts:50</span>）。面板里<b>没有</b>“这一层单独设”的表达。</p>'
+  html += '<p style="margin:0 0 4px">面板里<b>也没有</b>“这套字族缺这一档会回落”的提示（实测 grep <span class="mono">缺档|会回落|fallback</span> 于 <span class="mono">typography-panel.tsx</span>、<span class="mono">font-picker.tsx</span> 退出码 1）。</p>'
+  html += '<p style="margin:0">字重会掉发生在助手侧选脸回落 <span class="mono">typography-capabilities.ts:383-391</span>；要逐层保住得把通道从按语言改成按层。</p></div></details>'
+  html += '</div></section>'
+  if (TP.dock) html += '<button class="tp-handle" id="tpHandle" data-tp="undock" style="' + (TP.dock === 'left' ? 'left:0' : 'right:0') + ';top:' + TP.pos.y + 'px" aria-label="展开排版定制面板（已停靠在' + (TP.dock === 'left' ? '左' : '右') + '边缘）">◈ 排版定制</button>'
+  return html
+}
+function tpRender() { document.getElementById('tpHost').innerHTML = tpHTML() }
+let tpDrag = null
+document.addEventListener('pointerdown', (e) => {
+  const h = e.target.closest('[data-tp="drag"]')
+  if (!h || e.target.closest('[data-no-drag]')) return
+  const host = document.getElementById('tp')
+  tpDrag = { dx: e.clientX - host.offsetLeft, dy: e.clientY - host.offsetTop }
+  e.preventDefault()
+})
+document.addEventListener('pointermove', (e) => {
+  if (!tpDrag) return
+  const w = 300, vw = window.innerWidth || 1280, vh = window.innerHeight || 800
+  TP.pos.x = Math.max(4, Math.min(vw - w - 4, e.clientX - tpDrag.dx))
+  TP.pos.y = Math.max(4, Math.min(vh - 60, e.clientY - tpDrag.dy))
+  TP.nearEdge = TP.pos.x < 56 ? 'left' : (vw - (TP.pos.x + w) < 56 ? 'right' : null)
+  const host = document.getElementById('tp')
+  if (host) { host.style.left = TP.pos.x + 'px'; host.style.top = TP.pos.y + 'px' }
+  let prev = document.getElementById('tpEdge')
+  if (TP.nearEdge && !prev) { prev = document.createElement('div'); prev.id = 'tpEdge'; prev.className = 'tp-edge'; document.body.appendChild(prev) }
+  if (prev) { prev.style.left = ''; prev.style.right = ''; prev.style[TP.nearEdge === 'left' ? 'left' : 'right'] = '4px' }
+  if (!TP.nearEdge && prev) prev.remove()
+})
+document.addEventListener('pointerup', () => {
+  if (!tpDrag) return
+  tpDrag = null
+  const prev = document.getElementById('tpEdge'); if (prev) prev.remove()
+  if (TP.nearEdge) { TP.dock = TP.nearEdge; TP.nearEdge = null }
+  tpSavePos(); tpRender()
+})
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tp]'); if (!b) return
+  const t = b.dataset.tp
+  if (t === 'drag') return
+  if (t === 'fold') { TP.folded = !TP.folded; tpSavePos(); tpRender(); return }
+  if (t === 'close') { TP.open = false; tpRender(); announce('排版定制已关闭（真实现里四步都能再打开）'); return }
+  if (t === 'undock') { TP.dock = null; tpSavePos(); tpRender(); return }
+  if (t === 'lang') { TP.activeLang = b.dataset.code; tpRender(); return }
+  if (t === 'save') {
+    const code = TP.activeLang, cur = tpCur(code)
+    TP.profiles[code] = { family: cur.family, style: cur.style, face: cur.face }
+    TP.dirty = false; tpSaveData(); tpRender(); announce(code + ' 已保存到本机'); return
+  }
+  if (t === 'clear') { delete TP.profiles[TP.activeLang]; TP.dirty = false; tpSaveData(); tpRender(); return }
+  if (t === 'reset') { TP.profiles = {}; TP.dirty = false; tpSaveData(); tpRender(); announce('全部沿用原稿'); return }
+  if (t === 'pseudo-b' || t === 'pseudo-i') {
+    const code = TP.activeLang
+    const flag = t === 'pseudo-b' ? 'fakeBold' : 'fakeItalic'
+    const prev = TP.profiles[code] || {}
+    const next = {}
+    Object.keys(prev).forEach((k) => { next[k] = prev[k] })
+    next[flag] = !prev[flag]
+    TP.profiles[code] = next
+    TP.dirty = true; tpRender(); return
+  }
+})
+tpLoad()
+
 window.__sim={ S, LANGS, CODES, SKUS, ROWS, LAYERS, DERIVE, EX,
   boundTotal, pendingTotal, groupBound, slotBound, draftTone,
   problemRows, rowIssues, needDecide, pendingRows, pendingTotal2, autoHandled, autoTotal, allLanguagesReviewed, filledCells, cellsTotal, srcEmptyRow, cellEmpty, cellSame, hasLang, isBad,
   textLayers, unmatchedLayers, contestedRows, rowsUsed, reconcileOpen, reconcileComplete, deliveryOpen, layerStyle,
-  inScope, outCount, creditTotal, pendingCount4, stepUnlocked, UNIT_CHARS, slotBound, render, goto };
+  inScope, outCount, creditTotal, pendingCount4, stepUnlocked, UNIT_CHARS, slotBound, render, goto,
+  TP, tpRender, tpCur, tpSetCount, tpReadOnly, TP_POS_KEY, TP_DATA_KEY };
 render();
 </script>
 </body>
