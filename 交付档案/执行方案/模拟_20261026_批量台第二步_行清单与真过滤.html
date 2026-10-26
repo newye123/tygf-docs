@@ -205,7 +205,7 @@ details.ev[open] summary::before{content:"▾"}
     <span class="crumb">第 2 步 智能检测 · 单位是<b>行</b> · <b id="crumbScope">142 份</b></span>
     <div class="counters">
       <span><span class="k">问题行</span> <b id="cBad">0</b>/<span id="cRows">67</span></span>
-      <span><span class="k">待你确认</span> <b id="cPend">0</b> 件</span>
+      <span><span class="k" id="pendLabel">按默认处理</span> <b id="cPend">0</b> <span class="k" id="pendUnit">处</span></span>
       <span><span class="k">已填格</span> <b id="cCells">0</b>/<span id="cCellsTotal">0</span></span>
     </div>
     <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
@@ -292,6 +292,8 @@ const S = {
   onlyProblems:true,         // 默认只看有问题的行
   activeRow:null,            // 展开详情的行（0 基）
   decided:{},                // 'sku/row' -> {kind:'skip'|'asis'|'fix', count}
+  confirmMode:'auto',          // 'auto' 默认：缺译与疑似没翻按默认处理，不拦人 | 'ask' 逐条确认
+  aggOpen:false,               // 聚合卡是否展开逐条
   clicks:0,
 };
 
@@ -361,11 +363,20 @@ function needDecide(sku,i){
   if (iss.includes('src-empty')) return false;
   return iss.includes('empty') || iss.includes('same');
 }
+/* 需要人拍板的行数：auto 模式一律按默认走，不拦人；ask 模式才逐条 */
 function pendingRows(sku){
+  if (S.confirmMode==='auto') return 0;
   let n = 0;
   for (let i=0;i<ROWS;i++) if (needDecide(sku,i) && !S.decided[`${sku}/${i}`]) n++;
   return n;
 }
+/* 按默认处理掉了多少处（缺译＋疑似没翻，不含原文空） */
+function autoHandled(sku){
+  let n = 0;
+  for (let i=0;i<ROWS;i++) if (needDecide(sku,i)) n++;
+  return n;
+}
+const autoHandledTotal = () => SKUS.reduce((n,s)=>n+autoHandled(s),0);
 function pendingDrafts(){ return SKUS.filter(s=>pendingRows(s)>0).length }
 const pendingTotal = () => SKUS.reduce((n,s)=>n+pendingRows(s),0);
 
@@ -374,14 +385,16 @@ function renderCounters(){
   const sku = S.active;
   document.getElementById('cBad').textContent = problemRows(sku).length;
   document.getElementById('cRows').textContent = ROWS;
-  document.getElementById('cPend').textContent = pendingTotal();
+  document.getElementById('cPend').textContent = S.confirmMode==='auto' ? autoHandledTotal() : pendingTotal();
+  document.getElementById('pendLabel').textContent = S.confirmMode==='auto' ? '按默认处理' : '待你确认';
+  document.getElementById('pendUnit').textContent = S.confirmMode==='auto' ? '处' : '件';
   document.getElementById('cCells').textContent = SKUS.reduce((n,s)=>n+filledCells(s),0);
   document.getElementById('cCellsTotal').textContent = cellsTotal();
   document.getElementById('crumbScope').textContent = `${BOUND} 份`;
   document.getElementById('railTag').textContent = S.langView==='all' ? '全部语言' : `只看 ${S.langView}`;
   const tag = document.getElementById('excTag');
-  tag.textContent = pendingTotal()===0 ? '都确认完了' : `${SKUS.reduce((n,s)=>n+problemRows(s).length,0)-pendingTotal()} 件已定`;
-  document.getElementById('excLeft').textContent = pendingTotal()===0 ? '结论：无' : `${pendingTotal()} 件`;
+  tag.textContent = S.confirmMode==='auto' ? '不拦人' : (pendingTotal()===0 ? '都确认完了' : `逐条 ${pendingTotal()} 件`);
+  document.getElementById('excLeft').textContent = S.confirmMode==='auto' ? '一句告知' : (pendingTotal()===0 ? '结论：无' : `${pendingTotal()} 件`);
   const sb = document.getElementById('sbRight');
   sb.innerHTML = `<span>这一稿 <b>${problemRows(sku).length}</b> 行有问题 · 已处置 <b>${decidedCount(sku)}</b> 行</span>`;
 }
@@ -497,6 +510,7 @@ function renderStage(){
       <span class="n">${ROWS} 行</span>
       <span class="n">${LANGS.filter(l=>hasLang(sku,l.code)).length} 门</span>
       <span class="sub">这一屏只看行。第 1 步的文件与归组已经定完了，这里不再出现「选表」。</span>
+      <span class="badge ${S.confirmMode==='auto'?'ok':'warn'}" style="margin-left:auto">${S.confirmMode==='auto'?'默认口径：不逐条问':'逐条确认中'}</span>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px 9px">
@@ -521,8 +535,8 @@ function renderStage(){
     ${detailHTML(sku)}
     <div class="callout grey"><b>这一步不做的事</b>不合并表（第 1 步已合）、不排版（第 3 步）、不报价（第 4 步）。所以这里不会出现「组卡」「144 格矩阵」「图层树」。</div>
     <div class="nextbar">
-      <button class="btn primary" data-act="next" ${pendingTotal()>0?'disabled':''}>${pendingTotal()>0?`还有 ${pendingTotal()} 行要确认`:'下一步：设计稿校对'}</button>
-      <span class="hint">${pendingTotal()>0?`分布在 ${pendingDrafts()} 稿里；顶栏那个数就是它，逐稿确认完才放行`:'12 稿的行都定完了。'}</span>
+      <button class="btn primary" data-act="next" ${pendingTotal()>0?'disabled':''}>${S.confirmMode==='auto'?'下一步：设计稿校对':(pendingTotal()>0?`还有 ${pendingTotal()} 行要你确认`:'逐条确认完了')}</button>
+      <span class="hint">${S.confirmMode==='auto'?'默认口径下这一步不拦人——缺的行按不翻处理、不计价，第 4 步报价里能看见。':`分布在 ${pendingDrafts()} 稿里；顶栏那个数就是它。<button class="link" data-act="mode-auto">回到默认口径</button>`}</span>
     </div>`;
   syncRows();
 }
@@ -573,6 +587,25 @@ function renderExc(){
           : `<div class="acts"><button class="btn sm" data-act="jump-row" data-row="${gotoRow}">跳到第 ${gotoRow+1} 行</button><button class="btn sm primary" data-act="bulk" data-row-list="${pend.join(',')}" data-kind="${g.kind==='empty'?'skip':'asis'}">这几行（${pend.length}）${g.kind==='empty'?'本批都不翻':'按原文保留'}</button></div>`}
     </div>`;
   }).filter(Boolean).join('');
+  const askMode = S.confirmMode==='ask';
+  if (!askMode){
+    /* 默认口径：一句聚合告知，不逐条拦人——跟第 1 步「表里对得上一律静默替换」同一条规矩 */
+    const nAuto = autoHandled(S.active);
+    const nAll  = autoHandledTotal();
+    const detail = S.aggOpen ? groups.map((g)=>{
+      const rows=[]; for (let i=0;i<ROWS;i++) if (rowIssues(sku,i).includes(g.kind)) rows.push(i);
+      if (!rows.length || g.kind==='long' || g.kind==='src-empty') return '';
+      return `<div class="li"><b>${g.kind==='empty'?'缺译':'疑似没翻'}</b><span>${rows.length} 行（第 ${rows.slice(0,6).map(r=>r+1).join('、')}${rows.length>6?' …':''} 行）· 默认${g.kind==='empty'?'本批不翻、不计价':'按原文保留'}</span></div>`;
+    }).filter(Boolean).join('') : '';
+    document.getElementById('excList').innerHTML = `<div class="exc" data-exc="auto">
+      <div class="exc-head"><span class="no">i</span>这一稿有 ${nAuto} 处按默认处理了<span class="badge" style="margin-left:auto">全批 ${nAll} 处</span></div>
+      <p>缺译文的那一格本批不翻、也不计费；译文与原文一样的按原文保留（型号名本来就该一样）。<b>不逐条问你。</b></p>
+      <div class="acts"><button class="btn sm" data-act="agg-toggle" aria-expanded="${String(S.aggOpen)}">${S.aggOpen?'收起逐条':`展开看这 ${nAuto} 处`}</button>
+      <button class="btn sm" data-act="mode-ask">改成逐条确认</button></div>
+      ${S.aggOpen?`<div class="kv" style="margin-top:2px"><div><dt>逐条</dt><dd><div class="evbody" style="padding:0">${detail}</div></dd></div></div>`:''}
+    </div>`;
+    return;
+  }
   document.getElementById('excList').innerHTML = items || `<div class="exc done"><div class="exc-head"><span class="no">✓</span>这一稿没有要确认的行</div><p>可以进第 3 步。</p></div>`;
 }
 
@@ -587,6 +620,9 @@ document.addEventListener('click',(e)=>{
   if (act==='pick-draft'){ S.active=b.dataset.sku; S.activeRow=null; render(); return }
   if (act==='lang'){ S.langView=b.dataset.lang; render(); return }
   if (act==='toggle-scope'){ S.onlyProblems=!S.onlyProblems; render(); return }
+  if (act==='agg-toggle'){ S.aggOpen=!S.aggOpen; render(); return }
+  if (act==='mode-ask'){ S.confirmMode='ask'; render(); announce('已改成逐条确认：下一步会被拦住直到你定完'); return }
+  if (act==='mode-auto'){ S.confirmMode='auto'; render(); announce('已回到默认口径：不逐条问'); return }
   if (act==='open-row'){ S.activeRow=Number(b.dataset.row); render(); return }
   if (act==='jump-row'){ S.onlyProblems=false; S.activeRow=Number(b.dataset.row); render(); announce(`已跳到第 ${S.activeRow+1} 行`); return }
   if (act==='lang-focus'){ S.langView=b.dataset.lang; render(); return }
@@ -605,7 +641,7 @@ document.addEventListener('click',(e)=>{
 });
 document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') document.getElementById('info').dataset.open='false' });
 function announce(t){ document.getElementById('announce').textContent=t }
-window.__sim = { S, LANGS, SKUS, ROWS, BOUND, problemRows, rowIssues, hasLang, cellEmpty, cellSame, cellLong, srcEmptyRows, filledCells, cellsTotal, pendingRows, pendingTotal, decidedCount, render };
+window.__sim = { S, LANGS, SKUS, ROWS, BOUND, problemRows, rowIssues, hasLang, cellEmpty, cellSame, cellLong, srcEmptyRows, filledCells, cellsTotal, pendingRows, pendingTotal, decidedCount, autoHandled, autoHandledTotal, needDecide, render };
 render();
 </script>
 </body>

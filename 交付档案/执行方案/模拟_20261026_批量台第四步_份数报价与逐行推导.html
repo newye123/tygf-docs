@@ -124,6 +124,11 @@ table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bo
 .q .big{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
 .q .sub{font-size:11.5px;color:var(--muted)}
 .qlist{display:flex;flex-direction:column;gap:3px;padding:9px 14px 12px;font-size:11.5px;color:var(--ink2)}
+.langgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:9px 14px 12px}
+.langgrid .btn{height:26px;justify-content:center;font-family:var(--mono);font-size:11.5px}
+.langgrid .btn.off{text-decoration:line-through;color:var(--muted);border-style:dashed}
+.langgrid .btn.absent{opacity:.4;cursor:not-allowed;border-style:dotted}
+.cell.quiet .cv{color:var(--ink2);font-weight:500}
 .log{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:170px;overflow:auto}
 .log .warn{color:var(--warn)}.log .bad{color:var(--bad)}.log .ok{color:var(--ok)}
 .progress{height:6px;border-radius:99px;background:var(--sunk2);overflow:hidden}
@@ -289,6 +294,8 @@ const S = {
   drop:{},                 // 'sku/LANG' -> true  本批不做这一份
   confirm:{},              // 'sku' -> true       覆盖率没满的那一稿，你确认照跑
   detail:null,             // 'sku/LANG' 展开逐行推导
+  onlyIssues:false,        // 矩阵只看有异常的稿
+  logOpen:false,           // 执行日志默认按稿聚合
   running:false, done:false, idx:0, log:[], results:{}, draftResult:{},
 };
 
@@ -333,21 +340,31 @@ function renderDrafts(){
   }).join('');
 }
 
+/* 异常＝缺表 / 你点了不做 / 执行失败。"有行不计价"是常态，不算异常。 */
+const draftHasIssue = (sk) => LANGS.some(l=>{
+  const k=`${sk}/${l}`;
+  return !hasLang(sk,l) || Boolean(S.drop[k]) || S.results[k]==='FAILED';
+});
 function matrixHTML(){
   const head = LANGS.map(l=>`<th>${l}</th>`).join('');
-  const body = SKUS.map(s=>{
+  const rowsShown = S.onlyIssues ? SKUS.filter(draftHasIssue) : SKUS;
+  const body = rowsShown.map(s=>{
     const cells = LANGS.map(l=>{
       const key = `${s}/${l}`;
-      let cls='c-ok', v='✓', cs='实证';
-      if (!hasLang(s,l)){ cls='c-bad'; v='缺'; cs='没这张表' }
-      else if (S.drop[key]){ cls='c-off'; v='—'; cs='不做' }
+      let cls='c-ok', v='·', cs='', quiet=true;
+      if (!hasLang(s,l)){ cls='c-bad'; v='缺'; cs='没这张表'; quiet=false }
+      else if (S.drop[key]){ cls='c-off'; v='—'; cs='不做'; quiet=false }
       else {
         const d = DERIVE[key];
-        if (d.skipped>0){ cls='c-warn'; v=String(d.credits); cs=`${d.units} 单位` }
-        else { v=String(d.credits); cs=`${d.units} 单位` }
-        if (S.results[key]) { cls = S.results[key]==='FAILED'?'c-bad':'c-ok'; cs = S.results[key]==='FAILED'?'失败':'已交' }
+        v = String(d.credits)
+        const r = S.results[key]
+        if (r==='FAILED'){ cls='c-bad'; cs='失败' }
+        else if (r==='OK'){ cs='已交' }
+        /* 「有 N 行不参与计价」是常态不是异常（真语料 112 行里 44 行人点了不翻），
+           所以它不进颜色、不占格子，只留在 title 与逐行推导里。 */
+        quiet = (cls==='c-ok' && (r!=='OK'))
       }
-      return `<td class="${cls}"><button class="cell" data-act="pick-cell" data-key="${key}"><span class="cv">${v}</span><span class="cs">${cs}</span></button></td>`;
+      return `<td class="${cls}"><button class="cell${quiet?' quiet':''}" data-act="pick-cell" data-key="${key}" title="${s} / ${l}：${cs||'可交，全部行都计价'}"><span class="cv">${v}</span>${cs?`<span class="cs">${cs}</span>`:''}</button></td>`;
     }).join('');
     const bound = LANGS.filter(l=>inScope(s,l)).length;
     return `<tr><th>${s} · 主副图 <span class="badge ${bound<12?'warn':'ok'}">${bound} 份</span></th>${cells}</tr>`;
@@ -393,12 +410,14 @@ function scopeHTML(){
       <span class="big">${creditTotal()}</span><span class="sub">积分（合计）</span>
       <span class="sub" style="margin-left:auto">份数 <b class="mono">${outCount()}</b>/${cellsAll()} · 每份按逐行折算</span>
     </div>
-    <div class="qlist">
-      交付物＝稿 × 语言 ＝ 12 × 12 ＝ 144<br>
-      ${Object.entries(STOP_LANG).flatMap(([s,ls])=>ls.map(l=>`− ${s} / ${l}（第 1 步已排除：${STOP_LANG[s][0]==='VI'?'找不到这门表':'这张表 66 行，与这份稿对不上'}）`)).join('<br>')}
-      ${Object.keys(S.drop).filter(k=>S.drop[k]).map(k=>`− ${k}（你点了本批不做）`).join('<br>') || ''}
-      ＝ <b class="mono">${outCount()}</b> 份
-    </div>
+    <div class="qlist"><table class="derive" style="width:100%">
+      <tbody>
+        <tr><td>交付物＝稿 × 语言</td><td class="n">12 × 12</td><td class="n">144</td></tr>
+        ${Object.entries(STOP_LANG).flatMap(([sk,ls])=>ls.map(l=>`<tr class="skip"><td>− ${sk} / ${l} 第 1 步已排除</td><td class="n">表不合规</td><td class="n">−1</td></tr>`)).join('')}
+        ${Object.keys(S.drop).filter(k=>S.drop[k]).map(k=>`<tr class="skip"><td>− ${k} 你点了本批不做</td><td class="n">人决定</td><td class="n">−1</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td>可交付</td><td></td><td class="n">${outCount()} 份</td></tr></tfoot>
+    </table></div>
     <p class="card-s" style="padding:0 14px 12px">点矩阵任意一格，下面摊开这一份的逐行推导。今天界面只有合计，没有这一段（<span class="mono">execute-step.tsx:2698-2702</span>），这就是你上次问「67 怎么来的」的原因。</p>
   </div>`;
 }
@@ -409,10 +428,19 @@ function runHTML(){
   return `<div class="card"><p class="card-t">执行队列（串行，一稿一稿跑）<span class="badge">${S.done?'已结束':S.running?`第 ${S.idx+1}/${SKUS.length} 稿`:'未开始'}</span></p>
     <div class="pad">
       <div class="progress"><i style="width:${pct}%"></i></div>
-      <div class="log">${S.log.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('') || '<div>（还没开跑）</div>'}</div>
+      <div class="log">${(()=>{
+        if (!S.log.length) return '<div>（还没开跑）</div>';
+        const perDraft = S.log.filter(l=>/完成/.test(l.t)||l.k==='bad'||l.k==='warn');
+        if (S.logOpen) return S.log.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('');
+        return perDraft.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('');
+      })()}</div>
+      ${S.log.length?`<button class="link" data-act="toggle-log">${S.logOpen?'收起明细':`展开 ${S.log.length} 条逐份明细`}</button>`:''}
       <div class="acts">
-        <button class="btn primary" data-act="run" ${(pendingCount()>0||S.running||S.done)?'disabled':''}>${S.done?'已完成':'开始生成 '+total+' 份'}</button>
-        ${S.done && Object.values(S.results).some((v,k)=>v==='FAILED')?'<button class="btn" data-act="retry-failed">只重跑失败的那几份</button>':''}
+        ${S.done
+          ? (Object.values(S.results).includes('FAILED')
+              ? '<button class="btn primary" data-act="retry-failed">只重跑失败的那几份</button><span class="hint" style="align-self:center;font-size:11.5px;color:var(--muted)">其余份不动</span>'
+              : '<span class="badge ok" style="align-self:center;height:30px;display:inline-flex;align-items:center;padding:0 12px">全部完成 · 无需重跑</span>')
+          : `<button class="btn primary" data-act="run" ${pendingCount()>0?'disabled':''}>开始生成 ${total} 份</button>`}
       </div>
       <p class="card-s" style="padding:0">${S.done?'回执按语言分开记：一份失败不影响其余，重跑只补那一门。':'开跑前会先报价、再让你确认范围——这一段协议一个字都不改。'}</p>
     </div>
@@ -431,8 +459,11 @@ function renderStage(){
       <span class="sub">这一屏只看份。文件、行、层前三步已经定完了。</span>
     </div>
     <div class="card">
-      <p class="card-t">交付物矩阵 · ${cellsAll()} 格 <span class="badge grey">全流程只有这里出现矩阵</span></p>
-      <p class="card-s">点任意格：这一份从哪张表来、要多少积分、为什么红。</p>
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 14px 0">
+        <p class="card-t" style="padding:0;margin:0">交付物矩阵 · ${cellsAll()} 格</p>
+        <button class="btn sm" data-act="toggle-issues" aria-pressed="${String(S.onlyIssues)}" style="margin-left:auto">${S.onlyIssues?`只看有异常的（${SKUS.filter(draftHasIssue).length} 稿）`:'只看有异常的'}</button>
+      </div>
+      <p class="card-s">格里的数字＝这一份要多少积分。<b>没话说的格子就是全对</b>；"有 N 行不参与计价"是常态（你点了不翻的行），不涂色不占格，想知道就点进去看逐行推导。</p>
       ${matrixHTML()}
     </div>
     ${detailHTML()}
@@ -440,10 +471,11 @@ function renderStage(){
       <div>${scopeHTML()}</div>
       <div>
         <div class="card"><p class="card-t">这一稿的范围 <span class="badge ${bound<12?'warn':'ok'}">${bound}/12 门</span></p>
-          <div class="acts" style="padding:9px 14px 12px">
+          <div class="langgrid">
             ${LANGS.map(l=>{
-              const on = inScope(s,l);
-              return `<button class="btn sm" data-act="drop" data-key="${s}/${l}" aria-pressed="${String(!hasLang(s,l)?false:!S.drop[`${s}/${l}`])}" ${hasLang(s,l)?'':'disabled'} title="${hasLang(s,l)?(on?'本批不做这一份':'已标本批不做，点回来'):'这一门没有表'}">${l}${S.drop[`${s}/${l}`]?' ✕':''}</button>`;
+              const absent = !hasLang(s,l), off = Boolean(S.drop[`${s}/${l}`]);
+              const cls = absent?'btn sm absent':(off?'btn sm off':'btn sm');
+              return `<button class="${cls}" data-act="drop" data-key="${s}/${l}" aria-pressed="${String(!off)}" ${absent?'disabled':''} title="${absent?'这一门没有表，第 1 步就没配上':(off?'已标本批不做，点回来':'本批不做这一份')}">${l}</button>`;
             }).join('')}
           </div>
         </div>
@@ -513,6 +545,8 @@ document.addEventListener('click',(e)=>{
   if (act==='focus-draft'){ S.active=b.dataset.sku; render(); return }
   if (act==='pick-cell'){ S.detail = S.detail===b.dataset.key ? null : b.dataset.key; render(); return }
   if (act==='toggle-all'){ S.showAll=!S.showAll; render(); return }
+  if (act==='toggle-issues'){ S.onlyIssues=!S.onlyIssues; render(); return }
+  if (act==='toggle-log'){ S.logOpen=!S.logOpen; render(); return }
   if (act==='drop'){
     const k=b.dataset.key; if(!DERIVE[k]) return;
     if (S.drop[k]) delete S.drop[k]; else S.drop[k]=true;

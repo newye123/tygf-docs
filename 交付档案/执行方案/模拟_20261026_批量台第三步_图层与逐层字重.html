@@ -388,13 +388,10 @@ function sample(code,i){
   const m = {ES:'Texto',FR:'Texte',ID:'Teks',IT:'Testo',JP:'翻訳',MS:'Teks',NL:'Tekst',PL:'Tekst',RU:'Текст',TH:'ข้อความ',TL:'Teksto',VI:'Văn bản'};
   return `${m[code]||code} ${i+1}`;
 }
-function familyPicker(idx){
-  const cur = layerStyle(idx);
-  return FAMILIES.map(f=>{
-    const miss = familyMissing(idx,f);
-    const on = (S.familyTarget[keyOf(idx)]||cur.family)===f;
-    return `<button class="btn sm" data-act="set-family" data-idx="${idx}" data-family="${esc(f)}" aria-pressed="${String(on)}" title="${miss?`这套族里没有 ${cur.weight}，今天会回落成 Regular`:'同档齐全'}">${esc(f)}${miss?' ⚠':''}</button>`;
-  }).join('');
+function targetNote(idx){
+  const st = layerStyle(idx);
+  const per = S.familyTarget[keyOf(idx)];
+  return per ? `${per}（这一层单独设过）` : `${st.family} ${st.weight}（沿用浮窗里那一套）`;
 }
 function renderStage(){
   const idx = S.activeLayer, l = LAYERS[idx], st = layerStyle(idx);
@@ -425,20 +422,14 @@ function renderStage(){
       </div>
       <div class="pad">
         <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <b style="font-size:12.5px">只换字族</b>
-          <span class="note" style="font-size:11.5px;color:var(--muted)">点一套族，只改脸名；字号行距字重一律不动。</span>
+          <b style="font-size:12.5px">字体与样式不在这里改</b>
+          <span style="font-size:11.5px;color:var(--muted)">这一屏只对账：谁对上谁对不上。换字体在右下角<b>「排版定制」浮窗</b>里，按语言设，存你这台浏览器。</span>
         </div>
-        <div class="acts">${familyPicker(idx)}</div>
-        ${target?`<div class="callout ${miss?'warn':'grey'}" style="margin:0">
-          <b>${target}${miss?'  ⚠ 这套族里没有 '+st.weight:''}</b>
-          ${miss
-            ? `今天会发生的事：<b>回落成 Regular</b>，字重就丢了（<span class="mono">typography-capabilities.ts:383-391</span>，且 <span class="mono">smoke-typography-picker.mjs:119</span> 把这回落钉成了既定行为）。<br>提案：这一层保留 <b>${st.weight}</b>，缺档时用伪粗体或换一套同档族，而不是默默降字重——这需要把排版通道从「按语言」改成「按层」（<span class="mono">typography-persistence.ts:156</span>）。`
-            : `同档齐全，写回 ${st.face.replace(/-(\w+)$/,'-'+st.weight)}，字号与字重不变。`}
-        </div>`:''}
+        <div class="acts">
+          <button class="btn sm" data-act="open-typography">打开排版定制（模拟件里不开）</button>
+          <span class="badge" style="align-self:center">这一层沿用的设置：${esc(targetNote(idx))}</span>
+        </div>
       </div>
-      ${target?`<details class="ev" open><summary>这一层的写入计划（1 条）</summary><div class="evbody">
-        <div class="li"><b>写什么</b><span>脸名换成 ${esc(target)} 的 ${st.weight} 档；字号 ${st.size}pt、行距 ${st.leading}pt、字重 ${st.weight} 全部不动。</span></div>
-      </div></details>`:''}
     </div>
     ${l.kind==='text'?`<div class="card">
       <p class="card-t">这一层 12 门各自会写什么 <span class="badge">${LANGS.filter(x=>l.row!==null && cellUsable(S.active,l.row,x.code)).length} / 12 门可写</span></p>
@@ -487,7 +478,9 @@ function renderExc(){
   cards.push(`<div class="tell"><b>缺的行不在这里问</b>
     <p style="margin:0">哪一行哪一门没译文，第 2 步已经处置完；这一屏只把它翻译成「这一层会不会写」。</p>
     <p class="why">告知只有三类：栅格化、智能对象、对不上的层——和现在产品定下来的一样，不加新的告知项。</p></div>`);
-  document.getElementById('excList').innerHTML = cards.join('');
+  document.getElementById('excList').innerHTML = cards.join('') + `<div class="tell" id="weightNote"><b>字重会不会掉？——会，但不在这一屏改</b>
+    <p style="margin:0">排版定制浮窗按语言给你一套字族；那一档字族里没有对应字重时，今天会<b>回落成 Regular</b>（<span class="mono">typography-capabilities.ts:383-391</span>，且 <span class="mono">smoke-typography-picker.mjs:119</span> 把这回落钉成了既定行为）。要真保住逐层字重，得把排版通道从「按语言」改成「按层」（<span class="mono">typography-persistence.ts:156</span>）——那是排版浮窗的活，不在这一步。</p>
+    <p class="why">这一屏只负责告诉你：哪个层会写到、哪个层不会写、为什么。</p></div>`;
 }
 
 function render(){ renderCounters(); renderLayers(); renderStage(); renderExc(); }
@@ -499,12 +492,7 @@ document.addEventListener('click',(e)=>{
   const act = b.dataset.act;
   if (act==='pick-layer'){ S.activeLayer=Number(b.dataset.idx); render(); return }
   if (act==='jump-layer'){ S.activeLayer=Number(b.dataset.idx); render(); announce(`已跳到 ${layerName(S.activeLayer)}`); return }
-  if (act==='set-family'){
-    const i=Number(b.dataset.idx), f=b.dataset.family;
-    const cur = layerStyle(i).family;
-    if (f===cur) delete S.familyTarget[keyOf(i)]; else S.familyTarget[keyOf(i)]=f;
-    S.clicks++; render(); return
-  }
+  if (act==='open-typography'){ announce('排版定制是另一个浮窗（按语言设字体与样式，只存本机）；这一屏不放编辑器'); return }
   if (act==='resolve'){ S.resolved[keyOf(Number(b.dataset.idx))]=b.dataset.kind; S.clicks++; render(); return }
   if (act==='undo-resolve'){ delete S.resolved[keyOf(Number(b.dataset.idx))]; render(); return }
   if (act==='next'){ announce('可玩件到第 3 步为止：第 4 步是另一份模拟件'); return }
