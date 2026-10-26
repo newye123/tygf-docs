@@ -931,7 +931,9 @@ const TODAY_N = {
   drafts: SKUS.length,        // 12 份稿
   slots: SKUS.length * LANGS.length, // 144 个格位（一份稿 × 一门语言）
   tables: 143,                // 144 个格位里有 143 张表（缺 VI 那张），另有 1 张孤表
-  boundToday: SKUS.length,    // 今天一稿只绑一张表 ⇒ 12 格
+  // 归组内核已在 develop 落地：一稿收成一组、整组逐张读、读完合并（workbench-view.tsx:2131-2137）。
+  // 所以"今天一稿只绑一张表"是旧说法，本轮撤掉；12 这个数真正的含义是执行页按稿数出来的份。
+  draftUnits: SKUS.length,    // 执行页口径：本批 12 份（execute-step.tsx:2512 数 entries）
 };
 const todayCredit = (sku) => (DERIVE[key(sku, 'ES')] || {}).credits || 0;
 const todayUnits = (sku) => (DERIVE[key(sku, 'ES')] || {}).units || 0;
@@ -967,15 +969,16 @@ function todayStep1() {
       </div>
       <p class="card-s">左边选一份稿，这里显示它的一整组语言表。这两颗按钮只扫文件名与表头，不读译文。</p>
       <div class="stats">
-        ${[['12', '设计稿'], ['12', '语种（全批并集）'], ['12', '本批要做的交付物'], ['11', '就绪格'], ['1', '待检查格'], ['0', '有问题格'], ['0', '读表失败表数'], ['12', '矩阵格数']]
+        ${[[String(TODAY_N.drafts), '设计稿'], [String(LANGS.length), '语种（全批并集）'], [String(outCount()), '本批要做的交付物'], [String(outCount()), '就绪格'], [String(TODAY_N.slots - outCount()), '待检查格'], ['0', '有问题格'], ['0', '读表失败表数'], [String(TODAY_N.slots), '矩阵格数']]
           .map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}
       </div>
       <p class="note" style="padding:0 14px 12px">这 8 张卡就是今天的全部概览（<span class="mono">step1-stage-view.tsx:522-577</span>）。注意「矩阵格数 12」：一稿只绑一张表，所以是 12 格，不是 144。</p>
     </div>
 
     <div class="card">
-      <p class="card-t">稿 → 表：今天一稿只能有一张表 ${srcTag('workbench-view.tsx:3119')}</p>
-      <p class="card-s">你把一个文件夹扔进来，里面有 143 张单语言表。今天系统只会给你一稿配一张，剩下的表要你自己再绑——或者手工把 12 张合成一张。</p>
+      <p class="card-t">稿 → 表：一稿一组已经能读，交给下游的还是一张基准表 ${srcTag('workbench-view.tsx:2131-2137 · group-binding.ts:377-396')}</p>
+      <p class="card-s">你把一个文件夹扔进来，里面有 143 张单语言表。自动归组按「同 SKU＋同交付物」把这一稿的十几张收成一组、逐张读、读完合并（<span class="mono">workbench-view.tsx:2131-2137</span>）；交给第 2 步那句「这一稿用哪张表」仍是一个<b>基准表指针</b>（<span class="mono">group-binding.ts:377-396</span>，把数组当字符串交下去会在 <span class="mono">:391</span> 抛 <span class="mono">TypeError</span>）。硬拦「一稿一表」的是<b>经典批量导入</b>那条老路：<span class="mono">workbench-view.tsx:3292</span> 抛「同一稿只能有一张表，请取消重复选择。」</p>
+      <div class="callout grey" style="margin:6px 0 0"><b>更正（本轮取证）</b> 这一格上一版写的指针是 <span class="mono">workbench-view.tsx:3119</span>——那里其实是 <span class="mono">handleStageNext</span> 把当前稿自动切到「第一张有表的稿」的注释，不是一稿一表的限制。写错的原因是我把"看到的行为"当成了"代码里的判据"，没翻到抛错那一行。</div>
       <div class="dlist">${rows}</div>
     </div>
 
@@ -991,9 +994,9 @@ function todayStep1() {
       <div class="card plain">
         <p class="card-t">抽屉里的绿灯说早了</p>
         <p class="note">抽屉会显示「这一份就绪」，但它成立的条件只是这一份绑上了<b>一张</b>表——另外 11 门没有表也算就绪（<span class="mono">step1-stage-view.tsx:1300-1313</span>）。</p>
-        <div class="callout grey" style="margin:8px 0 0"><b>你今天的实际代价</b>
-          什么都不额外做 → 可交 <b>12 份</b>（12 稿 × 1 门）。<br>
-          要交满 144 份 → 得逐稿把 12 张表手工合成一张，12 份稿就是 12 轮，每轮 12 张。</div>
+        <div class="callout grey" style="margin:8px 0 0"><b>「份」这个字今天有两套数法（这是口径问题，不是产能差）</b>
+          第 1 步那张卡按<b>语言</b>数：一组里几门有表就报几份（<span class="mono">step1-stage-view.tsx:844/:1470</span>）；执行页按<b>稿</b>数：「开始执行（本批 12 份 · 逐份）」数的是 entries（<span class="mono">execute-step.tsx:2512/:2519</span>），稿×语言在那一屏叫「格」（<span class="mono">:2517 totalCells</span>）。<br>
+          ⇒ 上一版这里写「什么都不额外做 → 只交 12 份 / 要交满 144 得手工合表」是把两套数法当成了一条产能结论，已更正。今天真正的代价是：<b>想在第 1 步就点掉某一稿的某一门，做不到</b>——得切到那一稿、去第 2 步的语言勾选里取消（<span class="mono">workbench-view.tsx:1879 removeLanguage</span>），第 1 步的格子上根本没有这个开关。</div>
       </div>
     </div>
   </div>`;
@@ -1115,7 +1118,7 @@ function todayStep4() {
     <div class="card">
       <p class="card-t">开始执行</p>
       <div class="row" style="gap:8px;flex-wrap:wrap">
-        <button class="btn sm" data-act="today-noop">开始执行（本批 ${TODAY_N.boundToday} 份 · 逐份）</button>
+        <button class="btn sm" data-act="today-noop">开始执行（本批 ${TODAY_N.draftUnits} 份 · 逐份）</button>
         <span class="note">点了会先弹「确认开始执行」，再逐份跑（<span class="mono">execute-step.tsx:2519</span>）。</span>
       </div>
       <p class="note" style="margin-top:8px">今天没有交付物矩阵：你没法在这一步看见「哪一份能交、哪一份为什么交不了」，只能等回执。</p>
@@ -1126,7 +1129,8 @@ function todayStep4() {
 /* ───── 今天：左右栏 / 顶栏数字 ───── */
 const TODAY_PROBLEMS = {
   1: [
-    { t: '一稿只能绑一张表', d: '一格一表，143 张表要你自己绑；不绑就是 12 份而不是 144 份。→ 改完之后：一组表＝一次绑定。', src: 'workbench-view.tsx:3119 · 本次改动不含 buildGroupBindings 的 excluded 通道' },
+    { t: '份数两套数法并存', d: '第 1 步按语言数份、执行页按稿数份，同一个词两个数，谁也不认谁。→ 改完之后：份数只有一处算＝ready 槽位 ∩ 这一稿要做哪几门。', src: 'step1-stage-view.tsx:844 · execute-step.tsx:2512 · slot-scope.ts countDeliverables' },
+    { t: '第 1 步点不掉单独一门', d: '要少做一门得切稿去第 2 步取消勾选，格子上没有开关；拦下一张表也只能看结果、不能撤。→ 改完之后：ready 格是复选框，点掉即从这稿的语言集合里减一门，「全选回来」按数据复原，被拦的表有「放开」。', src: 'workbench-view.tsx:1879 · step1-stage-view.tsx:854-880' },
     { t: '读表一次只排 12 张', d: '没有「读齐再进下一步」，读失败只显示成待检查。→ 改完之后：分轮读到齐，整组才算就绪。', src: 'table-inventory.ts:233-237' },
     { t: '抽屉绿灯说早了', d: '绑上一张表就显示「这一份就绪」，另外 11 门没表也算就绪。→ 改完之后：就绪＝整组齐。', src: 'step1-stage-view.tsx:1300-1313' },
     { t: '例外没有专门的清单', d: '同门两张、缺一门、错行、归属不明，混在普通格子里。→ 改完之后：只有这几件留给你，其余默认全选。', src: '本会话提案（未实现）' },
@@ -1158,23 +1162,23 @@ function todayRight() {
 function todayLeft() {
   const rail = document.getElementById('railLeft');
   const rows = SKUS.map(sku => `<button class="drow t-ok" data-act="pick-draft" data-sku="${sku}" aria-current="${String(sku === S.active)}">
-      <span class="dot"></span><span><span class="sku">${sku}</span><span class="sub">1 张表 · 11 门没绑</span></span><span class="pill">1 门</span></button>`).join('');
-  rail.innerHTML = `<div class="rail-head"><b>稿</b><span>12 份 · 全部主副图</span><span class="tag mono">今天</span></div>${rows}`;
+      <span class="dot"></span><span><span class="sku">${sku}</span><span class="sub">一组 ${groupBound(sku)} 张表 · 读完合并</span></span><span class="pill">${groupBound(sku)} 门</span></button>`).join('');
+  rail.innerHTML = `<div class="rail-head"><b>稿</b><span>${TODAY_N.drafts} 稿 · 全部主副图</span><span class="tag mono">今天</span></div>${rows}`;
 }
 function todayCounters() {
   const box = document.getElementById('counters');
   let bits = [];
   if (S.step === 1) {
-    bits = [`<span>已绑 <b id="tBound">${TODAY_N.boundToday}</b>/${TODAY_N.slots} 格</span>`,
-      `<span>可交付 <b id="tOut">${TODAY_N.boundToday}</b> 份</span>`,
-      `<span>没读的表 <b>${TODAY_N.tables - TODAY_N.boundToday}</b> 张</span>`];
+    bits = [`<span>已绑 <b id="tBound">${outCount()}</b>/${TODAY_N.slots} 格</span>`,
+      `<span>交付物 <b id="tOut">${outCount()}</b> 格（按语言数） · <b id="tDraft">${TODAY_N.draftUnits}</b> 份（按稿数）</span>`,
+      `<span>表 <b>${TODAY_N.tables}</b> 张 · 收成 ${TODAY_N.drafts} 组</span>`];
   } else if (S.step === 2) {
     bits = [`<span>逐条确认 <b>${autoTotal()}</b> 行</span>`, `<span>这一稿问题行 <b>${problemRows(S.active).length}</b>/${ROWS}</span>`];
   } else if (S.step === 3) {
     bits = [`<span>文字层 <b>${textLayers()}</b></span>`, `<span>对上 <b>${textLayers() - unmatchedLayers()}</b></span>`,
       `<span>门 <b>${reconcileOpen() ? '开着' : '关着'}</b></span>`];
   } else {
-    bits = [`<span>可交付 <b>${TODAY_N.boundToday}</b> 份</span>`, `<span>预计 <b>${todayCreditsAll()}</b> 积分</span>`];
+    bits = [`<span>本批 <b>${TODAY_N.draftUnits}</b> 份（按稿） · <b>${outCount()}</b> 格（按语言）</span>`, `<span>预计 <b>${todayCreditsAll()}</b> 积分</span>`];
   }
   box.innerHTML = bits.join('');
   document.getElementById('crumbStep').textContent = `第 ${S.step} 步 ${STEP_NAMES[S.step - 1][1]} · 今天`;

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对抗式审查报告 · 执行方案 v1《批量台第 1 步 14 条契约落地》</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:34px 22px 72px}
+h1{font-family:"IBM Plex Sans","Noto Sans SC",sans-serif;font-size:27px;line-height:1.3;margin:0 0 6px}
+h2{font-size:19px;margin:34px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--red);border-radius:8px;padding:16px 18px;margin:18px 0}
+.verdict b{color:var(--red);font-size:19px;display:block;margin-bottom:4px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:18px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat i{display:block;font-style:normal;font-size:24px;font-weight:700}
+.stat span{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13.5px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--card);font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+td.mono,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.id{font-weight:700;white-space:nowrap}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;border:1px solid var(--line)}
+.imp{color:var(--red);border-color:var(--red)}.nit{color:var(--amb);border-color:var(--amb)}.pre{color:var(--mut)}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:13px 16px;margin:14px 0}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:22px}li{margin:6px 0}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+</style>
+</head>
+<body><main>
+<h1>对抗式审查报告：执行方案 v1《批量台第 1 步 14 条契约落地》</h1>
+<p class="sub">审查对象：<span class="mono">交付档案/执行方案/执行方案_20261026_批量台第1步14条契约落地_v1.md</span>（25367 B，md5 <span class="mono">3f2cbb65…</span>，206 行）· 代码基线 develop HEAD <span class="mono">9048c13a</span> · Round 1/3 · 2026-10-26 23:3x</p>
+
+<div class="verdict"><b>VERDICT：打回（不可按文施工）</b>
+v1 的骨架——新建一套 slot 剔除状态、改语言门、改语言页签——建在<b>三条错的取证</b>上。照文做完，会交付一个"点了没反应"的假剔除：显示的数字降了，助手照跑那门语言、照样计费。</div>
+
+<div class="stats">
+<div class="stat"><i>10</i><span>Important（全部证实）</span></div>
+<div class="stat"><i>3</i><span>Nit</span></div>
+<div class="stat"><i>1</i><span>存量</span></div>
+<div class="stat"><i>2</i><span>未决</span></div>
+<div class="stat"><i>High</i><span>风险档（含计费语言集合＋回执闸）</span></div>
+</div>
+
+<h2>三条会推翻骨架的</h2>
+<div class="callout bad"><b>I-1 · 执行语言不是我计划减法的那个变量</b><br>
+<span class="mono">execute-step.tsx:714</span> <span class="mono">allLanguages = selectedLanguages ?? parsed.languageColumns</span> → <span class="mono">:1046</span> <span class="mono">executionLanguages</span>；传参处 <span class="mono">workbench-view.tsx:5762</span> <span class="mono">selectedLanguages={targetLanguages}</span>（当前稿）。而 <span class="mono">multiDraftLanguageColumns</span> 在 <span class="mono">:5792</span> 另传，只用于 <span class="mono">execute-step.tsx:2353-2356</span> 数「格」当显示。<br>
+<b>后果：</b>v1 任务 3.2 的减法做完，格数变了、执行没变。<b>而且 v1 承诺的判据负控不会红</b>（它测的是门，不是执行）。</div>
+<div class="callout bad"><b>I-3 · 我用来否掉内核通道的理由是编造的</b><br>
+<span class="mono">table-grouping.ts:213-221</span>：一张表若有多个语言列，直接判孤儿 <span class="mono">MULTI_LANGUAGE_TABLE</span> 踢出组。⇒ 组内<b>一表只供一门语言</b>，<span class="mono">input.excluded</span>（表级）恰好等于 (稿×门) 剔除。内核已实现该态（<span class="mono">group-binding.ts:203-211</span>）、已扣份数（<span class="mono">:269</span>＋<span class="mono">:162-168</span>）、已有单测（<span class="mono">tests/unit/group-binding.test.ts:165/:278</span>）。<br>
+<b>后果：</b>v1 丢掉最短最已被测的路，另建第三套状态＝多一套会打架的账。</div>
+<div class="callout bad"><b>I-2 · 我标的"最大的坑"钉在错误的门上</b><br>
+第 1 步→第 2 步的门是 <span class="mono">stageGate</span>（<span class="mono">workbench-view.tsx:3055-3077</span> → <span class="mono">stage-rows.ts:172-222</span>），只看 scanned/choice/read/dup，<b>从不看语言</b>；<span class="mono">allLanguagesReviewed</span>（<span class="mono">workbench-machine.ts:35-42</span>）管第 2/3 步且按当前稿——而 <span class="mono">activateDraft</span>（<span class="mono">workbench-view.tsx:594-608/:1908/:3699/:3757</span>）切稿时本就重绑每稿语言。<br>
+<b>后果：</b>v1 任务 3.3 改的是不相干路径，白改。</div>
+
+<h2>其余七条 Important</h2>
+<table>
+<thead><tr><th style="width:52px">ID</th><th style="width:230px">落点</th><th>会怎么坏</th><th style="width:56px">等级</th></tr></thead>
+<tbody>
+<tr><td class="id">I-4</td><td class="mono">step1-stage-view.tsx:844<br>group-binding.ts:269</td><td>份数＝<span class="mono">languageCount - 剔除数</span>，但 <span class="mono">languageCount</span> 数的是可用<b>表</b>，blocked/missing/pending 从没进过它；任务 2.2 又让四态格全可点 ⇒ 点掉"没有这张表"的格，份数下穿 0。同一数字另有三处消费者（<span class="mono">:531/:924/:1470</span>）没改 ⇒ 四处数、一处变。</td><td>A</td></tr>
+<tr><td class="id">I-5</td><td class="mono">workbench-view.tsx:1706-1710</td><td>守门只认全局列表 <span class="mono">targetLanguages.includes(currentLanguage)</span>。把被剔的门从页签"不再出现"后，<span class="mono">currentLanguage</span> 仍指着它 ⇒ 渲染出一张没有页签的译文编辑器；<span class="mono">:5262-5265</span> 的 <span class="mono">addLanguage</span> 还会把它点回来。</td><td>A</td></tr>
+<tr><td class="id">I-6</td><td class="mono">workbench-view.tsx:4723 vs :4749-4752</td><td>「手工选表 N 次」计数的两处 <span class="mono">:1924/:2001</span> 只是<b>打开对话框</b>；真确认在 <span class="mono">handleStagePickTable(:2320)</span>。且 <span class="mono">onChoose</span> 也从「读这张表再判」（<span class="mono">step1-stage-view.tsx:1023</span>）触发 ⇒ 数出来是"开几次对话框＋几次读表"。</td><td>A</td></tr>
+<tr><td class="id">I-7</td><td class="mono">stage-rows.ts:190-192</td><td>任务 6 是<b>重复门</b>：<span class="mono">!row.choice ⇒ pending-choice</span> 早就拦着，原因文案已存在（<span class="mono">workbench-view.tsx:3093-3094</span>「{count} 份还没拍板」）。而 v1 只改 <span class="mono">:1133</span>，漏 <span class="mono">:2058-2064</span> 第二个下一步 ⇒ 双闸＋漏一处。</td><td>A</td></tr>
+<tr><td class="id">I-8</td><td class="mono">smoke-workbench-batch-groups.mjs:19-24</td><td>v1 把 <span class="mono">:107</span> 当"假开关会被守卫抓"的依据。该守卫扫描集合<b>不含 <span class="mono">step1-stage-view.tsx</span></b>——而任务 2/4/5 全落在这个没被看的文件里。<span class="mono">:56</span> 只是对 <span class="mono">psd-selection.ts</span> 的裸 <span class="mono">includes('group')</span>。（9 个新标识符逐个跑过四条正则：全不命中，名字本身安全。）</td><td>A</td></tr>
+<tr><td class="id">I-9</td><td class="mono">git diff --numstat（23:32:24）</td><td>并发是真的：develop 7 个文件带真实 diff，<span class="mono">workbench-view.tsx(+1/−0 别人加 overflowRiskTotal)</span> 与 <span class="mono">execute-step.tsx(+4/−0)</span> 正是任务 3/4 主改文件，mtime <span class="mono">23:32:02</span>。v1 R8「改前确认没有别人在飞改动」此刻<b>不成立</b>，行号已 +1 漂移。</td><td>A</td></tr>
+<tr><td class="id">I-10</td><td class="mono">execute-step.tsx:2512 vs step1-stage-view.tsx:844</td><td>我的"更正"过度更正：今天<b>两种数份法并存</b>——执行步按稿（<span class="mono">totalEntries</span>），第 1 步按语言（<span class="mono">languageCount</span>）。真问题是口径不统一，不是我上一版写的那种错。</td><td><span class="badge pre">存量</span></td></tr>
+</tbody></table>
+
+<h2>Nit（三条，硬上限内）</h2>
+<ol>
+<li><b>N-1</b> <span class="mono">const { [masterPath]: _drop, ...rest }</span> 能过（<span class="mono">eslint.config.mjs:27/:49</span> 两条 no-unused-vars 均 off），但 <span class="mono">grep -rn "]: _" src/</span> 0 命中；房子写法是 spread+delete（<span class="mono">workbench-view.tsx:2238-2239</span>）。</li>
+<li><b>N-2</b> 任务 2.1 写"增两项"实列三项，加 4.1/4.2 共 5 个必填 props；<span class="mono">tests/unit/step1-stage-view.test.tsx:130-167</span> 的 <span class="mono">buildProps</span> 逐枚枚举 ⇒ 不改夹具 <span class="mono">tsc</span> 报 TS2739，v1 通篇没提夹具。</li>
+<li><b>N-3</b> 行号小漂：TypeError 实为 <span class="mono">group-binding.ts:391</span>（写 388）；<span class="mono">SLOT_CLASS</span> 在 <span class="mono">step1-stage-view.tsx:174</span>；「两套真相」注释在 <span class="mono">:527-529</span>；<span class="mono">handleStageChooseGroup</span> 在 <span class="mono">:2259</span>。</li>
+</ol>
+
+<h2>未决（各缺一条证据）</h2>
+<ul>
+<li><b>U-1</b> 「只拦这张」走内核 <span class="mono">excluded</span> 落地时，<span class="mono">pendingCount/defaultedCount</span>（<span class="mono">group-binding.ts:270-273</span>）会不会跟着变、会不会把"等你定"变成"整组停"。缺：改后跑 <span class="mono">npx vitest run tests/unit/group-binding.test.ts</span> ＋一条手工夹具。</li>
+<li><b>U-2</b> v1 说"剔除不进持久化"。我读到 <span class="mono">captureLiveDraft(:594-608)</span> 含 <span class="mono">targetLanguages</span>，但<b>没读到 DraftRuntimeSnapshot 的落盘写入点</b> ⇒ "刷新会不会带回旧语言集合"属未核实，不是已定。缺：一条 grep ＋真浏览器刷新实测。</li>
+</ul>
+
+<h2>更正（本轮推翻的说法）</h2>
+<div class="callout ok">
+① 「今天只能交付 12 份 vs 改完 142 份」→ 同一批活的两种数法＋口径不统一（I-10）。<br>
+② 「<span class="mono">excluded</span> 会把 12 门一起删」→ 组内一表一语言，表级 excluded＝格级剔除（I-3）。<br>
+③ 「剔除后第 1 步的门永远开不上」→ 第 1 步的门与语言无关，语言门在第 2/3 步且按稿重绑（I-2）。
+</div>
+
+<h2>覆盖缺口（我没审的）</h2>
+<p class="sub">没跑构建与测试（工作树当时被别会话改着，跑了会把别人红算我账上）；没审助手侧 <span class="mono">download/local-assistant/</span>；没验真语料；第 2/3/4 屏的语言取数只审了 v1 引用的那几处，未做全量扫描。风险档 High ⇒ 按技能 §4，计费/回执路径的结论需 Owner 过一眼，本审查不构成批准。</p>
+
+<footer>对抗式审查（用户级 skill <span class="mono">adversarial-review</span>）· Round 1/3 · 严重度全 A（自跑命令或本人读到 file:line）· 结论只对 <span class="mono">9048c13a</span> ＋该文档 md5 有效 · 报告：<span class="mono">交付档案/审查报告/审查报告_20261026_执行方案v1_对抗式审查.md</span></footer>
+</main></body></html>

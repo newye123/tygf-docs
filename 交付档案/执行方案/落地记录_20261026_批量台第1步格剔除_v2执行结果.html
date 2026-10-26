@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>落地记录 · 批量台第 1 步「点掉一格真少一格」</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:34px 22px 72px}
+h1{font-family:"IBM Plex Sans","Noto Sans SC",sans-serif;font-size:26px;line-height:1.3;margin:0 0 6px}
+h2{font-size:18px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13.5px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--grn);border-radius:8px;padding:15px 18px;margin:16px 0}
+.verdict b{color:var(--grn);font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat i{display:block;font-style:normal;font-size:22px;font-weight:700}
+.stat span{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mut)}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ul,ol{padding-left:22px}li{margin:6px 0}
+footer{margin-top:38px;padding-top:13px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+</style></head>
+<body><main>
+<h1>落地记录：批量台第 1 步「点掉一格真少一格」</h1>
+<p class="sub">2026-10-26 23:44 → 2026-10-27 00:20 · 流程＝方案 v1 → 对抗式审查打回 → 方案 v2 → 照 v2 执行 · 基线 develop <span class="mono">9048c13a</span>（施工全程另一会话在同树写）</p>
+
+<div class="verdict"><b>做完了，而且是被门证明过的做完</b><br>
+第 1 步点掉一格，这一稿真的不再做这一门：顶栏交付物、组卡份数、左栏份数、第 2 步页签、执行前逐稿确认、发出去执行的语言清单、回执与结算——七处跟着降；「全选回来」按数据复原。</div>
+
+<div class="stats">
+<div class="stat"><i>48</i><span>新增/回归渲染级断言</span></div>
+<div class="stat"><i>145</i><span>归组与批量套件（37＋108）</span></div>
+<div class="stat"><i>5/5</i><span>负控真红、逐字节还原</span></div>
+<div class="stat"><i>0</i><span>tsc / lint 错误</span></div>
+<div class="stat"><i>31</i><span>契约对账判据（门）</span></div>
+</div>
+
+<h2>界面上多了什么</h2>
+<ul>
+<li>能用那张表的格子变成复选框（<span class="mono">role="checkbox"</span>），点掉＝这一稿少做一门，再点加回来；<b>只有 ready 格是开关</b>——缺表／拦下／等人定的格点不动（把它们是做成开关会把份数减成负数）。</li>
+<li>点掉过才出现「全选回来」＋「剔除 N 门」。</li>
+<li>顶栏两张新卡：「已绑格（共 N 格）」「手工选表」——后者只数真确认，打开又取消的对话框与「读这张表再判」都不算。</li>
+<li>「已按你的选择」补「改／撤销」；被拦下的表补「拦下 · 点这里放开」。</li>
+<li>「看依据」→ 批准稿原话「凭什么归到这一组（3 条证据）」。</li>
+</ul>
+
+<h2>为什么写在这一处</h2>
+<div class="callout ok">剔除只写进<b>这一稿要做哪几门</b>那份语言集合（当前稿 <span class="mono">targetLanguages</span>，别的稿它那一份会话快照）。逐稿执行本来就靠 <span class="mono">activateDraft</span> 换会话（<span class="mono">workbench-view.tsx:3699/:3757</span>），执行语言从 <span class="mono">selectedLanguages</span> 取（<span class="mono">execute-step.tsx:714→:1046</span>）。写这一处＝七处自动跟随；写别处＝再造一套会打架的账。<br>
+份数也只有一处算：<span class="mono">|ready 槽位 ∩ 这一稿要做哪几门|</span>（<span class="mono">slot-scope.ts:9</span>），四个显示位全改读它。<br>
+<b>没碰</b>：计费公式、payload 结构、服务端、助手侧、支付 flag。<span class="mono">test:batch-row-contract</span> 与 <span class="mono">test:trust-chain</span>（56 秒）当回归跑绿。</div>
+
+<h2>执行中我自己撞上的三件事</h2>
+<div class="callout bad">① <b>前向引用把 React Compiler 撞红</b>：函数放在它引用的 memo 之前，<span class="mono">npm run lint</span> 报 5 条 <span class="mono">preserve-manual-memoization</span>（整个组件放弃优化）。用脚本把 71 行整块搬到 memo 之后（搬运前后字节数相同），lint 归零。</div>
+<div class="callout bad">② <b>两个快照副本共享同一个对象</b>：我原先把同一份 <span class="mono">updated</span> 既塞 ref 又塞 state，编译器直接报「may be modified later」——这正是审查警告的「两套账」换了形态。改成各写一份独立对象，并把这条钉进门里（契约 7 现要求两处都写 <span class="mono">{ ...updated }</span>）。</div>
+<div class="callout bad">③ <b>负控咬出我自己的两条假绿</b>：门原来判「函数名前缀」，把函数改名照样命中＝N-β 假绿。改成判挂载点接线与按钮落点，再加一条交给 <span class="mono">tsc</span>（引用悬空静态门看不见、类型系统看得见）。现在五条全红。</div>
+
+<h2>运行证据（退出码原样）</h2>
+<table><thead><tr><th>命令</th><th>结果</th></tr></thead><tbody>
+<tr><td class="mono">npx vitest run tests/unit/slot-scope.test.ts tests/unit/step1-stage-view.test.tsx</td><td>48 passed</td></tr>
+<tr><td class="mono">npm run test:table-grouping</td><td>rc=0 · 37 passed</td></tr>
+<tr><td class="mono">npm run test:workbench-batch-groups</td><td>rc=0 · 108 passed</td></tr>
+<tr><td class="mono">npm run test:batch-row-contract</td><td>rc=0</td></tr>
+<tr><td class="mono">npm run test:trust-chain</td><td>rc=0（00:12:37→00:13:33）</td></tr>
+<tr><td class="mono">npx tsc --noEmit ／ npm run lint</td><td>rc=0 ／ rc=0（0 errors，48 条既有 warning）</td></tr>
+<tr><td class="mono">node scripts/smoke-step1-mock-contract.mjs</td><td>rc=0 · 判据 31 项 · 14 条契约逐行打印</td></tr>
+<tr><td class="mono">node tmp/nc-step1.mjs</td><td>ALL NC BIT · N-α／β／γ／δ／ε 五条全红、还原 md5 一致</td></tr>
+<tr><td class="mono">node tmp/check-mock-all.cjs</td><td>断言 94 条全绿、零 jsdom 错误</td></tr>
+</tbody></table>
+
+<h2>同时更正我上一版说错的三句</h2>
+<ol>
+<li>「今天一稿只能有一张表（<span class="mono">workbench-view.tsx:3119</span>）」——那行是自动切稿的注释。真限制在经典批量导入 <span class="mono">:3292</span>；自动归组早就一稿读一组并合并 <span class="mono">:2131-2137</span>，给下游的「一张表」是基准表指针 <span class="mono">group-binding.ts:377-396</span>。</li>
+<li>「今天只交 12 份 / 改完交 142 份」不是产能差，是 <span class="mono">份</span> 这个字今天两套数法并存（第 1 步按语言 <span class="mono">step1-stage-view.tsx:844</span>、执行页按稿 <span class="mono">execute-step.tsx:2512</span>）。连走件今天那一侧的顶栏现在把两套数法同时摆出来，门第 79 条钉住。</li>
+<li>「剔除后第 1 步的门永远开不上」——第 1 步的门是 <span class="mono">stageGate</span>，从来不看语言；语言门在第 2/3 步且按稿。v2 因此撤掉那条改动，也撤掉重复的第二道门（<span class="mono">pending-choice</span> 早就拦着）。</li>
+</ol>
+
+<h2>没做到的（不粉饰）</h2>
+<div class="callout"><b>真浏览器点一遍没做成。</b>产品界面先过登录门（<span class="mono">account-gate.tsx:170</span>），我这侧浏览器没有你的 cookie，本机也没有已在跑的 dev 或任何本地免登录通道（<span class="mono">scripts/mock-auth-flow.mjs</span> 是登录安全自测，不是绕过开关）。我没有绕登录、也没读 cookie。承担验证的是渲染级测试（真组件＋真 <span class="mono">buildGroupBindings</span>）。你随手一点就能验：第 1 步挑一门点掉，看顶栏三个数是否同时降、第 2 步那一门是否真没了。</div>
+<ul>
+<li>契约 4／5／6／12 本轮没做（空态、扫描进度、一键、A/B 对照），在门表里标「推迟」，不静默消失。</li>
+<li>U-1（表级拦下后 <span class="mono">pendingCount/defaultedCount</span> 如何变）、U-2（刷新会不会带回旧语言集合）＝未核实，等你在场看一眼。</li>
+</ul>
+
+<h2>提交，以及"这份提交自己站不站得住"</h2>
+<p>develop <span class="mono">41a0fd65</span> · 7 文件 ＋652/−27。同树并发处理：<span class="mono">workbench-view.tsx</span> 与 <span class="mono">package.json</span> 里有另一会话的在飞现场（<span class="mono">overflowRiskTotal</span> 一族、clearance 接入），我用"内部按 LF 匹配 → 撤掉别人的 hunk → <span class="mono">git add</span> → 按原字节还原"的办法只提交自己的部分，两条都带 md5 自检（<span class="mono">还原 OK</span>）；提交后他们的 hunk 仍是未暂存（9/2 与 1/1），一行没少。中途一条 CRLF 陷阱（<span class="mono">git diff</span> 给 LF、工作树是 CRLF）让脚本匹配不到就停手报错，没有硬写。</p>
+<div class="callout ok"><b>干净树复核</b>（新建 detached worktree 只检出 <span class="mono">41a0fd65</span>，临时借 develop 的 <span class="mono">node_modules</span> 建 junction）：<span class="mono">tsc --noEmit</span> rc=0 · <span class="mono">vitest</span> 48 passed · <span class="mono">group-binding</span> 21 passed · <span class="mono">smoke-step1-mock-contract</span> rc=0。收尾先摘 junction（事后核对 develop 的 653 项依赖与 <span class="mono">next/package.json</span> 都在），再 <span class="mono">git worktree remove</span> ＋删空目录，<span class="mono">worktree list</span> 回到 35 条。<br>
+<b>没 push、没出包、没上站</b>——三段轨的那一步等你点头或另开会话。</div>
+
+<footer>方案：<span class="mono">执行方案_20261026_批量台第1步格剔除_v2.md/.html</span> · 审查：<span class="mono">审查报告_20261026_执行方案v1_对抗式审查.md/.html</span> · 提交：<span class="mono">develop 41a0fd65</span> · 本件：<span class="mono">落地记录_20261026_批量台第1步格剔除_v2执行结果.md/.html</span></footer>
+</main></body></html>

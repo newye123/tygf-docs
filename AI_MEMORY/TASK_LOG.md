@@ -1,3 +1,23 @@
+## 2026-10-27 00:20 批量台第 1 步「点掉一格真少一格」——方案→对抗式审查→修订→执行 一轮闭环（BATCH-SLOT-SCOPE）
+
+**目标**：按批准稿把第 1 步的交互契约落进真代码，核心是「点掉某一稿某一门，这一门真从这批里消失」。
+
+**流程**：执行方案 v1（`交付档案/执行方案/执行方案_20261026_批量台第1步14条契约落地_v1.md`）→ 对抗式审查（`交付档案/审查报告/审查报告_20261026_执行方案v1_对抗式审查.md/.html`，VERDICT 打回，10 条 Important 全证实）→ 方案 v2（`执行方案_20261026_批量台第1步格剔除_v2.md/.html`）→ 照 v2 执行 → 结果件（`落地记录_20261026_批量台第1步格剔除_v2执行结果.md/.html`）。
+
+**审查推翻的三条关键取证**（v1 若照施工会交付假剔除）：I-1 执行语言取的是 `selectedLanguages`＝当前稿 `targetLanguages`（`execute-step.tsx:714→:1046`，传参 `workbench-view.tsx:5762`），`multiDraftLanguageColumns` 只用于数「格」显示，所以 v1 的减法做在错变量上；I-2 第 1 步的门是 `stageGate`（`workbench-view.tsx:3055-3077`→`stage-rows.ts:172-222`），从不看语言，v1 所谓"最大坑"钉错地方；I-3 `table-grouping.ts:213-221` 把多语言列判孤儿 ⇒ 组内一表一门，表级 `excluded` 恰＝格级剔除，v1 用来否掉它的理由是编造的。
+
+**实现**：`src/lib/workbench/slot-scope.ts`（份数唯一口径 `countDeliverables`＝ready 槽位 ∩ 该稿要做哪几门，＋恢复集）；`workbench-view.tsx` 唯一写入口 `setDraftLanguages`（当前稿写 `targetLanguages` 并删该门确认摘要；非当前稿同一笔写 `draftSnapshotsRef` 与 `inactiveDraftSnapshots` **两个独立对象**）、`excluded: [...stageExcludedTables]` 接进 `buildGroupBindings`、`stageDeliverables`/`languagesByDraftRuntime` 两个派生 memo、`手工选表` 只在三处真确认点计数、`onClearChoice`/`onBlockTable`/`onUnblockTable`；`step1-stage-view.tsx` 仅 ready 格变 `role=checkbox`、`全选回来`、两张新卡、四个份数显示位改读同一派生、例外卡补改/撤销、`看依据`→`凭什么归到这一组（3 条证据）`；新门 `scripts/smoke-step1-mock-contract.mjs` 并同笔把游离的 `test:table-grouping` 接进 `test:contracts`。
+
+**执行中撞到的三件（都改了）**：① 函数写在所引用 memo 之前 ⇒ React Compiler 报 5 条 `preserve-manual-memoization`，用 `tmp/relocate.mjs` 整块搬到 memo 之后（字节数不变）；② 两个快照副本共享同一引用被编译器判为 "may be modified later"，改成各写一份独立对象并钉进门里；③ 负控 N-β 第一次是假绿（门按函数名前缀判存在，改名照样命中）⇒ 收紧为判挂载点接线与按钮落点，另加 N-ε 交给 tsc 判引用悬空。
+
+**验证**：`npx vitest run tests/unit/slot-scope.test.ts tests/unit/step1-stage-view.test.tsx` 48 passed；`test:table-grouping` rc=0（37）；`test:workbench-batch-groups` rc=0（108）；`test:batch-row-contract` rc=0；`test:trust-chain` rc=0（56 秒）；`tsc --noEmit` rc=0；`npm run lint` rc=0（0 errors）；门 rc=0（判据 31）；`tmp/nc-step1.mjs` 五条负控全红且逐字节还原；模拟件门 `tmp/check-mock-all.cjs` 断言 94 条全绿。
+
+**同时更正上一版交付里的三句错话**：`:3119` 是自动切稿注释（真限制在 `:3292`，整组读在 `:2131-2137`，投影在 `group-binding.ts:377-396`）；「今天 12 份 vs 改完 142 份」是 `份` 两套数法并存而非产能差；「剔除后第 1 步的门永远开不上」不成立。连走件今天侧顶栏改为同时摆出两套数法，并由门第 79 条钉住。
+
+**未做与未核实**：契约 4/5/6/12 推迟（门表可见）；真浏览器点击未做（产品要先过登录门，本会话浏览器无 cookie，未绕登录未读 cookie，验证由渲染级测试承担）；U-1 表级拦下对 `pendingCount/defaultedCount` 的影响、U-2 刷新是否带回旧语言集合＝未核实。
+
+**遗留**：`worktrees/develop` 另有他会话现场（`overflowRiskTotal`／clearance 一族／site 素材），本次仅按 hunk 暂存自己的部分（`tmp/stage-mine.mjs`，混合 hunk 跳过不合），逐名 add，未 push。
+
 ## 2026-10-26 23:2x 连走件加「今天的真工作台 / 改完之后」对照（BATCH-TODAY-VS-AFTER）
 
 - **触发**：Owner 三句：①「我在谷歌浏览器一直就登录着啊无语了」②「结合现在的真实工作台要怎么调整？我要你结合当前工作台，还有你真实要动干后出来的真实模拟效果」③ 之前那句「第三步好像没有起作用」。
