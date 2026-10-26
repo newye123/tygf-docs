@@ -2201,12 +2201,14 @@
 - **#282 进展（2026-10-25 22:1x，第三稿，界面架构层面）**：Owner 对第二稿判「步骤一二三都没区别」。最深根因＝**我写错了产品四步的名字**（真名 准备素材/智能检测/**设计稿校对**/生成交付，`worktrees/develop/src/lib/workbench/terms.ts:26-31`），于是第三步按「审核」理解、塞进交付物矩阵，导致第 1/3 步画同一张格子表（`workbench-view.tsx:5226` 证明第三步是按 PSD 文字层渲染的）。修法：四步各归一种单位（文件／行／图层／份），交付物矩阵只留第 4 步、第 1 步折叠保留；语言 tab 改为真过滤（14 列→4 列）；八行阶段条改紧凑 chips。新负控＝**DOM 指纹**（每屏的矩阵/表/图层/组清单计数必须不同），44 条 jsdom 断言全绿 EXIT=0；该负控当场抓到第 3 步复用第 1 步样式类。模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_文件到行到图层到份.html`。
 
 
-## #283　守门脚本自己过期：`test:batch-workbench-guards` 死抠已被 i18n 迁移改写的模板字符串原文，连红至少 6 天且不在 `test:contracts` 链里　🟠 开放（假红门／闸失效；2026-10-26 本会话跑 P2 回归时实测）
+## #283　守门脚本自己过期：`test:batch-workbench-guards` 死抠已被 i18n 迁移改写的模板字符串原文，连红至少 6 天且不在 `test:contracts` 链里　🟢 已修（2026-10-26 15:1x develop，断言改行为级＋该门接进 contracts，三条负控实测会红）
 
 - **现象**：`npm run test:batch-workbench-guards` 退出码 **1**，抛 `AssertionError: 失败/卡住必须停下点名（第 x/n 个 + 文件名，绝不静默跳过）`，位置 `scripts/smoke-batch-workbench-guards.mjs:108`。
 - **根因**：该断言用 `card.includes('队列已停止：第 ${ordinal}/${q.steps.length} 个设计稿（${basenameOf(entry.masterPath)}）')` 抠**源码原文**；而 `src/components/workbench/design-file-card.tsx:763` 早已改成 i18n 形式 `t('队列已停止：第 {ordinal}/{length} 个设计稿（{value2}）…')`，模板串不再存在。
 - **不是本线引入**：`git diff HEAD -- src/components/workbench/design-file-card.tsx` 空输出（该文件自 HEAD 起未变），即 HEAD 上跑同一门也是红的。`AI_MEMORY/ISSUES.md:1403`（#190 验收记录）在 2026-10-20 还写着它「37 checks rc=0」⇒ 红是在那之后、i18n 迁移那一笔引入的。
 - **为什么一直没人看见**：`npm run test:contracts` 的串联里**不含**这一门（`node -e "require('./package.json').scripts['test:contracts']"` 里 grep `workbench-guards` 命中 0），所以每次契约链全绿也不会碰到它。
 - **真实风险**：这条断言守的是「扫描队列失败必须停下点名、绝不静默跳过」——正是本项目反复点名的红线。门红着不动 ⇒ 这句保护现在**没有任何自动检查**；同时它教会下一个读者「includes(源码原文) 是判据」，而原文会随文案层漂走。同类病已在 #190 家族记过一次（判据写死字符串）。
-- **修法（未动，等授权）**：把抠原文的两条断言改成**行为级**判据——从 `t('…')` 的 key 里取，或断言该分支同时含 `ordinal`、`q.steps.length`、`basenameOf(entry.masterPath)` 三个标识与「未扫描」剩余数；并把这一门接进 `test:contracts`，红就不可能再潜伏。本会话未擅自改别人的闸。
+- **修法（2026-10-26 15:1x Owner「来吧，继续直到完成」授权后已实施）**：抠原文的三条断言改成**行为级**——从 `if (!isMultiPsdEntryScanned(entry)) {` 起取 600 字符窗口（实测该次调用在 ~515 字符收尾，窗口再大会串到下一处停止提示、把负控变成假绿），断言这段里同时有 `settleMultiScanQueueStop(`、`ordinal`、`basenameOf(entry.masterPath)`、`q.steps.length - ordinal`；`开始按钮…` 那条从抠整式改成 `/disabled=\{[^}]*!batchExecutionReady[^}]*\}/`（允许以后再加闸门项）。同批把 `test:batch-workbench-guards` **接进 `test:contracts`**（此前不在链里＝它能长期红的机制原因）。
+- **修后证据（本会话实跑）**：`npm run test:batch-workbench-guards` rc=0，**39 checks**（原 37 条能跑通时是 37；现断言拆细后 39）；负控三条全部真红——分别摘掉 `value2: String(basenameOf(entry.masterPath))`、`value4: String(q.steps.length - ordinal)`、`!batchExecutionReady` 后，门 rc=1 且点名的正是对应那条断言；两次改的都是 `design-file-card.tsx`/`execute-step.tsx`，跑完**逐字节还原**（`restored === original` 且 size 前后同为 80748／176554），`git status` 对这两文件空输出。`node -e` 复核 `test:contracts` 里 `test:batch-workbench-guards` 命中 1 次。
+- **原修法设想（保留备查）**：把抠原文的两条断言改成**行为级**判据——从 `t('…')` 的 key 里取，或断言该分支同时含 `ordinal`、`q.steps.length`、`basenameOf(entry.masterPath)` 三个标识与「未扫描」剩余数；并把这一门接进 `test:contracts`，红就不可能再潜伏。本会话未擅自改别人的闸。
 - **复跑判据（本会话实跑）**：`cd worktrees/develop && npm run test:batch-workbench-guards; echo $?` ⇒ 期望修前 rc=1（停在 `:108`），修后 rc=0 且 checks 数不少于 37。
