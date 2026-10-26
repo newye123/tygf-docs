@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟件 · 批量台四步连走：文件 → 行 → 图层 → 份</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#fff; --sunk:#f0f2f4; --sunk2:#e9ecef;
+  --ink:#16181c; --ink2:#3a4049; --muted:#6b7280; --faint:#9aa1ab;
+  --line:#e2e5ea; --strong:#cbd1d8;
+  --accent:#1f5fd0; --accent-soft:#eaf0fb; --accent-line:#b9cdf3;
+  --ok:#0f7a4d; --ok-soft:#e7f4ed; --warn:#8a5a00; --warn-soft:#fbf2dd;
+  --bad:#ad2a20; --bad-soft:#fbeae8;
+  --row:30px;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161a20; --sunk:#1c2128; --sunk2:#232a33;
+    --ink:#e8ebf0; --ink2:#c3cad4; --muted:#8f98a5; --faint:#6f7885;
+    --line:#262d37; --strong:#3a4350;
+    --accent:#79a6ff; --accent-soft:#182437; --accent-line:#2f4a75;
+    --ok:#5ccf9b; --ok-soft:#12291f; --warn:#e0b64a; --warn-soft:#2a2210; --bad:#ff8f82; --bad-soft:#2c1714;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.app{height:100vh;display:grid;grid-template-rows:44px 38px minmax(0,1fr) 30px}
+
+.topbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:12px;font-weight:700}
+.brand{font-weight:600;font-size:13px;white-space:nowrap}
+.brand small{color:var(--faint);font-weight:400}
+.crumb{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--ink2);font-weight:600}
+.counters{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.counters b{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.iconbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--muted);display:grid;place-items:center;font-size:12px}
+.iconbtn:hover{border-color:var(--strong);color:var(--ink)}
+
+.stepper{display:flex;align-items:center;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow:hidden}
+.stepper button{display:flex;align-items:center;gap:6px;padding:0 14px;height:38px;font-size:12.5px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.stepper button .n{width:16px;height:16px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:10px;font-family:var(--mono)}
+.stepper button[aria-current="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.stepper button[aria-current="true"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stepper button.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.stepper button:disabled{cursor:not-allowed}
+.stepper .sep{width:14px;height:1px;background:var(--line);flex:0 0 auto}
+.stepper .gate{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+
+.main{display:grid;grid-template-columns:238px minmax(0,1fr) 318px;min-height:0}
+.rail{min-height:0;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line)}
+.rail.right{border-right:0;border-left:1px solid var(--line)}
+.rail-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rail-head b{color:var(--ink2);font-weight:600}
+.rail-head .tag{margin-left:auto}
+.stage{min-height:0;overflow:auto;padding:14px 16px 26px}
+
+.drow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+.drow:hover{background:var(--sunk)}
+.drow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.drow.off{opacity:.55}
+.drow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.drow.t-warn .dot{background:var(--warn)}
+.drow.t-bad .dot{background:var(--bad)}
+.drow .sku{font-family:var(--mono);font-size:12.5px;font-weight:600}
+.drow .sub{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.drow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.drow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.drow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--strong);border-radius:6px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-t{font-size:13px;font-weight:600;margin:0;padding:11px 14px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card-s{font-size:11.5px;color:var(--muted);margin:3px 14px 9px}
+.pad{padding:11px 14px;display:flex;flex-direction:column;gap:9px}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--strong);color:var(--muted)}
+.badge.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.badge.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.badge.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.badge.lock{background:var(--sunk2);color:var(--ink2)}
+.scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px}
+.scope b{font-size:13.5px;font-weight:600}
+.scope .n{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--accent-line);border-radius:5px;padding:1px 6px;color:var(--accent)}
+.scope .sub{color:var(--ink2);font-size:12px}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px}
+.callout b{display:block;margin-bottom:2px}
+.callout.grey{border-left-color:var(--strong);background:var(--sunk)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.nextbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.nextbar .hint{font-size:11.5px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px;padding:10px 14px 12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel)}
+.stat .v{font-family:var(--mono);font-size:15px;font-weight:600}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--warn)}.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}
+details.ev{border-top:1px solid var(--line)}
+details.ev summary{cursor:pointer;padding:8px 14px;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary::before{content:"▸";font-size:9px;color:var(--faint)}
+details.ev[open] summary::before{content:"▾"}
+.evbody{padding:2px 14px 12px;display:flex;flex-direction:column;gap:6px}
+.evbody .li{display:grid;grid-template-columns:74px 1fr;gap:8px;font-size:12px;color:var(--ink2)}
+.evbody .li b{color:var(--muted);font-weight:500}
+.exc{border-bottom:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+.exc.focus{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.exc.done .exc-head{font-weight:500;color:var(--muted)}
+.exc-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;line-height:1.45}
+.exc-head .no{font-family:var(--mono);font-size:10.5px;width:16px;height:16px;border-radius:4px;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;flex:0 0 auto}
+.exc p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.exc .why{color:var(--muted);font-size:11px}
+.tell{border-bottom:1px solid var(--line);padding:9px 11px;font-size:11.5px;color:var(--ink2);display:flex;flex-direction:column;gap:3px}
+.tell b{font-size:12px}
+.tell .why{color:var(--muted);font-size:11px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;justify-content:center}
+.decision{font-size:11.5px;color:var(--ok);display:flex;gap:6px;align-items:center}
+.decision .undo{margin-left:auto;color:var(--muted);text-decoration:underline;font-size:11px}
+.statusbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.statusbar .path{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.statusbar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+.statusbar b{color:var(--ink2);font-weight:600;font-family:var(--mono)}
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.42);display:none;place-items:center;padding:20px;z-index:50}
+.modal[data-open="true"]{display:grid}
+.sheet{width:min(720px,100%);max-height:84vh;overflow:auto;background:var(--panel);border:1px solid var(--strong);border-radius:12px;padding:18px 20px}
+.sheet h2{margin:0 0 10px;font-size:15px}
+.sheet h3{margin:14px 0 5px;font-size:12.5px;color:var(--ink2)}
+.sheet p,.sheet li{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.sheet ul{margin:0;padding-left:16px}
+.sheet .close{margin-top:16px}
+
+/* 第 1 步 */
+.empty{max-width:560px;margin:8vh auto 0;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:24px 26px 20px}
+.empty h1{margin:0 0 6px;font-size:18px;line-height:1.35}
+.empty ul{margin:0 0 18px;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.9}
+.bar{height:4px;background:var(--sunk2);border-radius:99px;overflow:hidden;margin:14px 0 16px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.ph{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.ph li{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--faint)}
+.ph li .s{width:14px;height:14px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:9px}
+.ph li.on{color:var(--ink)}.ph li.on .s{border-color:var(--accent);color:var(--accent)}
+.ph li.done{color:var(--muted)}.ph li.done .s{background:var(--ok);border-color:var(--ok);color:#fff}
+.gcard{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden}
+.ghead{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ghead h2{margin:0;font-size:14px;font-weight:600;line-height:1.45}
+.ghead .meta{color:var(--muted);font-size:11.5px;margin-top:3px}
+.ghead .right{margin-left:auto;text-align:right;white-space:nowrap}
+.ghead .right .big{font-size:13px;font-weight:600}
+.ghead .right .small{display:block;font-size:11px;color:var(--muted)}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:6px;padding:12px 14px}
+.chip{display:grid;grid-template-columns:15px 1fr;align-items:center;gap:7px;text-align:left;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.chip:hover{border-color:var(--strong)}
+.chip .box{width:14px;height:14px;border:1px solid var(--strong);border-radius:3px;display:grid;place-items:center;font-size:9px;color:transparent}
+.chip[aria-checked="true"] .box{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .t{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .m{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+.chip[aria-checked="false"]{background:var(--sunk);border-style:dashed}
+.chip[aria-checked="false"] .t{color:var(--muted);text-decoration:line-through}
+.chip.q{border-color:var(--warn);border-style:dashed}.chip.q .m{color:var(--warn)}
+.chip.blocked{border-color:var(--bad)}.chip.blocked .m{color:var(--bad)}
+.filerow{display:grid;grid-template-columns:15px 1fr;gap:6px;align-items:start;padding:5px 7px;border:1px solid var(--line);border-radius:5px;text-align:left;width:100%}
+.filerow:hover{border-color:var(--strong);background:var(--sunk)}
+.filerow[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.filerow .nm{display:block;font-size:11.5px;word-break:break-all;line-height:1.45}
+.filerow .mt{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+.seg{display:flex;border:1px solid var(--strong);border-radius:6px;overflow:hidden}
+.seg button{padding:4px 10px;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);font-weight:600}
+
+/* 第 2 步 */
+.tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--strong);border-radius:999px;background:var(--panel)}
+.tabs button{padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;color:var(--ink2);display:inline-flex;align-items:center;gap:4px}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.tabs .d{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tabs .d.warn{background:var(--warn)}.tabs .d.bad{background:var(--bad)}
+.tblwrap{max-height:min(52vh,470px);overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+table.rows{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+table.rows th,table.rows td{border-bottom:1px solid var(--line);padding:0;text-align:left;vertical-align:middle}
+table.rows thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:6px 8px;white-space:nowrap}
+table.rows .cellbtn{display:block;width:100%;text-align:left;padding:6px 8px;line-height:1.4;min-height:var(--row)}
+table.rows .cellbtn:hover{background:var(--sunk)}
+table.rows .no{font-family:var(--mono);font-size:11px;color:var(--faint);width:38px;padding:6px 4px 6px 10px}
+table.rows .src{max-width:230px;font-size:11.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 8px}
+td.miss{background:var(--bad-soft)}td.miss .cellbtn{color:var(--bad);font-family:var(--mono);font-size:11px}
+td.same{background:var(--warn-soft)}td.dim{color:var(--faint)}
+tr.active td{background:var(--accent-soft)}
+.kv{margin:0;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
+.kv>div{display:flex;gap:7px}.kv dt{width:78px;flex:none;color:var(--muted)}.kv dd{margin:0;min-width:0;flex:1;word-break:break-word}
+.langlist{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lg{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:5px 9px;border-bottom:1px solid var(--line);font-size:11.5px;text-align:left;width:100%}
+.lg:last-child{border-bottom:0}.lg:hover{background:var(--sunk)}
+.lg .cd{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.lg .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg.miss{background:var(--bad-soft)}
+
+/* 第 3 步 */
+.treegrp{padding:6px 10px;font-size:11px;color:var(--muted);background:var(--sunk);border-bottom:1px solid var(--line);font-family:var(--mono)}
+.lrow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+.lrow:hover{background:var(--sunk)}
+.lrow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.lrow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.lrow.t-warn .dot{background:var(--warn)}.lrow.t-bad .dot{background:var(--bad)}
+.lrow .nm{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+.lrow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.lrow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.lrow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.lrow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;padding:10px 14px 12px}
+.ro{border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.ro .l{font-size:10.5px;color:var(--muted)}.ro .v{font-family:var(--mono);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ro.locked{border-style:dashed;background:var(--sunk)}
+.ro.face{grid-column:1/-1}
+.dots{display:flex;flex-wrap:wrap;gap:5px;padding:9px 14px 12px}
+.dotbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono)}
+.dotbtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.dotbtn i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.dotbtn i.warn{background:var(--warn)}.dotbtn i.bad{background:var(--bad)}.dotbtn i.idle{background:var(--faint)}
+.locked-screen{max-width:620px;margin:8vh auto 0;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:22px 24px}
+.locked-screen p{margin:0 0 10px;color:var(--ink2);font-size:12.5px}
+.locked-screen .grey{color:var(--muted);font-size:13px}
+
+/* 第 4 步 */
+.scroller{overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);max-height:340px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:6px 3px;text-align:center;min-width:44px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:10px;min-width:148px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;padding:5px 10px;border-right:1px solid var(--line);min-width:148px;font-weight:500;font-size:11.5px}
+.cell{border:0;background:transparent;width:100%;min-height:31px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 2px}
+.cell .cv{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.cell .cs{font-size:9.5px;color:var(--muted)}
+.cell.quiet .cv{color:var(--ink2);font-weight:500}
+.cell:hover{outline:2px solid var(--ink);outline-offset:-2px}
+.c-ok{background:var(--ok-soft)}.c-warn{background:var(--warn-soft)}.c-bad{background:var(--bad-soft)}.c-off{opacity:.5}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);padding:8px 14px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.lg2{width:11px;height:11px;border-radius:3px;border:1px solid var(--strong)}
+.lg2.ok{background:var(--ok-soft)}.lg2.warn{background:var(--warn-soft)}.lg2.bad{background:var(--bad-soft)}.lg2.off{background:var(--panel);border-style:dashed}
+table.derive{border-collapse:collapse;width:100%;font-size:11.5px}
+table.derive th,table.derive td{border-bottom:1px solid var(--line);padding:3px 7px;text-align:left;white-space:nowrap}
+table.derive thead th{position:sticky;top:0;background:var(--sunk);font-family:var(--mono);font-size:10px;color:var(--muted);z-index:2}
+table.derive td.n{font-family:var(--mono);text-align:right}
+table.derive tr.skip td{color:var(--faint);background:var(--sunk)}
+table.derive tfoot td{font-weight:700;background:var(--sunk2);position:sticky;bottom:0}
+.q{display:flex;align-items:baseline;gap:8px;padding:9px 14px;border-top:1px solid var(--line)}
+.q .big{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
+.q .sub{font-size:11.5px;color:var(--muted)}
+.qlist{padding:9px 14px 12px;font-size:11.5px;color:var(--ink2)}
+.langgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:9px 14px 12px}
+.langgrid .btn{height:26px;justify-content:center;font-family:var(--mono);font-size:11.5px}
+.langgrid .btn.off{text-decoration:line-through;color:var(--muted);border-style:dashed}
+.langgrid .btn.absent{opacity:.4;cursor:not-allowed;border-style:dotted}
+.log{font-family:var(--mono);font-size:11px;line-height:1.7;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:180px;overflow:auto}
+.log .warn{color:var(--warn)}.log .bad{color:var(--bad)}.log .ok{color:var(--ok)}
+.progress{height:6px;border-radius:99px;background:var(--sunk2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
+@media (max-width:1080px){.grid2{grid-template-columns:1fr}}
+@media (max-width:1180px){ .main{grid-template-columns:200px minmax(0,1fr) 286px} }
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{height:auto;grid-template-rows:44px 38px auto auto}
+  .main{grid-template-columns:1fr}
+  .rail{max-height:min(42vh,300px);border-right:0;border-bottom:1px solid var(--line)}
+  .rail.right{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .statusbar{position:sticky;bottom:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="mark" aria-hidden="true">图</span>
+    <span class="brand">图译工坊 <small>/ 批量处理</small></span>
+    <span class="crumb">一个文件夹 · <b id="crumbDrafts">12 份稿</b> · <b id="crumbStep">第 1 步 准备素材</b></span>
+    <div class="counters" id="counters"></div>
+    <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
+  </div>
+
+  <div class="stepper" id="stepper" role="tablist" aria-label="四步"></div>
+
+  <div class="main">
+    <aside class="rail left" id="railLeft" aria-label="左栏"></aside>
+    <section class="stage" id="stage"></section>
+    <aside class="rail right" id="railRight" aria-label="右栏"></aside>
+  </div>
+
+  <div class="sr" aria-live="polite" id="announce"></div>
+  <div class="statusbar">
+    <span class="path">完整表-20261003 · 只读，不会改你的文件</span>
+    <span class="r" id="sbRight"></span>
+  </div>
+</div>
+
+<div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
+  <div class="sheet">
+    <h2>四步连走的可玩件，不是截图</h2>
+    <p>一份文件从第 1 步走到第 4 步。数据是同一套：12 份稿 × 12 门语言 × 67 行；第 1 步定完是 <b>142 份可交付</b>，这个数字会一路带到第 4 步的报价里。</p>
+    <h3>每一步各看一种东西</h3>
+    <ul>
+      <li><b>第 1 步 准备素材</b>：文件。一组语言表默认全选，只把 4 件拿不准的留给你。</li>
+      <li><b>第 2 步 智能检测</b>：行。缺译按不翻处理、不计价，默认不逐条问你；语言页签点了真的裁列。</li>
+      <li><b>第 3 步 设计稿校对</b>：图层。这屏<b>照今天真界面画</b>——包括它两个让你觉得"没起作用"的地方（见屏内说明）。</li>
+      <li><b>第 4 步 生成交付</b>：份。矩阵只在这里出现，报价能逐行摊开看。</li>
+    </ul>
+    <h3>第 3 步那两个"没起作用"是真的（代码里读出来的）</h3>
+    <ul>
+      <li>① <b>没确认完全部语言时，整屏只有一句灰字</b>：「确认全部语言译文后开放与设计稿对账」（<span class="mono">workbench-view.tsx:5722-5724</span>，开关 <span class="mono">workbench-machine.ts:42</span>）。</li>
+      <li>② <b>一切就绪时它会自动跳走到第 4 步</b>，你根本停不住（<span class="mono">workbench-view.tsx:3969-3978</span>）。这一件我在这屏放了开关，默认关掉自动跳，让你看清它本来有什么。</li>
+      <li>③ 顺带一条：那个「重新检测」按钮<b>不重跑检测</b>，实为跳回第 1 步（<span class="mono">workbench-view.tsx:4179-4185</span>）。</li>
+    </ul>
+    <h3>哪些是真的，哪些是我提的</h3>
+    <p>真的：四步名与顺序（<span class="mono">terms.ts:26-31</span>）、第 3 步的块序与门（上面那些行号）、按 SKU 与交付物归组、多表单语言合并引擎、逐行报价公式（<span class="mono">billing/rules.ts:119-122</span>）、一行可被多个文字层消费（<span class="mono">billing-preview.ts:18</span>）。提的：第 1 步那 14 条交互契约补齐、第 2 步默认不拦人、第 4 步七处 UIUX、第 3 步撤掉自动跳走。</p>
+    <p><b>一个字不改</b>：执行链、报价口径、结算闸、助手协议、行身份。</p>
+    <button class="btn close" data-act="info-close">知道了</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═════════ 共用夹具（四步同一套数）═════════ */
+const LANGS = [
+  {code:'ES',zh:'西班牙语'},{code:'FR',zh:'法语'},{code:'ID',zh:'印度尼西亚语'},{code:'IT',zh:'意大利语'},
+  {code:'JP',zh:'日语'},{code:'MS',zh:'马来语'},{code:'NL',zh:'荷兰语'},{code:'PL',zh:'波兰语'},
+  {code:'RU',zh:'俄语'},{code:'TH',zh:'泰语'},{code:'TL',zh:'菲律宾语'},{code:'VI',zh:'越南语'},
+];
+const CODES = LANGS.map(l=>l.code);
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521'];
+const ROWS = 67, FOLDER = '完整表-20261003';
+const EX = { dup:{sku:'5857',lang:'ES'}, miss:{sku:'6896',lang:'VI'}, bad:{sku:'5660',lang:'ID'}, orphan:'5389 5390.xlsx' };
+const isDup=(s,l)=>s===EX.dup.sku&&l===EX.dup.lang;
+const isMiss=(s,l)=>s===EX.miss.sku&&l===EX.miss.lang;
+const isBad=(s,l)=>s===EX.bad.sku&&l===EX.bad.lang;
+const hasLang=(s,l)=>!isMiss(s,l);
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  step:1,
+  /* 第 1 步 */
+  phase:'idle', scanIdx:-1, active:'5857',
+  excluded:{}, dupPick:null, missPolicy:null, badPolicy:null, orphan:'unknown',
+  clicks:0,
+  seen2:false, seen3:false, seen4:false,
+  /* 第 2 步 */
+  langView:'all', onlyProblems:true, decided:{}, confirmMode:'auto', aggOpen:false,
+  reviewed:{},
+  /* 第 3 步 */
+  layer:0, autoJump:false, showAllLayers:true,
+  /* 第 4 步 */
+  drop:{}, confirm:{}, detail:null, showAll:false, onlyIssues:false, logOpen:false,
+  running:false, done:false, idx:0, log:[], results:{}, draftResult:{},
+};
+const key=(s,l)=>s+'/'+l;
+const zhOf=(l)=>(LANGS.find(x=>x.code===l)||{}).zh||l;
+const esc=(v)=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ═════════ 第 1 步派生 ═════════ */
+const stopped=(sku)=>(sku===EX.miss.sku&&S.missPolicy==='stop')||(sku===EX.bad.sku&&S.badPolicy==='stop');
+function slotBound(sku,lang){
+  if (stopped(sku)) return false;
+  if (isMiss(sku,lang)) return false;
+  if (S.excluded[key(sku,lang)]) return false;
+  if (isDup(sku,lang) && !S.dupPick) return false;
+  if (isBad(sku,lang)) return false;
+  return true;
+}
+function slotPending(sku,lang){
+  if (stopped(sku)) return false;
+  if (isDup(sku,lang)&&!S.dupPick) return true;
+  if (isMiss(sku,lang)&&!S.missPolicy) return true;
+  if (isBad(sku,lang)&&!S.badPolicy) return true;
+  return false;
+}
+const groupBound=(sku)=>LANGS.filter(l=>slotBound(sku,l.code)).length;
+const boundTotal=()=>S.phase!=='ready'?0:SKUS.reduce((n,d)=>n+groupBound(d),0);
+function pendingTotal(){
+  if (S.phase!=='ready') return 0;
+  let n=0;
+  if(!S.dupPick)n++; if(!S.missPolicy)n++; if(!S.badPolicy)n++; if(S.orphan!=='removed')n++;
+  return n;
+}
+function draftTone(sku){
+  if (stopped(sku)) return {tone:'t-bad',label:'整组停'};
+  if (sku===EX.dup.sku&&!S.dupPick) return {tone:'t-warn',label:'待定 1'};
+  if (sku===EX.miss.sku&&!S.missPolicy) return {tone:'t-warn',label:'缺 1 门'};
+  if (sku===EX.bad.sku&&!S.badPolicy) return {tone:'t-warn',label:'拦 1 张'};
+  if (sku===EX.miss.sku) return {tone:'t-warn',label:`${groupBound(sku)} 门 · 缺 1`};
+  if (sku===EX.bad.sku) return {tone:'t-warn',label:`${groupBound(sku)} 门 · 拦 1`};
+  return {tone:'t-ok',label:`${groupBound(sku)} 门`};
+}
+
+/* ═════════ 第 2 步派生（行）═════════ */
+const srcText=(i)=>{
+  const head=['型号','材质','尺寸','包装清单','使用提示','保养方式','注意事项','适配机型','颜色','重量','产地','保修','安装步骤','清洁建议','赠品','电池','接口','防尘','售后','图案说明'][i%20];
+  return `${head}：第 ${i+1} 条原文说明，含数字 3.5 与单位 mm。`.slice(0,14+(i%3)*9);
+};
+const srcEmptyRow=(sku,i)=>((SKUS.indexOf(sku)+1)*13+i*17)%251===0;
+const cellEmpty=(sku,i,l)=>{ if(!slotBound(sku,l)&&!isBad(sku,l)) return false; if(isMiss(sku,l)||isBad(sku,l)) return false;
+  return ((SKUS.indexOf(sku)+1)*7+i*11+CODES.indexOf(l)*13)%97===0 };
+const cellSame=(sku,i,l)=>!isMiss(sku,l)&&!isBad(sku,l)&&!cellEmpty(sku,i,l)&&((SKUS.indexOf(sku)+1)*5+i*3+CODES.indexOf(l)*2)%103===0;
+const cellLong=(sku,i,l)=>!isMiss(sku,l)&&!isBad(sku,l)&&!cellEmpty(sku,i,l)&&((SKUS.indexOf(sku)+1)*3+i*2+CODES.indexOf(l)*5)%89===0;
+function rowIssues(sku,i){
+  const out=[];
+  if (srcEmptyRow(sku,i)) out.push('src-empty');
+  if (LANGS.some(l=>cellEmpty(sku,i,l.code))) out.push('empty');
+  if (LANGS.some(l=>cellSame(sku,i,l.code))) out.push('same');
+  if (LANGS.some(l=>cellLong(sku,i,l.code))) out.push('long');
+  return out;
+}
+const problemRows=(sku)=>{const o=[];for(let i=0;i<ROWS;i++) if(rowIssues(sku,i).length) o.push(i);return o};
+const needDecide=(sku,i)=>{const iss=rowIssues(sku,i);return !iss.includes('src-empty')&&(iss.includes('empty')||iss.includes('same'))};
+function pendingRows(sku){ if(S.confirmMode==='auto') return 0; let n=0; for(let i=0;i<ROWS;i++) if(needDecide(sku,i)&&!S.decided[key(sku,i)]) n++; return n }
+const autoHandled=(sku)=>{let n=0;for(let i=0;i<ROWS;i++) if(needDecide(sku,i)) n++;return n};
+const autoTotal=()=>SKUS.reduce((n,s)=>n+autoHandled(s),0);
+const pendingTotal2=()=>SKUS.reduce((n,s)=>n+pendingRows(s),0);
+/* 语言是否"过完"：auto 模式视为已过（默认口径不拦人）；ask 模式要逐条定完 */
+const langReviewed=(sku)=>S.confirmMode==='auto' || pendingRows(sku)===0;
+const allLanguagesReviewed=()=>SKUS.every(langReviewed);
+const filledCells=(sku)=>{let n=0;for(let i=0;i<ROWS;i++)for(const l of LANGS){ if(!hasLang(sku,l.code)||isBad(sku,l.code)||srcEmptyRow(sku,i))continue; if(!cellEmpty(sku,i,l.code)&&!cellSame(sku,i,l.code)) n++ } return n};
+const cellsTotal=()=>SKUS.reduce((n,s)=>n+ROWS*LANGS.filter(l=>hasLang(s,l.code)&&!isBad(s,l.code)).length,0);
+
+/* ═════════ 第 3 步派生（图层）═════════ */
+const FACE={
+  'PingFang SC':{Regular:'PingFangSC-Regular',Medium:'PingFangSC-Medium',Semibold:'PingFangSC-Semibold'},
+  'Source Han Sans SC':{Regular:'SourceHanSansSC-Regular',Medium:'SourceHanSansSC-Medium',Bold:'SourceHanSansSC-Bold'},
+  'Adobe Gothic Std':{Regular:'AdobeGothicStd-Bold'},
+  'Microsoft YaHei':{Regular:'MicrosoftYaHei',Bold:'MicrosoftYaHei-Bold'},
+  'HarmonyOS Sans SC':{Regular:'HarmonyOSSansSC-Regular',Bold:'HarmonyOSSansSC-Bold'},
+};
+const FAMILIES=Object.keys(FACE);
+function layerModel(){
+  const out=[];
+  for(let row=0;row<ROWS;row++){ out.push({row,second:false,kind:'text'}); if(row<4) out.push({row,second:true,kind:'text'}) }
+  out.push({row:null,second:false,kind:'text'});
+  out.push({row:8,second:false,kind:'smart'});
+  out.push({row:23,second:false,kind:'raster'});
+  return out;
+}
+const LAYERS=layerModel();
+const layerName=(i)=>`文字层-${String(i+1).padStart(2,'0')}`;
+function layerStyle(i){
+  const fam=FAMILIES[i%FAMILIES.length], tiers=Object.keys(FACE[fam]), weight=tiers[i%tiers.length];
+  return {family:fam,weight,face:FACE[fam][weight],size:[11,12,14,16,18,20,24,28,32,36][i%10],leading:[14,16,18,22,26,30,34,40,44,48][i%10]}
+}
+const textLayers=()=>LAYERS.filter(l=>l.kind==='text').length;
+const unmatchedLayers=()=>LAYERS.filter(l=>l.kind==='text'&&l.row===null).length;
+const contestedRows=()=>new Set(LAYERS.filter(l=>l.second).map(l=>l.row)).size;
+const rowsUsed=()=>new Set(LAYERS.filter(l=>l.kind==='text'&&l.row!==null).map(l=>l.row)).size;
+const designReady=()=>S.phase==='ready';
+/* 真门：reconcileOpen = designReady && allLanguagesReviewed（workbench-machine.ts:42） */
+const reconcileOpen=()=>designReady()&&allLanguagesReviewed();
+const reconcileComplete=()=>reconcileOpen();
+const deliveryOpen=()=>reconcileComplete();
+
+/* ═════════ 第 4 步派生（份与报价）═════════ */
+const UNIT_CHARS=200;
+function rowBilling(sku,lang,i){
+  const longRow=i%9===3;
+  const srcChars=longRow?208+(i%5)*46:14+((SKUS.indexOf(sku)+i)%3)*9;
+  const tgtChars=cellEmpty(sku,i,lang)?0:Math.round(srcChars*(1.1+((i*7)%5)/10));
+  const excluded=i%11===5||(sku==='4602'&&i<57);
+  if (excluded) return {row:i+1,reason:'IGNORED',chars:0,units:0};
+  if (srcEmptyRow(sku,i)) return {row:i+1,reason:'SOURCE_EMPTY',chars:0,units:0};
+  if (!tgtChars) return {row:i+1,reason:'TARGET_EMPTY',chars:0,units:0};
+  const chars=Math.max(srcChars,tgtChars);
+  return {row:i+1,reason:'',chars,units:Math.max(1,Math.ceil(chars/UNIT_CHARS))}
+}
+const DERIVE={};
+SKUS.forEach(s=>CODES.forEach(l=>{ if(hasLang(s,l)&&!isBad(s,l)){
+  const rows=[]; for(let i=0;i<ROWS;i++) rows.push(rowBilling(s,l,i));
+  const billable=rows.filter(r=>!r.reason);
+  const units=billable.reduce((n,r)=>n+r.units,0);
+  DERIVE[key(s,l)]={rows,billable,units,credits:Math.max(20,units),skipped:rows.length-billable.length};
+}}));
+/* 份的口径只有一处：第 1 步没绑定上的（缺表／拦下／你取消勾选），第 4 步就不算可交付 */
+const inScope=(s,l)=>Boolean(DERIVE[key(s,l)])&&slotBound(s,l)&&!S.drop[key(s,l)];
+const cellsAll=()=>SKUS.length*LANGS.length;
+const outCount=()=>SKUS.reduce((n,s)=>n+CODES.filter(l=>inScope(s,l)).length,0);
+const creditTotal=()=>SKUS.reduce((n,s)=>n+CODES.filter(l=>inScope(s,l)).reduce((m,l)=>m+DERIVE[key(s,l)].credits,0),0);
+/* 待处理＝这一稿本可交付的门数比应有的少（你点了不做，或第 1 步取消勾选过），且你还没确认照少交跑 */
+function pendingCount4(){ return SKUS.filter(s=>{ const want=CODES.filter(l=>hasLang(s,l)&&!isBad(s,l)&&!S.excluded[key(s,l)]).length; return CODES.filter(l=>inScope(s,l)).length<want && !S.confirm[s] }).length }
+
+/* ═════════ 外壳：步骤条 / 顶栏 / 左右栏 ═════════ */
+const STEP_NAMES=[['1','准备素材','文件'],['2','智能检测','行'],['3','设计稿校对','图层'],['4','生成交付','份']];
+function stepUnlocked(n){
+  if (n===1) return true;
+  const u2 = S.phase==='ready' && pendingTotal()===0;
+  if (n===2) return u2;
+  const u3 = u2 && S.seen2 && allLanguagesReviewed();
+  if (n===3) return u3;
+  return u3 && S.seen3 && reconcileComplete();
+}
+function stepHint(n){
+  if (n===2 && !stepUnlocked(2)) return `第 1 步还有 ${pendingTotal()} 件要你定`;
+  if (n===3 && !stepUnlocked(3)) return S.seen2?'确认全部语言译文后开放与设计稿对账':'先进第 2 步看完行';
+  if (n===4 && !stepUnlocked(4)) return S.seen3?'先完成与设计稿的对账':'先进第 3 步对账';
+  return '';
+}
+function renderStepper(){
+  document.getElementById('stepper').innerHTML = STEP_NAMES.map(([n,name,unit],i)=>{
+    const step=i+1, unlocked=stepUnlocked(step);
+    const done = step===1 ? (S.phase==='ready'&&pendingTotal()===0)
+      : step===2 ? allLanguagesReviewed() && S.step>2
+      : step===3 ? reconcileComplete() && S.step>3 : false;
+    return (i? '<span class="sep"></span>':'') +
+      `<button data-act="goto" data-step="${step}" ${unlocked?'':'disabled'} aria-current="${String(S.step===step)}" title="${stepHint(step)||('这一屏只管'+unit)}"><span class="n${done?' ok':''}">${done?'✓':n}</span>${name}</button>`;
+  }).join('') + `<span class="gate" id="gateHint"></span>`;
+  const g=document.getElementById('gateHint');
+  g.textContent = stepHint(S.step) || (S.step===3 && !reconcileOpen() ? '' : `单位＝${STEP_NAMES[S.step-1][2]}`);
+}
+function renderCounters(){
+  const box=document.getElementById('counters');
+  const bits=[];
+  if (S.step===1){
+    bits.push(`<span>手工选表 <b id="cClicks">${S.clicks}</b> 次</span>`);
+    bits.push(`<span>已绑定 <b id="cBound">${boundTotal()}</b>/${cellsAll()} 格</span>`);
+    bits.push(`<span>可交付 <b id="cOut">${boundTotal()}</b> 份</span>`);
+  } else if (S.step===2){
+    bits.push(`<span>${S.confirmMode==='auto'?'按默认处理':'待你确认'} <b id="cPend">${S.confirmMode==='auto'?autoTotal():pendingTotal2()}</b> ${S.confirmMode==='auto'?'处':'件'}</span>`);
+    bits.push(`<span>这一稿问题行 <b id="cBad">${problemRows(S.active).length}</b>/${ROWS}</span>`);
+    bits.push(`<span>已填格 <b>${SKUS.reduce((n,s)=>n+filledCells(s),0)}</b>/${cellsTotal()}</span>`);
+  } else if (S.step===3){
+    bits.push(`<span>文字层 <b>${textLayers()}</b></span>`);
+    bits.push(`<span>对上 <b>${textLayers()-unmatchedLayers()}</b></span>`);
+    bits.push(`<span>要你看 <b id="cPend3">${unmatchedLayers()}</b> 处</span>`);
+  } else {
+    bits.push(`<span>可交付 <b id="cOut4">${outCount()}</b> 份</span>`);
+    bits.push(`<span>预计 <b id="cCredit">${creditTotal()}</b> 积分</span>`);
+    bits.push(`<span>待处理 <b id="cPend4">${pendingCount4()}</b> 件</span>`);
+  }
+  box.innerHTML=bits.join('');
+  document.getElementById('crumbStep').textContent=`第 ${S.step} 步 ${STEP_NAMES[S.step-1][1]}`;
+  document.getElementById('crumbDrafts').textContent=`${SKUS.length} 份稿`;
+  const sb=document.getElementById('sbRight');
+  sb.innerHTML = S.step===1 ? `<span>读表 <b>144</b>/144 · 手工选表 <b>${S.clicks}</b> 次</span>`
+    : S.step===4 ? `<span>份 <b>${outCount()}</b>/${cellsAll()} · 排除 <b>${cellsAll()-outCount()}</b></span>`
+    : `<span>当前稿 <b>${S.active}</b></span>`;
+}
+function renderLeft(){
+  const rail=document.getElementById('railLeft');
+  const head=(b,t,tag)=>`<div class="rail-head"><b>${b}</b><span>${t}</span><span class="tag mono">${tag}</span></div>`;
+  const rows=SKUS.map(sku=>{
+    let tone,label,sub;
+    if (S.step===1){ const st=draftTone(sku); tone=st.tone; label=st.label; sub=`${groupBound(sku)} 份可交付` }
+    else if (S.step===2){ const p=pendingRows(sku),b=problemRows(sku).length; tone=p?'t-warn':'t-ok'; label=p?`待确认 ${p}`:(b?`已定 ${b}`:'满行齐'); sub=`问题行 ${b} · 已填 ${filledCells(sku)}` }
+    else if (S.step===3){ tone=unmatchedLayers()?'t-warn':'t-ok'; label=`${textLayers()} 层`; sub=`对上 ${textLayers()-unmatchedLayers()} · ${rowsUsed()} 行` }
+    else { const n=CODES.filter(l=>inScope(sku,l)).length, cr=CODES.filter(l=>inScope(sku,l)).reduce((m,l)=>m+DERIVE[key(sku,l)].credits,0);
+      const r=S.draftResult[sku]; tone=r==='FAILED'?'t-bad':(n<12?'t-warn':'t-ok'); label=r==='FAILED'?'有失败':(r==='OK'?`已交 ${n}`:`${n} 份`); sub=`${cr} 积分` }
+    return `<button class="drow ${tone}" data-act="pick-draft" data-sku="${sku}" aria-current="${String(sku===S.active)}"><span class="dot"></span><span><span class="sku">${sku}</span><span class="sub">${sub}</span></span><span class="pill">${label}</span></button>`;
+  }).join('');
+  rail.innerHTML = head(S.step===3?'图层':'稿', S.step===3?`${SKUS.length} 份稿`:`${SKUS.length} 份 · 全部主副图`, S.step===3?`${textLayers()} 层 · ${rowsUsed()} 行`:'按'+['文件','行','图层','份'][S.step-1]) + rows;
+}
+function renderRight(){
+  const rail=document.getElementById('railRight');
+  if (S.step===1) rail.innerHTML=`<div class="rail-head"><b>要你定的</b><span>${pendingTotal()?pendingTotal()+' 件':'都处置完了'}</span><span class="tag mono">${4-pendingTotal()}/4</span></div><div id="excList">${excHTML()}</div>`;
+  else if (S.step===2) rail.innerHTML=`<div class="rail-head"><b>结论</b><span>${S.confirmMode==='auto'?'一句告知':'待你确认'}</span><span class="tag mono">${S.confirmMode==='auto'?'不拦人':pendingTotal2()+' 件'}</span></div><div id="excList">${conclHTML()}</div>`;
+  else if (S.step===3) rail.innerHTML=`<div class="rail-head"><b>要你看</b><span>${unmatchedLayers()} 处</span><span class="tag mono">争夺 ${contestedRows()}</span></div><div id="excList">${reconcileOpen()?s3RightHTML():'<div class="tell"><b>这一屏还没开</b><p class="why">第 2 步没走完前，这里只有一句灰字——今天真就是这样。</p></div>'}</div>`;
+  else rail.innerHTML=`<div class="rail-head"><b>要处理的</b><span>${pendingCount4()?pendingCount4()+' 件':'没有'}</span><span class="tag mono">${S.done?'已结束':'未开跑'}</span></div><div id="excList">${s4RightHTML()}</div>`;
+}
+
+/* ═════════ 第 1 步 ═════════ */
+function excHTML(){
+  if (S.phase!=='ready') return `<div class="tell"><b>待扫描</b><p class="why">扫描完才有例外清单。扫描只读文件名和表头，不动原文件。</p></div>`;
+  const cards=[];
+  if (!S.dupPick) cards.push(`<div class="exc" data-exc="dup"><div class="exc-head"><span class="no">1</span>${EX.dup.sku} 有两张${zhOf(EX.dup.lang)}语表</div>
+    <p>两张原文逐字一致，译文有 3 行不同，修改时间差 7 分钟。系统不替你按时新挑。</p>
+    <button class="filerow" data-act="dup" data-which="clean" aria-pressed="false"><span>·</span><span><span class="nm">${EX.dup.lang} ${zhOf(EX.dup.lang)}-${EX.dup.sku}.xlsx</span><span class="mt">干净名 · 67 行 · 10-20 14:02</span></span></button>
+    <button class="filerow" data-act="dup" data-which="hash" aria-pressed="false"><span>·</span><span><span class="nm">${EX.dup.lang} ${zhOf(EX.dup.lang)}-${EX.dup.sku}-3e338c29100d.xlsx</span><span class="mt">带哈希副本 · 67 行 · 10-20 14:09</span></span></button>
+    <p class="why">你想用哪张就点哪张，点一下即定。</p></div>`);
+  else cards.push(`<div class="exc done"><div class="exc-head"><span class="no">1</span>两张${zhOf(EX.dup.lang)}语表已选一张</div><div class="decision">用的是${S.dupPick==='clean'?'干净名那张':'带哈希那张'}<button class="undo" data-act="dup-undo">撤销</button></div></div>`);
+  const policy=(id,no,title,body,opts,cur,touched,sku)=>{
+    if (!cur) return `<div class="exc" data-exc="${id}"><div class="exc-head"><span class="no">${no}</span>${title}</div><p>${body}</p><div class="acts">${opts.map(o=>`<button class="btn sm ${o.p?'primary':''}" data-act="${id}" data-v="${o.v}">${o.t}</button>`).join('')}</div></div>`;
+    return `<div class="exc done"><div class="exc-head"><span class="no">${no}</span>${title}</div><div class="decision">${touched?'已按你的选择':'已按默认'}：${cur==='exclude'||cur==='block'?(cur==='exclude'?'排除这一门，其余 11 门照跑':'只拦这一张'):'整组停'}<button class="undo" data-act="${id}-undo">改</button></div></div>`;
+  };
+  cards.push(policy('miss',2,`${EX.miss.sku} 缺${zhOf(EX.miss.lang)}`,`文件夹里找不到这门表。`,[{v:'exclude',t:'排除，其余 11 门照跑',p:1},{v:'stop',t:'整组停'}],S.missPolicy,S.touchedMiss));
+  cards.push(policy('bad',3,`${EX.bad.sku} 的${zhOf(EX.bad.lang)}表只有 66 行`,`同组其余 11 张都是 67 行——不是行多，是这张表和这份稿对不上。`,[{v:'block',t:'只拦这一张',p:1},{v:'stop',t:'整组停'}],S.badPolicy,S.touchedBad));
+  if (S.orphan==='unknown') cards.push(`<div class="exc" data-exc="orphan"><div class="exc-head"><span class="no">4</span>${EX.orphan} 表名里有两个 SKU</div><p>两个都不在本批 12 份稿里。系统不猜，也不丢掉。</p><div class="acts"><button class="btn sm primary" data-act="orphan-read">读这张表判归属</button></div></div>`);
+  else if (S.orphan==='read') cards.push(`<div class="exc" data-exc="orphan"><div class="exc-head"><span class="no">4</span>${EX.orphan} 归属不明</div><p>读完仍是两个 SKU，都不在本批。</p><div class="acts"><button class="btn sm primary" data-act="orphan-remove">移出本批</button></div></div>`);
+  else cards.push(`<div class="exc done"><div class="exc-head"><span class="no">4</span>${EX.orphan} 已移出本批</div><div class="decision">不影响这 12 份稿<button class="undo" data-act="orphan-undo">改</button></div></div>`);
+  return cards.join('');
+}
+function groupCardHTML(sku){
+  const chips=LANGS.map(l=>{
+    const bound=slotBound(sku,l.code), pend=slotPending(sku,l.code), bad=isBad(sku,l.code);
+    const cls=pend?'chip q':(bad?'chip blocked':'chip');
+    const meta=pend?'两张待选':(bad?'66 行 · 已拦':(isMiss(sku,l.code)?'没有这张表':(bound?`67 行 · ${l.zh}`:'已剔除')));
+    return `<button class="${cls}" data-act="toggle-lang" data-lang="${l.code}" role="checkbox" aria-checked="${String(bound)}" data-k="${sku}/${l.code}"><span class="box">✓</span><span><span class="t">${l.code}<small>${l.zh}</small></span><span class="m">${meta}</span></span></button>`;
+  }).join('');
+  const n=groupBound(sku);
+  return `<div class="gcard"><div class="ghead"><div><h2>${sku} · 主副图</h2><div class="meta">一组 ${LANGS.length} 张单语言表 ＝ 一次绑定 · 导入时合成一张</div></div><div class="right"><span class="big">${n} 门</span><span class="small">可交付 ${n} 份</span></div></div>
+    <div class="chips">${chips}</div>
+    ${Object.keys(S.excluded).some(k=>k.startsWith(sku+'/')&&!isMiss(sku,k.split('/')[1]))?`<div class="note" style="display:flex;gap:8px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);background:var(--sunk);font-size:12px">这一组有 ${Object.keys(S.excluded).filter(k=>k.startsWith(sku+'/')).length} 门被你剔除<span style="margin-left:auto"><button class="link" data-act="restore-all" data-sku="${sku}">全选回来</button></span></div>`:''}
+    <details class="ev"><summary>凭什么归到这一组（3 条证据，点开看）</summary><div class="evbody">
+      <div class="li"><b>归属</b><span>文件名里的 SKU＝${sku}，交付物＝主副图</span></div>
+      <div class="li"><b>覆盖</b><span>12 门里 ${n} 门有表；${isMiss(sku,'VI')?'缺越南语':''}${isBad(sku,'ID')?' 印尼语那张 66 行已拦':''}</span></div>
+      <div class="li"><b>唯一</b><span>${isDup(sku,'ES')?'同一门两张表已让你选，没有第二处重复':'每门只有一张表'}</span></div>
+    </div></details></div>`;
+}
+function renderStep1(){
+  const stage=document.getElementById('stage');
+  if (S.phase==='idle'){ stage.innerHTML=`<div class="empty"><h1>还没扫描这个文件夹</h1><p>扫一次，系统按文件名里的 SKU 和交付物自动配对。</p><ul><li>归组只看三件事：稿的 SKU、交付物、组内语言互不重复。</li><li>整组默认全选，不让你一份一份挑表。</li><li>只有拿不准的（同门两张、缺一门、行对不上、归属不明）才留给你。</li><li>扫描只读文件名和表头，不动原文件。</li></ul><button class="btn primary" data-act="scan">扫描并自动配对</button></div>`; return }
+  if (S.phase==='scanning'){
+    const steps=['读文件夹与文件名','读表头与语言列','按 SKU 与交付物归组','整组默认全选，标出例外'];
+    stage.innerHTML=`<div class="empty" style="max-width:520px"><h1>正在扫描 ${FOLDER}</h1><ul class="ph">${steps.map((t,i)=>`<li class="${i<S.scanIdx?'done':(i===S.scanIdx?'on':'')}"><span class="s">${i<S.scanIdx?'✓':(i+1)}</span>${t}<em>${i<S.scanIdx?'完成':(i===S.scanIdx?'进行中':'等待')}</em></li>`).join('')}</ul><div class="bar"><i style="width:${Math.max(6,(S.scanIdx+1)*25)}%"></i></div></div>`; return;
+  }
+  const pend=pendingTotal();
+  stage.innerHTML=`<div class="verdict-line" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px">
+      <b>${S.active} · 主副图</b><span class="scope n" style="all:unset">${groupBound(S.active)} 门已绑定</span>
+      <span class="sub">${pend?`144 格里 ${boundTotal()} 格自动配好，只剩 ${pend} 件要你定`:`144 格里 ${boundTotal()} 格自动配好，例外都处置完了`}</span>
+    </div>
+    ${groupCardHTML(S.active)}
+    <div class="nextbar"><button class="btn primary" data-act="next" ${pend?'disabled':''}>${pend?`先定 ${pend} 件，再进第 2 步`:'下一步：智能检测'}</button><span class="hint">${pend?'右栏那几件处置完才放行。':'表已在导入时合成一张，第 2 步只看行。'}</span></div>`;
+}
+
+/* ═════════ 第 2 步 ═════════ */
+function conclHTML(){
+  const sku=S.active;
+  if (S.confirmMode==='auto'){
+    const n=autoHandled(sku);
+    const detail=CODES.map(c=>{const rows=[];for(let i=0;i<ROWS;i++){if(rowIssues(sku,i).includes('src-empty'))continue; if((c&&cellEmpty(sku,i,c))||(c&&cellSame(sku,i,c))) rows.push(i)} return {c,rows}}).filter(x=>x.rows.length);
+    return `<div class="exc" data-exc="auto"><div class="exc-head"><span class="no">i</span>这一稿有 ${n} 处按默认处理了<span class="badge" style="margin-left:auto">全批 ${autoTotal()} 处</span></div>
+      <p>缺译的那一格本批不翻、也不计费；译文与原文一样的按原文保留（型号名本来就该一样）。<b>不逐条问你。</b></p>
+      <div class="acts"><button class="btn sm" data-act="agg-toggle" aria-expanded="${String(S.aggOpen)}">${S.aggOpen?'收起逐条':`展开看这 ${n} 处`}</button><button class="btn sm" data-act="mode-ask">改成逐条确认</button></div>
+      ${S.aggOpen?`<div class="evbody" style="padding:2px 0 0">${detail.map(x=>`<div class="li"><b>${x.c}</b><span>${x.rows.length} 行（第 ${x.rows.slice(0,6).map(r=>r+1).join('、')}${x.rows.length>6?' …':''}）</span></div>`).join('')}</div>`:''}
+    </div>`;
+  }
+  const groups=[{k:'empty',t:'缺译（那一格是空的）',v:'skip',b:'这几行本批都不翻'},{k:'same',t:'疑似没翻（译文＝原文）',v:'asis',b:'这几行按原文保留'}];
+  return groups.map((g,idx)=>{
+    const rows=[]; for(let i=0;i<ROWS;i++) if(rowIssues(sku,i).includes(g.k)) rows.push(i);
+    if (!rows.length) return '';
+    const pend=rows.filter(i=>needDecide(sku,i)&&!S.decided[key(sku,i)]);
+    return `<div class="exc ${pend.length?'':'done'}"><div class="exc-head"><span class="no">${idx+1}</span>${g.t}<span class="badge ${pend.length?'warn':'ok'}" style="margin-left:auto">${rows.length} 行${pend.length?` · 待确认 ${pend.length}`:' · 已定'}</span></div>
+      <p>第 ${rows[0]+1} 行起。${g.k==='empty'?'那一门那一格是空的。':'译文与原文逐字相等。'}</p>
+      ${pend.length?`<div class="acts"><button class="btn sm" data-act="jump-row" data-row="${pend[0]}">跳到第 ${pend[0]+1} 行</button><button class="btn sm primary" data-act="bulk" data-rows="${pend.join(',')}" data-kind="${g.v}">${g.b}（${pend.length}）</button></div>`:`<div class="decision">已逐行处置完<button class="undo" data-act="open-row" data-row="${rows[0]}">重看</button></div>`}</div>`;
+  }).filter(Boolean).join('') + `<div class="tell"><b>处置落在行上，不在语言上</b><p class="why">一行定了，12 门一起生效。原文为空的行不参与计价，也不用你处置。</p></div>`;
+}
+function renderStep2(){
+  const sku=S.active;
+  const shown=S.langView==='all'?LANGS.filter(l=>hasLang(sku,l.code)&&!isBad(sku,l.code)):[LANGS.find(l=>l.code===S.langView)];
+  const prob=problemRows(sku);
+  const list=S.onlyProblems?prob:Array.from({length:ROWS},(_,i)=>i);
+  const head=`<tr><th style="width:38px">#</th><th>原文</th>${shown.map(l=>`<th>${l.code}</th>`).join('')}${shown.length>1?'<th style="width:70px">这一行</th>':''}</tr>`;
+  const body=list.map(i=>{
+    const iss=rowIssues(sku,i);
+    const cells=shown.map(l=>{
+      if (iss.includes('src-empty')) return `<td class="dim"><span class="cellbtn mono">原文空·不计</span></td>`;
+      if (cellEmpty(sku,i,l.code)) return `<td class="miss"><button class="cellbtn mono" data-act="open-row" data-row="${i}">缺译</button></td>`;
+      if (cellSame(sku,i,l.code)) return `<td class="same"><button class="cellbtn mono" data-act="open-row" data-row="${i}">＝原文</button></td>`;
+      return `<td><button class="cellbtn" data-act="open-row" data-row="${i}">${esc(`${l.code} 译文 ${i+1}`)}${cellLong(sku,i,l.code)?'<small style="color:var(--muted)"> 偏长</small>':''}</button></td>`;
+    }).join('');
+    const flag=iss.includes('src-empty')?'<span class="badge">原文空</span>':iss.includes('empty')?'<span class="badge bad">缺译</span>':iss.includes('same')?'<span class="badge warn">疑似没翻</span>':iss.includes('long')?'<span class="badge">偏长</span>':'<span class="badge ok">齐</span>';
+    return `<tr class="${i===S.activeRow?'active':''}"><td class="no">${i+1}</td><td class="src" title="${esc(srcText(i))}">${esc(srcText(i))}</td>${cells}${shown.length>1?`<td>${flag}</td>`:''}</tr>`;
+  }).join('');
+  const tabs=[`<button data-act="lang" data-lang="all" aria-pressed="${S.langView==='all'}">全部 ${LANGS.filter(l=>hasLang(sku,l.code)&&!isBad(sku,l.code)).length} 门</button>`]
+    .concat(LANGS.filter(l=>hasLang(sku,l.code)&&!isBad(sku,l.code)).map(l=>{
+      let n=0; for(let i=0;i<ROWS;i++){ if(cellEmpty(sku,i,l.code))n++; if(cellSame(sku,i,l.code))n++ }
+      const tone=n===0?'ok':(n<=4?'warn':'bad');
+      return `<button data-act="lang" data-lang="${l.code}" aria-pressed="${S.langView===l.code}" title="${l.zh}：${n} 行要留意"><i class="d ${tone}"></i>${l.code}</button>`
+    })).join('');
+  const detail=S.activeRow===null?'':(()=>{
+    const i=S.activeRow, iss=rowIssues(sku,i);
+    return `<div class="card" id="rowDetail"><p class="card-t">第 ${i+1} 行 · 逐门看</p><p class="card-s">原文：<span class="mono">${esc(srcText(i))}</span></p><div class="pad">
+      <div class="langlist">${LANGS.filter(l=>hasLang(sku,l.code)&&!isBad(sku,l.code)).map(l=>{
+        const e=cellEmpty(sku,i,l.code),s=cellSame(sku,i,l.code),b=iss.includes('src-empty');
+        return `<button class="lg ${e||s||b?'miss':''}" data-act="lang" data-lang="${l.code}"><span class="cd">${l.code}</span><span class="tx">${b?'原文这一格为空':(e?'这一门没有可用译文':(s?'译文＝原文':`${l.code} 译文 ${i+1}`))}</span>${b||e||s?'<span class="badge">不写</span>':'<span class="badge ok">会写入</span>'}</button>`
+      }).join('')}</div>
+      ${needDecide(sku,i)?(S.decided[key(sku,i)]?`<div class="decision">已处置<button class="undo" data-act="undo-row" data-row="${i}">撤销</button></div>`:`<div class="acts"><button class="btn sm" data-act="decide" data-row="${i}" data-kind="skip">这一行本批不翻</button><button class="btn sm primary" data-act="decide" data-row="${i}" data-kind="fix">记下来，我去补译文</button></div>`):'<div class="callout grey" style="margin:0"><b>不用处置</b>这一行没有要你拍的事。</div>'}
+    </div>
+    <details class="ev"><summary>凭什么这么说（3 条依据，点开看）</summary><div class="evbody">
+      <div class="li"><b>缺译</b><span>那一门那一格是空字符串（今天的界面头条就是这句，<span class="mono">review-step.tsx:709-712</span>）</span></div>
+      <div class="li"><b>疑似没翻</b><span>译文与原文逐字相等</span></div>
+      <div class="li"><b>不写</b><span>不写进交付件，也不计费——第 4 步逐行推导里看得见</span></div>
+    </div></details></div>`;
+  })();
+  document.getElementById('stage').innerHTML=`
+    <div class="scope"><b>${sku} · 主副图</b><span class="n">${ROWS} 行</span><span class="n">${shown.length} 门</span>
+      <span class="sub">这一屏只看行。</span><span class="badge ${S.confirmMode==='auto'?'ok':'warn'}" style="margin-left:auto">${S.confirmMode==='auto'?'默认口径：不逐条问':'逐条确认中'}</span></div>
+    <div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px 9px">
+        <p class="card-t" style="margin:0;padding:0">行清单</p><div class="tabs">${tabs}</div>
+        <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="badge ${prob.length?'warn':'ok'}">问题行 ${prob.length}</span><button class="btn sm" data-act="toggle-scope">${S.onlyProblems?`全看 ${ROWS} 行`:`只看 ${prob.length} 行`}</button></span>
+      </div>
+      <p class="card-s">${S.langView==='all'?'12 门并排，点任意格展开那一行。':`现在只看 <b>${S.langView} ${zhOf(S.langView)}</b>：表里只剩「原文＋这一门」两列——今天的页签不裁列，只换整屏作用域（<span class="mono">workbench-view.tsx:5262-5265</span>）。`}</p>
+      <div class="tblwrap"><table class="rows"><thead>${head}</thead><tbody id="rowBody">${body}</tbody></table></div>
+      <p class="card-s" style="padding:9px 14px 12px;margin:0">实际出行 <b class="mono">${list.length}</b> 行。</p>
+    </div>
+    ${detail}
+    <div class="nextbar"><button class="btn primary" data-act="next" ${pendingTotal2()>0?'disabled':''}>${S.confirmMode==='auto'?'下一步：设计稿校对':(pendingTotal2()>0?`还有 ${pendingTotal2()} 行要你确认`:'逐条确认完了')}</button>
+      <span class="hint">${S.confirmMode==='auto'?'默认口径不拦人——缺的行按不翻处理、不计价。':'<button class="link" data-act="mode-auto">回到默认口径</button>'}</span></div>`;
+}
+
+/* ═════════ 第 3 步（照真界面）═════════ */
+function s3RightHTML(){
+  const un=LAYERS.map((l,i)=>({l,i})).filter(x=>x.l.kind==='text'&&x.l.row===null);
+  return un.map(({i})=>`<div class="exc"><div class="exc-head"><span class="no">!</span>${layerName(i)} 表里没有原文</div>
+    <p>它不参与写入，也不拖住别的层——这是今天已有的行为（<span class="mono">object-inspector.tsx</span> 的匹配与跳过）。</p>
+    <div class="acts"><button class="btn sm" data-act="pick-layer" data-idx="${i}">看这一层</button></div></div>`).join('')
+  +`<div class="tell"><b>争夺：${contestedRows()} 行各有 2 个层认领</b><p class="why">同一行会被写进多个文字层（计费里叫「这一行要写进几个对象」，<span class="mono">billing-preview.ts:18</span>）。裁决已有：<span class="mono">object-inspector.tsx:124-136</span>。</p></div>
+  <div class="tell"><b>不进写回的层：1 智能对象 · 1 已栅格化</b><p class="why">这两类今天就不改，界面如实标出来就停在这里。</p></div>
+  <div class="tell" id="weightNote"><b>字重会不会掉？——会，但不在这一屏改</b><p class="why">换字体在「排版定制」浮窗，按语言设、只存你这台浏览器（<span class="mono">typography-panel.tsx:882</span>）。那一档字族里没有对应字重时回落 Regular（<span class="mono">typography-capabilities.ts:383-391</span>）；要逐层保住得把通道改成按层（<span class="mono">typography-persistence.ts:156</span>）。</p></div>`;
+}
+function renderStep3(){
+  const stage=document.getElementById('stage');
+  if (!reconcileOpen()){
+    /* 真行为：门没开时整屏只有一句灰字（workbench-view.tsx:5722-5724） */
+    stage.innerHTML=`<div class="locked-screen"><h1 style="font-size:16px;margin:0 0 8px">设计稿校对</h1>
+      <p class="grey">确认全部语言译文后开放与设计稿对账</p>
+      <p>就这一句。开关在 <span class="mono">workbench-machine.ts:42</span>：<span class="mono">reconcileOpen = designReady && allLanguagesReviewed</span>；渲染分支 <span class="mono">workbench-view.tsx:5722-5724</span>。</p>
+      <p><b>这就是你说"第三步好像没起作用"的第一条原因</b>：门没开时它什么都没有；而门开的那一刻它又常常已经要跳去第 4 步了（下面第二条）。</p>
+      <div class="acts"><button class="btn sm primary" data-act="goto" data-step="2">回第 2 步</button><button class="btn sm" data-act="force-open">（演示）把门打开看看里面有什么</button></div></div>`;
+    return;
+  }
+  const idx=Math.min(S.layer,LAYERS.length-1), l=LAYERS[idx], st=layerStyle(idx);
+  const sameRow=LAYERS.filter(x=>x.row===l.row&&x.kind==='text').length;
+  const blocked=unmatchedLayers();
+  stage.innerHTML=`
+    <div class="scope"><b>${S.active} · 主副图</b><span class="n">${textLayers()} 层</span><span class="n">${rowsUsed()} 行</span>
+      <span class="sub">这一屏只做一件事：把表里的行和稿里的文字层对上。</span>
+      <span class="badge ${blocked?'warn':'ok'}" style="margin-left:auto">${blocked?`${blocked} 个层对不上`:'全部对上'}</span></div>
+    ${blocked?'':`<div class="callout ok"><b>已全部对齐</b>${textLayers()} 个文字层都对上了行，没有要你处理的东西。今天真界面在这里就只剩这一句统计（<span class="mono">workbench-view.tsx:5630-5633</span>）。</div>`}
+    <div class="callout warn"><b>这一屏有两个地方让你觉得"没起作用"，都是真的</b>
+      ① 门没开时整屏只有一句灰字（上面那个状态）。② 一切就绪时 <span class="mono">workbench-view.tsx:3969-3978</span> 会<b>自动跳走到第 4 步</b>，你来不及看——本件默认关掉自动跳，你可以停在这里。<br>
+      ③ 另外那个「重新检测」按钮<b>不重跑检测</b>，实为跳回第 1 步（<span class="mono">workbench-view.tsx:4179-4185</span>）。</div>
+    <div class="card"><p class="card-t">差集确认 <span class="badge ok">0 项</span></p><p class="card-s">表里有原文、稿里没有对应层的行——今天这一项为 0 时整块不显示（<span class="mono">:5424-5461</span> 的条件门）。</p></div>
+    <div class="card"><p class="card-t">要你决定 <span class="badge ok">0 项</span></p><p class="card-s">原文变化、重复文案、无效目标三类；全为 0 时这块也不显示（<span class="mono">:1182-1186</span>）。这就是"多数时候这一屏是空的"的第二层原因。</p></div>
+    <div class="card"><p class="card-t">版式需复核 <span class="badge warn">8 行译文偏长</span></p><p class="card-s">偏长不拦你：不写坏行，但第 3 步之后要看一眼排版。今天这块有内容时才出现（<span class="mono">:5517-5538</span>）。</p></div>
+    <div class="card"><p class="card-t">语言 <span class="badge">点一门＝只看那一门的对账</span></p><div class="dots">${LANGS.map(x=>`<button class="dotbtn" data-act="s3-lang" data-lang="${x.code}" aria-pressed="${String(S.langView===x.code)}"><i class="${x.code==='VI'||x.code==='ID'?'idle':'ok'}"></i>${x.code}</button>`).join('')}</div></div>
+    <div class="grid2">
+      <div class="card"><p class="card-t">层清单 <span class="badge ${blocked?'warn':'ok'}">${blocked?`${blocked} 个对不上`:'全部对上'}</span></p>
+        <div style="max-height:340px;overflow:auto">${LAYERS.map((x,i)=>{
+          const s2=layerStyle(i);
+          let tone='t-ok',pill;
+          if (x.kind==='raster'){tone='t-bad';pill='已栅格化'} else if (x.kind==='smart'){tone='t-warn';pill='智能对象'}
+          else if (x.row===null){tone='t-warn';pill='表里没有'} else pill=x.second?`第 ${x.row+1} 行 · 第2个层`:`第 ${x.row+1} 行`;
+          return `<button class="lrow ${tone}" data-act="pick-layer" data-idx="${i}" aria-current="${String(i===idx)}"><span class="dot"></span><span><span class="nm">${layerName(i)}</span><span class="sub">${s2.family} ${s2.weight} · ${s2.size}pt</span></span><span class="pill">${pill}</span></button>`
+        }).join('')}</div></div>
+      <div class="stack" style="display:flex;flex-direction:column;gap:11px">
+        <div class="card"><p class="card-t">${layerName(idx)} <span class="badge ${l.kind==='text'?(l.row===null?'warn':'ok'):(l.kind==='smart'?'warn':'bad')}">${l.kind==='text'?(l.row===null?'表里没有原文':`对上第 ${l.row+1} 行`):(l.kind==='smart'?'智能对象':'已栅格化')}</span></p>
+          <p class="card-s">${l.kind==='text'?(l.row===null?'这一层在设计稿里有文字，但表里没有逐字相等的原文——匹配不做模糊猜。':`对上表第 ${l.row+1} 行；这一行会写进 ${sameRow} 个层。`):'这一层的文字今天不写。'}</p>
+          <div class="readout">
+            <div class="ro face"><div class="l">现在的字族／字重（PostScript 脸名）</div><div class="v">${esc(st.face)}</div></div>
+            <div class="ro locked"><div class="l">字号 <span class="badge lock">锁</span></div><div class="v">${st.size} pt</div></div>
+            <div class="ro locked"><div class="l">行距 <span class="badge lock">锁</span></div><div class="v">${st.leading} pt</div></div>
+            <div class="ro locked"><div class="l">字重 <span class="badge lock">锁</span></div><div class="v">${st.weight}</div></div>
+          </div>
+          <div class="acts" style="padding:0 14px 12px"><button class="btn sm" data-act="open-typography">打开排版定制</button><span class="badge" style="align-self:center">沿用：${esc(st.family)} ${st.weight}</span></div>
+        </div>
+        <div class="card"><p class="card-t">就绪清单 <span class="badge ${blocked?'bad':'ok'}">${blocked?`${blocked} 项挡住`:'0 项挡住'}</span></p>
+          <p class="card-s">今天这块只在<b>有挡住项</b>时才渲染（<span class="mono">:5596</span>）；没挡住时整块消失，只剩统计。</p></div>
+      </div>
+    </div>
+    <div class="nextbar"><button class="btn primary" data-act="next">下一步：生成交付</button>
+      <span class="hint">真界面在这里满足条件会<b>自动跳走</b>（你关不掉）。本件默认不自动跳。<button class="link" data-act="toggle-jump">${S.autoJump?'关掉自动跳':'打开自动跳（照今天）'}</button></span></div>`;
+}
+
+/* ═════════ 第 4 步 ═════════ */
+function s4RightHTML(){
+  const need=SKUS.filter(s=>{ const want=CODES.filter(l=>hasLang(s,l)&&!isBad(s,l)&&!S.excluded[key(s,l)]).length; return CODES.filter(l=>inScope(s,l)).length<want && !S.confirm[s] });
+  const done=SKUS.filter(s=>{ const bound=CODES.filter(l=>hasLang(s,l)&&!isBad(s,l)).length; return CODES.filter(l=>inScope(s,l)).length<bound && S.confirm[s] });
+  let html=need.map(s=>{const n=CODES.filter(l=>inScope(s,l)).length; return `<div class="exc"><div class="exc-head"><span class="no">!</span>${s} 只有 ${n} 份</div><p>这一稿有语言没配上表或你点了不做。确认一下我就照 ${n} 份跑，不补猜。</p><div class="acts"><button class="btn sm primary" data-act="confirm4" data-sku="${s}">照 ${n} 份跑</button><button class="btn sm" data-act="pick-draft" data-sku="${s}">看这一稿</button></div></div>`}).join('')
+   + done.map(s=>`<div class="exc done"><div class="exc-head"><span class="no">✓</span>${s} 已确认照 ${CODES.filter(l=>inScope(s,l)).length} 份跑</div><div class="decision">已确认<button class="undo" data-act="unconfirm4" data-sku="${s}">改</button></div></div>`).join('');
+  if (S.done && Object.values(S.results).some(v=>v==='FAILED')) html+=`<div class="callout bad" style="margin:11px"><b>4521 / RU 执行超时</b>这一门单独回执失败，其他份不受影响。重跑只补这一门——不是整批重跑。</div>`;
+  return (html||'<div class="exc done"><div class="exc-head"><span class="no">✓</span>没有要处理的</div><p>可以直接开跑。</p></div>')
+    +`<div class="tell"><b>只三类告知</b><p class="why">缺表的那一门、你点了不做的份、执行失败的那一门。别的都静默按对上的一致处理。</p></div>`;
+}
+function renderStep4(){
+  const draftHasIssue=(sk)=>CODES.some(l=>!hasLang(sk,l)||isBad(sk,l)||S.drop[key(sk,l)]||S.results[key(sk,l)]==='FAILED');
+  const rowsShown=S.onlyIssues?SKUS.filter(draftHasIssue):SKUS;
+  const head=CODES.map(c=>`<th>${c}</th>`).join('');
+  const body=rowsShown.map(sk=>{
+    const cells=CODES.map(l=>{
+      const k=key(sk,l);
+      let cls='c-ok',v='·',cs='',quiet=true;
+      if (!hasLang(sk,l)){cls='c-bad';v='缺';cs='没这张表';quiet=false}
+      else if (isBad(sk,l)){cls='c-off';v='拦';cs='66 行';quiet=false}
+      else if (S.excluded[k]){cls='c-off';v='—';cs='已剔除';quiet=false}
+      else if (S.drop[k]){cls='c-off';v='—';cs='不做';quiet=false}
+      else { const d=DERIVE[k]; v=String(d.credits); const r=S.results[k];
+        if (r==='FAILED'){cls='c-bad';cs='失败'} else if (r==='OK'){cs='已交'}
+        quiet=(cls==='c-ok'&&r!=='OK') }
+      return `<td class="${cls}"><button class="cell${quiet?' quiet':''}" data-act="pick-cell" data-key="${k}" title="${sk} / ${l}：${cs||'可交'}"><span class="cv">${v}</span>${cs?`<span class="cs">${cs}</span>`:''}</button></td>`;
+    }).join('');
+    const n=CODES.filter(l=>inScope(sk,l)).length;
+    return `<tr><th>${sk} · 主副图 <span class="badge ${n<12?'warn':'ok'}">${n} 份</span></th>${cells}</tr>`;
+  }).join('');
+  const d=S.detail&&DERIVE[S.detail]?(()=>{
+    const [sk,lg]=S.detail.split('/'); const dd=DERIVE[S.detail];
+    const shown=S.showAll?dd.rows:dd.rows.slice(0,12);
+    return `<div class="card" id="deriveCard"><p class="card-t">${sk} / ${lg} 这一份为什么是 <b style="font-family:var(--mono)">${dd.credits}</b> 积分
+      <button class="btn sm" data-act="toggle-all" style="margin-left:auto">${S.showAll?'只看前 12 行':`展开全部 ${ROWS} 行`}</button></p>
+      <p class="card-s">共 ${ROWS} 行：参与计价 <b>${dd.billable.length}</b> 行、不参与 <b>${dd.skipped}</b> 行；折算 <b>${dd.units}</b> 个标准行单位（一行按 200 字符折算），不足 20 按 20 起（<span class="mono">billing/rules.ts:119-122</span>）。</p>
+      <div class="tblwrap"><table class="derive"><thead><tr><th>行</th><th>计费字符</th><th>标准行</th><th>不计价的话怎么说</th></tr></thead><tbody>
+        ${shown.map(r=>`<tr class="${r.reason?'skip':''}"><td class="n">${r.row}</td><td class="n">${r.chars||'—'}</td><td class="n">${r.units||'—'}</td><td>${r.reason||'按 max(原文,译文) 字符折算'}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td>合计</td><td class="n">${dd.billable.reduce((n,r)=>n+r.chars,0)}</td><td class="n">${dd.units}</td><td>${dd.credits} 积分</td></tr></tfoot></table></div>
+      <details class="ev"><summary>为什么行数不等于积分数（3 条，点开看）</summary><div class="evbody">
+        <div class="li"><b>逐行折算</b><span>每行至少 1 个单位，长句每满 200 字符加 1 个。</span></div>
+        <div class="li"><b>不计价的行</b><span>人点了不翻（IGNORED）、原文为空（SOURCE_EMPTY）、译文为空（TARGET_EMPTY）。</span></div>
+        <div class="li"><b>37 是什么</b><span>那是文字层对象数（<span class="mono">ExecutionAttempt.totalAssignmentCount</span>），跟价格无关。</span></div>
+      </div></details></div>`;
+  })():'';
+  const pct=S.running||S.done?Math.round(S.idx/Math.max(1,SKUS.length)*100):0;
+  document.getElementById('stage').innerHTML=`
+    <div class="scope"><b>生成交付</b><span class="n">${outCount()} 份</span><span class="n">${creditTotal()} 积分</span><span class="sub">这一屏只看份。</span></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 14px 0">
+        <p class="card-t" style="padding:0;margin:0">交付物矩阵 · ${cellsAll()} 格</p>
+        <button class="btn sm" data-act="toggle-issues" aria-pressed="${String(S.onlyIssues)}" style="margin-left:auto">${S.onlyIssues?`只看有异常的（${SKUS.filter(draftHasIssue).length} 稿）`:'只看有异常的'}</button></div>
+      <p class="card-s">格里的数字＝这一份要多少积分。<b>没话说的格子就是全对</b>；"有 N 行不参与计价"是常态（你点了不翻的行），不涂色不占格，想知道就点进去。</p>
+      <div class="scroller"><table class="mx"><thead><tr><th>设计稿 / 交付物</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <div class="legend"><span><i class="lg2 ok"></i>可交</span><span><i class="lg2 bad"></i>缺表 / 失败</span><span><i class="lg2 off"></i>本批不做 / 已拦</span></div>
+    </div>
+    ${d}
+    <div class="grid2">
+      <div class="card"><div class="q"><span class="big">${creditTotal()}</span><span class="sub">积分（合计）</span><span class="sub" style="margin-left:auto">份数 ${outCount()}/${cellsAll()}</span></div>
+        <div class="qlist"><table class="derive" style="width:100%"><tbody>
+          <tr><td>交付物＝稿 × 语言</td><td class="n">12 × 12</td><td class="n">144</td></tr>
+          <tr class="skip"><td>− 6896 / VI 第 1 步已排除</td><td class="n">找不到这门表</td><td class="n">−1</td></tr>
+          <tr class="skip"><td>− 5660 / ID 第 1 步已拦</td><td class="n">66 行对不上</td><td class="n">−1</td></tr>
+          ${Object.keys(S.drop).filter(k=>S.drop[k]).map(k=>`<tr class="skip"><td>− ${k} 你点了本批不做</td><td class="n">人决定</td><td class="n">−1</td></tr>`).join('')}
+        </tbody><tfoot><tr><td>可交付</td><td></td><td class="n">${outCount()} 份</td></tr></tfoot></table></div></div>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div class="card"><p class="card-t">这一稿的范围 <span class="badge ${CODES.filter(l=>inScope(S.active,l)).length<12?'warn':'ok'}">${CODES.filter(l=>inScope(S.active,l)).length}/12 门</span></p>
+          <div class="langgrid">${LANGS.map(x=>{const absent=!hasLang(S.active,x.code)||isBad(S.active,x.code); const off=Boolean(S.drop[key(S.active,x.code)]);
+            return `<button class="btn sm ${absent?'absent':(off?'off':'')}" data-act="drop" data-key="${S.active}/${x.code}" aria-pressed="${String(!off)}" ${absent?'disabled':''} title="${absent?'这一门没有表':(off?'已标本批不做，点回来':'本批不做这一份')}">${x.code}</button>`}).join('')}</div></div>
+        <div class="card"><p class="card-t">执行队列（串行，一稿一稿跑）<span class="badge">${S.done?'已结束':S.running?`第 ${S.idx+1}/${SKUS.length} 稿`:'未开始'}</span></p>
+          <div class="pad"><div class="progress"><i style="width:${pct}%"></i></div>
+            <div class="log">${S.log.length?(S.logOpen?S.log.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join(''):S.log.filter(l=>/完成/.test(l.t)||l.k==='bad'||l.k==='warn').map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('')):'<div>（还没开跑）</div>'}</div>
+            ${S.log.length?`<button class="link" data-act="toggle-log">${S.logOpen?'收起明细':`展开 ${S.log.length} 条逐份明细`}</button>`:''}
+            <div class="acts">${S.done?(Object.values(S.results).includes('FAILED')?'<button class="btn primary" data-act="retry-failed">只重跑失败的那几份</button><span class="hint" style="align-self:center;font-size:11.5px;color:var(--muted)">其余份不动</span>':'<span class="badge ok" style="align-self:center;height:30px;display:inline-flex;align-items:center;padding:0 12px">全部完成 · 无需重跑</span>'):`<button class="btn primary" data-act="run" ${pendingCount4()>0?'disabled':''}>开始生成 ${outCount()} 份</button>`}</div>
+          </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═════════ 跑批 ═════════ */
+function run(){
+  if (S.running) return;
+  S.running=true; S.done=false; S.idx=0; S.log=[]; S.results={}; S.draftResult={}; tick();
+}
+function tick(){
+  if (S.idx>=SKUS.length){ S.running=false; S.done=true; render(); return }
+  const sk=SKUS[S.idx];
+  const langs=CODES.filter(l=>inScope(sk,l));
+  if (!langs.length){ S.idx++; render(); tick(); return }
+  let work=[...langs];
+  const step=()=>{
+    const l=work.shift();
+    if (l===undefined){
+      const anyFail=langs.some(x=>S.results[key(sk,x)]==='FAILED');
+      S.draftResult[sk]=anyFail?'FAILED':'OK';
+      S.log.push({k:anyFail?'warn':'ok',t:`${sk} ${anyFail?'有 1 门失败':'完成'} · ${langs.length} 份`});
+      S.idx++; render(); tick(); return;
+    }
+    const fail=(sk==='4521'&&l==='RU');
+    S.results[key(sk,l)]=fail?'FAILED':'OK';
+    S.log.push({k:fail?'bad':'ok',t:`${sk}/${l} ${fail?'执行超时（回执失败）':'已写出交付件'}`});
+    render(); setTimeout(step,18);
+  };
+  step();
+}
+
+/* ═════════ 渲染总入口 ═════════ */
+function render(){ renderStepper(); renderCounters(); renderLeft(); renderRight(); ({1:renderStep1,2:renderStep2,3:renderStep3,4:renderStep4})[S.step]() }
+function goto(n){ if(!stepUnlocked(n)&&n!==S.step) return false; S.step=n; if(n===2)S.seen2=true; if(n===3)S.seen3=true; if(n===4)S.seen4=true; if(n===3&&S.layer===0) S.layer=LAYERS.findIndex(x=>x.kind==='text'&&x.row===null); render(); return true }
+function announce(t){ document.getElementById('announce').textContent=t }
+
+document.addEventListener('click',(e)=>{
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const a=b.dataset.act;
+  if (a==='info'){ document.getElementById('info').dataset.open='true'; return }
+  if (a==='info-close'){ document.getElementById('info').dataset.open='false'; return }
+  if (a==='goto'){ goto(Number(b.dataset.step)); return }
+  if (a==='next'){
+    if (S.step===1){ if(pendingTotal()>0) return; goto(2); return }
+    if (S.step===2){ if(pendingTotal2()>0) return; goto(3); return }
+    if (S.step===3){ if(S.autoJump){ goto(4); announce('自动跳走了——这就是今天让你看不见第 3 步的那个行为') } else goto(4); return }
+    announce('可玩件到第 4 步为止'); return
+  }
+  if (a==='pick-draft'){ S.active=b.dataset.sku; if(S.step===2) S.activeRow=null; render(); return }
+  /* 第 1 步 */
+  if (a==='scan'){ S.phase='scanning'; S.scanIdx=-1; const t=setInterval(()=>{ S.scanIdx++; renderStep1(); if(S.scanIdx>3){ clearInterval(t); S.phase='ready';
+    /* 三条默认照批准稿套上：缺一门排除、错行只拦那一张、归属不明的移出本批；只有「同门两张」留给人 */
+    S.missPolicy='exclude'; S.badPolicy='block'; S.orphan='removed'; render() } },260); return }
+  if (a==='dup'){ S.dupPick=b.dataset.which; S.clicks++; render(); return }
+  if (a==='dup-undo'){ S.dupPick=null; S.clicks=Math.max(0,S.clicks-1); render(); return }
+  if (a==='miss'){ S.missPolicy=b.dataset.v; S.touchedMiss=true; render(); return }
+  if (a==='miss-undo'){ S.missPolicy=null; S.touchedMiss=false; render(); return }
+  if (a==='bad'){ S.badPolicy=b.dataset.v; S.touchedBad=true; render(); return }
+  if (a==='bad-undo'){ S.badPolicy=null; S.touchedBad=false; render(); return }
+  if (a==='orphan-read'){ S.orphan='read'; render(); return }
+  if (a==='orphan-remove'){ S.orphan='removed'; render(); return }
+  if (a==='orphan-undo'){ S.orphan='unknown'; render(); return }
+  if (a==='toggle-lang'){ const k=b.dataset.k; if(S.excluded[k]) delete S.excluded[k]; else S.excluded[k]=true; render(); return }
+  if (a==='restore-all'){ Object.keys(S.excluded).filter(k=>k.startsWith(b.dataset.sku+'/')).forEach(k=>delete S.excluded[k]); render(); return }
+  /* 第 2 步 */
+  if (a==='lang'){ S.langView=b.dataset.lang; render(); return }
+  if (a==='toggle-scope'){ S.onlyProblems=!S.onlyProblems; render(); return }
+  if (a==='open-row'||a==='jump-row'){ S.activeRow=Number(b.dataset.row); if(a==='jump-row') S.onlyProblems=false; render(); return }
+  if (a==='decide'){ S.decided[key(S.active,b.dataset.row)]={kind:b.dataset.kind}; S.clicks++; render(); return }
+  if (a==='undo-row'){ delete S.decided[key(S.active,b.dataset.row)]; render(); return }
+  if (a==='bulk'){ b.dataset.rows.split(',').forEach(r=>{S.decided[key(S.active,r)]={kind:b.dataset.kind}; S.clicks++}); render(); return }
+  if (a==='agg-toggle'){ S.aggOpen=!S.aggOpen; render(); return }
+  if (a==='mode-ask'){ S.confirmMode='ask'; render(); announce('已改成逐条确认：下一步会被拦住直到你定完'); return }
+  if (a==='mode-auto'){ S.confirmMode='auto'; render(); announce('已回到默认口径：不逐条问'); return }
+  /* 第 3 步 */
+  if (a==='force-open'){ S.confirmMode='auto'; S.seen2=true; S.seen3=true; render(); announce('门开了：reconcileOpen = designReady && allLanguagesReviewed'); return }
+  if (a==='pick-layer'){ S.layer=Number(b.dataset.idx); render(); return }
+  if (a==='open-typography'){ announce('排版定制是另一个浮窗（按语言设，只存本机）；这一屏不放编辑器'); return }
+  if (a==='toggle-jump'){ S.autoJump=!S.autoJump; render(); return }
+  if (a==='s3-lang'){ S.langView=S.langView===b.dataset.lang?'all':b.dataset.lang; render(); return }
+  /* 第 4 步 */
+  if (a==='pick-cell'){ S.detail=S.detail===b.dataset.key?null:b.dataset.key; render(); return }
+  if (a==='toggle-all'){ S.showAll=!S.showAll; render(); return }
+  if (a==='toggle-issues'){ S.onlyIssues=!S.onlyIssues; render(); return }
+  if (a==='toggle-log'){ S.logOpen=!S.logOpen; render(); return }
+  if (a==='drop'){ if(!DERIVE[b.dataset.key]) return; if(S.drop[b.dataset.key]) delete S.drop[b.dataset.key]; else S.drop[b.dataset.key]=true; delete S.confirm[b.dataset.key.split('/')[0]]; render(); return }
+  if (a==='confirm4'){ S.confirm[b.dataset.sku]=true; render(); return }
+  if (a==='unconfirm4'){ delete S.confirm[b.dataset.sku]; render(); return }
+  if (a==='run'){ run(); return }
+  if (a==='retry-failed'){ const f=Object.keys(S.results).filter(k=>k.includes('/')&&S.results[k]==='FAILED').map(k=>k.split('/')[1]); S.log.push({k:'warn',t:`只重跑失败的那些份：${f.join('、')}`}); render(); return }
+});
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') document.getElementById('info').dataset.open='false' });
+S.activeRow=null;
+window.__sim={ S, LANGS, CODES, SKUS, ROWS, LAYERS, DERIVE, EX,
+  boundTotal, pendingTotal, groupBound, slotBound, draftTone,
+  problemRows, rowIssues, needDecide, pendingRows, pendingTotal2, autoHandled, autoTotal, allLanguagesReviewed, filledCells, cellsTotal, srcEmptyRow, cellEmpty, cellSame, hasLang, isBad,
+  textLayers, unmatchedLayers, contestedRows, rowsUsed, reconcileOpen, reconcileComplete, deliveryOpen, layerStyle,
+  inScope, outCount, creditTotal, pendingCount4, stepUnlocked, UNIT_CHARS, slotBound, render, goto };
+render();
+</script>
+</body>
+</html>
