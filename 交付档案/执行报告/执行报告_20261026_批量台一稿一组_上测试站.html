@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量台一稿一组语言表 · 上测试站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+<p class="eyebrow"><span>执行报告</span><span class="sep">/</span><span>批量台 · 一稿一组语言表</span><span class="sep">/</span><span>2026-10-26 17:2x</span></p>
+<h1>一稿一组语言表已上测试站</h1>
+<p class="standfirst">P3 第一批＋P4 份数收口上线；假红门 #283 修好并接进契约链。测试站现役 <code>3ae696f2</code>，生产站与 <code>main</code> 未动。</p>
+<div class="meta"><span>预检 17 门全过</span><span>单测 324 例 rc=0</span><span>包哈希逐位一致</span><span>站内健康 200</span></div>
+</header>
+<h2><span class="sn">§</span>一句话</h2>
+<p>第 1 步的"一稿一组语言表"已经跑到测试站上了。<strong>你现在打开测试站就能试</strong>：选一个文件夹，扫描完，12 份稿各自自动配好 12 门语言的表，读完整组合成一张。测试站现在跑的是提交 <code>3ae696f2</code>，回滚备份留在服务器上，生产站一行没动。</p>
+<p>访问还要带你的口令参数（测试站的访问门按设计拦无 <code>?key=</code> 的请求，刚才我从服务器外面量它回 403，就是这个门在拦，不是站坏了）。</p>
+<h2><span class="sn">§</span>这一轮做完的三件事</h2>
+<p><strong>第一件：矩阵和抽屉现在按语言取自己的表。</strong> 之前 ES 那一格查的其实是这份稿唯一绑定的那张表，所以一份稿绑了张只带泰语的表时，别的语言格会跟着一起答话。修完之后：这一门绑的表不带这一列，就判「本稿不做」，覆盖率哪怕 100% 也不给「就绪」；这一门真没表，就判「未配表」并写清「本批有 ES，这一组里没有这张表」。点一列也改了——只列真做这门语言的稿，缺门的稿已经在中栏和右栏逐条点过名，不再在这里把 4 份撑成 14 份（这正是施工图那条验收）。</p>
+<p><strong>第二件：份数只有一个来源。</strong> 「本批要做的交付物」这张卡以前是数矩阵格子数出来的。稿还没扫描时格子一律算「未扫」，于是同一批里内核算 3 份、卡片报 0 份——同一个数字两套真相，是写测试的时候当场抓出来的。现在它直接取归组内核那句「每组真能用的语言数」：缺一门就少一份，补一门就多一份，两个方向都有断言钉着。</p>
+<p><strong>第三件：没读过的表不再被说成「没有语言列」。</strong> 这句是把「不知道」报成「没有」。现在只有真读过全文的表才允许这么说，没读的要么不渲染这句、要么说「未读」。</p>
+<p>另外按你的裁定，交付物矩阵归第 4 步，第 1 步先留折叠版：默认收起，格子一条不少（收起和展开两种状态下格数相同，这条有断言）。</p>
+<h2><span class="sn">§</span>顺手修掉一扇连红 6 天的门</h2>
+<p><code>test:batch-workbench-guards</code> 那条守「扫描队列失败必须停下点名、绝不静默跳过」的门，红在那句中文原文被国际化改造换掉了写法，而断言在抠源码原文。改成了核行为：那一段必须同时报出「第几／共几」「是哪一份稿」「还剩几份没扫」。三条负控实测都会红（分别摘掉文件名、剩余数、批量就绪位，门都 rc=1 并点名对应那条）。这道门以前不在契约链里，所以每次契约全绿都碰不到它——现在接进去了，红就藏不住。</p>
+<h2><span class="sn">§</span>证据</h2>
+<p>推 GitHub：<code>cdc40807..3ae696f2</code>，5 笔快进，没用 force。出包预检 17 门全过——它当场还抓到我自己新加的折叠点没写「折叠不得删报」出口声明，补了才放行。包体 54,270,929 字节，SHA-256 <code>AB96FFDD…BAAFD16</code>；分 9 块上传逐块 md5 相符，服务器拼接后哈希逐位一致；部署退出码 0，站内健康检查 200，现役提交对上，库迁移没动（脚本自己 skip）。我还从现役构建产物里 grep 到了这轮新增的三句话，说明跑的就是这笔代码。</p>
+<p>全量单测 29 文件 324 例、批量台线 35 项冒烟＋102 例、行级合同、信任链 12 项、回执诚实、全链契约——全部真实退出码 0。类型检查 0 错，lint 0 error。</p>
+<h2><span class="sn">§</span>部署路上踩的三个坑，说清免得下次再踩</h2>
+<p>第一次我跑的是从安装包里解出来的部署脚本，它据此找"上一版迁移目录"的路径就指错了，于是误报「候选含未批准迁移」。正解是跑现役服务器上那份脚本。第二次被「stale next directory exists」拦住——那是第一次失败留下的临时目录，我核对过它的时间戳就是我 17:12 那次尝试，确认是自己这轮的残留才删。第三次是「在飞批次」检查报读库失败（那个检查读不到就拦，是设计，不是故障）；我手工复核了近 30 分钟 RUNNING 状态的批次确实是 0（表里只有 STALLED/SETTLED/EXPIRED/QUOTED），重试就自然放行了——<strong>全程没有用任何强制开关绕过闸门</strong>。</p>
+<h2><span class="sn">§</span>还没做完的，三件，不含糊</h2>
+<p><strong>第 2 步语言页签真过滤、第 3 步改成一层对多行</strong>：这两件都会改变「哪些行算数」。按项目规矩这是合同变更，要浏览器投影、助手证据、服务端报价、结算闸四层同步再改测试夹具。我不在你没定口径的情况下动它——这是要你先拍的一件事。</p>
+<p><strong>矩阵整块搬进第 4 步</strong>：本轮只做了「第 1 步留折叠版」这半边。整块搬需要把表头调查的结果和矩阵派生上提一层，否则第 1 步和第 4 步会变成两套事实，正是这个项目反复记过的病。</p>
+<p><strong>真机跑一整批</strong>：本机诊断器给出两处底层卡点——助手向服务端验票超时 108 次（最慢单跳 24.9 秒），会让读文件夹／扫描／替换全变 403；以及 21 次账号绑定失配，而这个失配码正是这次上线那笔修复该自愈的。所以「读表按整组读回来」这条循环目前只有单测和界面级证据，真机端到端还没拿到。</p>
+<h2><span class="sn">§</span>要你的两句话</h2>
+<p>一是你在测试站点一遍第 1 步，看三栏和整组读表是不是你要的样子；二是第 2 步「按语言过滤行」和第 3 步「一层对多行」的行口径怎么定——定了我按合同变更四层走。</p>
+</div>
+</body>
+</html>
