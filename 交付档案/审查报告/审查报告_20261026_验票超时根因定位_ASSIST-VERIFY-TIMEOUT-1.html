@@ -1,0 +1,500 @@
+<title>验票超时根因定位</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+  ul{margin:.6em 0 .9em 1.1em;padding-left:.4em}
+  li{margin:.32em 0;line-height:1.62}
+  code{background:rgba(120,140,170,.14);padding:.06em .32em;border-radius:3px;font-size:.9em}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">只读深查 · 任务 ASSIST-VERIFY-TIMEOUT-1</div>
+    <h1>验票超时根因定位：坏的是这台机器到 Cloudflare 那一段，不是云端</h1>
+    <p class="standfirst">「扫描一直失败、扫到一半中断」＝本机链路不稳（IPv4 TLS 100% 起不来、IPv6 会卡会被复位）× 助手每一次只读轮询都要回云验票且单跳只等 10 秒。源站毫秒级应答，nginx 里 158 次验票全部 200。</p>
+    <div class="meta"><span class="sn">执行会话 0e24ae40 · 2026-10-26 20:2x · 全程只读，未出包未部署未碰生产</span></div>
+  </header>
+
+  <section class="verdict">
+    <div class="lb">结论</div>
+    <p>根因落在<strong>客户端链路＋助手侧「每跳必验票、单跳 10 秒」</strong>这一层，不在云端、不在事件日志。最坏一次验票烧 30 秒（首跳 10s ＋ 重试跳 20s），随后浏览器拿到 403，扫描中断，忙碌锁实测握了 <strong>12 分 51 秒</strong>，期间新扫描只会得到「助手正忙」。</p>
+    <div class="stats">
+      <div class="stat"><div class="n">158 / 200</div><div class="k">nginx 内 20 分钟验票：全部到达且答 200</div></div>
+      <div class="stat"><div class="n">10 / 10</div><div class="k">本机 IPv4 → Cloudflare TLS 握手失败（rc=35）</div></div>
+      <div class="stat"><div class="n">0.002–0.007 s</div><div class="k">源站自身应答（服务器回环实测）</div></div>
+      <div class="stat"><div class="n">30.010 s</div><div class="k">日志实测到预算边界（attempts=2）</div></div>
+    </div>
+  </section>
+
+  <section>
+<p>签发：2026-10-26 20:2x｜执行会话：本地助手调整（<code>0e24ae40</code>）｜原任务书 <code>总控/任务书_ASSIST-LOG-DEAD-1_助手事件日志停写调查_20261026.md</code> 已按签发会话改题</p>
+<h2>先说结论（这对你下一步意味着什么）</h2>
+<p><strong>"扫描一直失败、扫到一半中断"不是云端慢，也不是耳朵聋，而是你这台机器到 Cloudflare 那一段网络在坏，加上助手把每一次只读轮询都做成"必须回云验票、单跳只等 10 秒"。</strong> 两件事叠在一起，就成了：一次轮询 10 秒拿不到答复 → 再试一次 → 30 秒总预算烧完 → 助手回浏览器 403 → 扫描中断；中断期间那把"忙碌锁"一直握着（实测握了 12 分 51 秒），所以你重点扫描只会得到"助手正忙"。</p>
+<p>所以：改代码阈值不是第一刀，<strong>先把这台机器的链路修稳</strong>是最便宜的一刀；真要产品侧动手，改的是"只读轮询不该每跳都回云验票"这一条。</p>
+<h2>一件：阈值在哪，最坏烧多少秒</h2>
+<ul>
+  <li>单跳上限 10 秒：<code>worktrees/develop/download/local-assistant/ticket-verify-schedule.cjs</code> 里 <code>FIRST_ATTEMPT_TIMEOUT_MS = 10000</code>，重试跳 <code>RETRY_ATTEMPT_TIMEOUT_MS = 22000</code>，至多 2 跳 <code>MAX_ATTEMPTS = 2</code>，总预算 <code>TOTAL_BUDGET_MS = 30000</code>。</li>
+  <li>助手侧默认走这套分级：<code>server.js:2744</code>（<code>TICKET_VERIFY_ATTEMPT_TIMEOUT_MS = 10000</code>）、<code>server.js:2785-2794</code>（不传预算就用 30 秒总预算；显式钉死单跳上限的执行类路由退化为"只跳一次"）。</li>
+  <li>最坏总耗时＝<strong>30 秒</strong>（首跳 10 秒 + 重试跳 min(22000, 30000−已耗) ＝ 20 秒）。日志实测到边界值：今天 20:00:49 那条 <code>GET /v1.5/preparation/status/... -&gt; 403 code=VERIFY_TIMEOUT elapsedMs=30010 attempts=2</code>。</li>
+</ul>
+<h2>二件：这个超时是对谁超时（慢还是断）</h2>
+<p>先复跑签发会话给的那批读数，逐字对上（方法＝node 按换行切非空行，窗口取 UTC 11:58:24–11:58:59.999）：14 行、VERIFY_TIMEOUT 8、slow hop 6、verify retry 4、verify rejected 4，elapsedMs 取值 3077/3576/10003/10004/10006/10009/10015/10017/12317/14329/15031/16357。<strong>注意形状</strong>：这 8 条首跳超时里有 4 条重试跳成功了（2.3–6.4 秒答上来），这一窗内没有一条真正判死。</p>
+<p>再看链路（同一台机器、同一时刻，真退出码取不接管道的 <code>$?</code>；<code>curl -w</code> 里没有 exit_code 这个变量）：</p>
+<ul>
+  <li>对 <code>https://test.tuyigf.com/api/local-assistant/ticket/verify</code> 连测 10 次：7 次 0.74–1.17 秒返回 403（GET 探路，只做计时），3 次 <strong>rc=35</strong>（TLS 握手直接失败）。</li>
+  <li>对照 <code>https://test.tuyigf.com/api/runtime-provenance</code> 连测 10 次：6 次 0.75–1.46 秒 200，4 次 <strong>rc=35</strong>。</li>
+  <li>20:28 复测分协议族：<strong>IPv4 连续 4 次全部 rc=35（TLS 起不来，0.19–0.38 秒即失败）</strong>；<strong>IPv6 连续 4 次全部成功，TLS 0.39–0.59 秒、首字节 0.79–1.37 秒</strong>。</li>
+  <li>更坏的一形也抓到了：20:11:45 <code>[ticket] verify rejected reason=VERIFY_UNREACHABLE: read ECONNRESET elapsedMs=18227 attempts=2</code>，同一毫秒浏览器侧那条轮询拿到 403。</li>
+</ul>
+<p><strong>定性：IPv4 到 Cloudflare 是"断"（TLS 握手 100% 起不来），IPv6 是"能通但会卡会被人复位"。</strong> 助手（node）优先走 IPv6，所以它踩的是那条会卡、会被 RST 的路。</p>
+<h2>三件：谁在 19:58 触发（nginx 定案）</h2>
+<ul>
+  <li>你这台机器的助手是唯一调用方：测试站 nginx 里 19:55–20:15 这 20 分钟 <code>ticket/verify</code> <strong>158 条，全部 200</strong>，来源 IP 只有一个 IPv6 <code>2408:8256:3884:17fd:...</code>，与本机 <code>netstat</code> 里那条已建立连接同一 /64 前缀（本机就是发起方）。</li>
+  <li>浏览器侧同窗口还在猛发取票请求：<code>POST /api/local-assistant/ticket</code> <strong>139 条</strong>。</li>
+  <li>全天 <code>ticket/verify</code> 330 条里 167 条集中在 19:00–20:15；非 200 只有 9 条 403。</li>
+  <li><strong>源站不慢</strong>：服务器上直连自家应用 <code>http://127.0.0.1:3000/api/runtime-provenance</code> 5 次全部 200、0.002–0.007 秒；服务器自己走公网 URL 回自己 5 次 0.24–0.84 秒；nginx <code>error.log</code> 里 <code>upstream timed out</code> <strong>0 条</strong>（<code>grep -c</code> 实测 0，正控＝同法数当天 verify 请求得 330）；<code>pm2</code> 三个进程 online、重启计数 0、load 0.04、CPU 1.5%。</li>
+  <li>助手自己也在这段干活：<code>engine.log</code> 20:12:08 之前那两条是 <code>2026-10-26T11:59:17.040Z [busy] acquire phase=* attempt=-</code> 与 <code>2026-10-26T12:12:08.366Z [busy] release</code>（＝本地 19:59:17 起、20:12:08 放，<strong>握锁 12 分 51 秒</strong>）。</li>
+  <li>一处口径要挑明：nginx 只记"答完"的时刻（<code>log_format</code> 里没有 request_time），所以"158 条全 200"能证明<strong>请求到了源站且最终答了</strong>，不能证明它们答得及时。我按秒看了 19:58:05–19:58:35 只有 3 条完成，而助手在这 35 秒里发了 8 次首跳＋4 次重试——<strong>差的那几次在源站日志里没有对应完成记录，卡在哪一跳未核实</strong>（要么停在 Cloudflare 边缘，要么就是本机这条 IPv6 连接被复位）。</li>
+</ul>
+<h2>四件：只读操作到底能不能不验票</h2>
+<ul>
+  <li>助手侧<strong>没有</strong>"只读操作降级路径"这个词意义上的实现：<code>authorizePreparationScan</code>（<code>server.js:3107-3122</code>）只要请求头带 <code>x-tygf-ticket</code> 就必须回云 <code>verifyTicket</code>；只有"未打包 exe ＋ beta ＋ 本机 serverUrl"的本地一体化开发旁路才免票（<code>isDevelopmentBypass</code>，<code>server.js:3120-3121</code>），你现在用的是安装包＋公网测试站，<strong>这条路天生走不到</strong>。</li>
+  <li>轮询状态也一样要票：<code>authorizePreparationState</code>（<code>server.js:4091-4105</code>）——只要带 Origin 就先 <code>isAllowedOrigin</code> 再走 <code>authorizePreparationScan</code>，即每跳一次回云验票。它里面的 <code>internalTokenValid</code> 免票分支要求<strong>没有 Origin 头</strong>，只有助手内部调用才满足。</li>
+  <li>助手侧没有任何"刚验过的票短时间内复用"的缓存：按 <code>verifyCache|verifiedTicket|ticketGrace|recentlyVerified|verifyMemo</code> 在本机 <code>server.js</code> 里 <code>grep -n</code> 得 <strong>0 命中</strong>（正控＝同一工具在 <code>server.js:2744</code> 命中 <code>TICKET_VERIFY_ATTEMPT_TIMEOUT_MS</code>）。</li>
+  <li>你提到的 <code>src/lib/server/ticket-replay-window.ts:13-19</code> 把 <code>preparation_scan</code> 列进只读 30 秒幂等窗口——那是<strong>云端收到票之后</strong>怎么处理重复票，救不了"票根本没送到云端"。这次就是这么死的：链路卡住 ⇒ 云端看不见 ⇒ 窗口再宽也没用。</li>
+  <li>浏览器还放大了这件事：每一次状态轮询都先向云端取一张新票再让助手验（<code>src/lib/workbench/local-assistant-client.ts:1531</code> <code>fetchTicket(undefined, 'preparation_scan')</code>），于是一次扫描的轮询就产生"N 次取票＋N 次验票"。20 分钟里取票 139、验票 158 次是这么来的。</li>
+  <li>铁律守住的口径：<strong>"超时就算通过"不属可选方案</strong>——那是静默降级。本轮也没做任何降级动作，全程只读。</li>
+</ul>
+<h2>五件：可选修法与代价</h2>
+<ul>
+  <li>方案 C（<strong>先做这个，最便宜</strong>）：修本机链路。动作＝换 4G 对照跑一次；把 IPv4 的 TLS 失败查出来（本机 7890 端口有代理在听，DNS 也被本机拦了一层：<code>node dns.resolve4/6/CNAME</code> 三个都 <code>ECONNREFUSED</code>）；需要公网入口时把隧道重连上（旧隧道 PID 12672 已不存在，<code>Get-Process</code> 实测 GONE）。<strong>不用重出 exe、不改代码</strong>；风险：链路是外部条件，可能自己好也可能自己坏，不能当永久修法，只当止血。</li>
+  <li>方案 A：抬单跳阈值（10 秒往上抬）。<strong>必须重出安装包</strong>（3.7.28→3.7.29，本项目没有静默自动更新，升级＝换安装包），要走三段轨。代价与坑：浏览器侧对这条轮询只等 15 秒——真值是常量 <code>LOCAL_API_TIMEOUT_MS = 15_000</code>（<code>src/lib/workbench/local-assistant-client.ts:187</code>），不是注释里的说法；助手单跳一旦抬过 15 秒，<strong>浏览器先断，原因送不上来</strong>（这条取舍 <code>server.js:2741-2743</code> 已写明，但它写的指针 <code>local-assistant-client.ts:100</code> 已经漂了——那一行现在是别的注释，正确落点是 <code>:187</code>）。风险：改了阈值不等于少一次回云，只是把失败推后。</li>
+  <li>方案 B：改"只读轮询不必每跳回云验票"。方向有两选一——① 助手侧给已通过验票一个很短的复用窗口（安全语义变更：票据一次性原则要重新界定，必须 Owner 明令，并按合同变更纪律核"归属/回执"两层是否受影响）；② 浏览器侧改成一次取票多次轮询、或让轮询走"不带 Origin 的内部通道"。②不动安全语义，<strong>同样要重出 exe</strong>（前端在助手包外，但验票逻辑在助手侧；纯前端改动可随测试站整线走，不必单独出包）。风险：①若做成"超时也算通过"即踩红线，直接不可选。</li>
+  <li>方案 D（节奏）：这三件都不该单独催一次发版。建议随下一条整线（多稿工作台／排版浮窗已在测试站待验）一起 bump 3.7.29；本轮<strong>未出包、未部署、未碰生产、支付开关保持关闭</strong>。</li>
+</ul>
+<h2>我这一路还顺手证伪/更正的东西</h2>
+<ul>
+  <li>原任务书的前提不成立：事件日志<strong>没停写</strong>（我 20:00—20:11 三次采到 size 246,425 → 251,096 → 255,626 B、mtime 20:11:45，且行内时间戳一路推进到 20:11:45）。它本来就只在被拒/重试/慢跳时落盘（<code>server.js:3125</code> 上方注释原文「事件持久化日志：4xx/5xx 拒绝落盘」）⇒ 安静＝没失败。任务书里"21:35 之后不再写入"那个 21:35，实为 <code>.tygf_failures</code> 目录与其最新文件 <code>2026-10-25T13-35-44-744Z-scan-3a8e1fff.json.sent</code> 的时刻（本地 21:35:44）——把别的册子的时间当成了日志的时间。</li>
+  <li>那份失败包本身给了另一个独立原因：<code>code=PHOTOSHOP_COM_UNAVAILABLE</code>（错误 429：ActiveX 部件不能创建对象），engine 侧同刻 <code>durMs=759186</code>（12 分 39 秒）——也就是说 10-25 那次扫描是 PS 自动化不可用，跟今天这批验票超时不是同一件事。</li>
+  <li>另有两笔敞口记在案：助手当前配置的服务器地址仍是本机回环（<code>/ping</code> 回显 <code>pendingReceipts.count=4</code>、<code>lastErrorCode=ECONNREFUSED</code>、hint 点名 <code>http://localhost:3000</code>；<code>engine.log</code> 今天 17:44 也自己抱怨过一次），所以有 4 条回执送不出去；<code>assistant-events.log</code> 里没有轮转件（同目录只有 <code>engine.log.1</code>，2,097,255 B／10-22 起），即事件日志目前不轮转、只长（现 255 KB，磁盘无关紧要：E 盘剩 243.2 GB）。</li>
+</ul>
+<h2>证据与纪律</h2>
+<ul>
+  <li>全程只读：没改助手代码/配置、没重启或结束任何进程、没删文件、没部署、没碰生产与支付开关；<code>node scripts/doctor-testsite-assistant.mjs</code> 按你的提醒只当健康读数（它给的 VERIFY_TIMEOUT=88／slow_hop=76 与我独立统计同向），未拿来当根因。</li>
+  <li>未核实清单：① 那几次"助手发了、源站没完成记录"的请求到底停在 Cloudflare 边缘还是本机；② 19:59:17 那次 <code>busy acquire</code> 的触发者是谁（浏览器还是助手内部），nginx 无 request_time、engine.log 只给时刻；③ IPv4 TLS 失败的具体成因（代理／驱动/中间盒／DNS 拦截哪一层）。</li>
+</ul>
+
+  </section>
+</div>
+</body>
+</html>
