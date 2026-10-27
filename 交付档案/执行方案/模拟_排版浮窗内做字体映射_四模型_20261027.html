@@ -70,7 +70,12 @@
   .lay:first-of-type{border-top:none}
   .lay input{margin:0}
   .lay .ln{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sum{font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:6px;margin-top:2px}
+  details.hint{font-size:11px;color:var(--muted);margin:0 0 6px}
+  details.hint summary{cursor:pointer;font-size:11px;color:var(--teal);list-style:none}
+  details.hint summary::before{content:"▸ "}
+  details.hint[open] summary::before{content:"▾ "}
+  details.hint>div{margin:4px 0 0;line-height:1.6}
+  details.hint .warn{color:var(--amber-fg)}
   .sum b{color:var(--teal)}
   .searchrow{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:6px}
   .sbtn{border:1px solid var(--border);background:var(--card);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px}
@@ -260,28 +265,24 @@
   /* ---------- 面板体渲染（一切都在 300px 浮窗内）---------- */
   function render(){
     var gs=groups(), a=assigned();
-    var census=uniq(LAYERS.map(function(l){return l.size})).sort(function(x,y){return y-x})
-      .map(function(s){ return '<span class="tag">'+s+' '+(LAYERS.filter(function(l){return l.size===s}).length)+'层</span>' }).join(' ');
     var html='';
     html+='<div class="lead">按语言设置字体与样式。保存后，<b>以后每一稿在本机执行时都会沿用这套设置</b>（只存你这台浏览器，不上传）。</div>';
     html+='<div class="pills">'+['JA','KO','EN'].map(function(L){
       return '<button class="pill'+(L===lang?' on':'')+'" data-lang="'+L+'">'+({JA:'日语',KO:'韩语',EN:'英语'}[L])+' ·</button>' }).join('')+'</div>';
 
-    /* 已上线的字号分布 */
-    html+='<div class="sec"><h4>本稿字号分布<span class="sub">共 '+LAYERS.length+' 层</span></h4><div>'+census+'</div>'+
-      '<div class="mt" style="font-size:10px;color:var(--muted);margin-top:4px">数字是原稿里的字号读数，只用来分组；产品不会改字号。</div></div>';
+    /* 字号分布块已撤（Owner 2026-10-27 22:5x「这个可以去掉了」）：
+       ① 按脸分组不需要它，读数改挂在每一组的行里（如「读数 14/11 · 5层」），不再单占一块。 */
 
-    /* 新增：字体映射（面板内） */
+    /* 分组配字体（面板内） */
     html+='<div class="sec"><h4>按原稿分组配字体<span class="sub">已配 '+a.groups+' 组 · 影响 '+a.layers+' 层</span></h4>';
     html+='<div class="chips">'+[['1','① 只按原稿字体'],['2','② 再按读数拆开']].map(function(t){
       return '<button class="chip'+(model===t[0]?' on':'')+'" data-model="'+t[0]+'">'+t[1]+'</button>' }).join('')+'</div>';
-    html+='<div style="font-size:10px;color:var(--muted);margin:0 0 5px">① 是常用档：标题与正文在源稿里本来就是两张脸，一眼分开。'+
-      '同一张脸还兼两种角色（比如标题和正文都用 Arial，只是字号不同）时才切 ②。两种分法各存各的，来回切不丢设置。</div>';
     var mixedN=LAYERS.filter(function(l){return l.mixed}).length;
-    if(mixedN){
-      html+='<div style="font-size:10px;color:var(--amber-fg);margin:0 0 5px">有 '+mixedN+' 层内部用了不止一种样式，扫描只读到第一种脸 ⇒ 这一层按第一种脸归组。'+
-        '这是分组唯一会错的地方（要不要现在解决＝待你拍）。</div>';
-    }
+    html+='<details class="hint"><summary>怎么用（点开）</summary>'+
+      '<div>① 是常用档：标题与正文在源稿里本来就是两张脸，一眼分开。同一张脸还兼两种角色（比如标题和正文都用 Arial，只是字号不同）时才切 ②。两种分法各存各的，来回切不丢设置。</div>'+
+      '<div>点上面任意一行＝选中它，下面的字段格就变成「编辑这一组」；未指定＝沿用原稿。</div>'+
+      (mixedN?'<div class="warn">有 '+mixedN+' 层内部用了不止一种样式，扫描只读到第一种脸 ⇒ 这一层按第一种脸归组（组行上有「内部混排」标记）。</div>':'')+
+      '</details>';
     /* 分组行：点一行＝选中它 ⇒ 下面的字段格就是「编辑这一组」。
        「改字体」只是快捷路径（不动该组其它字段）。默认档＝没命中任何分组的层走它。 */
     var all=[{key:'__def',nm:'默认档（未命中任何分组）',mt:'兜底：其余层都用它',ls:[]}].concat(gs);
@@ -294,7 +295,6 @@
       html+='<button class="pick'+(o.face?' set':'')+'" data-pick="'+gr.key+'">改字体</button>';
       html+='</div>';
     });
-    html+='<div class="sum">点上面任意一行＝选中它，下面的字段格就变成「编辑这一组」；未指定＝沿用原稿。执行后逐层回读"落到哪一组、想要什么、实际得到什么"（P1 待做）。</div>';
     html+='</div>';
 
     /* 字段格＝「当前选中那一组的编辑区」（Owner 问「那这格还有什么用」后的改法）：
