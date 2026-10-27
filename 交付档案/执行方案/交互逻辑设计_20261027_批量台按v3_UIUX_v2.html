@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量台交互逻辑设计 v2 · 按 10-20 那份 v3 的 UI/UX</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--blu:#175cd3;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:30px 22px 66px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--blu);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--blu);font-size:16.5px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13.5px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+pre{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:5px 0}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;border:1px solid var(--line)}
+.b1{color:var(--blu)}.b2{color:var(--amb)}.b3{color:var(--red)}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>批量台交互逻辑设计 v2</h1>
+<p class="sub">2026-10-27 09:3x · 按你指的 <span class="mono">批量台v3_第一性原理_交付物矩阵与归属切片_对抗式审查</span>（10-20 那份）的 UI/UX 做 · 代码基线 <span class="mono">5d5dcff3</span> · v1 自查打回（14 条），本件逐条修正</p>
+
+<div class="verdict"><b>主角是 144 个交付物；表是数据集，稿用的是"一片"；绑定必须可证，不能靠猜</b><br>
+v3 的两条公理我照收：<span class="mono">(设计稿 × 语种) → 一份新设计稿</span>；<span class="mono">译文的键 = (归属, 原文, 序号)</span>——<b>文件不是原语，归属才是</b>。</div>
+
+<h2>0. v1 的四处硬伤（认错＋改法）</h2>
+<table><thead><tr><th style="width:250px">v1 说错的话</th><th>实测反证</th><th style="width:230px">v2 改成</th></tr></thead><tbody>
+<tr><td>「合表今天永远落不了地」</td><td>宽表在单稿链今天就能端到端跑（<span class="mono">workbench-view.tsx:1852</span>、<span class="mono">execute-step.tsx:544/716</span>、<span class="mono">review-step.tsx:284</span>），且归组后 <span class="mono">parsedTables[稿]</span> 本身就是整组合并出的<b>多语言表</b>（<span class="mono">:2065/:2315</span> 注释原话）</td><td>精确成：<b>多稿自动归组不给宽表位置</b>（<span class="mono">table-grouping.ts:215-221</span> 判孤儿），不是"用不了"</td></tr>
+<tr><td>代价是"会红 37 条单测"</td><td><span class="mono">grep -n MULTI_LANGUAGE tests scripts</span> → 0 命中；归组测试 fixture 全是单语言 ⇒ 没有一条断言"宽表必成孤儿"</td><td>换成实测到的两条：读表<b>12 张一轮</b>（<span class="mono">local-assistant-client.ts:1413</span>、<span class="mono">table-inventory.ts:282</span>）；宽表进组会改<b>下游行集与报价基准</b>（碰合同）</td></tr>
+<tr><td>「切片不自动发生，人确认才写绑定」</td><td>与已落地裁定相反：<span class="mono">模拟_20261026_批量台第一步….md:14,27</span>「手工选表 0 次、已绑定 141/144……141 个格没让你确认过一次」</td><td><b>默认自动切＋自动绑，只列例外</b>；屏 2 是给你看的，不是让你逐片点</td></tr>
+<tr><td>「只重跑失败的那几份」当 UI 按钮</td><td><span class="mono">batch-result-panel.tsx:3-4</span> 明写重试需先重建服务端冻结的 <span class="mono">expectedRowTokens</span>；执行是 fail-stop（<span class="mono">workbench-view.tsx:3867-3875</span>）</td><td>不承诺该按钮；只给「从失败那一稿继续（起新批次）」，排 P2 并标合同相关</td></tr>
+</tbody></table>
+
+<h2>1. 证据分档：哪些今天就能算，哪些必须等模板</h2>
+<table><thead><tr><th style="width:90px">档</th><th>判据</th><th>今天能算吗</th></tr></thead><tbody>
+<tr><td><span class="badge b1">推定</span></td><td>无归属列，但该片原文集<b>覆盖</b>本稿全部原文</td><td><b>能</b>——<span class="mono">coverage.ts:113-129</span> 今天就在用 <span class="mono">summary.textLayers[].sourceText</span> 与表行比对</td></tr>
+<tr><td><span class="badge b2">存疑</span></td><td>原文集只部分重叠</td><td><b>能</b>（同上）</td></tr>
+<tr><td><span class="badge b3">不符</span></td><td>无交集，或归属值指向别稿</td><td><b>能</b>（同上）</td></tr>
+<tr><td>声明／实证</td><td>需要归属值（「模块」列）</td><td><b>不能</b>——模板今天只写 <span class="mono">['source', ...codes]</span>（<span class="mono">translation-template.ts:58</span>）⇒ 属 P1</td></tr>
+</tbody></table>
+<div class="callout bad">v1 一边写"P0 三档起步"，一边在屏 1 画五色徽章——把 P1 的东西画进了 P0。v2 规定：<b>P0 徽章只有三色</b>，未落地的档在界面上不出现占位。</div>
+
+<h2>2. 两根轴的优先级（v1 只说"并存"，交叉里全是不可能格）</h2>
+<ol>
+<li><b>先判格，后判徽章</b>：<span class="mono">不符 &gt; 待你选 &gt; 库里缺列 &gt; 拦下 &gt; 本稿不做 &gt; 可交付</span>。</li>
+<li><b><span class="mono">pending</span> 时不显示证据档</b>——证据是从绑定算出来的，还没绑定就没有档（v1 让"待你选 × 实证"这种组合存在）。此时行头写「待你选：这一门有 2 张表」。</li>
+<li><b>徽章只描述"这一稿用的那片"，不承诺整个库</b>。v1 的「合表 · 12 片」在出现"库里缺列"时自相矛盾（且那句是我自造的，模拟件里没有）。v2 拆两行：行头「绑定：推定 · 来自《全SKU合表》第 9 片」，格上「库里缺这一列」。</li>
+<li><b>「本稿不做」不改变徽章但改变判定集</b>：证据用未剔除的格重算，避免点掉一门后徽章还说覆盖 12 门。</li>
+<li><b>拦批条件＝不符 ∪ 拦下 ∪ 缺列 ∪ 整稿不做</b>。v1 只让"不符"拦，会让 <span class="mono">blocked × 绿徽章</span> 静默放行。</li>
+</ol>
+
+<h2>3. 状态机（补上 v1 缺的三条边）</h2>
+<pre>未扫描 → 无候选 → 待你选(一对多) ┐
+                                 ├→ 已绑定(推定|存疑|不符) → 已读表 → 语言已确认 → 已交付
+      整组停(读不出SKU) ─────────┘        ↑ 重扫/换表 ⇒ 证据重算（降级边）
+                                          ↑ 库指纹不匹配 ⇒ 新态「库已变」(黄)，不许保持绿
+失败(按稿隔离·现状 fail-stop) → 「从失败那稿继续」= 起新批次（P2，合同相关）</pre>
+<p>v1 缺：<b>重算边</b>、<b>降级边</b>、<b>失败重入边</b>。另外 v1 里"12 门全点掉"不拦下一步，误点会一路过 ⇒ v2 标「整稿不做」并计入待你定、点名到稿。</p>
+
+<h2>4. 份与格：把冲突当设计的一部分（v1 回避了）</h2>
+<p>今天用户会连着看到两个"份"：第 1 步「可交付 141 份」（口径＝格，<span class="mono">step1-stage-view.tsx:879</span>）与执行页「本批 12 份 · 逐份」（口径＝稿，<span class="mono">execute-step.tsx:2456/2527/2534</span>）。v2 立场：界面统一说「<b>交付物（稿×语种）= N</b>」与「<b>批次（逐稿串行）= M</b>」，"份"只出现一次；执行页按钮改「开始执行（本批 12 稿 · 141 个交付物 · 逐稿）」。纯文案＋取数口，不碰计费，但要你拍（O1）。</p>
+
+<h2>5. 分期（按依赖重排）</h2>
+<table><thead><tr><th style="width:70px">档</th><th>做什么</th><th>能不能立刻做</th></tr></thead><tbody>
+<tr><td>P0-1</td><td>三色证据纯函数 <span class="mono">binding-evidence.ts</span>，复用 <span class="mono">coverage.ts</span> 三档口径</td><td>能（只需 summary 原文集＋已读表行）</td></tr>
+<tr><td>P0-2</td><td>行头三色徽章＋§2 五条优先级＋顶栏四数</td><td>能</td></tr>
+<tr><td>P0-3</td><td>拦批条件扩到四项；"缺列"与"本稿不做"文案分离</td><td>半能——<b>未读到的表只能标"未核"，不能标"缺列"</b>（v1 漏了这条）</td></tr>
+<tr><td>P0-4</td><td>「库已变」态＋库指纹（路径＋行数＋语言列集摘要）</td><td>能（会话内）</td></tr>
+<tr><td>P1-1</td><td>模板带出处：编号按层级路径生成，<b>必须过助手白名单</b> <span class="mono">^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$</span>（否则我们亲手造 #195）</td><td>要跟译员约定；今天 <span class="mono">csv.ts:714</span> 只提示不拦</td></tr>
+<tr><td>P1-2</td><td>宽表进组＋按「模块」切片</td><td><b>要拍板</b>：会改下游行集与报价基准 ⇒ 合同变更四层同改</td></tr>
+<tr><td>P1-3</td><td>突破 12 张/轮读表节拍（144 格体检要 ~12 轮）</td><td><b>要拍板</b>：动助手协议（版本矩阵＋发布门＋runtime identity）</td></tr>
+<tr><td>P2</td><td>绑定持久化（稿→库＋归属值＋指纹）；从失败那稿继续；行身份升级</td><td>后两项碰结算/匹配键 ⇒ 独立单</td></tr>
+</tbody></table>
+<div class="callout ok">红线：<span class="mono">binding-core</span> 匹配键、报价公式、结算闸、支付 flag 在 P0 全不动。一旦某条要动，它就从 P0/P1 挪到 P2 并走合同门——<b>不把 UI 任务偷偷做成执行合同变更</b>。</div>
+
+<h2>6. 待你拍板（A 还是 B）</h2>
+<ul>
+<li><b>O1 份的口径</b>：A 统一成"交付物＝稿×语种"、执行页按钮改文案（两处看到同一个数）／B 保留两套（用户会继续问"到底几份"）。</li>
+<li><b>O2 宽表要不要进多稿归组</b>：A 进 ⇒ 走合同变更（行集与报价基准会变，一轮以上）；B 不进 ⇒ 屏 2 只剩"每稿一片"，v3 的"一库切 12 片"停在纸面。</li>
+<li><b>O3 模板加不加「记录编号／模块」</b>：A 加 ⇒ 能升到声明/实证档、出现绿徽章，代价是给译员的协作约定（可留列可改名<b>不可填中文</b>）；B 不加 ⇒ 永远只有三档，不给绿。</li>
+<li><b>O4 读表节拍 12 张/轮提不提</b>：A 提 ⇒ 动助手协议（跨端改动＋发布门）；B 不提 ⇒ 144 格体检排 12 轮，界面老实显示"还在读"。</li>
+</ul>
+
+<h2>7. 这份设计不回答</h2>
+<p class="sub">第 3 步留不留（与本模型正交）；排版浮窗的字重粒度；不含代码工时——落地前照例先出施工图，再走"审查→修订→执行"。</p>
+
+<footer>依据：<span class="mono">批量台v3_第一性原理_交付物矩阵与归属切片_对抗式审查/执行方案_20261020_….md</span> ＋可点模拟 · 被修订件：<span class="mono">交互逻辑设计_20261027_批量台按v3_UIUX_v1.md</span>（存档不删） · 本件：<span class="mono">交互逻辑设计_20261027_批量台按v3_UIUX_v2.md/.html</span></footer>
+</main></body></html>
