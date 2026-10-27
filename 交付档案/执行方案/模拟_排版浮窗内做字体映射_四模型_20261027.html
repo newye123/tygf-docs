@@ -109,14 +109,14 @@
 </head>
 <body>
 <header class="top">
-  <h1>模拟 · 字体映射长在排版浮窗里（四模型面板内切换，不另造页面）</h1>
+  <h1>模拟 · 字体映射长在排版浮窗里（① 只按原稿字体 ＋  再按读数拆开，不另造页面）</h1>
   <button class="btn primary" id="btnOpen">打开排版浮窗</button>
   <button class="btn" id="btnResetWin">清窗口态（位置/折叠/贴边）</button>
   <button class="btn" id="btnResetMap">清映射</button>
 </header>
 <div class="note">
   <b>这就是已上线的那个悬浮窗</b>：300px 宽、按住标题栏拖动、<kbd>▾</kbd> 折叠成一行、拖到屏幕左右缘或点 <kbd>◎</kbd> 收成边缘拉手、<kbd>Esc</kbd> 只在焦点在面板内时才关、位置与状态存本机。
-  <b>新的"按字号/按字体各配一种字体"全部加在面板体内</b>，四套模型用面板里的小 chips 切换——没有独立对照页。
+  <b>Owner 2026-10-27 22:4x 拍：只做 ①＋②</b>（③ 字号阈值、④ 逐层勾选已撤下——③ 靠没标定的读数，④ 真稿 616 层不该占主界面）。文件名仍留"四模型"，因为它同时是那次四选一的对照记录。
   背景工作台照样能点（非模态），可以边看稿边调。
 </div>
 
@@ -176,7 +176,7 @@
 
   var MAP_KEY='tygf.sim.fontmap.v2', WIN_KEY='tygf.sim.typographyPanel.v2';
   var map=loadJson(MAP_KEY,{}), win=loadJson(WIN_KEY,{});
-  var lang=win.lang||'JA', model=win.model||'2', sel=win.sel||'__def';
+  var lang=win.lang||'JA', model=(win.model==='2')?'2':'1', sel=win.sel||'__def';
   var open=false, folded=!!win.folded, dock=win.dock||null, collapsed=!!win.collapsed, pos=null, dragging=false;
 
   var panel=document.getElementById('panel'), head=document.getElementById('pHead'),
@@ -207,30 +207,24 @@
   function vw(){ return window.innerWidth } function vh(){ return window.innerHeight }
   function clamp(x,y){ var w=panel.offsetWidth||300; return {x:Math.min(Math.max(x,-(w-48)),vw()-48), y:Math.min(Math.max(y,0),vh()-48)} }
 
-  /* ---------- 四套分组模型（都吃同一份假稿）---------- */
+  /* ---------- 分组方式：Owner 2026-10-27 22:4x 拍「只做 ①＋②」，字号阈值与④逐层不进产品 ---------- */
+  function srcLabel(f){ var i=f.lastIndexOf('-'); if(i<0) return f; return (CNFAMILY[f.slice(0,i)]||f.slice(0,i))+' '+f.slice(i+1) }
   function groups(){
     var m={},out=[];
     if(model==='1'){
+      // ① 只按源稿那张脸：标题与正文在源稿里本来就是两张脸 ⇒ 一眼分好，最省事
       LAYERS.forEach(function(l){ (m[l.face]=m[l.face]||[]).push(l) });
       Object.keys(m).sort().forEach(function(f){
-        out.push({key:'f:'+f, nm:f, mt:'读数 '+uniq(m[f].map(function(l){return l.size})).join('/')+' · '+m[f].length+'层', ls:m[f]});
+        out.push({key:'f:'+f, nm:srcLabel(f), raw:f, mt:'读数 '+uniq(m[f].map(function(l){return l.size})).join('/')+' · '+m[f].length+'层', ls:m[f]});
       });
-    } else if(model==='2'){
+    } else {
+      // ② 同一张脸里还有两种角色时，再按字号读数拆开（同脸不同字号才需要它）
       LAYERS.forEach(function(l){ var k=l.face+'|'+l.size; (m[k]=m[k]||[]).push(l) });
       Object.keys(m).forEach(function(k){
         var p=k.split('|');
-        out.push({key:'p:'+k, nm:p[0]+' ＋ '+p[1], mt:p[1]>=36?'偏标题':'偏正文', ls:m[k]});
+        out.push({key:'p:'+k, nm:srcLabel(p[0])+' ＋ 读数 '+p[1], raw:p[0], mt:(p[1]>=36?'偏标题':'偏正文')+' · '+m[k].length+'层', ls:m[k]});
       });
       out.sort(function(a,b){ return b.ls.length-a.ls.length });
-    } else if(model==='3'){
-      var hi=+ (map['thr:hi']||48), mid=+ (map['thr:mid']||20);
-      [{k:'t:hi',nm:'读数 ≥ '+hi,lo:hi,hi:Infinity},{k:'t:mid',nm:'读数 ≥ '+mid,lo:mid,hi:hi},{k:'t:lo',nm:'其余',lo:0,hi:mid}]
-        .forEach(function(b){
-          var ls=LAYERS.filter(function(l){ return l.size>=b.lo && l.size<b.hi });
-          out.push({key:b.k,nm:b.nm,mt:'档内 '+ls.length+' 层（读数 '+ (uniq(ls.map(function(l){return l.size})).join('/')||'—') +'）',ls:ls});
-        });
-    } else {
-      LAYERS.forEach(function(l){ out.push({key:'l:'+l.id, nm:l.id+' '+l.name, mt:l.face+' ＋ '+l.size, ls:[l]}) });
     }
     return out;
   }
@@ -279,15 +273,14 @@
 
     /* 新增：字体映射（面板内） */
     html+='<div class="sec"><h4>按原稿分组配字体<span class="sub">已配 '+a.groups+' 组 · 影响 '+a.layers+' 层</span></h4>';
-    html+='<div class="chips">'+[['1','①只按字体'],['2','②字体×读数'],['3','③字号阈值'],['4','④逐层勾选']].map(function(t){
+    html+='<div class="chips">'+[['1','① 只按原稿字体'],['2','② 再按读数拆开']].map(function(t){
       return '<button class="chip'+(model===t[0]?' on':'')+'" data-model="'+t[0]+'">'+t[1]+'</button>' }).join('')+'</div>';
-    if(model==='3'){
-      html+='<div class="thr">大标题下限 <input type="number" id="thrHi" value="'+(map['thr:hi']||48)+'"> 读数</div>'+
-            '<div class="thr">小标题下限 <input type="number" id="thrMid" value="'+(map['thr:mid']||20)+'"> 读数</div>'+
-            '<div style="font-size:10px;color:var(--amber-fg);margin:2px 0 5px">这两个数靠没标定的读数，换一稿含义会变——③只当高级项。</div>';
-    }
-    if(model==='4'){
-      html+='<div style="font-size:10px;color:var(--muted);margin-bottom:4px">真稿可能几十上百层（实测 616 层），所以④是②的下游精修，不做主界面。这里为演示只列 '+LAYERS.length+' 层。</div>';
+    html+='<div style="font-size:10px;color:var(--muted);margin:0 0 5px">① 是常用档：标题与正文在源稿里本来就是两张脸，一眼分开。'+
+      '同一张脸还兼两种角色（比如标题和正文都用 Arial，只是字号不同）时才切 ②。两种分法各存各的，来回切不丢设置。</div>';
+    var mixedN=LAYERS.filter(function(l){return l.mixed}).length;
+    if(mixedN){
+      html+='<div style="font-size:10px;color:var(--amber-fg);margin:0 0 5px">有 '+mixedN+' 层内部用了不止一种样式，扫描只读到第一种脸 ⇒ 这一层按第一种脸归组。'+
+        '这是分组唯一会错的地方（要不要现在解决＝待你拍）。</div>';
     }
     /* 分组行：点一行＝选中它 ⇒ 下面的字段格就是「编辑这一组」。
        「改字体」只是快捷路径（不动该组其它字段）。默认档＝没命中任何分组的层走它。 */
@@ -346,7 +339,14 @@
     pBody.style.display=folded?'none':'block';
 
     pBody.querySelectorAll('[data-lang]').forEach(function(b){ b.onclick=function(){ lang=b.getAttribute('data-lang'); saveWin(); render(); say('切到语言页签 '+lang) } });
-    pBody.querySelectorAll('[data-model]').forEach(function(b){ b.onclick=function(){ model=b.getAttribute('data-model'); saveWin(); render(); say('面板内切到模型 '+model+'：分组数变成 '+groups().length+' 组') } });
+    pBody.querySelectorAll('[data-model]').forEach(function(b){ b.onclick=function(){
+      model=b.getAttribute('data-model');
+      var hadSel=sel!=='__def';
+      if(hadSel && !groups().some(function(g){ return g.key===sel })) sel='__def';
+      saveWin(); render();
+      say('换成'+(model==='1'?'① 只按原稿字体':'② 再按读数拆开')+'：分成 '+groups().length+' 组'+
+        (hadSel&&sel==='__def'?'（原来选中那一组在这种分法里不存在，已回到默认档）':''));
+    } });
     /* 点一行＝选中它；「改字体」＝选中它并直接弹搜索浮层 */
     pBody.querySelectorAll('[data-sel]').forEach(function(row){
       row.onclick=function(e){
@@ -363,9 +363,6 @@
     pBody.querySelectorAll('[data-pick]').forEach(function(b){
       b.onclick=function(e){ e.stopPropagation(); pickFor(b.getAttribute('data-pick')); };
     });
-    var hi=document.getElementById('thrHi'), mi=document.getElementById('thrMid');
-    if(hi) hi.onchange=function(){ map['thr:hi']=this.value; saveMap(); render(); say('阈值改 '+this.value+'：分组立刻重切（这就是③的坑）') };
-    if(mi) mi.onchange=function(){ map['thr:mid']=this.value; saveMap(); render(); say('阈值改 '+this.value+'：分组立刻重切') };
     var fs=document.getElementById('btnFaceSearch');
     if(fs) fs.onclick=function(){ openPicker(sel, fs); say('搜索口改的是当前选中那一组，不是全局') };
     var sf=document.getElementById('selFamily');
