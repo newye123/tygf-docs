@@ -1,3 +1,256 @@
+## 2026-10-27 22:3x 「视觉」词改正上测试站 6ab85b5c ＋ 分组配字体模拟件重做进真悬浮窗（含我自己英文词条 Vivid→Optical 的当场认错）
+
+- 触发：Owner 两张截图三连问「这个要改成视觉，文字图标完全跟ps的一样才行／调整字距的不见了？」。前一轮他已定「只能在悬浮窗上去做调整的，不要再单独造一个假模拟」，本轮两件事一起做。
+- **改的是词，不是值**：自动字距那一档界面显示从 `光学`（我自造的词）改成 PS 简中面板的真词 `视觉`，底层仍发 `AutoKernType.OPTICAL`（10-17 真机 `outH5.json` 实测可写、宽 585→580；ROMAN 无效 `outH3.json`）。动了值就写不进 PS，所以 6 个文件只碰文案：`typography-panel.tsx:800`、`typography-capabilities.ts:94/:286`、`typography-persistence.ts:37`、`dict-en.json:1276`、加守卫 `smoke-typography-picker.mjs` 与单测 `typography-picker.test.tsx`。
+- **我自己的错，当场发现并改**：英文词典我把「视觉」写成 `Vivid`——PS 英文面板原词是 `Optical`（外部印证：Adobe 简中「字距微调 Kerning＝度量标准 Metrics 或 视觉 Optical」）。改正在 `df6fc08f`。**这一笔没单独出包**：为一个英文词条重跑 17 行发布门＋换一次线上版本不划算，代价如实写进交付件——测试站中文已对、英文界面仍挂旧词直到下一班车。
+- **字距那格没丢**：真面板早有 `tracking`（`typography-panel.tsx:760-783`，含 ‰em↔% 切换按钮）；漏的是模拟件，已补回并实测单位切换 `-50‰ ↔ -5%`。图标对齐 PS（TT/VA/T↑）只做在模拟件，真组件等分组重构一起换——同一排格子改两次是浪费，已列为待拍项。
+- **模拟件按令重做**：删掉独立对照页，只留一个与真产品同形的浮窗（可拖、贴边收成竖标签、点标签回弹、折叠成一行摘要），窗顶切四种映射模型，控件全部真能操作（这条是被他抓过第二次改的规矩）。左列分组清单→右六格变成"这一组的编辑器"＋默认档兜底；改 A 组不影响 B 组为实测。文件 `交付档案/执行方案/模拟_排版浮窗内做字体映射_四模型_20261027.html`（38,120 B，21:53:46）。
+- 三段轨执行（全带真实读数）：`6ab85b5c` 推 origin/develop → 隔离树 `iso-clone-deploy` 出包（17 行 `gate …: PASS`，`test:contracts` 150s／`trust-chain` 46s／`assistant-script-distribution` 71s／`partial-index-guard` 84s，末行 `PKG_RC=0`）→ 包 54,309,203 B，SHA-256 `86A2…433E`。
+- **部前自查（防回退别手）**：`git merge-base --is-ancestor 4ac43784 6ab85b5c` rc=0，中间只隔我 3 笔（改词/日期更正/记账）。
+- 传输：4 块并发（14,680,064×3 ＋ 10,269,011 ＝ 整包字节数逐位相等），22:21:03→22:21:24（21 秒），远端重拼后 sha256 与本地一致。部署 `DEPLOY_START 22:21:50` → `deployed commit 6ab85b5ce755…`，三进程 online，备份 `deploy-20261027_222151-6ab85b5ce755`，未批迁移按规矩跳过。
+- 上线实测：`/api/runtime-provenance` ⇒ `webCommitSha 6ab85b5ce7553140…`／`status BOUND`／buildId `tygf-test-6ab85b5ce755.zip`（22:25 拍）；进服务器 grep 已发布分片＝含「度量标准」的在、**含旧词「光学」的 0 个文件**；公网首页 403 是 `deploy/nginx.test.conf:134` 的内测口令门照规矩拦，服务器直连 `127.0.0.1:3001/` 拿 200／104,885 B／37ms。
+- 门与验证（改动前后同口径）：`npx tsc --noEmit` rc=0；`vitest run tests/unit/typography-picker.test.tsx` 19/19；`smoke-typography-picker` 235 passed；`smoke-user-visible-copy` 49 passed；`i18n-dict-qa` 2001 条硬伤 0（rc=0）。
+- 共享树并发：`dict-en.json` 工作区里含别手一行 `"下载安装包"`，我用 `node tmp/stage-dict-hunk.cjs` 切出只含 `"视觉"` 的那一枚 hunk，`git apply --cached` rc=0，`git diff --cached --stat` ＝ 1 file / 1 行 ⇒ 别手那行没被我提交。
+- 交付：`交付档案/执行报告/执行报告_20261027_视觉词上线与浮窗内分组模拟.md` ＋同名 HTML；飞书一张（`SENT … chunks=1`，SEND_RC=0）。
+- 遗留／等 Owner 三拍：① 分组模型定 ②＋④ 与否（图标要不要现在进真组件）；② 混排层 `styleRanges` 现在解不解决（解＝要重出安装包）；③ 自动字距第一档要不要就叫「自动」跟 PS 一字一样（现「不改（沿用原稿）」）——这条我没自定，因为它改的是承诺措辞不是排版。
+- 未做（不藏着）：P1 逐层失败取证仍缺（`typoIssue` 无层 id、`typographyIssues` 在 `src` 里 0 消费方），P1 必须排在 P3 前；P1/P3 要动助手执行器，须先与助手 3.7.29 bump 那条线错开版本号；本轮对抗式审查为我自己分轮做，独立并行审查未做成（当日 Chat 用量到顶、agent-reach／gh 本机未装）。
+
+## 2026-10-27 21:2x 交付物矩阵落地（批量台 v3 的 P0-1）：矩阵从"每稿一段"改成 12×12 真格子，语种轴原来是假的（Owner 提醒跑偏后回到工作台）
+
+- 触发：Owner 一句「不是要你做工作台的吗，你搞哪里去了」——我确实在扫描权限那条链上耗掉整天（那是他先问的"为什么扫描没反应"，但把 P3/P4 截停了）。回线后先实测工作台真实进度，不拿记忆答：`binding-evidence.ts`（7,522 B，09:56）与 `language-exclusion-memory.ts` 已落地；`coverage-matrix.tsx` 自 10-26 18:52 一字未改，标题仍是「覆盖率矩阵 · 每稿一表」⇒ **P3 的矩阵那一半根本没做**。
+- **本轮最有价值的发现（不是排版问题，是数据被扔掉）**：矩阵的**语种轴是假轴**。取数口 `src/lib/workbench/coverage.ts:188` 把每个语种列都映射成同一份"原文列"，调用侧 `workbench-view.tsx:3600`（改后 `:3603`）只取 `row.source`，而 `src/lib/types.ts:138` 明写了 `translations: Record<string,string>`。⇒ 同一稿各语种覆盖率**必然相同**，"一行译文都没填"的格子照样实心绿＋100%，界面在说反话。
+- 方案与取舍：格＝覆盖率（口径**一字不动**，仍走 `calcCoverageMatrixForDraftTables`，与执行前闸同源，`coverage.ts:106-110` 那条"两套真值"教训不能碰）＋ 该语种列已填行数（新纯函数 `countLangFilledRows`，coverage.ts:202）＋ 四态（未开始/进行中/就绪/待放行）。**未开始必须从绿色里出来**：虚线灰，否则矩阵骗眼睛。填充率**不进闸**——闸签名仍只取 source。
+- 增量（`git diff --numstat` 实测）：`coverage-matrix.tsx` ＋223/−130、`coverage.ts` ＋23/−1、`workbench-view.tsx` ＋14/−3（**该文件同时有别手在飞改动，我只动我那 5 行**）、`smoke-batch-workbench-guards.mjs` ＋53（9 针）、`smoke-batch-workbench-logic.mjs` ＋34（6 断言）。
+- 测试结果（命令＋退出码）：`npx tsc --noEmit` rc=0；`npm run lint` rc=0（0 errors／48 warnings，**改动前后同为 48**＝我没新增警告）；`test:batch-workbench-guards` rc=0 **passed: 50**（前 39）；`test:batch-workbench-logic` rc=0 **passed: 114**（前 108）；`test:workbench-ui-contract` rc=0 ok。负控 `node tmp/negcontrol-deliverable-matrix.mjs` rc=0，**五条全部改坏⇒门红⇒还原 sha256 逐位相同**（N1 不走纯函数／N2 不传译文／N3 旧标题复现／N4 取数口偷读译文／N5 未开始涂成实心绿）。
+- 真浏览器点验：临时路由 `/tmp-matrix-probe`（12 稿 × 12 语种夹具）复用**本机已在跑的本树 dev**（端口 3000，PID 51216——我没起新服务、没碰那个进程；`npx next dev -p 3118` 被 Next 自己拒了，因为它报"该目录已有一个实例在 3000"，顺带证伪了我记忆里"3000 是 Owner 的 SSH 隧道"这条旧断言）。DOM 实测：表头 13／数据行 12／**总格 144**／可点 126（＝144−未导入表整行 12−本稿不做 6）；`thead` 与行头 computed style 均 `position: sticky`；状态计数 就绪 47／未开始 67／**进行中 12**；SKU-03×EN `覆盖率 100%，该列已填 0/4 行` 边框 `dashed`；SKU-08 后 6 列「本稿不做」；点格出明细。**点验件已删**，删后该 URL 实测 `http=404`、`git status` 无残留。
+- **两处我自己的错，当场认**：① 第一版负控 N4 的"红"是**脏的**——那时我的用例把稿数组当单份传（`drafts.map is not a function`），rc=1 可能来自用例而不是负控；修好后重跑才算数。② 第一版夹具造不出「进行中」（填充按列整排给，永远 0 或 4），补了 `halfFilledDraft` 才点全四态；同一版件里我还写坏三处键名（`path`/`psdIndex`/`text` 应为 `masterPath`/`summary.textLayers.sourceText`/`languageColumns`），未跑起来就自查改掉。
+- 交付：`交付档案/执行报告/执行报告_20261027_交付物矩阵落地_批量台v3_P0-1.md` ＋同名 HTML；飞书一张。
+- 遗留：① 四态里「待放行」本次夹具没造出 ⇒ **未实测**；② 状态标签函数在组件内未导出 ⇒ 无常驻单测（要常驻得挪进 `coverage.ts`）；③ 12×12 是夹具，真 12 份母版没跑；④ **矩阵行头还没接绑定证据徽章**（`binding-evidence.ts` 已落地但矩阵未引）＝P3 剩下那一半；⑤ 语言页签与 1:N 口径归位、P4 份数与例外收口未做；⑥ 本轮改动全在脏区，未提交未推送（与扫描守卫那 5 个文件同树，等 Owner 拍 A/B/C）。
+
+## 2026-10-27 21:0x A 通道验通：PS 侧 AM 读得到画板矩形，且与离线量得同一组数（WRAP-PLUS1-SHIFT）
+
+- **触发**：Owner「要」→ 补那发只读探针，验 PS 22 侧能否读到画板矩形（S1a 路线 A 的唯一未知）。
+- **做法与安全**：`tmp/ps-spike-20261026/L1.jsx`–`L4.jsx`，经生产同通道 `DoJavaScriptFile` 驱动；**全程只读、零 transform**（上次挂死就是 translate 空层触发模态框）；`DialogModes.NO` 进、结束还原；开真稿→枚举→`close(SaveOptions.DONOTSAVECHANGES)`；结束 `docCountFinal=0`。活性前置：开跑前 `tasklist` 见 PS 单实例 PID 25136、`docs=0`。
+- **结论一 A 通道成立**：目标层 AM 描述符含 `artboard`(Object) 与 `artboardEnabled`(Bool)；`artboard` 对象键集＝`artboardRect, guideIDs, artboardPresetName, color, artboardBackgroundType`；矩形取法＝`getObjectValue('artboardRect')` 再读 `top/left/bottom/right`（**ObjectType，不是 RECTTYPE**）。
+- **结论二 双实现对上（v2 §4-D1 欠的那条，本轮还上了）**：真稿 `F:\改语言\完成的/0317 .../JP_5684-A+移动端.psd` 的「画板 1」，PS 侧读得 `top=0 left=0 bottom=450 right=600`；离线 ag-psd 独立量得**同一组数**。
+- **结论三 反向证据（防错用）**：同层 DOM `layer.bounds` = `-379,-529,2700,1000`，与画板矩形完全不同 ⇒ **禁止拿组边界当画板**，PS 侧也一样误导。另：`doc.artboards`／`layer.artboard` 均 `undefined`、`LayerKind.ARTBOARD` 抛「无效枚举值」、`artboardBoundingBox`／`section` 属性读取抛错 ⇒ DOM 无出口，必须走 AM。
+- **结论四 两通道互补坐实**：合成稿实测 PS 侧 `layerSet.bounds` 是真值（`10,20,210,60`＝填入矩形），而离线 ag-psd 给 `0,0,0,0`；反过来离线可解析 15 份真稿但 6896/6897 抛 `Invalid layer size` ⇒ `readRegionFacts({offline, ps})` 双通道形状已定并已实现过门。
+- **探针自身踩坑（记档）**：① `DescValueType`／`LayerKind` 取不存在的成员**会抛错而非返回 undefined**，L4 第一版因此整发 FATAL（差点被我读成"PS 读不到"）；② PS 22 `ActionDescriptor` **没有 `getKeyName`**，要 `app.typeIDToStringID(d.getKey(i))`；③ 我第一版按 `top/left/bottom/right` 直接找 artboard 子键 ⇒ 全 `-`，**"键存在"不等于"值可用"**，多花两发才取到。
+- **文档同步**：`交付档案/执行方案/执行方案_v3_自动换行顺序死结与破解切片.md` §4 整节重写（A 由"未实测"改判"已验通"，C 判死理由加 PS 侧反向证据）；同名 HTML 同步，含把页眉"本轮未碰你的 Photoshop"更正为"本轮只读探针碰了 PS（无 transform，已关净）"。
+- **未做／边界**：**未改任何业务代码**（`psd-region.js`/`clearance.js` 未动，探针只读）；A 通道逐层 `executeActionGet` 的**大稿耗时仍未实测**；未把 AM 读法接进 `Preparation_Scanner.jsx`（那是助手分发面，需随安装包生效，且要先有耗时账）；未部署、未提交、未 push；两站未碰。
+- **等 Owner**：成对发版窗口何时开（S1a 接线 + S2/S3 动摘要与协议）。
+
+## 2026-10-27 20:4x PRIV-DRILL-1 复测更正：一处路径抄错（事实不变）+ 提权话术从 2 处改判为 5 处 + 安装器正被别手重写（PRIV-DRILL-1-CORR）
+
+- 触发：落笔记账前按纪律"引用别手/自己的指针要先复跑"，把钻到底报告里的三个指针各复现一遍，结果一处对不上、一处范围判窄了。
+- **更正 ①（路径抄错，事实不变）**：初稿写 `build/dist/tygf-engine-setup-3.7.28.exe`。复测 `ls download/local-assistant/build/dist/*.exe` ⇒ 那里最新只到 **3.7.6（10-06）**；真身在 **`worktrees/develop/public/downloads/tygf-engine-setup-3.7.28.exe`，25,545,674 B，2026-10-25 15:48:03**——与我初稿引的字节数与时刻**逐位相同**，是路径写歪不是事实编造。同目录 3.7.20～3.7.27 连续八枚在案（10-22 09:16 → 10-25 12:45）。⇒ "本机出过包"这条继续成立。
+- **更正 ②（范围判窄）**：`grep -rn "以管理员身份\|RunAs\|需管理员" diagnostics/` ⇒ 教用户提权的地方是 **4 处**（`README.txt:22`、`README.txt:34`、`Fix-Photoshop-COM.ps1:138`、`Run-Photoshop-COM-Fix.bat:18`），另加**最可及的第 5 处**＝安装器把它做成开始菜单项 `download/local-assistant/build/installer.iss:96` `Name: "{group}\修复 Photoshop COM"`——用户不翻文档也能一键点进那个自提权脚本。⇒ 方案 B3 的动作范围从 2 处改为 **5 处**；"要不要撤掉这个菜单项"单独列为一个待拍项（默认建议：保留入口、只加前置话术，撤＝撤功能）。
+- **新事实 ③（改判 B2 前置）**：`installer.iss` mtime 实测 **2026-10-27 18:16:49**（11,639 B），别手已写入整段 `[Code]`：装前自关助手＝`--exit` → 等互斥体 15 秒 → 兜底 `taskkill.exe /F /IM` 按专名强关托盘与引擎；`AppVersion` 已抬到 **3.7.29**。⇒ 我 B2 里"在同一文件给 `[Run]` 加 `runasoriginaluser`"这笔**必须等他落地**（同文件两改必撞）；包号只能顺延 **3.7.30** 或直接并入他这一枚。另记一条观察（不立案、不动别人的码）：那段兜底用了按镜像名强关，与本机"只按 PID 收"的禁令同源风险，但它限定在产品自己的两枚 exe 专名，属可控范围。
+- **复现确认**：`grep -a -c "PHOTOSHOP" scripts/control-plane.sh` ⇒ **0**（rc=1），告警面缺轴这条不变。
+- 处理：报告 md/同名 HTML 加"六、20:40 复测更正"一节并就地改 L6 行；方案 md/同名 HTML 改 B2（3.7.30＋新前置）与 B3（5 处＋菜单项待拍）；台账 PRIV-DRILL-1 追加更正行；飞书发一张更正卡（不发在线链接）。
+- 本轮仍**只读取证**：未改代码、未出包、未装机、未推送。
+
+## 2026-10-27 20:44 S1a 定形为双通道＋诚实降级（复现 ag-psd 对 6896/6897 的硬失败）+ 守卫落地（WRAP-PLUS1-SHIFT）
+
+- **钟点更正（本会话第三次同形自纠）**：本节标题用本机 `date` 实测回显 2026-10-27 20:44；此前 v3 文档与记忆里写的「2026-10-26 深夜／23:5x」是**拿 23:40 那次旧读数往下推的**，不是实测，已一并改标。
+- **触发**：Owner「好来吧」→ 按推荐 B（离线 PSD 解析）推进 S1a；我先复现记忆里那条前科再动手。
+- **复现结果（A 级，本会话亲跑）**：`ag-psd` 对两份 314MB 级真稿**直接抛 `Invalid layer size`** —— `F:\改语言\0921 JP 日本-6897\6897亚马逊A+(英文）.psb`（2203ms）、`...\6896\6896亚马逊A+(英文）.psb`（2781ms），RSS 366/372MB；而 5857 主副图与另 15 份可解析、98% 文字层有宿主画板。⇒ **B 不能单独用，任何单通道都不成立**。
+- **定形**：`download/local-assistant/psd-region.js` = 通道仲裁 + 诚实降级。顺序 `offline → ps`（离线优先，PS 没开时不能整批报未采集）；通道**抛错或返回空壳**（零画板/零层）即让位；两路皆不可用 ⇒ `{status:'not_measured', reason: ALL_CHANNELS_THREW | NO_USABLE_CHANNEL}` 且**不携带任何几何**；C 路线（只用文字层近似）明确不做——它会把缺测产出成"看起来通过"的坏判定。
+- **闭环验证**：守卫 `scripts/smoke-psd-region.mjs` 五组断言，其中第 1 组把区域事实直接喂进上轮的 `computeClearance`，复现实测值 **净空隙 33／位移 40**（离线 ag-psd 独立量得）⇒ 两实现互为对拍。
+- **挂门与运行证据**：`npm run test:feature-flag-whitelist` rc=0，链内本轮 `[psd-region] 5 groups`、`[clearance] 10 assertions`、`[wrap-billing-isolation] 3 groups`、`smoke-typography-family 45 assertions` 全绿；`npx tsc --noEmit` rc=0。
+- **负控三发全咬（带基线前置）**：N1 空壳当可用事实 ⇒ 红在"空壳通道必须让位给下一通道"；N2 两路皆失败改口成 ok ⇒ 红在 status 断言；N3 通道顺序反转 ⇒ 红在顺序断言。逐发还原，`psd-region.js` sha `3ab0b74dca361c16` 三次与基线一致，`git status` 该文件仍为未跟踪新文件（内容未变）。
+- **纪律沿用**：harness 一律**先证明基线绿**再注入（上一轮因缺此前置差点报出四条假红，已记档）。
+- **未做／边界**：未加任何 npm 依赖（reader 以注入方式传入，装包接线另议）；**未改业务代码**；未跑完整 `test:contracts`（建库子进程并发会伪装业务红，需静默机窗口）；未部署、未提交、未 push；未触碰 Owner 的 Photoshop（A 通道的画板可读性**仍未实测**，要测需再动一次 PS，等一句）。
+- **等 Owner**：① A 通道要不要我这轮补一发只读探针验 PS 侧画板可读性；② 成对发版窗口何时开（S2/S3 动摘要与协议）。
+
+## 2026-10-27 19:0x 扫描权限链钻到底：七层证据 + 推翻我自己两条断言（本机其实能出包）（PRIV-DRILL-1）
+
+- 目标：Owner「用对抗式审查钻到最深处，钻到无处可钻，再给一个执行方案」。手法＝`yt-adversarial-review` 的钻到底六法（下钻到物理层／IS-NOT 四维／加宽 5 Whys／探针自证／负控／Survived 判定），全程只读。
+- 钻到的底层（不是"某人点了以管理员运行"）：产品里从来没有「两侧完整性级别」这个一等观测量。七层＝L1 界面报未注册 → L2 进程 High(12288) vs Medium(8192) → L3 提权来自父进程（安装包清单实测 `asInvoker`；Layers 无 RUNASADMIN 条目，正控能读出 HIGHDPIAWARE）→ L4 **不是资源管理器双击**（UserAssist 61 条命中里历轮安装包都在，唯独 3.7.28 一条没有；且 `[Run]` 带 `skipifsilent`）→ 具体命令无盘上残留（Security 日志该窗口 0 事件）＝未核实 → L5 **正确诊断早在盘上却接在永不到达的错误号上**（`server.js:1794-1803` 的 `PHOTOSHOP_PERMISSION_MISMATCH` 触发号是 70／-2147024891，实测 VBS 只写 `ERR_COM: 429`）→ L6 **我们自己在教用户提权**（出厂件 `diagnostics/README.txt:34`、`Run-Photoshop-COM-Fix.bat:14-19` 自 `-Verb RunAs`，且 UserAssist 里确有该 bat 两条启动记录；根账 `ISSUES #253` 10-22 已登记镜像情形）→ L7 治理层：`ISSUES #259/#262` 原文"源码当日已改但版本号没动、也没重出安装包 ⇒ 装到的最新版不含修复，而所有身份门照绿"今天原样命中；告警面缺轴（`grep -c "PHOTOSHOP" scripts/control-plane.sh` = 0、`durMs|扫描` = 0，正控 `在办|ledger` = 2；`总控/口径_第一指标改首跑成功_20260925.md` 里 `PHOTOSHOP|权限` = 0）。
+- **推翻我自己两条断言（不许静默改口）**：① 「本机没有 Inno Setup 所以出不了包」**是错的**——`C:\Users\ivan\AppData\Local\Programs\Inno Setup 6\ISCC.exe`（1,456,272 B，2026-05-22）实测运行回显 `Inno Setup 6 Command-Line Compiler` rc=0，HKCU 卸载项 Setup Version 6.7.3，且 **3.7.28 包就是本机 10-25 15:48:03 出的**（`build/dist/tygf-engine-setup-3.7.28.exe` 25,545,674 B）。我只查两个 `Program Files` 固定目录就下"没有"结论＝本项目明令禁止的错法。连带改判：防复发不是"只能等构建机"，真拦路＝脏树门（同树 38 项在飞）＋版本未 bump（#259/#262）＋装机需授权。② 「提权来自安装程序 postinstall 那一步」**降级为未核实**（`[Run]` 带 `skipifsilent`；3.7.28 在 UserAssist 0 命中）。
+- 新发现的治理缺陷：根账 `AI_MEMORY/ISSUES.md` 里 **#258≡#261、#259≡#262** 标题逐字相同（行 2020/2042、2028/2050 实测）⇒ 同一问题两个号，"已修/未修"会各走各的。
+- 交付：`交付档案/审查报告/审查报告_20261027_扫描权限_钻到底_七层与两处自我推翻.md`（8,997 B，mtime 实测 19:03:24）＋同名 HTML（9,781 B，19:06:14）；`交付档案/执行方案/执行方案_20261027_完整性级别收口_六批可独立验收.md`（9,402 B，19:05:17）＋同名 HTML（六批 B1 判据与错误码归一／B2 本机出包链路／B3 撤"教用户提权"话术／B4 `runningPsExe` 不再用 Path 判在不在（#258/#261 存量）／B5 控制面与第一指标补两轴／B6 台账号界）；每批都带验收命令与负控 N5–N7。飞书 `SENT rc=0` 两张。
+- 测试结果：本轮**只读**——未改代码、未跑构建、未装机、未部署、未推送；取证命令与读数全部落在报告正文（含 `tygf-il-probe.ps1` 读 Photoshop RID=8192、耗时 450 ms；`tmp/userassist-probe.mjs` ROOTS=9／MATCHED=61／正控样本 `UEME_CTLSESSION`，值层 SYSTEMTIME 与 FILETIME 两种候选扫描全 null ⇒ 只用键名层，值层记未核实）。
+- 遗留问题：① 方案本身还没过对抗式审查（按 Owner 的链，下一步该审这份方案再执行）；② B2 前置是他手那笔 `config/release-identity.json`（+5/−3 在飞）落地或合流，两包不能同时抬版；③ B4 归属需 Owner 当场指定一人（我或原登记会话），不许两边同改一个函数；④ 未核实三项＝17:44:35 启动命令／UserAssist 值布局／下载页与帮助文档旧指引；⑤ 我这 5＋2 文件仍未提交。
+
+## 2026-10-26 23:5x 加行的顺序死结：报价拿不到决策几何 ⇒ S1a 是 S2 硬前置（v2 排期被推翻）+ G1 计价隔离守卫落地（WRAP-PLUS1-SHIFT）
+
+- **触发**：Owner「可以，来吧……使用对抗式审查做更深入探查，钻到最深处去给个执行方案，然后按方案执行」。
+- **钻到的最深处（三条腿，全部本人复跑）**：① 报价入参 `src/app/api/workbench/execution-batches/quote/route.ts:63-69` 只有 `rowToken/sourceCharacters/targetCharactersByLanguage/requiredObjectCount/scopeStatus`，**无 layerId、无 bounds、无 typography**；② `computeAssignmentDigest` 含 `target_text`（`evidence-foundation.ts:205`）、manifest 线上哈希含（`execution-manifest.ts:219-226`），而 `computeBindingPlanDigest` **不含译文文本**（`binding-core.ts:268-276`）；③ 比对点全硬拒——`receipt/route.ts:107/111/114/117/120` 五处 409、`execution-batch.ts:687-688`、`execution-manifest.ts:460-473`、`v15-runner.js:96-97`。
+- **结论（推翻 v2 排期）**：「执行时才决定插行」必炸 409 ⇒ 加行必须是 `compileBindings` 内、只依赖报价时已冻结输入的确定性纯决策（`server.js:6258/7556/7838` 三处同输入同输出）⇒ **S1a（预扫描采画板矩形／非文字层顶边／缩放／分辨率）是 S2 的硬前置，不是可并行旁支**；几何还要随 `scanId` 进 evidence，两次扫描不一致须显式拒跑。
+- **计价：验证为"不动"但脆**：报价字符数取 `row.translation.length`（`execute-step.tsx:1110/1123`）＝表行原文；而 `normalizeBillingText`（`billing/rules.ts:50-57`）保留 `\n`、`characterCount` 按码点 ⇒ 换行一旦进入计价源就多算 1 字符。已沉成守卫，不靠口头约定。
+- **S1a 三条路（待拍）**：A PS 侧 AM 读画板（可读性未实测）／B 助手内引入离线 PSD 解析（本轮已用 ag-psd 实测 15 份真稿、98% 层有宿主画板，**推荐**）／C 只用文字层近似（**已证伪**：分组框口径把屏间空带算成负数、非文字层不进集合）。
+- **交付**：`交付档案/执行方案/执行方案_v3_自动换行顺序死结与破解切片.md`；新守卫 `scripts/smoke-wrap-billing-isolation.mjs`（3 组断言，钉"插行只动 assignmentDigest 不动 bindingPlanDigest"+"换行计入计价字符"+"求解器不得原地改写表行对象"），已挂进 `test:feature-flag-whitelist` → `test:contracts`。
+- **运行证据**：门本体 rc=0；`npm run test:feature-flag-whitelist` rc=0（含 clearance + 新守卫）；`smoke-release-consistency` **53 checks passed**（加门前 46）；`npx tsc --noEmit` rc=0；负控 harness 两发全咬（M1 删 `target_text` ⇒ 红在断言 1b；M2 让 `normalizeBillingText` 吞换行 ⇒ 红在断言 2a），逐发还原 sha `efe2e3580e730359`／`e1e8c65a1088007f` 与基线一致，`git status` 对这两个业务文件为空。
+- **抓到并修掉自己的两个错（记档不静默）**：① **假负控**——harness 第一版把 `'node'` 当参数多传一遍，每发都 rc=1，差点报出"四条负控全咬"；根因是**缺基线前置**（注入前没证明门是绿的），已加 `BASELINE GREEN` 硬门并复跑；② **又一次吞标题**——用整节标题行当替换锚点，把记忆文件里 §31 的标题替换掉（本会话第三次同形错误），已按"锚点唯一 + 复现计数"修回并核对结构（§36 在 166 行、§31 标题在 174 行、正文紧随）。
+- **未做／边界**：未改任何业务代码（负控注入均已还原）、未动摘要与计价、未部署、未提交、未 push；未跑完整 `test:contracts`（建库子进程并发会伪装业务红，需静默机窗口）；**本轮未再触碰 Owner 的 Photoshop**，PS 侧画板可读性仍标"未实测"。
+- **等 Owner 拍**：① S1a 走 A 还是 B（决定 S2 开工日）；② 成对发版窗口何时开。
+
+## 2026-10-27 18:2x｜官网转化线：发版不再砸客户三批落地 ＋ 装新版不再需要手动退出（Owner 追加令）
+
+**目标**：① 让"发新版"不再等于"逼所有客户重装"；② Owner 追加令「现在安装要手动退出软件，无法做到全自动，这个也一起做了吧」。
+
+**方案**：按 `交付档案/执行方案/执行方案_20261027_发版不再砸客户_讲人话定稿.md`（16:3x 修订版）三批顺序执行；第 3 批先做合成件封驳再动手。
+
+**改动（全部在 worktrees/develop）**
+- 拆字段：`config/release-identity.json` 新增 `minAssistantVersion`＋`minAssistantVersionReason`；`src/config/localAssistant.ts` 导出 `localAssistantMinVersion`。下限四个消费点全部改读新字段：`assistant-execution-contract.ts`、`batch-execution-mode.ts`、`photoshop/execute/route.ts`、`scripts/distribute/route.ts`（方案原以为只有一个，实测少三个＝下限照样被抬）。
+- 构建号 D4：`assistantBuildId` 从拒绝条件降为证据字段（三处判定 `!==` 删掉它；schema/renderer 保留），界面那句"确认构建、报告 schema 和 renderer 三项一致"同步改掉。
+- 机器闸 D3：`scripts/check-release-identity.cjs` 加下限纪律（非 x.y.z／高于当前版本／原因缺失／原因不点名版本／原因太短 ⇒ 红）；`smoke-release-consistency.mjs` 补 6 条负控并逐条打印执行；`smoke-photoshop-script.mjs` 把四个消费点＋新字段导出全部钉住。
+- 头门控 D2：`local-assistant-client.ts` 那句错注释（"旧助手会忽略这个头"）改掉，`x-tygf-install-id` 改为按 `/ping` 回报版本（≥3.7.28）才发；缺省"允许"＝与今天逐字节一致，只在探明是旧助手时不发（退回助手 `requestInstallId` 的无钥匙＝旧单槽路径）。
+- 入口 D5：`execute-step.tsx` 被版本／合同门挡下时当场挂"下载安装包 v3.7.29"；`dict-en.json` 补一条翻译（避免 EN 漏中文）。
+- 第 3 批：`TrayHost.cs` 加 `--exit`（命名事件＋互斥体探测，0/3/4 三态返回码）＋ `ExitAssistant()` 加忙判断（堵今天手点退出会把助手锁进恢复锁的洞）；`installer.iss` 加 `[Code]` 自关握手＋静默安装收尾拉起（拉起前验互斥体）＋ `RestartApplications=no`；版本声明同步面 3.7.28→3.7.29（server.js／installer.iss／package.json／report-renderer.js／.env.example／deploy/server-setup.sh／.gitattributes），**下限仍留 3.7.28 并写明原因**＝第一版不砸老客户。
+
+**验证（真实退出码，日志在 worktrees/develop/tmp/）**：`npx tsc --noEmit` rc=0；`npm run lint` rc=0（0 error／48 既有告警）；`smoke-release-consistency` rc=0（53 项，含 6 条下限负控逐条打印）；`smoke-photoshop-script` rc=0；`smoke-assistant-auth-barrier` rc=0（新增下限正／负控一对）；`test:trust-chain` rc=0；`test:batch-row-contract` rc=0；`test:assistant-script-distribution` rc=0；`validate-release-config` rc=0；`csc TrayHost.cs` rc=0；`ISCC installer.iss` rc=0（17.718 秒，产物只落 `%TEMP%\tygf-iscc-out`，未覆盖树内已发布 3.7.28 成品）。合成件八 case：T0 rc=0／T2 忙⇒rc=7 不误杀／**T3 负控不自关⇒rc=5 停在被占用的 exe**／T4b rc=0 且 1.1 秒释放无兜底／T5 孤儿引擎 rc=0／T7＋T9 叫不动⇒rc=7 中止不硬装／T8 拉起闸真落。验证件已卸载并清理（`%LOCALAPPDATA%\tygf-selfexit-probe` 实测 0 命中，注册表卸载项查不到）。
+
+**原因/影响**：本轮只改判定与安装链，未出包、未部署、未翻任何闸；生产发布仍卡四条前置。
+
+**我判错并被门纠正的一处**：我以为 `CloseApplicationsFilter` 的分号写法是笔误，改成 `*.exe,*.dll` ⇒ `test:trust-chain` 红在 `smoke-pc-bundled-engine.mjs:321`（[D4] 按 `;` 切并要求点名内置引擎，否则旧引擎作为孤儿永久留在 `{app}\bin`）。已改回原样并留注释"不要改成逗号"；Inno 自己如何解析该分隔符仍标未核实（本机没帮助文件、官方页取不到正文），但自关机制不依赖它。
+
+**新踩环境坑（已记 user 记忆 99 条）**：Inno `[Code]` 段是 Pascal，`;` 不是注释而是空语句，作为段内首行时报错只指段首行（`'BEGIN' expected`）不指坏行；ISCC 的 `/O"<dir>"` 经 Git Bash 会被 MSYS 拆成"多个脚本文件名"，必须走 .bat；跨进程"叫它自己退出"不能用进程内标志（实测 `--exit` 返回 0 而互斥体 15 秒不释放）。
+
+**遗留问题**：① `npm run test:contracts` 现 rc=1，红在 `[zh-font]` 子集门——5 个字（○ ● ◐ 剔 黄）逐个 `git grep -F <字> HEAD` 命中**已提交**源（主为 `step1-stage-view.tsx`，另有 `workbench-view.tsx`／`candidate-aggregator.ts`），本轮 diff 含这些字的新增行仅 1 行且非我写；未替别手重新生成子集（会把这棵树上其他会话未提交文案烘进生成物，门自己要求已提交状态）。② 真机 3.7.28→3.7.29 覆盖安装未做（本机不宜跑：49152 被 PID 23568 占、托盘 PID 53524 在跑）。③ 第 4 批一键升级未动工，且必须排在 D2／D4 之后。④ 台账本次追加出现一条 `updatedAt="undefined"` 坏行（环境变量未 export），已按"只准追加"补一行正确行，取最后一条为准。⑤ 该文件另有 5 行空白行（非本轮产生）。
+
+## 2026-10-27 18:02 扫描权限守卫走完一轮闭环：v1 被自己审打回、按 v2 重做判据并真跑出 422（SCAN-PRIV-2）
+
+- 目标：Owner 令「方案→对抗式审查→修订方案→照最后那份执行，一步不许跳，并给真实运行证据」。承接 SCAN-PRIV-1（根因＝助手高权限／PS 普通权限，COM 跨权限必败）。
+- 四步落盘（每步 md＋同名 HTML 同目录）：① 执行方案 v1 `交付档案/执行方案/执行方案_20261027_扫描权限守卫落地_v1.md`；② 对抗式审查 Round 1/3 **VERDICT＝打回** `交付档案/审查报告/审查报告_20261027_扫描权限守卫落地_v1_对抗式审查.md`；③ 执行方案 v2 `交付档案/执行方案/执行方案_20261027_扫描权限守卫落地_v2_按审查修订.md`；④ 执行报告 `交付档案/执行报告/执行报告_20261027_扫描权限守卫v2落地与真机恢复.md`。审查技能＝`adversarial-review`（含 risk_scan 与负控纪律）。
+- 审出的四条 Important 全是**我自己 v1 的洞**（逐条已复现）：I-01 判据只看"我是不是管理员"，而握手记录的六个写入点里**扫描成功根本不写**（`markPhotoshopReady` 只在 :6809/:6812/:8342/:8404/:8552/:8684，预热是开机 300 毫秒一次性且失败静默）⇒"两边都管理员"这种 COM 其实能通的机器一旦被拒就再也解不开；I-02 守卫位置在「PS 未运行」早退之后 ⇒ 会拒掉不碰 COM 的内置引擎通道；I-03 把 429 改判成新码后，`markExecutionFailure` 的"置 unavailable"清单**没同批补码** ⇒ `/ping` 继续假报就绪（全仓同类清单 6 处，仅此一处漏）；I-04 新拒绝逻辑**从未真跑过**，42 条断言全是源码正则＋纯函数表。I-05 探针失败静默 fail-open 无痕迹。
+- 方案（v2）：判据换成**两侧完整性级别实测比较**（`refuseScanByPrivilege({assistantRid, photoshopRid})`，任一侧读不到＝放行，不再依赖握手）；新增 Photoshop 级别只读探针（令牌 SID 尾 RID，60 秒 TTL，只在助手 ≥12288 时付出约 0.7 秒）；守卫唯一出口 `privilegeGuardBlocked()`，分类/话术/路由三处共用同一判据；补清单码；补探针失败留痕；加**仅源码生效**的 `TYGF_DEBUG_ASSISTANT_RID` 以便真跑拒绝与其负控。
+- 修改文件（5 个，行号本次实测）：`download/local-assistant/scan-error-code.cjs:42-59`；`download/local-assistant/server.js:518-599`（两探针＋唯一出口）、`:2753`（清单补码）、`:1755`＋`:1773-1780`、`:3646-3653`（分类与话术共用判据）、`:5798-5803`（路由拒绝，排在 waiting_for_photoshop 之后）；`scripts/smoke-preparation-failure-observation.mjs`（42→**50 条断言**）；两处白名单沿用 SCAN-PRIV-1（`funnel-event-contract.ts:151`、`batch-error-policy.ts:252`）。净增（`git diff --ignore-cr-at-eol --numstat`）＝server.js 145/5、scan-error-code.cjs 35/1、smoke 69/1、两处 ts 各 4/0。**未提交未推送未部署**；patch 存证 `tmp/privilege-guard-20261027-v1.patch`（`grep -c '^+++ b/'` = 5）。
+- 原因：v1 的判据把"我高权限"当成"必然不通"，而真条件是"我比 PS 高"；用握手时间窗作补救是靠不住的（扫描成功不写握手）。不改判据就会误伤合法机器，这正是本项目反对的"新增一条会误伤的闸"。
+- 测试结果（命令原式＋退出码，本会话实测）：`node --check server.js` rc=0、`node --check scan-error-code.cjs` rc=0（17:58:37）；`node server.js --self-test-errors` rc=0；`node scripts/smoke-preparation-failure-observation.mjs` rc=0「50 条断言全部通过」；`node tmp/negcontrol-priv-guard.mjs` rc=0＝四条负控（判据退化/清单漏码/路由不接守卫/注入回落真探针）全部让门 rc=1，还原后哈希一致并复跑 rc=0；`npx tsc --noEmit` rc=0（17:55:45–17:56:32；同命令 17:12:17 那次 rc=2，唯一红在别手在飞 `local-assistant-client.ts(427,30)`，numstat 42/5、mtime 17:14:19 ⇒ 环境红非本改动）；`npm run lint` rc=0；`npm run test:error-message-contract` rc=0；`node --experimental-strip-types scripts/smoke-local-assistant-errors.mjs` rc=0；**真跑** `node tmp/live-priv-guard.mjs` rc=0：冒充 12288 ⇒ HTTP 422 `PHOTOSHOP_PRIVILEGE_MISMATCH` 且 `taskRootBefore=0 taskRootAfter=0`（不起后台任务）；冒充 8192 ⇒ HTTP 202 `hashing`（闸不恒拒）。
+- 机器面收口（不再靠猜）：提权助手脚本 17:09:16–17:09:27 执行完毕（`%TEMP%\tygf-deelevate-result.txt`，停 53524/23568、`alive_after_stop=none`、经 explorer 重拉）；现助手 **46636**／引擎 **36708** 实测 `integrityRID=8192`，Photoshop 25136 亦 8192；恢复后实测 `engine.log 09:11:18.706Z durMs=24158 outcome=prepared`（此前 6 次 709,486–771,326 ms 全失败）；`POST /diagnostic` 17:52:17 返 `200 PHOTOSHOP_READY` time=0.284s `docCount=0`。**UAC 不是我点的**（只能由机器前的人批准）。另**更正看门狗一条**：它报"tasklist 找不到任何 tygf 进程"是按英文名找的，真实进程名是中文（图译工坊本地助手.exe／图译工坊引擎.exe），17:10:02 实测两只都在。
+- 副作用如实记：真跑需绕开票据 ⇒ 在 `tmp/tygf-priv-live` **副本**里打开 `betaMode`（真树未改，副本已删，`ls` 现报不存在）；副本引擎启动做一次只读 COM 握手；负控那发建的 `preparation_2ebce2e6f2745ede`（mtime 17:49:53）已删；`wscript/cscript` 无残留；未杀 Owner 进程、未重启其助手、未装东西。
+- 交付：五份件（v1 方案／审查／v2 方案／执行报告，各带同名 HTML；根因件见 SCAN-PRIV-1）＋ `交付档案/飞书卡片/飞书_20261027_扫描权限守卫_v1到v2执行闭环.md`（讲人话版）。飞书 `SENT rc=0` 两张（prose 卡＋执行报告详版，chunks=1）。
+- 遗留问题：① 处置待 Owner 拍 A/B/C（A 留脏区／B 只提交我 5 个文件／C 连安装器根治一起排期），推荐先 B；② `installer.iss:101`「装完立即启动」是事故源头，本机无 `ISCC.exe` 不编译就不改，且 17:5x 实测 `installer.iss`(+131/−3) 与 `TrayHost.cs`(+97/−2) 正被**另一会话**在飞改（其 diff 内权限关键字 0 命中）⇒ 需合流别出两份互不认识的安装器改法；③ `test:contracts` 整串未跑（同树 38 项在飞，红无法归属）＝覆盖缺口；④ 「助手与 PS 都是管理员」组合本机造不出（要第二次 UAC 批准），该分支只有真值表与单测覆盖；⑤ 新码云端统计要等新版出厂，历史批次反查（`PHOTOSHOP_COM_UNAVAILABLE`＋约 12 分钟耗时）我没跑；⑥ 那次安装被提权的具体上下文仍未核实；⑦ 下载页/帮助文档是否还留着「以管理员身份运行」旧指引未核实；⑧ 批量台线仍等 O1–O4，与本轮无关。
+
+## 2026-10-27 16:2x 测试版扫描恒失败定案：助手被装成管理员身份，COM 跨权限必然失败（SCAN-PRIV-1）
+
+- 目标：Owner「我发现现在的测试版扫描总是不成功」——先取证再定位（系统化调试，先根因后修）。
+- 根因（两侧证据）：**本地助手与引擎跑在管理员完整性级别（SID 尾 12288），Photoshop 跑在普通级别（8192）**。Windows 不允许高权限进程激活低权限 COM 本地服务器 ⇒ 脚本只拿到笼统 `429 ActiveX 部件不能创建对象` ⇒ 旧逻辑当成「没注册」重试十轮 ⇒ 每次约 12 分钟才失败。三组本机实测（16:0x–16:12）：①令牌探针读三个进程 RID＝12288/12288/8192；②同一分钟普通权限 `cscript` COM 探针 `GETOBJECT_OK / VERSION_OK: 22.0.0` rc=0，而现役助手进程内 `POST /diagnostic` 等满 60 秒返 `503 PHOTOSHOP_COM_UNAVAILABLE`；③助手进程启动 2026-10-25 17:44:35、引擎 17:44:36，安装目录 bin/licenses/diagnostics 17:44:33、`unins000.dat` 17:44:34 ⇒ 就是安装脚本 `[Run]`「装完立即启动」拉起的子进程继承了安装程序的提权身份（助手清单为 asInvoker，不会自提权）。
+- 失效史：`engine.log` 最后一次成功 `2026-10-23T23:28:49Z`（17.6 秒）；此后 6 次全红，`durMs` 709,486–771,326（11.8–12.9 分），末次 `2026-10-27T06:18:11Z`；全部落在 10-25 17:44 那次安装之后。
+- 代码侧防复发（5 文件，**未提交未推送**）：`server.js:524-538` 新增 `assistantElevated()`（绝对路径调 System32\whoami.exe，避开 PATH 里 Git 自带 whoami 不认 /groups）；`server.js:5715-5718`＋`5740-5746` 扫描路由在起后台任务前秒级判掉（**排在「Photoshop 未运行」判定之后**——PS 没开时先说「请先打开 Photoshop」，不用权限话术盖掉它）；`scan-error-code.cjs:44-51` 新增 `PRIVILEGE_MISMATCH_MESSAGE` 与 `refuseScanByPrivilege`（放行条件＝本进程 10 分钟内握手成功，护住「PS 本身也是管理员」的机器）；`server.js:1697-1725`＋`3579-3587` 让 elevated 下的 429 改判 `PHOTOSHOP_PRIVILEGE_MISMATCH` 且**不再**建议去跑管理员修复工具（那是反方向）；`funnel-event-contract.ts:151`＋`batch-error-policy.ts:252` 两处白名单收录新码（前端 `design-file-card.tsx:510` 本就原样上报助手码，故新码有活的产生侧）；`server.js:4897` `/ping` 增 `assistantElevated`。
+- 测试结果（本拍实跑）：`node --check server.js` 通过；`node server.js --self-test-errors` 通过；`node scripts/smoke-preparation-failure-observation.mjs` **42 条断言全 PASS**（含 6 行真值表、文案方向、路由接线、429 改判顺序在两处均先于 NOT_REGISTERED、两处白名单）。
+- 自己抓到自己一处缺陷：首版守卫写在 `!psRunning` 分支之前 ⇒ PS 没开时会先说权限。已改成先算 `privilegeBlocked`、在 202 之后消费。
+- 机器恢复（未完成，卡一次人工点击）：管理员进程不能被普通权限杀掉，重启必须经 `explorer.exe` 交回用户 shell；已投递 `%TEMP%\tygf-deelevate.ps1`（UAC 提示 consent.exe 51600 自 15:5x 起到 16:2x 未被点）。受管束未使用的替代手段：`shutdown /l` 会打断 Owner 会话，不取。
+- 交付：`交付档案/审查报告/审查报告_20261027_测试版扫描恒失败_权限级别不一致.md` ＋ 同名 HTML（10 节）；飞书 `SENT rc=0`（chunks=1）。
+- 遗留问题：① 恢复待 Owner 点 UAC「是」或托盘右键退出后正常启动；恢复后须复验两 PID 回 8192 且 `/diagnostic` 返 200 PHOTOSHOP_READY；② 新版助手出包本机做不到（无 Inno Setup、develop 树有他手在飞、需签名）⇒ 走 GitHub 三段轨时另立单；③ 安装脚本「以原用户身份启动」候选改动**未改**（本机无编译器，改完无法验证；不验证就落盘＝坏判据）；④ 下载页／帮助文档里「以管理员身份运行」旧指引是否还在＝未核实；⑤ 本机之外是否已有用户踩坑：新版发出前只能按 `PHOTOSHOP_COM_UNAVAILABLE` ＋约 12 分钟耗时反查历史批次；⑥ 本次 5 个改动文件与同树他手在飞改动**混在同一工作树**，提交时必须逐文件 `git add`，禁 `git add -A`。
+
+## 2026-10-27 15:58 助手版本门对抗式审查定稿：收回我上一条 A 建议的一半，真问题是三件事（ASSIST-GATE-REVIEW-1）
+
+- 目标：Owner「就是啊，使用对抗式审查看看怎么执行吧」——承接我上轮给的 A（buildId 降为诊断字段）+ C（自动更新），要审出怎么执行。
+- 审计结果（全部原式实跑）：① 契约三元组**没变**——`reportSchemaVersion=local-report-v2`、`reportRendererVersion=renderer-v3`、替换脚本 sha256 两边同为 `882a4a8655ed…`；挡 3.7.15 的只有版本下限（`assistant-execution-contract.ts:69-72`）与 buildId 逐位相等（`:75-84`）。② 但 `origin/main..HEAD` 有 **27 笔**碰 `download/local-assistant`，含**不体现在任何契约字段**的安全/防丢数据修复：本机 HTTP 卫生（Vary/PNA/Host 回环白名单，`66cbb30e`）、会话文件不被默认配置覆盖（`3a220b9c`）、技术目录搬出客户素材目录（`f049969b`）、回执链不自崩且留痕（`a624e8c6`）。⇒ **A 原样否决（降门＝静默绕过这些修复，触红线）**。③ 新发现真 bug：buildId 判据是 `!==` 而非"不低于" ⇒ **更新的助手也会被拒**（内测客户从测试站装新版回生产即被挡）。④ 新发现更要紧：`expectedAssistantBuildId` 被写进**签名执行清单**（`execution-manifest.ts:98/:183/:283`）⇒ 只拆拒绝不动信任链口径，会出现"期望≠实际而无人拦"的记录，证据链一致性主张失真；且 `batch-execution-mode.ts:232` 界面还在教客户"确认构建…三项一致"。⑤ 被挡客户**无下载入口**：文案为"升级本地助手到 v3.7.28 后重启"（`batch-execution-mode.ts:225`、`batch-execution-client.ts:233`），附近 grep `href|download|Link` **0 命中**。⑥ 自动更新确为零实现：助手源码 grep `autoUpdate|checkUpdate|updater|downloadNewVersion` **0 命中**；Owner 09-25 15:4x 已批，两本任务书在（勘察＋实现发，后者被裁"不开"）。
+- 定稿三层：**P0** 被挡时给可点下载入口 + 文案补"连托盘一起退出"（纯呈现，不改判定）；**P1** 三件必须同批——(1) buildId 降为证据字段不再据此拒绝、同时定信任链口径并改界面说法，(2) 版本下限保留但抬它需判据（契约三项变／随车安全或防丢修复／新增助手必支持接口）且在发布身份文件留"为什么抬"，(3) 机器检查落 `check-release-identity`：抬版本无原因 ⇒ 出包红；**P2** 自动更新单独立项（硬前置：自停托盘+引擎、静默装完不拉起、不弹 UAC、"谁重启/怎么回滚"全仓无落点、无签名私钥接入点），**不为今日痛点仓促上**。
+- 推荐：P0 现在可做；P1 推荐做但三件不许拆（只做 1＝拆门不立规矩）；P2 排期单列。
+- 修改文件：仅新增交付件（`交付档案/执行方案/执行方案_20261027_助手版本门三层修法_对抗式审查定稿.md/.html/_飞书版.md`），**未改任何业务代码、未动门、未提交未推送**。
+- 测试结果：只读审查（git diff/log 计数、identity 字段两边对比、grep 定位落点、源码读判据形状）；飞书 `SENT rc=0`。
+- 遗留问题：① 27 笔未逐笔读 diff（按主题判读，真要放行某版须逐笔定性）；② P1 属发布身份路径＝永远需人批，未动；③ 本方案不解决"这一版怎么上生产"（仍卡四条前置）；④ 生产支付 flag 未实测；⑤ 未跑 `release:preflight --target production`。
+
+## 2026-10-27 15:39 对抗式审查"除多稿外可全推生产"：对一半，另有三件非多稿前置（PROD-GAP-CLAIM-REVIEW）
+
+- 目标：Owner 命题「除了多个设计稿工作台不能推到生产之外，其他的都可以全部推了」，要我用对抗式审查验是不是这样。
+- 结论：**有条件成立**——"卡在多稿"在门禁层属实（13 道门绿，唯一红的 `fold-no-report-loss` 指向 `step1-stage-view.tsx:1782`，且比对证明 `3ae696f2` 绿 / `97abb21d` 红）；但"其他都可以推"不成立。
+- 三条非多稿拦路（均实测）：① **助手版本门硬拦**——`assistant-execution-contract.ts:69-72` 低于要求即拒并提示升级、`scripts/distribute/route.ts:101` 回 403；生产要求助手 3.7.15、待推版本要求 **3.7.28** ⇒ 网页一推，现网旧助手客户扫描/执行被拒，升级动作在客户机上；② **生产库缺 `ApplicationAttribution`**——差集实测 develop 声明 68 表 vs 生产 67 表只差这一张，`route.ts:249` 无条件写它 ⇒ 推上去官网申请 100% 500（本地已复现），生产部署脚本无 migrate、漂移门恒 rc=2；③ **"只推非多稿"技术上做不到**——242 笔里 `workbench-view.tsx` 被改 41 次、`step1-stage-view.tsx` 12 次、`stage-folder-gate.tsx` 6 次、`coverage-matrix.tsx` 3 次，提交级手术必冲突且解完即新树、全部绿证作废。另补一条命题未含：生产 main 独有 2 笔（`df93c257` 字体分片动了 `home-view.tsx`、`80eb4263` CF 缓存）⇒ 非快进，须双向合流。
+- 建议：不拆半推；顺序为 ① 合 main 2 笔（硬前置）→ ② 生产库加表 → ③ 定助手随发并**先公告老客户** → ④ 多稿补声明 → 出包 → 测试站验 → 才谈生产；②③④ 可并行。
+- 测试结果：全部为只读实测（git 差集、生产库只读 SQL、源码读强制点、同门两点比对）；未跑生产 target 前置门、未跑构建、未改任何码。
+- 遗留问题：① **现网旧助手用户数算不出**——`BetaFunnelEvent.appVersion` 1868 行全为 "0.1"，取不到真值；② 242 笔未逐笔核复验状态（门绿≠功能验收，我推的 9 笔别手工作本会话零验证）；③ 生产支付 flag 未实测（按 false 推定计费面无资金风险）；④ 未跑 `release:preflight --target production`（需生产分支树）。
+- 交付：`交付档案/审查报告/审查报告_20261027_除多稿外可全推生产_对抗式审查.md/.html/_飞书版.md`，飞书 `SENT rc=0`。
+
+## 2026-10-27 15:31 A 路线走完：隔离树出包被两道门拦停，第一道已修并推上，第二道停在别手线上（SITE-FUNNEL-PKG）
+
+- 目标：Owner 选 A——从 GitHub 拉干净树出测试站候选包、**不部署**、并列出部署重启面。
+- 通道：`git worktree add --detach worktrees/release-70814271 70814271` + `node_modules` junction 指向 develop（`git status` 保持 0 行）；首次跑门缺 `--allow-detached-head`（脚本注释自证"出包树可以是从合流 SHA 现建的 detached 树"），补 `<40位全等SHA>` 后分支名放宽生效。
+- 第一道红 `test:zh-font`：`○ ● ◐ 剔 黄` 5 码位缺。**定责用比对法**：同一道检查在 `3ae696f2`（测试站现役）PASS（1214 码位全覆盖）、在 `70814271` FAIL ⇒ 缺口来自我推上去的别手批量台文案（"剔除""去整片黄"），非本次官网改动，但推送是我做的、账记本会话。处置照门内指示：**重新生成子集**（干净 detached 树、已提交状态下跑）⇒ 4 片 400,556 B（原 400,892 B）、字符集 1475 码位、`--check` 回绿 1219 码位全覆盖；**未改任何产品文案**（门内点名 2026-10-22 为过门改字的反例）。提交 `97abb21d` 推上 develop（`70814271..97abb21d`，PUSH_RC=0）。
+- 第二道红（当前拦路）`fold-no-report-loss`：`step1-stage-view.tsx:1782 折叠点缺「折叠不得删报」出口声明`，`折叠点=23 R1=1 FOLD_RC=1`。同法比对：`3ae696f2` → `ok 折叠点=21 R1=0 rc=0`；`97abb21d` → FAIL。旁证别手提交 `9048c13a` 自陈"折叠门 R1/R2 实测会红，执行手漏跑该门"。**未替其改文件**：① 同线文件（coverage-matrix／stage-folder-gate／workbench-view）在 develop 工作树是他手未提交在飞态，插行即撞现场；② 该门要的是产品口径声明，代填一句能过 grep 的话正是本项目拦的"为过门改文案"反面。
+- 门通过情况：13 道绿（含 `test:contracts` 修字体后过约 354s、`test:trust-chain` 61s、`assistant-script-distribution` 74s、`partial-index-guard` 78s），第 14 道红 ⇒ **`PKG_RC=1`，无 zip 无 receipt**。
+- 部署影响清单（读自 `deploy/deploy-test-release.sh`）：准备阶段 `check-release-identity`→`check-environment-isolation --target test`→`npm ci`→`prisma generate`→`npm run build` 全在候选目录做、**现役不动**；`restart_current_on_error` 会在候选准备失败时把现役重新拉起；切换只重启 `tygf-test` + `tygf-test-auth-mail` + `tygf-test-smart-review`；健康检查 `127.0.0.1:3001`；备份含 `.env`/`custom.db`/两份 nginx conf/target-commit/receipt，保留 10 份且 LATEST 回滚目标永不删；测试站部署脚本批准名单含 `20261024120000_application_attribution`（:500）⇒ 测试站自动应用，生产脚本无此步；nginx 缺省不动且脚本明确不 reload。
+- 交付：`交付档案/执行报告/执行报告_20261027_隔离树出包被两道门拦停与部署影响清单.md/.html/_飞书版.md`，飞书 `SENT rc=0`。
+- 遗留问题：① 出包待 `step1-stage-view.tsx:1782` 补声明（应由批量台线作者写口径，或 Owner 明示让我补并给文案）；② 部署待包出且 Owner 确认无人在用测试站；③ 生产四道前置不变；④ 隔离树 `worktrees/release-70814271` 保留未删（0 脏、junction 在），补完可一条命令重跑；⑤ 未跑 `npm run build`（属部署阶段）；⑥ 我推上 GitHub 的 10 笔中 9 笔为别手工作、本会话未验证，两处拦路皆由那 9 笔引入。
+
+## 2026-10-27 14:41 官网改动提交并推上 GitHub；测试站部署与生产发布停在四道硬前置（SITE-FUNNEL-SHIP）
+
+- 目标：Owner「提交后推送并部署吧然后看看跟生产站差多少，全部一起推上去了」。
+- 已完成：① 只提交自己 6 个文件（`git diff --cached --name-only` 逐行自证，55 插入/21 删除）→ `70814271`，COMMIT_RC=0；② `git push origin develop` 第一次被 GitHub 掐线（`Connection reset by 20.205.243.166 port 22` rc=128），重试成功 `3ae696f2..70814271` PUSH_RC=0，**连带别手 9 笔已提交工作一起上 GitHub**（即 Owner 要的"全部一起"，未部署未进生产）。
+- 关键读数改变判断：`curl 127.0.0.1:3001/api/runtime-provenance` → 测试站现役 `3ae696f24c63…`、期望助手 **3.7.28**，即**别手 9 笔早已在测试站上，我这一笔是唯一增量**；"部署"实际含义＝把 1 笔官网改动推上测试站。
+- 部署为何未做：`npm run release:preflight:test` → GitHub 一致性腿**通过**（"已核：HEAD 708142718801 已在 origin/develop 上"），但 `working tree must be clean` 红，PREFLIGHT_RC=1；脏的是**别手在飞 15 项**（workbench-view／overflow-estimator／coverage-matrix／stage-folder-gate 及其测试／execute-step／local-assistant-client／typography-upload-client／download/local-assistant 两文件／package.json／smoke-report-coverage-honesty）+ 3 个未跟踪 clearance 件。**拒绝三种清树法**：共享 worktree 禁 stash；不替别人提交未验收代码（v1 审查自立的 F-07）；禁 `git add -A`。合规路径（从 origin/develop 建隔离干净树出包，F: 剩 568 GB 够，约 6–10 分钟）存在但**未执行**，因测试站共用、部署会 pm2 重启 `tygf-test` 与两个 worker，可能打断别会话正在跑的验证。
+- 生产差距实测：`origin/main...origin/develop` = **2 落后 / 242 领先**，348 文件 +40,560/−2,678；**非快进**——main 独有 `df93c257`（字体分片 14.13 MiB→406,956 B）与 `80eb4263`（CF 边缘缓存），其中 **`df93c257` 动了 `home-view.tsx`，与本次同一文件 ⇒ 合流必冲突**；差异含 `download/local-assistant` 19 文件（生产期望助手 3.7.15 vs 测试站 3.7.28 ⇒ 涉 exe 重建）与 `prisma/migrations` 2 处；**生产库仍缺 `ApplicationAttribution` 表、`deploy-release.sh` 不跑 migrate、`check-migration-drift --target production` 恒 rc=2** ⇒ 直发生产会让申请表从"没人填"变"填了就 500"；本机 `main` 停在 `319bc138` 与 `origin/main` 不同步。
+- 交付：`交付档案/执行报告/执行报告_20261027_提交推送完成与生产差距实测.md/.html/_飞书版.md`，飞书 `SENT rc=0`；给出 A/B/C 三路与推荐（A＝出包不部署、把重启面清单交定时点；B＝确认无人用测试站后我直接部署并验；C＝先合 main 2 笔＋补生产迁移＋定助手，再走生产）。
+- 遗留问题：① 等 Owner 选 A/B/C；② 生产发布四道前置（合 main 2 笔含冲突处理、助手是否随发需真建 exe、生产库人工补迁移、测试站先跑通留证）；③ 242 笔只数了量、**未逐笔核复验状态**，发生产前须按"未复验不得记绿"过一遍；④ 容器根另有 2 个脚本改动（`site-traffic-report.mjs`、`control-plane.sh`）与 100+ 交付档案文件**未提交**（容器根是独立仓库 tygf-workspace-backup）；⑤ 无"部署成功"主张——rc=1 是门真拦住，不是绕过。
+
+## 2026-10-27 14:29 剔除记忆跨会话落地：键内容指纹不键路径，沿用必须明说（`d1115c5a`）
+
+- 目标：Owner「要一劳永逸的」——回答上一轮 A/B：选 **A（保留非当前稿的剔除跨会话）**，且要求做到底而不是先做半截。落成可判定一句：同一份稿这次剔掉的语言，下次重新扫描仍是剔掉的；恢复即删记忆；沿用必须明说。
+- 先更正我上一轮的一句错话：上一轮写「切回稿 A、刷新，B 那门会回来」不成立——批量选择根本没有持久化（`multiPsdSelection` 初始化即 `clearMultiPsdSelection()`，全仓无恢复点），刷新后除最后在用的那一稿，其余稿在界面上根本不存在，谈不上复活。真问题是「上次剔掉的决定，这次重扫同一份稿完全不记得」，本轮修的是后者。
+- 方案：把**决定**持久化，而不是把草稿槽持久化。键＝稿件内容指纹（`BrowserPreparationSummary.fingerprint`，`preparation-contract.ts:329` 的 `assertDigest` 只收 64 位小写十六进制，由 `sha256File` 产出），**不键 masterPath**——`psd-selection.ts:2` 明写「masterPath 只在浏览器内存与本地助手之间流转，绝不写入草稿或上传云端」，路径进存储即破线。存 `localStorage` 键 `tygf:workbench:language-exclusions:v1`，形如 `{指纹:{excluded:[语言码],at}}`，上限 200 条按 `at` 从旧裁剪；坏数据/读写抛错一律当空。三条规则抽成纯函数：`deriveLanguages`（**现场 > 记忆**）、`nextExclusions`（只记真剔除、恢复即忘）、`withLanguageExclusions`（`excluded.length===0` ⇒ 删条目，不留空账）。告知：沿用一次即在第 1 步明说「沿用了上次剔掉的语言（…）。要恢复就点那一稿的「全选回来」」，按指纹去重只报一次。
+- 修改文件（提交 `d1115c5a`，5 文件 +451/−5，develop 分支，**未推远端、未部署**）：新增 `src/lib/workbench/language-exclusion-memory.ts`（173 行，存储可注入）；`src/components/workbench/workbench-view.tsx` 六处（导入换 `deriveLanguages` 一族、`fingerprintByDraft` memo、`languageExclusions` state、`languagesByDraftRuntime` 走 `deriveLanguages`、告知 effect、`setDraftLanguages` 里唯一写入口）；`src/lib/i18n/dict-en.json` +2 键（上一轮漏的 `{file}：{langs}` 与本轮新句）；新增 `tests/unit/language-exclusion-memory.test.ts`（166 行 / 16 条）；`scripts/smoke-step1-mock-contract.mjs` +3 契约（M1／M2／M3，判据 88→104）。
+- 原因：上一轮把这条挂在「A/B 待拍、可排到第 2/3/4 步之后」；Owner 明确要「一劳永逸」，即不接受「先放着」。而 A 案若按草稿槽实现会破 `psd-selection.ts:2` 的路径边界，故改成按内容指纹存决定。
+- 测试结果（本拍重跑，均在提交后）：`npx tsc --noEmit` rc=0；`npx vitest run tests/unit/language-exclusion-memory.test.ts` **16/16 rc=0**；`node scripts/smoke-step1-mock-contract.mjs` **判据 104 项 · 行 32 条 · 失败 0 · PASS**；`npm run test:workbench-ui-contract` ok；`npm run test:workbench-scope` ok（52 断言）；`npm run test:workbench-batch-groups` 6 文件 **120/120**。
+- 负控八式（`tmp/negcontrol-exclusion-memory.mjs`）：N1 导出改名／N2 `deriveLanguages(` 改成不存在的名字／N3 删告知句 ⇒ 契约门 M1/M2/M3 红；N4 不写存储／N5 `applyExclusions` 忽略剔除表／N6 `nextExclusions` 不记本次剔除／N7 清空后仍留空账／N8 记忆压过现场 ⇒ 单测红。**八条全红**，每次改完立即还原，模块 `f1691c316f4719b8`、组件 `0b1462d33a211015` 与改前逐字节相同。
+- 门自身的缺陷（本轮抓到并修）：N1 第一次**没变红**——判据 `export function applyExclusions` 是 `applyExclusionsBroken` 的前缀子串，门被骗过。修法：M1 的 5 条导出判据全部咬到「函数名 + 左括号」调用形态，改完 N1 立刻红。教训入库候选：**子串判据必须咬到调用形态，不能只咬名字前缀**。
+- 真浏览器点验（`tmp/browser-exclusion-memory.mjs` + 临时路由 `src/app/(zh)/lang-memory-check/`，验完即删；复用别手已在跑的 dev，`http://127.0.0.1:3000`，PID 51216 **未杀**）：**BROWSER_FACTS=PASS**。四步读数：剔 `en` ⇒ 存储出现键为 64 位指纹的记录；模拟重扫/界面重开 ⇒ 推导 `['zh','ja']`（英文确实沿用剔除）；现场手动加回 `en` ⇒ `['zh','en','ja']`（现场压过记忆）；另一指纹的稿 ⇒ `['zh','en','ja']` 不受影响。截图 `交付档案/证据_20261027_剔除记忆/01-刷新后剔除仍在.png`。
+- 提交隔离与索引收尾：`workbench-view.tsx` 上另有别手 4 处／9 行在飞，用 `GIT_INDEX_FILE` + `read-tree HEAD` + 混合 blob 只提交我的改动，别手现场原样留在未提交（提交后实测 `git diff --numstat` = 9/2、4 个 hunk，位置一致）。临时索引提交后真实 `.git/index` 落后于新 HEAD，已用 `git reset -- <这 5 个路径>` **只刷 5 条索引记录**（当时除这 5 个文件外无任何暂存条目），未做裸 `git reset`，未碰别人暂存；现 `git status` 只剩别手自己的改动。
+- 交付：`交付档案/执行报告/执行报告_20261027_剔除记忆跨会话.md` ＋同名 HTML（12 节）；飞书版 `飞书_20261027_剔除记忆跨会话.md` 已发（chunks=1，rc=0）。
+- 遗留问题：① 「推定」档去留仍待 Owner 拍（A 留着／B 并进「声明」，建议 A）；② 英文词典 73 条缺口未修（既有红，独立任务）；③ 本机 3000 端口 dev 进程是别的会话的，未杀任何进程；④ 同树其它会话改动一行未动；⑤ 下一项建议＝第 2 步「口径合一」，开工前先给 Owner 看目标形态。
+
+## 2026-10-27 14:17 只读日报脚本落地 + 首份分站点读数（SITE-TRAFFIC-REPORT-1）
+
+- 目标：Owner「那就按A来」——B1 已让 nginx 日志带 `host=`/`rt=`，本轮加一只**只读**日报脚本并接进每早控制面，使"官网真人候选数"每天自动出，不再靠人记得去取。
+- 方案：新增 `scripts/site-traffic-report.mjs`（容器根，不在 develop 应用树）——把聚合 awk 送上去跑，**本机只接收计数**（IP／UA／正文不出服务器）；`scripts/control-plane.sh` 末段加一段读数，失败只打 ⚠、**不改变巡检退出码**；主机名可被 `SITE_TRAFFIC_SSH_HOST` 覆盖（专为负控与日后接测试站独立主机留的口子）。
+- 修改文件：`?? scripts/site-traffic-report.mjs`、`M scripts/control-plane.sh`（均在容器根，未提交）。
+- 原因：上一轮 B1 装了仪器没人读就会重演 10-20"知道缺口但没人补"；接进既有巡检而非新建 cron，是为了不新增常驻写面与新的失效模式。
+- 测试结果：`--self-test` 跑**同一份 awk**（本机 GNU awk 5.4 与服务端同族，不用 JS 复刻件）⇒ **15 例全绿 rc=0**（含 3 条负控）；真机读数 rc=0；`--quiet` 回 `SITE-TRAFFIC ok new_format=578 legacy=3797`；接入后 `bash scripts/control-plane.sh` 末段出现读数行；**负控 N1**（坏主机）→ 脚本 rc=1 且打 `UNAVAILABLE rc=255`；**负控 N2**（同一坏主机跑整条巡检）→ 打 ⚠ 且 `ledger_exit=1 readback_exit=1` 与健康那次逐字相同 ⇒ "读数挂了不改变巡检结论"是被证出来的，不是口头保证。Lint **不适用**（容器根无 eslint 配置，`npx eslint` rc=2 为找不到配置）。
+- 首份真读数（B1 后约 3.5 小时累计）：官网 真人候选 IP 19／爬虫 IP 6／首页命中 20（真人首页 IP 8）／下载页 1／**申请提交 0**／首页最慢 **30.057s**（>2s 4 次）；内测站 命中 459 但真人候选 IP 仅 4（接口轮询占大头）；3797 行无 host= 未计入。**边界**：非整日、且带浏览器 UA 的机房代理仍会混入；首个可比窗口为 2026-10-28。
+- 过程抓到两个真缺陷：① 字段位假设反了（行尾是 `host=X rt=Y`，`$NF` 取到 rt）⇒ 症状是**计数全 0 且 rc=0 不报错**，改按前缀扫末尾字段；② **我自己写的负控会巧合通过**——爬虫正则只有小写 `python`，`Python-urllib` 在基线里已被算真人，换不换 UA 都是 3 ⇒ 负控绿着而探测器是坏的。修法：正则补大小写字符类（不用 gawk `IGNORECASE`，服务端可能是 mawk）＋**负控一律改成相对基线的增量断言**并补"基线本身对不对"的用例。
+- 记忆与号界：`env-windows-toolchain-gaps.md` 追加 92／93／94／97 条（含"改生产配置的正解形状"与"负控巧合通过"）；其中我原编 91 与另一会话 10-26 的 91 条撞号 ⇒ 按"被占就自己顺延、绝不改别人正文"改为 **97** 并留号界句；另一次 `node -e` 内联写记忆被 shell 吃掉反引号造成 687 B 垃圾，已按自写标记做**字节精确还原**（31881）后改用文件方式重写。
+- 遗留问题：① 明天出整日读数并附"这对你意味着什么"；② 真人基线未定前，T2b（当前批量台真素材）与 try-sandbox 不排期——若真人一天只有个位数，先解决"来的是谁"；③ 浏览器埋点 B5 仍压在条款第五节变更之后；④ 未提交未推送未发版（本轮 2 个容器根文件改动留在工作树）；⑤ 每早巡检本身红（`ALARM ⛔ 121 项`，机器列漂移与重复行为既有台账问题），本轮未顺手改；⑥ 首页最慢 30 秒这条只量到现象，未查成因（可能与 10-25 网站慢 A 方案相关，待单独看）。
+
+## 2026-10-27 11:49 对抗式审查返修：契约 5／12 三处真缺陷修掉并各配负控（`b6dcb959`）
+
+- 目标：Owner 令「你使用对抗式审查继续看看怎么执行」。审查对象是上一轮我自己提交的 `11f9844a`（契约 5／12 落地）＋那份报告里「已落地跑绿」的结论。审查结论：三处真缺陷 + 一处文案口径错，上一份报告的一句话结论不成立。
+- 方案（三处都是我自己写的错）：① F1 四阶段清单出现条件漏了 `surveyBusy`——只点「读全部表头」（不扫稿）时整条清单消失，用户看不到任何进度；把 `surveyBusy` 并进条件（`step1-stage-view.tsx:1561`），状态条首行写「正在读表头…」（`:1578`）。② F2 「归组」直接数 `groupBindings.groups.length`，而内核每稿必推一组、认不出 SKU 的稿推空组（`table-grouping.ts:238-258`）⇒ 一张表都没配上也会说「归好组」；改为只数 `tables.length > 0` 的组（`:665`），0 组时写「还没配上组」。③ F3 「读表头」分母数扫描到的表、分子数 `stage === 'ready'`（全文读完），标签却写「表头已读」——两套口径；改为分子数 `record.rows !== null`（表头已知，`:669`），读不了的表单独点名成「N 张表头已读 · M 张读不了」。④ 契约 12 对照句撤掉旧口径「另外 N 张表选不进来，也进不了第 2 步」，改成算术说法「一稿只用一张表，3 份稿最多用 3 张表，另外 1 张在这套做法下用不上」（`:1801`）。
+- 修改文件（提交 `b6dcb959`，4 文件 +179/−32，develop 分支，**未推远端、未部署**）：`src/components/workbench/step1-stage-view.tsx`、`src/lib/i18n/dict-en.json`（−3/+5 键）、`tests/unit/step1-stage-view.test.tsx`（+5 条：表不比稿多／认不出 SKU／空组不算归好／只读表头忙碌态／读不了的表）、`scripts/smoke-step1-mock-contract.mjs`（契约 5／12 判据 75→88 项）。
+- 门加严：静态门钉「组数只准数非空组（`groupBindings.groups.length` 必须 0 次）」「分母不许退回 `const readTables = inventory.filter`（0 次）」「`record.rows !== null` 必须 1 次」「`t('正在读表头…')` 必须 2 次（按钮忙碌态＋状态条）」「`n: manualPickCount` 必须 2 次」；两条只能靠行为抓的（条子在只读表头时必须出现、认不出的稿不进分子）钉在单测里。
+- 测试结果（全部本拍实跑）：`npx tsc --noEmit` rc=0（删掉临时路由后复跑仍 0）；`npm run lint` rc=0，0 errors／48 warnings（既有）；`npx vitest run tests/unit/step1-stage-view.test.tsx` **49/49**；`npm run test:workbench-batch-groups` 6 文件 **120/120**；`node scripts/smoke-step1-mock-contract.mjs` **88 判据·29 行·0 失败·PASS**。
+- 负控七式（`tmp/negcontrol-contract5-12.mjs`，CRLF 锚点按盘上换行展开）：N1 组数退回 `groups.length`／N2 第四步退回只数全文读完／N3 状态条那句换成别的字／N4 对照正文点击数改回常量 ⇒ **契约门四式全 rc=1**；N5 空组缺陷注回／N6 撤掉「读表头也唤出清单」的条件／N7 认出数改回总稿数 ⇒ **单测三式全 rc=1**；每次改完立刻还原，`BASE_SHA256 = FINAL_SHA256 = fd6427c4…`（122,798 字节）逐字节相同。
+- 真浏览器点验（`tmp/browser-step1-check.mjs`，临时路由 `src/app/(zh)/step1-check/` 挂真组件＋真派生，验完即删）：**BROWSER_FACTS=PASS**（11 条断言＋5 张截图落 `交付档案/证据_20261027_契约5_12_v2/`）。五态读数：空闲无清单（计数 0）；扫描中「3 份稿 · 4 张表／3/3 认出／4 张 → 2 组／2/4 张表头已读」，`aria-valuenow=3`、条宽 84/112 px＝75%；认不出 SKU「2/3 认出」「3 张 → 1 组」；只读表头点按钮前清单 0、点后出现且第四步 `data-stage-state="on"`＋「正在读表头…」；对照块含「另外 1 张在这套做法下用不上」且不含旧句「选不进来」。
+- 一处环境事实（写清免得被误读）：临时页所在的本机浏览器没有内测资格，`读全部表头` 会在 `ACTIVATION_CONTEXT_MISSING`（`local-assistant-client.ts:798`）处立刻失败、忙碌态一闪而过；因此验证脚本用 `addInitScript` 在一次性浏览器 profile 里预置了一条假匿名安装号，只为让请求停在等待中，**不接触任何真实账号、不写任何后端**。
+- 如实披露（既有红，不是本笔造成也未修）：`npm run test:en-workbench` **rc=1，95.2%（1445/1518）**。用 `BASE=11f9844a node tmp/i18n-attribution.mjs` 复核：基线词典 1515 条缺 72，现在 1518 条缺 73；第 1 步这一屏缺口 55→54（本轮补上「正在读表头…」1 条），新增 2 条缺口全在 `workbench-view.tsx`（同树另一会话新加的「本版量不出译文宽度…」两句）。要修到 100% 需逐条译 73 句，是独立一件事。
+- 交付：`交付档案/执行报告/执行报告_20261027_批量台第1步_契约5与12落地.md` ＋同名 HTML（10 节，由 `tmp/md2report.mjs` 从 md 生成）；飞书版 `飞书_20261027_批量台第1步_契约5与12落地.md` 已发（chunks=1，rc=0）。
+- 遗留问题：① 非当前稿剔除跨刷新（A/B 待 Owner 拍，建议 A）；② 「推定」档去留（A/B 待拍，建议 A）；③ 英文词典 73 条缺口未修（独立任务）；④ 本机 3000 端口 dev 进程 PID 51216 是别的会话起的，本轮未杀任何进程；⑤ 同树其它会话改动（清关脚本／官网演示媒体／运行器／workbench-view 文案）一行未动，提交只含我这 4 个文件。
+
+## 2026-10-27 11:18 第 1 步契约 5／12 落地：扫描四阶段清单＋进度条、一组表 vs 今天的做法（Owner 拍的 B 案）
+
+- 目标：Owner 拍「按你的来」＝B 案——不加第二道闸，补「这版界面真的在浏览器里长对了」与批准稿里还缺的两段说明面。本轮只做契约 5／12 并在真浏览器点验。
+- 方案：契约 5 的四阶段清单只在真扫时出现（扫完收回原来那句 pending 文案），四步数字全部取现有派生——稿数/表数取 `plan.counts.drafts`／`scan.tables.length`，认 SKU 取 `plan.rows[].identity.sku` 非空数，归组取 `groupBindings.groups.length`（退化两栏取「已配上表的稿」），读表头取 `inventory` 的 ready/error 计数；进度条只数「几步行了」（`aria-valuenow`），与上面那行逐稿扫描进度**并列不合并**，避免造一个假百分比。契约 12 用 `manualPickCount` 与本批份数/表数对照，「另外 N 张表选不进来」＝`max(0, 表数−稿数)`，为 0 时改说「表里没有的语言这一稿就没有」，不硬造减法。同笔修掉 evidenceDetail 的重复前缀（徽章已有「不符」二字，依据句又写「不符：」⇒ 界面读成「不符：不符：」）。
+- 修改文件：`src/components/workbench/step1-stage-view.tsx`（:247 前缀、:656-704 派生、:1566/:1577 四阶段与进度条、:1770 对照块）、`src/lib/i18n/dict-en.json`（+19 键）、`scripts/smoke-step1-mock-contract.mjs`（契约 5／12 由「推迟」转「已对」，判据 62→75）、`tests/unit/step1-stage-view.test.tsx`（+2 条：idle 不出现四阶段块／running 时四行文案与 aria 读数；对照块逐字断言）。提交 `11f9844a`（4 文件、+207/−15）**未推远端、未部署**。
+- 原因：上一轮对抗式审查的对账表里，契约 5 与 12 是 0 命中的两条「说明面」；Owner 明确要的是「这版界面真的长对了」，不是再加闸。
+- 测试结果：`npx tsc --noEmit` rc=0；`npm run lint` 0 errors／48 warnings（逐条比对 HEAD 计数一致，与本次无关）；`npx vitest run tests/unit/step1-stage-view.test.tsx` 44/44；`npm run test:workbench-batch-groups` 6 文件 115/115；`npm run test:step1-mock-contract` 判据 75 项·行 29 条·失败 0·PASS；负控（把 `data-testid="step1-mode-compare"` 改坏一字符）**rc=1 门真红**，还原后 sha256 前 12 位 `f939402cef68` 与改前逐字节相同（提交后复跑）。真浏览器 Chromium 1280 宽、临时路由挂真组件跑真派生：读数「正在扫描 2/3 · 5857-主图.psb」＋「● 扫描文件夹 3 份稿 · 4 张表／● 认 SKU 与交付物 3/3 认出／● 归组 4 张 → 3 组／○ 读表头 3/4 张已读」、进度条约 75%；对照块「你点了 1 次；今天那套最少 3 次」＋「另外 1 张表选不进来」。截图落 `交付档案/证据_20261027_契约5_12/01-扫描四阶段.png`、`02-一组表对照.png`；临时路由与 Chrome 临时 profile 验完即删，仓库未留验证件。
+- 自我更正（撤下一条，不报缺陷）：原准备报「推定档在组卡里永远出不来」，复核后只在「组内 SKU 已知」时成立（`ownerOf` 在 sku 非空时只会给 match/mismatch）；SKU 为空与退化两栏仍可出现，截图里 `7788-详情页.psb` 那行就挂着「推定」徽章。
+- 遗留问题：① **刷新会丢「非当前稿」的剔除**（读代码结论、未真机量）：草稿单槽 sessionStorage（`src/lib/workbench/draft.ts:3`）、写入只写当前稿语言集（`workbench-view.tsx:928-941`）、非当前稿只活在内存（`:1948`）、刷新回落表语言列（`:2155`）；已作为 A/B 待拍事项交 Owner（建议 A＝按稿存，但可排到第 2/3/4 步之后）。② 另两条负控（拆进度条宽度表达式、删一条英文对照）在本次提交前跑过、提交后未复跑，报告里已点名。③ 「推定」档去留已交 A/B。④ 同树其它会话改动（清关脚本／官网演示媒体／运行器）本轮一行未动，提交只含我这 4 个文件。
+- 交付：`交付档案/执行报告/执行报告_20261027_批量台第1步_契约5与12落地.md` ＋同名 HTML（9 节）；飞书版 `飞书_20261027_批量台第1步_契约5与12落地.md` 已发（chunks=1，rc=0）。
+
+## 2026-10-27 10:43 B1 落地：生产 nginx 日志加 host=/rt=，官网与内测站首次可分桶（SITE-FUNNEL-B1）
+
+- 目标：Owner 回「A」批准改服务器日志格式，补上 2026-10-20 那份读数点名、长期被挡的缺口——把官网／内测站／爬虫分开，让"每天几个真人"从猜测变成可测。
+- 方案：`/etc/nginx/nginx.conf:40` 新增 `log_format tygf_vhost`（内建 combined 八字段原样保留 + 末尾追加 `host=$host rt=$request_time`）并让 http 级 `access_log` 改用它；`/etc/nginx/sites-available/tygf-test:11` 的 server 级 `access_log … combined if=$tygf_test_loggable` 把 `combined` 换成 `tygf_vhost`、**`if=` 条件原样保留**（带 `?key=` 的探针流量仍不入日志，10-08 那道闸行为不变）。
+- 修改文件：上述两个生产配置文件（非仓库文件）。备份：`nginx.conf.bak-20261027T023757Z`、`sites-available/tygf-test.bak-logfmt-20261027T024047Z`（另留有失败尝试的 `nginx.conf.bak-20261027T023533Z`，内容与原版一致）。回滚一条命令：`cp -a <bak> <原文件> && nginx -t && systemctl reload nginx`。
+- 原因：只追加末尾两字段而不重排，是为了让既有 awk 探针的 `$6/$7/$9/$11` 字段位不漂移（实测新格式行上仍能正确取出 路径/状态/来源），避免一次日志改动连带打断已有读数工具链。
+- 测试结果：两次 `nginx -t` 均 `syntax is ok` + `test is successful`，`systemctl reload nginx` 无中断；`https://tuyigf.com/` 200（98,352 B／0.072772s）、`/download` 200、`https://test.tuyigf.com/` 403（其既有门禁，改前改后一致）；单行实证 `… "GET / HTTP/1.1" 403 162 "-" "curl/8.5.0" host=test.tuyigf.com rt=0.000` 与同行官网侧 `host=tuyigf.com rt=0.014`；分桶实测（最近 3000 行内新格式 14 行）`tuyigf.com hits=8 uniq_ip=2`、`test.tuyigf.com hits=6 uniq_ip=3`；`rt` 官网首页样本 0.000–0.017 秒。
+- 过程守卫：第一次尝试锚点正则写成 `^access_log` 未允许行首制表符 ⇒ awk `ANCHOR_NOT_FOUND` rc=3，脚本按设计退出，**配置未动、未重载**（回显 `STEP2_PATCH_FAILED rc=3 (config untouched)`），改 `^[ \t]*` 后重跑成功。
+- 两条工具教训（记进长期记忆）：① `grep -rn access_log /etc/nginx/sites-enabled/` 得到"无站点级日志"是**假结论**——该目录全是符号链接，`grep -r` 默认不跟随，须查 `sites-available/*` 真文件；② 用 `printf` 逐行拼远端脚本会把 `$` 与 `!` 转义坏（本轮两次 awk 语法错皆此因），远端脚本一律落成文件再 `bash -s` 喂。
+- 遗留问题：① 历史日志无 `host=`，分桶只能往前积累，首个可比窗口 2026-10-28；② 那 14 行样本含我自己 5 发 curl 与服务器自身 IP，**只是仪器自检，不是流量结论**；③ 建议下一步加一只只读日报脚本（按 `host=` 分桶出官网真人候选／爬虫占比／`/download`／`POST beta-applications`）接入每早控制面——待 Owner 点头，本轮未建；④ 未提交代码、未推送、未发版（本轮只动生产配置）；⑤ 上一轮那条发版提醒继续有效：生产库补 `ApplicationAttribution` 表是独立人工动作，`check-migration-drift --target production` 恒 rc=2，不得因部署退出码 0 视为已应用。
+
+## 2026-10-27 10:03 英文站"TRY IT"说法修正落地 + 自我更正两条（封驳件被同名覆盖后重落盘、F-11 迁移门比我说得窄）
+
+- 目标：Owner 回"好来吧"，按我上条消息自定的语义只覆盖两件自主项（英文站说法修正、迁移门），生产 nginx／提交／发版仍需单独点头。本轮做这两件并留真运行证据。
+- 前置补件：23:17 那份《封驳官网执行方案 v1》被另一会话**用同名文件**写入其批量台链审查件而覆盖（实测：现名件标题为《批量台第 1 步 14 条契约落地》、该目录 `grep -c 官网`=0、`grep -rl 官网看得见运行与量得出转化`=0）。**不动别手那份**，改用带专题名重落盘：`交付档案/审查报告/审查报告_20261026_官网执行方案v1_封驳_对抗式审查.md`（9,780 B，mtime 00:04:38）+ 同名 HTML；重落前于 00:04 复跑四条承重探针全成立；并更正自己一处行号（记档注释在 `home-view-en.tsx:16`，原写 `:17`）；顺手修掉本链 3 处会引到别手那份的旧指针。
+- 方案：英文站选 A（只收邮件），故只改表达不改行为——章节标签 `08 / TRY IT`→`08 / GET IN TOUCH`、面板标题加 `— by email`、正文首句明说 `This page has no application form: email is the only way to reach us here.`、要点首条改 `In your email, tell us...`。
+- 修改文件：`src/config/siteContentEn.ts`（mtime 09:55:27）、`src/components/site/home-view-en.tsx`（09:55:33）。中文站与服务端合同零改动。
+- 原因：`siteContentEn` 由 `src/app/en/page.tsx:4,26` 直接静态消费、**不经后台合并内容** ⇒ 改文案无需内容发布即生效（与中文站走 `getMergedSiteContent` 不同，这条差异决定了英文站这步比中文站便宜）。
+- 测试结果：复用别会话已在跑的 `:3000` dev（PID 51216，同树 ⇒ 改动即时生效；**未杀任何进程**）取真页面。`curl /en` HTTP 200（50,281 B）：`GET IN TOUCH`=1、旧标签 `08 / TRY IT`=0、`no application form`=1、`— by email`=1；负控 `grep -c "<input\|<textarea" home-view-en.tsx`=0 且 `mailto`=3（证明没偷偷加表单）；`curl /` HTTP 200（108,194 B）中文站仍 `08 / TRY IT`=1、`（选填）`=8（上一轮 B2 未回归）。`npx tsc --noEmit` rc=0；`npx eslint` 我这两个文件 rc=0。隔离库 `tmp/en-check.db`（`prisma migrate deploy` rc=0）用完已删。
+- 自我更正 F-11（要紧）：上轮我说"下一次发版不带 `prisma migrate deploy` 官网申请会 100% 失败"并建议新造一道出包门。实测改口三条：① 那条迁移**已在** `deploy/deploy-test-release.sh:500` 批准名单（带 sha256 与预期表/索引名）⇒ 测试站不会漏；② 门**早就存在** = `scripts/check-migration-drift.mjs`（病根页眉写 2026-10-10 `cebb737` 漏迁移事故）+ `npm run test:migration-drift`，本轮自测 7 例全绿含 4 条负控 ⇒ 不该再造；③ 生产侧 `deploy/deploy-release.sh` 的 `approved_migrations` 与 `migrate` 两条 grep 全空 ⇒ 生产部署不跑迁移，而 `check-migration-drift --target production` 实测 **rc=2**「manual review required, this is not a pass」⇒ 真缺口是"生产库补表是独立人工动作、不得因部署退出码 0 就当已应用"，不是"没有门"。今天真正爆的现场是本机开发库从未 `migrate deploy`＝环境问题。
+- 遗留问题：① 生产 nginx 加 `$host`/`$request_time` 仍等 Owner 一个字（改法/验证/回滚在 v2 §3 B1）；② 未提交未推送未发版（同树他手在飞 11 项、develop 领先远端 3 笔）；③ 发版清单需显式写"生产迁移人工核对 rc=2"那一步；④ 埋点 B5 仍压在条款第五节变更之后；⑤ T2b 真素材与 try-sandbox 待真人数出来再定；⑥ 未在真浏览器点过英文站邮件按钮（判据来自服务端 HTTP 200 + 访客 DOM 断言）。
+
 ## 2026-10-27 10:00 批量台第 1 步：绑定证据分级落地（BINDING-EVIDENCE-1）
 
 **触发**：Owner 追问「你回看一下我们之前的讨论，我认为是很明确了的，为什么还是没有执行？」——上一轮交的是设计稿（`交互逻辑设计_20261027_批量台按v3_UIUX_v2.md`），他要的是照 v3 那份 UI/UX 直接做出来。本轮不再出设计，直接落代码。
