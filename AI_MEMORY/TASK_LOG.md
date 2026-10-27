@@ -1,3 +1,21 @@
+## 2026-10-27 09:0x UI 可见改动一轮闭环：方案→对抗式审查→修订→执行（UI-VISIBLE-1）
+
+**为什么做**：Owner 原话「UI, UX 还是之前的呀，你根本都没改」。上一轮我交的是功能接线（格剔除＋份数口径），第 1 步在**没扫文件夹之前**根本看不到任何变化——他说的是事实。本轮只做"看得见的版面"。
+
+**流程**：执行方案 v1（`交付档案/执行方案/执行方案_20261027_UI可见改动_v1.md`）→ 对抗式审查（`交付档案/审查报告/审查报告_20261027_UI可见改动_v1_对抗式审查.md/.html`，VERDICT 打回，9 条 Important）→ v2（`执行方案_20261027_UI可见改动_v2.md/.html`）→ 照 v2 执行 → 结果件（`落地记录_20261027_UI可见改动_v2执行结果.md/.html`，含改前｜改后并排真截图）。
+
+**审查砍掉的四条**（照 v1 做等于白做）：I-1 改 `coverage-matrix.tsx` 染色＝改一个藏在 `hidden` 分支里的组件（`workbench-view.tsx:5216/:5252`），用户看到的染色在 `step1-stage-view.tsx:175-183`；I-3 「格＝已绑−剔除」的"已绑"从没传进执行步（`totalCells` 已是剔除后集合）；I-5 语言 chip 的"缺表／不做"两态在 `batchSummary` 里没有维度；I-6/I-7 日志按稿聚合与"只重跑失败项"缺采集且重试需先重建服务端冻结的 `expectedRowTokens` 行集（`batch-result-panel.tsx:3-4` 原注释）。
+
+**落地的改动**：`siteContent.ts` folderGate 新增 `changesTitle`／`changes[3]`／`notes[3]`／`afterScanHint`，`read` 改「扫描并自动配对」；`stage-folder-gate.tsx` 加青色"这一版你会看到什么不一样"清单块＋三枚约束标签＋读表头仍手动的实话行；`workbench-view.tsx` `loadStageFolder` 成功分支链一次 `pulseStageFolderAction('scan-all')` 并给回执提示；`step1-stage-view.tsx` `CELL_CLASS.wait` 去琥珀填充（只留描边，红底仍归必须处理）＋图例行；`execute-step.tsx` 执行编排加两列小表（份／格／预计积分，全取既有派生）＋语言区 `grid-cols-6`（窄屏三列）；`dict-en.json` 补新按钮英文键；门 `smoke-step1-mock-contract.mjs` 新增 5 个文件读取与 S3-S7 结构判据、契约 4 转「已对」、契约 6 转「部分·点名」。
+
+**执行中抓到自己两条**：① 门的「部分·点名」档从不判失败（判定写成只有『已对』才计失败）——负控 U-β 一删自动扫描门照样绿，修成"除推迟／未做外都必须过"；这是本次会话第二条同类假绿（前一条是按函数名前缀判存在），共同形状是判据不参与裁决。② v1 谎报"08:29 截图已落盘"（目录当时不存在），v2 因此把"改前先落盘、存不出 PNG 不许动代码"写成任务 0 硬闸。
+
+**验证**：门 rc=0（判据 45 项）；`npx vitest run stage-folder-gate/step1-stage-view/slot-scope` 50 passed；`test:workbench-batch-groups` rc=0（108）；`test:table-grouping` rc=0（37）；`test:batch-row-contract` rc=0；`tsc --noEmit` rc=0；`npm run lint` rc=0（0 errors）；`tmp/nc-ui.mjs` 五条负控全红且逐字节还原；上一轮 `tmp/nc-step1.mjs` 五条重跑仍全红；真浏览器（本机 dev PID 51216）DOM 实测四要素 true、编译错误 false，改前 08:51／改后 09:01 两张 PNG 落 `交付档案/证据_20261027_UI可见改动/`（第一次 08:57 拍到另一会话在飞路由的 Build Error 覆盖层，作废重截并留记）。
+
+**未做与未核实**：第 4 步与"扫完后"两屏截图未取到（要批次数据，本机一次性账号未连助手、未选真实语料，按规矩标未取到不凑图）；一键只覆盖"读文件夹→自动扫描"，读表头仍手动（界面上明写）；U-3 助手在场时一键是否顺畅未观察；任务 3.4/4.4 的渲染级单测改由静态门承担（渲染 ExecuteStep 需整套 props），代价是门只证结构不证渲染。
+
+**并发**：`workbench-view.tsx`／`execute-step.tsx`／`siteContent.ts` 同树另有会话在写（其间还新建又删除了 `src/app/(zh)/step1-preview/`，把 dev 编译图弄成陈旧态）；本轮仍按"撤别人 hunk→git add→按原字节还原＋md5 自检"只提交自己的部分，不 push、不上站、不动支付 flag。本地一次性账号口令不落任何交付正文，只存 `worktrees/develop/tmp/reg.json`、`tmp/login.json`。
+
 ## 2026-10-27 00:20 批量台第 1 步「点掉一格真少一格」——方案→对抗式审查→修订→执行 一轮闭环（BATCH-SLOT-SCOPE）
 
 **目标**：按批准稿把第 1 步的交互契约落进真代码，核心是「点掉某一稿某一门，这一门真从这批里消失」。
