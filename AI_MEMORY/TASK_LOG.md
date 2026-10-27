@@ -1,3 +1,26 @@
+## 2026-10-27 10:00 批量台第 1 步：绑定证据分级落地（BINDING-EVIDENCE-1）
+
+**触发**：Owner 追问「你回看一下我们之前的讨论，我认为是很明确了的，为什么还是没有执行？」——上一轮交的是设计稿（`交互逻辑设计_20261027_批量台按v3_UIUX_v2.md`），他要的是照 v3 那份 UI/UX 直接做出来。本轮不再出设计，直接落代码。
+
+**做了什么（commit `b99cc7ed`，develop 分支，6 文件 +645 行）**：
+1. 新内核 `worktrees/develop/src/lib/workbench/binding-evidence.ts`——六档（实证/声明/推定/存疑/不符/未核），归属信号取表名 SKU 与解析层早有的「模块」列（`csv.ts:422-423`、`types.ts:140`），覆盖信号一律 `import { calcCoverage } from './coverage'`（`:24`），不自带 95% 阈值；「模块」列只在全部取值命中本稿 SKU 时算归属，同形不同值才算指到别稿（`ownerFromValues:85`）。
+2. 第 1 步界面 `step1-stage-view.tsx`：左栏每稿行头徽章（`:1746`）、组卡徽章（`:1008`）、组卡下独立一行依据句（`:1048`，不塞进折叠区以免破坏契约 9 的原文）；不符档把「进第 2 步」条件拼进 `canAdvance`（`:998`，去向由 `EVIDENCE_ACTION` 单一来源给），按钮换文案 `:1201`，待办条记「绑定不符」`:1650`。
+3. 待办只收「不符」、不收「存疑」（`:747`）：存疑本来就是覆盖率闸的事（`workbench-view.tsx:3628/:3820`、`execute-step.tsx:2415`），同一问题不报两遍（v3 D16）。
+4. 门 `scripts/smoke-step1-mock-contract.mjs` 增 E1–E5：内核复用 `calcCoverage` 且无自带阈值、三个 data-testid 各一处、`evaluateBindingEvidence` 只在两处被调、硬停字符串、待办只收 mismatch、六档文案有英文对照；顺带补上 S4 通过时不打印的空行（原来只在失败时有行）。
+5. 测试：`tests/unit/binding-evidence.test.ts`（新，16 条）、`tests/unit/step1-stage-view.test.tsx`（+6 条，共 42）。
+
+**实测**：`npx tsc --noEmit` rc=0；`npm run lint` rc=0（48 条既有 a11y warning）；vitest 两文件 58/58；`test:step1-mock-contract` 判据 62 项失败 0；`test:table-grouping` 37/37；`test:workbench-batch-groups` 113/113。四条负控（删 `!blockedByEvidence`、待办改收存疑、内核零交集判据改坏、删闸后跑界面测试）全部 rc=1 并点名到具体行，改回后逐字节哈希一致。
+
+**顺手修的两处自伤**：`Edit` 两次吞掉换行，把 `isIssueCell` 与「矩阵按语言取表」那条测试的首行并进了上一行（tsc 绿但形状坏了）；已补回，diff 复查为纯增量（测试文件 +69/−0）。另把没人用的 `EVIDENCE_LABEL`（lib 层中文常量）删掉，界面档位文案只走 `t()`；`EVIDENCE_ACTION` 改为组件真用（不再是死代码）。
+
+**既有红（非本轮引入）**：`node scripts/build-zh-font-subset.mjs --check` rc=1，缺「剔」「黄」两字——来自已提交旧文案（`step1-stage-view.tsx:1294`「黄描边＝…」、`t('剔除 {n} 门')`），本轮提交 + 侧命中 0（`git show -U0 b99cc7ed | grep -E '^\+' | grep -c "剔\|黄"`）。子集是生成物，规矩要求干净已提交树，本轮不动，留打包前重新生成。
+
+**未验**：没起浏览器真点这一遍（徽章要整套扫描完成状态，仓库无演示路由；只做了真组件渲染测试），视觉层未人眼确认。
+
+**产物**：`交付档案/执行报告/飞书_20261027_批量台第1步_绑定证据落地.md` ＋ 同名 `.html`；已按 10-14 通道发飞书（chunks=1，脚本 rc=0）。代码未 push、未部署。
+
+**待 Owner**：A＝把「不符」再推到整批执行前硬拦（与覆盖率闸重复、多一次提示）；B＝保持现状，下一轮补批准稿契约 5／12 ＋ 真浏览器点验（建议 B）。
+
 ## 2026-10-27 09:3x 批量台交互逻辑设计（按 10-20 那份 v3 的 UI/UX）：设计 v1 → 自查打回 → v2（DESIGN-INTERACTION-V3-ALIGN）
 
 **触发**：Owner 指 `交付档案/执行方案/批量台v3_第一性原理_交付物矩阵与归属切片_对抗式审查/`（10-20 那份）说「按这个 UIUX 做，看看整个交互逻辑要怎么设计」。本件只出设计，不动代码。
@@ -49,6 +72,44 @@
 **未做与未核实**：契约 4/5/6/12 推迟（门表可见）；真浏览器点击未做（产品要先过登录门，本会话浏览器无 cookie，未绕登录未读 cookie，验证由渲染级测试承担）；U-1 表级拦下对 `pendingCount/defaultedCount` 的影响、U-2 刷新是否带回旧语言集合＝未核实。
 
 **遗留**：`worktrees/develop` 另有他会话现场（`overflowRiskTotal`／clearance 一族／site 素材），本次仅按 hunk 暂存自己的部分（`tmp/stage-mine.mjs`，混合 hunk 跳过不合），逐名 add，未 push。
+
+## 2026-10-26 23:41 官网零申请：根因深挖 → 执行方案 v1 → 封驳 v1 → v2 → 按 v2 落地（SITE-FUNNEL-VISIBILITY-1）
+
+- 目标：Owner 报"每天进来 100 多人，没一个人申请"，提两条候选（带访客体验一次 / 首页放运行视频），要外部调研 + 对抗式审查钻到最深处，并按"审查→方案→审方案→优化→执行"四步闭环做完，不许跳步。
+- 根因（钻到底）：不是缺演示，是**没有访客级观测**。L2 分母不成立（94.7/天是 Cloudflare 域名级读数，含爬虫与自家接口；首页"像人"的 top10 IP 全是机房地址）；L3 访客看到的界面是 CSS 手绘的假界面（`home-view.tsx:193-219`、`:386-389`），"看看它怎么改语言"只滚到静态插图；L4 唯一动作是 7 项必填 + 等人工发码；L5 因此任何改版都无法验收。
+- 实测硬数：生产库 `BetaApplication` 全历史 12 行、最后一条 2026-09-29 17:05（27 天 0 申请）；nginx 10 天 `POST /api/beta-applications` 0 次（3 行命中全为 `GET→405` 扫描）；`BetaUser` 68／`InviteCodeActivation` 37 ⇒ 现有用户几乎全是手工发码拉的，官网从未当过获客渠道；`ADMIN_NOTIFY_MODE=webhook` 在位（排除"申请了没通知"）。
+- 素材真相：09-19 已有 17.3 秒真组件录屏（`video/intro-20260919/demo/out/app-16x9.mp4`，`kind: workbench-real-components`、`reuseMode: 真实组件树+网络/助手边界替身`），而首页 `grep -rn "<video" src` 0 命中、`public/videos/` 不存在、`hero.video.src` 为空死槽 ⇒ 不是没素材，是从没接线。10-24 的 v5 是排版动画不是运行画面（抽帧目视，且第 7 镜"0/175 层"配三行"已写入"自相矛盾）。
+- 方案链：`交付档案/执行方案/执行方案_20261026_官网看得见运行与量得出转化_v1.md` → 审 v1（`交付档案/审查报告/审查报告_20261026_执行方案v1_对抗式审查.md`，9 条 findings，其中 F-01 服务端强制 `name`、F-02 英文站无表单、F-03 埋点触条款变更、F-07 推 develop 会顺手替别手发布）→ v2 最终施工版（按"谁能批准"切批 B1–B6）。
+- 落地：B2 中文站申请表 7 必填 → 3 必填（`home-view.tsx` requiredOk 收敛 + 去多余 `required` + `siteContent.ts` 四标签改"（选填）"）；B4 首页演示媒体位（新增 `src/config/siteDemoMedia.ts`、`src/components/site/hero-demo-media.tsx`，`src` 空则返回 null）。服务端合同、蜜罐、限流、通知、`site-settings.ts:148-154` 垫片一字未动。
+- 原因：把"改完能不能判断有没有用"当第一判据；凡触生产写（B1 nginx、B6 发布）或触条款（B5 埋点）或推翻别手记档决定（B3）的，一律停在门里写清楚，不混进"已完成"。
+- 测试结果：`npx tsc --noEmit` rc=0（2m23s）；`npm run lint` rc=0（全树 0 errors/48 warnings，我 4 个文件单独跑 0 问题）；提交合同用隔离库（`tmp/b2-isolate.db`，`prisma migrate deploy` rc=0）实测 `201/201/400/400/400` 五例全对；真 DOM 断言必填位恰 3、`（选填）` 8 次、缺素材时 `<video>`=0 且假界面仍在、置值时 `<video>`=1 且三重标注齐、`app-card` 正确消失（不空框不双份）；负控 N4 抓到回退、还原后 MD5 逐位相同。SEO 门未获真绿：默认目标 `127.0.0.1:3000` 无服务，改指本机后 59 条 FAIL 全为 origin 不适配、内容级断言 0 红（F-14）。
+- 新挖出的雷（F-11，要紧）：`route.ts:249` 调 `tx.applicationAttribution.create()` 而该表在本地库不存在 ⇒ **develop 上申请接口自 10-24 迁移落盘起必然 500**；生产现役 `80eb4263` 不含此写路径所以暂未爆，但**下一次发布不带 `prisma migrate deploy` 就会让官网申请 100% 提交失败**。
+- 遗留问题：① F-11 需进发布清单并建议加"新 model 无迁移 ⇒ 出包红"的门；② B1 待 Owner 一句话（Cloudflare 绕路已实测证伪：令牌看不到 accounts 也看不到 zone）；③ B3 待 Owner 拍（英文站无表单是 `home-view-en.tsx:17` 记档决定，我不擅自推翻）；④ 后台已发布内容版本可能覆盖我改的标签默认值，发布须同笔处理；⑤ 未提交未推送（develop 领先远端 3 笔且同树他手在飞 11 项）；⑥ 没在真浏览器点过表单，`checkValidity()` 行为未实测。
+- 交付件（md+HTML 同目录）：`交付档案/审查报告/审查报告_20261026_官网访客零申请根因_对抗式审查`、`交付档案/执行方案/执行方案_20261026_官网看得见运行与量得出转化_v1`、`交付档案/审查报告/审查报告_20261026_执行方案v1_对抗式审查`、`交付档案/执行方案/执行方案_20261026_官网看得见运行与量得出转化_v2最终施工版`、`交付档案/执行报告/执行报告_20261026_官网申请表降级与演示媒体位_按v2施工`。
+
+## 2026-10-26 23:40 四步闭环：执行方案 v1 → 对抗式审自己（BLOCK）→ v2 → 按 v2 落地零合同部分（WRAP-PLUS1-SHIFT）
+
+- **Owner 令**：「你审查完后给我一个执行方案文档，然后再继续使用对抗式审查你给出来的文档，再给一个优化后的对抗式审查建议执行文档，最后按最后给出的对抗式审查文档去做执行，不能跳过任何一步」→ 四步全做，无跳步。
+- **第 1 步 v1**：`交付档案/执行方案/执行方案_20261026_通稿版自动换行_v1.md`（合并真机探针六条、通稿 15 稿普查、扫描与学习复用核查）。
+- **第 2 步 对抗式审查（审我自己写的 v1）**：`交付档案/审查报告/审查报告_20261026_执行方案v1自审_对抗式审查.md`＋同名 HTML。独立子路只读取证 + 主审逐条复跑，**VERDICT BLOCK，8 条 findings 全部证实、0 条驳回**，其中两条打掉作者（我）自述：
+  - **C-1**「复用现成几何引擎做执行前预演」**不成立**——`download/local-assistant/layout-geometry.js:124-131` 天生是「执行后 vs 基线」差集，`:230` 注释原文「只比"可见 + 文字 + 非组"，**与背景/图片层重叠是预期行为，不算碰撞**」，且 `server.js:2993` 基线只产 `{layerId,bounds}`（无 isText/visible）⇒ 直接喂会全被 continue、`overlaps` 恒 0（静默零风险报告）。我要的 clearance 量**全仓不存在**。
+  - **C-2** 负控 1 拿不同总体做等式闸（母版预演 vs 交付件实测 30；母版实测出框本来就是 0）⇒ 坏判据比没判据更坏。
+  - **W-1 我的 grep 漏 `.mjs`**：`resolveLearningRule` 并非"全仓零调用方"，实为「除冒烟测试外零生产调用点」（`scripts/smoke-learning-phase4.mjs:37/144/149` 命中，rc=0）。同族错误：计数正确≠对象正确。
+  - **W-2** 真总数到不了渲染器（`v15-runner.js:702-706` 每语言再 `slice(0,200)`；而 `overflow-estimator.ts` 早有 `total`）⇒ S0 不是改渲染器一行。
+  - **W-3** 「忽略整幅背景层」会连产品主图一起豁免 ⇒ 反转默认。
+  - **W-4** 新字段撞 `typography-contract.ts:147-148` 的 `fail('unknown field')`，且上传 `.catch(() => null)` 静默 ⇒ 学习数据会静默断供。
+  - **W-5** 扫描加采无耗时账；**N-1** 调用点指针应为 `v15-runner.js:127`。
+- **第 3 步 v2**：`交付档案/执行方案/执行文档_v2_通稿版自动换行_按对抗式审查修订.md`＋同名 HTML。逐条写采纳/驳回（八条全采纳、无驳回），并把"复用"改判为"新写 clearance"、S0 升为三层、豁免默认反转、S1a/S2/S3 移出本轮。
+- **第 4 步 按 v2 执行（零合同，本地可验证）**：
+  - **E1** 新建 `download/local-assistant/clearance.js`（逐文字层输出所属画板／画板可用宽／下方最近元素顶边／净空隙／判定 `roomy|needs_shift|NO_VERTICAL_ROOM|SHIFT_OVERFLOWS_ARTBOARD|not_measured`；整幅背景层含住文字时不算障碍但强制留痕 `imageOverlay`；缺几何输入一律 not_measured，禁止折算成 roomy 或 0）＋夹具 `scripts/clearance-5857-fixture.mjs`（数值取本会话 ag-psd 离线实测：图3 标题净空隙 33、画板可用宽 1600、实测增高 73 ⇒ 位移 40）＋门 `scripts/smoke-clearance.mjs` **10 条全绿**，并挂进 `test:feature-flag-whitelist`（→ `test:contracts`）。
+  - **E2** 报告诚实性三层打通：`overflow-estimator.ts` 新增 `unmeasuredCount` ⇒ `execute-step.tsx`/`workbench-view.tsx`/`local-assistant-client.ts` 透传 `overflowRiskTotal` ⇒ `v15-runner.js` 逐语言存 `overflowRiskTotalByLang` ⇒ `report-renderer.js` 标题改「N 处／全批总数未给出／另有 M 处未列出」、卡片加 `*`、`widthRatio===null` 显示「宽度未测（本版不判宽）」、界面块由 `total > 0 &&` 改三态。
+  - **E3** `smoke-report-coverage-honesty.mjs` 追加 3 组断言（250 条必须显示 250 与"另有 210 处未列出"；缺总数必须显形；缺测不得冒充"比原稿宽"）。
+- **负控全部实测会红、还原核哈希**：clearance 四发（M1 整幅阈值归零／M2 取消背景识别／M3 缺增高洗成 roomy／M4 无画板按文档猜）逐发 RED rc=1、还原 sha `3f221a103771cdcb` 一致；report-renderer 两发（退回"截断长度当计数"、缺测仍写"比原稿宽"）逐发 RED、sha `31c77ae293952262` 一致。
+- **运行证据**：`npx tsc --noEmit` rc=0；`npm run lint` rc=0（0 errors／48 warnings，警告行号均在他人既有代码）；`node scripts/smoke-clearance.mjs`、`smoke-report-coverage-honesty`、`smoke-overflow-estimator`、`smoke-layout-geometry`、`smoke-wrap-solver` 全 rc=0；`npm run test:feature-flag-whitelist` rc=0（含新门）；`smoke-release-consistency` 46 checks passed。
+- **踩到并修掉的两个自身错误**：① `clearance.js` 初稿混用 `export` 与 `module.exports`；② 三处 patch 锚点在 CRLF 工作树上按 `\n` 匹配 ⇒ 命中 0 次静默失配（本仓 `core.autocrlf=true`），改为逐文件探测 EOL 后再替换，并对每个锚点断言"命中恰 1 次"。
+- **残留检验点（如实）**：D1「双实现对拍」本轮以"夹具钉住离线实测常量"的形式满足，**未做同一 JSON 现喂两套实现的自动对拍**；W-4 的"上报失败不得静默"**本轮未改**（只登记）；`smoke-clearance` 未跑进完整 `test:contracts`（该链含建库子进程，并发下 90 秒超时会伪装成业务红，需静默机窗口）。
+- **未做／边界**：只动上列 8 个既有文件 + 3 个新文件；**未提交、未 push、未部署**，两站与生产未碰；未动摘要（S2/S3 留成对发版窗口）；未动扫描器（S1a 需真机与耗时账）；工作树里 `src/components/site/home-view.tsx`、`coverage-matrix.tsx`、`siteContent.ts`、`hero-demo-media.tsx`、`siteDemoMedia.ts` 是**另一会话（官网线）的在飞改动，我未触碰**；助手分发面改动需随安装包才在真机生效，本轮验收面是本地冒烟门，**不声称已上线**。
+- **等 Owner 拍**：① S2/S3 的成对发版窗口何时开（动摘要，四层同步 + fixture）；② 顶出画板那 66% 要不要走"扩画板高"（须先核 Amazon 各模块尺寸规范，本仓无依据）；③ W-4 的学习上传字段兼容与"上报失败非静默"要不要本轮补。
 
 ## 2026-10-26 23:2x 连走件加「今天的真工作台 / 改完之后」对照（BATCH-TODAY-VS-AFTER）
 

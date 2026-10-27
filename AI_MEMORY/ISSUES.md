@@ -2214,3 +2214,18 @@
 - **修后证据（本会话实跑）**：`npm run test:batch-workbench-guards` rc=0，**39 checks**（原 37 条能跑通时是 37；现断言拆细后 39）；负控三条全部真红——分别摘掉 `value2: String(basenameOf(entry.masterPath))`、`value4: String(q.steps.length - ordinal)`、`!batchExecutionReady` 后，门 rc=1 且点名的正是对应那条断言；两次改的都是 `design-file-card.tsx`/`execute-step.tsx`，跑完**逐字节还原**（`restored === original` 且 size 前后同为 80748／176554），`git status` 对这两文件空输出。`node -e` 复核 `test:contracts` 里 `test:batch-workbench-guards` 命中 1 次。
 - **原修法设想（保留备查）**：把抠原文的两条断言改成**行为级**判据——从 `t('…')` 的 key 里取，或断言该分支同时含 `ordinal`、`q.steps.length`、`basenameOf(entry.masterPath)` 三个标识与「未扫描」剩余数；并把这一门接进 `test:contracts`，红就不可能再潜伏。本会话未擅自改别人的闸。
 - **复跑判据（本会话实跑）**：`cd worktrees/develop && npm run test:batch-workbench-guards; echo $?` ⇒ 期望修前 rc=1（停在 `:108`），修后 rc=0 且 checks 数不少于 37。
+
+## #284　`feishu-readback.mjs` 快照缺失时仍打「表 0 行 / 缺行 240」并报 241 项 ALARM，会被读成「投影全丢」　🟡 minor（2026-10-27 10:0x 本会话实测）
+
+- **现象**：`node scripts/feishu-readback.mjs` rc=1，首两行「飞书回读闸：表 0 行 / 台账 240 任务」「缺行 240」，逐条「台账里有但表里缺行：X（投影未落地）」，最后一行才写「飞书快照不存在：AI_MEMORY/readback/records.ndjson（回读未执行）」。
+- **根因**：该脚本不自己拉表，读的是 `AI_MEMORY/readback/records.ndjson` 这份快照；文件不存在 ⇒ 读到 0 行 ⇒ 按「台账有、表里没有」逐条报缺行。真正的结论（回读没执行）排在 240 条假警报之后。
+- **反证（同一时刻直接读表）**：`lark-cli base +record-list … --json --limit 200` 与 `--offset 200` 两页共 245 行，`BINDING-EVIDENCE-1` 在第二页末行命中 1；同日新建的 `BATCH-SLOT-SCOPE`／`UI-VISIBLE-1`／`DESIGN-INTERACTION-V3-ALIGN` 也都在 ⇒ 投影没丢，是回读自身没跑。
+- **修法建议**：快照缺失时直接 exit 2，只印一句「回读未执行（缺快照）」，不逐条报缺行；或把它改成自己拉表（`sync-task-ledger.sh:91-97` 那套 lark-cli 拉取直接复用）。
+- **本轮未做**：不改别人的门；只在本轮记账时用直读表作证据（见 TASK_LOG 2026-10-27 10:00 条）。
+
+## #285　`AI_MEMORY/TASK_LOG.md` 里有一枚 NUL 字节，`grep -n "^## "` 退化成一个字面串造成计数打架　🟢 trivial（2026-10-27 10:0x 本会话实测）
+
+- **现象**：同一文件 `grep -c "^## "` 得 579，`node` 按 `split(/\r?\n/).filter(l=>l.startsWith('## '))` 得 578；`grep -n "^## "` 只印前 15 行再印 `Binary file AI_MEMORY/TASK_LOG.md matches`。
+- **根因**：文件第 644 行正文里含一个 U+0000（原文「立 Select-String 复扫敏感词命中 \u0000。」，是有人把 PowerShell 输出里的 NUL 粘进了正文），grep 随即按二进制处理。字节偏移 173646（`node -e` 逐字节扫 `b[i]===0`）。
+- **影响**：任何"数 TASK_LOG 有几个 `## ` 标题"的判据都会得到两个不同答案（本轮我因此差点怀疑 `tasklog-prepend.mjs` 吞标题，实测 `h2_before=577 → h2_after=578` 增量正确）。
+- **修法**：把那一枚 U+0000 换成字面量 `NUL` 四字；属追加型台账，建议由属主一次性处理（本轮不动，避免与并发写手撞）。
