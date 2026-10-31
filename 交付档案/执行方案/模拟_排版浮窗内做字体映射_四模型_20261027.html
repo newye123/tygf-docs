@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>模拟：字体映射长在排版浮窗里（四模型面板内切换 · 2026-10-27）</title>
+<title>模拟：排版浮窗真实使用（分组配字体 ①＋② · 段落六项 · 2026-10-31）</title>
 <style>
   :root{
     --bg:#f6f7f8; --card:#fff; --border:#e4e7ea; --fg:#1a2129; --muted:#5f6b78;
@@ -90,9 +90,40 @@
   .cell select:focus-visible,.cell input:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
   .cell .unit{font-size:10px;color:var(--muted);flex:none}
   .savebtn{border:1px solid var(--teal);background:var(--teal);color:#fff;border-radius:6px;padding:4px 9px;font-size:11.5px;font-weight:600;cursor:pointer}
-  .prev{margin-top:7px;border:1px solid var(--border);border-radius:7px;padding:6px 7px;background:var(--card)}
+  /* 预览块搬到「编辑」字段格上方（Owner 2026-10-31 令：放图二上面、边改边看） */
+  .prev{margin:0 0 8px;border:1px solid var(--border);border-radius:7px;padding:6px 7px;background:var(--card)}
   .prev .lab{font-size:10px;color:var(--muted)}
   .prev .txt{font-size:14px}
+  /* ===== 段落六项（2026-10-31）：两列标签＋控件，灰置行自带理由 ===== */
+  /* 段落默认折叠（Owner 2026-10-31 令），点标题行展开；改值重渲染后保持展开 */
+  details.para{border-top:1px solid var(--border);margin-top:6px;padding-top:6px}
+  details.para>summary{list-style:none;cursor:pointer;outline:none}
+  details.para>summary::-webkit-details-marker{display:none}
+  details.para>summary::before{content:"▸";color:var(--muted);flex:none}
+  details.para[open]>summary::before{content:"▾"}
+  details.para>summary:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}
+  details.para>summary .sum2{margin-left:auto;font-size:9.5px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .paraBody{padding-top:2px}
+  .ph{font-size:10.5px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+  .ph .sub{font-weight:400;color:var(--muted)}
+  .orig{font-size:9.5px;color:var(--muted);margin:-2px 0 5px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow{display:grid;grid-template-columns:66px minmax(0,1fr);gap:4px;align-items:center;margin-bottom:3px;font-size:11px}
+  .prow>span{color:var(--muted)}
+  .prow select,.prow input[type=number]{width:100%;border:1px solid var(--border);border-radius:5px;padding:2px 4px;font-size:11px;background:var(--card);color:var(--fg)}
+  .prow select:focus-visible,.prow input:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+  .prow.off>span,.prow.off .rd{opacity:.6}
+  .prow .rd{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .why{font-size:9.5px;color:var(--muted);margin:-1px 0 5px 70px;line-height:1.5}
+  .unit2{font-size:10px;color:var(--muted)}
+  .rowflex{display:flex;align-items:center;gap:4px}
+  .rowflex input{min-width:0}
+  /* 结果（模拟执行一次） */
+  .res{margin-top:7px;border:1px solid var(--border);border-radius:7px;padding:6px 7px;background:var(--card);font-size:10.5px;line-height:1.65}
+  .res .r{display:flex;gap:5px;align-items:flex-start}
+  .res .ok{color:var(--teal);font-weight:700;flex:none}
+  .res .no{color:var(--amber-fg);font-weight:700;flex:none}
+  .res .est{color:var(--muted);font-weight:700;flex:none}
+  .res .h{margin:2px 0 3px;font-weight:700;font-size:10.5px}
   /* 字体搜索浮层：宽度跟着面板（真实修复过的 275px 上限） */
   #fontPop{position:fixed;z-index:70;display:none;max-width:275px;background:var(--card);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow);overflow:hidden}
   #fontPop .fh{padding:6px 7px;border-bottom:1px solid var(--border)}
@@ -114,7 +145,7 @@
 </head>
 <body>
 <header class="top">
-  <h1>模拟 · 字体映射长在排版浮窗里（① 只按原稿字体 ＋  再按读数拆开，不另造页面）</h1>
+  <h1>模拟 · 排版浮窗真实使用（分组配字体 ①＋② ＋ 段落六项；避头尾/书写器/连字灰置）</h1>
   <button class="btn primary" id="btnOpen">打开排版浮窗</button>
   <button class="btn" id="btnResetWin">清窗口态（位置/折叠/贴边）</button>
   <button class="btn" id="btnResetMap">清映射</button>
@@ -123,6 +154,16 @@
   <b>这就是已上线的那个悬浮窗</b>：300px 宽、按住标题栏拖动、<kbd>▾</kbd> 折叠成一行、拖到屏幕左右缘或点 <kbd>◎</kbd> 收成边缘拉手、<kbd>Esc</kbd> 只在焦点在面板内时才关、位置与状态存本机。
   <b>Owner 2026-10-27 22:4x 拍：只做 ①＋②</b>（③ 字号阈值、④ 逐层勾选已撤下——③ 靠没标定的读数，④ 真稿 616 层不该占主界面）。文件名仍留"四模型"，因为它同时是那次四选一的对照记录。
   背景工作台照样能点（非模态），可以边看稿边调。
+</div>
+<div class="note" style="padding-top:0">
+  <b>2026-10-31 加进来的一轮</b>：字号改成可写；新增段落六项（对齐、首行缩进、左/右缩进、段前距、段后距）——<b>这六项是真的能点、能填、会算进"本次会发几项"的</b>。
+  书写器、避头尾、连字三项<b>灰着</b>，灰的理由写在每一行下面，不放假开关：
+  书写器只对「有文本框的段落文本」生效而本稿 8 层全是点文本、且今天合同锁着；避头尾 Photoshop 脚本接口里根本没有这个属性；连字对中文没有实际效果。
+  避头尾虽然改不了，但<b>扫描读得到原值</b>，面板里照实显示。
+  点最下面「模拟执行一次」可以看到执行完这份稿会怎么向用户交代——尤其是行数那句是<b>估算</b>，不是实测。
+</div>
+<div class="note" style="padding-top:0">
+  <b>2026-10-31 14:5x Owner 两句照改</b>：① <b>预览块搬到「编辑」字段格上方</b>——原来挂在面板最底，改字段得滚到末尾才看得见，现在是选哪一组、改哪个值，上面那块就跟着变；② <b>段落默认折叠</b>——标题行右侧挂一句已设摘要（没改过就写「沿用原稿」），点标题行展开；点开改值后重渲染不会自己收回，关掉面板再打开回到折叠。灰置三项（书写器／避头尾／连字）也一起收进去了，不点开不占位置。
 </div>
 
 <div class="stage">
@@ -159,16 +200,24 @@
 <script>
 (function(){
   /* ---------- 假稿数据：刻意做成能暴露各模型盲区 ---------- */
+  /* textType 与 pg（原稿段落原值）都来自扫描侧：docs/records/20260920_排版普查_实测基线.md:40-41
+     记着「39/39 层是 point 文本」且段落九项都读得到（含 kinsokuOrder/burasagari）。
+     面板里那三行灰置，显示的就是这份读回来的原值。 */
   var LAYERS=[
-    {id:'L1',name:'主标题',face:'Helvetica-Bold',size:72},
-    {id:'L2',name:'副标题 A',face:'Helvetica-Bold',size:36},
-    {id:'L3',name:'副标题 B',face:'Helvetica-Bold',size:36},
-    {id:'L4',name:'正文段 1',face:'ArialMT',size:14},
-    {id:'L5',name:'正文段 2',face:'ArialMT',size:14},
-    {id:'L6',name:'注释 a',face:'ArialMT',size:11},
-    {id:'L7',name:'注释 b',face:'ArialMT',size:11},
-    {id:'L8',name:'促销条（内部混排）',face:'ArialMT',size:14,mixed:true}
+    {id:'L1',name:'主标题',face:'Helvetica-Bold',size:72,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuHard'}},
+    {id:'L2',name:'副标题 A',face:'Helvetica-Bold',size:36,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuHard'}},
+    {id:'L3',name:'副标题 B',face:'Helvetica-Bold',size:36,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuHard'}},
+    {id:'L4',name:'正文段 1',face:'ArialMT',size:14,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:6,kinsoku:'PhotoshopKinsokuSoft'}},
+    {id:'L5',name:'正文段 2',face:'ArialMT',size:14,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:6,kinsoku:'PhotoshopKinsokuSoft'}},
+    {id:'L6',name:'注释 a',face:'ArialMT',size:11,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuSoft'}},
+    {id:'L7',name:'注释 b',face:'ArialMT',size:11,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuSoft'}},
+    {id:'L8',name:'促销条（内部混排）',face:'ArialMT',size:14,mixed:true,textType:'point',pg:{al:'LEFT',fl:0,li:0,ri:0,sb:0,sa:0,kinsoku:'PhotoshopKinsokuSoft'}}
   ];
+  /* PS 段落面板的对齐档：名字按 Photoshop 自己的常量原样给出，不翻译成近义词 */
+  var ALIGN=[['LEFT','左对齐'],['CENTER','居中对齐'],['RIGHT','右对齐'],
+    ['FULLY_JUSTIFIED','两端对齐（末行左）'],['JUSTIFY_LAST_CENTER','末行居中'],['JUSTIFY_LAST_RIGHT','末行右'],
+    ['JUSTIFY_ALL','全部对齐']];
+  var PARA_FIELDS=[['fl','首行缩进'],['li','左缩进'],['ri','右缩进'],['sb','段前距'],['sa','段后距']];
   var FONTS=['NotoSansSC-Regular','NotoSansSC-Medium','NotoSansSC-Bold','SourceHanSansSC-Regular','SourceHanSansSC-Bold',
     'SourceHanSerifSC-Regular','PingFangSC-Regular','PingFangSC-Semibold','HarmonyOSSansSC-Regular','HarmonyOSSansSC-Bold',
     'AlibabaPuHuiTi-Regular','AlibabaPuHuiTi-Bold','LXGWWenKai-Regular','MyriadPro-Regular','MyriadPro-Bold'];
@@ -183,6 +232,9 @@
   var map=loadJson(MAP_KEY,{}), win=loadJson(WIN_KEY,{});
   var lang=win.lang||'JA', model=(win.model==='2')?'2':'1', sel=win.sel||'__def';
   var open=false, folded=!!win.folded, dock=win.dock||null, collapsed=!!win.collapsed, pos=null, dragging=false;
+  /* 段落折叠态只活在本次面板打开期间：默认折叠（Owner 2026-10-31 令），
+     点开改值后重渲染不自动收回；关掉面板再打开回到折叠，与「默认」一致。 */
+  var paraOpen=false;
 
   var panel=document.getElementById('panel'), head=document.getElementById('pHead'),
       pBody=document.getElementById('pBody'), pSum=document.getElementById('pSummary'), log=document.getElementById('log'),
@@ -199,11 +251,56 @@
       if(k.indexOf('thr:')===0) return;
       var o=gget(k);
       if(o.face) n++;
+      if(o.size) n++;
       if(o.leadingPt) n++;
       if(o.tracking) n++;
       if(o.kern&&o.kern!=='follow') n++;
+      if(o.para){
+        if(o.para.al) n++;
+        PARA_FIELDS.forEach(function(p){ if(o.para[p[0]]!==''&&o.para[p[0]]!=null) n++ });
+      }
     });
     return n;
+  }
+  /** 这一组设了哪些段落项（用于摘要与执行结果） */
+  function paraSet(o){
+    var out=[];
+    if(!o||!o.para) return out;
+    if(o.para.al) out.push('对齐 '+((ALIGN.filter(function(x){return x[0]===o.para.al})[0]||['',''])[1]));
+    PARA_FIELDS.forEach(function(p){ if(o.para[p[0]]!==''&&o.para[p[0]]!=null) out.push(p[1]+' '+o.para[p[0]]+' 点') });
+    return out;
+  }
+  /* 「模拟执行一次」：照真产品的结算口径把结果说出来——写回的、没调整的、估算的分开写，不混着报。 */
+  function runReport(){
+    var setGroups=[];
+    groups().forEach(function(gr){
+      var o=gget(gr.key), b=[];
+      if(o.face) b.push('字体 '+short(o.face));
+      if(o.size) b.push('字号 '+o.size+' 点');
+      if(o.leadingPt) b.push('行距 '+o.leadingPt+' 点');
+      if(o.tracking) b.push('字距 '+o.tracking);
+      if(o.kern&&o.kern!=='follow') b.push('自动字距');
+      if(o.para&&o.para.al) b.push('对齐 '+((ALIGN.filter(function(x){ return x[0]===o.para.al })[0]||['',''])[1]));
+      if(o.para) PARA_FIELDS.forEach(function(p){ if(o.para[p[0]]!==''&&o.para[p[0]]!=null) b.push(p[1]+' '+o.para[p[0]]+' 点') });
+      if(b.length) setGroups.push({nm:gr.nm,n:gr.ls.length,b:b});
+    });
+    var h='<div class="res"><div class="h">执行结果（模拟）</div>';
+    if(!setGroups.length){
+      h+='<div class="r"><span class="est">照原稿</span><span>这一稿没改任何设置：执行只替换文字，排版一个字都不动。</span></div>';
+    } else {
+      var n=setGroups.reduce(function(s,x){ return s+x.n },0);
+      h+='<div class="r"><span class="ok">已写回</span><span>'+setGroups.length+' 组共 '+n+' 层：</span></div>';
+      setGroups.forEach(function(x){ h+='<div style="margin-left:34px">· '+x.nm+' → '+x.b.join('、')+'</div>' });
+      h+='<div style="margin-left:34px;color:var(--muted)">每项都逐字段读回比对；对不上的会在下面点名并带码，不静默吞。</div>';
+    }
+    h+='<div class="r" style="margin-top:4px"><span class="no">未调整</span><span>避头尾：Photoshop 没有这个接口，保持原样（本稿读到的是 '+
+      uniq(LAYERS.map(function(l){ return l.pg.kinsoku })).join(' / ')+'）。</span></div>';
+    h+='<div class="r"><span class="no">未调整</span><span>书写器：这 '+LAYERS.length+' 层都是点文本，书写器对它不生效。</span></div>';
+    h+='<div class="r" style="margin-top:4px"><span class="est">估算</span><span>版式复核：渲染 2 行，与计划一致；行距按字号 120% 估算。<b>这是几何估算，不是真去数了行</b>，所以报告里不会拿它断言「换行没生效」。</span></div>';
+    h+='</div>';
+    var box=document.getElementById('resBox');
+    if(box){ box.innerHTML=h; box.scrollIntoView({block:'nearest'}) }
+    say('模拟执行：写回 '+setGroups.length+' 组；避头尾与书写器如实报未调整，行数标为估算');
   }
   function say(m){ log.innerHTML='<div>· '+m+'</div>'+log.innerHTML; }
   function uniq(a){ var s={},o=[]; a.forEach(function(x){ if(!s[x]){s[x]=1;o.push(x)} }); return o }
@@ -233,9 +330,14 @@
     }
     return out;
   }
+  /** 改过设置就算一组（不再只认"设了字体"——段落项单独改也该算进结算数） */
+  function hasAny(o){
+    if(!o) return false;
+    return !!(o.face||o.size||o.leadingPt||o.tracking||(o.kern&&o.kern!=='follow')||paraSet(o).length);
+  }
   function assigned(){
     var n=0,layers=0;
-    groups().forEach(function(gr){ if(gget(gr.key).face){ n++; layers+=gr.ls.length } });
+    groups().forEach(function(gr){ if(hasAny(gget(gr.key))){ n++; layers+=gr.ls.length } });
     return {groups:n,layers:layers};
   }
   /** 一组的设置（对象形）。老数据可能是纯字符串脸名 ⇒ 归一，不炸。 */
@@ -249,13 +351,15 @@
     var cur=gget(key);
     var next=Object.assign({},cur,patch);
     // 全空 ⇒ 删掉这条（＝沿用原稿），不留空壳
-    if(!next.face&&!next.leadingPt&&!next.tracking&&(!next.kern||next.kern==='follow')) delete map[key];
+    var hasPara=next.para&&Object.keys(next.para).some(function(k){ return next.para[k]!==''&&next.para[k]!=null });
+    if(!next.face&&!next.size&&!next.leadingPt&&!next.tracking&&(!next.kern||next.kern==='follow')&&!hasPara) delete map[key];
     else map[key]=next;
     saveMap();
   }
   function gSummary(o){
     var bits=[];
     if(o.face) bits.push(short(o.face));
+    if(o.size) bits.push('字号 '+o.size+' 点');
     if(o.leadingPt) bits.push('行距 '+o.leadingPt+' 点');
     if(o.tracking) bits.push('字距 '+o.tracking+(o.trackUnit==='pct'?'%':'‰'));
     if(o.kern&&o.kern!=='follow') bits.push('自动字距 '+(o.kern==='METRICS'?'度量标准':'视觉'));
@@ -301,6 +405,12 @@
        它不再是全局第二套字体设置，而是编辑上面选中的那一组；字体族/样式/行距/自动字距都归这一组。 */
     var cur=gget(sel);
     var selGr=all.filter(function(x){ return x.key===sel })[0]||all[0];
+    /* 预览块搬到这一行上面（Owner 2026-10-31 令「应该放在图二上面位置，实时查看」）：
+       此前它挂在面板最底，改字段时要滚到最末尾才看得见；现在紧贴字段格上方，选组/改值即刷新。 */
+    var firstSet=null; gs.forEach(function(gr){ if(gget(gr.key).face&&!firstSet) firstSet=gget(gr.key).face });
+    var pf=gget(sel).face||firstSet;
+    html+='<div class="prev"><div class="lab" title="字体名与字重按当前选中这一组显示；CSS 示意，不等于 Photoshop 终态">预览（CSS 示意 ≠ PS 终态）· '+(pf?short(pf):'未指定 ⇒ 沿用原稿')+'</div>'+
+      '<div class="txt" style="font-weight:'+weightOf(pf)+';'+(pf?"font-family:'"+pf+"',sans-serif;":'')+'">译文排版预览 夏季新品 あA</div></div>';
     html+='<div class="sec"><h4>编辑：'+selGr.nm+'<span class="sub">'+(sel==='__def'?'其余层':selGr.ls.length+' 层')+'</span></h4>';
     html+='<div class="searchrow"><button class="sbtn" id="btnFaceSearch">🔍 搜索字体（1293 款）</button>'+
       '<span class="face">'+(cur.face?('脸名 '+cur.face):'还没定到唯一脸 ⇒ 不发字体')+'</span></div>';
@@ -311,6 +421,9 @@
     html+='<div class="cell"><span class="g sp"></span>字体样式<select id="selStyle"'+(cur.family?'':' disabled')+'>'+
       (cur.family?styles.map(function(s){ return '<option value="'+s+'"'+(cur.style===s?' selected':'')+'>'+s+'</option>' }).join('')
         :'<option value="">先选字族</option>')+'</select></div>';
+    /* 字号（2026-10-31 Owner 令放开）：textItem.size 是 UnitValue(pt)，执行器读回先取 .value */
+    html+='<div class="cell"><span class="g">号</span>字号<input type="number" id="inpSize" min="0.1" max="1296" step="0.1" value="'+
+      (cur.size!=null?cur.size:'')+'" placeholder="沿用原稿"><span class="unit">点</span></div>';
     html+='<div class="cell"><span class="g">行</span>行距<select id="selLeadMode">'+
       ['follow','fixed'].map(function(m){ return '<option value="'+m+'"'+((cur.leadingMode||'follow')===m?' selected':'')+'>'+
         (m==='follow'?'自动':'固定pt')+'</option>' }).join('')+'</select>'+
@@ -323,14 +436,48 @@
       (cur.trackUnit==='pct'?(cur.tracking!=null?cur.tracking/10:0):(cur.tracking!=null?cur.tracking:0))+'">'+
       '<button class="unit" id="btnTrackUnit" title="切换显示单位（值不变，仍是 PS 的 1/1000 em）">'+(cur.trackUnit==='pct'?'%':'‰em')+'</button></div>';
     html+='<div class="cell" style="opacity:.55"><span class="g">T↑</span>基线偏移<span class="v">0 点 · 本版不写</span></div>';
+
+    /* ===== 段落六项（2026-10-31）=====
+       能写的六项＝对齐＋五个缩进/间距，全部是 PS 脚本文档里真有、且是 UnitValue 的属性。
+       三项灰置不是"先不做"，是真做不了或今天不该做——每行下面写清是哪一种。 */
+    var pgSample=(selGr.ls[0]&&selGr.ls[0].pg)||LAYERS[0].pg;
+    var pg=cur.para||{};
+    var alName=(ALIGN.filter(function(x){return x[0]===pgSample.al})[0]||['','左对齐'])[1];
+    /* 默认折叠（Owner 2026-10-31 令「段落这个默认折叠」）：折叠时标题行右侧挂一句已设摘要，
+       不点开也知道这一组有没有改过段落——不然折叠＝把状态藏起来。 */
+    var paraSum=paraSet(cur).join(' · ');
+    html+='<details class="para" id="paraBox"'+(paraOpen?' open':'')+'><summary class="ph">段落<span class="sub">· 只影响这一组</span>'+
+      '<span class="sum2">'+(paraSum||'沿用原稿')+'</span></summary><div class="paraBody">';
+    var origTxt='原稿（扫描只读）：'+alName+
+      PARA_FIELDS.map(function(p){ return ' · '+p[1]+' '+pgSample[p[0]] }).join('')+
+      ' · 避头尾 '+pgSample.kinsoku;
+    html+='<div class="orig" title="'+origTxt+'">'+origTxt+'</div>';
+    html+='<div class="prow"><span>对齐</span><select id="selAlign"><option value="">沿用原稿</option>'+
+      ALIGN.map(function(a){ return '<option value="'+a[0]+'"'+(pg.al===a[0]?' selected':'')+'>'+a[1]+'</option>' }).join('')+
+      '</select></div>';
+    PARA_FIELDS.forEach(function(p){
+      html+='<div class="prow"><span>'+p[1]+'</span><div class="rowflex"><input type="number" id="para-'+p[0]+'" name="para-'+p[0]+'" data-para="'+p[0]+
+        '" min="-1296" max="1296" step="0.5" value="'+(pg[p[0]]!==''&&pg[p[0]]!=null?pg[p[0]]:'')+'" placeholder="沿用原稿">'+
+        '<span class="unit2">点</span></div></div>';
+    });
+    /* 灰置三项：① 书写器——接口有，但只对段落文本生效，且今天合同锁着；② 避头尾——接口根本没有；
+       ③ 连字——接口有，对中文没有实际效果。三种理由分开写，不合并成一句"暂不支持"。 */
+    html+='<div class="prow off"><span>书写器</span><div class="rd">不可用 · '+
+      (selGr.ls.length?selGr.ls.filter(function(l){return l.textType==='paragraph'}).length+' / '+selGr.ls.length+' 层是段落文本':'—')+
+      '</div></div>';
+    html+='<div class="why" title="只对有文本框的段落文本生效；本稿扫描 39/39 层都是点文本。此外它今天在合同里是锁死项，真要开属于合同变更。">只对段落文本生效；本稿全是点文本。</div>';
+    html+='<div class="prow off"><span>避头尾</span><div class="rd">'+pgSample.kinsoku+'　<span class="tag">只读</span></div></div>';
+    html+='<div class="why" title="Photoshop 官方脚本参考全文 0 处提到这个属性，改不了；但扫描侧读得到原值，上面就是原稿里的设置。">脚本改不了；上面是原稿原值。</div>';
+    html+='<div class="prow off"><span>连字</span><div class="rd">不适用</div></div>';
+    html+='<div class="why" title="连字只管西文单词在行末断字，中文没有这个词的概念；设了也不会改变中文段落的换行。">只管西文断字，中文不生效。</div>';
+    html+='</div></details>';
     html+='<div style="font-size:10px;color:var(--muted);margin-top:3px">这一组改完只作用于'+(sel==='__def'?'没命中分组的层':selGr.ls.length+' 层（'+selGr.ls.map(function(l){return l.id}).join('、')+'）')+'。</div>';
     html+='</div>';
-    html+='<div style="margin-top:7px"><button class="savebtn" id="btnSave">保存到本机</button> '+
+    html+='<div style="margin-top:7px;display:flex;gap:5px;flex-wrap:wrap;align-items:center">'+
+      '<button class="savebtn" id="btnSave">保存到本机</button>'+
+      '<button class="sbtn" id="btnRun">模拟执行一次</button>'+
       '<span style="font-size:10.5px;color:var(--muted)">本次会发 '+a.groups+' 组 · '+fieldItems()+' 项</span></div>';
-    var firstSet=null; gs.forEach(function(gr){ if(gget(gr.key).face&&!firstSet) firstSet=gget(gr.key).face });
-    var pf=gget(sel).face||firstSet;
-    html+='<div class="prev"><div class="lab">预览（CSS 示意，预览≠PS 终态）· '+(pf?short(pf)+' 字重 '+weightOf(pf):'未指定 ⇒ 沿用原稿')+'</div>'+
-      '<div class="txt" style="font-weight:'+weightOf(pf)+';'+(pf?'font-family:"'+pf+'",sans-serif;':'')+'">译文排版预览 夏季新品 あA</div></div>';
+    html+='<div id="resBox"></div>';
     pBody.innerHTML=html;
 
     pSum.innerHTML='<b style="color:var(--teal)">已配 '+a.groups+' 组 · 字段 '+fieldItems()+' 项</b> · 点标题栏右侧 ▾ 展开';
@@ -393,6 +540,36 @@
       gset(sel,{tracking:permille});
       render(); say('这一组字距 '+permille+'（PS 口径 1/1000 em'+(o.trackUnit==='pct'?'，显示按 %':'')+'）⇒ 结算项数已更新');
     };
+    var isz=document.getElementById('inpSize');
+    if(isz) isz.onchange=function(){
+      var v=parseFloat(this.value);
+      gset(sel,{size:(Number.isFinite(v)&&v>0)?v:''});
+      render();
+      say(Number.isFinite(v)&&v>0 ? '这一组字号设成 '+v+' 点（执行器按 0.5 点容差读回比对）'
+        : '字号清空 ⇒ 沿用原稿（不发字号）');
+    };
+    var sa=document.getElementById('selAlign');
+    if(sa) sa.onchange=function(){
+      var o=gget(sel), para=Object.assign({},o.para||{});
+      if(this.value) para.al=this.value; else delete para.al;
+      gset(sel,{para:para}); render();
+      say(this.value?'这一组对齐改成 '+((ALIGN.filter(function(x){return x[0]===sa.value})[0]||['','—'])[1])+'（＝PS 常量 '+this.value+'）'
+        :'对齐回到沿用原稿');
+    };
+    pBody.querySelectorAll('[data-para]').forEach(function(inp){
+      inp.onchange=function(){
+        var k=inp.getAttribute('data-para'), v=inp.value.trim();
+        var o=gget(sel), para=Object.assign({},o.para||{});
+        if(v==='') delete para[k]; else para[k]=parseFloat(v);
+        gset(sel,{para:para}); render();
+        var nm=(PARA_FIELDS.filter(function(p){return p[0]===k})[0]||['',''])[1];
+        say(v===''?nm+' 回到沿用原稿':nm+' 设为 '+v+' 点（属性是 UnitValue，读回要比 .value）');
+      };
+    });
+    var pb=document.getElementById('paraBox');
+    if(pb) pb.ontoggle=function(){ paraOpen=pb.open; };
+    var br=document.getElementById('btnRun');
+    if(br) br.onclick=runReport;
     var tu=document.getElementById('btnTrackUnit');
     if(tu) tu.onclick=function(){ var o=gget(sel); gset(sel,{trackUnit:o.trackUnit==='pct'?'permille':'pct'}); render(); say('字距显示单位切换（只换显示，发出去仍是 1/1000 em）') };
     var sv=document.getElementById('btnSave');
@@ -436,7 +613,7 @@
     if(dock&&collapsed){ panel.style.display='none'; (dock==='left'?tabL:tabR).style.display='flex'; (dock==='left'?tabR:tabL).style.display='none' }
     else { panel.style.display='flex'; tabL.style.display='none'; tabR.style.display='none' } }
   function openPanel(){
-    open=true;
+    open=true; paraOpen=false; /* 每次新打开＝段落回默认折叠 */
     pos=win.pos?clamp(win.pos.x,win.pos.y):clamp(vw()-324,72);
     apply(); showTabs(); render(); saveWin();
     document.getElementById('btnOpen').textContent='关闭排版浮窗';
