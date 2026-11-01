@@ -1,3 +1,27 @@
+## 2026-11-01 08:5x 生产字体排版灰度白名单全开（Owner 令「全开吧」）
+
+**背景**：Owner 问「生产站没有把字体排版更新上去？」。代码已随 `94bda516` 上线（`src/components/workbench/typography-panel.tsx:1019` 等新行为都在包内），阻因是生产库无 `typographyBetaUsersV1` 行——空名单 fail-closed（`src/lib/server/feature-flag-gating.ts:15-20`）；主开关 `typographyCustomizationEnabled` 为 true。
+
+**动作**：先 `sqlite3 .backup` 到 `/var/www/tygf/db-backup/pre-typography-whitelist-20261101.db`（13,205,504 B）；再 upsert `SiteSetting(key='typographyBetaUsersV1') = json_group_array(BetaUser.id WHERE status='active' AND deletedAt IS NULL)`。
+
+**结果**：69 个 active 账号全部入白名单（`json_array_length=69`、1,933 B、`updatedAt=2026-11-01 00:53:13` UTC），bad_ids=0；Owner 最近登录账号 `cmtzxfkhx000ywjm3lk5wc46k` 在内。无缓存层，未重启服务；无代码改动、无需部署。
+
+**验证**：`curl /api/workbench/feature-access` 未登录 200 + `false`（设计如此，不泄漏）；登录后按判定函数返回 true；工作台渲染受 `src/components/workbench/workbench-view.tsx:443,542` 控制。
+
+**边界**：1 个 active 账号 `accessExpiresAt` 已过期，按 `src/app/api/workbench/feature-access/route.ts:14-21` 仍为 false（访问期规则，未动）。
+
+**遗留**：白名单后续增删走运营台或手工写库；本文件与 ledger 未提交（待 Owner 统一提交）。
+
+## 2026-10-31 23:5x 生产发布：94bda516 上 tuyigf.com（预检 17/17 全绿、四步批量台可见、生产要求助手 3.7.28）
+
+- 目标：把测试站已验收的版本推到生产站（Owner 2026-10-31「目前这个版本可以推到生产站了」）。
+- 方案：main 落后 develop 15 笔 ⇒ 在独立干净树合出 `dce7f535`（tree `2ea6072a…` 与 `e7d49ceb` 逐位相同）；补 3.7.28 真机验收记录 `94bda516`；推 `origin/main`（无 force）；同一提交在干净树 detached 出生产包（`--allow-detached-head <sha> --allow-unsigned-beta`）⇒ 9 片分片上传 + 逐片 md5 + 整包 sha256 核对 ⇒ `deploy/deploy-release.sh`。
+- 修改文件：`docs/acceptance/3.7.28_2026-10-31_win11-laptop-dcbf37fd.json`（新增，+28 行，五项 pass 全部对得上 10-31 真机证据）；本条目与 `AI_MEMORY/ledger.jsonl`。
+- 服务端变更（不在仓库）：`/var/www/tygf/.env` 两行——`NEXT_PUBLIC_LOCAL_ASSISTANT_DOWNLOAD_URL` 与 `…_VERSION` 由 3.7.15 改 3.7.28（备份 `.env.bak-20261031-before-94bda516`）；`SiteSetting.featureFlagsV1` 的 `batchWorkbenchEnabled` false→true（Owner 当场拍板，与测试站一致；DB 备份 `db-backup/pre-flagflip-20261031-94bda516.db`）。
+- 原因：`release:check` 要求 .env 内助手版本与本包身份一致，否则构建前硬失败；批量入口被 2026-10-22 的旧覆盖关着，生产首页实测 0 处入口，与测试站不一致。
+- 测试结果（真实读数）：预检 17 道门全 PASS、0 FAIL（`test:contracts` 364s、`test:trust-chain` 94s；密钥唯一性门因无 `.env` 跳过并自证）；包 54,441,310 B、SHA-256 `37FB8BE6…AC85`，9 片 md5 全 OK；部署 rc=0——DB 备份 `pre-schema-20261031-233944-94bda516d57f.db`、schema in sync、partial unique index guard OK、三服务 active；`/api/runtime-provenance` = production / BOUND / `94bda516…` / expectedAssistantVersion 3.7.28；`https://tuyigf.com` 200（0.107s）、`/downloads/tygf-engine-setup-3.7.28.exe` 200/25,545,674 B；真浏览器打开 `https://tuyigf.com/#batch` 见「单个设计稿 / 多个设计稿」切换与四步流程（准备素材→智能检测→审核确认→生成交付）。
+- 遗留：① 生产现在要求助手 3.7.28，仍装旧版（3.7.15）的用户须重装新包才能继续用；② 失败尝试留下的半成品目录 `/var/www/tygf-releases/.failed-20261031T2340-94bda516`（63 MB）只挪未删，等 Owner 一句话可清；③ 生产库自 10-22 起积分包/人工二维码/人工确认收款三项为 true，Owner 已确认保持现状；④ 本次开关改动直连 sqlite 完成，未写运营台审计日志（已留 DB 备份与原值）。
+
 ## 2026-10-27 23:17 排版分组两刀落地：助手侧契约（执行器 1.3.0，旧信封逐字节不变）＋真面板撤下字号分布块（Owner 令）
 
 - 触发：Owner 三句「这个（本稿字号分布）可以去掉了／图二图三这些说明要可折叠，现在太占位置了／然后可以做真实的执行了，推 GITHUB 后再部署到测试站」。
