@@ -67,6 +67,18 @@ else
   fi
 fi
 
+# ---------- bundle 冷备闸（GitHub 之外的第二副本，2026-11-02 加） ----------
+# 为什么单列一道：上面那道只保证「GitHub 有一份」，账号级事故（仓被删／密钥吊销／误删分支）
+# 会连带丢掉全部记账历史。bundle 是能从零 clone 回来的离线包，落在服务器上。
+# RPO 定为 7 天：GitHub 那条链是 RPO 0，这条是兜底，落后几笔属正常窗口。
+bd_code=0
+if [ "${CONTROL_PLANE_SKIP_BACKUP:-0}" = "1" ]; then
+  echo "bundle 冷备闸：按 CONTROL_PLANE_SKIP_BACKUP=1 跳过（跳过即视为未验证）"
+else
+  bd_out="$(bash scripts/backup-ledger-bundle.sh --verify-only 2>&1)"; bd_code=$?
+  printf '%s\n' "$bd_out"
+fi
+
 # ---------- 飞书回读闸（单向投影的反向对账） ----------
 rb_code=0
 echo
