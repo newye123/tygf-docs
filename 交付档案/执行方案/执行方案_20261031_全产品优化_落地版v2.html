@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全产品优化·落地执行方案 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:var(--pad) var(--pad) 72px;display:flex;flex-direction:column;gap:28px}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.25;margin:0;letter-spacing:-.01em}
+.standfirst{margin:0;color:var(--ink-2);max-width:72ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--muted);font-family:var(--font-mono)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.16rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+h2 .sn{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);font-weight:500}
+h3{font-size:.98rem;margin:0;color:var(--ink)}
+p{margin:0;max-width:74ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.2vw,1.18rem);line-height:1.6;max-width:56ch;font-weight:500}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-display);font-size:1.5rem;font-weight:600;line-height:1.2}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:580px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{background:var(--sunk);font-size:.76rem;letter-spacing:.04em;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.card p{font-size:.92rem;color:var(--ink-2)}
+.tag{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:16px 18px;font-size:.93rem;color:var(--ink-2)}
+.callout strong{color:var(--warn)}
+.notes{font-size:.85rem;color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.78rem;color:var(--muted);font-family:var(--font-mono)}
+ul.plain{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px;font-size:.93rem;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">图译工坊 · 执行方案 <span class="sep">/</span> 2026-10-31 <span class="sep">/</span> v2 终稿</div>
+  <h1>全产品优化·落地执行方案 v2</h1>
+  <p class="standfirst">工作台主体已落地，剩余四块：官网说清"12 份稿 × 每份 12 种语言"、首次使用六状态、报告入口收口、排版证据补齐。现场风险大于代码风险。</p>
+  <div class="meta">
+    <span>基线 origin/develop = e7d49ceb</span>
+    <span>本地 = 71529c7c + 107 未提交</span>
+    <span>状态：方案定稿 / 未实施</span>
+    <span>对应：T01–T26</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>先收口现场，再改官网一句话、报告一处文案，最后用真机走 T01–T26；多稿报告入口与手动停止属新能力，单独拍板，不混在 UI 批。</p>
+    <p class="notes">工作台 R1–R5 已在 611c53ce 落地，fa822618 修折叠点，6e69a8ca 是记录，e7d49ceb 是排版预览上移。本方案取代审查稿 v1。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">12</span><span class="k">单次最多 PSD/PSB 份数（design-file-card.tsx:140）</span></div>
+    <div class="stat ok"><span class="n">12</span><span class="k">每份最多目标语种（batch-limits.ts:6）</span></div>
+    <div class="stat warn"><span class="n">7</span><span class="k">本地与远端重叠文件（1 处同锚点冲突）</span></div>
+    <div class="stat bad"><span class="n">1</span><span class="k">真实执行缺报告直连入口</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>现场事实</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>已完成，不要重做</h3>
+      <ul>
+        <li>第 1 步布局、单文件导表、第 2/3 步整理、第 4 步范围与费用口径（611c53ce）</li>
+        <li>表格上限整链 20MB（代码已到两端）</li>
+        <li>折叠点出口修复（fa822618）、R6 上测试站记录（6e69a8ca）</li>
+        <li>排版预览块上移常显（e7d49ceb）</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>必须尊重的现场</h3>
+      <ul>
+        <li>本地树落后 4 笔，带 107 项未提交（主题是助手提权/COM 429 等另一路工作）</li>
+        <li>7 个文件两边都动过；workbench-scope-runtime.test.tsx 同锚点冲突</li>
+        <li>check-wb-tokens.mjs、test:wb-four-screens 只在本地，远端没有</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>能力事实卡（决定官网能写什么）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>主张</th><th>代码依据</th><th>边界</th></tr></thead>
+      <tbody>
+        <tr><td>单次最多 12 份 PSD/PSB</td><td class="mono">design-file-card.tsx:140</td><td>加入本批的稿件数上限</td></tr>
+        <tr><td>每份最多 12 个目标语种</td><td class="mono">batch-limits.ts:6；quote/route.ts:53</td><td>去重后的语言门数，不是逐稿格相加</td></tr>
+        <tr><td>多稿按顺序逐份执行</td><td class="mono">execute-step.tsx:2528 / 2563 / 2616</td><td>每份一笔独立批次，不能写成并发出 144 个文件</td></tr>
+        <tr><td>13 个语言版本</td><td class="mono">execute-step.tsx:2400-2403</td><td>逐稿语言格合计，仅两稿重复一门时出现</td></tr>
+        <tr><td>报告文件确实生成</td><td class="mono">v15-runner.js:905 / 965；server.js:8137</td><td>写在产物同目录，网页无直连入口</td></tr>
+        <tr><td>只重建报告不重跑 PS</td><td class="mono">server.js:8368-8413；execute-step.tsx:1973</td><td>仅限本次 attempt</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>剩余缺口</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>缺口</th><th>证据</th><th>处理</th></tr></thead>
+      <tbody>
+        <tr><td>G1</td><td>官网没有"一次 12 份稿"</td><td class="mono">siteContent.ts:867 / 886 / 898 / 901 / 1017-1018</td><td>E1 中文默认值＋FAQ；英文同改</td></tr>
+        <tr><td>G2</td><td>费用不必上网</td><td>首页无价格段；积分包页属交易页</td><td>不新增；不动积分包页</td></tr>
+        <tr><td>G3</td><td>中文可后台覆盖，英文不能</td><td class="mono">site-copy.ts:4/18；home-view-en.tsx 直接 import</td><td>E1 先读 ACTIVE 覆盖；英文随发版</td></tr>
+        <tr><td>G4</td><td>真实执行无报告直连入口</td><td class="mono">execute-step.tsx:2357 / 3411；reportHtml 仅置 null</td><td>如实写；新增入口列 D1</td></tr>
+        <tr><td>G5</td><td>多稿只留最近一稿进度</td><td class="mono">execute-step.tsx:2530-2538；batch-result-panel.tsx:9/75/91</td><td>如实写；逐稿入口列 D1</td></tr>
+        <tr><td>G6</td><td>多稿无手动停止</td><td class="mono">execute-step.tsx:1450 / 1470 / 1498 仅自动停</td><td>不新增；列 D2</td></tr>
+        <tr><td>G7</td><td>文案说 report 目录，实际在产物同目录</td><td class="mono">siteContent.ts:801 vs v15-runner.js:905</td><td>先实测再改文案，不改路径</td></tr>
+        <tr><td>G8</td><td>20MB 代码到、包未到</td><td class="mono">table-file.ts:14；助手版本 3.7.28</td><td>新包前不写已支持</td></tr>
+        <tr><td>G9</td><td>首次使用六状态缺体系</td><td>母方案 §6</td><td>E2 逐状态取证</td></tr>
+        <tr><td>G10</td><td>排版五项已有、缺证据</td><td class="mono">typography-panel.tsx:217/236/270/763/869/958-962/1019-1025</td><td>E4 只补实测</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>分阶段执行</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag">E0</span><h3>现场收口（0.5 天）</h3></div>
+      <p>fetch 取最新 origin；从 origin/develop 建独立 worktree；跑基线门禁（tsc、lint、contracts、workbench-scope、batch-workbench-guards、step1-mock-contract、zh-font）；按符号重核施工坐标；产出基线卡、入口迁移卡、文案事实卡。</p>
+      <p class="notes">判据：三卡齐、门禁全绿或存量红有对照、7 个重叠文件冲突点逐条登记。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">E1</span><h3>官网：12 份稿 × 每份 12 种语言（1–2 天）</h3></div>
+      <p>先读测试站 ACTIVE 覆盖；改 siteContent.ts 的 eyebrow / batchChip / batchCardTitle / batchSteps[1] 并加一条 FAQ；英文 siteContentEn.ts 同改；不新增费用区块；新字跑 build-zh-font。</p>
+      <p class="notes">判据：test:seo-consistency、test:content-studio-draft、四视口截图、逐句对能力卡。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag">E2</span><h3>首次使用六状态（1 天）</h3></div>
+      <p>未登录 / 无权限 / 未装助手 / 掉线 / 版本不匹配 / 就绪：每态一条原因＋出口；不改权限与激活规则；诊断工具不进界面。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">E3</span><h3>报告：说清在哪、怎么重建（1–2 天）</h3></div>
+      <p>实测报告落盘位置；修正"report 目录"这句；模板只调顺序与折叠；数字同源；失败只重建报告；多稿如实写只留最近一稿。</p>
+      <p class="notes">依据：v15-runner.js:905；siteContent.ts:803；execute-step.tsx:1973 / 3356-3374。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">E4</span><h3>排版五项补证据（0.5 天）</h3></div>
+      <p>范围 / 单位 / 草稿 / 关闭保留 / 执行中只读，逐项实测截图；不改结构，不引入分组字体。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag">E5</span><h3>共用 UIUX 补缺口（0.5–1 天）</h3></div>
+      <p>14px 基准、间距级差、单一主前进、状态不靠颜色、焦点归位、局部滚动、对比度实测 4.5:1 / 3:1。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">E6</span><h3>真机联调与发布（2–3 天，Owner 在场）</h3></div>
+      <p>推 GitHub → 测试站出包 → 真导表/确认/执行/报告 → 2 稿验证逐份执行 → 负控 → T01–T26 填状态 → Owner 同意后上生产。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>施工坐标（origin/develop e7d49ceb）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>用途</th><th>位置</th></tr></thead>
+      <tbody>
+        <tr><td>官网中文默认值</td><td class="mono">siteContent.ts:867 / 886 / 898 / 901 / 1017-1018；:456；:801 / 803</td></tr>
+        <tr><td>官网英文默认值</td><td class="mono">siteContentEn.ts:13 / 37 / 57 / 69 / 72 / 197 / 217-218</td></tr>
+        <tr><td>中文渲染与合并</td><td class="mono">home-view.tsx:104；site-copy.ts:4 / 18</td></tr>
+        <tr><td>12 份稿 / 12 门语言</td><td class="mono">design-file-card.tsx:140；batch-limits.ts:6；quote/route.ts:53</td></tr>
+        <tr><td>多稿逐份执行</td><td class="mono">execute-step.tsx:2528 / 2563 / 2616；lastBatchId :2530-2538</td></tr>
+        <tr><td>报告状态与重建</td><td class="mono">execute-step.tsx:1973 / 3054-3056 / 3061；siteContent.ts:801 / 803</td></tr>
+        <tr><td>报告落盘</td><td class="mono">v15-runner.js:905 / 965；server.js:8137 / 6916 / 8368-8413</td></tr>
+        <tr><td>报告模板</td><td class="mono">report-renderer.js（742 行）:710 / 716-725</td></tr>
+        <tr><td>导表入口</td><td class="mono">workbench-view.tsx:2825 / 4001 / 4020</td></tr>
+        <tr><td>排版</td><td class="mono">typography-panel.tsx:217 / 236 / 270 / 763 / 869 / 958-962 / 1019-1025；接线 workbench-view.tsx:6153</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="notes">行号只对 e7d49ceb 有效；施工前按符号复核，变了就以符号为准并更新本表。</p>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>验收矩阵（可判定版）</h2>
+  <p class="lede">每条必须给"命令＋退出码/输出摘要"或"同视口同数据配对截图"；两者都没有写"未验证"。不写"截图或断言"。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>编号</th><th>判据</th><th>证据形态</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">T01</td><td>首屏可见"12 份稿"与"每份 12 个目标语种"；3 名陌生人复述能说出多份稿、每份多语、逐份做</td><td>截图＋3 条复述记录</td></tr>
+        <tr><td class="mono">T02</td><td>两个主按钮到真实申请/登录后工作台；老用户入口可用</td><td>URL＋截图</td></tr>
+        <tr><td class="mono">T03</td><td>中文默认值、后台覆盖、英文站一致；发布与回滚各一次</td><td>test:content-studio-draft＋前后截图</td></tr>
+        <tr><td class="mono">T04</td><td>六状态各有原因与出口</td><td>六条路径截图＋出口 URL</td></tr>
+        <tr><td class="mono">T05</td><td>11 稿长名下目录不横滚，选中清晰</td><td>两档截图＋scrollWidth 读数</td></tr>
+        <tr><td class="mono">T06</td><td>扫描/读表次数与基线一致；失败可重试、停止有落点</td><td>计数＋截图</td></tr>
+        <tr><td class="mono">T07</td><td>多余表只提醒；缺表按原规则</td><td>夹具输出</td></tr>
+        <tr><td class="mono">T08</td><td>真实文件导入后表页与语言可核查</td><td>截图＋解析结果</td></tr>
+        <tr><td class="mono">T09</td><td>取消/损坏/空表保留旧表</td><td>三次操作后截图</td></tr>
+        <tr><td class="mono">T10</td><td>导入中切稿，迟到响应不写错对象</td><td>workbench-scope 夹具断言</td></tr>
+        <tr><td class="mono">T11</td><td>换表/改语言后应失效的确认失效</td><td>摘要前后差异</td></tr>
+        <tr><td class="mono">T12</td><td>查看语言不改执行语言</td><td>范围前后读数</td></tr>
+        <tr><td class="mono">T13</td><td>0 待确认≠已检测；知悉≠内容决定</td><td>空态/已检态截图</td></tr>
+        <tr><td class="mono">T14</td><td>改译文后确认/检测/引用一致，不串语言</td><td>两门语言断言</td></tr>
+        <tr><td class="mono">T15</td><td>矩阵常显、同源、查看不改范围</td><td>计数＋范围值</td></tr>
+        <tr><td class="mono">T16</td><td>绑定归属不能被一键知悉绕过</td><td>负控截图</td></tr>
+        <tr><td class="mono">T17</td><td>排版五项逐条成立</td><td>五步截图＋test:typography-picker</td></tr>
+        <tr><td class="mono">T18</td><td>两稿 12+1=13 时显示 13；当前稿预估与整批费用分开</td><td>真数据截图或"未验证"</td></tr>
+        <tr><td class="mono">T19</td><td>确认后输入变化，旧确认不可启动</td><td>负控截图</td></tr>
+        <tr><td class="mono">T20</td><td>进度来自回执；未知先核对</td><td>日志＋界面对照</td></tr>
+        <tr><td class="mono">T21</td><td>部分失败列清完成/未完成；退款以账务为准</td><td>流水＋报告截图</td></tr>
+        <tr><td class="mono">T22</td><td>报告失败只重建，不重跑 PS、不重复冻费</td><td>重建前后 attempt/积分</td></tr>
+        <tr><td class="mono">T23</td><td>报告与产物入口可找到；下一批不删产物</td><td>目录截图＋两批对照</td></tr>
+        <tr><td class="mono">T24</td><td>五档视口可用；键盘可走；两处对比度实测</td><td>五张截图＋两个数值</td></tr>
+        <tr><td class="mono">T25</td><td>单稿全链路仍可用</td><td>回归记录</td></tr>
+        <tr><td class="mono">T26</td><td>同视口同数据前后截图</td><td>成对截图（带时间与 SHA）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>决策点（不做也能交付）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>编号</th><th>问题</th><th>推荐</th><th>代价</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td>多稿每稿报告入口 / 逐稿结果留存</td><td>先不做，如实写只留最近一稿</td><td>做＝新增逐稿状态与读取接口，属合同扩面</td></tr>
+        <tr><td class="mono">D2</td><td>多稿手动停止</td><td>先不做，保留自动停止并说明边界</td><td>做＝涉及 PS 任务取消与退款语义</td></tr>
+        <tr><td class="mono">D3</td><td>20MB 助手新包何时出</td><td>先按旧包上限对外</td><td>不做则 8–19MB 表不可用</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>反思：v1 哪里没做到、为什么</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>没做到</th><th>根因</th><th>解决</th></tr></thead>
+      <tbody>
+        <tr><td>指针取自本地脏树</td><td>先读本地树再写方案</td><td>全部按 e7d49ceb 重取，按符号复核</td></tr>
+        <tr><td>把能力存在当入口存在</td><td>只看生成代码，没看渲染条件</td><td>报告单列"有文件无直连"，E3 先实测</td></tr>
+        <tr><td>本地独有脚本当既有门禁</td><td>没在远端 package.json 查</td><td>剔除，只用远端脚本</td></tr>
+        <tr><td>12 与 13 混写</td><td>两个量纲当成一个</td><td>能力卡拆开，T18 用真数据</td></tr>
+        <tr><td>漏中英文控制面差异</td><td>只核了合并层</td><td>E1 先读 ACTIVE；英文随发版</td></tr>
+        <tr><td>漏母方案 §8/§11/§12</td><td>只沿用了 T 编号</td><td>补入同原文提示、恢复语义、滚动与对比度</td></tr>
+        <tr><td>判据不可判定</td><td>求快没定义证据形态</td><td>每条固定命令或配对截图</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>风险、回滚、交付</h2>
+  <p>高风险：脏树合并、真机扣费、发布轨、助手新包。中风险：官网文案与覆盖、字体子集、共享 CSS。</p>
+  <p>回滚：每批独立提交只撤本批；官网走内容版本；工作台不回滚历史账务与已生成文件；不整树重置、不 force push、不删用户文件。</p>
+  <p>交付：本方案 md＋HTML、审查报告 md＋HTML、T01–T26 状态表、真机证据、已知限制。TASK_LOG 用容器根 <code>tasklog-prepend.mjs</code>，飞书只走 <code>FEISHU_BOT_WEBHOOK</code>。</p>
+</section>
+
+<footer class="footer">
+  未核实项：测试站 ACTIVE 覆盖内容 / 实际助手包报告落盘位置 / 生产后台写入门槛 / 本地 107 项归属。本文件未修改任何业务代码。
+</footer>
+
+</main>
+</body>
+</html>

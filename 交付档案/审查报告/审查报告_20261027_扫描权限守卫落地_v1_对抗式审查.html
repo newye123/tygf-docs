@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对抗式审查 · 执行方案 v1《扫描权限守卫落地》</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--red);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--red);font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>对抗式审查：执行方案 v1《扫描权限守卫落地》</h1>
+<p class="sub">基线 <span class="mono">70814271..WORKTREE</span>（未提交）· Round 1/3 · 风险档 Medium · 我的 5 文件净增 <span class="mono">+157/−6</span>（逐文件 numstat 同拍实测）· 2026-10-27 17:3x</p>
+
+<div class="verdict"><b>VERDICT：打回</b><br>
+v1 自称的判据「秒拒且不误伤」一条都没被证明：判据只看「我是不是管理员」，不看 Photoshop 是什么权限；42 条断言全是读源码文本＋纯函数真值表，<b>没有一次真请求</b>。另有两条连带：会误拒内置引擎通道的扫描，会把 <span class="mono">/ping</span> 的"就绪"状态改坏且没测这个方向。</div>
+
+<h2>已证实的缺陷（本次引入）</h2>
+
+<h3>I-01 · 会把「两边都是管理员」的正常机器永久挡在门外 <span class="sub">Important</span></h3>
+<div class="callout bad">
+放行条件写的是「最近 10 分钟握过手」（<span class="mono">server.js:5715-5718</span>）。握手只有六个写入点：<span class="mono">:6809/:6812</span>（执行链）、<span class="mono">:8342/:8404/:8552</span>（检测／legacy 执行）、<span class="mono">:8684</span>（<b>进程启动后 300 毫秒的一次性预热</b>，<span class="mono">cfg.psExePath</span> 不存在就不跑、失败静默）。<b>扫描成功本身不写握手</b>——<span class="mono">runPreparationScan</span>（:5764 起）里没有一处 <span class="mono">markPhotoshopReady</span>。<br>
+⇒ 助手与 Photoshop 都以管理员运行（COM 其实能通）的机器，第一次扫描要靠开机预热赌运气；预热失败或过了 10 分钟窗口就被拒，而<b>被拒又永远不产生新握手记录</b>——只有手动点一次「检测 Photoshop」才解套。<br>
+修法：判据换成「<b>实测两边完整性级别，我的更高才拒</b>」。探针本机实测：Photoshop PID 25136 读到 <span class="mono">RID=8192</span>，整条命令 0.73 秒。
+</div>
+
+<h3>I-02 · 内置引擎通道的扫描会被这条与 COM 无关的守卫拒掉 <span class="sub">Important</span></h3>
+<div class="callout bad">
+守卫在 <span class="mono">if (!psRunning &amp;&amp; channel !== 'engine') { 202 }</span>（<span class="mono">:5727-5736</span>）之后（<span class="mono">:5740-5746</span>）⇒「PS 没开＋旗标开＋内置引擎可用」这条路会被 422 拒，而这条路根本不碰 COM。出厂 <span class="mono">pcExecutorEnabled=false</span> ⇒ 暂无活体伤害，但代码是错的。<br>
+修法：I-01 的新判据天然要求「实测到 PS 的级别」，PS 不在跑就不拒 ⇒ 一并解决；再加一条门断言钉住。
+</div>
+
+<h3>I-03 · 改了 429 的归类，连带把 /ping 的「就绪」改坏 <span class="sub">Important</span></h3>
+<div class="callout bad">
+<span class="mono">markExecutionFailure</span>（:2678-2696）靠一张码清单决定要不要置 <span class="mono">photoshopAutomationStatus='unavailable'</span>（<span class="mono">:2682-2690</span>，含 <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span>）。管理员场景下的 429 被我改判成新码（<span class="mono">:1717-1723</span>、<span class="mono">:3581-3587</span>）后<b>不在清单里</b> ⇒ 执行链撞跨权限时不再标 unavailable，<span class="mono">/ping</span> 继续报就绪。<br>
+同类清单已找齐：全仓列 <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span> 的码集共 6 处，唯一该同步而没同步的就是 <span class="mono">:2683</span>。
+</div>
+
+<h3>I-04 · 新守卫从未真跑过一次 422 <span class="sub">Important</span></h3>
+<div class="callout bad">
+V1–V5 里最接近真跑的只有 <span class="mono">node server.js --self-test-errors</span>（测纯函数分类）；「路由接线」「改判顺序」都是对源码做正则 ⇒ 判据 1（422 且不起后台任务）事实上未被证明。<br>
+修法：加<b>只在源码运行时生效</b>的调试注入 <span class="mono">TYGF_DEBUG_ASSISTANT_RID</span>（只能把"我自己"冒充成更高权限，方向更严不放宽），从源码起一台隔离端口引擎，真发一次 <span class="mono">POST /v1.5/preparation/scan</span> 断 422 ＋ 任务目录未创建；负控：冒充 8192 ⇒ 不拒。
+</div>
+
+<h3>I-05 · 判据不可用时静默放行，不留痕 <span class="sub">Nit</span></h3>
+<div class="callout"><span class="mono">assistantElevated()</span> 的 catch 直接写 false（<span class="mono">:535-536</span>）。fail-open 本身是对的（不能因判据坏就拒正常用户），但盘上零痕迹。修法：抛错时追一行 <span class="mono">outcome=privilege_probe_failed</span>，只写值/类型。</div>
+
+<h2>存量与环境</h2>
+<table><thead><tr><th style="width:56px">ID</th><th>内容</th></tr></thead><tbody>
+<tr><td class="id">P-01</td><td>tsc 的唯一红在<b>别手在飞</b>文件：该文件 numstat 42/5、mtime 17:14:19（我 tsc 跑在 17:12:17–17:16:17）、符号在其 diff 的 <span class="mono">+</span> 侧 2 次、HEAD 版无此调用 ⇒ 环境红。但 v1 只把 rc=2 写进表格、没附同拍证据，下游会读成"tsc 已验绿"。</td></tr>
+<tr><td class="id">P-02</td><td>源头在安装器：<span class="mono">installer.iss:101</span>「装完立即启动」。<b>不改安装器，别的用户还会再来一遍</b>；本机无 <span class="mono">ISCC.exe</span> ⇒ 不能编译验证，v1 没动它是对的，但最后一公里不在代码里，属永远需人审的路径。</td></tr>
+<tr><td class="id">P-03</td><td>两把尺子不一致：技能的 <span class="mono">risk_scan.sh</span> 报 <span class="mono">server.js +8769/-8689</span> 并抛 SPLIT_REQUIRED；同树 <span class="mono">git diff --numstat</span> 报 <span class="mono">84/4</span>。以 numstat 为准，工具差异只作记录。</td></tr>
+</tbody></table>
+
+<h2>未决</h2>
+<ul>
+<li><b>U-01</b> 「两边都管理员」的真实现场人数 ⇒ 要云端按新码统计（新码须新版出厂）；短期只能按 <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span>＋约 12 分钟耗时反查历史批次，<b>我没跑这个反查</b>。</li>
+<li><b>U-02</b> 普通权限进程能否读高权限进程 RID ⇒ 本机此刻无高权限进程可测；设计上该方向永不被用到（只有 <span class="mono">elevated=true</span> 才探 PS）。未核实，不影响判据。</li>
+<li><b>U-03</b> 改动留在脏区的处置（会被别手提交吞掉或随部署意外上线）⇒ 需 Owner 拍。</li>
+<li><b>U-04</b> <span class="mono">test:contracts</span> 整串未跑（含 <span class="mono">smoke-user-visible-copy</span>、<span class="mono">smoke-release-consistency</span>）⇒ 同树 15+ 文件在飞，红无法归属；覆盖缺口如实记，不写成通过。</li>
+</ul>
+
+<h2>更正</h2>
+<div class="callout ok"><b>原说法</b>：v1 第三节「放行条件＝最近 10 分钟握过手，所以不会误伤」。<br>
+<b>反证</b>：握手六个写入点里没有"扫描成功"；预热只在开机 300 毫秒一次性跑且失败静默。<br>
+<b>新结论</b>：以"我是否管理员"为判据必然存在误伤面；v2 必须换成"两边级别实测比较"。</div>
+
+<h2>交给人的部分</h2>
+<p class="sub">风险档 Medium ⇒ 1 人复核；涉及<b>安装器</b>（P-02）与<b>面向用户的拒绝路径</b>（I-01/I-02）⇒ 无论档位都要人拍。批准绑定具体 commit；本改动尚未提交，任何批准对后续 commit 自动失效。</p>
+
+<footer>图译工坊 · 对抗式审查 Round 1/3 · 对应 md：交付档案/审查报告/审查报告_20261027_扫描权限守卫落地_v1_对抗式审查.md</footer>
+</main></body></html>

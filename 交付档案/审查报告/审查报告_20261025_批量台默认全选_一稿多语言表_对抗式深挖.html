@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>审查报告 · 批量台默认全选 · 一稿多语言表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(26px,5vw,52px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,5vw,48px)}
+.masthead{display:flex;flex-direction:column;gap:13px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4vw,2.15rem);line-height:1.28;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1rem}
+.verdict{border:1px solid var(--bad);border-left-width:6px;background:var(--bad-soft);border-radius:var(--radius);padding:15px 18px;display:flex;flex-direction:column;gap:5px}
+.verdict .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict .v{font-family:var(--font-display);font-weight:700;font-size:1.16rem;color:var(--ink)}
+.verdict p{margin:0;font-size:.88rem;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px}
+.stat{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:10px 12px}
+.stat .v{font-family:var(--font-mono);font-size:1.22rem;font-weight:600;line-height:1.2}
+.stat .l{font-size:.72rem;color:var(--muted);margin-top:2px;line-height:1.4}
+.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-family:var(--font-display);font-size:1.14rem;font-weight:700;margin:0;letter-spacing:-.005em}
+h2 .n{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);margin-right:8px;letter-spacing:.06em}
+.lead{margin:0;color:var(--ink-2);font-size:.93rem;max-width:72ch}
+.table{width:100%;border-collapse:collapse;font-size:.84rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.table thead th{background:var(--sunk);font-family:var(--font-mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.table tbody tr:last-child td{border-bottom:0}
+.table td.mono,.mono{font-family:var(--font-mono);font-size:.79rem;white-space:nowrap}
+.table td.wrap-cell{min-width:14ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.card .h{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
+.card p{margin:0;font-size:.82rem;color:var(--ink-2)}
+.tag{font-family:var(--font-mono);font-size:.65rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);white-space:nowrap}
+.tag.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.tag.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.tag.acc{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:11px 14px;font-size:.86rem;color:var(--ink-2)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout b{display:block;color:var(--ink);margin-bottom:2px;font-size:.9rem}
+.gates{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.gate{display:grid;grid-template-columns:52px minmax(0,1fr) minmax(0,1fr);gap:12px;padding:10px 13px;border-bottom:1px solid var(--line);font-size:.84rem}
+.gate:last-child{border-bottom:0}
+.gate .p{font-family:var(--font-mono);font-weight:600;font-size:.8rem;color:var(--accent)}
+.gate .a strong{display:block;font-size:.86rem}
+.gate .a span{color:var(--muted);font-size:.78rem}
+.gate .b{color:var(--ink-2);font-size:.8rem}
+.gate .b em{font-style:normal;color:var(--warn);font-weight:600}
+@media (max-width:760px){.gate{grid-template-columns:44px 1fr}.gate .b{grid-column:2}}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.7;color:var(--ink-2);margin:0}
+.notes{display:flex;flex-direction:column;gap:8px;font-size:.86rem;color:var(--ink-2)}
+.notes .li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+.notes .li b{color:var(--ink)}
+.notes .num{font-family:var(--font-mono);font-size:.76rem;color:var(--muted);padding-top:2px}
+.footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.78rem;display:flex;flex-direction:column;gap:5px}
+.footer b{color:var(--ink-2)}
+ul.tight{margin:0;padding-left:18px;color:var(--ink-2);font-size:.86rem}
+ul.tight li{margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>对抗式审查报告</span><span class="sep">/</span><span>2026-10-25 第三稿（含第三轮审查）</span><span class="sep">/</span><span>基线 worktrees/develop@a7c530bb</span></div>
+    <h1>批量台「默认全选」：上一稿我错在哪，四步里怎么做到 0 次选表</h1>
+    <p class="standfirst">这份报告先审我自己的交付物。第一稿把它做成 8 步走法、第一屏还摆着你最烦的那个弹窗；第二稿四步了，但第 1/2/3 步画的是同一张格子表——你一句「步骤一二三都没区别」说到了根上：不是排版问题，是我把产品的第三步名字写错了，于是第三步没有属于自己的内容。第三轮把四步各归一种单位：文件 → 行 → 图层 → 份。</p>
+    <div class="verdict">
+      <span class="k">判定</span>
+      <span class="v">BLOCK —— 第一稿模拟件不能作为施工依据</span>
+      <p>已作废并重做（四步、全自动、jsdom 真跑 34 条断言全绿）。但仍有 <b>3 处引擎行为必须先改</b>：重复语言静默先到优先、无严格多数静默放行、对不上时给的是「行太多」。这三处不改，自动全选就是把错误放大 12 倍。</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="stats">
+      <div class="stat bad"><div class="v">0</div><div class="l">自动配好的稿<br>（12 份全待选）</div></div>
+      <div class="stat bad"><div class="v">8.3%</div><div class="l">点完 12 次后<br>能出的交付物（12/144）</div></div>
+      <div class="stat warn"><div class="v">12 / 144</div><div class="l">读表队列<br>其余 132 张永远未读</div></div>
+      <div class="stat ok"><div class="v">67×12</div><div class="l">合并引擎实测<br>（12 张 → 一张多语言表）</div></div>
+      <div class="stat ok"><div class="v">0 次</div><div class="l">本方案<br>需要你手工选表</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">0</span>三句话结论</h2>
+    <div class="notes">
+      <div class="li"><span class="num">1</span><div><b>那 12 行「选」不是排版问题。</b>数据模型规定一份稿只能绑一张表，加多选框判断次数一次都不会少——只是从「点 12 下」变成「勾 12 下」。</div></div>
+      <div class="li"><span class="num">2</span><div><b>正解是「一组表＝一次绑定」。</b>扫描完按「SKU ＋ 交付物 ＋ 语言互不重复」把 144 张归成 12 组，整组默认全选，导入时用<b>现成的</b>合并算法合成一张 12 语言表。下游拿到的还是一张表——执行链、报价、结算、回执一行都不用改。</div></div>
+      <div class="li"><span class="num">3</span><div><b>还有第二层卡点：读表一次只读 12 张。</b>144 张读不完，所以就算绑上了，系统也只认得前 12 张有什么语言。弹窗那句「未读 · 没有语言列」就是这么来的。</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">1</span>先审我自己：第一稿的四条硬伤（已全部修掉）</h2>
+    <table class="table">
+      <thead><tr><th>#</th><th>硬伤</th><th>你为什么生气</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F0-1</td><td><span class="tag bad">🔴 重</span> 做成「8 步走法」</td><td>产品本来四步，我另立一套等于让你重学；第一屏还是那个弹窗，像在替旧做法辩护</td><td>删掉 8 步，改回产品四步：准备素材 / 译文校对 / 审核确认 / 执行。开局第一屏就是「扫描并自动配对」</td></tr>
+        <tr><td class="mono">F0-2</td><td><span class="tag bad">🔴 重</span> 计数器自相矛盾</td><td>点 1 次后显示「1 / 144」，走到第 4 步还停在 1 / 144——状态机根本没接上，那份「模拟」证不了任何事</td><td>重写状态机，计数器全部由真实状态派生</td></tr>
+        <tr><td class="mono">F0-3</td><td><span class="tag warn">🟠</span> 数字写死</td><td>「141 格就绪」「例外 3 件」是硬编码，走到那一步实际只剩 2 件——假数字比没数字更坏</td><td>全部实时算；例外「处置一件少一件」；未清空前确认按钮真的禁用</td></tr>
+        <tr><td class="mono">F0-4</td><td><span class="tag warn">🟠</span> 用截图当验收</td><td>静态图看不出按钮能不能点</td><td>改为 jsdom 真跑：点按钮、读状态、断文案，<b>34 条断言 / 0 FAIL / 0 runtime error</b></td></tr>
+      </tbody>
+    </table>
+    <div class="callout bad"><b>病根</b>我把「解释问题」和「演示解法」混在一起了。你要看的是解法长什么样、每一步点哪，我却先给你看了一遍病历。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>事实核（探针实测，不是推断）</h2>
+    <p class="lead">12 份稿（同一交付物：主副图）× 每份 12 张单语言表 = 144 张，每张 67 行。下表每一行都来自跑通的探针。</p>
+    <table class="table">
+      <thead><tr><th>量</th><th>实测</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td>自动配好的稿</td><td class="mono">auto = 0</td><td>一张都不会自动配</td></tr>
+        <tr><td>待人工选的稿</td><td class="mono">conflict = 12</td><td>每一份都卡在「请你选一张」</td></tr>
+        <tr><td>每稿候选表数</td><td class="mono">12</td><td>12 张全是候选，因为语言不参与身份</td></tr>
+        <tr><td>矩阵非空格</td><td class="mono">12 / 144</td><td>点完 12 次也只能出 12 份交付物</td></tr>
+        <tr><td>读表队列</td><td class="mono">144 → 12</td><td>剩下 132 张永远「未读」</td></tr>
+        <tr><td>合并能力</td><td class="mono">67 行 × 12 语言</td><td>引擎没问题，每张「匹配 67 行」</td></tr>
+        <tr><td>一张 66 行</td><td class="mono">CSV_MERGE_STRUCTURE_MISMATCH</td><td><b>整批拒</b>，11 张好的也进不来</td></tr>
+        <tr><td>6 张 67 / 6 张 66</td><td class="mono">134 → 134</td><td><b>没有严格多数就不拦</b>，静默膨胀</td></tr>
+        <tr><td>两张表都带 ES</td><td class="mono">不报错</td><td>先到优先 + 一条提示 ⇒ 可能静静用错表</td></tr>
+        <tr><td>完全对不上（各 30 行）</td><td class="mono">CSV_TOO_MANY_ROWS（330）</td><td>碰巧拦住了，但错误码说的是「行太多」，不是「表对不上」</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>五个真断点（每条都能查行号）</h2>
+    <table class="table">
+      <thead><tr><th>#</th><th>断点</th><th>证据</th><th>后果</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">B1</td><td>候选只按 SKU＋交付物筛，<b>语言不参与身份</b></td><td class="mono wrap-cell">sku-attribution.ts:331-339<br>:366-375</td><td>12 张全成候选，系统不敢替你挑（纪律是对的），于是每稿都要你点</td></tr>
+        <tr><td class="mono">B2</td><td><b>一稿一张表</b>在导入时硬拦</td><td class="mono wrap-cell">workbench-view.tsx:3119<br>assignments: Record&lt;string, ParsedCsv&gt;</td><td>第 2 张起全进不来，144 份交付物结构上做不出</td></tr>
+        <tr><td class="mono">B3</td><td>读表一次只 <b>12 张</b></td><td class="mono wrap-cell">table-inventory.ts:233-237<br>local-assistant-client.ts:1413-1414</td><td>144 张读不完 ⇒ 132 张永远不知道有什么语言</td></tr>
+        <tr><td class="mono">B4</td><td>合并引擎<b>整批拒</b></td><td class="mono wrap-cell">merge-tables.ts:65-94</td><td>一张 66 行，11 张好的也被挡在外面</td></tr>
+        <tr><td class="mono">B5</td><td>抽屉里 <span class="mono">na</span> 不进 issues</td><td class="mono wrap-cell">step1-stage-view.tsx:1300-1313<br>:1375-1379</td><td>你截图那张：ES 取自 TH 表，抽屉却写「这一份就绪」= 假绿灯</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>顺带一条</b><span class="mono">table-picker-dialog.tsx:155</span>、<span class="mono">table-inventory-list.tsx:185</span> 在表<b>还没读</b>的时候就说「没有语言列」。这不是措辞问题，它会让你以为表本身坏了。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>三个方案：为什么不是「加多选」</h2>
+    <table class="table">
+      <thead><tr><th></th><th>A 弹窗加多选</th><th>B 一稿一组（推荐）</th><th>C v3 三层（库/片/绑定）</th></tr></thead>
+      <tbody>
+        <tr><td>你要判断几次</td><td class="mono">144 次</td><td class="mono"><b>0 次</b>（只在 4 件例外上动手）</td><td class="mono">0 次 + 切片确认</td></tr>
+        <tr><td>能出多少交付物</td><td class="mono">12 / 144</td><td class="mono"><b>144 / 144</b></td><td class="mono">144 / 144</td></tr>
+        <tr><td>改动面</td><td>弹窗组件</td><td>绑定类型 string→string[]、导入合并、读表分轮（3 文件 + 2 纯函数）</td><td>模板加两列 + 译员协作 + 后续行身份升级</td></tr>
+        <tr><td>下游影响</td><td>无</td><td><b>无</b>（仍是一张 ParsedCsv）</td><td>P2 才触合同变更</td></tr>
+        <tr><td>能否顺手解决「一张合表切 12 片」</td><td>不能</td><td>不能（它只解决「一稿多表」）</td><td>能</td></tr>
+        <tr><td>风险</td><td>低但没用</td><td>低，可单测</td><td>高（模板变更需译员配合）</td></tr>
+      </tbody>
+    </table>
+    <div class="callout ok"><b>结论</b>B 是 C 的<b>真子集路径</b>——B 落地后，C 的「片」才有承载物（片就是「一组表」合并出来的那张）。所以 P0 做 B，C 留作 P3，不要一上来就改模板。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>反方攻击：这 8 条不解决，B 会静默出错</h2>
+    <div class="cards">
+      <div class="card"><div class="h"><span class="tag warn">F1</span>一张坏表拖垮整组</div><p>现状整批拒（实测 <span class="mono">CSV_MERGE_STRUCTURE_MISMATCH</span>）。<b>必须改成只排那一张</b>，其余 11 门照常合并。</p></div>
+      <div class="card"><div class="h"><span class="tag bad">F2</span>两张表都带 ES</div><p>实测<b>不报错</b>，先到优先 + 一条提示。<b>必须升级成冲突</b>：内容不同一律要人定，不自动合并。</p></div>
+      <div class="card"><div class="h"><span class="tag bad">F3</span>6 张 67 / 6 张 66</div><p>实测<b>不拦</b>，134 行进、134 行出，只有一条追加提示。这不是「多数派」，是两套原文，<b>必须拦</b>。</p></div>
+      <div class="card"><div class="h"><span class="tag warn">F4</span>12 张完全对不上</div><p>被 <span class="mono">CSV_TOO_MANY_ROWS</span> 拦住——<b>碰巧</b>。错误码说「行太多」，你会去删行，而真问题是表不属于这份稿。</p></div>
+      <div class="card"><div class="h"><span class="tag warn">F5</span>12 语言上限</div><p><span class="mono">batch-limits.ts:6</span>；组里 13 门就爆。与单稿行为一致，不算新风险，但话术要写清「本批最多 12 门」。</p></div>
+      <div class="card"><div class="h"><span class="tag warn">F6</span>自动全选万一组错</div><p>归组只给<b>证据</b>（归属对上 + 原文覆盖），不给「我说了算」。行头徽章 实证/存疑/不符，红格可点开看判据。</p></div>
+      <div class="card"><div class="h"><span class="tag">F7</span>归属记忆只存一张表</div><p><span class="mono">attribution-memory.ts:14-34</span> 是 <span class="mono">tablePath: string</span>。组绑定后必须存组，否则下次重开又退回单选。</p></div>
+      <div class="card"><div class="h"><span class="tag bad">F8</span>别碰记录编号</div><p>本方案<b>不动</b>行身份。<span class="mono">execution-manifest.js:9</span> 是纯 ASCII 白名单，一旦有人「顺手规范化」编号就重演 #195。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>施工顺序：四步不动，只改第 1 步里「稿 → 表」这条边</h2>
+    <div class="gates">
+      <div class="gate"><div class="p">P0</div><div class="a"><strong>归组纯函数</strong><span>buildLanguageTableGroups(稿, 表) → 组 + 证据 + 冲突</span></div><div class="b">新增 <span class="mono">table-grouping.ts</span>。验收：12 稿×12 表 ⇒ 12 组；缺 1 门 ⇒ 存疑；同语言两张 ⇒ 冲突；<em>归不出来不猜</em></div></div>
+      <div class="gate"><div class="p">P1</div><div class="a"><strong>绑定 string → string[]</strong><span>只改第 1 步与导入</span></div><div class="b">workbench-view.tsx、step1-stage-view.tsx。负控：同一稿两张表<b>不再</b>报「同一稿只能有一张表」；跨交付物共用仍允许</div></div>
+      <div class="gate"><div class="p">P2</div><div class="a"><strong>导入合并 + 读表分轮 + F1/F2/F3</strong><span>复用 mergeParsedTables</span></div><div class="b">负控：1 张 66 行只拦那张；&gt;12 张不报错；<em>重复语言不再自动合并</em>；<em>无严格多数必须拦</em></div></div>
+      <div class="gate"><div class="p">P3</div><div class="a"><strong>矩阵/抽屉按语言取表 + na 分支</strong><span>未读不再说「没有语言列」</span></div><div class="b">负控：ES 格绑 TH 表 ⇒ <b>不得</b>出现「就绪」；未读表 ⇒ 只说「未读」</div></div>
+      <div class="gate"><div class="p">P4</div><div class="a"><strong>例外清单与确认页</strong><span>归属记忆升级为组</span></div><div class="b">144 格只列 4 件；每件可单点处置；处置后范围数字同步；记忆存组</div></div>
+    </div>
+    <div class="callout"><b>顺序纪律</b>每档都先写纯函数 + 负控，再动界面——否则又会变成「界面一套、闸一套」两个真值（<span class="mono">coverage.ts:106-110</span> 记过这个教训）。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span>要你拍的三件事</h2>
+    <div class="notes">
+      <div class="li"><span class="num">①</span><div><b>组内缺 1 门</b>（比如 6896 缺 VI）：默认<b>排除该门照跑</b>，还是<b>整组停</b>？建议排除并标红，不拖累另外 11 门。</div></div>
+      <div class="li"><span class="num">②</span><div><b>同一门有两张表</b>：默认<b>让你选一张</b>（不按时间挑），还是按目录优先？建议让你选——探针已证明现在会静默先到优先，这个必须改。</div></div>
+      <div class="li"><span class="num">③</span><div><b>合并基准表</b>：默认用<b>行数最多的那张</b>，并列时按文件名排序取第一张——可以吗？</div></div>
+      <div class="li"><span class="num">④</span><div><b>交付物矩阵放哪一步</b>：放<b>第 4 步</b>（第 1 步保留折叠版），还是留在第 1 步？建议前者，理由见第 8 节。</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">8</span>第三轮：界面架构本身（「步骤一二三没区别」的根因）</h2>
+    <table class="table">
+      <thead><tr><th>#</th><th>攻击</th><th>实测 / 处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F9</td><td><span class="tag bad">🔴</span> <b>我把四步的名字写错了</b></td><td>产品真名是 <b>准备素材 / 智能检测 / 设计稿校对 / 生成交付</b>（<span class="mono">terms.ts:26-31</span>），我写成「译文校对 / 审核确认 / 执行」。名字错的代价不是文案：<b>第三步在产品里单位是「图层」</b>（<span class="mono">workbench-view.tsx:5226</span>），我却按「审核」理解，于是第三步没有任何属于自己的内容</td></tr>
+        <tr><td class="mono">F10</td><td><span class="tag bad">🔴</span> 第 1 步和第 3 步画同一张矩阵，第 2、3 步都是表格</td><td>你说的「1/2/3 都没什么区别」不是错觉，是<b>信息没分层</b>：同一份数据换了四遍标题</td></tr>
+        <tr><td class="mono">F11</td><td><span class="tag warn">🟠</span> 阶段条 8 行，占首屏约 620 px</td><td>改成<b>一行紧凑 chips</b>（6 个），细节默认收起</td></tr>
+        <tr><td class="mono">F12</td><td><span class="tag warn">🟠</span> 语言 tab 点了没反应</td><td>死控件比没有控件更坏。现在点 ES 真换表：只剩 <b># / 原文 / ES / 状态</b> 4 列，并写明「只看 ES · 61/67 行」</td></tr>
+        <tr><td class="mono">F13</td><td><span class="tag">🟡</span> 把矩阵挪走等于删掉既有能力</td><td>Product Drift Guard 第 2 条「不能证明可删就保留」→ 第 1 步<b>保留</b>矩阵但默认折叠、点开才渲染；第 4 步放完整矩阵</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:6px"><span class="n">8.1</span>四步的单位阶梯</h2>
+    <table class="table">
+      <thead><tr><th>步</th><th>单位</th><th>这一屏回答的问题</th><th>唯一主角</th><th>不该出现</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 准备素材</b></td><td class="mono">文件 / 表</td><td>稿进来了吗、表归对了吗</td><td>12 份稿 ＋ 选中稿那一组 12 张表</td><td>行内容、交付物格子</td></tr>
+        <tr><td><b>2 智能检测</b></td><td class="mono">行</td><td>这一行原文有 12 门译文吗</td><td>一张表 ＋ 语言筛选 ＋ 覆盖条</td><td>图层、交付物格子</td></tr>
+        <tr><td><b>3 设计稿校对</b></td><td class="mono">图层</td><td>这个文字层对上表第几行</td><td>67 个文字层 ＋ 选中层的 12 门预览</td><td>整张表、交付物格子</td></tr>
+        <tr><td><b>4 生成交付</b></td><td class="mono">份</td><td>这 144 份哪份能交、交了什么</td><td>交付物矩阵 ＋ 例外 ＋ 回执</td><td>表内容、图层</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout ok"><b>新加的负控：DOM 指纹</b>
+      每一屏必须有不同的指纹，否则「看起来一样」会复发：第 1 步 矩阵0/表0/图层0/组清单12；第 2 步 矩阵0/表1/覆盖率条12；第 3 步 矩阵0/表0/图层67；第 4 步 矩阵1/表0/图层0。
+      这套断言第一次跑就抓到一个真问题：第 3 步复用了第 1 步的组清单样式，指纹显示「图层 67 ＋ 组清单 12」——同一屏两种语义长得一样。已拆开。
+      <b>47 条断言全绿、0 运行时错误、EXIT=0</b>（<span class="mono">tmp/sim5-jsdom-check.cjs</span>）。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">9</span>第四轮：把「自动全选」的前提一条条证伪</h2>
+    <p class="lead">前三轮都在问「界面怎么排」，这一轮换个问法：<b>自动全选默认成立的那些前提，哪一条是真的？</b>（探针 <span class="mono">tmp/probe-20261025-group-preconditions.mjs</span>，EXIT=0）</p>
+    <table class="table">
+      <thead><tr><th>#</th><th>攻击</th><th>实测（探针原样）</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F14</td><td><span class="tag bad">🔴</span> 组里混进「原文一模一样、只有译文不同」的别稿表（同款不同色）</td><td><b>零提示通过</b>：结构检查、重复语言、行数上限全部放行，notes 只有 12 条常规「匹配 67 行」，第一行译文变成「ES-别的SKU的译文-1」。组绑定的安全前提是「原文集不同」，<b>而同款不同色的 SKU 恰恰原文集相同</b></td></tr>
+        <tr><td class="mono">F15</td><td><span class="tag warn">🟠</span> 结构检查的报错话术</td><td>报错原文：「多数文件为 67 行，『ES 西班牙语-6896.xlsx』<b>67 行</b>」——两个数字一样，用户看不出哪里不对。真实原因是<b>原文集不同</b>，不是行数</td></tr>
+        <tr><td class="mono">F16</td><td><span class="tag bad">🔴</span> 覆盖率闸与合并引擎是两套口径</td><td>同一批数据：覆盖率 <b>100%</b>（strict 2 ＋ substring 1），合并只找到 <b>2 / 3</b> 行。空白差异更露骨：NBSP、全角空格——合并侧算两行，覆盖率侧算命中</td></tr>
+        <tr><td class="mono">F17</td><td><span class="tag warn">🟠</span> 交付物份数按「组 × 12 门」算</td><td>实测缺一门（11 张）→ 合并成功、<b>11 列、67 行、不报错</b>。若份数按 12 门算，每稿多算 1 份，12 稿虚高 12 份。份数必须从合并后的<b>实际语言列</b>算</td></tr>
+        <tr><td class="mono">F18</td><td><span class="tag">🟡</span> 「行数 ＝ 层数」是我编的</td><td>计费字段 requiredObjectCount（<span class="mono">billing-preview.ts:18</span>「一行只被一个图层消费时为 1」）证明<b>一行可被多个图层消费</b>。模拟件已改成 <b>72 层 ↔ 67 行</b>：4 行各被 2 个层消费、1 层表里没有</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout bad"><b>被我自己证伪的两条（审查也包括删掉自己的结论）</b>
+      ① 「12 稿 × 300 行 ⇒ 撞服务端 1,500 行上限」——读码实测：报价的 rows 是<b>每稿一次</b>的逻辑行（<span class="mono">execute-step.tsx:1114-1124</span>），单稿已被 300 行卡住，300 &lt; 1,500 ⇒ <b>这条路径不可达，不是风险</b>。
+      ② 「记录编号跨次导出 ⇒ 该表所有行静默追加」——实测：结构签名里含 recordId，混入另一次导出的表<b>先被结构检查拦下</b> ⇒ 表现是「整批拒」而不是「静默膨胀」，风险从红降到黄。
+    </div>
+
+    <div class="callout ok"><b>这一轮真正该改的一处（加进 P0）</b>
+      组准入必须补第 5 条：组内每张表的<b>文件名 SKU 必须严格等于本稿 SKU</b>；文件名读不出 SKU 的表一律不进组、转人工。理由只有一条——F14 那种表（同原文、别稿译文）在引擎里是<b>完全合法</b>的，只有归属证据能挡，代价是一次字符串比较。
+      同时：<b>覆盖率与合并必须共用一套口径</b>（F16），否则 v3 里担心的「矩阵说 100%、体检说不符」不用等到 P1，现在就已经成立。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">10</span>本次未动什么（红线自检）</h2>
+    <ul class="tight">
+      <li>执行链、报价口径、结算闸、助手协议：<b>零改动</b></li>
+      <li>行身份（记录编号）与信任链匹配键：<b>零改动</b>（F8）</li>
+      <li>生产站、支付 flag：<b>未触碰</b></li>
+      <li>产品四步流程：<b>未改</b>（这稿的错就是擅自加步，已删）</li>
+      <li>业务代码仓库：<b>未提交</b>，本报告与模拟件都在 <span class="mono">交付档案/</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">附</span>证据清单（逐条可核）</h2>
+    <pre>四步真名与顺序             terms.ts:26-31
+第三步按文字层渲染          workbench-view.tsx:5226
+候选只按 SKU＋交付物筛    sku-attribution.ts:331-339
+多候选一律 conflict        sku-attribution.ts:366-375
+一稿一表（导入时硬拦）     workbench-view.tsx:3119
+表册一稿一表类型           table-inventory.ts:53-58,164
+矩阵语言来自唯一绑定表     table-inventory.ts:189
+读表队列默认 12            table-inventory.ts:233-237
+批量读表头 &gt;12 直接拒      local-assistant-client.ts:1413-1414
+合并算法（现成）           merge-tables.ts:103-231
+合并结构多数 / 行数上限    merge-tables.ts:65-94,126-131,173-178
+单稿多文件合并已存在       csv-step.tsx:128-161
+抽屉「就绪」不含 na        step1-stage-view.tsx:1300-1313,1375-1379
+未读也写「没有语言列」     table-picker-dialog.tsx:155；table-inventory-list.tsx:185
+归属记忆只存一张表         attribution-memory.ts:14-34
+批量上限常量               batch-limits.ts:6,12
+行标识白名单（#195）       download/local-assistant/execution-manifest.js:9,168</pre>
+    <p class="lead">探针：<span class="mono">tmp/probe-20261025-group-bind.mjs</span>（EXIT=0）→ <span class="mono">tmp/probe-20261025-group-bind.json</span>；第四轮 <span class="mono">tmp/probe-20261025-group-preconditions.mjs</span>（EXIT=0）。模拟件自检：<span class="mono">tmp/sim5-jsdom-check.cjs</span>（47/47 PASS，EXIT=0）。</p>
+  </section>
+
+  <div class="footer">
+    <div><b>配套模拟</b>：交付档案/执行方案/模拟_20261025_批量台四步_文件到行到图层到份.html（四步各归一种单位，44 条 jsdom 断言全绿）</div>
+    <div><b>已作废</b>：模拟_20261025_批量台四步_全自动归组_交付物矩阵.html（第二稿，1/2/3 步画同一张矩阵）；模拟_20261025_批量台_默认全选_语言表归组_真实合同版.html（第一稿，8 步走法）</div>
+    <div><b>口径</b>：本报告只做审查与方案，不改业务代码；所有数字来自可重跑的探针。</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,499 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 · 批量台第 1 步 · 契约 5／12（审查返修）</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>批量台第 1 步：四阶段清单改成按真状态算——审查挖出的三处缺陷已修，并各配一条负控</h1>
+  <p class="standfirst">我上一份报告说这两段说明面「已经落地并跑绿」。对抗式审查在这份代码里挖出三处真缺陷，那句话不成立。这一轮把三处修掉、把门加严、把真浏览器点验补全，也把英文词典那条早就红着的门如实摊开。</p>
+  <div class="meta"></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>01 一句话结论</h2>
+  <p>契约 5（扫描时的四阶段清单＋进度条）与契约 12（「一组表 vs 今天的做法」对照）<strong>现在才算真的对</strong>：代码在 <code>worktrees/develop</code> 提交 <code>b6dcb959</code>（4 个文件，+179/−32 行），<strong>未推远端、未部署</strong>。三个缺陷是我自己写的，不是别人的：清单该在时不在、空组被算成归好组、读表头的分子分母是两套口径。三处修完各配了一条负控（故意改坏→门必须变红→逐字节还原）。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>02 审查打回了什么</h2>
+  <p><strong>F1 只读表头时，整条清单消失。</strong> 条子出现条件是「正在扫稿」，可「读表头」这个动作不扫稿、只读表头元数据，于是你点了「读全部表头」等在那里，屏幕上什么进度都没有。修法是把 <code>surveyBusy</code> 并进出现条件（<code>step1-stage-view.tsx:1561</code>），忙碌时状态条头部写「正在读表头…」（<code>:1578</code>）。</p>
+  <p><strong>F2 一张表都没配上，也显示「归好了组」。</strong> 归组内核给每份稿都推一个组，认不出 SKU 的稿推的是空组（<code>table-grouping.ts:238-258</code>）。我原来直接数 <code>groups.length</code>，等于把空组也算成一组——一份稿都没配上时，界面照样说「归好组」。现在只数真收了表的组（<code>:665</code>），一个都没有就写「还没配上组」。</p>
+  <p><strong>F3 「读表头」的分子分母是两套口径。</strong> 分母数的是「扫描到的表」，分子数的却是「全文解析做完了的表」，可标签写的是「表头已读」——表头读过、全文还没读的表，在这个数字里既不算读过也不算没读过。现在分子改数「表头已知的表」（<code>:669</code>，行数不为空即表头已知），读不了的表单独点名，写成「2 张表头已读 · 1 张读不了」。</p>
+  <p><strong>外加一条文案。</strong> 契约 12 的对照句原来写「另外 N 张表选不进来，也进不了第 2 步」——这句话把两件事混在一起，而且「选不进来」不是本批的真实差额。现在改成算术说法：「一稿只用一张表，3 份稿最多用 3 张表，另外 1 张在这套做法下用不上」（<code>:1801</code>）。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>03 契约 5：现在真浏览器里长这样</h2>
+  <p>条子只在两种时候出现：正在扫稿，或正在读表头；空闲时不存在。以下五态都是这轮在真 Chromium 里点出来、并由脚本断言过的（截图在 <code>交付档案/证据_20261027_契约5_12_v2/</code>）：</p>
+  <ul><li><strong>空闲</strong>：条子不存在（计数 0）。</li><li><strong>扫描中</strong>：「正在扫描 2/3 · 5857-主图.psb」＋ 四步「● 扫描文件夹 3 份稿 · 4 张表」「● 认 SKU 与交付物 3/3 认出」「● 归组 4 张 → 2 组」「○ 读表头 2/4 张表头已读」，进度条 84/112 像素＝75%，<code>aria-valuenow</code> 3。</li><li><strong>认不出 SKU</strong>：「○ 认 SKU 与交付物 2/3 认出」（认不出的稿进分母、不进分子）、「● 归组 3 张 → 1 组」（空组不算归好组）。</li><li><strong>只读表头</strong>：点按钮之前条子不在（这正是 F1 的病灶）；点完之后条子出现，第四步转 ◐「读表头 1/4 张表头已读」，头部写「正在读表头…」。</li><li><strong>对照块</strong>：展开后正文含「另外 1 张在这套做法下用不上」，旧口径「选不进来」已不在。</li></ul>
+  <p>进度条口径没变，还要再说一遍：它数的是<strong>四步里几步行了</strong>，不是工作量百分比，所以最后一步读完会从 75% 跳到 100%。界面不假装那是平滑进度；真正的逐稿进度仍是上面独立那一行。</p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>04 契约 12：省了几次，是算出来的</h2>
+  <p>「一组表（现在）」写本批稿数、表数、手工选表次数；「今天的做法（一稿一张表）」写最少弹几次选表框、一稿一张时最多用几张表、几张用不上。三个数全部取既有派生（<code>manualPickCount</code>、本批份数、扫描到的表数，<code>:1794</code>），没有第二个计数来源。表不比稿多时不硬造减法，只说「一稿只用一张表，表里没有的语言这一稿就没有」。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>05 真实运行证据（全部本拍实跑）</h2>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>命令</th><th>结果</th></tr></thead><tbody>
+  <tr><td>类型检查</td><td><code>npx tsc --noEmit</code></td><td>rc=0</td></tr>
+  <tr><td>代码规范</td><td><code>npm run lint</code></td><td>rc=0，0 errors、48 warnings（既有，与本笔无关）</td></tr>
+  <tr><td>组件单测</td><td><code>npx vitest run tests/unit/step1-stage-view.test.tsx</code></td><td><strong>49/49 通过</strong>（上一版 44；新增 5 条对准三个缺陷）</td></tr>
+  <tr><td>批量台回归</td><td><code>npm run test:workbench-batch-groups</code></td><td>6 文件、<strong>120/120 通过</strong></td></tr>
+  <tr><td>契约门</td><td><code>node scripts/smoke-step1-mock-contract.mjs</code></td><td><strong>判据 88 项 · 行 29 条 · 失败 0 · PASS</strong>（上一版 75 项）</td></tr>
+  <tr><td>负控七式</td><td><code>node tmp/negcontrol-contract5-12.mjs</code></td><td>N1 组数退回 <code>groups.length</code>、N2 第四步退回只数全文读完、N3 状态条那句换成别的字、N4 对照正文点击数改回常量——<strong>契约门四式全红</strong>；N5 空组缺陷注回、N6 撤掉「读表头也唤出清单」的判据、N7 认出数改回总稿数——<strong>单测三式全红</strong>。还原后 sha256 <code>fd6427c4…</code>（122,798 字节）与改前逐字节相同</td></tr>
+  <tr><td>真浏览器五态</td><td><code>node tmp/browser-step1-check.mjs</code></td><td><strong>BROWSER_FACTS=PASS</strong>（11 条断言），5 张截图</td></tr>
+  <tr><td>英文词典</td><td><code>npm run test:en-workbench</code></td><td><strong>rc=1，95.2%（1445/1518）</strong>——既有红，见 06</td></tr>
+</tbody></table></div>
+  <p>门加严的意思：上面三个缺陷改动之前门全是绿的。所以这一轮不只是修代码，还把每条修法钉住——静态门钉「组数不许数 <code>groupBindings.groups.length</code>」「分母不许写死 <code>readTables</code>」「<code>record.rows !== null</code> 必须出现」「<code>正在读表头…</code> 必须出现两次」；两条只能靠行为抓的（条子在只读表头时必须出现、认不出的稿不进分子）钉在单测里。哪一条被改回去，负控都会当场变红——这就是上面七式的由来。</p>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>06 英文词典这条门是红的，如实说</h2>
+  <p><code>npm run test:en-workbench</code> 现在是 <strong>95.2%（1445/1518）</strong>，红线是 100%。这条红<strong>不是这一笔造成的</strong>，但也没被这一笔修好，我不能含糊过去：</p>
+  <ul><li>本轮开工前的基线（<code>11f9844a</code>）：词典 1515 条、缺 72 条。</li><li>现在：词典 1518 条、缺 73 条。</li><li>归属（用 <code>BASE=11f9844a node tmp/i18n-attribution.mjs</code> 复核）：第 1 步这一屏的缺口 <strong>55 → 54</strong>（我补上 1 条「正在读表头…」）；新增的 2 条缺口全在 <code>workbench-view.tsx</code>，是同一棵树上另一个会话新加的句子（「本版量不出译文宽度…」两句），不是我改的文件。</li></ul>
+  <p>净效果：整棵树缺口 +1、我这一屏缺口 −1。要修到 100% 得把这些屏的 73 句话逐条译出来，那是独立一件事，不塞进这一轮。</p>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>07 我自己查出来的两件事（上一轮结论，未变）</h2>
+  <p><strong>撤下的一条</strong>：我原以为「推定」这一档在组卡里永远出不来。复核后这句只在「组内 SKU 已知」时成立；SKU 空着、以及退化两栏时会出——截图里 <code>7788-详情页.psb</code> 那行就挂着「推定」。不报缺陷。</p>
+  <p><strong>仍是待拍的一条</strong>：刷新会让「非当前稿」的剔除丢掉。依据是单槽草稿只存当前稿的语言集，非当前稿的语言集只活在内存里。<strong>读代码得出，没在真机上点过</strong>，所以当待拍事项，不当线上缺陷。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>08 本轮没做什么</h2>
+  <ul><li>临时验证路由 <code>src/app/(zh)/step1-check/</code> 与三个一次性探针已删除；<code>npx tsc --noEmit</code> 在删除后重跑仍 rc=0。留档的只有三个跑判据用的脚本（<code>tmp/browser-step1-check.mjs</code>、<code>tmp/negcontrol-contract5-12.mjs</code>、<code>tmp/i18n-attribution.mjs</code>），它们不进提交，且依赖的临时路由已撤，重跑需先重建那条路由。</li><li>提交只含我这 4 个文件（<code>step1-stage-view.tsx</code>、<code>dict-en.json</code>、单测、契约门），同树其它会话的改动一行没动。</li><li>没推远端、没部署测试站或生产、没翻任何开关；没碰计费、服务端、数据；没删任何数据。</li><li>本机 3000 端口那个 dev 进程（PID 51216）是别的会话起的，我没按名字杀任何进程。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>09 要你拍的两件（与上一轮同）</h2>
+  <p><strong>第一件：非当前稿的剔除，刷新后要不要还在。</strong></p>
+  <ul><li>A「保留」：把草稿存法扩成按稿存。好处是剔了就是剔了；代价是要动存储结构、处理旧草稿兼容、补一条单测和一次真机点验。</li><li>B「不保留」：保持现状，不动存储、零风险；代价是切稿后刷新会悄悄复活被剔掉的语言，界面也不告诉你。</li></ul>
+  <p>我建议 A，但可以等第 2/3/4 步补齐之后再做。</p>
+  <p><strong>第二件：「推定」这一档留着，还是并进「声明」。</strong></p>
+  <ul><li>A「留着」：含义清楚——没有归属证据、但这稿原文集全覆盖，遇上认不出 SKU 的稿，这是唯一能说的话。</li><li>B「并进去」：少一个档位、少一次解释，但丢掉「凭什么能放行」的区别。</li></ul>
+  <p>我倾向 A，它在界面里已经真实出现过。</p>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>10 下一步</h2>
+  <p>三步各有缺口：第 2 步同一屏三套口径并列、第 3 步没有逐层改字重的入口、第 4 步逐行推导算完就丢。建议先做第 2 步「口径合一」——它是现在最容易让你看不懂的一屏；开工前先把要改成什么样拿给你看。</p>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>

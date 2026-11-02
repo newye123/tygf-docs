@@ -1,0 +1,486 @@
+<title>审执行方案 v1 · 对抗式审查（VERDICT BLOCK）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>对抗式审查</span><span class="sep">/</span><span>审我自己写的执行方案 v1</span><span class="sep">/</span><span>2026-10-26 23:2x</span></p>
+  <h1>v1 被自己审到 BLOCK：两条 CRITICAL 里有一条打掉我亲口说过的话</h1>
+  <p class="standfirst">独立子路只读审查 + 主审逐条复跑。结论：v1 不能照它开工——「复用现成几何引擎做执行前预演」在代码上不成立，而那条负控拿两个不同总体的数做等式闸、永远不可能通过。</p>
+  <div class="meta"><span>基线 develop@9048c13a</span><span>全程只读</span><span>八条 findings 全部我本人复跑</span><span>推翻作者自述 2 条</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict"><span class="lb">VERDICT</span>
+    <p><strong>BLOCK。</strong>已证实 7 条（CRITICAL 2 / WARNING 4 / NOTE 1），驳回 0 条——八条全部成立。其中两条打掉的是我自己上一轮的自述。</p></div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">2</span><span class="k">CRITICAL<br>一条否掉"复用"，一条否掉负控</span></div>
+    <div class="stat warn"><span class="n">4</span><span class="k">WARNING<br>截断/豁免/字段兼容/性能账</span></div>
+    <div class="stat ok"><span class="n">2</span><span class="k">我推翻自己<br>并把教训写回记忆</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>两条 CRITICAL（我本人复跑到原文）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="loc">layout-geometry.js:124-131 · :230-234 / server.js:2993-3002</span><h3>S1b「把现成函数从执行后挪到执行前」结构性不成立</h3><span class="tag bad">CRITICAL</span></div>
+      <p>该函数入参是 <code>{after, baseline, assignedLayerIds}</code>——天生是<strong>执行前后差集</strong>算法。而 <code>:230</code> 注释原文：「文字层两两相交：只比"可见 + 文字 + 非组"，<strong>与背景/图片层重叠是预期行为，不算碰撞</strong>」，<code>:232</code> 直接 <code>if (!layer.isText || layer.isGroup || !layer.visible) continue</code>。</p>
+      <p>更要命的是 <code>server.js:2993</code> 的基线只产 <code>{layerId, bounds}</code>，<strong>没有 isText/visible</strong> ⇒ 喂进去全被 continue 掉，<code>overlaps</code> 恒 0。</p>
+      <p><strong>影响</strong>：我要的"文字层下方最近的非文字元素顶边"全仓不存在。照 v1 排期＝把一个"新算法 + 字段映射"当成"改调用时机"，而且默认写法会产出<strong>一份静默零风险的报告</strong>——正踩本项目"不得静默"红线。</p>
+      <p><strong>修复</strong>：新写 <code>clearance</code> 纯函数；observation 补 isText/visible；layout-geometry 只当"判据写法与有界比较"的参考。<strong>防回归</strong>：夹具放"产品图正好压在文字下方"，断言算得出重叠、overlaps 不再恒 0。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="loc">v1 §4 负控 1</span><h3>拿两个不同总体的数做等式闸，永远不可能通过</h3><span class="tag bad">CRITICAL</span></div>
+      <p>v1 写「5857 母版跑预演，<code>outOfCanvas</code> 必须 == 离线实测 30」。可 30 是在 <strong>12 份交付件</strong>（已写译文）上量的；母版我另测过——<strong>母版基线出框 = 0</strong>（主副图 37 层、A+ 55 层，两判据均 0）。母版是原文行，宽度天然不同。</p>
+      <p><strong>影响</strong>：坏判据比没有判据更坏——它会让下一只手以为已经对拍过。</p>
+      <p><strong>修复</strong>：改成同输入双实现对拍（同一份坐标 JSON 分别喂两套实现，断言计数相等）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>四条 WARNING + 一条 NOTE</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>位置</th><th>破了什么</th><th>我复跑到的证据</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">v1 §1.3「零调用方」</td><td class="was">把实测写成不存在（规矩②）</td><td class="now"><code>grep -rn resolveLearningRule --include=*.ts --include=*.tsx --include=*.mjs --include=*.js src scripts download</code> ⇒ rc=0，命中 4 行（含 <code>smoke-learning-phase4.mjs:37/144/149</code>）。我上一轮只带 .ts/.tsx，<strong>对象集错了</strong></td><td>改述「除冒烟测试外零生产调用点」＋附原式与 rc；教训进记忆</td></tr>
+        <tr><td class="mono">v1 S0-③</td><td class="was">「共 N 条」的 N 到不了渲染器，诚实性修复本身不诚实</td><td class="now"><code>v15-runner.js:702-706</code> 每语言再 <code>slice(0,200)</code> 且 map 固定字段；而 <code>overflow-estimator.ts:48/57</code> <strong>本来就有 total</strong>，<code>:67-73</code> 注释还自陈历史上 UI 读错字段</td><td>三层同步：estimator total → 上传载荷与 normalize 白名单 → 渲染器</td></tr>
+        <tr><td class="mono">v1 I2b 背景层豁免</td><td class="was">整幅产品主图被一起豁免 ⇒ 最高压稿型静默产坏图</td><td class="now">判据只写"覆盖全画板"；v1 自己点名压力最高的 76% 那份就是 5857 主副图（1600×1600 画板，主图常占满）</td><td><strong>默认不豁免</strong>：整幅光栅层一律报人，仅纯色/显式白名单可豁免且留痕</td></tr>
+        <tr><td class="mono">v1 S1a 新字段</td><td class="was">撞学习上传白名单 <code>fail('unknown field')</code>，且失败静默 ⇒ 学习数据静默断供</td><td class="now"><code>typography-contract.ts:147-148</code> default 即 fail；<code>typography-upload-client.ts</code> 每批 <code>.catch(() =&gt; null)</code></td><td>字段先入服务端白名单并部署再随包发；本轮新字段只进本地报告；上报失败改非静默</td></tr>
+        <tr><td class="mono">v1 S1a 成本</td><td class="was">扫描加采无耗时账</td><td class="now">PS DOM <code>layer.bounds</code> 逐层同步；样本含 6700px 宽／175 文字层稿；v1 全文无耗时预算与载荷上限</td><td>S1a 移出本轮，准入判据加"最大稿加采前后耗时 + 层数/字节上限"</td></tr>
+        <tr><td class="mono">v1 §1.3 指针</td><td class="was">调用点写错</td><td class="now">真实调用在 <code>v15-runner.js:127</code>；<code>:27</code> 是 require、<code>:816</code> 是注释</td><td>改指针</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">主审推翻自己两处</span>
+    <p>① 「<code>resolveLearningRule</code> 全仓零调用方」→ 实为"除冒烟测试外零生产调用点"，根因是我的 grep 对象集漏了 <code>.mjs</code>（同族错误：计数正确≠对象正确、报 0 先怀疑正则）。<br>② 「复用现成几何引擎就能做执行前预演」→ 引擎只算文字×文字且要求执行后差集输入，我要的 clearance 全仓不存在。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>覆盖缺口（没审到的）</h2>
+  <ul class="notes">
+    <li>未跑任何门禁与构建，"改完能不能过 <code>test:contracts</code>/<code>test:trust-chain</code>"未证。</li>
+    <li>PS DOM 侧能否读到画板矩形仍未实测（v1 已自认未决，本次既未推翻也未证实）。</li>
+    <li>未连库，学习表实际行数与字段完整度未核。</li>
+    <li>K2 探针的 73px 结论本轮未重跑；子路称未复现落盘文件，我确认结果文件在 <code>Temp/tygf-ps-K1.txt</code> 且与脚本一致，但<strong>未再跑一次 PS</strong>。</li>
+    <li>73px 与闭式 88px 差异成因仍未证。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>方法：独立子路只读审查（不看作者推理，只看待审件与判据）＋主审对每条 finding 二次复跑；八条全部证实，无一条驳回。</p>
+  <p>2026-10-26 · 全程只读，未改业务代码、未跑门禁、未部署、未提交。下游件：<code>执行文档_v2_通稿版自动换行_按对抗式审查修订.md</code>。</p>
+</footer>
+</div>
+

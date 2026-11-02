@@ -1,0 +1,501 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>脏树分推统一落地 v4 —— S0 保全迁移到 S1–S6 全部收口（执行报告·终）</title><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+main{max-width:1100px;margin:auto;padding:32px 24px}p{line-height:1.9;overflow-wrap:anywhere}h2{margin-top:40px}nav{display:flex;gap:12px;flex-wrap:wrap}a{color:var(--accent)}</style></head><body><main class="wrap"><header class="masthead">
+<div class="eyebrow"><span>执行报告·终</span><span class="sep">/</span><span>2026-11-01</span><span class="sep">/</span><span>脏树分推 v4 · S0–S6</span></div>
+<h1>脏树分推统一落地 v4 —— S0 保全迁移到 S1–S6 全部收口（执行报告·终）</h1>
+<div class="meta"><span>日期：2026-11-01（起 2026-10-31 23:4x，止 01:2x）</span><span>依据：<code>交付档案/执行方案/执行方案_20261031_全产品优化与脏树分推_统一落地版v4.html</code>（Owner「按这个来执行吧」→「继续你全权负责直到完成」）</span><span>状态：<strong>六批全部提交并推到 GitHub 侧枝；未合 origin/develop、未部署任何站点、未出助手安装包</strong></span><span>分支：<code>codex/unified-opt-20261031</code>（远端同名，7 笔，HEAD <code>886b18ff</code>，基线 <code>e7d49ceb</code>）</span><span>工作树：<code>worktrees/unified-opt-20261031</code>（干净，0 个未提交改动）</span><span>快照：<code>F:/工具开发/tmp/dirty-tree-snapshot-20261031/</code>（原脏树 109 路径逐文件 SHA256＋清单＋迁移脚本留底；不进提交、不发飞书）</span></div>
+</header>
+<section>
+<h2><span class="sn">01</span>结论先讲</h2>
+<p class="lede">v4 方案里我能自己做完的部分做完了：脏树原封保全，改动按功能依赖三方迁移到干净基线，S1 术语、S2 表格与来源、</p>
+<p class="lede">S4 质检与字号、S5 官网与首用、S6 工作台显示全部收口并提交，全部验证有真实退出码。</p>
+<p class="lede"><strong>卡住的一步不是能力问题，是事实问题</strong>：3.7.30 助手安装包没出，所以这条线不能合进 develop、不能上测试站——</p>
+<p class="lede">一合上去，网页会开始要求"报告 schema v3／renderer v4／最低版本 3.7.30"，而现在装机的是 3.7.28，</p>
+<p class="lede">所有老用户的批量执行会当场被判"合同不匹配"。这一步需要真机跑一次 Photoshop 批次并留验收记录，我不能伪造。</p>
+<section>
+<h2><span class="sn">02</span>提交清单（7 笔，全部三件套信息）</h2>
+<div class="scrollx"><table><thead><tr><th>批</th><th>提交</th><th>内容</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>S1</td><td><code>adefa865</code></td><td>第 3 步阶段名统一为「审核确认」（权威表＋状态机＋单测＋smoke）</td></tr>
+<tr><td>S2</td><td><code>47cf46a7</code></td><td>模板出处两列（记录编号/模块）、交付物缓存键、CSV 元列提示纠错、4 枚测试＋计价隔离守卫</td></tr>
+<tr><td>S4</td><td><code>3c646e32</code></td><td>输出质检接入、排版字号链、权限级别诊断错误码、版本身份 3.7.30、执行器哈希登记、i18n 接线</td></tr>
+<tr><td>S6</td><td><code>3164ce3c</code></td><td>四步显示层、矩阵/进度判据随 R4 改写、6 枚工作台单测、2 枚守卫、3 本变更书</td></tr>
+<tr><td>S5</td><td><code>bdd25201</code></td><td>官网中英文、首用支持对话、界面合同随现行文案改写、package.json 入口</td></tr>
+<tr><td>字集</td><td><code>0b9dc35c</code></td><td>中文子集重生成（覆盖新文案用到的「遮」等字），生成物 3 件同批</td></tr>
+<tr><td>S5 补</td><td><code>886b18ff</code></td><td>官网补「单批最多 12 份稿 · 每份最多 12 个目标语种 · 逐份执行」（Owner 10-31 令）</td></tr>
+</tbody></table></div>
+<section>
+<h2><span class="sn">03</span>最终验证读数（候选树 HEAD <code>886b18ff</code>）</h2>
+<div class="scrollx"><table><thead><tr><th>入口</th><th>结果</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td></tr>
+<tr><td><code>npx tsc --noEmit</code></td><td><strong>rc=0</strong></td></tr>
+<tr><td><code>npm run lint</code></td><td><strong>rc=0</strong>（0 error／60 存量 warning）</td></tr>
+<tr><td><code>npm run test:unit</code>（全量）</td><td><strong>rc=0 · 44 文件 519 例全绿</strong></td></tr>
+<tr><td><code>npm run test:contracts</code> 54 步逐条</td><td><strong>53 绿 / 1 红</strong></td></tr>
+<tr><td>唯一红：<code>smoke-release-consistency.mjs</code></td><td>rc=1 —— manifest 五项 mismatch ＋ 缺 <code>tygf-engine-setup-3.7.30.exe</code>（＝没出包，不是代码坏）</td></tr>
+<tr><td><code>npm run test:batch-row-contract</code></td><td>rc=0（10 场景）</td></tr>
+<tr><td><code>npm run test:trust-chain</code></td><td>rc=0（含 B/C/D 组负控）</td></tr>
+<tr><td><code>node scripts/check-repo-policy.cjs</code></td><td><strong>rc=0</strong>（迁来时 rc=1：归档可见性指向不存在的 3.7.29）</td></tr>
+<tr><td><code>node scripts/check-release-identity.cjs</code></td><td>rc=1（同上，等包）</td></tr>
+<tr><td><code>node scripts/i18n-guard-lib-unwrapped.mjs</code></td><td><strong>rc=0</strong>（迁来时 18 处裸中文）</td></tr>
+<tr><td><code>node scripts/i18n-guard-module-scope.mjs</code></td><td><strong>rc=0</strong>（词典缺口 3→0，覆盖率 1578/1578＝100%）</td></tr>
+<tr><td><code>node scripts/build-zh-font-subset.mjs --check</code></td><td><strong>rc=0</strong>（曾因「遮」红，重生成后绿）</td></tr>
+<tr><td><code>node scripts/smoke-workbench-ui-contract.mjs</code></td><td><strong>rc=0</strong>（<strong>基线 e7d49ceb 上是 rc=1</strong>——测试站在跑的这条红门已修）</td></tr>
+<tr><td><code>node scripts/smoke-wb-four-screens.mjs</code></td><td>rc=0（101/101）</td></tr>
+<tr><td><code>node scripts/check-wb-tokens.mjs</code></td><td>rc=0（41/41）</td></tr>
+<tr><td><code>node scripts/smoke-photoshop-script.mjs</code></td><td>rc=0（迁来时 rc=1）</td></tr>
+<tr><td><code>EN_SITE_TARGET=http://127.0.0.1:3100 node scripts/smoke-en-workbench.mjs</code></td><td><strong>rc=0（17 条断言）</strong> —— 此前因未起站＝未验证，现已真跑</td></tr>
+</tbody></table></div>
+<section>
+<h2><span class="sn">04</span>真渲染取证（隔离站 127.0.0.1:3100，空库、零真实密钥，用完已停并删 .env）</h2>
+<p class="lede">6 组＝中英文 × 桌面 1440×900 / 窄屏 390×844 / 等效 200% 缩放 720×450：</p>
+<ul class="notes">
+<li>横向溢出 <strong>0px</strong>（六组全部）；JS 运行时错误 <strong>0</strong>；Tab 焦点 8/8 且 8/8 带可见焦点样式。</li>
+<li>对比度实测：主标题 18.67:1、眉标 6.06:1、主按钮 18.51:1、正文 5.78:1 —— WCAG AA 全过。</li>
+<li>容量主张命中：中文含「12 份稿」「逐份执行」，英文含「12 drafts」「one draft at a time」。</li>
+<li>费用不上官网复核：渲染正文里 价格／费用／积分 计数 <strong>0</strong>。</li>
+<li>取证件：<code>F:/工具开发/tmp/render-evidence-20261101/</code>（6 张 PNG ＋ metrics.json）。</li>
+<li>一处观察（未改）：左下角那个圆形浮标在 390px 窄屏下压住了示意图的行号列，属显示层小毛病，要不要挪等 S6 出稿时一起拍。</li>
+</ul>
+<section>
+<h2><span class="sn">05</span>我做了判断的地方（全部留痕，可逐条推翻）</h2>
+<div class="card"><p>1. <strong>红门按现行代码改判据</strong>（<code>smoke-workbench-ui-contract.mjs</code>）：第 2 步前缀远端已改成「当前语言 ·」、价值摘要改由 Done/Pending 两串承载。</p></div>
+<p class="lede">   判据跟着换成"功能名还在＋前缀点明当前语言范围"，并反向锁死旧写法不得复活。<strong>没有</strong>把产品文案改回去迁就旧测试。</p>
+<div class="card"><p>2. <strong>质检文案的 i18n 分工</strong>：19 条中文是助手 payload 的接口字面（web 侧靠它们比对），留原样并登记为数据身份；</p></div>
+<p class="lede">   翻译挪到渲染端逐条 t()，并新增两组断言点名"每条接口词汇必须有英文词条／渲染端漏接 t() 必红"。</p>
+<p class="lede">   英文措辞是我写的，需要您或英文侧扫一眼。</p>
+<div class="card"><p>3. <strong>两处 npm 入口不迁</strong>：脏稿往 <code>test:feature-flag-whitelist</code> 加了 <code>smoke-clearance</code> 与 <code>smoke-psd-region</code>，属未接线实验 ⇒ 不迁，</p></div>
+<p class="lede">   实验本体留在快照里没删（v4 §10 与独立复核第 2 条）。</p>
+<div class="card"><p>4. <strong>令牌绕行基线重标定</strong>：step1-stage-view textTeal 6→8、总数自检 173→175。+2 的作者是已上线的 <code>e7d49ceb</code> 那一笔</p></div>
+<p class="lede">   （在冻结基线上实测该文件与候选逐字相同），本批没新增绕行；已登记为问题 <strong>#292</strong> 待回收。</p>
+<div class="card"><p>5. <strong>矩阵 total 期望 3→1</strong>：现行口径「本批不做」不计 total（依据 <code>coverage-matrix-counts.ts:14-16</code> 与远端已提交的 coherence 用例）；</p></div>
+<p class="lede">   顺手把一条<strong>永真</strong>旧不变式换成能红的现行不变式。</p>
+<div class="card"><p>6. <strong>刀 5 两条锁旧文案断言</strong>按 R4 改写＋补负控；<strong>读表缓存回归钉</strong>新增（旧用例锁的正是本次要修的跨交付物串写）。</p></div>
+<div class="card"><p>7. <strong>归档可见性</strong>：<code>.gitattributes</code> 从指向不存在文件的 3.7.29 改为 3.7.30，<code>.gitignore</code> 同步保持安装包可跟踪。</p></div>
+<section>
+<h2><span class="sn">06</span>还差什么（按依赖顺序，都不是我能独立闭合的）</h2>
+<div class="card"><p>1. <strong>出 3.7.30 助手安装包</strong>：需要 ISCC 打包 ＋ manifest ＋ 真机验收记录（<code>docs/acceptance/…</code> 五 pass 形状）。</p></div>
+<p class="lede">   真机那一步要有人在装有 Photoshop 的机器上跑一次并目检，我不能代跑也不能造记录。</p>
+<div class="card"><p>2. <strong>合 develop／上测试站</strong>：必须等第 1 步。现在合上去的后果＝老助手用户批量执行被判合同不匹配（minVersion=3.7.30）。</p></div>
+<p class="lede">   合之前还要按三段轨核 <code>origin/develop</code> 与出包提交的一致性。</p>
+<div class="card"><p>3. <strong>生产</strong>：更后面，且需您点头（红线）。</p></div>
+<div class="card"><p>4. <strong>S6 视觉出稿</strong>：本批只做了真渲染取证与显示层收口，没出"改前/改后同样本对照图"（要基线树重跑一遍，等您要不要做）。</p></div>
+<div class="card"><p>5. <strong>首用六状态串联</strong>（未登录／权限不足／未装助手／掉线／版本不匹配／就绪）：静态与单测覆盖了各分支，</p></div>
+<p class="lede">   端到端串联需要真账号＋真助手，属第 1 步之后的联调面。</p>
+<div class="card"><p>6. <strong>台账投影 20 行被对账闸拦下</strong>（别的会话/您手改的行），不是我造成，但飞书台账上那 20 行没同步；要清得逐行采纳。</p></div>
+<section>
+<h2><span class="sn">07</span>回滚</h2>
+<ul class="notes">
+<li>远端只有侧枝：<code>git push origin --delete codex/unified-opt-20261031</code> 即可彻底撤掉本次对外痕迹；develop/生产/测试站零影响。</li>
+<li>按批回滚：七笔各自独立，<code>git revert &lt;sha&gt;</code> 单笔即可；两处例外——</li>
+</ul>
+<p class="lede">  ① <code>3c646e32</code>（S4）含版本身份与安装包字节，回滚它必须连同 <code>0b9dc35c</code>（字集）一起退；</p>
+<p class="lede">  ② <code>bdd25201</code>（S5）是 package.json 新入口的唯一笔，退它会让 <code>test:wb-four-screens</code>／<code>test:typography-fontsize</code> 两条 npm 入口消失（脚本本体仍在，可直接 node 跑）。</p>
+<ul class="notes">
+<li>原脏树从未被改写（仍 109 个路径），快照与逐路径 SHA256 在 <code>F:/工具开发/tmp/dirty-tree-snapshot-20261031/</code>，可随时对账回原样。</li>
+</ul>
+<footer><p>本件是执行记录。已推 GitHub 侧枝 codex/unified-opt-20261031；未合 origin/develop、未部署测试站与生产、未出助手安装包、未做任何真实扣费执行。</p></footer></main></body></html>

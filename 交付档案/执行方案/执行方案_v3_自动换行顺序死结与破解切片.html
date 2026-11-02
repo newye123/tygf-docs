@@ -1,0 +1,474 @@
+<title>自动换行 v3 · 顺序死结与破解切片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>执行方案 v3</span><span class="sep">/</span><span>自动换行 · 顺序死结</span><span class="sep">/</span><span>2026-10-26 深夜</span></p>
+  <h1>钻到底：不是算法难，是"报价时点根本拿不到该不该加行的数据"</h1>
+  <p class="standfirst">这一轮把 v2 的一处排期推翻：<strong>S1a（扫描补采画板与非文字层几何）不是可并行的旁支，而是 S2 的硬前置</strong>。因为插一个换行＝改写要写进 Photoshop 的译文文本，而那个文本在报价时就被摘要冻结了——执行时才决定，必然 409。</p>
+  <div class="meta"><span>基线 develop@9048c13a</span><span>三条腿全部本人复跑</span><span>本轮只读探针碰了 PS（无 transform，已关净）</span><span>已落地一个计价守卫</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>死结的三条腿</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>腿</th><th>事实</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">一 · 报价无排版数据</td><td class="was">报价 rows 只有 <code>rowToken / sourceCharacters / targetCharactersByLanguage / requiredObjectCount / scopeStatus</code>——<strong>没有 layerId、没有 bounds、没有 typography</strong></td><td><code>quote/route.ts:63-69</code>；经典报价 <code>createPhotoshopQuote</code> 同样只吃 snapshotId/manifestHash/billingScope</td></tr>
+        <tr><td class="mono">二 · 换行改哪条摘要</td><td class="now">插换行 ⇒ <code>assignmentDigest</code> 与 <code>manifestDigest</code> 变；<code>bindingPlanDigest</code> <strong>不变</strong>（它只含 expected_source／layer_id／object_id）</td><td><code>evidence-foundation.ts:205</code>；<code>execution-manifest.ts:219-226</code>；<code>binding-core.ts:268-276</code></td></tr>
+        <tr><td class="mono">三 · 比对点全硬拒</td><td class="was">回执五处 409（manifest／rowSet／bindingPlan／translation／document）＋批次清单不符＋助手回读归一不等</td><td><code>receipt/route.ts:107/111/114/117/120</code>；<code>execution-batch.ts:687-688</code>；<code>execution-manifest.ts:460-473</code>；<code>v15-runner.js:96-97</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">唯一不自相矛盾的形状</span>
+    <p>插行必须收敛成 <code>compileBindings</code> 内、<strong>只依赖报价时点已冻结输入</strong>的确定性纯决策（三处调用 <code>server.js:6258/7556/7838</code> 同输入同输出）。为此要把四样东西搬进预扫描：所属画板矩形、该层下方最近元素顶边、图层缩放系数、文档分辨率——现状是<strong>预扫描只采文字层自身 bounds</strong>（<code>Preparation_Scanner.jsx:177-187</code>），画板与非文字层顶边只有执行并保存之后的 <code>Reopen_Verifier.jsx:164-225</code> 才有，<strong>晚于票据签发</strong>。</p></div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>计价：你拍的"不动"已验证成立，但它是脆的</h2>
+  <ul class="notes">
+    <li><strong>成立</strong>：报价字符数取 <code>row.translation.length</code>（<code>execute-step.tsx:1110/1123</code>）＝<strong>表行译文原文</strong>，不是排版后的 targetText ⇒ 加行不进计价。</li>
+    <li><strong>脆</strong>：服务端 <code>normalizeBillingText</code>（<code>billing/rules.ts:50-57</code>）<strong>保留换行</strong>、<code>characterCount</code> 按码点计数 ⇒ 哪天有人把计价源换成"加行后的文本"，同一句译文会<strong>静默多算 1 字符</strong>。</li>
+    <li><strong>已沉成守卫</strong>（本轮执行）：<code>scripts/smoke-wrap-billing-isolation.mjs</code> 三组断言——插行只动 assignmentDigest 不动 bindingPlanDigest；换行确实计入字数；求解器不得原地改写表行对象。已挂进 <code>test:feature-flag-whitelist</code> → <code>test:contracts</code>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>S1a 三条路，要你选一条</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">B</span><div class="body"><h3>B 可用但有硬失败：离线 PSD 解析</h3>
+      <p>落地形状已定：<code>readRegionFacts({offline, ps})</code> 双通道——离线优先、抛错或空壳即让位、两路皆不可用只许 <code>not_measured</code> 且不携带几何（守卫 <code>smoke-psd-region</code> 5 组断言、三发负控全咬）。可复现、不需要 PS。代价：新增运行时依赖进安装包、大文件要内存闸门。<strong>硬失败已复现</strong>：<code>6896／6897</code> 两份 314MB 级真稿抛 <code>Invalid layer size</code>（2.2s／2.8s 即失败）⇒ <strong>不可单独依赖</strong>。</p></div></div>
+    <div class="gate"><span class="num">A</span><div class="body"><h3>A 已验通：PS 侧 AM 读画板（本轮真机）</h3>
+      <p><code>artboard</code>(Object) 与 <code>artboardEnabled</code>(Bool) 键存在，矩形取 <code>getObjectValue(&#39;artboardRect&#39;)</strong> 的 top/left/bottom/right。真稿「画板 1」PS 侧读得 <code>0,0,450,600</code>，<strong>与离线 ag-psd 独立量得同一组数</strong>（这就是 v2 欠的 D1 双实现对拍）。反向证据：同层 DOM <code>layer.bounds</code> 是 <code>-379,-529,2700,1000</strong> ⇒ <strong>禁止拿组边界当画板</strong>。仍未知：逐层 <code>executeActionGet</code> 在大稿上的耗时。</p></div></div>
+    <div class="gate"><span class="num">C</span><div class="body"><h3>C 判死，不做：只用文字层近似</h3>
+      <p><strong>本轮已证伪</strong>：按分组框口径把屏间空带算成负数；非文字层（产品图）根本不进集合 ⇒ 判定系统性偏乐观，会产出"看起来通过"的坏结果，正是本项目禁止的静默。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>剩余排期与本轮证据</h2>
+  <ul class="notes">
+    <li><strong>排期</strong>：S1a（按选定路线，几何随 <code>scanId</code> 进 evidence，两次扫描不一致须显式拒跑）→ S2（<code>wrapProfile</code> 进 plan 摘要 v3，四层同步 + fixture + HANDOFF 标【合同变更】）→ S3（执行器"写文字→重读边界→按实测 Δ 下移→回证"，带 <code>nonEmpty(bounds)</code> 与 <code>DialogModes.NO</code> 双前置）→ S4（真机跨 72/300ppi、窄宽稿、含智能对象稿验收）。</li>
+    <li><strong>运行证据</strong>：新守卫 rc=0；<code>npm run test:feature-flag-whitelist</code> rc=0（含 clearance 10 条 + 本守卫）；<code>smoke-release-consistency</code> <strong>53 checks passed</strong>（加门前 46）；<code>npx tsc --noEmit</code> rc=0。</li>
+    <li><strong>负控两发全咬</strong>：删掉摘要里的 <code>target_text</code> ⇒ 红在断言 1b；让计价归一化吞掉换行 ⇒ 红在断言 2a。逐发还原，sha <code>efe2e358…</code>／<code>e1e8c65a…</code> 与基线一致，两个业务文件 <code>git status</code> 为空。</li>
+    <li><strong>我自己被抓到的一个假负控</strong>：harness 第一版把 <code>'node'</code> 当参数多传一遍，每发都 rc=1，差点报成"四条负控全咬"。根因是<strong>缺基线前置</strong>——注入前没证明门是绿的。已加 <code>BASELINE GREEN</code> 硬门后复跑，才是上面这两发。</li>
+    <li><strong>本轮未动</strong>：未改业务代码（注入均已还原）、未动摘要与计价、未部署、未提交、未 push；未跑完整 <code>test:contracts</code>（建库子进程并发会伪装成业务红，需静默机窗口）；未再触碰你的 Photoshop。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>上游：v1 → 自审 BLOCK → v2（E1 clearance 新门 + E2 报告诚实性三层，均已落地过门）→ 本件 v3 为 v2 排期做深挖，<strong>推翻"S1a 是可单独发版旁支"这一条</strong>。</p>
+  <p>2026-10-26 深夜 · 只读深挖 + 一个零合同守卫脚本 · 两站与生产未碰。</p>
+</footer>
+</div>
+

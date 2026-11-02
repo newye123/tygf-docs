@@ -1,0 +1,597 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GitHub 与官方实践深度审查</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+ main{max-width:1080px;margin:auto;padding:32px 24px}p{overflow-wrap:anywhere;line-height:1.85}h2{margin-top:44px}h3{margin-top:30px}@media(prefers-color-scheme:dark){:root{--bg:#15191f;--surface:#202630;--ink:#f0f3f7;--ink-2:#ccd3df;--muted:#adb9cb;--line:#394453}body{background:var(--bg);color:var(--ink)}}</style></head><body><main><h1>GitHub 与官方实践：官网方案深度对抗审查</h1>
+<p>承接：对“官网宣传与演示修订执行方案”继续下钻，检查开源项目实际做法、官方边界与本地运行反例。</p>
+<p>方法：yt-adversarial-review；外部一手来源 → 本地源码 → 隔离运行 → 反方验证。单主审，未声称多 Agent 独立盲审。</p>
+<p>一句话结论：三批拆分方向仍成立，但上一版对“演示隔离”和“自动回滚”的判据不够硬；真实样例应前置作为事实依据，SEO 文件建设应降级。</p>
+
+<div class="verdict">VERDICT: CONCERNS</div>
+<p>可以继续做事实修订与素材准备。演示发布前必须补上本报告的网络验收；自动化回滚前必须补当前版本保护或可验证的发布互斥。没有据此判定生产已存在漏洞，也没有修改业务代码。</p>
+
+<h2>1. 最值得改的六件事</h2>
+<p>1. 演示用固定样例与真实无副作用计算，不把计时动画当执行。真实 Photoshop 结果作为另一种证据单独展示。</p>
+<p>2. 演示隔离要查三层：代码是否发起危险请求、浏览器是否阻止、服务端是否收到或写入。Mock 只能帮助测试交互，不能证明产品自己隔离了网络。</p>
+<p>3. 内容回滚不能仅指定目标旧版本，还应核对“现在这一版是不是我要撤的那一版”，防止误撤别人刚发布的内容。</p>
+<p>4. 先准备一套可追溯真实样例，再围绕它写承诺和做演示。完整录屏可后置，但事实证据不能全部拖到第三批。</p>
+<p>5. 匿名试用采用受限临时身份和原子额度，不采用“没登录就放行”。本轮仍不开放真实匿名执行。</p>
+<p>6. SEO 优先抓取、内容价值与可见事实一致；不把 llms.txt 或结构化数据数量当增长目标。</p>
+
+<h2>2. 范围与取证边界</h2>
+<p>本地开发树：F:/工具开发/图译工坊内测版/worktrees/develop，读取基线 edec3f1111e21dca6a6bbd7e4f859241c7e5fcda。以下源码路径相对该树。</p>
+<p>被审方案：交付档案/执行方案/执行方案_20261026_官网宣传与演示修订_对抗审查版.md，重点复核其 :73、127、129、143 三个环节。</p>
+<p>检索日：2026-10-26。查阅 GitHub 的 WordPress Playground、Sanity client、Supabase Auth、Playwright 源码/变更，以及 MSW 历史讨论；补充 Google、Adobe、Stripe、Stryker、SLSA 官方材料。不是对这些仓库的全量安全审计。</p>
+<p>GitHub 连接器认证失败，公开 GitHub 网页与官方文档可读，部分 API/原始链接有 SSL 或 404 错误。分支链接是本次读取快照，不冒充锁定的 commit；WordPress #2296 为已合并历史变更。MSW #943 是历史案例，不能推断当前版本仍有同一 bug。</p>
+<p>本轮浏览器反例使用应用自带 Playwright 与独立 Chrome 155.0.8059.86，只访问随机本地端口的假服务。回滚反例使用当前真实函数与内存假数据库，不连接任何实际数据库。</p>
+
+<h2>3. 大家如何做，我们该学哪一层</h2>
+<h3>3.1 WordPress Playground：零门槛的关键是独立运行环境</h3>
+<p>WordPress Playground 将 PHP/WordPress 放进浏览器 WebAssembly 环境，并用 Blueprint 描述安装与运行步骤。这是实际运行相应引擎，不是播放进度条。可借鉴的是“固定输入、可重复环境、明确能力”，不是把它的零安装能力外推到 Photoshop。<a href="https://github.com/WordPress/wordpress-playground" target="_blank" rel="noopener">项目</a>、<a href="https://developer.wordpress.org/playground/" target="_blank" rel="noopener">官方说明</a>。</p>
+
+<p>反证更重要：该项目 2025-06-24 合并 #2296，默认启用网络；官方说明可以单独关闭。因此“在浏览器沙盒中运行”不等于“离线或绝无外部副作用”。<a href="https://github.com/WordPress/wordpress-playground/pull/2296" target="_blank" rel="noopener">已合并变更</a>、<a href="https://make.wordpress.org/playground/2025/06/27/wordpress-playground-now-connects-with-the-internet-by-default/" target="_blank" rel="noopener">网络行为说明</a>。</p>
+
+<p>对图译工坊的裁决：网页可真实计算固定样例的匹配/歧义，前提是复用的函数不含授权或网络副作用；不能模拟 Photoshop 运行却叫真实执行。要承诺真实本机执行，必须走真实安装授权与引擎。无需为演示移植 Photoshop 或引入整套 WASM 平台。</p>
+
+<h3>3.2 Supabase：匿名仍有身份，不是绕过身份</h3>
+<p>Supabase Auth 的 anonymous.go 在事务里创建用户并签发令牌。官方还提醒匿名身份使用 authenticated 角色，要区分匿名标记，补防滥用与清理策略。借鉴身份生命周期，不迁移我们的认证栈。<a href="https://github.com/supabase/auth/blob/master/internal/api/anonymous.go" target="_blank" rel="noopener">源码</a>、<a href="https://supabase.com/docs/guides/auth/auth-anonymous" target="_blank" rel="noopener">匿名认证说明</a>。</p>
+
+<p>本地真实任务要求授权解析、安装 ID 与 activationId：src/app/api/local-assistant/attempt/route.ts:30、34、145。匿名方案若只给前端一个 guest=true，就没有回答执行归属、过期、恢复、撤销和结算问题。</p>
+
+<p>裁决：未来真实匿名试用应是独立受限身份，明确权限集合、到期与任务归属。额度控制需服务端原子预留，设备 ID、IP 或验证码各自只能提供部分防滥用能力，不能声称“每人永远只能一次”。清浏览器数据后是否还能恢复任务也必须明确。</p>
+
+<p>Stripe 的幂等机制按请求键与参数重用结果，可借鉴重复提交约束；但它是 HTTP 操作语义，不能证明 Photoshop 外部副作用恰好一次，也不能把“超时未回”自动当作没执行。<a href="https://docs.stripe.com/api/idempotent_requests" target="_blank" rel="noopener">官方幂等说明</a>。</p>
+
+<h3>3.3 Sanity：补丁要知道自己基于哪一版</h3>
+<p>Sanity client 的 BasePatch.ifRevisionId 把预期修订号放入补丁，官方事务说明强调客户端“先读再写”的竞争需要乐观锁；事务本身不能表达操作者脑中的旧基线。<a href="https://github.com/sanity-io/client/blob/main/src/data/patch.ts" target="_blank" rel="noopener">客户端源码</a>、<a href="https://www.sanity.io/docs/content-lake/transactions" target="_blank" rel="noopener">事务与乐观锁</a>。</p>
+
+<p>本地已做得正确的部分：建草稿事务内重新核 ACTIVE（site-settings.ts:621），发布核基准修订与摘要（:698），数据库迁移还有每环境一个 ACTIVE 的唯一约束（prisma/migrations/20260901153000_content_studio_v1/migration.sql，现有守卫 scripts/smoke-content-studio-v1.mjs:30）。不应推翻这些现成机制。</p>
+
+<p>更深的边界在回滚：它接收目标版本、管理员、理由；没有调用方预期的当前发布 ID（site-settings.ts:713）。这不是认证绕过，而是部署自动化可能缺少“不要撤掉别人刚发布内容”的条件，详见第 5 节。</p>
+
+<h3>3.4 Playwright / MSW：测试拦截器会改变你正在观察的系统</h3>
+<p>Playwright 明确区分页请求与 Service Worker 请求的观测/拦截；源码的 worker 请求使用 BrowserContext 拦截器。不能只装 page.route 就宣称捕获全部浏览器网络。<a href="https://playwright.dev/docs/network" target="_blank" rel="noopener">网络文档</a>、<a href="https://playwright.dev/docs/service-workers" target="_blank" rel="noopener">Service Worker 文档</a>、<a href="https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/crServiceWorker.ts" target="_blank" rel="noopener">实际源码</a>。</p>
+
+<p>MSW 的历史讨论 #943 提醒：即便模拟层抛异常，测试也可能吞掉异常继续通过。它只能作为失败形态的佐证，不作为当前 MSW 版本缺陷结论。<a href="https://github.com/mswjs/msw/discussions/943" target="_blank" rel="noopener">历史讨论</a>。</p>
+
+<p>裁决：交互 mock 测试与真实网络边界验收分开；禁止用 mock 的成功响应证明真实处理链可用。错误日志不是失败断言，页面显示“成功”也不是副作用证据。</p>
+
+<h3>3.5 Stryker / SLSA：验“测试能抓错”与“产物来自哪里”是两件事</h3>
+<p>Stryker 区分变异被杀死、存活、未覆盖、编译/运行异常等结果。我们应对关键判断做小范围定向破坏，不追求一个全仓高分；语法被破坏导致无法启动，不能冒充业务断言抓住了错误。<a href="https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/" target="_blank" rel="noopener">变异结果定义</a>。</p>
+
+<p>SLSA 的产物核验重在构建来源、签名与期望参数。可借鉴样例包/安装包的来源清单，但哈希和来源正确仍不等于 PSD 文字与视觉正确。<a href="https://slsa.dev/spec/v1.2/verifying-artifacts" target="_blank" rel="noopener">产物核验</a>。</p>
+
+<p>裁决：证据至少分三种：产物身份、处理正确性、设计师视觉验收。不能因为 SHA 一致就给出“零漏改”。本项目不必为了这次官网修订先建设完整供应链平台。</p>
+
+<h3>3.6 Adobe：文字类型和实际渲染决定换行，不是字符串长度</h3>
+<p>Adobe 区分点文字与段落文字：点文字的行由人工换行控制，段落文字在边界框内自动流动；UXP 文档也区分这两种类型及转换方法。<a href="https://helpx.adobe.com/photoshop/desktop/text-typography/type-layers-creation/create-point-type-and-paragraph-type.html" target="_blank" rel="noopener">文字类型</a>、<a href="https://developer.adobe.com/photoshop/uxp/2022/ps-reference/classes/textitem" target="_blank" rel="noopener">TextItem API</a>。</p>
+
+<p>不能把现代 UXP API 的可用性外推到本项目所有 Photoshop 版本或现有 JSX 执行器。更不能因为转换成文本框能折行，就假设转换不改变原稿布局、混合字体与渲染。</p>
+
+<p>本地已有更精细的 wrap-planner：src/lib/workbench/wrap-planner.ts:1–4 明示纯规划器、暂不接线；:318 要求调用方提供度量表。当前绑定路径则在 binding-core.ts:1157、1254、1302 调 structuralTargetText，:1772 进入既有结构换行。两个层次可以同时存在：规划代码已实现，不代表实际任务消费了它。</p>
+
+<p>裁决：撤回“需要从零新建自动换行”的潜在误读；未来工作是核清已有规划器、真实字体度量、冻结计划和执行写回之间的缺口。宣传只认已经接通并有运行证据的路径。</p>
+
+<h3>3.7 Google：把可见内容做好，别把文件堆砌当增长</h3>
+<p>Google 官方明确说 Google Search 不使用 llms.txt 改善可见性或排名；AI 搜索仍依赖正常抓取、索引和内容质量，结构化数据应与可见内容一致。这只适用于 Google，不能外推所有 AI 服务。<a href="https://developers.google.com/search/docs/fundamentals/ai-optimization-guide" target="_blank" rel="noopener">官方 AI 搜索指南</a>、<a href="https://developers.google.com/search/docs/appearance/ai-features" target="_blank" rel="noopener">AI 功能与网站</a>。</p>
+
+<p>裁决：现有 llms 文本有错就修，但停止把新增它当增长里程碑；先检查索引资格、页面可读性、真实成果及内链。搜索结果没出现某页，不足以证明未收录；需要 Search Console 等站点证据，本轮未取得。</p>
+
+<h2>4. 实验一：同一缺陷，三种“看起来成功”的结果</h2>
+<p>证据与复跑脚本：交付档案/调研报告/证据_20261026_外部实践深探/network-counterexample.cjs；结果 network-counterexample.json。</p>
+<p>命令：node 交付档案/调研报告/证据_20261026_外部实践深探/network-counterexample.cjs，真实退出码 0。只启临时本地 HTTP 服务，finally 关闭浏览器与端口。</p>
+
+<p>四个场景：</p>
+<p>- 正常基线：点击仅改变演示状态。应用尝试 0，浏览器网络请求 0，假服务端命中 0，界面完成。</p>
+<p>- 有缺陷但被 mock：按钮尝试发 POST，测试给假成功。应用尝试 1，浏览器请求 1，服务端命中 0，界面完成。</p>
+<p>- 同一缺陷撤掉 mock：应用尝试 1，浏览器请求 1，服务端命中 1，界面仍完成。</p>
+<p>- 同一缺陷加产品侧 CSP 限制：应用尝试 1，浏览器策略违规 1，可见网络请求 0，服务端命中 0；因为应用吞掉异常，界面仍完成。</p>
+
+<p>第 2、3 个场景证明：测试自己挡住请求，不能证明应用不会发请求。</p>
+<p>第 4 个场景证明：零网络请求可能因为策略已经阻断；需要检查策略违规与应用错误，不能只盯 Network 数量。策略起效是好事，但页面还在假报成功仍是缺陷。</p>
+<p>本实验没有 Service Worker，因此并未实测所有 SW 边界；SW 结论来自官方文档与源码，应在最终产品采用 SW 时另测。</p>
+
+<h3>Finding N1 [CRITICAL / CONFIRMED] 上版 V8 需要升级为三层验收</h3>
+<p>问题：上版方案:127 只写“捕获浏览器网络，证明不触发”，没有要求区分 mock、违规尝试和真实服务端副作用。</p>
+<p>证据：上述四场景。现有 next.config.ts:22 的全站 connect-src 放行 self 与本地助手；:82 对全站生效。该配置服务真实工作台有合理用途，不是现有漏洞证明。</p>
+<p>影响：演示回归成真实请求时，mock 测试仍可通过；沿用全站策略也不能给演示提供独立的本机访问限制。</p>
+<p>修复路径：独立演示入口、只复用无副作用依赖；为该入口设计最小网络能力。不能全站收紧而弄坏工作台，也不能只写 connect-src self 就认为隔离了同源业务 API。若用 Next 页面，必须实测 hydration、导航、静态资源所需请求；做不到精确隔离时改用静态独立演示文档，而不是放开全部接口。</p>
+<p>防回归：交互测试允许 mock；边界测试关闭 mock，用隔离假后端计数，同时统计禁止请求尝试、CSP 违规、真实命中及数据库/队列副作用。坏样例先证明测量能抓到，再运行正常样例；正常样例三个层面均符合约束。</p>
+
+<p>MDN 列明 connect-src 管 fetch、XHR、WebSocket、EventSource、sendBeacon 等，不覆盖所有资源类型。还应按演示资产检查图片、脚本、表单与 frame 的相应约束，不能只拦 fetch。<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/connect-src" target="_blank" rel="noopener">CSP 范围</a>。</p>
+
+<h2>5. 实验二：回滚目标正确，仍可能撤错一次发布</h2>
+<p>证据：rollback-counterexample.cjs 与 rollback-counterexample.json，与网络反例在同目录。</p>
+<p>命令：node 交付档案/调研报告/证据_20261026_外部实践深探/rollback-counterexample.cjs，真实退出码 0。</p>
+<p>方法：从当前 site-settings.ts 提取真实 rollbackSiteContentRevision，TypeScript 转译后运行；用内存假库提供 frozen 目标与 ACTIVE。身份/数据库保护依赖作桩，因此只能验证函数消费的输入与顺序状态语义，不能宣称完成真库并发或权限验收。</p>
+<p>源码 SHA-256：18f747952888b3128a0ce8ea59461f7872853cd3c7882d53d1609542497a95e1。</p>
+
+<p>场景 A：操作者以为当前是 B，实际也是 B；请求回滚到 A → B 退役，A 生效。</p>
+<p>场景 B：操作者仍以为当前是 B，别人已先发布 C；同一请求回滚到 A → C 退役，A 生效。</p>
+<p>函数没有收到“只允许撤 B”的期望值，所以按现有语义会操作当前 C。这是顺序交错，不需要两个事务同时执行；数据库唯一 ACTIVE 约束不能阻止这种意图不一致。</p>
+
+<h3>Finding N2 [WARNING / CONFIRMED] 自动回滚必须带当前状态条件</h3>
+<p>问题：上版方案:129 与第八节要求成组回滚，但没有明说避免撤掉其他发布。</p>
+<p>证据：site-settings.ts:713、726–730；api/admin/site-content/rollback/route.ts:10、15；上述真实函数/假库反例。</p>
+<p>影响：失败批次的延迟回滚可能撤销其他人的更新。</p>
+<p>修复路径：人工单写者场景先确认当前版本，并锁定发布窗口；若要自动化，应把 expectedPublicationId/当前内容摘要纳入事务内比较，不一致时拒绝并重新核对。已有后台“任意回滚”功能可按其产品意图保留；为部署脚本另加条件，不擅自改变所有管理员操作语义。</p>
+<p>防回归：B 正常回 A；C 已取代 B 时旧回滚请求拒绝；同请求重放不得撤掉更新版本；中途断网后先查询真实当前状态，不盲重试。真实库还需测唯一约束、事务冲突及审计，不以本次假库替代。</p>
+
+<h2>6. 再钻一层：根因不是“测试写得少”</h2>
+<h3>IS / IS-NOT 对照</h3>
+<p>- IS：坏演示 UI 成功；IS-NOT：正常演示也成功。二者差异藏在副作用，不在 UI。</p>
+<p>- IS：mock 状态服务端 0 命中；IS-NOT：同代码不 mock 时 1 命中。差异是测试拦截器，不能归因成产品隔离有效。</p>
+<p>- IS：发布会核草稿基准；IS-NOT：回滚没有操作者预期的 ACTIVE 参数。事务内操作不等于意图不会过期。</p>
+<p>- IS：有 wrap-planner 源码；IS-NOT：当前 src 调用检索只找到其定义，实际绑定走 structuralTargetText。模块存在不等于功能已接入。</p>
+
+<p>为什么会重复出现“全绿但没完成”？</p>
+<p>第一层：把可见完成状态当作实际结果。</p>
+<p>第二层：测量与被测对象共享同一假设，例如测试给假成功，然后验证页面显示成功。</p>
+<p>第三层：没有明确区分各证据能证明的范围：源代码存在、运行进入、外部副作用、保存后的产物、视觉正确性。</p>
+<p>可操作的根因：验收合同缺少“谁产生结果、谁独立观察、故意破坏哪一步必须失败”。不是要求 AI 再认真一点，而是让成功必须经过不同观察点。</p>
+<p>反向验证：单看截图无法区分四个网络场景；加入请求尝试和服务端计数后可区分；再加策略违规可解释第 4 场景。因此新观察点确实补上了原判据的信息缺口。</p>
+
+<h2>7. 还需补的计划级问题</h2>
+<h3>N3 [WARNING / CONFIRMED] 真机证据不能全部后置</h3>
+<p>问题：上版:12、93 把完整素材放第三批，可能先写完文案与演示才发现真实能力不同。</p>
+<p>证据：本次本地结构换行与未接线规划器的差异；Adobe 区分文本类型；原方案已经出现把单行长文自动加行当既有能力的错误。</p>
+<p>影响：成本花在虚构能力的演示上，事后整体返工。</p>
+<p>修复路径：第 0 步先做一套“真实成功 + 真实例外”的最小证据。已有可靠素材可复用；完整剪辑与大样例包仍留第三批。没有机器时照实把相关承诺搁置，其他已有证据的修订继续。</p>
+<p>防回归：每个关键卖点绑定样例、版本、结果和视觉验收状态；撤去样例证据，对应强承诺必须从候选文案移除。</p>
+
+<h3>N4 [NOTE / CONFIRMED] SEO/GEO 的完成指标要换</h3>
+<p>问题：旧总方案把 llms 与 JSON-LD 作为重要缺失；上一版虽纠正存在性，但仍容易让执行者把这些文件当增长成果。</p>
+<p>证据：Google 官方指南和仓库已有实现。</p>
+<p>影响：能交付文件，却不能解释用户是否更容易找到或理解产品。</p>
+<p>修复路径：把事实纠错列维护项，把抓取/索引资格、真实内容与内部链接列质量项；转化用用户实际能否理解边界、找到模板、看到样例、完成既有申请来观察，不预设涨幅。</p>
+<p>防回归：不把“新增三个 SEO 文件”作为验收通过；用真实响应、可见内容、站长数据区分技术成功与业务结果。</p>
+
+<h3>N5 [NOTE / CONFIRMED] 不要把后续工程写成从零重做</h3>
+<p>问题：抽象提“几何换行、独立同意、发布并发”可能掩盖已存在模块。</p>
+<p>证据：wrap-planner.ts:1、318；site-settings.ts:621、698；现有 consent 相关代码已在上轮读到。本次只深入核实前两者，学习链仍待专项核实。</p>
+<p>影响：重复搭系统，把已验证链路换成新风险。</p>
+<p>修复路径：新增任务第一步输出“已有能力—实际调用—缺失连接—需要变化的合同”，缺口才进入实现范围。</p>
+<p>防回归：对否定结论给精确范围和命令结果；不能把未搜到当没有。</p>
+
+<h2>8. 可以直接并入执行方案的修订条款</h2>
+<p>以下替换上版相应段落；保留旧文档以便对照，不在本轮擅自实施代码。</p>
+
+<p>A. 第 0 步新增：最小真实证据先行。选一套可公开样例，记录真实成功和真实例外；关键卖点只能引用已核实部分。不能为了展示而删掉失败分支。</p>
+<p>B. 第二批新增：演示独立依赖与网络策略，避免挂载真实工作台壳。AppShell 确有工作台动态入口（app-shell.tsx:16、49），但本轮不声称它会自动执行；隔离设计应避免用户状态、hash 导航等把演示切成真实工作台。</p>
+<p>C. V8 替换为：分别验证应用尝试、浏览器策略、隔离服务端副作用；关闭 mock 后执行真实边界验收；适用时分开覆盖 Service Worker 启用/关闭、弹窗、重定向、WebSocket 与 beacon。不宣称有限测试证明全部可能网络行为。</p>
+<p>D. V10 新增：回滚时核对预期当前发布 ID/内容摘要；真实状态发生变化即停。代码、内容、样例资产的组合版本分别记录，并演练切换顺序；三者不能假设在一次数据库事务里原子切换。</p>
+<p>E. 每项负控新增：记录坏样例确实注入、绿色基线、目标断言失败、还原哈希和恢复绿色。异常退出但原因是环境/编译问题，不能算抓住业务缺陷。</p>
+<p>F. 样例包新增：输入输出哈希、代码/助手/PS 版本与内容版本；这是来源证据。另列文字回读、覆盖检查与视觉验收，三者不互相替代。</p>
+<p>G. SEO 优先级调整：纠正现有资产，先查抓取与可见内容；不新增为“AI 搜索排名”而存在的文件工程，不许承诺搜索收录或转化涨幅。</p>
+<p>H. 匿名工程补充：受限临时身份 + 服务端权限 + 原子额度 + 幂等与未知状态查询；验证码/设备指纹只作辅助；未核清残留数据、恢复与清理前不开放。</p>
+
+<p>实际推进建议：最小真实证据与事实修订先做 → 默认值及后台文案同步验证 → 演示隔离与行为验证 → 完整真实样例/录屏 → 测试站 → 经授权生产。真实证据不足时不硬推相关卖点，已证实的修订可独立交付。</p>
+
+<h2>9. 主审裁决：哪些保留，哪些撤回</h2>
+<p>- 保留：分批交付、匿名真实执行另行处理、已有 SEO 与内容发布机制优先复用。Survived: yes，来源与源码支持这些边界。</p>
+<p>- 撤回我上一版过宽的判断：“捕获浏览器网络就能证明不触发”。本次四场景实测显示需三层证据。</p>
+<p>- 收紧：“作为一组回滚”还不够，必须明确当前状态条件和切换顺序。</p>
+<p>- 调整顺序：完整视频可以晚做，但最小真实能力证据必须早于强承诺。</p>
+<p>- 不采信：“浏览器沙盒天然没有网络”——WordPress 已合并变更直接反驳。</p>
+<p>- 不采信：“有换行规划器就可以宣传全自动换行”——本地调用路径没有支持这个外推。</p>
+<p>- 不采信：“以上回滚模型证明线上已丢失内容”——没有真实库、并发或线上事故证据；只确认接口语义可能不满足自动回滚意图。</p>
+<p>- 不采信：“装更多工具就能保证成功”——不建议为本轮引入新认证平台、CMS、完整供应链或全库变异系统。</p>
+
+<h2>10. 覆盖缺口与停止条件</h2>
+<p>- 已完成：外部一手资料核查、本地源码追踪、四场景真实浏览器反例、真实回滚函数的内存库顺序交错实验。</p>
+<p>- 未完成：真实数据库并发、生产内容版本读取、Photoshop 真机、完整 SW 网络验证、客户转化实验、Search Console 核查、法律合规专项。</p>
+<p>- 环境记录：GitHub 连接器无认证；浏览器 MCP 缺扩展，未安装扩展，改用自带 Playwright 启动独立无头 Chrome 后成功。API SSL/404 不作为业务故障。</p>
+<p>- 本轮停止在“源码与反例能清楚区分的机制层”。不声称穷尽所有漏洞；后续只有出现新运行证据或进入具体实现，才扩展专项。</p>
+<p>- 没有修改业务、部署两站、开匿名执行、翻开关、发布内容或调用真实支付接口。只新增本报告与复现证据，按常设渠道发送飞书。</p>
+
+<h2>11. 复查证据入口</h2>
+<p>- network-counterexample.cjs/json：真实 Chrome + 本地假 HTTP 服务，四场景。</p>
+<p>- rollback-counterexample.cjs/json：真实函数 + 假数据库，顺序交错模型。</p>
+<p>- 当前调用链命令：rg -n 'compileBindings|structuralTargetText\(' worktrees/develop/src/lib/trust-chain/binding-core.ts，退出码 0，命中 :1157、1254、1302、1770。</p>
+<p>- 规划器调用范围：rg -n 'from.*wrap-planner|planWrap\(' worktrees/develop/src -g '*.ts' -g '*.tsx'，退出码 0，仅命中 wrap-planner.ts:310 定义；此结果只限定本次 src 范围，不扩张为全系统永久不存在调用。</p>
+<p>- CSP 证据：next.config.ts:22、82；回滚证据：site-settings.ts:713、726–730，api/admin/site-content/rollback/route.ts:10、15。</p>
+<p>收尾基线复核：HEAD 已由并行会话推进至 8e78de7afb58b3126450246d3c2e9425cf69661c；对本报告引用的核心业务文件做两基线 git diff --name-only，输出为空、退出码 0。回滚源文件 SHA-256 与实验时一致。唯一 ACTIVE 数据库索引进一步核实位于上述 migration.sql:38。</p><footer class="footer">2026-10-26 · 外部研究与隔离反例 · 非生产验收</footer></main></body></html>

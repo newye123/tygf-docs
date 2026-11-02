@@ -1,0 +1,522 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>官网执行方案审查</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+main{max-width:1080px;margin:auto;padding:32px 24px}p{overflow-wrap:anywhere;line-height:1.85}h2{margin-top:44px}h3{margin-top:32px} @media(prefers-color-scheme:dark){:root{--bg:#15191f;--surface:#202630;--ink:#f0f3f7;--ink-2:#ccd3df;--muted:#adb9cb;--line:#394453}body{background:var(--bg);color:var(--ink)}}</style></head><body><main><h1>官网执行方案对抗式审查｜2026-10-26</h1>
+<p>承接：审查 Downloads 中的 tuyigf_execution_plan_20261026.md 第 8 轮方案，不执行其中施工指令。</p>
+<p>方法：采用 yt-adversarial-review，源码对照、故障样例验证、跨模块合同核查；本轮为单主审，没有冒称多 Agent 盲审。</p>
+<p>一句话结论：宣传优化方向可以保留，但这版不能直接交给 AI 自动施工；核心换行承诺超出实现，验收脚本能把空产品判成全部通过。</p>
+
+<div class="verdict">VERDICT: BLOCK</div>
+
+<h2>基线与证据说明</h2>
+<p class="notes">• 方案 SHA-256：407D0561B73A6141C948CAE3AEFB58E539AD617875AEA0F22553D80736B246B9。</p>
+<p class="notes">• 审查基线 develop HEAD 为 f6d140ae8862eb421d9ee2b8c5d9c9c43b670234；最后复核已被并行会话推进至 edec3f1111e21dca6a6bbd7e4f859241c7e5fcda。git diff --name-only 两基线实测仅 package.json 与 scripts/smoke-batch-workbench-guards.mjs，业务实现引用未变；最终 git status --short 为空。本轮未修改或提交这些文件。</p>
+<p class="notes">• 下文“方案”指 C:/Users/ivan/Downloads/tuyigf_execution_plan_20261026.md；“开发树”指 F:/工具开发/图译工坊内测版/worktrees/develop。引用源码已实读，不能据此宣称已上线。</p>
+<p class="notes">• 已读开发树 CURRENT_STATUS、PROJECT_CONTEXT、ISSUES、HANDOFF。最新全景文件是总控/产品功能全景_20261003.md，其第 3 行基线已旧，仅作导航，结论用当前代码重核。</p>
+<p class="notes">• 临时隔离夹具与结果已保存至本报告旁“证据_20261026_官网执行方案审查/”。所有功能验证都在隔离夹具或纯函数上完成。</p>
+
+<h2>分面判定链与问题</h2>
+
+<h3>1. [CRITICAL / CONFIRMED] 换行宣传覆盖了代码明确跳过的情形</h3>
+<p>问题：方案把“单行点文字长译文自动折行、不捅出画布”写成已实现的核心卖点，随后要求全站照抄。（方案:18、75、79、97）</p>
+<p>证据：开发树 src/lib/trust-chain/binding-core.ts:1709 的换行函数在 :1736 返回 SOURCE_SINGLE_LINE，意思是原文只有一行，因此跳过换行；:1768 明确按原稿行结构拆分，:1771 对段落文字交由 Photoshop 自身排版。实跑助手生成模块：Sale → 长德语，sourceLines=1、targetLines=1、wrapped=false、maxWidthRatio=13.5；Free 换行 Shipping → 德语，wrapped=true、两行，但 maxWidthRatio=2.75。命令 node 调用 generated/binding-core.js 导出的 wrapTargetToSourceStructure，退出码 0。</p>
+<p>影响：客户最想解决的单行长文场景未被这个能力覆盖；即使发生拆行，也不能承诺不超宽。该比值是估算，不是 Photoshop 画布实测。</p>
+<p>修复路径：改为“按原稿已有多行结构辅助换行，提示超宽等需人工复核的位置”；如坚持单行长文自动适配，必须另列功能开发与真稿验收，不能只改宣传。删除“零漏改”“100% 拎出”等未经覆盖验证的保证。</p>
+<p>防回归测试：单行点文字、多行点文字、段落文字、无空格长词分别验收；同时验证字形实际宽度、遮挡、字号、存后重开与报告一致。</p>
+
+<h3>2. [CRITICAL / CONFIRMED] “31 项通过”不是 31 项验收</h3>
+<p>问题：方案把一个静态扫描脚本与 build 当作唯一完成标准。（方案:7、129、150、173、194、208）</p>
+<p>证据：脚本实际是 8 个禁用文本规则、11 个文件存在检查、1 个字段正则，不是 31 项业务测试。创建 11 个占位文件，契约文件只放注释“allowThirdPartyAi: false”，其余文件为空，匿名 API、执行器和视频均未实现。原脚本直接用 node 运行，仍输出 ALL 31 ADVERSARIAL CHECKS PASSED，真实退出码 0。另注入“撑版”后捕获退出码 1、精确报 1 项；还原后退出码 0，说明扫描器能抓词，但证明不了功能。</p>
+<p>影响：没有安全机制、没有可运行产品也能拿到这个成功标记。此实验证伪的是脚本的覆盖声明，不声称空项目也通过 npm build。</p>
+<p>修复路径：把它降级为文案检查；输出真实检查数量。逐条把 R1–R31 映射到行为测试、页面检查、真机记录或明确 NOT RUN；build 只是其中一关。</p>
+<p>防回归测试：缺匿名 API、额度校验失效、开启第三方 AI、删视频资产、页面无 JSON-LD 时，针对各项的检查必须分别失败。常量写在注释中不得算安全实现。</p>
+
+<h3>3. [CRITICAL / CONFIRMED] 匿名首单是授权产品改造，现有文件分工接不住</h3>
+<p>问题：方案只规定新建匿名 API 和几个上限，却要求真实助手免登录执行；没有定义现有身份、票据、额度及结算怎么衔接。（方案:66、82、109）</p>
+<p>证据：开发树 src/app/api/local-assistant/attempt/route.ts:30 调用 authorizeAssistantCredential，:34 使用授权所得安装身份，:53 约束已预留任务，:145 写入 activationId。这些接口不在 Agent-D 允许修改的匿名 API 与 workbench 范围内。几个 TypeScript 常量无法替代服务端授权。</p>
+<p>影响：照现有授权链接会失败；绕过它则可能破坏安装绑定、额度隔离与结果归属。本轮确认的是方案缺口，没有测试或宣称现有系统可被绕过。</p>
+<p>修复路径：网页演示与真实匿名任务拆开。演示先行；真实匿名任务另写有边界的凭证、有效期、安装绑定、一次性额度、并发原子扣减、重放与撤销合同，并明确是否允许自带文件。</p>
+<p>防回归测试：并发两请求、重复票据、伪造设备、改客户端上限、过期与跨安装使用、直接请求 AI 接口均应被对应服务端规则拦截；正常样例走完既有执行和报告链。</p>
+
+<h3>4. [WARNING / CONFIRMED] 只改默认文案，用户可能仍看到旧文案</h3>
+<p>问题：Agent-A 的主要施工入口是 siteContent.ts，终验也只扫磁盘源码。（方案:63、89、144）</p>
+<p>证据：开发树 src/app/(zh)/page.tsx:49 读取合并文案；src/lib/server/site-settings.ts:465 将存储内容覆盖代码默认值，:470–472 优先读取后台正在发布的版本。</p>
+<p>影响：代码扫描已干净、构建已通过，网站仍可展示数据库发布版本中的旧说法。</p>
+<p>修复路径：补充内容版本的 before/after、草稿预览、受控发布与可回滚步骤；先在隔离环境验证，不因审查擅自发布线上文案。</p>
+<p>防回归测试：预置一份含旧文案的已发布内容，再部署新默认值；确认迁移后的访客页面和结构化数据都更新，回滚可恢复旧版本。</p>
+
+<h3>5. [WARNING / CONFIRMED] SEO 缺失结论失实，按新建施工会重复已有能力</h3>
+<p>问题：R11 声称缺 llms 文件及 SoftwareApplication/FAQPage，Agent-C 被要求生成。（方案:35、105）</p>
+<p>证据：开发树 public/llms.txt:1、public/llms-full.txt:1、src/app/robots.ts:1、src/app/sitemap.ts:1 已有实现；src/app/(zh)/page.tsx:74、85 已构建这两种结构化数据，英文入口 src/app/en/page.tsx:53、64 亦有。Invoke-WebRequest https://tuyigf.com/llms.txt 实际 HTTP 200、4390 bytes。</p>
+<p>影响：会重复建设，甚至增加重复或相互矛盾的结构化数据。llms 文件存在并不表示内容正确；当前本地 llms.txt:11–12 的栅格化报告和不落盘说法仍值得修订。</p>
+<p>修复路径：把“新建”改成“核对并修正既有实现”，让 FAQ 可见内容和结构化数据继续同源；“搜索只看到协议页”不能等同于已证实全站仅一页被收录，应取得站长平台或逐 URL 证据。</p>
+<p>防回归测试：页面解析 JSON-LD、检查是否重复、与可见 FAQ 对账；核对中英文 canonical、站点地图路由与现有 SEO 检查。搜索收录另列观察项，不能靠文件存在判 PASS。</p>
+
+<h3>6. [WARNING / CONFIRMED] 单改隐私政策一条，会留下相互矛盾的承诺</h3>
+<p>问题：方案要求只改第八条⑤，让撤回学习同意不影响基础服务，却没有把第三节与实际撤回流程列入验收。（方案:94）</p>
+<p>证据：开发树 src/app/(zh)/privacy/page.tsx:69 仍写“注册即视为同意”，:125 将学习作为服务前提；src/app/api/auth/register/route.ts:59–69 注册流程写入学习同意。方案没有给出修改后同意、撤回和采集停止的完整合同。</p>
+<p>影响：文本可能宣称能单独退出，实际用户路径未闭合。这里是内部承诺一致性问题，不据此直接裁定违法。</p>
+<p>修复路径：梳理第三节、第八节、中英文、注册同意、设置入口、撤回后采集行为；确认现有 consent-gate 能力后补缺口，不把“改文案”当“改合规流程”。</p>
+<p>防回归测试：同意、拒绝、撤回、再次登录各状态验证基础执行可用与学习采集停止；历史记录处置按明确政策验证。</p>
+
+<h3>7. [WARNING / CONFIRMED] 路径脱敏少了跨端合同与重启恢复设计</h3>
+<p>问题：方案用一句 documentHash → localDiskPath 映射替代上传绝对路径。（方案:107）</p>
+<p>证据：开发树 src/lib/trust-chain/preparation-contract.ts:273、379–380 将 masterPath 定为必填，binding-core.ts:315 也带该字段；这些 trust-chain 文件不在 Agent-D 写入范围。receipts.js:7 已有禁止敏感字段名单，:60–63 的完整路径属于本地记录，不能不区分载荷便统一删除。</p>
+<p>影响：可能把合法准备请求改成不合法，或者断开续跑、回执与任务关联。同内容的两份文件也不能仅凭内容哈希表达“用户选择了哪一份”。</p>
+<p>修复路径：先列每条上传载荷，区分磁盘路径、图层内部路径与仅本地存储；用有范围的文件标识映射，并明确持久化、重启、同内容不同位置和旧版兼容；按合同变更同步各层。</p>
+<p>防回归测试：抓取实际请求确认不含绝对路径；复制相同文件到两处、重启助手、移动或删除文件、旧助手连接新服务端，逐项验证准确拒绝或正确恢复。</p>
+
+<h3>8. [WARNING / CONFIRMED] 演示、真实成果和真实执行的验收混在一起</h3>
+<p>问题：网页沙盒用固定 24 层演示数据，却展示自动折行和关闭重开进度，按钮写“跑完整案例”；同时要求真机视频和 PSD 样例包，终验没有检查这些资产。（方案:97–100、173–185）</p>
+<p>影响：做出模拟动画也可能被当作真实 Photoshop 执行；视频组件存在不证明录屏真实，演示报告不证明下载 PSD 通过回读。</p>
+<p>修复路径：固定数据流程明确标“交互演示”，成果包来自可追溯的真实执行；视频、字幕、资产版权与版本、下载地址、样例包摘要另列交付清单。真实素材未齐时不能靠合成进度充数。</p>
+<p>防回归测试：访问视频与样例下载链接；解包并用 Photoshop 打开样例，对照报告逐层查验；浏览器演示明确标注模拟，不冒充实时本机执行。</p>
+
+<h3>9. [WARNING / CONFIRMED] 文件隔离与英文路由写法还不能直接派工</h3>
+<p>问题：表格声称权限完全正交，但 Agent-D 包含 Agent-0 的契约文件；Agent-B 写 src/app/(en)/try-sandbox，而当前英文入口是 src/app/en。（方案:62、64、66、98）</p>
+<p>证据：实际英文首页与下载页位于开发树 src/app/en/page.tsx、src/app/en/download/page.tsx；方案同时把首页组件笼统列给 B，未列接线位置。Phase 0 与 Phase 1 分阶段可以避免同时写契约，但需明确交接后谁有权改，不能把它称为天然正交。</p>
+<p>影响：错误目录可能不能得到 /en/try-sandbox，并与中文路径冲突；共享契约可能在并行期间漂移。此项未创建路由或运行 Next 构建，路由具体报错 NOT RUN。</p>
+<p>修复路径：沿用仓库现有英文路由；把共享契约冻结在先行阶段，变更必须整合者串行处理；给首页、表单、SEO 组件的挂载文件逐个指定唯一写者。</p>
+<p>防回归测试：/try-sandbox 与 /en/try-sandbox 分别渲染正确语言；检查实际写入路径与授权表差集，契约变动触发双方接口测试。</p>
+
+<h2>逐项对账与反证裁决</h2>
+<p class="notes">• R27：部分能力存在，但方案扩大适用范围，改判为“先改承诺，再决定是否开发几何自适应”。</p>
+<p class="notes">• R31：拒绝其“31 项已验收”口径，空产品夹具已经证伪。</p>
+<p class="notes">• R11：缺失断言撤回；改成检查既有资产内容。</p>
+<p class="notes">• R2/R16/R29：产品目标可以讨论，不能作为仅靠新增几份文件就可完成的施工任务。</p>
+<p class="notes">• R15：修改方向需连同流程落实；本轮不作法律裁定。</p>
+<p class="notes">• R4：搜索收录状态待确认，未取得 Search Console 证据。</p>
+<p class="notes">• R1/R3/R5–R10/R12–R14/R17–R26/R28/R30：仅对关联部分做审查，没有逐项完成现网与真机复验；不能打包声称 31 项均已核验。</p>
+
+<h2>三种压力验证及保留结论</h2>
+<p class="notes">• 删除探针：仅占位文件、缺业务实现仍判全绿。Survived: no，终验不足。</p>
+<p class="notes">• 规模跳变：单行原文配长德语不换行；多行原文拆行后仍超宽。Survived: no，“长文普遍自动适配”不成立。</p>
+<p class="notes">• 跨接缝探针：默认文案被已发布内容覆盖，匿名接口需接已有授权链。Survived: no，分工不能证明运行闭环。</p>
+<p class="notes">• 可保留：区分保存前失败与保存后失败、明确栅格化限制、提供真实成果和模板、突出人工复核边界。Survived: yes（作为方案约束）；本轮没有把这些方向当作全链路实测通过。</p>
+
+<h2>本轮推翻的初判</h2>
+<p>最初认为“既然已有自动换行，就只需补真机覆盖”。追到求解器并实跑后撤回：单行原稿被明确跳过，多行拆分也不保证宽度达标。因此必须先缩小宣传承诺，而不是单纯补测试。另一方面，不能因为方案有明显问题就否定全部优化方向；真实样例、模板与更直白文案仍值得保留。</p>
+
+<h2>建议怎么改成可执行方案</h2>
+<p>推荐 A：先交付事实准确的宣传修订、已有 SEO 资产修订、明确标注的演示和真实样例。每一项给实际页面证据、后台发布版本与回滚路径。匿名真实执行、路径合同改造、单行几何适配另列后续工程。</p>
+<p>B：坚持一轮全做。先补齐以上合同、资产与行为验收，再允许施工；周期和风险明显更高，不能再以静态扫描和 build 为唯一完成标准。</p>
+
+<p>无论选哪种，助手行为改动须纳入生成件与版本一致性检查；适用时运行现有 test:trust-chain、test:batch-row-contract 和 test:seo-consistency。发布按 GitHub → 测试站验收 → 选定变更进 main → 获授权后生产的既有流程，方案第 7 行的完成标准不能取代它。</p>
+
+<h2>残留检验点与覆盖缺口</h2>
+<p class="notes">• 未跑业务 build、完整测试、Windows/Photoshop 真机验收，未检查所有现网页面。纯审查不需要为了凑绿运行全库测试。</p>
+<p class="notes">• 网页工具无法访问所查三页；备用 HTTP 请求成功读取现网 llms.txt（200/4390 bytes），首页请求 SSL 失败。没有把失败请求当作站点故障证据。</p>
+<p class="notes">• graphify query 命令退出码 1（工具不可用），已改源码检索。</p>
+<p class="notes">• 首次 bash 调到损坏 WSL；改用 Git Bash 后控制面检查退出码 1：在办 11/2、待复验 72，飞书回读快照失败。属于环境与治理告警，不算本方案功能测试失败，也未趁机修改任务台账。</p>
+<p class="notes">• 未联网确认法律适用、Photoshop 各版本复杂文字排版能力、Google 实际收录数量。这些断言保留待确认。</p>
+
+<h2>本次未动什么</h2>
+<p>未改被审方案，未改业务代码、治理规则或状态台账，未运行其 Phase 0–3；未部署两站、未翻任何开关、未修改账号或账务。本次只生成审查报告与隔离测试证据，按常设要求发送本报告至飞书。</p>
+<footer class="footer">2026-10-26 · 单主审 · 附可复跑证据</footer></main></body></html>
+

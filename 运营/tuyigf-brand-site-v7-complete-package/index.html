@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071832">
+<meta name="description" content="图译工坊：将已确认的多语言译文批量写入 Photoshop PSD/PSB 文字图层。逐项审查匹配与异常，交付可复核。本页为设计模拟原型。">
+<title>图译工坊 · 一套 PSD，多语言批量处理</title>
+<style>
+:root{
+  --ink:#122039;--ink2:#32425d;--muted:#71809a;--muted2:#9ca9bd;
+  --navy:#071832;--navy2:#0b2550;--blue:#286af6;--blue2:#63b6ff;--ice:#edf4ff;
+  --line:#e2e9f2;--bg:#f7f9fc;--white:#fff;--good:#0a9b74;--warn:#d68a16;--bad:#cb5361;
+  --radius:18px;--shadow:0 20px 70px rgba(9,32,69,.095);
+  font-family:Inter,"SF Pro Display","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,BlinkMacSystemFont,sans-serif
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:#fff;color:var(--ink);font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}a{color:inherit;text-decoration:none}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}
+svg{display:block}img{max-width:100%;display:block}::selection{background:#a3c9ff;color:#081632}
+:focus-visible{outline:3px solid #61a7ff;outline-offset:3px}
+.container{width:min(1190px,calc(100% - 52px));margin:0 auto}
+.u-blue{color:var(--blue)}.u-light{color:#70b5ff}
+.smallcaps{letter-spacing:.19em;text-transform:uppercase;font-weight:800;font-size:11px}
+.micro{font-size:12px}.muted{color:var(--muted)}.title-text{letter-spacing:-.046em;line-height:1.18}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 12px;background:#f1f5fb;color:#4d6281;font-size:12px;font-weight:650;white-space:nowrap}
+.pill-blue{background:#eaf2ff;color:#256be7}.pill-dark{background:#ffffff16;color:#daeaff;border:1px solid #ffffff24}
+.pill-light{background:#e8fff4;color:#0c936c}.pill-amber{background:#fff6e7;color:#a77215}.pill-red{background:#fff0f1;color:#b43e52}
+.dot{display:inline-block;width:7px;height:7px;flex-shrink:0;border-radius:50%;background:currentColor}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:0 19px;border-radius:12px;border:1px solid transparent;font-weight:700;font-size:14px;transition:transform .2s,box-shadow .2s,background .2s;line-height:1.15}
+.btn:hover{transform:translateY(-2px)}.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 9px 22px #2367f33d}.btn-primary:hover{background:#1359e6;box-shadow:0 15px 30px #2367f350}
+.btn-white{background:#fff;color:#112b58}.btn-white:hover{background:#edf5ff}
+.btn-outline{background:#fff;color:#1c3355;border-color:#dbe5f0}.btn-outline:hover{background:#f5f9ff}
+.btn-glass{background:#ffffff12;color:#fff;border-color:#ffffff30}.btn-glass:hover{background:#ffffff24}
+.btn-ghost{background:transparent;color:var(--ink);padding:0 10px}
+.btn-sm{min-height:36px;padding:0 13px;font-size:12px;border-radius:9px}
+.btn-icon{min-width:40px;padding:0 12px}.btn-block{width:100%}
+.link-arrow{display:inline-flex;align-items:center;gap:9px;color:var(--blue);font-weight:740;font-size:14px}.link-arrow:hover{gap:15px}
+.link-arrow .arrow{font-size:19px;font-family:Arial,sans-serif}
+.site-header{position:sticky;top:0;z-index:80;background:#081a35f5;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:white;border-bottom:1px solid #ffffff15}
+.navbar{height:77px;display:flex;align-items:center;gap:30px}
+.brand{display:flex;align-items:center;gap:11px;min-width:183px}.brand-icon{width:37px;height:37px;border:1px solid #71b3ff80;background:linear-gradient(140deg,#236cf5,#082b63);border-radius:10px;display:grid;place-items:center;font-size:19px;line-height:1;font-weight:900;color:#fff;position:relative;box-shadow:0 4px 25px #206bfd40}
+.brand-icon:after{content:"";position:absolute;right:-5px;top:9px;width:9px;height:18px;border:2px solid #66c4ff;border-left:0;border-radius:0 5px 5px 0}
+.brand-name{font-weight:800;font-size:17px;letter-spacing:-.025em;line-height:1.2}.brand-note{font-size:9px;color:#8cadd6;letter-spacing:.16em;margin-top:3px}
+.site-nav{display:flex;align-items:center;gap:4px;flex:1;justify-content:center}
+.site-nav a{font-size:13px;font-weight:600;color:#b9c7e0;padding:9px 11px;border-radius:8px;white-space:nowrap;transition:.2s}
+.site-nav a:hover,.site-nav a.active{color:#fff;background:#ffffff13}
+.nav-actions{display:flex;align-items:center;gap:9px}
+.menu-toggle{display:none;background:#ffffff12;color:#fff;border:1px solid #ffffff22;border-radius:9px;padding:10px 13px;font-size:18px}
+.global-banner{background:#0b2a5a;text-align:center;font-size:11px;letter-spacing:.02em;color:#b9d7ff;padding:7px 16px;border-bottom:1px solid #ffffff0f}
+.global-banner strong{color:#fff;font-weight:700}
+.page{display:none}.page.is-active{display:block;animation:pageReveal .27s ease both}
+@keyframes pageReveal{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Hero */
+.hero{position:relative;background:radial-gradient(ellipse at 78% 40%,#12448b78 0,transparent 39%),radial-gradient(ellipse at 18% 90%,#1b65c530 0,transparent 43%),linear-gradient(132deg,#06152d 0%,#0b2349 55%,#04162f 100%);overflow:hidden;color:#fff;padding:105px 0 135px;min-height:690px}
+.hero:before,.inner-hero:before{content:"";position:absolute;inset:0;opacity:.16;background-image:linear-gradient(#97c9ff18 1px,transparent 1px),linear-gradient(90deg,#97c9ff18 1px,transparent 1px);background-size:61px 61px;mask-image:linear-gradient(100deg,transparent,#000 33%,#000 90%,transparent);pointer-events:none}
+.hero-backword{position:absolute;inset:auto 0 -74px;font-size:clamp(140px,20vw,320px);font-weight:900;color:#ffffff05;letter-spacing:-.09em;line-height:1;text-align:center;white-space:nowrap;user-select:none;pointer-events:none}
+.hero-layout{display:grid;grid-template-columns:.97fr 1.03fr;gap:40px;align-items:center;position:relative;z-index:1}
+.hero-copy{padding:4px 0 0}
+.hero-brow{display:inline-flex;align-items:center;gap:11px;font-size:11px;letter-spacing:.06em;color:#bfd5f5;background:#ffffff0d;border:1px solid #80acff36;border-radius:999px;padding:8px 12px}
+.blink-dot{width:7px;height:7px;border-radius:50%;background:#76d8fe;box-shadow:0 0 0 5px #62c6fd18}
+.hero h1{font-size:clamp(44px,4.9vw,74px);letter-spacing:-.067em;line-height:1.2;margin:27px 0 22px;font-weight:850}
+.hero h1 em{font-style:normal;background:linear-gradient(93deg,#f5fbff 0%,#72bcff 45%,#2b86ff 98%);color:transparent;background-clip:text;-webkit-background-clip:text}
+.hero-intro{font-size:16px;color:#b9cbe7;max-width:480px;line-height:1.95}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:29px}
+.hero-conditions{display:flex;gap:18px;flex-wrap:wrap;margin-top:33px;color:#a8c3e2;font-size:12px}
+.hero-conditions span{display:flex;align-items:center;gap:7px}.hero-conditions .tick{color:#77d9c6}
+.hero-visual{position:relative;min-width:0;padding:12px 0 25px 14px;filter:drop-shadow(0 35px 42px #00000024)}
+.mock-window{background:#102449;border:1px solid #699cff5c;border-radius:17px;overflow:hidden;box-shadow:0 26px 76px #020b20b8,0 0 0 7px #7ea4ef0c;transform:rotate(-2.3deg);animation:floaty 8s ease-in-out infinite}
+@keyframes floaty{0%,100%{translate:0 0}50%{translate:0 -8px}}
+.mock-top{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#112c58,#0a2148);padding:11px 13px;border-bottom:1px solid #ffffff18;color:#a7c8ed;font-size:10px}
+.mock-window-dots{display:flex;gap:4px}.mock-window-dots i{width:6px;height:6px;border-radius:50%;background:#7b9abe}.mock-window-dots i:first-child{background:#ff9b9b}.mock-window-dots i:nth-child(2){background:#eec77b}.mock-window-dots i:last-child{background:#7cd5be}
+.mock-top strong{color:#eef6ff;font-size:10px;font-weight:600;margin-left:4px}
+.mock-canvas{display:grid;grid-template-columns:120px 1fr 155px;min-height:308px}
+.mock-sidebar{background:#0b1a36;padding:12px 8px;color:#a3bddc;border-right:1px solid #ffffff13}
+.mock-small-head{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#7194c2;margin:5px 6px 10px}
+.mock-layer{display:flex;align-items:center;gap:7px;font-size:9px;color:#d1ddf0;padding:8px 5px;border-radius:5px;white-space:nowrap;overflow:hidden}
+.mock-layer svg{width:12px;height:12px;flex-shrink:0;opacity:.65}.mock-layer.active{background:#276ff240;color:#fff}
+.mock-previewer{padding:14px 11px;background:linear-gradient(148deg,#182f55,#203e6b);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;position:relative}
+.mock-previewer:after{content:"";width:110px;height:14px;background:#00000035;filter:blur(10px);position:absolute;bottom:41px;border-radius:50%}
+.mock-previewer .mini-art{transform:scale(.79);margin:-18px 0}
+.mock-output{background:#0c1c3a;padding:11px 9px;min-width:0;border-left:1px solid #ffffff13}
+.mock-count{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px}
+.mock-count>div{background:#ffffff0a;border-radius:7px;padding:8px 6px}.mock-count b{font-size:17px;display:block;color:#fff;line-height:1.1}.mock-count small{font-size:9px;color:#a3bedb}
+.mock-result{padding:8px 6px;border-bottom:1px solid #ffffff11;font-size:9px;color:#bed2ec}.mock-result strong{color:#e6f1ff;display:block;font-size:10px;margin-top:2px;font-weight:550}
+.mock-result .warn{color:#ffcf8d}.mock-result .success{color:#82e0ce}
+.floating-note{position:absolute;border:1px solid #b7d4ff40;background:linear-gradient(133deg,#194484,#0e305b);color:white;border-radius:12px;box-shadow:0 20px 35px #010b2380;display:flex;align-items:center;gap:10px;padding:13px 14px;z-index:2;min-width:170px}
+.floating-note.one{top:-25px;right:-11px;transform:rotate(3deg)}.floating-note.two{bottom:-11px;left:-12px;transform:rotate(-3deg)}
+.floating-note-icon{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#ffffff20;font-size:16px}
+.floating-note b{font-size:11px;display:block}.floating-note small{font-size:9px;color:#acc6e8;display:block}
+.visual-disclaimer{text-align:right;margin:19px 17px 0;color:#83a5d1;font-size:10px}
+.mini-art{width:210px;height:238px;border-radius:13px;overflow:hidden;background:linear-gradient(150deg,#dde9f5,#9eb7d1 58%,#6e8eaf);color:#1d3a58;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.mini-art:before{content:"";width:215px;height:215px;border:1px solid #ffffff64;border-radius:50%;position:absolute;top:14px;right:-75px}
+.mini-art:after{content:"";width:94px;height:94px;border:1px solid #ffffff88;border-radius:50%;position:absolute;top:45px;left:-47px}
+.mini-art .mini-art-top{position:absolute;top:13px;left:15px;font-size:9px;font-weight:800;letter-spacing:.1em;color:#2a4e6f}
+.mini-art .mini-art-name{position:absolute;top:34px;left:16px;font-size:18px;font-weight:840;letter-spacing:-.02em;line-height:1.12;max-width:146px;z-index:2}
+.mini-art .mini-art-foot{position:absolute;bottom:13px;left:16px;right:16px;display:flex;justify-content:space-between;gap:3px;font-size:8px;font-weight:700;color:#274a6b}
+.product-svg{width:155px;height:142px;z-index:1;filter:drop-shadow(0 15px 12px #15365f33);transform:rotate(-13deg);margin-top:45px}
+.surface-curve{background:#fff;border-radius:66px 66px 0 0;position:relative;margin-top:-55px;z-index:2;overflow:hidden}
+.section{padding:112px 0}
+.section-tight{padding:82px 0}
+.section-muted{background:#f7f9fd}
+.section-dark{background:var(--navy);color:#fff}
+.section-intro{max-width:710px;margin-bottom:42px}.section-eyebrow{color:var(--blue);font-size:11px;letter-spacing:.2em;font-weight:850;margin-bottom:16px}
+.section-intro h2,.section-heading{font-size:clamp(32px,3.25vw,48px);line-height:1.26;letter-spacing:-.052em;margin:0 0 16px;font-weight:830}
+.section-intro p{font-size:15px;color:#64758e;max-width:630px;line-height:1.96;margin:0}.section-dark .section-intro p{color:#b4cae4}
+.split-heading{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:34px}.split-heading .section-intro{margin:0}
+.case-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:34px}
+.case-copy{display:flex;flex-direction:column;justify-content:center}
+.case-quote{font-size:clamp(26px,3vw,38px);letter-spacing:-.045em;line-height:1.36;font-weight:790;max-width:470px;margin:6px 0 18px}
+.case-copy>p{color:#66768b;max-width:410px;margin:0 0 24px}
+.case-checks{display:grid;gap:12px}.case-checks span{display:flex;align-items:center;gap:10px;color:#3b526e;font-weight:650;font-size:13px}
+.case-checks .num{width:27px;height:27px;display:grid;place-items:center;background:#edf4ff;color:var(--blue);border-radius:8px;font-size:11px}
+.case-demo{background:#fff;border:1px solid #dce5f0;box-shadow:var(--shadow);border-radius:22px;padding:20px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}
+.card-head b{font-size:13px;letter-spacing:-.01em}.card-head small{color:#8695aa;font-size:11px}
+.lang-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:15px}
+.lang-tab{border:1px solid #e2e9f2;background:#f7f9fc;color:#77879d;padding:7px 13px;border-radius:8px;font-size:11px;font-weight:750;transition:.2s}
+.lang-tab:hover,.lang-tab.active{background:#1d65e8;color:#fff;border-color:#1d65e8}
+.case-stage{display:grid;grid-template-columns:1fr 150px;gap:10px}
+.case-preview{min-width:0;background:linear-gradient(135deg,#e7eef6,#b5c8dd);border-radius:13px;min-height:295px;overflow:hidden;position:relative}
+.case-preview .sample-mark{font-size:11px;position:absolute;top:22px;left:22px;letter-spacing:.16em;font-weight:800;color:#56708b}
+.case-preview h3{position:absolute;z-index:2;top:43px;left:22px;max-width:50%;font-size:24px;letter-spacing:-.055em;line-height:1.15;margin:0;overflow-wrap:anywhere}
+.case-preview .sample-artwork{position:absolute;right:8px;bottom:34px;width:54%;max-height:215px;filter:drop-shadow(0 21px 11px #123a6933)}
+.case-preview .sample-bottom{position:absolute;left:22px;bottom:20px;font-size:11px;font-weight:800;background:#ffffffaa;border:1px solid #ffffff99;padding:8px 12px;border-radius:6px;color:#30516e;max-width:58%}
+.case-issues{border:1px solid #e2e9f1;border-radius:11px;padding:12px;display:flex;flex-direction:column;gap:9px}
+.case-issues .issue-entry{padding:9px 8px;border-radius:8px;background:#f7f9fc;font-size:10px;line-height:1.45}
+.case-issues .issue-entry span{font-size:9px;color:#8b9caf;display:block;margin-bottom:3px}
+.case-issues .issue-entry strong{font-size:11px;font-weight:650}
+.case-demo-note{border-top:1px solid #e8edf4;margin-top:14px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#8695ab;font-size:11px}
+.workflow-layout{display:grid;grid-template-columns:360px 1fr;gap:44px;align-items:center}
+.workflow-steps{display:grid;gap:9px}
+.workflow-step{width:100%;border:1px solid transparent;background:#f6f8fb;display:flex;align-items:center;gap:15px;text-align:left;padding:17px;border-radius:14px;transition:.2s}
+.workflow-step:hover{background:#edf3ff}.workflow-step.active{background:#ecf3ff;border-color:#b7cfff;box-shadow:0 9px 25px #286af60c}
+.workflow-index{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#7d8da4;background:#fff;border:1px solid #e2eaf3;flex-shrink:0}
+.workflow-step.active .workflow-index{color:#fff;background:#286af6;border-color:#286af6}
+.workflow-step b{font-size:15px;display:block;line-height:1.35}.workflow-step small{font-size:11px;color:#6d7e98}
+.workflow-frame{border-radius:23px;min-height:378px;background:#0b1e3d;padding:14px;box-shadow:0 22px 65px #102f5b2a;position:relative;overflow:hidden}
+.workflow-frame:before{content:"";position:absolute;right:-95px;top:-110px;width:280px;height:280px;border-radius:50%;background:#286af62e;filter:blur(30px)}
+.workflow-app{border-radius:14px;background:#142d55;min-height:350px;border:1px solid #3e6094;position:relative;z-index:1;overflow:hidden}
+.workflow-app-head{background:#0c2246;display:flex;align-items:center;justify-content:space-between;color:#dae8ff;padding:13px 17px;border-bottom:1px solid #ffffff15;font-size:12px}
+.workflow-app-body{padding:23px 27px;color:#f2f7ff}
+.workflow-app-body h4{font-size:22px;letter-spacing:-.035em;margin:3px 0 9px}
+.workflow-app-body p{font-size:12px;color:#a8c5e7;line-height:1.9;max-width:480px}
+.workflow-visual-rows{display:grid;gap:8px;margin-top:18px}
+.workflow-visual-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #ffffff1b;background:#ffffff0b;padding:11px;border-radius:9px;color:#d0e4f8;font-size:11px}
+.workflow-visual-row span:last-child{color:#80c7ff}
+.features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.feature-card{padding:23px;background:#fff;border:1px solid #e2e8f1;border-radius:18px;min-height:285px;transition:.2s;overflow:hidden}
+.feature-card:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:#ccddf4}
+.feature-icon{width:43px;height:43px;background:#ecf3ff;color:var(--blue);display:grid;place-items:center;border-radius:11px;margin-bottom:20px;font-size:19px}
+.feature-card h3{font-size:17px;margin:0 0 9px}.feature-card p{font-size:12px;color:#687a92;margin:0;line-height:1.92}
+.feature-micro{background:#f3f7fd;border-radius:8px;margin-top:23px;padding:11px;color:#5d7290;font-size:10px;line-height:1.7}
+.evidence-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:35px;align-items:center}
+.evidence-visual{border:1px solid #dce5f0;border-radius:18px;background:#fff;padding:23px;box-shadow:0 13px 45px #122e5010}
+.evidence-label{border-bottom:1px solid #edf0f5;padding:0 0 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.evidence-row{display:grid;grid-template-columns:1.1fr 1fr auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #f0f2f6;font-size:12px}
+.evidence-row .value{color:#73849b}.evidence-row .pending{font-weight:700;color:#ae7a27}
+.evidence-copy h2{font-size:clamp(31px,3vw,44px);line-height:1.3;letter-spacing:-.045em;margin:15px 0}
+.evidence-copy p{color:#687a92;line-height:1.95}.evidence-checklist{margin:23px 0;display:grid;gap:11px}
+.evidence-checklist div{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:650}
+.evidence-checklist div:before{content:"✓";width:23px;height:23px;border-radius:50%;background:#eaf2ff;color:#236be9;display:grid;place-items:center}
+.cta-wrap{background:linear-gradient(125deg,#0b2348,#123d81 74%,#1b68d1);border:1px solid #618fff44;border-radius:29px;padding:57px 65px;position:relative;overflow:hidden;color:#fff;display:grid;grid-template-columns:1fr 310px;gap:38px;align-items:center}
+.cta-wrap:before{content:"";position:absolute;width:550px;height:550px;border:1px solid #ffffff28;border-radius:50%;right:-155px;top:-250px;box-shadow:0 0 0 72px #ffffff09,0 0 0 160px #ffffff06}
+.cta-wrap>div{position:relative;z-index:2}
+.cta-wrap h2{font-size:clamp(31px,3.4vw,49px);letter-spacing:-.05em;line-height:1.25;margin:11px 0 17px}
+.cta-wrap p{color:#c3d7f0;max-width:600px;line-height:1.85;font-size:14px}
+.cta-points{display:grid;gap:12px}.cta-point{border:1px solid #ffffff32;background:#ffffff0e;border-radius:12px;padding:13px 15px;color:#eef5ff;font-size:12px;display:flex;gap:12px;align-items:center}
+.cta-point b{color:#8ac4ff}
+.faq-preview{max-width:900px;margin:auto}
+.faq-item{border-bottom:1px solid #e4ebf3}.faq-item summary{padding:22px 6px;cursor:pointer;list-style:none;font-weight:760;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.faq-item summary::-webkit-details-marker{display:none}.faq-item summary:after{content:"+";font-size:22px;font-weight:400;color:#7f90a8}.faq-item[open] summary:after{content:"−"}.faq-item p{color:#60738d;margin:0;padding:0 25px 22px 6px;line-height:1.95}
+/* Inner pages */
+.inner-hero{background:radial-gradient(ellipse at 86% 10%,#1753a66d,transparent 42%),linear-gradient(135deg,#071832,#0c2b5b);position:relative;overflow:hidden;color:white;padding:77px 0 83px}
+.inner-hero.compact{padding:59px 0 65px}.inner-hero .container{position:relative;z-index:2}
+.inner-hero .kicker{color:#76b8ff;font-weight:800;font-size:11px;letter-spacing:.19em}
+.inner-hero h1{font-size:clamp(37px,4.2vw,59px);letter-spacing:-.055em;line-height:1.27;margin:15px 0 17px}
+.inner-hero p{color:#b7cee9;font-size:15px;line-height:1.95;max-width:770px}
+.inner-links{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:25px}
+.page-content{padding:78px 0 110px}.body-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.info-card{background:white;border:1px solid #dfe8f2;border-radius:18px;padding:25px}
+.info-card h3{margin:0 0 9px;font-size:18px}.info-card p{color:#63748b;font-size:13px;margin:0;line-height:1.9}
+.info-card .overline{font-size:10px;color:var(--blue);letter-spacing:.16em;font-weight:850;margin-bottom:18px}
+.stack-cards{display:grid;gap:14px}
+.wide-card{border:1px solid var(--line);border-radius:17px;background:#fff;padding:25px;display:grid;grid-template-columns:60px 1fr;gap:20px;align-items:center}
+.wide-card .wide-num{width:56px;height:56px;background:#edf4ff;color:#246df1;display:grid;place-items:center;border-radius:15px;font-size:20px;font-weight:800}
+.wide-card h3{margin:0 0 7px;font-size:17px}.wide-card p{margin:0;color:#697b92;font-size:13px}
+.soft-box{background:#edf4ff;border:1px solid #d0e1fb;border-radius:18px;padding:23px;color:#31517e}
+.soft-box h3{margin:0 0 8px;font-size:15px}.soft-box p{font-size:13px;margin:0;line-height:1.85}
+.mini-compare{background:#f6f9fd;border:1px solid #e2eaf3;border-radius:18px;padding:24px}
+.mini-compare h3{font-size:17px;margin:0 0 10px}
+.fit-table{width:100%;border-collapse:collapse;font-size:13px;overflow:hidden}
+.fit-table th{text-align:left;color:#51627b;font-weight:750;background:#f3f7fc}
+.fit-table th,.fit-table td{padding:15px 16px;border-bottom:1px solid #e8edf4;vertical-align:top}
+.fit-table td{color:#58708d}.fit-table td strong{color:#20334f}
+.fit-table tr:last-child td{border-bottom:0}
+.report-lab{background:#f5f8fd;border:1px solid #e0e8f4;border-radius:21px;padding:25px}
+.report-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.report-top h3{font-size:17px;margin:0}
+.checklist-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:22px}
+.checklist-item{background:white;border:1px solid #e6ecf3;padding:14px 15px;border-radius:11px;font-size:12px;color:#506582;display:flex;align-items:start;gap:10px}
+.checklist-item span:first-child{color:var(--good);font-weight:800}
+.case-list{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}
+.test-card{padding:24px;border:1px solid #dce6f2;border-radius:17px;background:white;display:flex;flex-direction:column;min-height:280px}
+.test-card .test-icon{font-size:28px;margin-bottom:16px;display:block;color:#246cf0}
+.test-card h3{font-size:17px;margin:0 0 12px}.test-card p{color:#6f8094;font-size:12px;line-height:1.88;margin:0}.test-card .test-tag{margin-top:auto;align-self:flex-start;padding-top:18px}
+.security-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.security-node{border:1px solid #dce5f1;background:#fff;border-radius:18px;padding:24px;min-height:170px}
+.security-node .security-icon{width:45px;height:45px;border-radius:12px;background:#eaf2ff;color:#2670ef;font-size:19px;display:grid;place-items:center;margin-bottom:18px}
+.security-node h3{font-size:16px;margin:0 0 9px}.security-node p{font-size:12px;color:#71819b;margin:0}
+.billing-grid{display:grid;grid-template-columns:1fr 1fr;gap:21px}
+.billing-card{padding:33px;border-radius:19px;background:#fff;border:1px solid #dfe7f1;min-height:285px;display:flex;flex-direction:column}
+.billing-card.primary{background:linear-gradient(139deg,#0b2552,#174998);border-color:#174998;color:white}
+.billing-card h3{font-size:21px;margin:0 0 12px}.billing-card p{font-size:13px;color:#6a7c95;margin:0 0 25px}.billing-card.primary p{color:#b6d5ff}
+.billing-price{font-weight:840;font-size:33px;letter-spacing:-.05em;margin-top:auto}.billing-card small{color:#8190a9}.billing-card.primary small{color:#c6d8f7}
+.guides-list{display:grid;grid-template-columns:repeat(3,1fr);gap:19px}
+.guide-card{background:white;border:1px solid #dfe8f1;border-radius:16px;overflow:hidden}
+.guide-visual{height:142px;background:linear-gradient(140deg,#09224b,#1d68e3);display:flex;align-items:center;justify-content:center;color:#d4eaff;font-size:46px;position:relative;overflow:hidden}
+.guide-visual:before{content:"";position:absolute;width:210px;height:210px;border:1px solid #ffffff2d;border-radius:50%;right:-20px;top:-95px;box-shadow:0 0 0 39px #ffffff0d,0 0 0 78px #ffffff0a}
+.guide-body{padding:22px}.guide-body small{font-size:11px;color:#7789a0}.guide-body h3{font-size:16px;letter-spacing:-.02em;margin:12px 0}.guide-body p{font-size:12px;color:#6e8096;line-height:1.85}
+.article{max-width:790px;margin:auto}.article h2{font-size:25px;margin-top:30px}.article p{line-height:2.05;color:#536780}.article ul{line-height:2.1;color:#536780}
+/* Product demo */
+.demo-topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap}
+.demo-subtitle{font-size:12px;color:#7a8ba1}
+.demo-app{background:#fff;border:1px solid #d9e3f0;box-shadow:0 22px 65px #102a5112;border-radius:20px;overflow:hidden}
+.demo-app-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:17px 22px;background:#0d254b;color:#d9eaff;border-bottom:1px solid #ffffff21}
+.demo-app-head b{font-size:14px;color:#fff}.demo-app-head small{font-size:11px;color:#91b3dd}
+.demo-steps{display:flex;gap:5px;padding:13px 20px;border-bottom:1px solid #e6ecf4;background:#f8fafe;overflow:auto}
+.demo-step{background:transparent;color:#7a8ba2;border:1px solid transparent;border-radius:9px;padding:10px 16px;font-size:12px;font-weight:750;white-space:nowrap}
+.demo-step.active{background:#eaf2ff;color:#236bea;border-color:#c5dbff}
+.demo-body{display:grid;grid-template-columns:190px minmax(0,1fr) 260px;min-height:518px}
+.demo-side{border-right:1px solid #e6ecf4;padding:21px 14px;background:#fbfcff}
+.demo-panel-title{font-size:10px;letter-spacing:.15em;color:#96a6bd;font-weight:800;text-transform:uppercase;padding:0 9px;margin-bottom:14px}
+.side-file{padding:12px;border-radius:10px;background:#edf4ff;border:1px solid #dbe8fd;color:#2e5487;display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700;overflow:hidden;overflow-wrap:anywhere}
+.side-group{margin-top:21px}.side-group label{font-size:11px;font-weight:750;color:#74859e;display:block;margin:0 0 8px 6px}
+.side-item{display:flex;gap:7px;align-items:center;font-size:11px;padding:9px 10px;border-radius:9px;color:#526b89}
+.side-item.active{background:#eaf2ff;color:#2163db}
+.demo-main{padding:22px 23px;min-width:0}.demo-right{background:#f9fbfe;border-left:1px solid #e5ecf4;padding:22px 17px;min-width:0}
+.demo-stage{display:none}.demo-stage.active{display:block}
+.field-label{font-size:12px;display:block;color:#405772;font-weight:750;margin:0 0 8px}
+.field-input,.field-select,.field-textarea{width:100%;border:1px solid #d8e2ee;background:white;border-radius:10px;outline:none;color:#183050;padding:12px 13px;font-size:13px;transition:border .2s,box-shadow .2s}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:#4b91f7;box-shadow:0 0 0 4px #4b91f718}
+.field-textarea{resize:vertical;min-height:170px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;line-height:1.7}
+.form-group{margin-bottom:18px}.form-help{font-size:11px;color:#8595ab;margin-top:7px;line-height:1.75}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+.demo-drop{border:1.5px dashed #c8d9f0;background:#f6f9ff;border-radius:12px;padding:14px;color:#536d8d;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.demo-drop b{display:block;color:#2b507d;font-size:12px}.demo-drop input{max-width:100%;font-size:10px}
+.demo-note{background:#edf5ff;color:#476b9b;border:1px solid #d1e2fa;border-radius:11px;padding:13px 14px;font-size:11px;line-height:1.75;margin-bottom:17px}
+.demo-preview-card{border:1px solid #e0e7f1;border-radius:13px;padding:13px;background:#fff}
+.demo-preview-card .case-preview{min-height:235px}
+.demo-preview-card .case-preview h3{font-size:20px}
+.table-wrap{max-width:100%;overflow:auto;border:1px solid #e0e7f0;border-radius:12px}
+.demo-table{width:100%;border-collapse:collapse;font-size:11px;min-width:480px}
+.demo-table th{font-size:10px;font-weight:800;letter-spacing:.03em;color:#7587a0;background:#f5f8fc;text-align:left;padding:12px;border-bottom:1px solid #e8edf4}
+.demo-table td{padding:12px;border-bottom:1px solid #edf0f4;vertical-align:middle;line-height:1.65;color:#405572;overflow-wrap:anywhere}
+.demo-table tr:last-child td{border-bottom:0}.demo-table tbody tr{cursor:pointer}.demo-table tbody tr:hover,.demo-table tbody tr.selected{background:#ecf4ff}
+.demo-table strong{font-weight:750;color:#1f3658}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:10px;line-height:1.3;border-radius:6px;padding:5px 7px;background:#edf2f9;color:#526b8c;white-space:nowrap}
+.state.ok{background:#eaf8f2;color:#138764}.state.warn{background:#fff4e1;color:#a7761d}.state.bad{background:#ffeff0;color:#b23e53}.state.info{background:#e9f1ff;color:#2c67c8}
+.state:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.demo-stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 15px}.demo-stat{background:#f4f7fb;border:1px solid #e6edf4;border-radius:9px;padding:10px 12px;font-size:10px;color:#708099}
+.demo-stat b{font-size:18px;color:#263d60;display:block}
+.review-content{font-size:12px;color:#526780;line-height:1.82}.review-content h4{font-size:14px;color:#1c3658;margin:4px 0 11px}
+.review-meta{font-size:10px;letter-spacing:.04em;color:#97a7ba;margin-top:15px}
+.review-choice{width:100%;padding:10px;border-radius:9px;border:1px solid #d6e3f1;color:#24446e;background:#fff;font-size:12px;margin:9px 0}
+.review-actions{display:grid;gap:8px;margin-top:14px}
+.log-box{background:#0b1b33;color:#bad0e9;border-radius:13px;padding:16px;min-height:200px;font:12px/2 ui-monospace,Consolas,monospace;white-space:pre-line}
+.progress-track{height:8px;border-radius:9px;background:#e2eaf5;overflow:hidden;margin:19px 0}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#2d78ef,#72baff);border-radius:9px;transition:width .25s}
+.demo-empty{background:#f4f8fd;padding:24px;border:1px solid #e7edf6;border-radius:13px;text-align:center;color:#7890aa;font-size:12px;line-height:1.9}
+.demo-empty strong{display:block;color:#31547d;font-size:15px;margin-bottom:7px}
+.local-alert{display:flex;gap:12px;background:#fff8eb;color:#885e25;border:1px solid #f7dfb9;padding:16px;border-radius:11px;font-size:12px}
+.step-controls{display:flex;justify-content:space-between;gap:9px;margin-top:20px;flex-wrap:wrap}
+.pilot-box{max-width:840px;margin:auto;border:1px solid #e0e8f1;background:white;border-radius:20px;padding:34px;box-shadow:0 18px 70px #20395f10}
+.check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.check-chip{background:#f7f9fc;border:1px solid #e3e9f2;border-radius:9px;padding:10px;font-size:12px;color:#516683;cursor:pointer}
+.check-chip:has(input:checked){background:#eaf2ff;border-color:#77aaff;color:#2663c7}
+.check-chip input{accent-color:#286af6;margin-right:5px}
+.form-summary{margin-top:24px;display:none;border:1px solid #cdddff;background:#f1f6ff;border-radius:13px;padding:19px}
+.form-summary.active{display:block}.form-summary pre{white-space:pre-wrap;font:12px/1.8 ui-monospace,Consolas,monospace;color:#375574}
+.site-footer{background:#06172f;color:#b1c5df;padding:52px 0 26px}
+.footer-cols{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.1fr;gap:30px;margin-bottom:45px}
+.site-footer h4{color:#fff;font-size:12px;margin:0 0 17px}.site-footer a{color:#a9bfd9;display:block;font-size:12px;margin:10px 0}.site-footer a:hover{color:#fff}
+.footer-note{font-size:12px;color:#7d9cbe;max-width:335px;line-height:1.9;margin-top:19px}
+.footer-bottom{border-top:1px solid #ffffff16;padding-top:22px;display:flex;justify-content:space-between;gap:18px;color:#7390b2;font-size:11px;flex-wrap:wrap}
+.site-footer .brand{color:white}
+.modal{border:0;background:#fff;color:#1a3253;padding:0;border-radius:20px;box-shadow:0 30px 100px #0007;max-width:min(720px,calc(100vw - 32px));width:100%}
+.modal::backdrop{background:#041329cc;backdrop-filter:blur(8px)}
+.modal-head{padding:19px 23px;border-bottom:1px solid #e5ebf2;display:flex;align-items:center;justify-content:space-between}
+.modal-head b{font-size:15px}.modal-body{padding:25px}
+.story-screen{min-height:280px;background:radial-gradient(ellipse at 70% 30%,#2466d9a1,transparent 58%),#0a2245;color:#fff;border-radius:14px;padding:25px;display:flex;flex-direction:column;justify-content:space-between}
+.story-screen .story-stage{font-size:11px;letter-spacing:.18em;color:#8ebffa;font-weight:800}
+.story-screen h2{font-size:clamp(27px,4vw,42px);letter-spacing:-.05em;line-height:1.28;margin:8px 0}
+.story-screen p{color:#bbd3f3;font-size:13px;max-width:480px}
+.story-track{background:#dce9fa;height:5px;border-radius:5px;margin-top:18px;overflow:hidden}
+.story-track>div{background:#2c7afa;width:0;height:100%;transition:width .4s}
+.toast{position:fixed;bottom:30px;right:26px;background:#0b2d5b;color:white;border:1px solid #74a9ff66;padding:13px 18px;border-radius:10px;z-index:150;box-shadow:0 16px 42px #071c3670;font-size:12px;opacity:0;transform:translateY(10px);pointer-events:none;transition:.22s;max-width:340px}
+.toast.show{opacity:1;transform:translateY(0)}
+.sr-only{position:absolute!important;width:1px;height:1px;clip:rect(0,0,0,0);white-space:nowrap;overflow:hidden}
+@media(max-width:1130px){.site-nav a{padding:9px 7px}.navbar{gap:15px}.mock-canvas{grid-template-columns:99px 1fr 125px}.hero-layout{gap:15px}.floating-note.one{right:4px}.floating-note.two{left:2px}.mock-previewer .mini-art{transform:scale(.66);margin:-27px -12px}.mock-layer{font-size:8px}}
+@media(max-width:980px){
+  .container{width:min(100% - 38px,900px)}.navbar{height:70px}.menu-toggle{display:block}.nav-actions .nav-secondary{display:none}
+  .site-nav{display:none;position:absolute;top:70px;left:0;right:0;background:#071a37;padding:15px 22px 20px;border-top:1px solid #ffffff18;box-shadow:0 20px 40px #03102b80;flex-wrap:wrap;justify-content:flex-start}
+  .site-nav.open{display:flex}.site-nav a{padding:12px;font-size:13px}
+  .navbar .brand{margin-right:auto}.hero{padding:72px 0 114px}.hero-layout{grid-template-columns:1fr;gap:60px}.hero-copy{max-width:720px}
+  .hero h1{font-size:clamp(45px,7vw,70px)}.hero-intro{max-width:700px}.hero-visual{max-width:650px;margin:0 auto;width:100%}
+  .mock-canvas{grid-template-columns:130px 1fr 170px}.mock-previewer .mini-art{transform:scale(.93);margin:0}.mock-layer{font-size:9px}
+  .features-grid{grid-template-columns:repeat(2,1fr)}.feature-card{min-height:230px}
+  .case-grid,.evidence-grid{grid-template-columns:1fr}.case-copy{max-width:800px}.case-demo{max-width:810px}
+  .workflow-layout{grid-template-columns:1fr}.workflow-steps{grid-template-columns:repeat(2,1fr)}
+  .cta-wrap{grid-template-columns:1fr;padding:45px}.cta-points{grid-template-columns:repeat(3,1fr)}
+  .demo-body{grid-template-columns:155px minmax(0,1fr)}.demo-right{grid-column:1 / -1;border-left:0;border-top:1px solid #e4edf7}
+  .body-grid,.security-grid,.case-list,.guides-list{grid-template-columns:repeat(2,1fr)}.footer-cols{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+  .container{width:calc(100% - 32px)}
+  .global-banner{font-size:10px}.brand{min-width:unset}.brand-name{font-size:15px}.brand-note{font-size:8px}
+  .nav-actions .btn{font-size:11px;padding:0 11px;min-height:37px}.navbar{gap:8px}
+  .hero{padding:64px 0 115px;min-height:unset}.hero h1{font-size:clamp(41px,9vw,55px)}.hero-intro{font-size:14px}
+  .hero-actions{gap:8px}.hero-actions .btn{font-size:12px;min-height:43px;padding:0 13px}.hero-conditions{gap:12px;font-size:10px}
+  .hero-visual{padding:0 0 15px}.mock-window{transform:rotate(-1deg)}
+  .mock-canvas{grid-template-columns:82px 1fr 108px;min-height:253px}
+  .mock-sidebar{padding:7px 3px}.mock-small-head{margin:4px 3px;font-size:7px}.mock-layer{padding:7px 2px;font-size:7px;gap:3px}.mock-layer svg{width:9px}
+  .mock-output{padding:7px 4px}.mock-result{font-size:7px}.mock-result strong{font-size:7px}.mock-count b{font-size:14px}.mock-count small{font-size:7px}.mock-previewer .mini-art{transform:scale(.58);margin:-39px -40px}
+  .floating-note{padding:8px 9px;min-width:unset;gap:6px}.floating-note.one{right:-8px;top:-25px}.floating-note.two{bottom:-17px;left:-6px}
+  .floating-note-icon{width:24px;height:24px;font-size:12px}.floating-note b{font-size:8px}.floating-note small{font-size:7px}.visual-disclaimer{font-size:9px}
+  .surface-curve{border-radius:31px 31px 0 0;margin-top:-40px}
+  .section{padding:75px 0}.section-tight{padding:60px 0}.section-intro h2,.section-heading{font-size:33px}.section-intro{margin-bottom:30px}
+  .split-heading{display:block}.split-heading .link-arrow{margin-top:18px}
+  .case-quote{font-size:27px}.case-grid{gap:24px}.case-demo{padding:12px}.case-stage{grid-template-columns:1fr}
+  .case-preview{min-height:255px}.case-preview h3{font-size:21px}.case-issues{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px}.case-issues .issue-entry{padding:7px 5px;font-size:9px;min-width:0}.case-issues .issue-entry strong{font-size:9px;overflow-wrap:anywhere}
+  .workflow-steps{grid-template-columns:1fr}.workflow-layout{gap:20px}.workflow-step{padding:13px}.workflow-frame{padding:8px;min-height:310px}.workflow-app{min-height:290px}.workflow-app-body{padding:16px}.workflow-app-body h4{font-size:20px}
+  .features-grid,.evidence-grid,.body-grid,.security-grid,.billing-grid,.case-list,.guides-list,.checklist-grid{grid-template-columns:1fr}
+  .feature-card{min-height:190px}.cta-wrap{padding:30px 21px;border-radius:22px}.cta-points{grid-template-columns:1fr}.cta-wrap h2{font-size:31px}
+  .inner-hero{padding:62px 0}.inner-hero h1{font-size:38px}.page-content{padding:57px 0 75px}
+  .report-lab{padding:16px}.fit-table{font-size:11px}.fit-table th,.fit-table td{padding:11px 8px}.wide-card{grid-template-columns:45px 1fr;gap:13px;padding:17px}.wide-card .wide-num{width:45px;height:45px}
+  .demo-topbar{align-items:flex-start}.demo-body{display:flex;flex-direction:column}.demo-side{border-right:0;border-bottom:1px solid #e6edf6}.demo-side .side-group{display:none}
+  .demo-main,.demo-right{padding:18px 14px}.demo-steps{padding:8px}.demo-step{font-size:11px;padding:8px 12px}
+  .form-grid,.check-grid{grid-template-columns:1fr}.pilot-box{padding:21px 16px}.demo-drop{display:block}.demo-drop input{margin-top:8px}
+  .footer-cols{grid-template-columns:1fr 1fr;gap:15px}.footer-cols .footer-brand{grid-column:1/-1}.footer-bottom{display:block}
+  .story-screen{min-height:270px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mock-window{animation:none}.btn,.page,.toast{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#454f62"/><stop offset=".4" stop-color="#101f30"/><stop offset="1" stop-color="#091323"/></linearGradient>
+    <linearGradient id="g-metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f7fa"/><stop offset=".46" stop-color="#8ca0b4"/><stop offset="1" stop-color="#304c66"/></linearGradient>
+    <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#52677b"/><stop offset="1" stop-color="#0b1c32"/></linearGradient>
+    <symbol id="product-object" viewBox="0 0 300 290">
+      <ellipse cx="155" cy="258" rx="88" ry="14" fill="#213e5d" opacity=".22"/>
+      <g transform="rotate(-15 152 145)">
+        <path d="M140 221h29v37h-29z" fill="#142b42"/>
+        <path d="M105 259h102" stroke="#284c6d" stroke-width="15" stroke-linecap="round"/>
+        <path d="M151 216v-63" stroke="#32485c" stroke-width="27" stroke-linecap="round"/>
+        <path d="M147 211v-61" stroke="#667e92" stroke-width="3" opacity=".45"/>
+        <path d="M140 164L102 135" stroke="#24374b" stroke-width="19" stroke-linecap="round"/>
+        <path d="M140 164L102 135" stroke="#69869b" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+        <rect x="79" y="103" width="153" height="100" rx="23" fill="#0c1c2c" stroke="#647f98" stroke-width="5"/>
+        <rect x="89" y="111" width="136" height="85" rx="17" fill="url(#g-body)"/>
+        <path d="M99 116h115" stroke="#b6c6d0" opacity=".3" stroke-width="2"/>
+        <circle cx="154" cy="151" r="42" fill="url(#g-metal)" stroke="#b1c2ce" stroke-width="4"/>
+        <circle cx="154" cy="151" r="36" fill="url(#g-ring)" stroke="#20364a" stroke-width="5"/>
+        <circle cx="154" cy="151" r="30" fill="#041120" stroke="#4e6b81" stroke-width="3"/>
+        <circle cx="154" cy="151" r="22" fill="#0b304f" stroke="#246d9e" stroke-width="3"/>
+        <circle cx="154" cy="151" r="11" fill="#113f62"/>
+        <ellipse cx="145" cy="142" rx="6" ry="4" fill="#80c3ef" opacity=".65"/>
+        <rect x="193" y="131" width="21" height="5" rx="2" fill="#aec6db" opacity=".85"/>
+        <rect x="193" y="140" width="17" height="3" rx="1.5" fill="#6e889e"/>
+        <circle cx="209" cy="178" r="4" fill="#4bbdff"/>
+        <path d="M99 111L113 103H208L225 112" fill="none" stroke="#e0e7ec" opacity=".35"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+<header class="site-header">
+  <div class="global-banner"><strong>TUYI LAB · 2026 CONCEPT V7</strong>　品牌与交互原型 · 演示功能均在浏览器本地运行 · 不连接真实 Photoshop</div>
+  <div class="container navbar">
+    <a class="brand" href="#/home" aria-label="图译工坊首页">
+      <div class="brand-icon">译</div>
+      <div><div class="brand-name">图译工坊</div><div class="brand-note">TUYI WORKSHOP</div></div>
+    </a>
+    <nav class="site-nav" id="siteNav" aria-label="主导航">
+      <a href="#/product" data-nav="product">产品能力</a>
+      <a href="#/demo" data-nav="demo">交互演示</a>
+      <a href="#/cases" data-nav="cases">实测计划</a>
+      <a href="#/security" data-nav="security">数据与隐私</a>
+      <a href="#/guides" data-nav="guides">设计指南</a>
+      <a href="#/faq" data-nav="faq">常见问题</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-glass btn-sm nav-secondary" href="https://tuyigf.com/download" target="_blank" rel="noopener noreferrer">本地助手 ↗</a>
+      <a class="btn btn-primary btn-sm" href="#/pilot">申请真实试跑 <span>↗</span></a>
+      <button type="button" class="menu-toggle" id="menuToggle" aria-label="展开导航" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+<main class="page is-active" data-page="home" id="pageHome">
+  <section class="hero">
+    <div class="hero-backword">TUYI WORKSHOP</div>
+    <div class="container hero-layout">
+      <div class="hero-copy">
+        <div class="hero-brow"><i class="blink-dot"></i> 已有译文 · 多语言 PSD / PSB 批量适配工作流</div>
+        <h1>一套 PSD，<br><em>多语言批量处理。</em><br>异常集中复核。</h1>
+        <p class="hero-intro">译文已经准备好了，接下来的重复查层、对词、写入和核对，交给有流程的工具。确定的先处理，有歧义的留给设计师。每次交付都有清楚的检查依据。</p>
+        <div class="hero-actions">
+          <a href="#/demo" class="btn btn-primary">体验交互式产品演示 <span>↗</span></a>
+          <a href="#/pilot" class="btn btn-glass">申请真实项目试跑 <span>→</span></a>
+        </div>
+        <div class="hero-conditions">
+          <span><b class="tick">✓</b> PSD / PSB 文件留在本机</span>
+          <span><b class="tick">✓</b> 单批最多 12 个目标语种</span>
+          <span><b class="tick">✓</b> 最终视觉由设计师确认</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="floating-note one"><div class="floating-note-icon">≡</div><div><b>translations.csv</b><small>已确认译文 · 多语言列</small></div></div>
+        <div class="mock-window">
+          <div class="mock-top"><div class="mock-window-dots"><i></i><i></i><i></i></div><strong>图译工坊 / Project: NOVA Launch</strong><span style="margin-left:auto">DE · FR · JP · ES</span></div>
+          <div class="mock-canvas">
+            <div class="mock-sidebar">
+              <div class="mock-small-head">PHOTOSHOP LAYERS</div>
+              <div class="mock-layer active">▣ Hero / Title</div>
+              <div class="mock-layer">▣ Hero / CTA</div>
+              <div class="mock-layer">▣ Feature / 01</div>
+              <div class="mock-layer">▣ Feature / 02</div>
+              <div class="mock-layer">▣ Footer / Legal</div>
+            </div>
+            <div class="mock-previewer">
+              <div class="mini-art">
+                <div class="mini-art-top">NOVA / STUDIO</div>
+                <div class="mini-art-name">MODULAR<br>CREATIVE KIT</div>
+                <svg class="product-svg" aria-hidden="true"><use href="#product-object"></use></svg>
+                <div class="mini-art-foot"><span>DESIGNED TO MOVE</span><span>01 / 04</span></div>
+              </div>
+            </div>
+            <div class="mock-output">
+              <div class="mock-small-head">REVIEW QUEUE</div>
+              <div class="mock-count"><div><b>04</b><small>语言样例</small></div><div><b>03</b><small>状态类别</small></div></div>
+              <div class="mock-result">DE / Hero Title<strong class="warn">◉ 版式需要复核</strong></div>
+              <div class="mock-result">ES / Feature 01<strong class="success">✓ 内容拟写入</strong></div>
+              <div class="mock-result">JP / Layer Match<strong class="warn">◉ 匹配需要确认</strong></div>
+              <div class="mock-result">FR / Rasterized<strong>↳ 留待 Photoshop</strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-note two"><div class="floating-note-icon">✓</div><div><b>Clear changes. Clear exceptions.</b><small>明确项处理 · 异常项留痕</small></div></div>
+        <div class="visual-disclaimer">产品流程示意，数据与界面均为模拟样例</div>
+      </div>
+    </div>
+  </section>
+  <div class="surface-curve">
+    <section class="section" id="homeCase">
+      <div class="container">
+        <div class="split-heading">
+          <div class="section-intro"><div class="section-eyebrow">01 / SEE THE WORK</div><h2>先看一份设计稿，<br>怎样进入多语言交付流程。</h2><p>把整个流程说清楚，比展示一个“成功”的按钮更重要。点击语言，看看相同版式遇到不同译文时，哪些内容需要重点检查。</p></div>
+          <a class="link-arrow" href="#/demo">进入完整互动工作台 <span class="arrow">↗</span></a>
+        </div>
+        <div class="case-grid">
+          <div class="case-copy">
+            <span class="pill pill-blue" style="width:max-content;margin-bottom:20px">场景示例 · 跨境电商详情页</span>
+            <div class="case-quote">译文有了，<br>麻烦才刚开始。</div>
+            <p>相同的 Photoshop 文件，需要面对不同语言的长词、不同字符形态和重复文案。图译工坊把问题集中展示，让设计师把注意力留给有判断价值的地方。</p>
+            <div class="case-checks">
+              <span><span class="num">01</span> 批量处理已经对应明确的文字对象</span>
+              <span><span class="num">02</span> 同文多译、缺译文及不可编辑内容单独列出</span>
+              <span><span class="num">03</span> 逐语言检查换行、字体与最终视觉</span>
+            </div>
+          </div>
+          <div class="case-demo">
+            <div class="card-head"><b>NOVA / Product Detail</b><span class="pill pill-blue">INTERACTIVE SAMPLE</span></div>
+            <div class="lang-tabs" id="homeLanguageTabs" aria-label="切换预览语言">
+              <button class="lang-tab active" type="button" data-hlang="EN">EN 原稿</button>
+              <button class="lang-tab" type="button" data-hlang="DE">DE 德语</button>
+              <button class="lang-tab" type="button" data-hlang="FR">FR 法语</button>
+              <button class="lang-tab" type="button" data-hlang="JA">JP 日语</button>
+              <button class="lang-tab" type="button" data-hlang="ES">ES 西语</button>
+            </div>
+            <div class="case-stage">
+              <div class="case-preview">
+                <span class="sample-mark">NOVA / FIELD SYSTEM</span>
+                <h3 id="homeSampleTitle">Ready for the outdoors.</h3>
+                <svg class="sample-artwork" viewBox="0 0 300 290" aria-hidden="true"><use href="#product-object"></use></svg>
+                <span class="sample-bottom" id="homeSampleCTA">Shop now →</span>
+              </div>
+              <div class="case-issues">
+                <div style="font-size:10px;font-weight:800;color:#475f7e">当前复核焦点</div>
+                <div class="issue-entry"><span>HEADLINE</span><strong id="homeIssue1">原稿基准内容</strong></div>
+                <div class="issue-entry"><span>TYPOGRAPHY</span><strong id="homeIssue2">字体与行宽基线</strong></div>
+                <div class="issue-entry"><span>DELIVERY</span><strong id="homeIssue3">视觉终检仍需人工</strong></div>
+              </div>
+            </div>
+            <div class="case-demo-note"><span>模拟语种对比 · 文案与产品图为演示材料，未经过真实 PSD 处理</span><span>↔ 切换语言</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section section-muted" id="homeWorkflow">
+      <div class="container">
+        <div class="section-intro"><div class="section-eyebrow">02 / HOW IT WORKS</div><h2>从译文表到交付件。<br>每一步都有明确的判断点。</h2><p>准备、对账、执行、交付构成一个完整闭环。以下工作流可点选查看，每一步都对应真实产品应具备的处理责任。</p></div>
+        <div class="workflow-layout">
+          <div class="workflow-steps" id="workflowSteps">
+            <button class="workflow-step active" type="button" data-flow="0"><span class="workflow-index">01</span><span><b>导入文件与译文</b><small>PSD/PSB、CSV/TSV/Excel</small></span></button>
+            <button class="workflow-step" type="button" data-flow="1"><span class="workflow-index">02</span><span><b>检测与图层对账</b><small>确定的匹配，疑点待确认</small></span></button>
+            <button class="workflow-step" type="button" data-flow="2"><span class="workflow-index">03</span><span><b>本机 Photoshop 执行</b><small>确认后批量写入并回读</small></span></button>
+            <button class="workflow-step" type="button" data-flow="3"><span class="workflow-index">04</span><span><b>核对与交付</b><small>保留例外、检查源文件</small></span></button>
+          </div>
+          <div class="workflow-frame">
+            <div class="workflow-app">
+              <div class="workflow-app-head"><span>图译工坊 / FLOW PREVIEW</span><span class="pill pill-dark" id="flowPill">STEP 01</span></div>
+              <div class="workflow-app-body">
+                <div class="smallcaps" style="color:#80baff" id="flowEyebrow">INPUT REVIEW</div>
+                <h4 id="flowTitle">先准备素材，再开始处理。</h4>
+                <p id="flowDesc">选择本机设计稿与已有译文，阅读文字图层信息，检查目标语言列是否与任务一致。</p>
+                <div class="workflow-visual-rows" id="flowRows">
+                  <div class="workflow-visual-row"><span>product_launch.psd</span><span>本机设计稿</span></div>
+                  <div class="workflow-visual-row"><span>translations.csv</span><span>已有译文表</span></div>
+                  <div class="workflow-visual-row"><span>DE · FR · JA · ES</span><span>目标语种</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="homeFeatures">
+      <div class="container">
+        <div class="section-intro"><div class="section-eyebrow">03 / BUILT FOR ACCOUNTABILITY</div><h2>批量的价值，<br>要建立在每一处可复核上。</h2><p>减少重复执行与翻找，让“需要人判断”的对象进入统一的工作列表。</p></div>
+        <div class="features-grid">
+          <article class="feature-card"><div class="feature-icon">▦</div><h3>图层级文字绑定</h3><p>将译文行与具体文字图层对应，支持嵌套结构。重复原文要结合具体对象确认。</p><div class="feature-micro">Layer ID / Source / Target<br>绑定信息可检查</div></article>
+          <article class="feature-card"><div class="feature-icon">◇</div><h3>执行前检查</h3><p>空白、重复、歧义和不适合自动处理的内容提前暴露，确认后才进入执行。</p><div class="feature-micro">READY · REVIEW · SKIP<br>状态透明</div></article>
+          <article class="feature-card"><div class="feature-icon">◉</div><h3>写入结果核对</h3><p>按官方产品说明，本地执行将结果读回确认。文字一致性与最终视觉仍分别检查。</p><div class="feature-micro">READ BACK · VERIFY<br>结果有依据</div></article>
+          <article class="feature-card"><div class="feature-icon">▤</div><h3>可追溯交付</h3><p>源文件、预览及异常报告形成交付组合。哪些内容未修改，清楚记录。</p><div class="feature-micro">PSD / JPG / REPORT<br>人工检查项保留</div></article>
+        </div>
+        <div style="margin-top:26px;text-align:center"><a class="link-arrow" href="#/product">详细查看产品能力与边界 <span class="arrow">↗</span></a></div>
+      </div>
+    </section>
+    <section class="section section-muted" id="homeEvidence">
+      <div class="container evidence-grid">
+        <div class="evidence-visual">
+          <div class="evidence-label"><strong>PSD STRESS TEST / PUBLIC PROTOCOL</strong><span class="pill pill-amber">真实案例待入库</span></div>
+          <div class="evidence-row"><strong>常规可编辑文字图层</strong><span class="value">标准样本</span><span class="pending">待实测</span></div>
+          <div class="evidence-row"><strong>同文多译与嵌套分组</strong><span class="value">匹配压力</span><span class="pending">待实测</span></div>
+          <div class="evidence-row"><strong>德语长词与日本语混排</strong><span class="value">排版压力</span><span class="pending">待实测</span></div>
+          <div class="evidence-row"><strong>字体缺失 / 不可编辑层</strong><span class="value">兼容边界</span><span class="pending">待实测</span></div>
+          <div class="evidence-row"><strong>中断与恢复</strong><span class="value">执行稳定性</span><span class="pending">待实测</span></div>
+          <div style="padding-top:17px;color:#8b9bb0;font-size:11px">公开证据位置预留。禁止用示意数字替代真实成功率或效率数据。</div>
+        </div>
+        <div class="evidence-copy">
+          <div class="section-eyebrow">04 / PROVE IT WITH REAL FILES</div>
+          <h2>用真实项目证明价值。<br>也把处理不了的说清楚。</h2>
+          <p>宣传中的效率提升、兼容性与正确率，都需要可复现的测试条件。图译工坊计划将复杂 PSD 实测形成持续更新的案例资料。</p>
+          <div class="evidence-checklist"><div>记录 Photoshop 与系统环境</div><div>统计全部人工投入及复核时间</div><div>公开失败项和兼容性限制</div><div>区分内容写入与视觉交付</div></div>
+          <a class="btn btn-outline" href="#/cases">查看公开实测计划 <span>↗</span></a>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="homeFAQ">
+      <div class="container faq-preview">
+        <div class="section-intro"><div class="section-eyebrow">05 / CLARITY BEFORE CONVERSION</div><h2>先把关键边界说明白。</h2><p>适合什么文件、哪些需要人工确认、数据会到哪里，都应在申请之前说清楚。</p></div>
+        <details class="faq-item"><summary>需要自己准备好译文吗？</summary><p>需要。图译工坊使用你已有的译文，支持按表格导入并进行检查。译文本身的语言正确性需要由翻译来源及最终审核者负责。</p></details>
+        <details class="faq-item"><summary>PSD 和 PSB 会上传服务器吗？</summary><p>官方隐私政策说明设计文件本体与导出图像在本机处理。图层原文、译文、部分本机路径、任务与诊断相关数据会按实际流程传输。请在正式处理机密项目之前阅读<a href="https://tuyigf.com/privacy" target="_blank" rel="noopener noreferrer" style="color:#286af6">隐私政策 ↗</a>。</p></details>
+        <details class="faq-item"><summary>能自动解决所有排版问题吗？</summary><p>不能保证。长译文、缺字形、换行、栅格化文字和智能对象等情况可能需要人工处理。写入结果的核对与最终视觉质量检查采用不同标准。</p></details>
+        <details class="faq-item"><summary>现在可以在这个网页里直接处理真实 PSD 吗？</summary><p>此页面是完整的宣传与交互原型。互动工作台只演示 CSV 对账与异常处理逻辑，完全不连接 Photoshop 或生产服务器。正式操作请通过图译工坊官方工作台与本地助手。</p></details>
+        <div style="margin-top:25px"><a class="link-arrow" href="#/faq">查看完整 FAQ <span class="arrow">↗</span></a></div>
+      </div>
+    </section>
+    <section class="section-tight" id="homeCTA">
+      <div class="container">
+        <div class="cta-wrap">
+          <div>
+            <div class="smallcaps" style="color:#97caff">REAL PROJECT PILOT</div>
+            <h2>下一套多语言项目，<br>拿真实 PSD 跑一次。</h2>
+            <p>从准备、确认到最终 QA，用同一套检查标准比较人工投入。申请阶段只沟通项目规模与联系方式，无需上传 PSD 或译文。</p>
+            <div style="display:flex;gap:11px;flex-wrap:wrap;margin-top:23px"><a class="btn btn-white" href="#/pilot">申请真实项目试跑 <span>↗</span></a><a class="btn btn-glass" href="#/demo">先体验模拟流程</a></div>
+          </div>
+          <div class="cta-points"><div class="cta-point"><b>01</b> 看你的项目是否适合批量处理</div><div class="cta-point"><b>02</b> 用一致的标准记录人工耗时与异常</div><div class="cta-point"><b>03</b> 产出可检查的真实交付结果</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<!-- 产品能力 -->
+<main class="page" data-page="product">
+  <section class="inner-hero"><div class="container"><div class="kicker">PRODUCT / FROM COPY TO DELIVERY</div><h1>把多语言 PSD 的重复制作，<br>变成可以对账的工作流。</h1><p>为有已确认译文的设计团队准备。按图层识别与确认、批量写回、本机输出和最终质量检查依次推进。</p><div class="inner-links"><a class="btn btn-primary" href="#/demo">操作交互样例 ↗</a><a class="btn btn-glass" href="#/pilot">申请真实试跑</a></div></div></section>
+  <section class="page-content"><div class="container">
+    <div class="section-intro"><div class="section-eyebrow">THE FULL WORKFLOW</div><h2>每一步都知道下一步是什么。</h2><p>团队的交付流程需要的是可解释、可复查且能定位异常的任务状态。</p></div>
+    <div class="stack-cards">
+      <div class="wide-card"><div class="wide-num">01</div><div><h3>准备：导入设计文件和目标译文</h3><p>读取本机 PSD / PSB 的可编辑文字层信息。已有译文以 CSV、TSV、TXT、Excel 或粘贴方式进入正式工作流。原文件不应在“检查输入”阶段被改动。</p></div></div>
+      <div class="wide-card"><div class="wide-num">02</div><div><h3>对账：明确对象，暴露歧义</h3><p>将译文行与图层逐对象对应。缺失译文、同文多译、无法可靠处理的文字对象单独呈现，交给用户决定保留、跳过或确认。</p></div></div>
+      <div class="wide-card"><div class="wide-num">03</div><div><h3>执行：通过本机助手调用 Photoshop</h3><p>按当前产品公开说明，任务由 Windows 本地助手与 Photoshop 完成。已确认对象进入写入与回读检查，未确认对象保留状态。</p></div></div>
+      <div class="wide-card"><div class="wide-num">04</div><div><h3>交付：源文件、预览和报告联合检查</h3><p>将写入结果、未处理对象、失败情况与人工终检事项记录在交付信息中。文件的视觉效果仍需要设计师逐语种确认。</p></div></div>
+    </div>
+    <div style="height:55px"></div>
+    <div class="section-intro"><div class="section-eyebrow">WHAT IT DOES · WHAT IT LEAVES</div><h2>能力与边界同时公开。</h2></div>
+    <div class="body-grid">
+      <div class="info-card"><div class="overline">IN SCOPE</div><h3>确定性文字替换</h3><p>可编辑文字层、已有译文、可明确识别的绑定关系和逐语言交付任务。</p></div>
+      <div class="info-card"><div class="overline">REVIEW REQUIRED</div><h3>版面与字体细节</h3><p>译文长度、换行结构、目标语言字形与特殊字符可能影响视觉，需人工确认。</p></div>
+      <div class="info-card"><div class="overline">OUT OF SCOPE</div><h3>生成新译文与设计重构</h3><p>产品不承担机器翻译和自动设计决策。复杂栅格或智能对象内容可进入人工处理。</p></div>
+    </div>
+    <div style="height:55px"></div>
+    <div class="soft-box"><h3>当前公开兼容条件</h3><p>Windows 10 / 11（64 位），需要安装 Photoshop 与官方本地助手。官网列出 Photoshop 2021（22.0）已实机验证，其它版本并未逐项确认。单批最多 12 个目标语种。请以实际工作台显示的兼容性、额度和报价为准。</p><div style="margin-top:16px"><a class="link-arrow" href="https://tuyigf.com/download" target="_blank" rel="noopener noreferrer">查看官方安装和兼容说明 <span class="arrow">↗</span></a></div></div>
+  </div></section>
+</main>
+<!-- 交互演示 -->
+<main class="page" data-page="demo">
+  <section class="inner-hero compact"><div class="container"><div class="kicker">INTERACTIVE PRODUCT EXPERIENCE / LOCAL SIMULATION</div><h1>用一套样例，走完“准备到报告”。</h1><p>这里可以真实操作浏览器中的 CSV 文本解析、模拟图层匹配、查看歧义和导出演示报告。整个操作只在本页运行，不会处理 PSD，也不会连接云端或 Photoshop。</p></div></section>
+  <section class="page-content" style="background:#f4f8fe;padding-top:34px">
+    <div class="container">
+      <div class="demo-topbar"><div><strong style="font-size:16px">工作台交互原型</strong><div class="demo-subtitle">演示模式 · 预置虚构设计稿的文字图层 · 支持自定义 CSV / TSV</div></div><span class="pill pill-amber">SIMULATION ONLY / 无真实写入</span></div>
+      <div class="demo-app">
+        <div class="demo-app-head"><div><b>▣ NOVA Launch / Localization Workspace</b><br><small>虚构样例 · 可以检查输入和演示异常</small></div><span class="pill pill-dark">浏览器本地</span></div>
+        <div class="demo-steps">
+          <button type="button" class="demo-step active" data-dstep="0">01 准备素材</button>
+          <button type="button" class="demo-step" data-dstep="1">02 对账检测</button>
+          <button type="button" class="demo-step" data-dstep="2">03 异常复核</button>
+          <button type="button" class="demo-step" data-dstep="3">04 模拟交付</button>
+        </div>
+        <div class="demo-body">
+          <aside class="demo-side">
+            <div class="demo-panel-title">SELECTED DOCUMENT</div>
+            <div class="side-file"><span style="font-size:17px">▣</span><span id="demoFileName">nova_product_launch.psd</span></div>
+            <div class="side-group"><label>示例图层目录</label><div class="side-item active">▤ Hero / Headline</div><div class="side-item">▤ Hero / CTA</div><div class="side-item">▤ Feature / Copy</div><div class="side-item">▤ Badge / Rasterized</div><div class="side-item">▤ Footer / Legal</div></div>
+            <div class="side-group"><label>本次预览语言</label><select class="field-select" id="demoLanguage" style="font-size:11px;padding:10px"><option value="DE">德语 DE</option><option value="FR">法语 FR</option><option value="JA">日语 JA</option><option value="ES">西语 ES</option></select></div>
+          </aside>
+          <div class="demo-main">
+            <div class="demo-stage active" data-stage="0">
+              <div class="demo-note">本原型不扫描 PSD 图层。图层清单来自内置的虚构样例，选择 PSD 只读取文件名用于界面预览。CSV/TSV 的文本解析在浏览器内执行。</div>
+              <div class="form-group"><label class="field-label" for="mockPsdFile">本地设计稿 · 可选</label><div class="demo-drop"><div><b>为这个演示选择一个 PSD / PSB</b><span>仅展示文件名；不读取文件内容</span></div><input type="file" id="mockPsdFile" accept=".psd,.psb"></div></div>
+              <div class="form-group"><label class="field-label" for="demoCsvText">译文表文本 · 支持粘贴 CSV / TSV</label><textarea class="field-textarea" id="demoCsvText" spellcheck="false"></textarea><div class="form-help">第一列为 source（源文），后续可使用 DE、FR、JA、ES。Excel 文件请通过正式工作台导入，此静态演示不解析 XLSX。</div></div>
+              <div class="form-group"><div class="demo-drop"><div><b>导入本地 CSV / TSV / TXT</b><span>只在当前浏览器解析</span></div><input type="file" id="csvFileInput" accept=".csv,.tsv,.txt,text/plain,text/csv"></div></div>
+              <div class="step-controls"><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" type="button" id="resetSampleBtn">恢复样例</button><button class="btn btn-outline btn-sm" type="button" id="downloadSampleCsvBtn">下载样例 CSV ↓</button></div><button class="btn btn-primary" type="button" id="inspectBtn">检查译文与图层 →</button></div>
+            </div>
+            <div class="demo-stage" data-stage="1">
+              <div class="card-head"><b>译文与图层对账</b><span class="pill pill-blue" id="langTag1">DE / German</span></div>
+              <p class="muted micro" style="margin:0 0 14px">检测规则用于说明歧义处理，不代表 Photoshop 真实扫描结果。图层列表来自演示样例。</p>
+              <div class="demo-stats" id="demoStats"></div>
+              <div class="table-wrap"><table class="demo-table"><thead><tr><th>图层位置</th><th>原文</th><th>候选译文</th><th>审查状态</th></tr></thead><tbody id="demoResultRows"></tbody></table></div>
+              <div class="step-controls"><button class="btn btn-outline" type="button" data-dstep="0">← 返回调整输入</button><button class="btn btn-primary" type="button" data-dstep="2">处理需要确认的项目 →</button></div>
+            </div>
+            <div class="demo-stage" data-stage="2">
+              <div class="card-head"><b>集中处理异常对象</b><span class="pill pill-amber">人工确认环节</span></div>
+              <p class="muted micro" style="margin:0 0 14px">选择需要复核的行，再在右侧决定确认候选译文、保留原文或恢复默认状态。处理记录只保存在当前页面中。</p>
+              <div class="demo-stats" id="demoStatsReview"></div>
+              <div class="table-wrap"><table class="demo-table"><thead><tr><th>图层位置</th><th>候选译文</th><th>状态</th></tr></thead><tbody id="reviewRows"></tbody></table></div>
+              <div class="step-controls"><button class="btn btn-outline" type="button" data-dstep="1">← 返回检测</button><button class="btn btn-primary" type="button" data-dstep="3">查看模拟交付 →</button></div>
+            </div>
+            <div class="demo-stage" data-stage="3">
+              <div class="card-head"><b>模拟执行与交付报告</b><span class="pill pill-amber">不生成真实 PSD</span></div>
+              <div class="local-alert"><strong>注意</strong><span>此步骤仅展示前端任务状态和报告结构。所有“已模拟写入”均为逻辑演算，未运行 Photoshop，不能据此验证实际交付质量。</span></div>
+              <div style="height:17px"></div>
+              <div class="demo-stats" id="demoStatsDelivery"></div>
+              <div class="progress-track"><div class="progress-bar" id="demoProgress"></div></div>
+              <div class="log-box" id="demoLog">演示待开始。
+请点击下方“运行模拟执行”，查看状态如何被分类记录。</div>
+              <div class="step-controls"><button class="btn btn-outline" type="button" data-dstep="2">← 返回复核</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" type="button" id="downloadReportBtn" disabled>导出演示 HTML 报告 ↓</button><button class="btn btn-primary" type="button" id="simulateRunBtn">运行模拟执行 →</button></div></div>
+            </div>
+          </div>
+          <aside class="demo-right">
+            <div class="demo-panel-title">VISUAL PREVIEW</div>
+            <div class="demo-preview-card">
+              <div class="case-preview">
+                <span class="sample-mark">NOVA / FIELD SYSTEM</span>
+                <h3 id="demoPreviewTitle">Bereit für jedes Abenteuer.</h3>
+                <svg class="sample-artwork" viewBox="0 0 300 290" aria-hidden="true"><use href="#product-object"></use></svg>
+                <span class="sample-bottom" id="demoPreviewCTA">Jetzt kaufen →</span>
+              </div>
+            </div>
+            <div class="demo-panel-title" style="padding:0;margin:20px 0 10px">SELECTED LAYER</div>
+            <div class="review-content" id="reviewDetail"><h4>选择一条图层记录</h4><p>点击表格行查看对象与候选译文。在右侧标记人工决策。</p></div>
+            <div style="border-top:1px solid #e3eaf3;margin-top:17px;padding-top:14px;font-size:10px;color:#8a9bb1">预览布局为矢量模拟。文本长度提示是启发式示意，不代表 Photoshop 排版检测。</div>
+          </aside>
+        </div>
+      </div>
+      <div class="soft-box" style="margin-top:25px"><h3>想验证真实 PSD 的处理效果？</h3><p>请通过正式产品的工作台、本地助手及 Photoshop 执行。当前静态原型用于理解产品流程、确认界面信息结构与开展宣传测试。</p><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-outline btn-sm" href="#/pilot">申请真实项目试跑 ↗</a><a class="btn btn-outline btn-sm" href="https://tuyigf.com/auth/login" target="_blank" rel="noopener noreferrer">打开当前官方登录页 ↗</a></div></div>
+    </div>
+  </section>
+</main>
+<!-- 实测计划 -->
+<main class="page" data-page="cases">
+  <section class="inner-hero"><div class="container"><div class="kicker">PSD STRESS TEST / PUBLIC TESTING PLAN</div><h1>每个“能处理”，<br>都应该能说清楚测试条件。</h1><p>用复杂 PSD、真实译文和可复现的测试过程建立案例资料。当前页面展示实测体系及未来案例位置，未使用模拟指标冒充产品成绩。</p><div class="inner-links"><a class="btn btn-primary" href="#/pilot">参与真实试跑 ↗</a><button class="btn btn-glass" type="button" id="downloadTestChecklist">下载测试清单 ↓</button></div></div></section>
+  <section class="page-content"><div class="container">
+    <div class="section-intro"><div class="section-eyebrow">TEST MATRIX</div><h2>五类真实文件压力测试。</h2><p>所有项目都记录版本、文件复杂度、逐对象结果、人工修复量和最终视觉审核结果。</p></div>
+    <div class="case-list">
+      <div class="test-card"><span class="test-icon">01</span><h3>基础可编辑图层</h3><p>以普通多语言 A+ 和详情页为样本，验证文字对象对应、语言列与交付文件。</p><div class="test-tag"><span class="pill pill-amber">案例待补充</span></div></div>
+      <div class="test-card"><span class="test-icon">02</span><h3>嵌套组与同文多译</h3><p>测试多层级图层、重复文案在不同语境中出现时的匹配与人工决策流程。</p><div class="test-tag"><span class="pill pill-amber">案例待补充</span></div></div>
+      <div class="test-card"><span class="test-icon">03</span><h3>语言长度与字形压力</h3><p>德语长词、法语扩展、日语折行和特殊字符的实际布局表现与人工修复量。</p><div class="test-tag"><span class="pill pill-amber">案例待补充</span></div></div>
+      <div class="test-card"><span class="test-icon">04</span><h3>不可编辑与字体缺失</h3><p>栅格化文字、智能对象、缺少本机字体时是否准确预警和保持安全的失败状态。</p><div class="test-tag"><span class="pill pill-amber">案例待补充</span></div></div>
+      <div class="test-card"><span class="test-icon">05</span><h3>异常中断与可恢复性</h3><p>测试 Photoshop 失去响应、任务中断、保存失败以及后续重试的完整路径。</p><div class="test-tag"><span class="pill pill-amber">案例待补充</span></div></div>
+      <div class="test-card" style="background:#0b2652;border-color:#15437f;color:#fff"><span class="test-icon" style="color:#83beff">+</span><h3>你的真实项目</h3><p style="color:#b9d1f2">有代表性的复杂 PSD 更有价值。提交项目概况后，可以共同确定脱敏、授权及测试条件。</p><div class="test-tag"><a href="#/pilot" class="btn btn-white btn-sm">申请参与试跑 ↗</a></div></div>
+    </div>
+    <div style="height:64px"></div>
+    <div class="section-intro"><div class="section-eyebrow">METHODOLOGY</div><h2>同一标准，同一份交付。</h2><p>效率与正确性的比较需要清楚的口径。计入准备、确认、执行干预、视觉终检与返工。</p></div>
+    <div class="report-lab">
+      <div class="report-top"><h3>每期 Stress Test 公开的记录字段</h3><span class="pill pill-blue">数据表模板</span></div>
+      <div class="checklist-grid">
+        <div class="checklist-item"><span>✓</span><span>测试机型、Windows、Photoshop 与助手版本</span></div>
+        <div class="checklist-item"><span>✓</span><span>文件数、文件体积、可编辑文字图层数</span></div>
+        <div class="checklist-item"><span>✓</span><span>语言、译文行数、人工确认项</span></div>
+        <div class="checklist-item"><span>✓</span><span>匹配结果、读回验证与错误类型</span></div>
+        <div class="checklist-item"><span>✓</span><span>准备、处理、终检与返工的人力时间</span></div>
+        <div class="checklist-item"><span>✓</span><span>输出文件、视觉终检结果及不适用条件</span></div>
+      </div>
+      <div style="margin-top:19px;font-size:12px;color:#6b7b92">真实案例未入库前，页面只展示测试方法。正式公开时应提供获授权截图、处理日志和样本说明。</div>
+    </div>
+  </div></section>
+</main>
+<!-- 隐私 -->
+<main class="page" data-page="security">
+  <section class="inner-hero"><div class="container"><div class="kicker">DATA FLOW / SECURITY BOUNDARIES</div><h1>知道文件在哪里，<br>也知道文字数据去了哪里。</h1><p>从本机 Photoshop 到云端任务、AI 智能检测，各部分承担不同职责。透明披露数据流，才能支持企业在真实项目中做安全评估。</p><div class="inner-links"><a class="btn btn-primary" href="https://tuyigf.com/privacy" target="_blank" rel="noopener noreferrer">阅读正式隐私政策 ↗</a><a class="btn btn-glass" href="https://tuyigf.com/privacy/subprocessors" target="_blank" rel="noopener noreferrer">第三方处理方清单 ↗</a></div></div></section>
+  <section class="page-content"><div class="container">
+    <div class="section-intro"><div class="section-eyebrow">WHO PROCESSES WHAT</div><h2>将产品数据路径拆成三部分。</h2><p>以下为依据当前官网公开隐私政策整理的简化说明。具体处理和保留期限应以实时更新的正式政策为准。</p></div>
+    <div class="security-grid">
+      <div class="security-node"><div class="security-icon">▣</div><h3>你的本机</h3><p>PSD / PSB 文件字节、Photoshop 操作、导出图像与交付件在本地处理。</p></div>
+      <div class="security-node"><div class="security-icon">◈</div><h3>图译工坊服务器</h3><p>账户、任务、报价及结算；图层原文、目标译文、本机路径字符串等必要信息按流程传输。</p></div>
+      <div class="security-node"><div class="security-icon">◇</div><h3>第三方服务</h3><p>智能检测涉及文字内容传递至 AI 服务；邮件、网络加速与安全防护等处理方见官网清单。</p></div>
+    </div>
+    <div style="height:52px"></div>
+    <div class="section-intro"><div class="section-eyebrow">DISCLOSURE MATRIX</div><h2>哪些内容离开设备？</h2></div>
+    <div class="table-wrap"><table class="fit-table" style="background:#fff;width:100%;min-width:640px"><thead><tr><th>数据类型</th><th>是否离开本机</th><th>用途说明</th></tr></thead><tbody>
+      <tr><td><strong>PSD/PSB 文件本体</strong></td><td><span class="state ok">本机</span></td><td>由本地助手与 Photoshop 处理，官网说明不上传文件字节。</td></tr>
+      <tr><td><strong>导出图像与交付件</strong></td><td><span class="state ok">本机</span></td><td>图像在本机保存，按公开说明不会上传完整文件。</td></tr>
+      <tr><td><strong>图层原文与译文</strong></td><td><span class="state warn">会上传</span></td><td>用于报价、绑定、执行、复核；智能检测可能发送给 AI 处理方。</td></tr>
+      <tr><td><strong>本机文件及输出目录路径字符串</strong></td><td><span class="state warn">会上传</span></td><td>用于定位任务文件和输出位置。</td></tr>
+      <tr><td><strong>错误与排障信息</strong></td><td><span class="state warn">按策略传输</span></td><td>脱敏错误快照可能自动上报，扩展文字内容包需要用户另行授权。</td></tr>
+      <tr><td><strong>账号、授权与结算记录</strong></td><td><span class="state info">服务端</span></td><td>用于登录、授权、任务及费用管理。</td></tr>
+    </tbody></table></div>
+    <div class="soft-box" style="margin-top:24px"><h3>进行企业试跑前应检查的事项</h3><p>确认样本具有测试授权，必要时脱敏；评估图层文字和路径上传是否符合客户保密要求；确认跨境处理与第三方 AI 服务适用范围。对于不允许传输文字内容的项目，应先与产品团队确认实际可用的隔离方案。</p></div>
+  </div></section>
+</main>
+<!-- 计费 -->
+<main class="page" data-page="pricing">
+  <section class="inner-hero"><div class="container"><div class="kicker">BILLING / PREDICTABLE BEFORE EXECUTION</div><h1>费用规则提前看，<br>实际处理结果再核对。</h1><p>当前公开产品采用积分与任务结算体系。具体的计费行数、语种、扣费与失败处理规则，以正式工作台执行前的报价及现行用户协议为准。</p></div></section>
+  <section class="page-content"><div class="container">
+    <div class="billing-grid">
+      <div class="billing-card"><span class="pill pill-blue" style="width:max-content;margin-bottom:25px">个人 / 小规模批次</span><h3>按任务使用</h3><p>适用于单人设计师及需要逐批完成多语言项目的工作方式。先检查匹配范围，执行前确认工作台显示的费用。</p><div class="billing-price">以工作台为准</div><small>本原型不显示虚构价格与折扣</small><div style="margin-top:20px"><a class="btn btn-outline btn-block" href="https://tuyigf.com/auth/login" target="_blank" rel="noopener noreferrer">打开真实工作台 ↗</a></div></div>
+      <div class="billing-card primary"><span class="pill pill-dark" style="width:max-content;margin-bottom:25px">团队 / 首次验证</span><h3>真实项目试跑</h3><p>适用于高频制作跨境电商 A+、详情页和活动物料的团队。使用同样的文件及最终视觉标准，验证人力节省与可处理范围。</p><div class="billing-price">先验证价值</div><small>具体试跑安排和费用由正式产品方确认</small><div style="margin-top:20px"><a class="btn btn-white btn-block" href="#/pilot">提交试跑需求 ↗</a></div></div>
+    </div>
+    <div style="height:56px"></div>
+    <div class="section-intro"><div class="section-eyebrow">BILLING PRINCIPLES</div><h2>有效行数、目标语言与异常状态。</h2><p>交接资料中描述了按有效译文行数与语言数量计量的思路，官网使用积分体系。正式价格必须由实际产品报价显示，不能用静态页面承诺固定数值。</p></div>
+    <div class="body-grid"><div class="info-card"><div class="overline">01 / BEFORE</div><h3>确认处理范围</h3><p>哪些语言、哪些文字行、哪些需要跳过，决定实际执行的基础范围。</p></div><div class="info-card"><div class="overline">02 / ESTIMATE</div><h3>先查看正式报价</h3><p>开始执行前复核工作台提供的费用信息与当前适用规则。</p></div><div class="info-card"><div class="overline">03 / RECONCILE</div><h3>核对真实执行结果</h3><p>失败、未处理和已确认任务应有明确记录，最终账务以正式产品规则为准。</p></div></div>
+  </div></section>
+</main>
+<!-- 指南 -->
+<main class="page" data-page="guides">
+  <section class="inner-hero"><div class="container"><div class="kicker">GUIDES / USEFUL BEFORE YOU BUY</div><h1>把多语言 PSD 的实际问题，<br>一篇篇讲明白。</h1><p>围绕译文表准备、图层匹配和视觉复核编写的操作内容。先帮助设计团队理解风险，再判断工具是否适合当前流程。</p></div></section>
+  <section class="page-content"><div class="container">
+    <div class="guides-list">
+      <article class="guide-card"><div class="guide-visual">▦</div><div class="guide-body"><small>准备指南 / 5 分钟阅读</small><h3>怎么把一张译文表准备成适合 PSD 批量处理的格式？</h3><p>统一对象、原文和语种列，并识别重复条目的不同语境。</p><button type="button" class="btn btn-ghost" data-article="table">阅读指南 ↗</button></div></article>
+      <article class="guide-card"><div class="guide-visual">Aa</div><div class="guide-body"><small>版式检查 / 6 分钟阅读</small><h3>德语长词、日语折行，为什么不能只检查文字有没有写进去？</h3><p>从字体、行宽、行数与最终画面检查语言扩展造成的风险。</p><button type="button" class="btn btn-ghost" data-article="typography">阅读指南 ↗</button></div></article>
+      <article class="guide-card"><div class="guide-visual">✓</div><div class="guide-body"><small>交付检查 / 4 分钟阅读</small><h3>多语言 PSD 交付前，如何建立最小可复核清单？</h3><p>记录匹配、写入、保存和最终人工检查的不同结果。</p><button type="button" class="btn btn-ghost" data-article="qa">阅读指南 ↗</button></div></article>
+    </div>
+    <div class="soft-box" style="margin-top:30px"><h3>这些是工作方法文章</h3><p>内容用于建立对多语言设计流程的理解，并非官方产品功能测试结果。涉及具体 Adobe 操作与文字引擎行为，请以 Photoshop 当前版本文档为准。</p></div>
+  </div></section>
+</main>
+<main class="page" data-page="article">
+  <section class="inner-hero compact"><div class="container"><div class="kicker">GUIDES / PRACTICAL WORKFLOW</div><h1 id="articleHeading">设计指南</h1><p id="articleSubtitle">可复用的多语言设计操作方法。</p></div></section>
+  <section class="page-content"><div class="container"><div class="article" id="articleContent"></div><div style="text-align:center;margin-top:55px"><a href="#/guides" class="btn btn-outline">← 返回设计指南</a></div></div></section>
+</main>
+<!-- 常见问题 -->
+<main class="page" data-page="faq">
+  <section class="inner-hero compact"><div class="container"><div class="kicker">FAQ / BEFORE YOU START</div><h1>清楚知道它能做什么，<br>再决定要不要试跑。</h1><p>这里集中回答文件、翻译、兼容性、排版、数据安全和原型环境等常见问题。</p></div></section>
+  <section class="page-content"><div class="container faq-preview">
+    <details class="faq-item"><summary>图译工坊会自动翻译中文、英文或日文吗？</summary><p>当前产品面向已经有译文的情况。译文可来自翻译公司、供应商或你的其他翻译流程。图译工坊负责把确定的译文对应到可编辑文字图层，并让异常更容易核对。</p></details>
+    <details class="faq-item"><summary>只拿到 JPG、PNG，还能直接批量改语言吗？</summary><p>本工具依赖可编辑的 PSD / PSB 文字图层。如果文字已经被栅格化或合并到图片里，需要在 Photoshop 中先评估可编辑情况，不能把图片中的所有字都视为可替换对象。</p></details>
+    <details class="faq-item"><summary>为什么重复原文需要确认？</summary><p>相同的“Shop now”可能出现在首屏按钮、页脚按钮和不同活动图中。它们可能对应不同语境的译文。匹配流程应保留具体图层身份，遇到多个候选时由用户确认。</p></details>
+    <details class="faq-item"><summary>能自动调整字体、字号和位置吗？</summary><p>默认应尊重原稿的明确设计约束。实际可用的字体与字符设置以当前工作台功能为准。自动调整可能改变设计结果，必须由用户知情并复核。长译文、换行和文字溢出都可能需要人工修改。</p></details>
+    <details class="faq-item"><summary>一次最多可以处理多少语言？</summary><p>根据当前官网说明，单批最多 12 个目标语种。语言更多时可以分批组织，具体导入量与运行限制以正式工作台为准。</p></details>
+    <details class="faq-item"><summary>需要 Windows 和 Photoshop 吗？</summary><p>需要安装本地助手与 Photoshop。当前官方下载页列出 Windows 10 / 11（64 位），Photoshop 2021（22.0）实机验证。macOS 尚未正式支持。</p></details>
+    <details class="faq-item"><summary>我的 PSD 会传到服务器吗？</summary><p>官方隐私政策披露 PSD / PSB 文件本体与导出图像在本机处理。但文字层内容、译文、部分本机路径字符串、账户和任务数据会按服务流程上传。建议从<a href="https://tuyigf.com/privacy" target="_blank" rel="noopener noreferrer" style="color:#286af6">正式隐私政策</a>了解每项数据的处理范围。</p></details>
+    <details class="faq-item"><summary>写入后回读是否等于版式正确？</summary><p>回读可以确认写入的文字内容与预期是否一致，仍然无法替代对字体覆盖、断行、遮挡、对齐和整体视觉的检查。二者必须分开记录。</p></details>
+    <details class="faq-item"><summary>如果任务失败或中断，该怎么办？</summary><p>正式产品中应依据任务报告区分写入失败、未处理和需要人工确认的对象，并按实际工作台提供的重试与恢复操作处理。是否支持跨语言续跑、状态持久化等能力，需要以对应版本的真实执行测试为准。</p></details>
+    <details class="faq-item"><summary>这里展示的交互演示会生成真实 PSD 吗？</summary><p>不会。这份网页是完整的宣传与交互设计原型。演示环境只对样例层和 CSV / TSV 文本运行浏览器逻辑，点击“模拟执行”后生成的是带有明确演示标识的 HTML 报告。</p></details>
+    <details class="faq-item"><summary>如何申请测试？</summary><p>准备项目类型、设计文件数量、目标语言、译文是否齐全以及当前处理难点。申请阶段无需上传源文件。可以使用本原型预览表单信息，再通过当前官方网站提交正式申请。</p></details>
+  </div></section>
+</main>
+<!-- 试跑 -->
+<main class="page" data-page="pilot">
+  <section class="inner-hero compact"><div class="container"><div class="kicker">REAL PROJECT PILOT / BETA ACCESS</div><h1>拿你下一套项目，<br>验证图译工坊是否真的省时间。</h1><p>初期优先邀请经常制作多语言商品详情页的跨境电商设计团队。本页表单为静态原型，可整理申请摘要并复制；正式申请请前往现行官网。</p></div></section>
+  <section class="page-content" style="background:#f6f8fd"><div class="container">
+    <div class="pilot-box">
+      <div class="demo-note">演示表单，不连接后台。填写内容不会提交给图译工坊，也不会自动发送邮件。完成后可以复制摘要，或打开官方现行申请页。</div>
+      <form id="pilotForm">
+        <div class="form-grid">
+          <div class="form-group"><label class="field-label" for="pilotName">称呼 *</label><input class="field-input" required minlength="2" maxlength="60" id="pilotName" placeholder="你希望我们如何称呼你"></div>
+          <div class="form-group"><label class="field-label" for="pilotEmail">工作邮箱 *</label><input class="field-input" type="email" required maxlength="120" id="pilotEmail" placeholder="you@company.com"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="field-label" for="pilotRole">角色 *</label><select class="field-select" id="pilotRole" required><option value="">请选择</option><option>跨境电商视觉负责人</option><option>品牌视觉设计师</option><option>设计外包工作室</option><option>本地化与翻译服务商</option><option>独立设计师</option><option>其他</option></select></div>
+          <div class="form-group"><label class="field-label" for="pilotFreq">多语言改稿频率 *</label><select class="field-select" required id="pilotFreq"><option value="">请选择</option><option>每周多次</option><option>每周一次</option><option>每月 2 至 3 次</option><option>每月一次或更少</option></select></div>
+        </div>
+        <div class="form-group"><label class="field-label">常处理哪些物料？</label><div class="check-grid">
+          <label class="check-chip"><input name="material" type="checkbox" value="Amazon A+">Amazon A+</label>
+          <label class="check-chip"><input name="material" type="checkbox" value="产品详情页">产品详情页</label>
+          <label class="check-chip"><input name="material" type="checkbox" value="主图/副图">主图 / 副图</label>
+          <label class="check-chip"><input name="material" type="checkbox" value="活动视觉">活动视觉</label>
+          <label class="check-chip"><input name="material" type="checkbox" value="包装">包装</label>
+          <label class="check-chip"><input name="material" type="checkbox" value="其他">其他</label>
+        </div></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="field-label" for="pilotPsd">计划试跑的 PSD / PSB 数量 *</label><input class="field-input" id="pilotPsd" type="number" required min="1" max="999" placeholder="如：3"></div>
+          <div class="form-group"><label class="field-label" for="pilotLang">目标语言数量 *</label><input class="field-input" id="pilotLang" type="number" required min="1" max="12" placeholder="如：6（单批最多 12）"></div>
+        </div>
+        <div class="form-group"><label class="field-label" for="pilotPain">当前人工怎么处理？最想解决什么？ *</label><textarea class="field-textarea" id="pilotPain" required minlength="10" maxlength="1200" style="min-height:104px;font-family:inherit;font-size:13px" placeholder="例如：已经有 6 列译文，每张 A+ 图都需要逐层粘贴，德语溢出问题多，终检容易漏。"></textarea></div>
+        <div class="form-group"><label class="check-chip" style="display:block"><input type="checkbox" required id="pilotAccept">我理解本页面是模拟表单，内容仅用于生成本地摘要，未被提交。</label></div>
+        <div class="step-controls"><span class="micro muted">申请阶段请勿填写机密译文或上传正式设计文件。</span><button class="btn btn-primary" type="submit">生成本地申请摘要 →</button></div>
+      </form>
+      <div class="form-summary" id="pilotSummary"><strong>申请摘要已经在浏览器中生成</strong><p class="micro" style="margin:6px 0">尚未发送。可以复制内容用于正式官网申请。</p><pre id="pilotSummaryText"></pre><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" type="button" id="copyPilotSummary">复制申请摘要</button><a class="btn btn-outline btn-sm" href="https://tuyigf.com/" target="_blank" rel="noopener noreferrer">打开现行官网提交 ↗</a></div></div>
+    </div>
+  </div></section>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-cols">
+      <div class="footer-brand"><a class="brand" href="#/home"><div class="brand-icon">译</div><div><div class="brand-name">图译工坊</div><div class="brand-note">TUYI WORKSHOP</div></div></a><p class="footer-note">一套 PSD，多语言批量处理。让明确的替换更高效，让需要设计师判断的细节更清楚。</p><span class="pill pill-dark">本站为 2026 V7 宣传交互原型</span></div>
+      <div><h4>了解产品</h4><a href="#/product">产品能力</a><a href="#/demo">交互演示</a><a href="#/cases">PSD Stress Test</a><a href="#/pricing">计费说明</a></div>
+      <div><h4>资源与帮助</h4><a href="#/guides">设计指南</a><a href="#/faq">常见问题</a><a href="#/security">数据与隐私</a><a href="https://tuyigf.com/download" target="_blank" rel="noopener noreferrer">官方本地助手 ↗</a></div>
+      <div><h4>正式产品</h4><a href="https://tuyigf.com/" target="_blank" rel="noopener noreferrer">tuyigf.com ↗</a><a href="https://tuyigf.com/auth/login" target="_blank" rel="noopener noreferrer">官方工作台 ↗</a><a href="https://tuyigf.com/privacy" target="_blank" rel="noopener noreferrer">正式隐私政策 ↗</a><a href="https://tuyigf.com/terms" target="_blank" rel="noopener noreferrer">用户协议 ↗</a></div>
+    </div>
+    <div class="footer-bottom"><div>© 2026 图译工坊 · 品牌宣传和交互原型提案</div><div>产品承诺、性能及隐私以正式产品和官方政策为准 · 这份原型没有生产系统连接</div></div>
+  </div>
+</footer>
+<dialog class="modal" id="storyModal" aria-label="产品故事演示">
+  <div class="modal-head"><b>产品故事 · 演示动画</b><button class="btn btn-outline btn-sm" type="button" id="closeStoryBtn" aria-label="关闭">关闭 ✕</button></div>
+  <div class="modal-body"><div class="story-screen"><div class="story-stage" id="storyStage">STEP 01 / 04</div><div><h2 id="storyHeadline">把已有译文导入工作台</h2><p id="storyDescription">使用已有多语言表格，把原文和目标语种作为任务输入。</p></div><span style="font-size:11px;color:#92bbf2">SCREEN MOTION SIMULATION / 画面叙事示意</span></div><div class="story-track"><div id="storyProgress"></div></div><div class="step-controls"><button class="btn btn-outline btn-sm" type="button" id="storyPrevBtn">← 上一步</button><button class="btn btn-primary btn-sm" type="button" id="storyNextBtn">下一步 →</button></div></div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+"use strict";
+const $ = (selector, root=document) => root.querySelector(selector);
+const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
+const escapeHtml = str => String(str ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const normalize = s => String(s ?? "").trim().replace(/\s+/g," ").toLowerCase();
+let toastTimer;
+function toast(msg){const el=$("#toast"); if(!el)return;el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),3100)}
+function downloadText(name,content,mime="text/plain;charset=utf-8"){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),6000)}
+async function copyText(text){
+  try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);toast("已经复制到剪贴板");return}}
+  catch(e){}
+  const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";document.body.append(ta);ta.select();
+  try{document.execCommand("copy");toast("已经复制到剪贴板")}catch(e){toast("无法自动复制，请手动选择内容")}
+  ta.remove()
+}
+const allowedPages=["home","product","demo","cases","security","pricing","guides","article","faq","pilot"];
+function route(){
+  const hash=decodeURIComponent((location.hash||"#/home").replace(/^#\/?/,""));
+  const parts=hash.split("/").filter(Boolean);
+  const page=allowedPages.includes(parts[0])?parts[0]:"home";
+  $$(".page").forEach(x=>x.classList.toggle("is-active",x.dataset.page===page));
+  $$("[data-nav]").forEach(x=>x.classList.toggle("active",x.dataset.nav===page));
+  const nav=$("#siteNav");nav.classList.remove("open");
+  $("#menuToggle")?.setAttribute("aria-expanded","false");
+  if(page==="article")renderArticle(parts[1]||"table");
+  if(page==="demo"){setDemoStage(demo.step);renderDemo()}
+  document.title=page==="home"?"图译工坊 · 一套 PSD，多语言批量处理":({product:"产品能力",demo:"交互演示",cases:"PSD Stress Test",security:"数据与隐私",pricing:"计费说明",guides:"设计指南",article:"设计指南",faq:"常见问题",pilot:"真实项目试跑"}[page]||"图译工坊")+" | 图译工坊";
+  window.scrollTo({top:0,behavior:"instant"})
+}
+window.addEventListener("hashchange",route);
+$("#menuToggle")?.addEventListener("click",()=>{const open=$("#siteNav").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
+const homeLang={
+ EN:{title:"Ready for the outdoors.",cta:"Shop now →",a:"原稿基准内容",b:"字体与行宽基线",c:"视觉终检仍需人工"},
+ DE:{title:"Bereit für jedes neue Abenteuer.",cta:"Jetzt kaufen →",a:"德语文字变长",b:"复核字宽、折行与空间",c:"确认按钮与主标题边距"},
+ FR:{title:"Prêt pour toutes vos aventures.",cta:"Découvrir →",a:"法语译文长度变化",b:"复核字重、词间距",c:"检查对齐与整体层级"},
+ JA:{title:"どんな冒険にも、軽やかに。",cta:"詳しく見る →",a:"日语字符与排版规则",b:"检查日文字体与禁则",c:"核对字号及视觉层级"},
+ ES:{title:"Listo para cada aventura.",cta:"Comprar ahora →",a:"西语标题与按钮变化",b:"检查按钮文案宽度",c:"检查位置和对齐"}
+};
+function setHomeLang(lang){
+ const data=homeLang[lang]||homeLang.EN;
+ $("#homeSampleTitle").textContent=data.title;$("#homeSampleCTA").textContent=data.cta;
+ $("#homeIssue1").textContent=data.a;$("#homeIssue2").textContent=data.b;$("#homeIssue3").textContent=data.c;
+ $$("[data-hlang]").forEach(el=>el.classList.toggle("active",el.dataset.hlang===lang))
+}
+$$("[data-hlang]").forEach(el=>el.addEventListener("click",()=>setHomeLang(el.dataset.hlang)));
+const flowSteps=[
+ {pill:"STEP 01",eyebrow:"INPUT REVIEW",title:"先准备素材，再开始处理。",desc:"选择本机设计稿与已有译文，阅读文字图层信息，检查目标语言列是否与任务一致。",rows:[["product_launch.psd","本机设计稿"],["translations.csv","已有译文表"],["DE · FR · JA · ES","目标语种"]]},
+ {pill:"STEP 02",eyebrow:"MATCH & REVIEW",title:"模糊对象先留给你决定。",desc:"逐项对账，把缺译文、同文多译、无法编辑和可能影响版式的内容单独分类。",rows:[["Hero / Title","可匹配"],["CTA / Shop now","存在多个候选"],["Badge / Rasterized","不可可靠写入"]]},
+ {pill:"STEP 03",eyebrow:"LOCAL EXECUTION",title:"明确项进入本机执行队列。",desc:"本地助手驱动 Photoshop 写入已确认的目标内容，并依据正式产品工作流读取检查结果。",rows:[["Windows Helper","本机运行"],["Photoshop","文字图层处理"],["Read-back","检查文字一致性"]]},
+ {pill:"STEP 04",eyebrow:"DELIVERY & TRACE",title:"把结果和例外一起交付。",desc:"区分已经执行、未处理、失败以及需要设计师视觉确认的对象。输出与报告共同构成可追溯交付。",rows:[["localized_DE.psd","正式任务输出示意"],["preview_DE.jpg","逐语言视觉预览"],["review-report.html","异常与处理记录"]]}
+];
+function setFlow(index){
+ const x=flowSteps[index]||flowSteps[0];
+ $("#flowPill").textContent=x.pill;$("#flowEyebrow").textContent=x.eyebrow;$("#flowTitle").textContent=x.title;$("#flowDesc").textContent=x.desc;
+ $("#flowRows").innerHTML=x.rows.map(([a,b])=>`<div class="workflow-visual-row"><span>${escapeHtml(a)}</span><span>${escapeHtml(b)}</span></div>`).join("");
+ $$("[data-flow]").forEach(btn=>btn.classList.toggle("active",Number(btn.dataset.flow)===index));
+}
+$$("[data-flow]").forEach(btn=>btn.addEventListener("click",()=>setFlow(Number(btn.dataset.flow))));
+const SAMPLE_CSV=[
+ 'source,DE,FR,JA,ES',
+ '"Ready for the outdoors","Bereit für jedes neue Abenteuer","Prêt pour toutes vos aventures","どんな冒険にも、軽やかに","Listo para cada aventura"',
+ '"Shop now","Jetzt kaufen","Acheter","今すぐ購入","Comprar ahora"',
+ '"Lightweight design","Leichtes und besonders kompaktes Design","Conception légère","軽量設計","Diseño ligero"',
+ '"Free shipping","Kostenloser Versand","Livraison offerte","送料無料","Envío gratis"',
+ '"Shop now","Hier bestellen","Commander","購入する","Compra ahora"',
+ '"Limited offer","Nur kurze Zeit","Offre limitée","期間限定","Oferta limitada"',
+ '"Warranty information","","Informations de garantie","保証情報","Información de garantía"'
+].join("\n");
+const LAYERS=[
+ {path:"Hero / Headline",source:"Ready for the outdoors",editable:true},
+ {path:"Hero / CTA",source:"Shop now",editable:true},
+ {path:"Feature / Description",source:"Lightweight design",editable:true},
+ {path:"Feature / Shipping",source:"Free shipping",editable:true},
+ {path:"Footer / CTA",source:"Shop now",editable:true},
+ {path:"Badge / Rasterized",source:"Limited offer",editable:false},
+ {path:"Footer / Legal",source:"Warranty information",editable:true}
+];
+const LANGUAGE_NAME={DE:"German",FR:"French",JA:"Japanese",ES:"Spanish"};
+const articleMap={
+ table:{title:"怎么准备适合 PSD 批量改语言的译文表？",subtitle:"对象、原文和语言列的组织方式，决定后续匹配的确定性。",html:`<h2>一行代表一个可核对对象</h2><p>先把要处理的设计稿中的可编辑文字对象整理出来。理想情况下，译文表同时记录对象标识、所在页面、原文以及每个目标语言的译文。若同一文字层原本包含多行，通常让这个对象继续占据一行表格，以免误拆成多个目标。</p><h2>重复原文要带上下文</h2><p>例如“Shop now”可能同时出现在首屏按钮和页脚按钮。即使原文相同，也应明确对应图层路径及版面角色。同文多译时，先由人工确认每一处的译文，避免进行全局猜测。</p><h2>导入前建议检查</h2><ul><li>每个目标语言列使用稳定的语言代码，如 DE、FR、JA、ES。</li><li>确认空白单元格是否有意保留原文。</li><li>技术型号、商标和尺寸单位需要统一规则。</li><li>保留原始译文版本，方便后续审计和回退。</li></ul><p>在交互演示中可以使用样例 CSV 测试重复原文与空译文的提示逻辑。</p>`},
+ typography:{title:"为什么写入一致，版式还需要单独复核？",subtitle:"字符、字体与版面约束共同决定最终的视觉结果。",html:`<h2>文字长度只是初步信号</h2><p>德语复合词和法语表达可能增加文字占用空间。相同的字符数量，在不同字体、字重和字号下也会产生不同宽度。仅凭字符串长度无法准确预测 Photoshop 中的溢出。</p><h2>语言的排版规则存在差异</h2><p>日语禁则、标点悬挂、连续英文与全角字符混排，以及阿拉伯文从右向左的书写方向，都会对排版造成影响。应使用与正式任务一致的字体、语言设置和 Photoshop 版本进行复核。</p><h2>最小视觉检查清单</h2><ul><li>字符是否出现缺字形、替代字体或错误编码。</li><li>标题、按钮、正文的断行是否符合设计意图。</li><li>文字是否挤压其他元素或遮挡产品画面。</li><li>最终导出的图片与可编辑源文件是否一致。</li></ul><p>如无法在当前系统中自动验证某项视觉约束，应将其保留为明确的人工检查事项。</p>`},
+ qa:{title:"多语言 PSD 交付前的最小检查清单",subtitle:"把“看着成功”转变成能够定位和复现的交付状态。",html:`<h2>先核对内容</h2><p>检查每一条译文是否对应到正确的设计对象。重复原文、未匹配项、手动跳过项和已确认例外需要分别记录。逐层文字读回能帮助发现写入层面的失败。</p><h2>再核对文件</h2><p>保存完成后检查目标文件是否存在、是否可在 Photoshop 中重新打开、各目标语言的文件名是否符合交付约定。不要将模拟的文件状态当成真实校验。</p><h2>最后完成视觉终检</h2><p>设计师逐语言检查字号、字体、行距、对齐、边距、遮挡和整体画面。将无法处理的对象与可能影响交付的异常明确记录在报告中。</p><ul><li>文字核对：内容正确。</li><li>文件核对：可打开、可编辑、命名完整。</li><li>视觉核对：版式符合本项目要求。</li></ul><p>对于正式对外交付，三层检查都应通过，或明确列出尚未解决的限制。</p>`}
+};
+function renderArticle(id){
+ const a=articleMap[id]||articleMap.table;
+ $("#articleHeading").textContent=a.title;$("#articleSubtitle").textContent=a.subtitle;$("#articleContent").innerHTML=a.html;
+}
+// CSV / TSV parser with quoted cell support and CRLF support.
+function parseDelimited(text){
+ const raw=String(text).replace(/^\uFEFF/,"");
+ const firstLine=raw.split(/\r?\n/,1)[0]||"";
+ const delimiter=(firstLine.match(/\t/g)||[]).length>(firstLine.match(/,/g)||[]).length?"\t":",";
+ const rows=[];let row=[],cell="",quoted=false;
+ for(let i=0;i<raw.length;i++){
+   const ch=raw[i],next=raw[i+1];
+   if(ch==='"'&&quoted&&next==='"'){cell+='"';i++}
+   else if(ch==='"'){quoted=!quoted}
+   else if(ch===delimiter&&!quoted){row.push(cell);cell=""}
+   else if((ch==="\n"||ch==="\r")&&!quoted){if(ch==="\r"&&next==="\n")i++;row.push(cell);cell="";if(row.some(v=>v!==""))rows.push(row);row=[]}
+   else cell+=ch;
+ }
+ if(quoted)throw new Error("CSV 引号未闭合，请检查输入表");
+ row.push(cell);if(row.some(v=>v!==""))rows.push(row);
+ if(!rows.length)throw new Error("译文表为空");
+ const heads=rows[0].map(x=>x.trim());
+ const sourceIndex=heads.findIndex(x=>["source","original","source text","原文","源文","原始文本"].includes(x.trim().toLowerCase()));
+ if(sourceIndex<0)throw new Error('缺少原文列，请将首列表头命名为 "source"');
+ const data=rows.slice(1).map((r,i)=>{const obj={_row:i+2,source:(r[sourceIndex]||"").trim()};heads.forEach((h,j)=>obj[h.toUpperCase()]=(r[j]||"").trim());return obj}).filter(r=>r.source);
+ if(!data.length)throw new Error("没有有效译文行");
+ return {heads:heads.map(h=>h.toUpperCase()),rows:data,delimiter}
+}
+const demo={
+ step:0,lang:"DE",sourceText:SAMPLE_CSV,parsed:null,file:"nova_product_launch.psd",selected:0,overrides:{},ran:false,running:false
+};
+$("#demoCsvText").value=SAMPLE_CSV;
+function getRows(){
+ const parsed=demo.parsed||parseDelimited(demo.sourceText),lang=demo.lang,results=[];
+ for(const layer of LAYERS){
+   const found=parsed.rows.filter(r=>normalize(r.source)===normalize(layer.source));
+   const options=[...new Set(found.map(r=>r[lang]||r[(lang==="JA"?"JP":lang)]||"").map(x=>x.trim()).filter(Boolean))];
+   const allFound=found.length>0;
+   const value=options[0]||"";
+   const override=demo.overrides[`${lang}:${layer.path}`];
+   let type,label,used=value;
+   if(override?.action==="skip"){type="skipped";label="保留原文";used=""}
+   else if(override?.action==="use"){type="confirmed";label="人工已确认";used=override.value}
+   else if(!layer.editable){type="blocked";label="不可编辑";used=value}
+   else if(!allFound){type="missing";label="未匹配"}
+   else if(options.length===0){type="missing";label="译文为空"}
+   else if(options.length>1){type="ambiguous";label="多个候选"}
+   else if(value.length>23&&value.length>layer.source.length*1.25){type="risk";label="检查版式"}
+   else{type="ready";label="可进入执行"}
+   results.push({...layer,options,value:used,type,label});
+ }
+ return results;
+}
+function statusClass(type){return ({ready:"ok",confirmed:"info",risk:"warn",ambiguous:"warn",missing:"bad",blocked:"bad",skipped:"info"}[type]||"info")}
+function countStats(rows){
+ let ready=rows.filter(x=>["ready","confirmed"].includes(x.type)).length;
+ let needs=rows.filter(x=>["ambiguous","missing","risk"].includes(x.type)).length;
+ let stops=rows.filter(x=>["blocked","skipped"].includes(x.type)).length;
+ return {ready,needs,stops,total:rows.length}
+}
+function renderStats(id,rows){
+ const t=countStats(rows);
+ $(id).innerHTML=`<div class="demo-stat"><b>${t.total}</b>对象总数</div><div class="demo-stat"><b>${t.ready}</b>可进入模拟执行</div><div class="demo-stat"><b>${t.needs}</b>需要人工检查</div><div class="demo-stat"><b>${t.stops}</b>停止 / 跳过</div>`;
+}
+function displayValue(row){return row.options.length?row.options.join("  /  "):"无"}
+function renderRows(rows){
+ $("#demoResultRows").innerHTML=rows.map((r,i)=>`<tr data-row="${i}" class="${demo.selected===i?"selected":""}"><td><strong>${escapeHtml(r.path)}</strong></td><td>${escapeHtml(r.source)}</td><td>${escapeHtml(displayValue(r))}</td><td><span class="state ${statusClass(r.type)}">${escapeHtml(r.label)}</span></td></tr>`).join("");
+ $("#reviewRows").innerHTML=rows.map((r,i)=>`<tr data-row="${i}" class="${demo.selected===i?"selected":""}"><td><strong>${escapeHtml(r.path)}</strong></td><td>${escapeHtml(displayValue(r))}</td><td><span class="state ${statusClass(r.type)}">${escapeHtml(r.label)}</span></td></tr>`).join("");
+ renderStats("#demoStats",rows);renderStats("#demoStatsReview",rows);renderStats("#demoStatsDelivery",rows);
+}
+function renderReview(rows){
+ const row=rows[demo.selected];
+ if(!row){$("#reviewDetail").innerHTML='<h4>请选择一行</h4>';return}
+ const choices=row.options.length
+  ?`<label class="field-label" for="reviewCandidates" style="margin-top:14px">选择候选译文</label><select id="reviewCandidates" class="review-choice">${row.options.map(x=>`<option value="${escapeHtml(x)}" ${row.value===x?"selected":""}>${escapeHtml(x)}</option>`).join("")}</select>`
+  :`<p class="muted micro">没有可用译文候选。可以选择保留原文。</p>`;
+ const actions=`<div class="review-actions">
+   <button class="btn btn-primary btn-sm btn-block" type="button" id="approveRowBtn" ${(!row.options.length||!row.editable)?"disabled":""}>人工确认选中译文</button>
+   <button class="btn btn-outline btn-sm btn-block" type="button" id="skipRowBtn">保留原文 / 跳过</button>
+   <button class="btn btn-ghost btn-sm btn-block" type="button" id="resetRowBtn">恢复原始状态</button></div>`;
+ $("#reviewDetail").innerHTML=`<h4>${escapeHtml(row.path)}</h4><span class="state ${statusClass(row.type)}">${escapeHtml(row.label)}</span>
+ <div class="review-meta">ORIGINAL TEXT</div><div>${escapeHtml(row.source)}</div>
+ <div class="review-meta">TARGET / ${escapeHtml(demo.lang)}</div>${choices}
+ <div class="review-meta">ISSUE CONTEXT</div><div>${escapeHtml(
+ row.type==="ambiguous"?"同一原文存在多个候选译文，需按对象身份判断。":
+ row.type==="blocked"?"该样例文字对象被标记为栅格化，不可模拟自动写入。":
+ row.type==="missing"?"当前语种未找到可用译文，不能自动填补。":
+ row.type==="risk"?"文案长度变化可能影响版面。此处仅为启发式风险提示。":
+ row.type==="skipped"?"用户已选择保留原文，当前对象不参与模拟写入。":
+ row.type==="confirmed"?"已记录你的候选选择，仍需在真实项目中检查最终版面。":"译文匹配明确，可以进入模拟执行。")}</div>${actions}`;
+}
+function setDemoStage(step){
+ demo.step=Math.max(0,Math.min(3,Number(step)||0));
+ $$(".demo-stage").forEach(x=>x.classList.toggle("active",Number(x.dataset.stage)===demo.step));
+ $$("[data-dstep]").forEach(btn=>btn.classList.toggle("active",Number(btn.dataset.dstep)===demo.step));
+ if(demo.step>=1&&!demo.parsed){
+   try{demo.parsed=parseDelimited($("#demoCsvText").value)}catch(e){demo.step=0;$$(".demo-stage").forEach(x=>x.classList.toggle("active",Number(x.dataset.stage)===0));toast(e.message);return}
+ }
+ renderDemo()
+}
+function renderDemo(){
+ const rows=getRows(),home=homeLang[demo.lang]||homeLang.DE;
+ $("#demoFileName").textContent=demo.file;
+ $("#demoPreviewTitle").textContent=home.title;
+ $("#demoPreviewCTA").textContent=home.cta;
+ $("#demoLanguage").value=demo.lang;
+ $("#langTag1").textContent=`${demo.lang} / ${LANGUAGE_NAME[demo.lang]}`;
+ renderRows(rows);renderReview(rows);
+}
+function inspectInput(){
+ demo.sourceText=$("#demoCsvText").value;
+ try{
+   demo.parsed=parseDelimited(demo.sourceText);
+   if(!demo.parsed.heads.includes(demo.lang)&&(demo.lang!=="JA"||!demo.parsed.heads.includes("JP")))
+      throw new Error(`译文表没有 ${demo.lang} 语言列，请检查表头`);
+   demo.overrides={};demo.ran=false;demo.selected=0;$("#downloadReportBtn").disabled=true;
+   setDemoStage(1);
+   toast(`已在浏览器内读取 ${demo.parsed.rows.length} 行译文，正在展示模拟匹配结果`);
+ }catch(e){toast(e.message);$("#demoCsvText").focus()}
+}
+$("#inspectBtn").addEventListener("click",inspectInput);
+$("#resetSampleBtn").addEventListener("click",()=>{$("#demoCsvText").value=SAMPLE_CSV;demo.sourceText=SAMPLE_CSV;demo.parsed=null;demo.overrides={};demo.ran=false;toast("已恢复演示样例")});
+$("#demoLanguage").addEventListener("change",e=>{
+ demo.lang=e.target.value;
+ demo.ran=false;$("#downloadReportBtn").disabled=true;
+ if(demo.parsed&&!demo.parsed.heads.includes(demo.lang)&&!(demo.lang==="JA"&&demo.parsed.heads.includes("JP"))){toast(`当前表中没有 ${demo.lang} 列，可以返回第一步修改表头`)}
+ renderDemo()
+});
+$("#mockPsdFile").addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;demo.file=f.name;$("#demoFileName").textContent=f.name;toast("只读取文件名；未打开或解析 PSD 内容")});
+$("#csvFileInput").addEventListener("change",async e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ if(f.size>5*1024*1024){toast("演示表最大 5MB，请使用较小的 CSV / TSV");e.target.value="";return}
+ if(!/\.(csv|tsv|txt)$/i.test(f.name)){toast("演示版支持 CSV / TSV / TXT 文本文件");return}
+ try{const txt=await f.text();$("#demoCsvText").value=txt;demo.sourceText=txt;demo.parsed=null;demo.ran=false;toast(`已在浏览器内导入 ${f.name}`)}catch(err){toast("读取失败，请确认文件编码")}
+});
+$("#downloadSampleCsvBtn").addEventListener("click",()=>downloadText("tuyigf-demo-translations.csv","\uFEFF"+SAMPLE_CSV,"text/csv;charset=utf-8"));
+document.addEventListener("click",e=>{
+ const step=e.target.closest("[data-dstep]");
+ if(step&&step.closest(".demo-app")){const target=Number(step.dataset.dstep);if(target>0&&demo.step===0){inspectInput();if(demo.step!==1)return;if(target!==1)setDemoStage(target)}else{setDemoStage(target)}return}
+ const row=e.target.closest("[data-row]");
+ if(row){demo.selected=Number(row.dataset.row);renderDemo();return}
+ if(e.target.closest("#approveRowBtn")){
+    const r=getRows()[demo.selected];if(!r?.editable||!r.options.length)return;
+    const value=$("#reviewCandidates")?.value||r.options[0];
+    demo.overrides[`${demo.lang}:${r.path}`]={action:"use",value};demo.ran=false;$("#downloadReportBtn").disabled=true;renderDemo();toast("已记录人工选择，最终版面仍需真实 Photoshop 核对");
+ }else if(e.target.closest("#skipRowBtn")){
+    const r=getRows()[demo.selected];if(!r)return;
+    demo.overrides[`${demo.lang}:${r.path}`]={action:"skip"};demo.ran=false;$("#downloadReportBtn").disabled=true;renderDemo();toast("对象已标记保留原文，模拟执行将跳过");
+ }else if(e.target.closest("#resetRowBtn")){
+    const r=getRows()[demo.selected];if(!r)return;
+    delete demo.overrides[`${demo.lang}:${r.path}`];demo.ran=false;$("#downloadReportBtn").disabled=true;renderDemo();toast("已恢复默认检测状态");
+ }
+});
+$("#simulateRunBtn").addEventListener("click",()=>{
+ if(demo.running)return;
+ demo.running=true;demo.ran=false;$("#downloadReportBtn").disabled=true;$("#simulateRunBtn").disabled=true;
+ const rows=getRows();const stats=countStats(rows);
+ $("#demoProgress").style.width="0%";let count=0;
+ const messages=[
+  "初始化：浏览器演示模式，无 Photoshop 连接。",
+  "读取预置的虚构文字图层...",
+  `解析译文表：${demo.parsed?.rows.length||0} 行，目标语种 ${demo.lang}。`,
+  `图层对账：${stats.total} 个样例对象。`,
+  `可模拟处理 ${stats.ready} 项，待复核 ${stats.needs} 项，停止或跳过 ${stats.stops} 项。`,
+  "模拟运行完成：记录演示状态，未修改 PSD/PSB。",
+  "提醒：真实任务需要由 Photoshop 写入、回读、保存与人工终检。"
+ ];
+ $("#demoLog").textContent="";
+ const timer=setInterval(()=>{
+    $("#demoLog").textContent+=messages[count]+"\n";
+    count++;
+    $("#demoProgress").style.width=Math.round(count/messages.length*100)+"%";
+    if(count>=messages.length){clearInterval(timer);demo.running=false;demo.ran=true;$("#simulateRunBtn").disabled=false;$("#downloadReportBtn").disabled=false;toast("演示执行结束，可以下载标记为模拟的报告")}
+ },350);
+});
+function buildDemoReport(){
+ const rows=getRows(),status=countStats(rows),stamp=new Date().toISOString();
+ return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>图译工坊 · 模拟审查报告</title><style>body{font:15px/1.7 system-ui,"Microsoft YaHei",sans-serif;max-width:900px;margin:45px auto;padding:0 25px;color:#1a3556}h1{font-size:27px}b{color:#153b75}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #dae4ef;padding:9px;font-size:12px;text-align:left}th{background:#edf4ff}.note{background:#fff0db;padding:14px;border-radius:9px;color:#8b5d17}footer{margin-top:35px;color:#789}</style></head><body><h1>图译工坊 | 互动演示报告</h1><p class="note"><b>SIMULATED ONLY</b>：本报告由前端原型在浏览器生成。未连接 Photoshop、未扫描真实 PSD、未进行真实写入、回读或保存验证。不能作为实际处理质量证明。</p><p>项目文件名：${escapeHtml(demo.file)}<br>语言：${escapeHtml(demo.lang)}<br>生成时间：${escapeHtml(stamp)}<br>可进入模拟处理：${status.ready} 项；需复核：${status.needs} 项；停止或跳过：${status.stops} 项。</p><table><thead><tr><th>样例对象</th><th>原文</th><th>演示译文</th><th>模拟状态</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.path)}</td><td>${escapeHtml(r.source)}</td><td>${escapeHtml(r.value||"")}</td><td>${escapeHtml(r.label)}</td></tr>`).join("")}</tbody></table><footer>图译工坊 2026 V7 概念原型 · 正式产品信息请查看 https://tuyigf.com</footer></body></html>`
+}
+$("#downloadReportBtn").addEventListener("click",()=>{if(!demo.ran)return;downloadText(`tuyigf-demo-report-${demo.lang.toLowerCase()}.html`,buildDemoReport(),"text/html;charset=utf-8");toast("演示报告已开始下载")});
+$("#downloadTestChecklist").addEventListener("click",()=>{
+ const csv="\uFEFF测试编号,测试类别,文件数,文字图层数,语种数,Windows版本,Photoshop版本,助手版本,准备时间分钟,确认时间分钟,执行干预分钟,视觉终检分钟,返工分钟,失败与限制说明,最终视觉审核结果\n";
+ downloadText("tuyigf-stress-test-checklist.csv",csv,"text/csv;charset=utf-8");toast("测试表模板已开始下载");
+});
+$("#pilotForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ if(!e.currentTarget.reportValidity())return;
+ const material=$$('input[name="material"]:checked').map(el=>el.value).join("、")||"未填写";
+ const fields=[["称呼",$("#pilotName").value],["邮箱",$("#pilotEmail").value],["角色",$("#pilotRole").value],["使用频率",$("#pilotFreq").value],["常处理的物料",material],["PSD/PSB 数量",$("#pilotPsd").value],["目标语言数",$("#pilotLang").value],["痛点与当前处理方式",$("#pilotPain").value]];
+ const summary=fields.map(([name,v])=>name+"："+v).join("\n");
+ $("#pilotSummaryText").textContent=summary;
+ $("#pilotSummary").classList.add("active");
+ $("#pilotSummary").scrollIntoView({behavior:"smooth",block:"center"});
+ toast("仅生成本地摘要，未提交任何数据");
+});
+$("#copyPilotSummary").addEventListener("click",()=>copyText($("#pilotSummaryText").textContent));
+$$("[data-article]").forEach(b=>b.addEventListener("click",()=>location.hash="#/article/"+b.dataset.article));
+// Storyboard modal. It is an illustrative motion sequence, not actual engine recording.
+const story=[
+ ["STEP 01 / 04","把已有译文导入工作台","将整理好的译文表与本机 PSD 任务关联，明确目标语言范围。"],
+ ["STEP 02 / 04","让有歧义的对象停下来","重复原文、空译文与不可编辑对象集中形成复核列表。"],
+ ["STEP 03 / 04","确定内容进入本机执行","通过正式产品的本地助手与 Photoshop 处理文字层；本动画不执行真实写入。"],
+ ["STEP 04 / 04","让每次交付有记录可查","分开记录文字内容、文件状态和人工视觉终检结果。"]
+];
+let storyIndex=0,storyTimer=null;
+function updateStory(){const s=story[storyIndex];$("#storyStage").textContent=s[0];$("#storyHeadline").textContent=s[1];$("#storyDescription").textContent=s[2];$("#storyProgress").style.width=((storyIndex+1)/story.length*100)+"%"}
+function openStory(){storyIndex=0;updateStory();$("#storyModal").showModal();clearInterval(storyTimer);storyTimer=setInterval(()=>{storyIndex=(storyIndex+1)%story.length;updateStory()},4500)}
+function closeStory(){clearInterval(storyTimer);if($("#storyModal").open)$("#storyModal").close()}
+$("#closeStoryBtn").addEventListener("click",closeStory);
+$("#storyNextBtn").addEventListener("click",()=>{storyIndex=(storyIndex+1)%story.length;updateStory()});
+$("#storyPrevBtn").addEventListener("click",()=>{storyIndex=(storyIndex-1+story.length)%story.length;updateStory()});
+$("#storyModal").addEventListener("close",()=>clearInterval(storyTimer));
+$("#storyModal").addEventListener("click",e=>{if(e.target===$("#storyModal"))closeStory()});
+document.addEventListener("click",e=>{if(e.target.closest("[data-open-story]"))openStory()});
+const storyLink=document.createElement("button");
+storyLink.type="button";storyLink.className="btn btn-ghost btn-sm";storyLink.style.cssText="color:#aad0ff;margin-top:12px;padding-left:0";
+storyLink.textContent="▶ 观看 4 步流程动画（模拟）";storyLink.dataset.openStory="1";
+$(".hero-copy .hero-conditions")?.after(storyLink);
+// Initialize
+try{demo.parsed=parseDelimited(SAMPLE_CSV)}catch(e){demo.parsed={heads:[],rows:[]}}
+route();setFlow(0);setHomeLang("EN");renderDemo();
+})();
+</script>
+</body></html>

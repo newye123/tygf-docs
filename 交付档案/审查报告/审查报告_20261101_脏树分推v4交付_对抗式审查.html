@@ -1,0 +1,483 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>对抗式审查报告 —— 「脏树分推 v4」交付结果（Round 1/3）</title><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+main{max-width:1100px;margin:auto;padding:32px 24px}p{line-height:1.9;overflow-wrap:anywhere}h2{margin-top:40px}nav{display:flex;gap:12px;flex-wrap:wrap}a{color:var(--accent)}</style></head><body><main class="wrap"><header class="masthead">
+<div class="eyebrow"><span>审查报告</span><span class="sep">/</span><span>2026-11-01</span><span class="sep">/</span><span>对抗式审查 Round 1–2</span></div>
+<h1>对抗式审查报告 —— 「脏树分推 v4」交付结果（Round 1/3）</h1>
+<div class="meta"><span>日期：2026-11-01</span><span>范围：<code>e7d49ceb..886b18ff</code>（7 笔，92 文件 +5,372/−261）｜风险档 <strong>High</strong>（扫描器判：High 6 文件／Medium 14／Low 72，测试文件 14）</span><span>手法：主审一轮 ＋ 两路独立子代理取证（契约链／测试证据）→ 主审逐条复现判定</span><span>VERDICT: <strong>打回（有条件）</strong> —— 上一份报告的 4 条自述被证伪，其中 1 条属"把门的输出文本当事实"，另 3 条是改动只做了一半或说得太满</span></div>
+</header>
+<section>
+<h2><span class="sn">01</span>头部读数</h2>
+<div class="scrollx"><table><thead><tr><th>项</th><th>值</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td></tr>
+<tr><td>已证实缺陷</td><td>6 条（Important 4／Nit 1／Pre-existing 1）</td></tr>
+<tr><td>未决</td><td>2 条（各注明缺什么证据）</td></tr>
+<tr><td>证伪丢弃</td><td>3 条（编号白名单边界、519 分母、快照保真——均判为真）</td></tr>
+<tr><td>覆盖缺口</td><td>未跑真实 Photoshop；未起真实登录态；未审 53 条绿步骤各自的"能否变红"；未审助手包内字节与 ISCC 侧</td></tr>
+</tbody></table></div>
+<section>
+<h2><span class="sn">02</span>更正段（推翻上一份报告的说法）</h2>
+<div class="scrollx"><table><thead><tr><th>原说法</th><th>反证</th><th>新结论</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>「唯一红＝缺 3.7.30 安装包，不是代码坏」</td><td><code>scripts/smoke-release-consistency.mjs:269-274</code> 的豁免白名单只含 version／filename／assistantBuildId／missing-exe 四项；实跑 6 错里 <code>reportSchemaVersion mismatch</code> 与 <code>reportRendererVersion mismatch</code> <strong>不在白名单</strong>，被 <code>:282</code> 判成 hardErrors。<code>public/downloads/local-assistant-release.json</code> 停在 <code>local-report-v2</code>／<code>renderer-v3</code>，而 <code>config/release-identity.json</code> 已是 v3／v4</td><td>这条红<strong>一半是声明字段没跟上</strong>，不是纯等包。要么同步 manifest 两字段，要么证明同步会误导用户并改门（附证据）——不能拿"等包"当解释</td></tr>
+<tr><td>「新错误码四层贯通」</td><td><code>src/app/api/local-assistant/preparation/scan/route.ts:13-18</code> 的状态映射表没有这个码 ⇒ 落到 <code>return 502</code>；<code>src/lib/workbench/local-assistant-client.ts:1517</code> 走 <code>requestError(data?.message ‥.)</code>，把助手那段 200 字中文指引原样抛给浏览器，<code>dict-en.json</code> 里「权限级别」类词条实测 0 条</td><td>至少还有<strong>第五层（云端代理状态归类）与第六层（英文文案）没接</strong>。英文用户在"助手以管理员运行"这个真实分支上会看到整段中文，且 HTTP 归类成网关错误</td></tr>
+<tr><td>「读表缓存键改完，跨交付物不串写」</td><td><code>src/components/workbench/workbench-view.tsx:3660-3669</code> 的全局聚合 <code>rawParsesById[normalizeTableId(path)]</code> <strong>仍只按表路径键</strong>，<code>:3697</code> 再 spread 进 <code>stageTableParses</code>；消费方 <code>:4234</code>（覆盖率矩阵）与 <code>:5714</code>（第 1 步行数）读的就是这份</td><td>加载器改对了，但<strong>下游那份全局表按旧粒度聚合</strong>：同一工作簿绑给两稿、两稿取不同 sheet 时，后写的解析覆盖先写的 ⇒ 一稿显示另一 sheet 的行数/语言列。旧语义"一表一解析"恰好掩盖了这件事</td></tr>
+<tr><td>「七笔拆不开，只能整批等包」</td><td>S1／S2 全部文件 grep S4 独有符号（<code>OutputQualitySummary</code>／<code>production-quality</code>／<code>minAssistantVersion</code>／<code>sizePt</code>）＝ <strong>0 命中</strong>；<code>terms.ts</code> 在基线也没有「审核确认」冲突</td><td>S1、S2 <strong>可以独立合入 develop</strong>（其中 S2 要先修上面那条串写）。"整批拆不开"对这两笔是假的；真的只有 S4（含身份）与 S5 的 package.json 入口</td></tr>
+</tbody></table></div>
+<section>
+<h2><span class="sn">03</span>Findings</h2>
+<div class="scrollx"><table><thead><tr><th>ID</th><th>严重度</th><th>file:line</th><th>失效场景</th><th>证据</th><th>证据等级</th><th>本次引入/存量</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>AR-1</td><td>Important</td><td><code>public/downloads/local-assistant-release.json:5-6</code> vs <code>config/release-identity.json</code></td><td>报告合同字段与身份不一致，<code>test:contracts</code> 第 7 步永久红 ⇒ 任何按门放行的会话都会被迫解释一条"其实可以修"的红</td><td>实跑 rc=1，6 错中 2 条不在 <code>smoke-release-consistency.mjs:269-274</code> 白名单</td><td>A</td><td>本次引入（我迁了身份没迁 manifest）</td></tr>
+<tr><td>AR-2</td><td>Important</td><td><code>src/app/api/local-assistant/preparation/scan/route.ts:13-18</code></td><td>助手以管理员运行＋PS 普通权限 ⇒ 助手回 <code>PHOTOSHOP_PRIVILEGE_MISMATCH</code>，云端代理不认这个码 ⇒ 归类 502 网关错误；前端按网关错误处理时，用户看到的不再是"别用管理员启动"</td><td>读码确认映射表只有 4 码；<code>grep PHOTOSHOP_PRIVILEGE_MISMATCH</code> 该文件 0 命中</td><td>A</td><td>本次引入（错误码是本批迁的，映射层没跟上）</td></tr>
+<tr><td>AR-3</td><td>Important</td><td><code>src/lib/workbench/local-assistant-client.ts:1517</code></td><td>英文界面在权限不匹配分支收到整段中文指引（200 字），且无词典兜底</td><td><code>dict-en.json</code> 中「权限级别／管理员」相关词条实测 2 条且均非此句；该行是 <code>data?.message</code> 直传</td><td>A</td><td>本次引入文案、存量写法</td></tr>
+<tr><td>AR-4</td><td>Important</td><td><code>src/components/workbench/workbench-view.tsx:3669</code>、<code>:3697</code></td><td>两稿共用一本工作簿、分别取主图/A+ sheet ⇒ 全局 <code>stageTableParses</code> 后写覆盖先写，第 1 步行数徽标与覆盖率矩阵显示另一 sheet 的数</td><td>键为 <code>normalizeTableId(member.tablePath)</code>，消费点 <code>:4234</code>／<code>:5714</code></td><td>A</td><td>本次引入（改动只做半程）</td></tr>
+<tr><td>AR-5</td><td>Nit</td><td><code>scripts/check-wb-tokens.mjs:219-221</code></td><td>一条"新文件绕行直接判红"的规则其实是<strong>空 body 的 if</strong>——看着像守卫，什么都不做（真保护走上一支 <code>n &gt; allowed</code>）</td><td>读码：分支内只有注释</td><td>A</td><td>存量（非本批写）</td></tr>
+<tr><td>AR-6</td><td>Pre-existing</td><td><code>src/components/workbench/workbench-view.tsx:3630</code></td><td>注释仍写"一张表全批只读一次"，与新语义相反，会误导下一个改这里的人</td><td>读码</td><td>A</td><td>存量</td></tr>
+</tbody></table></div>
+<section>
+<h2><span class="sn">04</span>未决（缺什么证据）</h2>
+<div class="card"><p>1. <strong>AR-1 的修法方向</strong>：把 manifest 的 schema/renderer 同步成 v3/v4，会不会让"下载到的还是 3.7.28"这件事对用户说错话？缺的证据＝<code>src/app/api/local-assistant/latest/route.ts</code> 与更新提示 UI 到底把这两个字段用在哪（我 grep 到的是服务端合同比对，不是展示路径）。<strong>执行方必须先读消费点再动手</strong>，不许先改再说。</p></div>
+<div class="card"><p>2. <strong>取证措辞</strong>：上一份报告写"等效 200% 缩放""键盘可用"。实为 720×450 视口（<code>deviceScaleFactor:1</code>，DPR 类查询永不命中）＋只测 <code>documentElement</code> 横向溢出＋只 Tab 8 次。缺的证据＝真缩放（CDP <code>Emulation.setPageScaleFactor</code> 或 DPR=2）下的溢出与焦点遍历。判为"说得太满"，不是造假。</p></div>
+<section>
+<h2><span class="sn">05</span>根因（钻到底）</h2>
+<p class="lede">三条 Important 的<strong>共同生成器</strong>不是粗心，是验收方式：</p>
+<div class="card"><p>1. 我把<strong>门的输出文本</strong>当成事实终点。AR-1、AR-2 都属这一类——门打印了什么，我就照抄成"因为什么"。门的打印文本是<strong>别人对这个世界的解释</strong>；真正的事实是那条判定表达式和它的输入值。只要一条"绿/红"结论不能附上"该门用哪个表达式、输入是什么、换成什么值会翻"，它就不是证据。</p></div>
+<div class="card"><p>2. 我改的是<strong>单点</strong>，没有把该点的不变量在下游每一份拷贝里同步。AR-2（第五、六层）与 AR-4（全局聚合键）同源于此：加载器/错误码本身改对了，但"谁复制了它的语义"没被枚举。判据＝对每个被改的标识符，列出全部读它的地方并逐个判定（不是 grep 到就完事）。</p></div>
+<div class="card"><p>3. 取证脚本的<strong>度量口径比结论窄</strong>，结论却用了广口径词（AR-6 类措辞）。</p></div>
+<p class="lede">最底一层：<strong>这批交付没有"归因复验"这一环</strong>。54 步逐条跑只证明了 rc，没证明 rc 的原因；我把原因外包给了门的文案。</p>
+<section>
+<h2><span class="sn">06</span>沉淀</h2>
+<p class="lede">按技能要求追加 <code>REVIEW-EVALS.md</code>：<code>2026-11-01 | 归因错标（门的豁免白名单没读） | scripts/smoke-release-consistency.mjs:269-274 | 本应"测试证据"层拦住 | 因为我复现了 rc 却没复现 rc 的判定路径</code>。</p>
+<p class="lede">---</p>
+<section>
+<h2><span class="sn">07</span>Round 2/3 —— 返工结果的独立复验（主审独占，不采信 worker 自述）</h2>
+<ul class="notes">
+<li>范围：<code>886b18ff..91cad832</code>（worker 四笔：P1 声明字段／P6 假规则／P2 错误码两层／P3 聚合键）｜风险档 Medium｜已推 <code>origin/codex/unified-opt-20261031</code></li>
+<li><strong>VERDICT: 有条件放行</strong> —— 四条修复主审全部自己复现成立；新出 3 条 finding（1 条是审查方自己的流程缺陷）。</li>
+</ul>
+<p class="lede">### 主审复现结果（每条都是我自己跑出来的 rc，不引用 worker 回包）</p>
+<div class="scrollx"><table><thead><tr><th>项</th><th>判据</th><th>负控（我打的）</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>P1</td><td><code>smoke-release-consistency</code> rc=0；干净环境 <code>test:contracts</code> <strong>54 步 54 绿</strong></td><td>把 manifest 的 reportSchemaVersion 改回 v2 ⇒ rc=1；改回 ⇒ rc=0</td></tr>
+<tr><td>P2</td><td>助手侧确实回 422（server.js 权限拦档）；web 侧文案走 <code>preparationFailureError()</code> 且词典有条目；<code>smoke-preparation-failure-observation</code> rc=0</td><td>删 route.ts 显式分支 ⇒ rc=1；删那条英文词条 ⇒ rc=1；均恢复后 rc=0</td></tr>
+<tr><td>P3</td><td>新单测 8 例 rc=0；全量 <code>vitest</code> 45 文件 527 例 rc=0；<code>tsc</code> rc=0</td><td>把聚合键退回只按表路径 ⇒ 5 条断言红（正是"后写覆盖先写"）；恢复 ⇒ rc=0</td></tr>
+<tr><td>P6</td><td><code>check-wb-tokens</code> rc=0（41/41）</td><td>放一枚含 bg-teal-600 的探针文件 ⇒ rc=1 并点名；删掉 ⇒ rc=0</td></tr>
+</tbody></table></div>
+<p class="lede">### 新 findings（Round 2）</p>
+<div class="scrollx"><table><thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>失效场景</th><th>证据</th><th>等级</th><th>归属</th></tr></thead><tbody>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>AR-7</td><td>Important</td><td>官网 <code>button.nav-login</code>／<code>a.btn</code>／<code>button.tab#workflow-tab-*</code>／<code>button.choice</code></td><td>键盘用户 Tab 到这些控件时看不到焦点在哪（WCAG 2.4.7）</td><td>全站焦点遍历：HEAD 63 站里 <strong>18 站无可见焦点样式</strong>；同一探针打基线站（e7d49ceb＋S1S2）＝62 站里同样 <strong>18 站</strong></td><td>A</td><td><strong>存量</strong>（A/B 坐实，非本批引入）</td></tr>
+<tr><td>AR-8</td><td>Nit</td><td>官网 <code>div.wrap</code>／<code>.faq-list</code>／<code>.faq-item</code> 等 5 处</td><td>容器内 3px 外溢（文档级 0，不出横向滚动条，像素级）</td><td>遍历所有元素 scrollWidth−clientWidth&gt;1 且 overflow-x:visible ⇒ 5 处，最大 +3px</td><td>A</td><td>未做基线对照（只测了 HEAD）</td></tr>
+<tr><td>AR-9</td><td>Important</td><td>本会话取证环境（worker 留下的 <code>.env</code> ＋ 常驻 dev server）</td><td><strong>无关的门会假红</strong>：<code>smoke-batch-stale-attempt-reaper</code> 在 .env 存在时 rc=1（<code>issueBillingChallenge</code> 断言失败），撤掉 .env 后 rc=0；文件锁 <code>db/custom.db</code> busy 也是同一来源</td><td>同一条门两次对照跑，rc 1→0；进程按端口定位（PID 1176 是本树 next dev）后停止</td><td>A</td><td><strong>本次引入（审查方自己的流程缺陷）</strong></td></tr>
+</tbody></table></div>
+<p class="lede">### 更正段（Round 2）</p>
+<div class="card"><p>1. 我一度判 worker 的"54 步全绿"是假绿——<strong>错了</strong>。真相是 worker 为 P4 建的隔离 <code>.env</code> 与常驻站点没清理，把 DB 指向改走，导致一条无关门假红；它在干净环境下的自述成立，我复跑 54/54 rc=0。<strong>同一条归因纪律对"怀疑别人"同样适用</strong>：我引用了门的输出，却没检查自己的环境。</p></div>
+<div class="card"><p>2. 上一轮报告写"Tab 焦点 8/8 且可见样式 8/8"——口径过窄（只按前 8 次按键计数）。真口径：全站 63 站，18 站无可见焦点样式（AR-7，存量）。</p></div>
+<div class="card"><p>3. 上一轮说"七笔拆不开"——worker 与主审共同证伪：P5 证据＝从 <code>e7d49ceb</code> 只挑 S1＋S2 成枝 <code>41190212</code>，<code>tsc</code> rc=0、5 个测试文件 38 例 rc=0、<code>test:batch-row-contract</code> rc=0、两枚 smoke rc=0 ⇒ <strong>这两笔技术上可独立合入 develop</strong>（合不合是 Owner 的决定）。</p></div>
+<p class="lede">### 覆盖缺口（Round 2）</p>
+<p class="lede">AR-7 只测了中文首页；英文首页与工作台内部件的焦点未测。AR-8 未做基线对照。P4 的"改前/改后同样本对照图"仍未做（需要保留基线站截图作为对照，本轮只做了焦点与溢出的 A/B 数值）。真实 Photoshop、真实扣费、安装包内字节仍未验证（不变）。</p>
+<footer><p>本件是执行记录。已推 GitHub 侧枝 codex/unified-opt-20261031；未合 origin/develop、未部署测试站与生产、未出助手安装包、未做任何真实扣费执行。</p></footer></main></body></html>

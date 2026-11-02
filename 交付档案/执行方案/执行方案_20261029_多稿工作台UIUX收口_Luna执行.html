@@ -1,0 +1,408 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>多稿工作台 UI/UX 收口执行方案</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.report-section{margin-top:32px;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.report-section h2{margin-top:0}.report-section h3{margin-top:24px}p,li{overflow-wrap:anywhere}.report-toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:20px 0}.report-toolbar button{background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:8px;cursor:pointer}.report-section ol{padding-left:1.4em}footer{padding:24px 0;color:var(--muted)}</style></head><body><main class="wrap"><div class="report-toolbar"><span>图译工坊 · 本地交付文件 · 2026-10-29</span><button type="button" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark'">切换亮暗主题</button></div><h1>多稿工作台 UI/UX 收口执行方案</h1><div class="verdict"><span class="lb">执行范围</span><p>矩阵优先、身份可辨、状态准确、作用范围清楚。实施与独立复验分开进行。</p></div><p>承接：Owner 2026-10-29「给个执行方案然后派 sol 6 luna 最高去执行」。按前文明确指定的 GPT-6 Luna、最高推理强度执行。</p><p>方法：先固定当前现场，独立审核方案，Luna 单独实施，再由另一位审查者复验。</p><p>结论：保留你确认的矩阵优先布局，把“哪个文件、检查到哪一步、这个按钮处理什么范围”说清楚。</p><section class="report-section"><h2>1. 任务与基线</h2><ul class="notes"><li>编号：MDW-UX-20261029。</li><li>目标：在现有四步工作台中，让多稿文件身份、状态含义、检测范围与待处理原因清楚可辨，所有现有操作仍可使用。</li><li>执行者：GPT-6 Luna，reasoning=max。独立复验：review_workbench_plan。</li><li>授权树：F:/工具开发/图译工坊内测版/worktrees/develop。</li><li>分支：develop；开工 HEAD：518a2dae0edeed4945541223709244f3edc8697e。</li><li>当前树已有大量未提交修改，不能当作干净树。不得整文件回滚或提交其中其他人的改动。</li><li>本轮目标文件的逐字节快照与哈希：F:/工具开发/图译工坊内测版/tmp/mdw-ux-20261029/baseline/manifest.json。每个目标源文件均保留原字节副本。</li><li>生效产品变更单：worktrees/develop/changes/active/20261029-multi-draft-uiux-clarity.md。</li></ul></section><section class="report-section"><h2>2. 能力现状与对抗式裁决</h2><p>最新全景索引是容器根 总控/产品功能全景_20261003.md，日期已旧。本轮不把它当今日事实，也不改写其属主文件；2026-10-29 已由独立审查者按下面的当前源代码逐项重核。以下行号对应开工现场，交付报告须刷新行号。</p><ul class="notes"><li>同名稿路径区分已经存在：multi-draft-stage-queue.tsx:20；矩阵仍取文件名：coverage-matrix.tsx:72、207。复用现有规则，不另造一套。</li><li>重复稿提示和保留/恢复操作已经存在：step1-stage-view.tsx:83、1609；数据来源：workbench-view.tsx:3202。只增加只读成员身份，不改选择与去重行为。</li><li>覆盖率的未知状态不是未扫描的同义词：coverage.ts:89、124；矩阵目前统一要求扫描：coverage-matrix.tsx:61。只改不准确的提示，未知仍是未知。</li><li>4/4 的真实含义是译文审查确认，而非生成完成：workbench-view.tsx:3962、4008；摘要相符的判据：deliverable-view.ts:34。不得将它命名为“已完成交付”或“全部可执行”。</li><li>第 2 步有三个须保留的动作：编辑译表 workbench-view.tsx:5837；本稿全部已选语言检测 :5845；当前语言检测 review-step.tsx:1255。单语言重跑和失败/未知状态处理均保留。</li><li>第 3 步各类事实已存在：去重阻断数 workbench-view.tsx:1219；范围处置 :6082；版式复核 :6175；当前语言明细 :6259；可选详情 :6300。不能相加这些不同单位的数。</li><li>第 4 步已有批次范围和逐稿执行按钮：execute-step.tsx:2471、2534。当前真实页面被 2 项待处理挡住，真实生成尚未验收；不能称为“批量能力缺失”或“批量已实跑通过”。</li><li>现有“处理 N 项”入口已存在：workbench-view.tsx:1841、1875。保留已有跳转，不新增第二条处理链。</li></ul><p>本轮推翻的旧建议：矩阵默认收起会倒退你确认过的布局，不执行；两个检测按钮作用范围不同，不以“重复”为由删除；第 4 步执行锁有安全依据，不放松。</p></section><section class="report-section"><h2>3. 分步实施</h2><h3>第 1 步：让稿件和状态可辨</h3><ol class="notes"><li>把现有最短可区分路径规则抽成共享纯函数。唯一文件名继续简短；同名文件按必要的父目录区分。矩阵、重复稿提醒、第 2/3 步队列使用相同标签。</li><li>重复稿提醒显示组名及成员路径；已暂时移出的成员也须可辨，避免“恢复两份”时不知道恢复的是谁。点击仍传原始 masterPath / duplicate key，不能把展示标签当身份。</li><li>矩阵继续优先显示。摘要明确“计划生成份数”和“译文已确认”，行头明确“配表待核对”等真实事实，不能用“可执行”代替所有生成条件已满足。界面只用必要短标签，不增加“证据、摘要、派生、快照、门禁”等开发说明或新的解释大卡。</li><li>算不出覆盖率时保留空值与原格态。提示应说明缺少可估算的原文信息；只有可靠扫描状态证明未扫描时，才能要求先扫描。</li></ol><h3>第 2 步：把操作对象写在按钮附近</h3><ol class="notes"><li>显示当前稿件的可区分名称，以及当前语言/本稿已选语言范围。</li><li>多稿模式下，上方动作明确“检测当前稿全部 N 种语言”；下方明确“智能检测当前语言”。编辑译表、所有原 disabled 条件、失败/未知语言重跑继续保留。</li><li>不合并两条 AI 调用、不增加自动检测或跨设计稿 AI 编排。不把确认过译文误报为 AI 检测已运行。</li><li>单稿模式保持现有文案及操作。</li></ol><h3>第 3 步：把要决定的事和供复核的信息讲清楚</h3><ol class="notes"><li>在既有内容上整理展示层级并标清范围：当前稿范围处置、必须处理的校对项、版式复核、可选详情。保留完整原控件和打开详情的出口。</li><li>全稿去重阻断数、当前语言明细行数、文字对象数、版式条目数分别用原事实展示；不得产生一个相加后的“总问题数”。例如“其中 1 处可能丢内容／版式明细共 30 处”只能在真实包含关系成立时这样写。</li><li>缺译对象在用户确认前，必须写成“建议保持原文／待你确认”；不能写成已排除、已保留或已经不计费。</li><li>保留“采用默认”“逐个补译”“检查材料”“选择归属”“保留原文”及全量可选详情。版式提示不新增阻断，不自动应用任何决定。</li></ol><h3>第 4 步：说明当前为什么还不能生成</h3><ol class="notes"><li>继续使用同一 deliveryOpen、derived.reason 和处理 N 项入口；只在已知真实原因与计数存在时补“当前稿”范围说明。</li><li>不把网络/连接/语言未确认等其他锁定原因统一改成“文字层归属问题”。</li><li>不新增预览或执行例外；保留目前访客可浏览演示的例外和所有真实授权、执行门。</li></ol></section><section class="report-section"><h2>4. 写入面与硬约束</h2><p>允许实施的业务路径：</p><ul class="notes"><li>src/components/workbench/coverage-matrix.tsx</li><li>src/components/workbench/step1-stage-view.tsx</li><li>src/components/workbench/multi-draft-stage-queue.tsx</li><li>src/components/workbench/workbench-view.tsx（只读展示投影、重复稿成员字段、展示 props）</li><li>src/components/workbench/review-step.tsx（只增加多稿可选展示 props）</li><li>src/lib/workbench/draft-display-labels.ts（新共享纯函数）</li><li>src/lib/i18n/dict-en.json（仅本轮新增/修改文案键）</li><li>tests/unit/multi-draft-stage-queue.test.ts、step1-stage-view.test.tsx，以及必要的 coverage-matrix / 多稿展示定向测试。</li><li>scripts/smoke-batch-workbench-guards.mjs：仅同步旧“已确认可执行”等显示断言为准确的译文审查状态，保留两态区分和全部业务保护，并新增禁止矩阵误报可执行的反向保护。此范围在首轮实际失败后由主审核实并追加授权，原字节另存 baseline-extra。</li></ul><p>文档允许：本变更单、同名执行报告 md+HTML、AI_MEMORY/TASK_LOG.md 的本轮置顶条目、ledger.jsonl 的同事件追加，以及 CHANGELOG.md 的本轮 L2 展示决策条目；如确有新问题，ISSUES.md 只追加。CURRENT_STATUS 属单写者，不整档重写。其他已有记录不得覆盖。</p><p>禁止触碰：服务端 API、助手、Photoshop 脚本、报价/积分/支付、回执、身份授权、执行范围/确认算法、执行状态机、release identity、环境开关、生产和测试站。禁止提交、推送、部署；用户素材不作自动选择，真实 AI/PS 生成不在本轮运行范围。</p></section><section class="report-section"><h2>5. 验收判据</h2><p>以下是预期判据，不是已通过的结果。每条由执行者留下真实输出，再由独立审查者复验。</p><ul class="notes"><li>身份：两个同名同父目录名但不同祖父目录的合成稿可区分；矩阵和队列一致；点击仍传完整原始路径，两个重复组可分别辨识与恢复。</li><li>状态：已扫描但原文信息不可估算的稿，不再被无根据要求重新扫描；不伪造 0%、100% 或可执行；译文确认数仍由现有摘要派生。</li><li>三个动作：编辑译表、当前稿全部语言检测、当前语言检测均保留，disabled 与 AI 调用未变；单稿展示保持原行为。</li><li>计数：同一对象同时有阻断和版式提示时不相加计数；范围处置在点击前保持未确认事实；当前稿切换后显示名称、语言和状态属于新稿。</li><li>门禁：现有访客预览可达；登录用户未满足交付条件时仍锁住；真实执行/扣费/AI 请求不会由查看页面自动触发。</li><li>定向测试：npx vitest run tests/unit/multi-draft-stage-queue.test.ts tests/unit/step1-stage-view.test.tsx 及本轮新增的语义展示测试，预期 rc=0。</li><li>既有保护：npm run test:workbench-ui-contract、npm run test:step1-mock-contract、npm run test:workbench-flow、npm run test:batch-workbench-guards、npm run test:workbench-scope，以及 node scripts/smoke-user-visible-copy.mjs，预期 rc=0。若因精确文案变化失败，先裁定断言是否过时；不可删保护或改业务算法凑绿。</li><li>类型与静态检查：npx --no-install tsc --noEmit；对本轮改动文件跑定向 ESLint；git diff --check，预期 rc=0。已存在的失败须用开工快照比对，不能归为本轮通过。</li><li>负控：对最关键的身份回归测试做一次受控破坏（如恢复为只显示 basename），测试必须失败；用 finally 恢复原字节并核对 SHA-256，再跑对应正控。优先在隔离副本做；不得破坏任何真实业务数据。</li><li>运行：localhost:3000 返回 200；在当前已有批次仅安全导航第 1/2/3 步，核对矩阵优先、同名稿、当前稿范围和待处理层级；第 4 步锁定原因与现有处理入口保持。不得代选表格/归属、触发扫描/AI检测/真实生成。无法到达的深态如实 NOT RUN。</li></ul></section><section class="report-section"><h2>6. 交付与收官</h2><ol class="notes"><li>执行者先保存目标文件原字节与哈希；只能做基于当前脏现场的增量修改。若发现目标文件被其他会话继续写，停止该文件改动并交还具体冲突证据。</li><li>实施后输出 task-only diff/补丁与SHA列表，明确未提交；本轮补丁相对本任务开工快照生成，不能把已有改动混入成果。</li><li>回包：F:/工具开发/图译工坊内测版/tmp/mdw-ux-20261029/luna-result.md，含结论、改动清单、准确退出码、源行号、负控与恢复哈希、未验证项。</li><li>独立复验者读取 task-only diff，并独立复跑定向行为测试及保护闸；发现阻断打回 Luna，最多三轮。</li><li>完成后更新本轮项目记录及结构化台账。台账只用 Node fs.appendFileSync 追加；飞书投影先 dry-run，失败登记不阻塞。</li><li>计划与最终报告均产出 md+HTML，直接用规定脚本发送飞书；脚本返回 code:0 才记为送达。内容用短句，不发素材正文和密钥。</li></ol><p>真实 Photoshop 批量生成、最终产物与结算本轮不做验收；最终交付只能称为“多稿界面与运行展示已复验”，不得称为真实批量生产全链路通过。</p></section><footer>本文件用于本地阅读；飞书发送载体为同名 Markdown 文本。真实 Photoshop 批量生成以单独运行证据为准。</footer></main></body></html>

@@ -1,0 +1,407 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>统一优化候选对抗复核</title><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+main{max-width:1080px;margin:auto;padding:32px 24px}p{line-height:1.9;overflow-wrap:anywhere}h2{margin-top:40px}</style><main><h1 id="s0">统一优化候选886b18ff·对抗式复核</h1><p>VERDICT: BLOCK（发布）；CONCERNS（代码候选）。代码已经完成一轮整理，但不能认定“全部改好、可发布”。本轮发现3条实质接线/退出风险、1条官网文案错误，并重现既有发布阻断。</p><p>日期：2026-11-01。对象：worktrees/unified-opt-20261031，基线e7d49ceb，候选886b18ff。7笔提交、92文件差异，审查前后工作树无未提交差异。旧develop树仍停在71529c7c，不作为候选实现依据。本轮未修改业务、未提交、未部署、未调用真实任务/费用。</p><p>方法：主审定点复读与定向测试；两位独立审查者分别核执行链和官网。不是全代码安全审计，也没有真人Windows/Photoshop运行验收。</p><p>以下业务路径均以F:/工具开发/图译工坊内测版/worktrees/unified-opt-20261031/为前缀。</p><h2 id="s1">1. [P1] 状态查询失败可能让安装器误停正在运行的引擎</h2><p>证据：download/local-assistant/build/TrayHost.cs:319—329，ProbeBusy超时1.5秒，异常返回false；:339—342两次false便允许发退出信号；:363—375同样将false用于允许停止；:154—163最终Kill实际引擎。server.js:537—538、:564—573新增同步权限查询允许阻塞4秒/6秒。队列状态接口在server.js:8503—8508。</p><p>问题：读不到状态与确认空闲被压成同一个布尔值。两次探测都超时仍可能误停执行；两次采样也不能消除检查后新任务进入的窗口。手动退出比旧版有忙碌检查改善，但新增安装器退出路径仍有安全缺口。</p><p>影响：升级/退出时可能中断本地任务，使用户进入恢复状态；本轮未实际杀进程或复现真实数据损失。</p><p>修复：忙/闲/未知三态；未知给可操作提示并拒绝破坏性关闭。真正停止前由运行服务协调停止接收新任务并检查执行状态，不靠两次客户端查询保证原子性。</p><p>验收：状态超时、无效响应、请求后新任务进入均不得Kill忙碌引擎；确认空闲时可正常退出。隔离模拟后补真实安装升级验收。</p><h2 id="s2">2. [P2] 字号未生效的失败码没有进入用户报告</h2><p>证据：download/local-assistant/scripts/TYGF_V15_Thin_Executor.jsx:84—85产生SIZE_NOT_APPLIED；:310—313写typographyIssues。v15-runner.js:247—250仅提取部分结果；主审与独立审查搜索助手和src业务路径，没有查到该字段的实际下游消费，只有执行器及注释。</p><p>问题：要求24pt、实际仍12pt时，执行器有内部记录，但报告和网页未接到这项记录。不能因为字号局部模拟测试通过就宣称用户能知道字号失败。</p><p>修复：将逐层字段问题接入报告与完成提示，清楚表达“文字写入完成，字号未按要求生效”，不要无依据改动结算或把文字成功整体伪装失败。保留图层身份与wanted/actual。</p><p>验收：模拟PS赋值未生效、字段抛错，正常生成与仅报告重建都显示对应警告；未设字号不产生假警告。跑执行器→runner→报告/摘要的集成用例，而非仅测JSX函数。</p><h2 id="s3">3. [P2] 版式风险总数已计算，却没传进报告渲染</h2><p>证据：download/local-assistant/v15-runner.js:880—885保存按语言总数；:942取overflowRiskTotal；:943—967调用renderLocalHtmlReport只传overflowRisks，未传总数。report-renderer.js:459—463消费总数，:701、:789据此决定总数和未列出提示。</p><p>问题：新增完整总数展示在真实runner调用中断开。renderer单独测试能通过，却不能证明运行报告有完整计数。当前变量还是当前语言总数，而overflowRisks为多语言扁平明细，不能随手加一行参数就称修好。</p><p>修复：先定义单语言与多语言汇总口径，再贯通生成、追加和仅报告重建路径。没有真实总数时标未收到，不拿截断明细长度当全批数。</p><p>验收：多语言、每种超过明细上限、部分语言缺总数、报告重建，分别核真实总数/已展示/未展示；缺数据不补0。</p><h2 id="s4">4. [P3] 官网新增第七项后，标题与摘要仍说六项</h2><p>证据：src/config/siteContent.ts:995—996标题和摘要写6件事，:1017新增设计稿上限后items为7项；英文src/config/siteContentEn.ts:196—197、:216—222同样不一致。</p><p>修复：标题、摘要、中英文与实际条目数一起对齐，或采用不钉死数量的标题。中文后台覆盖需一并核实际渲染。</p><p>验收：代码默认值与实际页面分别检查，后台有覆盖时不能只看源码。不是为了小错误重做官网。</p><h2 id="s5">5. [发布阻断，已知] 安装包与发布身份没有闭合</h2><p>本轮运行node scripts/smoke-release-consistency.mjs真实rc=1：manifest version、filename、assistantBuildId、reportSchemaVersion、reportRendererVersion五项不一致，缺tygf-engine-setup-3.7.30.exe。</p><p>config/release-identity.json声明3.7.30/schema v3/renderer v4，public/downloads/local-assistant-release.json仍为3.7.28/v2/v3。这是已经登记的候选状态，不当作新发现，但仍属于真实发布阻断，不能因“只是缺包”豁免。</p><p>修复顺序：先处理前3条运行链路问题，再构建唯一身份包、同步清单、核归档/下载/安装后实际运行身份，并完成设备测试。不得为让门绿而放宽版本或伪造验收记录。</p><h2 id="s6">6. 本轮真正复跑了什么</h2><p>- smoke-photoshop-output-quality：15组合成集成组PASS，输出明确synthetic bytes only，无用户文档。</p><p>- smoke-typography-fontsize：14断言PASS，模拟字号写入、读回和失败留痕；不包含真实PS和下游用户报告。</p><p>- smoke-wrap-billing-isolation：带ts-path-loader运行rc=0，3组断言通过。</p><p>- npx vitest run：translation-template-provenance、stage-table-loader-dedupe、workbench-scope-runtime，rc=0，3文件28测试通过。</p><p>- smoke-release-consistency：rc=1，缺包与manifest不一致如上。</p><p>一次直接node运行wrap-billing-isolation因缺路径loader报ERR_MODULE_NOT_FOUND；改用仓库loader后rc=0。这是本轮命令使用条件，不登记成产品故障。</p><p>没有重跑整树tsc/lint/全部单测/全部合同链；原执行报告的519例全绿等是前序记录，不冒充本轮结果。</p><h2 id="s7">7. 视觉与首次使用的验收范围必须收紧表述</h2><p>前序metrics.json路径F:/工具开发/tmp/render-evidence-20261101/，六组路由为首页/英文首页，检查前8个焦点与首屏颜色。它们不能证明登录后四步、排版弹层与六种首用状态均可用。</p><p>报告已经承认首用未串联、工作台没有同样本前后图。因此“全部收口”应读为源码迁移完成，不是全产品体验验收完成。还需补准备材料、返回修改、失败恢复、生成确认的实际交互；720×450等效布局不能替代真实浏览器200%缩放检查。</p><p>前序图中左下N圆标是Next开发环境指示器，不能直接登记成产品浮标遮挡缺陷。先在生产构建复核，避免改产品去补开发工具现象。</p><h2 id="s8">8. 最终建议</h2><p>保留已有迁移、定向回归与清晰候选边界；先修P1退出，再补字号和总数两条端到端通路，官网六/七项一起修；然后出包并做真实安装与最小Photoshop链路，最后复核工作台四种关键状态与首用出口。</p><p>在此之前，候选可继续审改，不能合为可发布版本或宣称全部验收。已确认的是源码路径断点，不是对线上现役事故的断言；本轮没有修改源码，所有修复均待执行。</p></main></html>

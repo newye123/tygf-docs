@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>审查报告 · OpenMontage 实装与拆解：人家怎么做宣传视频 · 20261024</title>
+<style>
+@font-face{font-family:'RptSans';src:url('../../video/intro-20261018/assets/fonts/NotoSansHans-Regular.otf') format('opentype');font-weight:400}
+@font-face{font-family:'RptSans';src:url('../../video/intro-20261018/assets/fonts/NotoSansHans-Bold.otf') format('opentype');font-weight:700}
+:root{--bg:#f7f6f2;--ink:#16150f;--mut:#6d685a;--line:#e1ddd2;--card:#fff;--ok:#15624a;--bad:#98272b;--warn:#8f5a06;--accent:#15624a;--serif:'Iowan Old Style',Georgia,'Source Han Serif SC',serif;--mono:ui-monospace,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#131316;--ink:#e9e6df;--mut:#9d978a;--line:#2b2b32;--card:#1a1a1e;--ok:#5fc79a;--bad:#e08a8e;--warn:#d6a85a;--accent:#5fc79a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'RptSans','Source Han Sans SC','Noto Sans SC','Microsoft YaHei',sans-serif;font-size:15px;line-height:1.72}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 26px 80px}
+h1{font-family:var(--serif);font-size:29px;line-height:1.28;margin:0 0 6px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+h2{font-family:var(--serif);font-size:20px;margin:34px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15.5px;margin:18px 0 7px}p{margin:0 0 11px}
+code{font-family:var(--mono);font-size:.87em;background:rgba(127,127,127,.13);padding:.08em .34em;border-radius:4px}
+.verdict{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.verdict b{font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .k{font-size:11px;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
+.stat .v{font-size:22px;font-weight:700;font-family:var(--serif)}
+.stat .n{font-size:11.5px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;background:var(--card);border:1px solid var(--line);font-size:13.5px}
+th{background:rgba(127,127,127,.08);text-align:left;font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.warn{color:var(--warn);font-weight:700}
+.callout{background:rgba(143,90,6,.07);border:1px solid rgba(143,90,6,.28);border-radius:10px;padding:13px 16px;margin:14px 0;font-size:14px}
+.callout.green{background:rgba(21,98,74,.07);border-color:rgba(21,98,74,.3)}
+.callout.red{background:rgba(152,39,43,.07);border-color:rgba(152,39,43,.3)}
+.notes{font-size:13px;color:var(--mut)}ul,ol{margin:0 0 12px;padding-left:21px}li{margin:0 0 5px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-right:5px;color:var(--mut)}
+.pill.a{border-color:var(--ok);color:var(--ok)}
+pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+</style></head><body><div class="wrap">
+<h1>OpenMontage 实装与拆解：人家是怎么做宣传视频的</h1>
+<div class="sub">审查对象＝<b>calesthio/OpenMontage（AGPL-3.0）</b>　|　2026-10-24　|　配套 md：<code>审查报告_20261024_OpenMontage实装_人家怎么做宣传视频的.md</code></div>
+
+<div class="verdict"><b>结论：装好了、跑通了；他们做宣传片靠的不是神渲染器，是把"怎么拍"写成规程的流水线。</b>
+<p style="margin:8px 0 0">对我们最值钱的不是代码，是三件事：<b>调性三旋钮</b>、<b>模板档/定制档二选一</b>、<b>"这片子换别家产品还成立吗"的区别性审查</b>。另外上次那个"能不能把官网走一遍录下来"的问题，在它这里有真答案——我用它的配方把 <code>tuyigf.com</code> 真录了 31.8 秒，红色光标和滚动都在画面里。</p></div>
+
+<div class="stats">
+<div class="stat"><div class="k">工具注册表</div><div class="v">155</div><div class="n">本机 37 可用 / 117 缺依赖或 key</div></div>
+<div class="stat"><div class="k">流水线</div><div class="v">13</div><div class="n">12 条实际产线 + 1 冒烟</div></div>
+<div class="stat"><div class="k">技能文件</div><div class="v">736</div><div class="n">157 + 579 个 md</div></div>
+<div class="stat"><div class="k">零键 demo</div><div class="v">22.5s</div><div class="n">1080p / 5.6 MB / 渲染成功</div></div>
+<div class="stat"><div class="k">官网真录屏</div><div class="v">31.8s</div><div class="n">1080p / 1.24 MB / 光标可见</div></div>
+</div>
+
+<h2>一、装了什么、跑到哪一步（本机实测）</h2>
+<table><tr><th>项</th><th>结果</th><th>说明</th></tr>
+<tr><td>Python 依赖</td><td class="ok">成功</td><td>venv（3.13.1）+ 12 个核心包，import 全通</td></tr>
+<tr><td>官方 PyPI</td><td class="bad">失败</td><td><code>ProxyError 10054</code> / <code>SSLError</code>，换清华镜像后成功</td></tr>
+<tr><td>Remotion</td><td class="ok">成功</td><td>199 包，remotion 4.0.484，走 npmmirror</td></tr>
+<tr><td>零键 demo</td><td class="ok">渲染成功</td><td><code>focusflow-pitch.mp4</code> 22.55s / 1920×1080 / 30fps / h264+aac / 5,577,599 B</td></tr>
+<tr><td>Chrome Headless Shell</td><td class="warn">卡住</td><td>113.3 MB 从 <code>storage.googleapis.com</code>，3 分钟只到 18 MB；改用系统 Chrome 绕过</td></tr>
+<tr><td>工具清点</td><td class="ok">成功</td><td>155 工具：37 available / 117 unavailable / 1 degraded</td></tr>
+<tr><td>官网真录屏</td><td class="ok">成功</td><td>31.83s / 955 帧 / 1080p / 1,237,475 B，第 26 秒帧内可见红色光标</td></tr>
+</table>
+<div class="callout"><b>怎么读"117 不可用"：</b>是<b>本机没装依赖或没配 key</b>，不是它产品只有 37 项能力。它把生图、生视频、TTS、修脸等 100 多个外部服务做成可插拔工具，要用就得付费配 key。</div>
+
+<h2>二、人家怎么做宣传视频</h2>
+
+<h3>1 第一原则：所有片子必须走流水线</h3>
+<p><code>AGENT_GUIDE.md:49</code> 写死一条 Rule Zero：要做视频，先找对应流水线、读清单、跑预检、一阶段一阶段做；<b>禁止临时写脚本直接调工具</b>。理由在同文件 <code>:68</code>：<b>"智能在技能里，不在即兴代码里"</b>。</p>
+
+<h3>2 屏幕演示片的两个模式</h3>
+<p><code>pipeline_defs/screen-demo.yaml:22-42</code>：<b>真拍</b>（录真实桌面/浏览器，必选 <code>screen_recorder</code>）与<b>合成</b>（终端动画用 Remotion 画）。Playwright 录制只写在描述文字里（<code>:4-16</code>），没进结构化 modes。</p>
+<p><b>对我们的用法：</b>该真录的（PS 里真改一层）真录，能合成的（译文表落位、进度条）合成——别拿录屏演可以画出来的东西。</p>
+
+<h3>3 七道工序，五道要人点头</h3>
+<p><code>screen-demo.yaml:77-239</code>：<code>idea → script → scene_plan → assets → edit → compose → publish</code>。其中 <code>idea/script/scene_plan/assets/publish</code> 五关要人批（<code>:85/:111/:134/:165/:239</code>），<code>edit/compose</code> 自动过。预算默认 1 美元、每关最多返修 3 次、全线最多 10 分钟（<code>:46-49</code>）。</p>
+
+<h3>4 脚本不是文案，是动作地图</h3>
+<p><code>skills/pipelines/screen-demo/script-director.md:29-48</code>：先标一张动作表——时间点、动作类型、对象、重要度、建议处理（实时/加速/切掉/高亮/缩放）；<code>:79-87</code> 给速度档：关键点击 0.75–1.0x、常规输入 1.5–2.0x、安装构建 3.0–6.0x、纯等待 cut；<code>:87</code> 明写<b>"不要把关键证据放在加速段里"</b>；<code>:124</code> 反面清单第一条：<b>"别解说着光标，要说结果"</b>。</p>
+
+<h3>5 画面硬规格与缩放档位</h3>
+<table><tr><th>场景</th><th>倍数</th><th>过渡 / 说明</th></tr>
+<tr><td>整页结果</td><td>1.0–1.3x</td><td>先多给上下文，再决定下次缩放</td></tr>
+<tr><td>终端 / 代码</td><td>1.5–2.2x</td><td>保留足够周边上下文</td></tr>
+<tr><td>小按钮 / 图标</td><td>2.0–3.0x</td><td>带边距，让观众知道它在哪</td></tr>
+<tr><td>弹窗</td><td>1.4–2.0x</td><td>框整个弹窗，不要切一半</td></tr></table>
+<p class="notes">倍数表来源 <code>skills/pipelines/screen-demo/scene-director.md:54-60</code>；过渡参数（0.8s ease-in-out、回总览 0.6s）见 <code>skills/creative/screen-recording.md:67-76</code>。短视频规格另见 <code>skills/creative/short-form.md</code>:11-18：9:16 1080×1920、安全区 900×1400、底部死区 300–320px、正文 42px+ 粗体、1–3 秒一变、20–40 剪/分、−14 LUFS / −1 dBTP。同屏最多 2 个提示、提示在动作之前、高亮与缩放二选一（<code>scene-director.md:76-79</code>）。</p>
+
+<h3>6 风格是一份可校验的文件，不是形容词</h3>
+<p><code>styles/premium-minimalist.yaml</code>（投资人更新 / 产品叙事）：炭黑 <code>#111827</code>、钴蓝 <code>#2563EB</code>、底色 <code>#F9FAFB</code>、<b>不用装饰性渐变</b>；单场景最少停 <b>2.75s</b>、最多 <b>12s</b>，文字卡 <b>3.75s</b>，转场 <b>0.45s</b>；对比度 ≥4.5:1、同屏最多 2 个强调色、<b>动效用来揭示层级而不是加能量</b>。</p>
+<div class="callout green">审片时"不够高级"没法改；"单场景只停了 1.4 秒，低于 2.75 秒下限"能改。<b>把风格变成数字，是这套东西最实用的地方。</b></div>
+
+<h3>7 调性三旋钮 + 模板/定制 + 区别性审查</h3>
+<p><code>skills/meta/taste-direction.md:8-45</code>：先写一句设计判断，再拧三个 1–10 旋钮（视觉变化 / 动效强度 / 信息密度）。<code>AGENT_GUIDE.md:143-146</code> 把成片分两条路：<b>模板档</b>——"也是大多数片子看起来都一样的真正原因"；<b>定制档</b>——"复用引擎知识，绝不复用创意组件"，营销/发布/品牌片默认走定制。</p>
+<p>收尾一道区别性审查（<code>:146</code>）：<b>"这片子换成别家产品还成立吗？我是不是又用了自己做过的那个样子？"</b>——把"AI 味"变成了可以回答是/否的问题。</p>
+
+<h3>8 自检：逐项过，不靠"我觉得行"</h3>
+<p><code>skills/pipelines/screen-demo/executive-producer.md:248-259</code> G1–G7 七道闸 + 终检：裁剪区是否真框住目标 UI 且 ≥ 源分辨率 50%；字幕会不会挡内容；ffprobe 查时长/分辨率/编码；<b>界面文字在成片分辨率下还读得清吗</b>；压缩后文字抗锯齿有没有崩。</p>
+<p><code>skills/meta/reviewer.md:9-17</code> 的 CHAI 三条：<b>准</b>（每条问题指到字段/行号/某一帧）、<b>全</b>（发现一个错要扫完同类）、<b>可改</b>（严重项必须给具体改法，给不出就降级为"待查"，见 <code>:42</code>）。</p>
+
+<h3>9 决策留痕：改主意只能追加</h3>
+<p><code>AGENT_GUIDE.md:117-137</code>：换供应商/声音/引擎都必须<b>新追加一条</b>决策，用同一"类别+主题"覆盖旧条，不许改旧条、不许改主题名。渲染引擎在提案阶段锁定后一路不变，<b>静默换引擎＝严重治理违规</b>（<code>:389</code>、<code>pipeline_defs/animated-explainer.yaml:245</code>）。</p>
+
+<h2>三、一个诚实的反面证据</h2>
+<p>它自己渲染的零键 demo（第 14 秒）就是<b>深紫渐变 + 环形图 + 大数字</b>，而它自己的风格文件把"generic AI-purple gradient"写进负面提示（<code>styles/premium-minimalist.yaml:78</code>）。</p>
+<div class="callout red"><b>这不是打脸，是印证它自己的判断：</b>默认档必然长得像模板，所以营销片才必须走定制档。<b>这套系统给的是方法，不是审美</b>——照默认跑，和我们现在的片子一个毛病。</div>
+
+<h2>四、对我们意味着什么</h2>
+<table><tr><th>条</th><th>拿走什么</th><th>落到哪</th></tr>
+<tr><td>1</td><td>三旋钮先定，再动手</td><td>片子开工检查</td></tr>
+<tr><td>2</td><td>模板档 / 定制档二选一，营销片默认定制</td><td>防止再出"一眼 AI"</td></tr>
+<tr><td>3</td><td>区别性审查："换别家产品还成立吗"</td><td>成片验收加一问</td></tr>
+<tr><td>4</td><td>CHAI 三性 + 严重项必须带改法</td><td>并入对抗式审查规则</td></tr>
+<tr><td>5</td><td>缩放/速度/安全区硬数字</td><td>审片尺子（可直接量）</td></tr></table>
+<p><b>可以真用的能力：</b>Playwright 真录屏（已验证，补上了上次 HyperFrames 只能截静态板的缺口）；Remotion 合成（已验证，适合"表格→逐语言落位"这类画出来比录出来更清楚的段落）。</p>
+<p><b>不建议接的：</b>12 条流水线 + Backlot 看板（对单人体量过重）；它的代码（AGPL-3.0，内部出片可以，搬进产品就是传染性开源）；100+ 外部服务（要 key 付费，性价比低）。</p>
+<div class="callout"><b>三个国内网络坑（和上次 GSAP 同一类）：</b>① 官方 PyPI 被重置 → 清华镜像；② Chrome Headless Shell 113 MB 从 Google 存储下载卡住 → 用系统 Chrome；③ 它的 HyperFrames 路线仍引用 jsdelivr 上的 GSAP（上次实测 23 处）→ 离线渲染前必须本地化。</div>
+
+<h2>五、覆盖缺口（未核实）</h2>
+<div class="notes">
+· 完整流水线没跑：七阶段里至少四关要人工点头 + 大量要 key 的工具；本机只验证了零键 demo 渲染和 Playwright 录制两件事。<br>
+· Backlot 看板没试（FastAPI 能起，体验未评估）。<br>
+· 117 个不可用工具只代表本机环境，不代表它产品能力。<br>
+· <code>/product-launch-video</code> 路由指向的 skill 目录不存在：7 个文件引用、0 个目录；可能是上游遗漏，未向上游确认。<br>
+· AGPL 判断是工程常识（内部使用 vs 对外分发），不是法律意见。<br>
+· 录制用系统 Chrome，不是它的标准环境（Playwright 自带 Chromium）；换机器要重验。
+</div>
+
+<h2>六、可复跑命令</h2>
+<pre># 依赖（官方 PyPI 不通时用镜像）
+.venv/Scripts/python.exe -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
+  pyyaml pydantic jsonschema python-dotenv Pillow numpy requests fastapi uvicorn watchfiles websockets
+
+# 能力清点
+.venv/Scripts/python.exe -c "from tools.tool_registry import registry; import json; registry.discover(); print(json.dumps(registry.support_envelope(), indent=2))"
+
+# 零键 demo（绕过 Chrome 下载）
+cd remotion-composer &amp;&amp; npx remotion render src/index.tsx Explainer ../projects/demos/renders/focusflow-pitch.mp4 \
+  --props=public/demo-props/focusflow-pitch.json --codec=h264 \
+  --browser-executable="C:/Program Files/Google/Chrome/Application/chrome.exe"
+
+# 官网真录屏
+node C:/Users/ivan/AppData/Local/Temp/om-record/record-site.mjs
+ffmpeg -i recordings/*.webm -vf "fps=30,scale=1920:1080" -c:v libx264 -crf 20 -pix_fmt yuv420p site-walkthrough.mp4</pre>
+
+<h2>七、下一步（建议只做第一条）</h2>
+<ol>
+<li><b>把上面的 5 条写进片子开工/验收清单</b>（半天，零成本，直接减少"一眼 AI"）。</li>
+<li>若要真拍版宣传片：用已验证的 Playwright 配方录一段"真在 PS 里改一层"，替换示意段落（需 Owner 先定要不要做对外素材）。</li>
+<li>不接它的流水线；等真要每天出片时再评估。</li>
+</ol>
+
+<footer>产物：<code>C:\Users\ivan\AppData\Local\Temp\OpenMontage\projects\demos\renders\focusflow-pitch.mp4</code>（零键 demo）、<code>C:\Users\ivan\AppData\Local\Temp\om-record\site-walkthrough.mp4</code>（官网录屏）、<code>om-record\f-26.png</code>（光标+滚动证据）、<code>OpenMontage\demo-f2.png</code>（紫渐变环图证据）。<br>
+<span class="pill a">A＝本会话实测</span><span class="pill">B＝对方文档原文</span><span class="pill">C＝转述</span><span class="pill">D＝推断</span></footer>
+</div></body></html>

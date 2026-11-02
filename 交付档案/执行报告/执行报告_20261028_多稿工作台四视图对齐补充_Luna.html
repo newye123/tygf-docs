@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>多稿工作台四视图与模拟稿界面结构对齐</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+    :root{color-scheme:light dark;--bg:#f3f5f7;--panel:#fff;--ink:#19212a;--muted:#596575;--line:#d9e0e6;--good:#087e68;--warn:#986314;--accent:#1769aa;--soft:#e9f2f8}
+    @media(prefers-color-scheme:dark){:root{--bg:#111820;--panel:#19232d;--ink:#e8edf2;--muted:#a9b6c3;--line:#34414d;--good:#5bd3b2;--warn:#f0bd61;--accent:#83c7f5;--soft:#1d3342}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 'IBM Plex Sans','Noto Sans SC',sans-serif}
+    main{max-width:1000px;margin:36px auto;padding:0 22px 48px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;margin:16px 0;box-shadow:0 8px 28px #08121b0c}
+    h1{font-size:30px;line-height:1.3;margin:8px 0 12px}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:0 0 8px}p{margin:8px 0}ul{padding-left:22px;margin:8px 0}li{margin:6px 0}
+    .eyebrow{color:var(--muted);font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.08em}.verdict{border-left:5px solid var(--good)}.verdict strong{color:var(--good)}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:var(--soft);border-radius:12px;padding:14px}.stat b{display:block;font:600 22px 'IBM Plex Mono',monospace}.stat span{color:var(--muted);font-size:12px}
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid var(--line);border-radius:12px;padding:16px}.gate{border-left:3px solid var(--accent);padding:4px 0 4px 12px;margin:10px 0}.gate.warn{border-color:var(--warn)}.tag{font:500 12px 'IBM Plex Mono',monospace;color:var(--muted)}code{font:13px 'IBM Plex Mono',monospace;overflow-wrap:anywhere}.notes{background:var(--soft);border-radius:12px;padding:16px}.footer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:22px}
+    @media(max-width:680px){main{margin:16px auto;padding:0 12px 28px}.panel{padding:17px}.split,.cards{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">执行报告补充 · 2026-10-28 · GPT-6 Luna / max</div>
+  <h1>多稿工作台四视图与模拟稿界面结构对齐</h1>
+  <section class="panel verdict">
+    <h2><strong>实际工作台已补上模拟稿的四视图入口</strong></h2>
+    <p>矩阵、单稿详情、译库与切片、现状对照（图一）现在都映射到真实工作台内容。切换视图不改变执行范围或流程阶段。</p>
+    <p>本地页面仍要求登录和内测激活。本轮没有绕过门禁；真人浏览器点击、窄屏视觉与 Photoshop/PSD 仍待验收。</p>
+  </section>
+  <section class="panel stats">
+    <div class="stat"><b>4</b><span>真实工作视图</span></div>
+    <div class="stat"><b>57/57</b><span>Step1 组件行为测试</span></div>
+    <div class="stat"><b>0</b><span>定向 ESLint errors</span></div>
+    <div class="stat"><b>49</b><span>用户文案断言</span></div>
+  </section>
+  <section class="panel">
+    <h2>现在看到的页面</h2>
+    <div class="cards">
+      <article class="card"><h3>交付物矩阵</h3><p>默认进入真实逐稿 × 语种交付矩阵，并保留现有扫描与准备操作。</p></article>
+      <article class="card"><h3>单稿详情</h3><p>复用真实稿件列表、语言与表状态组卡、逐稿例外。</p></article>
+      <article class="card"><h3>译库与切片</h3><p>复用真实来源矩阵、表册和分配详情；打开详情不会自动保存或开始执行。</p></article>
+      <article class="card"><h3>现状对照（图一）</h3><p>只读列出旧界面区域与当前实际入口的映射，并说明四阶段流程仍保留。</p></article>
+    </div>
+    <div class="gate">矩阵、稿件和译文均使用工作台当前数据。模拟稿中的静态演示样例没有接入产品流程。</div>
+  </section>
+  <section class="panel split">
+    <div><h2>验证结果</h2><ul>
+      <li><code>npx tsc --noEmit</code>：rc=0。</li>
+      <li><code>npx vitest run tests/unit/step1-stage-view.test.tsx --reporter=dot</code>：57/57 通过。</li>
+      <li><code>npx eslint src/components/workbench/step1-stage-view.tsx tests/unit/step1-stage-view.test.tsx</code>：rc=0，0 errors、13 warnings。</li>
+      <li><code>npm run test:workbench-ui-contract</code>：rc=0。</li>
+      <li><code>npm run test:step1-mock-contract</code>：107 静态合同判据、失败 0；既有部分/推迟项仍按脚本记录。</li>
+      <li><code>node scripts/smoke-user-visible-copy.mjs</code>：49 assertions passed。</li>
+      <li>英文词典 JSON 解析、<code>git diff --check</code>：rc=0。</li>
+    </ul></div>
+    <div><h2>真实验收边界</h2><ul>
+      <li>主线程打开本地英文工作台时看到登录与内测激活提示；本轮未输入凭据或绕过授权。</li>
+      <li>仓库现有测试没有直接挂载 WorkbenchView 的组件级入口；定向行为测试挂载的是该路由实际使用的 Step1StageView。</li>
+      <li>未做登录后的浏览器点击、窄屏/键盘验收或 Photoshop/PSD 批次。</li>
+      <li>未提交、未部署、未改授权或支付开关。</li>
+    </ul></div>
+  </section>
+  <section class="panel notes"><h2>主要代码位置</h2>
+    <p>四视图类型与切换在 step1-stage-view.tsx:320、:393；视图入口在 :1449、:1487；译库和对照页在 :2042、:2208、:2226。真实路由在 workbench-view.tsx:5233 渲染此组件，行为测试在 step1-stage-view.test.tsx:197。</p>
+  </section>
+  <div class="footer">工作目录：F:/工具开发/图译工坊内测版/worktrees/develop · 本报告记录本地代码与命令结果；不代表登录后浏览器或真实 Photoshop 验收。</div>
+</main>
+</body>
+</html>

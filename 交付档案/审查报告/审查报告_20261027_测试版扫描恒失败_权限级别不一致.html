@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>根因定位 · 测试版扫描总是不成功（助手被装成管理员身份）</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--red);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--red);font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 15px;font-size:14px}
+.card h3{margin:0 0 6px;font-size:15px}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--mut)}
+</style></head>
+<body><main>
+<h1>测试版「扫描总是不成功」：根因是本地助手被装成了管理员身份</h1>
+<p class="sub">对象：Owner 机器上的本地助手 3.7.28 ／ 测试站扫描链路 · 取证时刻 2026-10-27 16:0x–16:12 · 本机实测</p>
+
+<div class="verdict"><b>结论：不是设计文件的问题，也不是 Photoshop 版本的问题。</b><br>
+助手以<b>管理员身份</b>运行（完整性级别 12288），Photoshop 以<b>普通身份</b>运行（8192）。Windows 不允许高权限程序控制低权限程序，所以助手每次去驱动 Photoshop 都被告知「不存在」，重试十轮、每轮约一分钟，12 分钟后报一个看不懂的错。</div>
+
+<h2>一、这对你意味着什么</h2>
+<ol>
+<li><b>扫描能力本身没坏。</b>同一时刻、同一台机器、同一份 Photoshop，我用普通权限跑一条探针，一秒就连上（证据三）。</li>
+<li><b>今天的表现是「卡 12 分钟再报错」。</b>旧版助手不知道这两种权限不能互控，只会傻等重试。</li>
+<li><b>旧版还会把你带偏。</b>它把这种情况说成「Photoshop 没注册」建议重装 PS；另一条分支建议「以管理员身份运行修复工具」——正好是把问题钉死的方向。两处已改。</li>
+<li><b>不是测试站独有的问题。</b>任何用户只要助手是被提权安装、又被安装包自动拉起，都会一模一样地失败。</li>
+</ol>
+
+<h2>二、证据一：三个进程的权限级别</h2>
+<p class="sub">用 Windows 令牌接口直接读完整性级别：12288＝管理员级，8192＝普通级。</p>
+<table><thead><tr><th>进程</th><th style="width:90px">PID</th><th style="width:110px">管理员</th><th style="width:140px">完整性级别</th></tr></thead><tbody>
+<tr><td>图译工坊引擎</td><td class="mono">23568</td><td>是</td><td class="mono">12288</td></tr>
+<tr><td>图译工坊本地助手</td><td class="mono">53524</td><td>是</td><td class="mono">12288</td></tr>
+<tr><td>Photoshop</td><td class="mono">25136</td><td>否</td><td class="mono">8192</td></tr>
+</tbody></table>
+
+<h2>三、证据二：这个管理员身份是怎么来的</h2>
+<table><thead><tr><th>事实</th><th style="width:230px">读数</th></tr></thead><tbody>
+<tr><td>助手进程启动</td><td class="mono">2026-10-25 17:44:35</td></tr>
+<tr><td>引擎进程启动</td><td class="mono">2026-10-25 17:44:36</td></tr>
+<tr><td>安装目录 bin／licenses／diagnostics</td><td class="mono">2026-10-25 17:44:33</td></tr>
+<tr><td>unins000.dat（安装数据库）</td><td class="mono">2026-10-25 17:44:34</td></tr>
+<tr><td>Photoshop 启动（早于安装，普通身份）</td><td class="mono">2026-10-25 08:14:13</td></tr>
+</tbody></table>
+<div class="callout">安装程序 17:44:33–34 落完文件，助手 17:44:35 起来 ⇒ 它就是安装脚本 <span class="mono">[Run]</span> 段「装完立即启动」拉起的那个进程，因此拿到了和安装程序一样的权限。助手自身的清单是「按调用者身份运行」，不会自己提权；提权只可能来自父进程。</div>
+
+<h2>四、证据三：同一分钟，普通权限通、管理员权限不通</h2>
+<table><thead><tr><th style="width:170px">谁</th><th>动作</th><th style="width:250px">结果</th></tr></thead><tbody>
+<tr><td>普通权限命令行（8192）</td><td>2026-10-27 16:12:18 跑 COM 探针</td><td class="mono">GETOBJECT_OK / VERSION_OK: 22.0.0（rc=0）</td></tr>
+<tr><td>管理员权限（现役助手进程内）</td><td>POST /diagnostic 走同一条 COM 路径</td><td class="mono">等满 60 秒 → 503 PHOTOSHOP_COM_UNAVAILABLE</td></tr>
+</tbody></table>
+<div class="callout ok">同机、同账号、同 Photoshop，唯一差别是权限级别 ⇒ 根因确定。</div>
+
+<h2>五、证据四：失败史（engine.log）</h2>
+<table><thead><tr><th style="width:190px">时间（UTC）</th><th>结果</th><th style="width:190px">耗时</th></tr></thead><tbody>
+<tr><td class="mono">2026-10-23T23:28:49</td><td>成功（prepared）</td><td class="mono">17.6 秒</td></tr>
+<tr><td class="mono">2026-10-25T13:35:44</td><td>失败 PHOTOSHOP_COM_UNAVAILABLE</td><td class="mono">759,186 ms（12.7 分）</td></tr>
+<tr><td class="mono">2026-10-26T12:12:08</td><td>失败</td><td class="mono">771,326 ms（12.9 分）</td></tr>
+<tr><td class="mono">2026-10-26T15:19:43</td><td>失败</td><td class="mono">762,775 ms（12.7 分）</td></tr>
+<tr><td class="mono">2026-10-26T23:33:44</td><td>失败</td><td class="mono">766,509 ms（12.8 分）</td></tr>
+<tr><td class="mono">2026-10-27T01:31:17</td><td>失败</td><td class="mono">711,859 ms（11.9 分）</td></tr>
+<tr><td class="mono">2026-10-27T06:18:11</td><td>失败</td><td class="mono">709,486 ms（11.8 分）</td></tr>
+</tbody></table>
+<p class="sub">6 次全失败，全部落在 10-25 17:44 那次安装之后。每次约 12 分钟＝扫描脚本「十轮 × 每轮两次 COM 尝试」，跨权限时每次尝试都等到系统超时。</p>
+
+<h2>六、根因链</h2>
+<ol>
+<li>安装程序以管理员身份运行（安装包声明的是「最低权限」，说明这次它是被提权启动的）。</li>
+<li>安装脚本最后一步「装完立即启动助手」把助手拉起来，<b>子进程继承父进程的提权身份</b>。</li>
+<li>助手再拉起引擎，引擎同样是管理员身份。</li>
+<li>引擎通过脚本创建 Photoshop 的 COM 对象 → Windows 拒绝 → 脚本只拿到笼统的 <span class="mono">429 ActiveX 部件不能创建对象</span>。</li>
+<li>旧逻辑把 429 当成「没注册」并重试十轮 → 12 分钟后失败，给出一条指错方向的建议。</li>
+</ol>
+
+<h2>七、已经改好的（代码侧防复发）</h2>
+<table><thead><tr><th style="width:230px">改动</th><th style="width:270px">位置</th><th>作用</th></tr></thead><tbody>
+<tr><td>助手判断自己是不是管理员</td><td class="mono">server.js:524-538</td><td>读完整性级别并缓存，一次开销</td></tr>
+<tr><td>扫描前秒级判掉这种组合</td><td class="mono">server.js:5715-5718 · 5740-5746</td><td>管理员且近期未握手成功 ⇒ 立刻 422，不再起 12 分钟重试</td></tr>
+<tr><td>失败原因单独成码</td><td class="mono">scan-error-code.cjs:44-51</td><td>新增 <span class="mono">PHOTOSHOP_PRIVILEGE_MISMATCH</span>，云端可数这一档</td></tr>
+<tr><td>429 归类改对</td><td class="mono">server.js:1697-1725 · 3579-3587</td><td>不再冒充「没注册」，也不再建议跑管理员修复工具</td></tr>
+<tr><td>云端／浏览器白名单</td><td class="mono">funnel-event-contract.ts:151 · batch-error-policy.ts:252</td><td>新码不被折叠；前端本就原样上报助手码（<span class="mono">design-file-card.tsx:510</span>）</td></tr>
+<tr><td>排障自述字段</td><td class="mono">server.js:4897</td><td><span class="mono">/ping</span> 一眼看到助手是不是管理员</td></tr>
+<tr><td>门禁</td><td class="mono">scripts/smoke-preparation-failure-observation.mjs</td><td>42 条断言全 Pass（6 行真值表、文案方向、路由接线、归类顺序、两处白名单）；<span class="mono">--self-test-errors</span> 通过</td></tr>
+</tbody></table>
+<div class="callout">用户会看到的新文案：<br>
+<b>本地助手当前以「管理员身份」运行，Photoshop 以普通权限运行，两者权限级别不一致，Windows 拒绝控制。请完全退出本地助手（右下角托盘图标右键 → 退出），再从开始菜单正常启动（不要选「以管理员身份运行」），然后重新扫描。</b><br>
+<span class="sub">保险：若这台机器上 Photoshop 本来就是管理员启动的（两边同级），这条守卫会在「最近 10 分钟内成功握过手」时自动放行，不误伤。</span></div>
+
+<h2>八、还没做的</h2>
+<ul>
+<li><b>把修复做成新版安装包</b>：本机没有 Inno Setup，develop 树还有别的会话在改。出包要换构建机 + 代码签名 + 走 GitHub 三段轨。</li>
+<li><b>安装脚本的根治改动（候选，未改）</b>：在「装完立即启动」那一行加「以原用户身份启动」，即使安装程序被提权，自动拉起的助手仍是普通身份。没直接改的原因：本机无编译器，改完无法编译验证——不验证就写进去属于「坏判据比没有判据更坏」。建议随下一版出包在构建机上改并实机验一次。</li>
+<li><b>旧指引</b>：以前把「以管理员身份运行」当修 COM 的推荐做法，是这次事故的诱因之一。下载页／帮助文档里若还有类似指引应一起改（未核查，标「待确认」）。</li>
+</ul>
+
+<h2>九、现在要做的一件事：A 还是 B</h2>
+<div class="split">
+<div class="card"><h3>A · 现在就恢复这台机器的扫描 <span class="tag">一次操作</span></h3>
+<ul>
+<li>屏幕上还有 Windows 的「是否允许此应用对你的设备进行更改」提示 ⇒ 点「是」。<br><span class="sub">那个提示是我起的，只做一件事：关掉管理员身份的助手与引擎，再用普通身份重新拉起（脚本 <span class="mono">%TEMP%\tygf-deelevate.ps1</span>，结果写 <span class="mono">%TEMP%\tygf-deelevate-result.txt</span> 可回查）。</span></li>
+<li>提示已消失 ⇒ 右键托盘图标 →「退出本地助手」，再从开始菜单正常双击启动。</li>
+<li>恢复后我用探针复验：两个进程的完整性级别应回到 8192，<span class="mono">/diagnostic</span> 应返回 200 与 <span class="mono">PHOTOSHOP_READY</span>。</li>
+</ul></div>
+<div class="card"><h3>B · 把修复做成新版安装包给所有用户 <span class="tag">需要构建机</span></h3>
+<ul>
+<li>效果：新用户即使安装时用了管理员身份，助手也会在扫描前秒级给出正确指引；装到已出问题的机器上同样能立刻说清原因。</li>
+<li>代价：一台有 Inno Setup + 签名证书的机器，走 GitHub 三段轨（先推 GitHub → 测试站验 → 通过后再上生产）；生产上线需要你点头。</li>
+</ul></div>
+</div>
+<p>两件事不冲突：<b>A 解决你眼前的扫描，B 解决别人以后踩同一个坑。</b></p>
+
+<h2>十、覆盖与未核实</h2>
+<ul>
+<li>已实测：三组证据、失败史、门禁 42 条、语法检查。</li>
+<li>未核实：① 那次安装被提权的具体上下文（安装程序未留日志，只能由时间戳与清单反推）；② 下载页／帮助文档是否还留着「以管理员身份运行」的旧指引；③ 本机之外是否已有用户踩坑——新版助手发出去之前，可按 <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span> + 约 12 分钟耗时这两个特征反查历史批次。</li>
+</ul>
+
+<footer>图译工坊 · 根因定位报告 · 2026-10-27 · 对应 md：交付档案/审查报告/审查报告_20261027_测试版扫描恒失败_权限级别不一致.md</footer>
+</main></body></html>

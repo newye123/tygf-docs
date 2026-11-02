@@ -1,0 +1,1276 @@
+diff --git a/src/components/workbench/step1-stage-view.tsx b/src/components/workbench/step1-stage-view.tsx
+index 08aea15..bedaf02 100644
+--- a/src/components/workbench/step1-stage-view.tsx
++++ b/src/components/workbench/step1-stage-view.tsx
+@@ -408,8 +408,8 @@ export function Step1StageView({
+   }
+ 
+   // ── 批量表头调查（3.7.25 survey-tables，工作单 E）：
+-  //    一次票读最多 12 张表的表头元数据，结果并入表册（表清单/矩阵刷新走现有派生）；
+-  //    端点缺失（旧助手 404）时回退现行为——逐张读全文（onRetryRead 循环）。 ──
++  //    一次票读最多 12 张表的表头元数据，结果并入表册；仅成功记录会从待调查集合移除。
++  //    失败和未返回项保留给用户下一次显式点击重试。 ──
+   const [surveyMeta, setSurveyMeta] = useState<Record<string, NonNullable<TableMetaInput['survey']>>>({})
+   const [surveyBusy, setSurveyBusy] = useState(false)
+   const [surveyNotice, setSurveyNotice] = useState<string | null>(null)
+@@ -681,8 +681,17 @@ export function Step1StageView({
+       : plan.rows.filter((row) => Boolean(choices[row.draft.masterPath])).length
+     // 第四步数「表头已知」而不是「全文读完」：表册的 rows 在表头读完或全文读完时都非空，
+     // 而 stage 只有全文读完才是 ready（table-inventory.ts:160「表头已读≠读全文」）。
+-    const headerKnown = inventory.filter((record) => record.rows !== null).length
+-    const failedTables = inventory.filter((record) => record.stage === 'error').length
++    const headerKnownIds = new Set(
++      inventory
++        .filter(
++          (record) => record.stage === 'ready' || Boolean(surveyMeta[record.id] && !surveyMeta[record.id]?.error),
++        )
++        .map((record) => record.id),
++    )
++    const headerKnown = headerKnownIds.size
++    const failedTables = inventory.filter(
++      (record) => record.stage === 'error' && !headerKnownIds.has(record.id),
++    ).length
+     return [
+       {
+         key: 'folder',
+@@ -715,13 +724,13 @@ export function Step1StageView({
+         label: t('读表头'),
+         detail:
+           failedTables > 0
+-            ? t('{n} 张表头已读 · {failed} 张读不了', { n: headerKnown, failed: failedTables })
++          ? t('{n} 张表头已读 · {failed} 张读不了', { n: headerKnown, failed: failedTables })
+             : t('{n}/{total} 张表头已读', { n: headerKnown, total: tables }),
+         done: tables > 0 && headerKnown >= tables,
+         running: surveyBusy,
+       },
+     ]
+-  }, [plan.counts.drafts, plan.rows, choices, scan.tables.length, groupBindings, inventory, surveyBusy, folderLoading])
++  }, [plan.counts.drafts, plan.rows, choices, scan.tables.length, groupBindings, inventory, surveyBusy, folderLoading, surveyMeta])
+   const pairDoneCount = pairStages.filter((stage) => stage.done).length
+   const allCells = useMemo(() => matrix.flat(), [matrix])
+ 
+@@ -817,15 +826,27 @@ export function Step1StageView({
+         .filter((record): record is TableRecord => Boolean(record && record.usedBy.length > 0)),
+     [readQueue, recordById],
+   )
+-  const readAllDisabled = readableQueueRecords.length === 0
++  const surveyTargetRecords = useMemo(
++    () =>
++      inventory.filter(
++        (record) =>
++          record.id !== TRUNCATED_TABLE_ID &&
++          record.stage !== 'ready' &&
++          (!surveyMeta[record.id] || Boolean(surveyMeta[record.id]?.error)),
++      ),
++    [inventory, surveyMeta],
++  )
++  const surveyQueue = useMemo(
++    () => planTableReadQueue(surveyTargetRecords),
++    [surveyTargetRecords],
++  )
++  const readAllDisabled = surveyQueue.length === 0
+   const handleReadAllTables = () => {
+     if (surveyBusy || readAllDisabled) return
+     // 一轮只发 12 张（助手单次上限），发完待发集合才算空：144 张的文件夹要跑 12 轮。
+     // 不循环时点一次只读前 12 张，剩下 132 张永远停在「未读」，用户以为按钮坏了。
+     // 剩余集合在本地推进——循环里读不到 render 期之后的 surveyMeta。
+-    const targets = inventory.filter(
+-      (record) => record.id !== TRUNCATED_TABLE_ID && !surveyMeta[record.id],
+-    )
++    const targets = surveyTargetRecords
+     const remainingIds = new Set(targets.map((record) => record.id))
+     const nextRoundRecords = (): TableRecord[] => {
+       const queue = planTableReadQueue(targets.filter((record) => remainingIds.has(record.id)))
+@@ -840,68 +861,92 @@ export function Step1StageView({
+     void (async () => {
+       let okTotal = 0
+       let failedTotal = 0
+-      let readTotal = 0
++      let unreturnedTotal = 0
++      let requestedTotal = 0
++      let currentRequestCount = 0
+       let roundRecords = firstRound
+       try {
+         while (roundRecords.length > 0) {
+           const tablePaths = roundRecords.map((record) => record.path)
++          currentRequestCount = tablePaths.length
++          requestedTotal += currentRequestCount
+           // 发出去过就从剩余集合摘掉：助手回得不全也不卡在同一轮上重试。
+           for (const record of roundRecords) remainingIds.delete(record.id)
+           const entries = await surveyPreparationTables(root, tablePaths)
+           const relToPath = new Map(scan.tables.map((table) => [table.relPath, table.path] as const))
+           const next: Record<string, NonNullable<TableMetaInput['survey']>> = {}
+-          let okCount = 0
+-          let unmatched = 0
++          const requestedIds = new Set(roundRecords.map((record) => record.id))
++          const returnedIds = new Set<string>()
+           for (const entry of entries) {
+             const tablePath = relToPath.get(entry.relPath)
+             if (!tablePath) {
+-              unmatched += 1
+               continue
+             }
+-            next[normalizeTableId(tablePath)] = {
++            const tableId = normalizeTableId(tablePath)
++            if (!requestedIds.has(tableId) || returnedIds.has(tableId)) continue
++            returnedIds.add(tableId)
++            next[tableId] = {
+               sheets: entry.sheets,
+               languages: entry.languages,
+               rows: entry.rows,
+               warnings: entry.warnings,
+               error: entry.error,
+             }
+-            if (!entry.error) okCount += 1
++            if (entry.error) failedTotal += 1
++            else okTotal += 1
+           }
+-          okTotal += okCount
+-          failedTotal += entries.length - okCount + unmatched
+-          readTotal += tablePaths.length
++          unreturnedTotal += tablePaths.length - returnedIds.size
+           setSurveyMeta((previous) => ({ ...previous, ...next }))
+           // 每轮都给进度：读得慢时用户能看出它在动，而不是卡在「正在读表头…」。
+           setSurveyNotice(
+-            t('正在读表头：已读 {n} 张，还剩 {left} 张。', {
+-              n: String(readTotal),
++            t('正在读表头：已请求 {requested} 张，还剩 {left} 张。', {
++              requested: String(requestedTotal),
+               left: String(remainingIds.size),
+             }),
+           )
++          currentRequestCount = 0
+           if (entries.length === 0) break
+           roundRecords = nextRoundRecords()
+         }
+         setSurveyNotice(
+-          failedTotal === 0
++          failedTotal === 0 && unreturnedTotal === 0
+             ? t('已读 {n} 张表的表头（sheet/语言/行数见译文表清单）；读全文仍按绑定逐张进行。', { n: String(okTotal) })
+-            : t('已读 {ok} 张表的表头，{failed} 张没读成（清单里有原因）；读全文仍按绑定逐张进行。', {
++            : `${t('表头读取结果：成功 {ok} 张，失败 {failed} 张，未返回 {unreturned} 张。', {
+                 ok: String(okTotal),
+                 failed: String(failedTotal),
+-              }),
++                unreturned: String(unreturnedTotal),
++              })}${remainingIds.size > 0 ? t('另有 {count} 张尚未请求。', { count: String(remainingIds.size) }) : ''}${t('未成功的表可再点“读全部表头”。')}`,
+         )
+       } catch (error) {
+         if (error instanceof LocalAssistantRequestError && error.code === 'SURVEY_ENDPOINT_MISSING') {
+-          // 旧助手没有批量端点：回退现行为（逐张读全文），不给用户添新失败。
++          // 旧助手没有批量端点：只把已配表交给原逐稿读取；未配表不能假装调查成功或自动归属。
+           for (const record of readableQueueRecords) {
+             for (const draftPath of record.usedBy) onRetryRead(draftPath)
+           }
++          const unboundCount = surveyTargetRecords.filter((record) => record.usedBy.length === 0).length
++          setSurveyNotice(
++            readableQueueRecords.length > 0
++              ? t('当前助手版本不支持批量读取表头。已配表的 {bound} 张表交给逐稿读取；未配表的 {unbound} 张表需先配表后读取。', {
++                  bound: String(readableQueueRecords.length),
++                  unbound: String(unboundCount),
++                })
++              : t('当前助手版本不支持批量读取表头；这些表尚未配给设计稿，请升级助手或先配表后读取。'),
++          )
+           return
+         }
+-        setSurveyNotice(
+-          error instanceof Error && error.message
+-            ? error.message
+-            : t('批量读取表头失败，请重试或改用逐张读取。'),
+-        )
++        unreturnedTotal += currentRequestCount
++        const message = t('表头读取未完成：成功 {ok} 张，失败 {failed} 张，未返回 {unreturned} 张。', {
++          ok: String(okTotal),
++          failed: String(failedTotal),
++          unreturned: String(unreturnedTotal),
++        })
++        const notRequested = remainingIds.size > 0
++          ? t('另有 {count} 张尚未请求。', { count: String(remainingIds.size) })
++          : ''
++        const reason = error instanceof Error && error.message
++          ? error.message
++          : t('助手没有返回原因。')
++        setSurveyNotice(`${message}${notRequested}${t('未成功的表可再点“读全部表头”。')}${t('原因：')}${reason}`)
+       } finally {
+         setSurveyBusy(false)
+       }
+@@ -1404,6 +1449,7 @@ export function Step1StageView({
+       <div className="flex flex-wrap items-center gap-2">
+         <button
+           type="button"
++          data-testid="step1-scan-all"
+           className="rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-50"
+           disabled={scanBusy}
+           onClick={onScanAll}
+@@ -1421,7 +1467,7 @@ export function Step1StageView({
+           disabled={readAllDisabled || surveyBusy}
+           title={
+             readAllDisabled
+-              ? t('队列里的表都还没有绑定的稿：先为稿配表，再读表。')
++              ? t('没有待读取表头的译文表。')
+               : surveyBusy
+                 ? t('正在批量读取表头…')
+                 : t('识别译文表的工作表和语言列，不会修改表格。')
+diff --git a/src/components/workbench/workbench-view.tsx b/src/components/workbench/workbench-view.tsx
+index da18410..d0a18d2 100644
+--- a/src/components/workbench/workbench-view.tsx
++++ b/src/components/workbench/workbench-view.tsx
+@@ -128,6 +128,10 @@ import {
+   type LanguageExclusionStore,
+ } from '@/lib/workbench/language-exclusion-memory'
+ import { useSiteCopy } from '@/lib/workbench/site-copy'
++import {
++  readWorkbenchModePreference,
++  writeWorkbenchModePreference,
++} from '@/lib/workbench/workbench-mode-preference'
+ import {
+   detectAssistant,
+   diagnosePhotoshopAutomation,
+@@ -396,6 +400,12 @@ function WorkbenchBody({ batchModeFromUrl = false }: { batchModeFromUrl?: boolea
+   // 初始值仍由 URL 给出（旧书签 #batch 直达的语义不变），之后由页头分段切换器维护。
+   // 好处：27 处 batchMode 引用一行都不用改。
+   const [batchMode, setBatchMode] = useState(batchModeFromUrl)
++  const modePreferenceInitializedRef = useRef(false)
++  const pendingModePreferenceRef = useRef<boolean | null>(null)
++  const setBatchModeFromUser = (nextMode: boolean) => {
++    pendingModePreferenceRef.current = nextMode
++    setBatchMode(nextMode)
++  }
+   // 多 → 单的确认弹窗（本批超过 1 个稿时必须问；点名会被移出的稿）
+   const [modeConfirmOpen, setModeConfirmOpen] = useState(false)
+   // 批量导入：配对确认 → 逐张取表 → 写入各稿表槽（2026-10-21）
+@@ -592,6 +602,26 @@ function WorkbenchBody({ batchModeFromUrl = false }: { batchModeFromUrl?: boolea
+   const [multiPsdSelection, setMultiPsdSelection] = useState<MultiPsdSelection | null>(() =>
+     batchMode ? clearMultiPsdSelection() : null,
+   )
++  useEffect(() => {
++    if (!modePreferenceInitializedRef.current) {
++      modePreferenceInitializedRef.current = true
++      // 显式多稿路由优先；普通工作台才读取此标签页保存的显示偏好。
++      if (!batchModeFromUrl) {
++        const preference = readWorkbenchModePreference()
++        if (preference !== null) {
++          setBatchMode(preference)
++          if (preference) {
++            setMultiPsdSelection((previous) => previous ?? clearMultiPsdSelection())
++          }
++        }
++      }
++      return
++    }
++    if (pendingModePreferenceRef.current === batchMode) {
++      writeWorkbenchModePreference(batchMode)
++      pendingModePreferenceRef.current = null
++    }
++  }, [batchMode, batchModeFromUrl])
+   const [experimentTrigger, setExperimentTrigger] = useState(0)
+   // 2026-10-16：experimentRunning 原为「只写不读」的死状态（批量执行期间界面零反馈）。
+   // 现在下拉给 ExecuteStep，用于显示真实进度与锁定按钮。
+@@ -1761,6 +1791,14 @@ const totalSuggestion = checkSummary.suggestionCount
+     photoshopReady: psReady,
+     blockingIssueCount: decisionCount,
+   })
++  // 只用于界面解释现有事实，不参与 readiness、阶段权限或执行判定。
++  const stageReasonForDisplay = !parsed || targetLanguages.length === 0
++    ? t('先导入译文表并选择语言')
++    : !readiness.allLanguagesReviewed
++      ? t('确认全部语言译文后开放设计稿校对')
++      : !readiness.reconcileOpen
++        ? t('选择并扫描设计稿后开放设计稿校对')
++        : derived.reason
+   // P1：未手动导航时，activeStage 跟随 machine 建议（自动推进）。
+   // P-04：刷新恢复时 URL 已显式携带阶段，首次挂载跳过一轮，保证「刷新后仍在同一步」。
+   const skipFirstAutoStageRef = useRef(stageFromUrl)
+@@ -1835,20 +1873,14 @@ const totalSuggestion = checkSummary.suggestionCount
+         : !readiness.allLanguagesReviewed
+           ? t('审查原文与译文')
+           : !isPsdSelectionReady(psdSelection)
+-            ? t('扫描设计稿')
++            ? t('选择并扫描设计稿')
+             : !allChecksDone
+               ? t('开始设计稿校对')
+               : totalBlocked > 0
+                 ? t('处理 {count} 项 →', { count: totalBlocked })
+                 : !psReady
+                   ? t('完成 Photoshop 检测 →')
+-                  : t('生成当前语言版本（{count} 个对象将替换{extra}）', {
+-                      count: check?.boundCount ?? 0,
+-                      extra:
+-                        check && check.excludedCount > 0
+-                          ? t(' · {count} 个保留原文（不替换）', { count: check.excludedCount })
+-                          : '',
+-                    })
++                  : t('查看生成范围')
+ 
+   const mainCta = () => {
+     if (isGuest) {
+@@ -1866,6 +1898,15 @@ const totalSuggestion = checkSummary.suggestionCount
+     }
+     if (!isPsdSelectionReady(psdSelection)) {
+       goToStage('materials')
++      window.requestAnimationFrame(() => {
++        const target = document.querySelector<HTMLElement>(
++          batchMode
++            ? '[data-testid="step1-scan-all"], #stage-folder-path, #stage-design-selection'
++            : '#stage-design-selection',
++        )
++        target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
++        target?.focus({ preventScroll: true })
++      })
+       return
+     }
+     if (!allChecksDone) {
+@@ -2897,10 +2938,11 @@ const handlePsdSelectionChange = (next: PsdSelection | null) => {
+       const scan = await listFolderDesigns(target)
+       if (stageFolderRequestRef.current !== requestId) return
+       handleStageFolderSnapshot({ root: scan.root, scan })
+-      // 一键「扫描并自动配对」：读成功后自动排上扫描，不用再回界面点第二次。
+-      // 读表头仍留手动——扫描完成没有可等待的信号，硬串就变成轮询；界面上那句提示照此写。
++      // 读取文件夹清单后按原流程开始逐稿扫描；译文表配对和表头读取仍由用户核对。
+       pulseStageFolderAction('scan-all')
+-      setStageNotice(t('文件夹已读取，已自动开始扫描设计稿；读完表头就能配好每一门。'))
++      if (scan.designs.length > 0) {
++        setStageNotice(t('文件夹清单已读，设计稿已开始逐稿扫描；译文表配对还要你核对。'))
++      }
+     } catch (error) {
+       if (stageFolderRequestRef.current !== requestId) return
+       const message =
+@@ -4113,7 +4155,7 @@ const handlePsdSelectionChange = (next: PsdSelection | null) => {
+         return
+       }
+       if (nextMulti) {
+-        setBatchMode(true)
++        setBatchModeFromUser(true)
+         // 2026-10-18 修「切了多稿但界面没变化」：
+         // 卡片是否走多稿渲染的判据是 `batchMode && multiSelection`
+         // （design-file-card.tsx:929）。首屏 multiSelection 是 null（:298 只在
+@@ -4137,19 +4179,19 @@ const handlePsdSelectionChange = (next: PsdSelection | null) => {
+         setModeConfirmOpen(true)
+         return
+       }
+-      setBatchMode(false)
++      setBatchModeFromUser(false)
+   }
+ 
+   // 弹窗按下的「切换，只保留第 1 个」
+   const confirmSwitchToSingle = async () => {
+     setModeConfirmOpen(false)
+     if (!multiPsdSelection) {
+-      setBatchMode(false)
++      setBatchModeFromUser(false)
+       return
+     }
+     const { selection: keptSelection, kept, removed } = keepFirstMultiPsdEntries(multiPsdSelection, 1)
+     setMultiPsdSelection(keptSelection)
+-    setBatchMode(false)
++    setBatchModeFromUser(false)
+     // v7：保留稿的译表与现场随它一起进单稿槽；被移出的稿只是离开本批，
+     // 其表仍在浏览器内存的稿槽里（文件与用户数据都没删）。
+     moveDraftToSingle(
+@@ -4262,7 +4304,7 @@ const handlePsdSelectionChange = (next: PsdSelection | null) => {
+     // #140/D5 覆盖率闸（防御层）：UI 已禁用按钮，这里再拦一道——不放行绝不静默开跑。
+     if (batchCoverageBelow.length > 0 && !coverageReleaseAck) {
+       setExperimentNotice(
+-        t('覆盖率闸：{length} 格低于 {COVERAGE_THRESHOLD}% 阈值，需在下方勾选「显式放行」后才能开始。', { length: String(batchCoverageBelow.length), COVERAGE_THRESHOLD: String(COVERAGE_THRESHOLD) }),
++        t('有 {length} 格译文覆盖率低于 {COVERAGE_THRESHOLD}% 阈值，需在下方勾选「我已知晓覆盖率不足，仍要生成」后才能开始。', { length: String(batchCoverageBelow.length), COVERAGE_THRESHOLD: String(COVERAGE_THRESHOLD) }),
+       )
+       return
+     }
+@@ -4365,7 +4407,7 @@ const handlePsdSelectionChange = (next: PsdSelection | null) => {
+     setExperimentNotice(
+       t('全部 {total} 个设计稿已执行完成。', { total: String(total) }) +
+         (batchCoverageBelow.length > 0 && coverageReleaseAck
+-          ? t('（覆盖率闸：执行前已显式放行 {length} 格低于 {COVERAGE_THRESHOLD}%）', { length: String(batchCoverageBelow.length), COVERAGE_THRESHOLD: String(COVERAGE_THRESHOLD) })
++          ? t('（你已确认继续生成覆盖率不足的内容：本批 {length} 格低于 {COVERAGE_THRESHOLD}%）', { length: String(batchCoverageBelow.length), COVERAGE_THRESHOLD: String(COVERAGE_THRESHOLD) })
+           : ''),
+     )
+   }
+@@ -4493,7 +4535,7 @@ if (
+       setExperimentNotice(
+         totalBlocked > 0
+           ? t('第 {value0} 个设计稿对账后仍有 {totalBlocked} 个必须处理项，批量执行已暂停。请切到该稿的设计稿校对阶段处理后再重新开始。', { value0: String(experimentIndex + 1), totalBlocked: String(totalBlocked) })
+-          : t('第 {value0} 个设计稿对账完成，但生成交付门未开放（{value1}），批量执行已暂停。', { value0: String(experimentIndex + 1), value1: String(derived.reason ?? t('请检查 Photoshop 连接与语言审查状态')) }),
++          : t('第 {value0} 个设计稿对账完成，但生成交付门未开放（{value1}），批量执行已暂停。', { value0: String(experimentIndex + 1), value1: String(stageReasonForDisplay ?? t('请检查 Photoshop 连接与语言审查状态')) }),
+       )
+       return
+     }
+@@ -4830,7 +4872,13 @@ clearDecisionLog()
+   const parsedName = parsed ? displaySourceHeader(parsed.sourceHeader) : ''
+ 
+   // ─── P1 壳层派生：阶段导轨 + 底部操作条 ────────────────────────────────
+-  const completedStages = derived.completedStages
++  const displayMultiDrafts = multiPsdSelection?.entries ?? []
++  const displayMaterialsReady = batchMode
++    ? displayMultiDrafts.length > 0 && displayMultiDrafts.every(isMultiPsdEntryScanned)
++    : isPsdSelectionReady(psdSelection)
++  const completedStages = derived.completedStages.filter(
++    (stage) => stage !== 'materials' || displayMaterialsReady,
++  )
+   const stageItems: StageRailItem[] = [
+     {
+       stage: 'materials',
+@@ -4854,7 +4902,7 @@ clearDecisionLog()
+       locked: isGuest
+         ? undefined
+         : !readiness.reconcileOpen && parsed
+-          ? t('确认全部语言后开放')
++          ? stageReasonForDisplay
+           : undefined,
+     },
+     {
+@@ -4865,7 +4913,7 @@ clearDecisionLog()
+       locked: isGuest
+         ? undefined
+         : !deliveryOpen
+-          ? derived.reason ?? t('解决必须处理项后开放')
++          ? stageReasonForDisplay ?? t('解决必须处理项后开放')
+           : undefined,
+     },
+   ]
+@@ -4878,7 +4926,7 @@ clearDecisionLog()
+   const prevStage = prevStageOf[activeStage]
+   const actionStatus = isGuest
+     ? t('访客演示：可一直往下走；真读稿、真生成要登录并装本地助手。')
+-    : derived.reason ??
++    : stageReasonForDisplay ??
+       (activeStage === 'materials'
+       ? t(wbCopy.stageMaterials)
+       : activeStage === 'translation_review'
+@@ -5408,7 +5456,7 @@ clearDecisionLog()
+                 宽屏（lg 起）左栏是稿队列、右栏是当前稿的译表/语言/审查面板；
+                 窄屏仍是上下排（单列），能力一件不减。 */}
+             <div className="grid gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)] lg:items-start">
+-                <div className="rounded-xl bg-muted/30 p-4 lg:col-span-2">
++                <div id="stage-design-selection" tabIndex={-1} className="rounded-xl bg-muted/30 p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring lg:col-span-2">
+                   <p className="mb-3 text-sm font-extrabold">
+                     {t('选择设计文件 · 只读预扫描')}</p>
+                   {isGuest && (
+@@ -5893,7 +5941,9 @@ clearDecisionLog()
+                   {batchReviewRunning
+                     ? WB_TERMS.detectAllRunning
+                     : batchMode
+-                      ? t('检测当前稿全部 {count} 种语言', { count: String(targetLanguages.length) })
++                      ? activeDraftMasterPath
++                        ? t('检测当前稿全部 {count} 种语言', { count: String(targetLanguages.length) })
++                        : t('检测这张译文表的全部 {count} 种语言', { count: String(targetLanguages.length) })
+                       : WB_TERMS.detectAllLanguages(targetLanguages.length)}
+                 </button>
+               </div>
+@@ -6073,7 +6123,9 @@ clearDecisionLog()
+               activeDraftPath={activeDraftMasterPath}
+               currentLanguage={currentLanguage}
+               activeStageStatus={
+-                !allChecksDone || checkedRevision !== checkRevision
++                !activeDraftMasterPath
++                  ? t('先选择一个设计稿')
++                  : !allChecksDone || checkedRevision !== checkRevision
+                   ? batchLoading
+                     ? t('正在检查')
+                     : t('待检查当前稿')
+@@ -6101,9 +6153,7 @@ clearDecisionLog()
+                     : WB_TERMS.alignedVerdict
+                   : batchLoading
+                     ? t('正在计算…')
+-                    : readiness.allLanguagesReviewed
+-                      ? t('扫描设计稿后开始与设计稿对账')
+-                      : t('确认译文后开放')}
++                    : stageReasonForDisplay}
+               </span>
+             </div>
+             {isGuest ? (
+@@ -6437,7 +6487,7 @@ clearDecisionLog()
+               </div>
+             ) : (
+               <p className="text-xs text-muted-foreground">
+-                {derived.reason ?? t('确认全部语言后开放与设计稿对账')}
++                {stageReasonForDisplay ?? t('确认全部语言后开放与设计稿对账')}
+               </p>
+             )}
+           </section>
+@@ -6461,7 +6511,7 @@ clearDecisionLog()
+                   ? t('确认语言、文件名和费用')
+                   : isGuest
+                     ? t('访客可以先看这次要生成的范围')
+-                    : derived.reason ?? t('解决必须处理项后开放')}
++                    : stageReasonForDisplay ?? t('解决必须处理项后开放')}
+               </span>
+             </div>
+             <div className="space-y-4">
+diff --git a/src/components/workbench/stage-folder-gate.tsx b/src/components/workbench/stage-folder-gate.tsx
+index 46b532f..6a6f005 100644
+--- a/src/components/workbench/stage-folder-gate.tsx
++++ b/src/components/workbench/stage-folder-gate.tsx
+@@ -19,6 +19,29 @@ import { Button } from '@/components/ui/button'
+ import { Input } from '@/components/ui/input'
+ import { useSiteCopy } from '@/lib/workbench/site-copy'
+ 
++type FolderGateCopyForMigration = {
++  read: string
++  afterScanHint: string
++}
++
++/** 只迁移两条精确的旧默认文案；其他后台自定义内容原样显示。 */
++export function migrateLegacyFolderGateCopy<T extends FolderGateCopyForMigration>(
++  copy: T,
++  translate: (value: string) => string = t,
++): T {
++  const migrate = (value: string, legacy: string, current: string) =>
++    value === legacy || value === translate(legacy) ? translate(current) : value
++  return {
++    ...copy,
++    read: migrate(copy.read, '扫描并自动配对', '读取清单并逐稿扫描'),
++    afterScanHint: migrate(
++      copy.afterScanHint,
++      '扫完还要点一次「读全部表头」，表头读完才能把每一门自动配好',
++      '文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。',
++    ),
++  }
++}
++
+ export interface StageFolderGateProps {
+   initialPath?: string
+   loading: boolean
+@@ -38,7 +61,11 @@ export function StageFolderGate({
+   onReadFolder,
+   onShowClassic,
+ }: StageFolderGateProps) {
+-  const copy = useSiteCopy('workbench').step1.folderGate
++  // 先落到变量再迁移：把 hook 调用直接当实参套进另一个函数时，
++  // 开发态编译器会漏改写这个引用，运行期报 `useSiteCopy is not defined`
++  // （2026-10-29 实测，chunk src_components_workbench_1jhcmap._.js:7608）。
++  const siteCopy = useSiteCopy('workbench')
++  const copy = migrateLegacyFolderGateCopy(siteCopy.step1.folderGate)
+   const [path, setPath] = useState(initialPath)
+   const busy = loading || picking
+ 
+@@ -64,6 +91,7 @@ export function StageFolderGate({
+ 
+         <div className="flex flex-col gap-2 sm:flex-row">
+           <Input
++            id="stage-folder-path"
+             value={path}
+             onChange={(event) => setPath(event.target.value)}
+             onPaste={(event) => {
+diff --git a/src/components/site/site-header.tsx b/src/components/site/site-header.tsx
+index d8963db..baa4a78 100644
+--- a/src/components/site/site-header.tsx
++++ b/src/components/site/site-header.tsx
+@@ -100,13 +100,15 @@ export function SiteHeader() {
+             </Link>
+           </Button>
+           <DownloadAssistantEntry />
+-          <Button
+-            size="sm"
+-            onClick={() => setView('workbench')}
+-            className="hidden sm:inline-flex"
+-          >
+-            进入工作台
+-          </Button>
++          {view !== 'workbench' && view !== 'batch' && (
++            <Button
++              size="sm"
++              onClick={() => setView('workbench')}
++              className="hidden sm:inline-flex"
++            >
++              进入工作台
++            </Button>
++          )}
+           <button
+             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent"
+             onClick={() => setOpen((v) => !v)}
+diff --git a/src/config/siteContent.ts b/src/config/siteContent.ts
+index 59b30b9..cc53afb 100644
+--- a/src/config/siteContent.ts
++++ b/src/config/siteContent.ts
+@@ -450,7 +450,7 @@ export const siteContent = {
+         subtitle: '只读预扫描。选一个文件夹，子文件夹里的设计稿会一起找出来；不会动你的文件。',
+         pathPlaceholder: '文件夹路径（选择或粘贴后读取）',
+         pick: '选择文件夹…',
+-        read: '扫描并自动配对',
++        read: '读取清单并逐稿扫描',
+         reading: '正在读取文件夹…',
+         picking: '正在等待选择文件夹…',
+         notes: ['只读预扫描', '子文件夹最多 6 层', '本批最多 12 个稿'],
+@@ -460,7 +460,7 @@ export const siteContent = {
+           '顶栏两张新卡：已绑格（共 N 格）与手工选表次数',
+           '被拦下的表、按默认处理的选择，都有「放开／撤销」，不用回去重扫',
+         ],
+-        afterScanHint: '扫完还要点一次「读全部表头」，表头读完才能把每一门自动配好',
++        afterScanHint: '文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。',
+         system: '选择文件夹…',
+         classic: '逐稿手动导入…',
+       },
+diff --git a/src/lib/i18n/dict-en.json b/src/lib/i18n/dict-en.json
+index 3ac3018..66a7593 100644
+--- a/src/lib/i18n/dict-en.json
++++ b/src/lib/i18n/dict-en.json
+@@ -268,7 +268,7 @@
+   "复制路径": "Copy path",
+   "覆盖率低于 ": "Coverage below ",
+   "覆盖率矩阵 · 每稿一表": "Coverage matrix · one table per file",
+-  "覆盖率闸：本批执行前已显式放行（": "Coverage gate: explicitly overridden before this batch (",
++  "你已确认继续生成覆盖率不足的内容（本批 {count} 格低于 {threshold}%），执行会按原确认继续。": "You confirmed generating content with insufficient coverage (this batch: {count} cells below {threshold}%). The run continues as confirmed.",
+   "该对象在全部目标语言中都不替换，设计稿里保留原文": "This object is not replaced in any target language; the source text stays in the design file",
+   "该格所有可翻译文本都已在语言表中找到对应行。": "Every translatable string in this cell has a matching row in the language table.",
+   "改为仅生成当前语言": "Generate only the current language",
+@@ -594,6 +594,7 @@
+   "首次使用准备": "First-time setup",
+   "输出目录": "Output folder",
+   "输出文件名：": "Output file name:",
++  "输出名称前缀": "Output name prefix",
+   "输入会自动转大写并去除空格。验证成功后，系统会自动授权本地助手，无需输入运行码。": "Input is uppercased and spaces are removed automatically. Once verified, the local assistant is authorized for you — no run code needed.",
+   "输入你获得的邀请码（格式 TYGF-XXXX-XXXX），激活后进入工作台。": "Enter the invite code you received (format TYGF-XXXX-XXXX) to activate and enter the workbench.",
+   "输入语言代码，如 SV、CS、EL": "Enter a language code, e.g. SV, CS, EL",
+@@ -606,6 +607,8 @@
+   "提交中…": "Submitting…",
+   "替换 ": "Replaced ",
+   "替换行数": "Replaced rows",
++  "译文表行数": "Translation table rows",
++  "译文表共 {count} 行": "The translation table has {count} rows",
+   "替换执行失败，请查看下方错误信息。": "Replacement failed; see the error below.",
+   "替换执行完成，可下载 HTML 报告。": "Replacement finished; you can download the HTML report.",
+   "替换执行完成，HTML 报告已写入输出目录。": "Replacement finished; the HTML report was written to the output folder.",
+@@ -1100,14 +1103,14 @@
+   "检测到上次任务已按完成结算，本次不会重复执行或重复计费。": "The previous job was settled as completed; this run will not repeat or charge twice.",
+   "批量任务已完成 {value0} / {value1} 种语言；再次开始会从下一种语言继续。": "The batch completed {value0} of {value1} languages; starting again continues with the next one.",
+   "检测到上次提交在取得受理回执前中断；再次开始时会以同一操作号安全重试，不会重复创建任务。": "The previous submission was interrupted before we got a receipt; starting again retries safely with the same operation ID, so no duplicate job is created.",
+-  "检测到之前有执行仍在进行（attempt {value0}），正在重新等待本机完成回执…": "An earlier run is still in progress (attempt {value0}); waiting again for the local completion receipt…",
++  "检测到上次执行还在本机进行（任务记录 {value0}），正在等它回报完成…": "The last run is still finishing on this computer (task record {value0}). Waiting for it to report completion…",
+   "执行已提交；较长时间未观察到本机完成回执，请查看本地助手窗口与源 PSD 所在目录。": "The run was submitted, but no local completion receipt has arrived for a while. Check the local assistant window and the folder holding the source PSD.",
+   "详情请查看本地助手窗口。": "See the local assistant window for details.",
+   "本批未收到回执的部分不计费，预留积分已整笔退回。": "Parts of this batch that never returned a receipt are not charged; the reserved credits were refunded in one go.",
+   "本机执行已完成，云端未收到回执：{detail}{creditLine}": "The local run finished but the cloud never received the receipt: {detail}{creditLine}",
+   "V1.5 执行在 Photoshop 阶段未成功：{detail}": "The V1.5 run did not succeed in the Photoshop stage: {detail}",
+   "原批次仍保留，当前不会重新报价、冻结或执行；请先恢复本地助手并核对原任务状态。": "The original batch is kept; nothing will be re-quoted, frozen or run now. Restore the local assistant and check the original job's status first.",
+-  "本机回执已成功，但恢复记录无法安全确定它对应的语言；原 attempt 与批次已保留，当前不会继续执行或重复计费，请先核对批次状态。": "The local receipt succeeded, but the recovery record cannot safely tell which language it belongs to. The original attempt and batch are kept; nothing will continue or be charged again — check the batch status first.",
++  "本机回执已成功，但恢复记录无法安全确定它对应的语言；原任务记录与批次已保留，当前不会继续执行或重复计费，请先核对批次状态。": "The local receipt succeeded, but the recovery record cannot safely tell which language it belongs to. The original task record and batch are kept; nothing will continue or be charged again — check the batch status first.",
+   "已恢复完成 {length} / {length_1} 种语言；点击开始后继续剩余语言。": "Recovered {length} of {length_1} languages; click start to continue with the rest.",
+   "设计文件已生成，但 {localAssistantReportFileName} 未通过助手确认；请检查输出目录，必要时只重建报告，不要重复执行 Photoshop。": "The design file was generated, but {localAssistantReportFileName} was not confirmed by the assistant. Check the output folder and, if needed, rebuild only the report — do not re-run Photoshop.",
+   "上次批量任务已结束（{status}），本次不会重复执行或重复计费。": "The previous batch has finished ({status}); this run will not repeat or charge twice.",
+@@ -1324,7 +1327,7 @@
+   "{name}（未选择语言）": "{name} (no language selected)",
+   "{name}（{languages} 未确认）": "{name} ({languages} unconfirmed)",
+   "还有 {length} 个设计稿的译文没有完成审查确认，暂不能开始：{value1}。请切换到对应稿完成审查后再开始。": "{length} designs still have unconfirmed review work, so you cannot start: {value1}. Switch to each design, finish the review, then start.",
+-  "覆盖率闸：{length} 格低于 {COVERAGE_THRESHOLD}% 阈值，需在下方勾选「显式放行」后才能开始。": "Coverage gate: {length} cells are below the {COVERAGE_THRESHOLD}% threshold. Tick “Allow explicitly” below before starting.",
++  "有 {length} 格译文覆盖率低于 {COVERAGE_THRESHOLD}% 阈值，需在下方勾选「我已知晓覆盖率不足，仍要生成」后才能开始。": "{length} cells are below the {COVERAGE_THRESHOLD}% coverage threshold. Tick “I understand the coverage is insufficient and still want to generate” below before starting.",
+   "无法把助手的任务目录切到「{value0}」所在目录，批量执行未开始：": "Could not switch the assistant's job folder to the folder holding “{value0}”, so the batch did not start:",
+   "请确认本地助手仍在运行。": "Make sure the local assistant is still running.",
+   "第 {value0}/{total} 个设计稿（{value2}）执行失败，已停止后续设计稿。": "Design {value0} of {total} ({value2}) failed, so the remaining designs were stopped.",
+@@ -1333,7 +1336,7 @@
+   "请重新扫描该稿后再开始。": "Rescan this design, then start again.",
+   "无法把助手的任务目录切到第 {value0} 个设计稿（{value1}）所在目录，批量执行已暂停：": "Could not switch the assistant's job folder to the one holding design {value0} ({value1}), so the batch paused:",
+   "全部 {total} 个设计稿已执行完成。": "All {total} designs finished.",
+-  "（覆盖率闸：执行前已显式放行 {length} 格低于 {COVERAGE_THRESHOLD}%）": "(Coverage gate: {length} cells below {COVERAGE_THRESHOLD}% were explicitly allowed before the run)",
++  "（你已确认继续生成覆盖率不足的内容：本批 {length} 格低于 {COVERAGE_THRESHOLD}%）": "(You confirmed generating content with insufficient coverage: {length} cells in this batch are below {COVERAGE_THRESHOLD}%)",
+   "检查响应与本次请求不匹配，结果已丢弃，请重试。": "The response did not match this request, so the result was discarded. Please try again.",
+   "批量检查失败，请重试。": "The batch check failed; please try again.",
+   "第 {value0} 个设计稿对账失败，批量执行已暂停：{batchError}": "Reconciliation failed for design {value0}, so the batch paused: {batchError}",
+@@ -1644,6 +1647,8 @@
+   "文件夹路径（选择或粘贴后读取）": "Folder path (choose or paste, then read)",
+   "选择文件夹…": "Choose folder…",
+   "扫描并自动配对": "Scan and auto-pair",
++  "读取清单并逐稿扫描": "Read the list and scan each design file",
++  "文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。": "After reading the folder list, designs are scanned one by one; review table headers and pairings separately.",
+   "读取文件夹": "Read folder",
+   "正在读取文件夹…": "Reading the folder…",
+   "正在等待选择文件夹…": "Waiting for you to choose a folder…",
+@@ -2007,6 +2012,24 @@
+   "{n} 张表头已读 · {failed} 张读不了": "{n} headers read · {failed} unreadable",
+   "还没配上组": "Not grouped yet",
+   "正在读表头…": "Reading table headers…",
++  "先导入译文表并选择语言": "Import a translation table and choose a language first",
++  "先选择一个设计稿": "Choose a design file first",
++  "助手没有返回原因。": "The assistant did not provide a reason.",
++  "原因：": "Reason: ",
++  "另有 {count} 张尚未请求。": "{count} more tables have not been requested.",
++  "当前助手版本不支持批量读取表头。已配表的 {bound} 张表交给逐稿读取；未配表的 {unbound} 张表需先配表后读取。": "This assistant version cannot read headers in bulk. The {bound} paired tables will be read one by one; pair the other {unbound} tables before reading them.",
++  "当前助手版本不支持批量读取表头；这些表尚未配给设计稿，请升级助手或先配表后读取。": "This assistant version cannot read headers in bulk, and these tables are not paired with design files. Update the assistant or pair the tables before reading them.",
++  "文件夹清单已读，设计稿已开始逐稿扫描；译文表配对还要你核对。": "Folder list read; design files are being scanned one by one. Review the translation-table pairings.",
++  "未成功的表可再点“读全部表头”。": "Click “Read all headers” again for tables that did not succeed.",
++  "查看生成范围": "Review generation scope",
++  "检测这张译文表的全部 {count} 种语言": "Detect all {count} languages in this translation table",
++  "正在读表头：已请求 {requested} 张，还剩 {left} 张。": "Reading table headers: {requested} requested, {left} remaining.",
++  "没有待读取表头的译文表。": "No translation tables need header reading.",
++  "确认全部语言译文后开放设计稿校对": "Confirm all language translations to open design review",
++  "表头读取未完成：成功 {ok} 张，失败 {failed} 张，未返回 {unreturned} 张。": "Header reading incomplete: {ok} succeeded, {failed} failed, {unreturned} did not return.",
++  "表头读取结果：成功 {ok} 张，失败 {failed} 张，未返回 {unreturned} 张。": "Header reading results: {ok} succeeded, {failed} failed, {unreturned} did not return.",
++  "选择并扫描设计稿": "Choose and scan a design file",
++  "选择并扫描设计稿后开放设计稿校对": "Choose and scan a design file to open design review",
+   "：每份稿都弹一次选表框，最少 {drafts} 次；一稿只用一张表，{drafts} 份稿最多用 {drafts} 张表，另外 {unused} 张在这套做法下用不上。": ": every draft pops a table picker, at least {drafts} times; one table per draft means {drafts} drafts can use at most {drafts} tables, so the other {unused} go unused this way.",
+   "{file}：{langs}": "{file}: {langs}",
+   "沿用了上次剔掉的语言（{value0}）。要恢复就点那一稿的「全选回来」。": "Kept the languages you removed last time ({value0}). To bring them back, click “Restore all” on that draft.",
+diff --git a/product-specs/workbench-flow.md b/product-specs/workbench-flow.md
+index 7481368..ba4cb4a 100644
+--- a/product-specs/workbench-flow.md
++++ b/product-specs/workbench-flow.md
+@@ -68,3 +68,10 @@
+ - 屏幕文案的取值路径记牢：`src/lib/workbench/site-copy.ts:43` 是 `{ ...siteContent[section], ...override }`——**库里覆盖赢**，所以"改文件默认值"不等于"改屏幕"；任何要求"改文案必须上屏"的门禁若只核文件默认值，属门禁缺口（归 WB-TAP-GATE），不得反过来当已生效证据。
+ - **本次减法的验收指标（第二指标）＝用户完成一次交付全程的动手次数 ≤5**。第一指标仍是 Owner 定的"首跑成功率"（2026-09-25 15:4x 定），本指标不得取代它。
+ - 硬编码中文串须收回文案键（本片先收 `execute-step.tsx` 提交态那两条），三处并存（`siteContent.ts` 默认值／`workbench-terms.ts`／组件内硬编码）是"改了不生效"的根因，归并属 C2。
++
++## WF-011 工作台全流程显示优化（2026-10-29 L2 `changes/active/20261029-workbench-full-flow-uiux.md`）
++- 第 1 步批量读表头分别展示成功、失败、未返回和本轮尚未请求数量。空回复或异常不能显示成成功；失败与未返回只在用户再次明确点击后重试，本轮不自动重试。旧助手不支持批量读表头时，只把已配稿的表交给逐稿读取；未配表必须明确说明后续处理方式。
++- 单稿／多稿切换只记当前标签页的显示偏好。选择提交后保存；后续目录读取失败不回滚。忙碌拒绝和用户取消不保存。恢复多稿时只显示空的多稿选择，不恢复真实设计稿或扫描结果。
++- 阶段说明只解释当前已有事实，不改变 readiness、阶段权限或执行判定。没有选择当前稿时，不得声称正在处理当前稿。
++- 文件夹区只将精确匹配的两条旧默认文案迁移到新文案；自定义覆盖原样保留，不改服务端或数据库内容。
++- 工作台页隐藏重复的「进入工作台」顶栏按钮；其他页面导航保留。第 4 步确认框的显示范围随当前语言／批量模式和输出设置更新，旧确认范围变化后必须重新确认；实际执行回调、权限和计费规则不变。
+diff --git a/tests/unit/step1-stage-view.test.tsx b/tests/unit/step1-stage-view.test.tsx
+index 2d5d383..e69dbff 100644
+--- a/tests/unit/step1-stage-view.test.tsx
++++ b/tests/unit/step1-stage-view.test.tsx
+@@ -615,14 +615,23 @@ describe('第 1 步新壳（step1-stage-view）能力清单', () => {
+     expect(within(list).queryByText('5857-主图.psb')).toBeNull()
+   })
+ 
+-  it('读全部表头：队列里没有可读的绑定时置灰；旧助手（端点缺失）回退逐张走 onRetryRead', async () => {
+-    // 主夹具三张表都已读，唯一 listed 的孤儿表没有绑定稿 → 置灰
+-    const props = renderStage()
++  it('读全部表头：全未配表时仍可调查；旧助手不冒充成功也不回退未配表', async () => {
++    const core = makeCore([], [T1, T2, T3])
++    const props = renderStage({}, core)
+     const readAll = screen.getByRole('button', { name: '读全部表头' })
+-    expect(readAll.hasAttribute('disabled')).toBe(true)
++    expect(readAll.hasAttribute('disabled')).toBe(false)
++    surveyPreparationTablesMock.mockRejectedValue(
++      new LocalAssistantRequestError('不支持批量读表头', 'SURVEY_ENDPOINT_MISSING'),
++    )
++    fireEvent.click(readAll)
++    await waitFor(() => expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(1))
++    expect(surveyPreparationTablesMock).toHaveBeenCalledWith(core.scan.root, [T1.path, T2.path, T3.path])
++    await waitFor(() => expect(screen.getByText(/当前助手版本不支持批量读取表头/)).toBeTruthy())
++    expect(screen.getByText(/尚未配给设计稿/)).toBeTruthy()
+     expect(props.onRetryRead).not.toHaveBeenCalled()
+-    cleanup()
+-    // 撤掉 A 的读状态：T1 变 listed 且有绑定稿 → 可读
++  })
++
++  it('读全部表头：旧助手只把已配表交给逐稿读取', async () => {
+     const reads = renderStage(
+       {
+         readStates: {
+@@ -640,6 +649,8 @@ describe('第 1 步新壳（step1-stage-view）能力清单', () => {
+     )
+     fireEvent.click(enabled)
+     await waitFor(() => expect(reads.onRetryRead).toHaveBeenCalledWith(A.path))
++    expect(reads.onRetryRead).toHaveBeenCalledTimes(1)
++    expect(screen.getByText(/未配表的 1 张表需先配表后读取/)).toBeTruthy()
+   })
+ 
+   it('读全部表头：survey 成功时一次票并入表册元数据（不逐张 onRetryRead）', async () => {
+@@ -673,6 +684,99 @@ describe('第 1 步新壳（step1-stage-view）能力清单', () => {
+     })
+   })
+ 
++  it('读全部表头：少回的表按未返回计数，下一次显式点击只重试未成功项', async () => {
++    const core = makeCore([], [T1, T2, T3])
++    surveyPreparationTablesMock
++      .mockResolvedValueOnce([
++        { relPath: T1.relPath, sheets: ['主图'], languages: ['JA'], rows: 10, warnings: [] },
++      ])
++      .mockResolvedValueOnce([
++        { relPath: T2.relPath, sheets: ['详情'], languages: ['EN'], rows: 8, warnings: [] },
++        { relPath: T3.relPath, sheets: ['A+'], languages: ['FR'], rows: 6, warnings: [] },
++      ])
++    const props = renderStage({}, core)
++    const readAll = screen.getByRole('button', { name: '读全部表头' })
++
++    fireEvent.click(readAll)
++    await waitFor(() => expect(screen.getByText(/成功 1 张，失败 0 张，未返回 2 张/)).toBeTruthy())
++    expect(readAll.hasAttribute('disabled')).toBe(false)
++
++    fireEvent.click(readAll)
++    await waitFor(() => expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(2))
++    expect(surveyPreparationTablesMock.mock.calls[0]?.[1]).toEqual([T1.path, T2.path, T3.path])
++    expect(surveyPreparationTablesMock.mock.calls[1]?.[1]).toEqual([T2.path, T3.path])
++    expect(props.onRetryRead).not.toHaveBeenCalled()
++  })
++
++  it('读全部表头：空回按未返回计数，失败项可由用户再次点击重试', async () => {
++    const core = makeCore([], [T1, T2, T3])
++    surveyPreparationTablesMock
++      .mockResolvedValueOnce([])
++      .mockResolvedValueOnce([
++        { relPath: T1.relPath, sheets: [], languages: [], rows: null, warnings: [] },
++        { relPath: T2.relPath, sheets: [], languages: [], rows: null, warnings: [] },
++        { relPath: T3.relPath, sheets: [], languages: [], rows: null, warnings: [] },
++      ])
++    renderStage({}, core)
++    const readAll = screen.getByRole('button', { name: '读全部表头' })
++
++    fireEvent.click(readAll)
++    await waitFor(() => expect(screen.getByText(/成功 0 张，失败 0 张，未返回 3 张/)).toBeTruthy())
++    fireEvent.click(readAll)
++    await waitFor(() => expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(2))
++    expect(surveyPreparationTablesMock.mock.calls[1]?.[1]).toEqual([T1.path, T2.path, T3.path])
++  })
++
++  it('读全部表头：服务端明确失败时按失败计数并保留下一次重试', async () => {
++    const core = makeCore([], [T1, T2, T3])
++    const failed = [T1, T2, T3].map((table) => ({
++      relPath: table.relPath,
++      sheets: [],
++      languages: [],
++      rows: null,
++      warnings: [],
++      error: { code: 'TABLE_SURVEY_FAILED', message: '读取失败' },
++    }))
++    surveyPreparationTablesMock.mockResolvedValue(failed)
++    renderStage({}, core)
++    const readAll = screen.getByRole('button', { name: '读全部表头' })
++
++    fireEvent.click(readAll)
++    await waitFor(() => expect(screen.getByText(/成功 0 张，失败 3 张，未返回 0 张/)).toBeTruthy())
++    expect(readAll.hasAttribute('disabled')).toBe(false)
++    fireEvent.click(readAll)
++    await waitFor(() => expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(2))
++  })
++
++  it('读全部表头：首轮空回或助手异常分别说明未返回与尚未请求数量', async () => {
++    const tables = Array.from({ length: 36 }, (_, index) => {
++      const name = `synthetic-${String(index + 1).padStart(2, '0')}.xlsx`
++      return { path: `C:\\tmp\\${name}`, relPath: name, ext: 'xlsx', dir: '' }
++    })
++    const core = makeCore([], tables)
++    surveyPreparationTablesMock
++      .mockResolvedValueOnce([])
++      .mockRejectedValueOnce(new Error('请先启动本地助手'))
++    renderStage({}, core)
++    const readAll = screen.getByRole('button', { name: '读全部表头' })
++
++    fireEvent.click(readAll)
++    await waitFor(() => {
++      expect(screen.getByText(/成功 0 张，失败 0 张，未返回 12 张/)).toBeTruthy()
++      expect(screen.getByText(/另有 24 张尚未请求/)).toBeTruthy()
++    })
++    expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(1)
++    expect(surveyPreparationTablesMock.mock.calls[0]?.[1]).toHaveLength(12)
++
++    fireEvent.click(readAll)
++    await waitFor(() => {
++      expect(screen.getByText(/表头读取未完成：成功 0 张，失败 0 张，未返回 12 张/)).toBeTruthy()
++      expect(screen.getByText(/另有 24 张尚未请求/)).toBeTruthy()
++      expect(screen.getByText(/原因：请先启动本地助手/)).toBeTruthy()
++    })
++    expect(surveyPreparationTablesMock).toHaveBeenCalledTimes(2)
++  })
++
+   it('下一步按钮随 gate.ok 置灰，且不放行时点击不前进', () => {
+     const props = buildProps({ gate: { ok: false, blockers: [] } })
+     const { container } = render(<Step1StageView {...props} />)
+diff --git a/tests/unit/stage-folder-gate.test.tsx b/tests/unit/stage-folder-gate.test.tsx
+index 65d27ff..edc5b71 100644
+--- a/tests/unit/stage-folder-gate.test.tsx
++++ b/tests/unit/stage-folder-gate.test.tsx
+@@ -6,7 +6,7 @@ import React from 'react'
+ import { renderToStaticMarkup } from 'react-dom/server'
+ import { describe, expect, it } from 'vitest'
+ 
+-import { StageFolderGate } from '@/components/workbench/stage-folder-gate'
++import { migrateLegacyFolderGateCopy, StageFolderGate } from '@/components/workbench/stage-folder-gate'
+ import { TablePickerDialog } from '@/components/workbench/table-picker-dialog'
+ 
+ describe('第 1 步入口态', () => {
+@@ -24,7 +24,7 @@ describe('第 1 步入口态', () => {
+     )
+     expect(html).toContain('选择设计稿文件夹')
+     expect(html).toContain('选择文件夹…')
+-    expect(html).toContain('扫描并自动配对')
++    expect(html).toContain('读取清单并逐稿扫描')
+     expect(html).toContain('这个文件夹读不了')
+     expect(html).toContain('逐稿手动导入')
+     expect(html).not.toContain('准备素材')
+@@ -33,7 +33,46 @@ describe('第 1 步入口态', () => {
+     expect(html).toContain('只读预扫描')
+     expect(html).toContain('子文件夹最多 6 层')
+     expect(html).toContain('本批最多 12 个稿')
+-    expect(html).toContain('扫完还要点一次「读全部表头」')
++    expect(html).toContain('文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。')
++  })
++
++  it('只迁移两条精确旧默认文案，保留相近或自定义覆盖', () => {
++    const oldRead = '扫描并自动配对'
++    const oldHint = '扫完还要点一次「读全部表头」，表头读完才能把每一门自动配好'
++    const translate = (value: string) => value
++    const migrated = migrateLegacyFolderGateCopy(
++      { read: oldRead, afterScanHint: oldHint, title: '后台自定义标题' },
++      translate,
++    )
++    expect(migrated.read).toBe('读取清单并逐稿扫描')
++    expect(migrated.afterScanHint).toBe('文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。')
++    expect(migrated.title).toBe('后台自定义标题')
++
++    const nearMiss = migrateLegacyFolderGateCopy(
++      { read: `${oldRead}（自定义）`, afterScanHint: `${oldHint}；另有补充`, title: '我的标题' },
++      translate,
++    )
++    expect(nearMiss.read).toBe(`${oldRead}（自定义）`)
++    expect(nearMiss.afterScanHint).toBe(`${oldHint}；另有补充`)
++    expect(nearMiss.title).toBe('我的标题')
++
++    const english = new Map([
++      [oldRead, 'Scan and auto-pair'],
++      ['读取清单并逐稿扫描', 'Read the list and scan designs one by one'],
++      [oldHint, 'After scanning, read all headers to pair every language automatically'],
++      ['文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。', 'The folder list is read first, then designs are scanned one by one; review headers and pairings separately.'],
++    ])
++    const migratedEnglish = migrateLegacyFolderGateCopy(
++      {
++        read: 'Scan and auto-pair',
++        afterScanHint: 'After scanning, read all headers to pair every language automatically',
++        title: 'Custom title',
++      },
++      (value) => english.get(value) ?? value,
++    )
++    expect(migratedEnglish.read).toBe('Read the list and scan designs one by one')
++    expect(migratedEnglish.afterScanHint).toBe('The folder list is read first, then designs are scanned one by one; review headers and pairings separately.')
++    expect(migratedEnglish.title).toBe('Custom title')
+   })
+ })
+ 
+diff --git a/scripts/smoke-step1-mock-contract.mjs b/scripts/smoke-step1-mock-contract.mjs
+index 7827c85..e26815e 100644
+--- a/scripts/smoke-step1-mock-contract.mjs
++++ b/scripts/smoke-step1-mock-contract.mjs
+@@ -100,20 +100,31 @@ contract(5, '扫描四阶段清单＋进度条', '已对', [
+   // 组数只准数真收了表的组，退回 groups.length 会把「一份都没配上」说成归好组。
+   { at: `${STEP1}: 组数只数非空组`, source: step1, needle: 'group.tables.length > 0', exactly: 1 },
+   { at: `${STEP1}: 组数没退回 groups.length`, source: step1, needle: 'groupBindings.groups.length', exactly: 0 },
+-  // 第四步数「表头已知」（rows 有值），不是只把全文读完算数（table-inventory.ts:160）。
+-  { at: `${STEP1}: 表头已知取 rows`, source: step1, needle: 'record.rows !== null', exactly: 1 },
++  // 第四步数「表头已知」：全文读完（stage ready）＋本批预扫描成功（surveyMeta 无 error）都算，
++  // 不是只把全文读完算数（table-inventory.ts:160）。2026-10-29 起批量读表头把结果单独记进
++  // surveyMeta（WF-011 要分别报成功/失败/未返回），所以判据从 `record.rows !== null` 改成
++  // 「一个 headerKnownIds 集合」——门槛仍是"真读到了表头"，不许退回只数全文读完。
++  { at: `${STEP1}: 表头已知集合唯一`, source: step1, needle: 'const headerKnownIds = new Set(', exactly: 1 },
++  { at: `${STEP1}: 表头已知含预扫描成功`, source: step1, needle: 'Boolean(surveyMeta[record.id] && !surveyMeta[record.id]?.error)', exactly: 1 },
++  { at: `${STEP1}: 读表头数取该集合`, source: step1, needle: 'const headerKnown = headerKnownIds.size', exactly: 1 },
++  { at: `${STEP1}: 失败数也取该集合`, source: step1, needle: "record.stage === 'error' && !headerKnownIds.has(record.id)", exactly: 1 },
+   { at: `${STEP1}: 没退回只数全文读完`, source: step1, needle: 'const readTables = inventory.filter', exactly: 0 },
+   { at: `${DICT}: 英文对照`, source: dict, needle: '"扫描文件夹"' },
+   { at: `${DICT}: 第四步英文`, source: dict, needle: '"{n}/{total} 张表头已读"' },
+   { at: `${DICT}: 第四步失败分支英文`, source: dict, needle: '"{n} 张表头已读 · {failed} 张读不了"' },
+ ])
+-contract(6, '「扫描并自动配对」一键', '部分·点名', [
+-  { at: `${CONTENT}`, source: content, needle: "read: '扫描并自动配对'" },
+-  // 一键只保证「读文件夹 → 自动开始扫描」这一跳；读表头仍手动，且这句写在界面上。
+-  { at: `${VIEW}`, source: view, needle: "t('文件夹已读取，已自动开始扫描设计稿" },
+-  { at: `${CONTENT}`, source: content, needle: '扫完还要点一次「读全部表头」' },
++contract(6, '「读取清单并逐稿扫描」一键', '部分·点名', [
++  { at: `${CONTENT}`, source: content, needle: "read: '读取清单并逐稿扫描'" },
++  // 文件夹清单之后会开始原有逐稿扫描；读表头与配对仍需用户分别核对。
++  { at: `${VIEW}`, source: view, needle: "pulseStageFolderAction('scan-all')" },
++  { at: `${VIEW}`, source: view, needle: "t('文件夹清单已读，设计稿已开始逐稿扫描；译文表配对还要你核对。')" },
++  { at: `${CONTENT}`, source: content, needle: '文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。' },
++  // 只是改了 siteContent 的默认值还不够：后台旧覆盖仍会把旧句子送到界面。
++  // 迁移必须在组件这一层、只认两条精确旧文案（自定义覆盖原样保留，单测 stage-folder-gate.test.tsx 钉住）。
++  { at: `${GATE}: 旧「扫描并自动配对」精确迁移`, source: gate, needle: "read: migrate(copy.read, '扫描并自动配对', '读取清单并逐稿扫描')", exactly: 1 },
++  { at: `${GATE}: 旧提示精确迁移`, source: gate, needle: "'文件夹清单读取后会开始逐稿扫描；读表头和配对还要分别核对。',", exactly: 1 },
+ ])
+-rows.push(['6b', '一键里的「读表头」自动接上', '未做·有原因', '扫描完成没有可等待信号（审查 I-2）：硬串就变成轮询。改为界面上明写"还要点一次读全部表头"。'])
++rows.push(['6b', '一键里的「读表头」自动接上', '未做·有原因', '扫描完成没有可等待信号（审查 I-2）：硬串就变成轮询。改为界面上明写"读表头和配对还要分别核对"。'])
+ contract(7, '语言格 role=checkbox 且点掉真剔除', '已对', [
+   { at: `${STEP1}`, source: step1, needle: 'role="checkbox"', exactly: 1 },
+   { at: `${STEP1}`, source: step1, needle: "const droppable = slot.state === 'ready'" },
+diff --git a/scripts/smoke-workbench-ui-contract.mjs b/scripts/smoke-workbench-ui-contract.mjs
+index 2a61731..1d6c71c 100644
+--- a/scripts/smoke-workbench-ui-contract.mjs
++++ b/scripts/smoke-workbench-ui-contract.mjs
+@@ -7,6 +7,7 @@ const review = read('src/components/workbench/review-step.tsx')
+ const ps = read('src/components/workbench/photoshop-step.tsx')
+ const wb = read('src/components/workbench/workbench-view.tsx')
+ const exec = read('src/components/workbench/execute-step.tsx')
++const header = read('src/components/site/site-header.tsx')
+ const copy = read('src/config/siteContent.ts')
+ const spec = read('product-specs/workbench-flow.md')
+ 
+@@ -29,6 +30,28 @@ const stage4 = wb.indexOf("id=\"stage-delivery\"")
+ assert.ok(stage3 >= 0 && psPanel > stage3 && psPanel < stage4, 'Photoshop readiness must live in Step 3')
+ assert.ok(!wb.slice(stage4).includes('deliveryOpen && !psReady'), 'Step 4 must not own first-time Photoshop readiness')
+ assert.match(wb, /photoshopReady: psReady/, 'workbench state machine must gate delivery on Photoshop readiness')
++assert.match(header, /view !== 'workbench' && view !== 'batch'/, 'workbench and legacy batch views hide the duplicate header CTA')
++// 锚点不写跨行字面量：本树是 CRLF，'\n    if' 这类断言会在换行符上静默失配（2026-10-29 实测）。
++const modePreferenceEffectStart = wb.indexOf('if (!modePreferenceInitializedRef.current)')
++const modePreferenceEffectEnd = wb.indexOf('}, [batchMode, batchModeFromUrl])', modePreferenceEffectStart)
++assert.ok(modePreferenceEffectStart >= 0 && modePreferenceEffectEnd > modePreferenceEffectStart, 'mode preference restore/persist effect must remain identifiable')
++const modePreferenceEffect = wb.slice(modePreferenceEffectStart, modePreferenceEffectEnd)
++assert.match(modePreferenceEffect, /readWorkbenchModePreference\(\)/, 'saved mode is read on workbench mount')
++assert.match(modePreferenceEffect, /if \(!batchModeFromUrl\)/, 'explicit multi-draft URL takes precedence over saved display preference')
++assert.match(modePreferenceEffect, /setBatchMode\(preference\)/, 'saved preference restores the selected mode')
++assert.match(modePreferenceEffect, /if \(preference\)\s*\{\s*setMultiPsdSelection\(\(previous\) => previous \?\? clearMultiPsdSelection\(\)\)/, 'restored multi mode also renders an empty multi-draft selection')
++assert.ok(!/setPsdSelection|scanDesign|restore.*Draft/i.test(modePreferenceEffect), 'mode restore must not restore a real design file or scan')
++assert.match(modePreferenceEffect, /writeWorkbenchModePreference\(batchMode\)/, 'mode preference is persisted only after React commits the selected mode')
++assert.equal((wb.match(/writeWorkbenchModePreference\(/g) ?? []).length, 1, 'mode preference has one write site')
++const requestModeStart = wb.indexOf('const requestModeChange = (nextMulti: boolean) => {')
++const confirmModeStart = wb.indexOf('const confirmSwitchToSingle = async () => {', requestModeStart)
++assert.ok(requestModeStart >= 0 && confirmModeStart > requestModeStart, 'mode change handlers must remain identifiable')
++const requestModeBlock = wb.slice(requestModeStart, confirmModeStart)
++assert.ok(requestModeBlock.indexOf('if (experimentRunning)') < requestModeBlock.indexOf('setBatchModeFromUser('), 'busy execution is refused before saving a mode preference')
++assert.ok(requestModeBlock.indexOf('if (batchReviewRunning || retryingLanguage)') < requestModeBlock.indexOf('setBatchModeFromUser('), 'busy review is refused before saving a mode preference')
++assert.match(wb, /onClick=\{\(\) => setModeConfirmOpen\(false\)\}/, 'cancel closes the multi-to-single confirmation without committing a mode change')
++assert.equal((wb.match(/onClick=\{\(\) => setModeConfirmOpen\(false\)\}/g) ?? []).length, 1, 'cancel path does not write a second preference')
++assert.match(wb, /setBatchModeFromUser\(false\)[\s\S]{0,600}await setAssistantTaskRoot\(dir\)[\s\S]{0,500}catch \(e\)/, 'single mode commits before a directory request that can fail')
+ const autoAdvanceStart = wb.indexOf('// B：只有完整交付门已开放')
+ const autoAdvanceEnd = wb.indexOf('// P0-C-3：', autoAdvanceStart)
+ assert.ok(autoAdvanceStart >= 0 && autoAdvanceEnd > autoAdvanceStart, 'auto-advance contract block must remain identifiable')
+@@ -47,6 +70,7 @@ assert.match(exec, /copy\.execReadyStatusAll/, 'Step 4 must show batch-ready sta
+ assert.match(exec, /copy\.execReadyStatusSingle/, 'Step 4 must show single-language ready status')
+ assert.match(exec, /\(completed \|\| failed\)/, 'later owner decision: completion reset outlet must be preserved')
+ assert.match(spec, /后续明确决定优先于旧模拟稿/, 'mock deviations must be documented, not silently guessed')
++assert.match(spec, /WF-011 工作台全流程显示优化/, 'full-flow display contract must be recorded in the product spec')
+ 
+ // ─── UX P1（2026-09-17）：阶段头动作 / 语言卡状态 / 只读抽屉 / 单语言重跑 / 术语统一 ───
+ const terms = read('src/lib/workbench/workbench-terms.ts')
+@@ -288,4 +312,39 @@ assert.match(client, /patch >= 24/, 'the directory listing gate must start at as
+ assert.match(csv, /whitespace-nowrap/, 'format example headers must not wrap into the next column')
+ assert.match(csv, /overflow-x-auto/, 'format examples must scroll horizontally instead of squeezing columns')
+ 
++// ─── WF-011 第 4 步确认框：按真实执行语言显示范围（2026-10-29）──────────────────
++// 「仅当前语言」时确认框只许列当前语言；行数说译文表总行数；名称只给前缀。
++assert.match(
++  exec,
++  /const displayLanguages = useBatchChain \? allLanguages : \[targetLanguage\]/,
++  'step 4 must project the languages that actually run',
++)
++const singleDialogStart = exec.indexOf('signature: singleScopeSignature')
++const singleDialogEnd = exec.indexOf("confirmLabel: t('确认并开始'),", singleDialogStart)
++assert.ok(singleDialogStart > 0 && singleDialogEnd > singleDialogStart, 'single scope dialog must remain identifiable')
++const singleDialog = exec.slice(singleDialogStart, singleDialogEnd)
++assert.match(singleDialog, /count: displayLanguages\.length/, 'single scope dialog must count the languages that run')
++assert.match(singleDialog, /displayLanguages\.map\(formatLanguageCode\)/, 'single scope dialog must list the languages that run')
++assert.ok(!/count: allLanguages\.length/.test(singleDialog), 'single scope dialog must not count every table language')
++assert.match(singleDialog, /t\('译文表行数'\)/, 'row count label must say it is the table total')
++assert.match(singleDialog, /t\('译文表共 \{count\} 行'/, 'row count must be stated as the table total, not replacements')
++assert.match(singleDialog, /t\('输出名称前缀'\)/, 'output name must be shown as a prefix')
++assert.ok(!/__\$\{allLanguages\.length\}-languages/.test(singleDialog), 'dialog must not present the aggregate name as the design file name')
++const signatureStart = exec.indexOf('const singleScopeSignature = [')
++const signatureEnd = exec.indexOf('].join(\'##\')', signatureStart)
++assert.ok(signatureStart > 0 && signatureEnd > signatureStart, 'single scope signature must remain identifiable')
++const signature = exec.slice(signatureStart, signatureEnd)
++for (const field of ['psdSelection?.masterPath', 'allLanguages.join', 'parsed.rows.length', "useBatchChain ? 'batch' : 'single'", 'targetLanguage', 'displayLanguages.join', 'scopeOutputBaseName', 'customOutputDirectory']) {
++  assert.ok(signature.includes(field), `scope signature must include ${field}`)
++}
++// 恢复提示去内部词：用户可见句里不再出现 attempt / 覆盖率闸。
++const execVisible = exec
++  .replace(/\/\*[\s\S]*?\*\//g, '')
++  .split('\n')
++  .map((line) => line.replace(/\/\/[^\r\n]*/, ''))
++  .join('\n')
++// 只钉「印在界面上的内部词」：标识符里的 attempt 不算，'（attempt …' 这种给人看的才算。
++assert.ok(!/（attempt|attempt \{value\d\}/.test(execVisible), 'user-visible step 4 copy must not print attempt ids as “attempt …”')
++assert.ok(!execVisible.includes('覆盖率闸'), 'user-visible step 4 copy must not say coverage gate')
++
+ console.log('workbench UI product contract: ok')
+diff --git a/scripts/smoke-workbench-scope.mjs b/scripts/smoke-workbench-scope.mjs
+index a453047..4c94c01 100644
+--- a/scripts/smoke-workbench-scope.mjs
++++ b/scripts/smoke-workbench-scope.mjs
+@@ -110,7 +110,11 @@ console.log('[D2] Round 2 修正：不承诺没做的能力、补 spec 四项、
+ ok(!dialog.includes('中途只能「停止」'), '不承诺不存在的「停止」按钮（C1 未实现）')
+ ok(dialog.includes('还没有「停止」按钮'), '如实写「这一版还没有停止按钮」')
+ ok((exec.match(/label: t\('保存位置'\)/g) ?? []).length >= 2, '两个确认框都给「保存位置」（spec 四项之一）')
+-ok((exec.match(/label: t\('文件名'\)/g) ?? []).length >= 2, '两个确认框都给「文件名」')
++// 两个框都必须让用户看见「产出会叫什么」。多稿框的值是一条命名规则（各稿按自己的名字），
++// 单稿框的值是这次真实会用的名称前缀（落盘时还要拼时间戳）⇒ 单稿框 2026-10-29 改称「输出名称前缀」，
++// 否则「文件名: TYGF_OUTPUT」会让用户以为最终文件就叫这个。
++ok((exec.match(/label: t\('文件名'\)/g) ?? []).length >= 1, '多稿确认框给「文件名」')
++ok((exec.match(/label: t\('输出名称前缀'\)/g) ?? []).length >= 1, '单稿确认框给「输出名称前缀」')
+ ok(exec.includes("label: t('失败处理')"), '多稿确认框写明某稿失败会暂停')
+ ok(/useEffect\(\(\) => \{\s*setScopeConfirm\(null\)\s*\}, \[batchMode\]\)/.test(exec), '切档时清掉未确认的弹层')
+ ok(/allLanguages\.join\(['"],['"]\)/.test(exec), '单稿指纹含语言名单而非只有个数')
+diff --git a/src/components/workbench/execute-step.tsx b/src/components/workbench/execute-step.tsx
+index 245afe6..cfe25ef 100644
+--- a/src/components/workbench/execute-step.tsx
++++ b/src/components/workbench/execute-step.tsx
+@@ -620,7 +620,7 @@ export function ExecuteStep({
+       setLocalReportStatus(v15ExecutionEnabled ? 'pending' : 'unknown')
+       transitionExecState('execution_submitted')
+       setPreparationNotice(
+-        t('检测到之前有执行仍在进行（attempt {value0}），正在重新等待本机完成回执…', { value0: String(recovery.attemptId!.slice(0, 8)) }),
++        t('检测到上次执行还在本机进行（任务记录 {value0}），正在等它回报完成…', { value0: String(recovery.attemptId!.slice(0, 8)) }),
+       )
+       onExecutionAuthorized(true)
+       void waitForV15Completion(recovery.attemptId!).then((completion) => {
+@@ -669,7 +669,7 @@ export function ExecuteStep({
+           if (recovery.batchLanguages?.length) {
+             const activeLanguage = recoverableBatchAttemptLanguage(recovery)
+             if (!activeLanguage) {
+-              setPreparationNotice(t('本机回执已成功，但恢复记录无法安全确定它对应的语言；原 attempt 与批次已保留，当前不会继续执行或重复计费，请先核对批次状态。'))
++              setPreparationNotice(t('本机回执已成功，但恢复记录无法安全确定它对应的语言；原任务记录与批次已保留，当前不会继续执行或重复计费，请先核对批次状态。'))
+               transitionExecState('execution_failed')
+               return
+             }
+@@ -2064,8 +2064,6 @@ export function ExecuteStep({
+     setScopeConfirm(null)
+   }, [batchMode])
+ 
+-  const singleScopeSignature = `${psdSelection?.masterPath ?? ''}##${allLanguages.join(',')}##${parsed.rows.length}`
+-
+   // 确认框里的「文件名」需要一个与提交同规则的预览值：提交处那份在闭包里（见 preferredOutputBaseName），
+   // 这里按同一条回退顺序（源 PSD 名 → 'TYGF_OUTPUT'）重算一次，避免两处口径分叉。
+   const scopeOutputBaseName = resolveOutputBaseName(
+@@ -2073,6 +2071,23 @@ export function ExecuteStep({
+     basenameOnly(psdSelection?.masterPath || '').replace(/\.(psd|psb)$/i, '') || 'TYGF_OUTPUT',
+   )
+ 
++  // 确认框要按**这次真的会执行**的语言说范围：批量链走全部语言，单语言链只走当前语言。
++  // 旧实现无论选「仅当前语言」都列全部语言，等于把没在跑的语种算进确认范围。
++  const displayLanguages = useBatchChain ? allLanguages : [targetLanguage]
++
++  // 范围指纹：原三项（设计稿 / 语言名单 / 表格行数）保留，另加执行分支、当前语言、
++  // 实际显示语言、输出名称与目录——任一项在弹窗打开期间变了，都不许拿过期范围开工。
++  const singleScopeSignature = [
++    psdSelection?.masterPath ?? '',
++    allLanguages.join(','),
++    parsed.rows.length,
++    useBatchChain ? 'batch' : 'single',
++    targetLanguage,
++    displayLanguages.join(','),
++    scopeOutputBaseName,
++    customOutputDirectory ?? '',
++  ].join('##')
++
+   const confirmScope = () => {
+     const pending = scopeConfirm
+     setScopeConfirm(null)
+@@ -2434,7 +2449,10 @@ export function ExecuteStep({
+                 <p className="mt-1">{t('逐个串行执行，一个完成后自动开始下一个。')}</p>
+                 {coverageBelowCount > 0 && coverageReleaseAck && (
+                   <p className="mt-1">
+-                    {t('覆盖率闸：本批执行前已显式放行（')}{coverageBelowCount} {t('格低于 ')}{COVERAGE_THRESHOLD}%）。
++                    {t('你已确认继续生成覆盖率不足的内容（本批 {count} 格低于 {threshold}%），执行会按原确认继续。', {
++                      count: String(coverageBelowCount),
++                      threshold: String(COVERAGE_THRESHOLD),
++                    })}
+                   </p>
+                 )}
+               </div>
+@@ -2955,16 +2973,16 @@ export function ExecuteStep({
+                         },
+                         {
+                           label: t('语言'),
+-                          value: t('{count} 个：{list}', { count: allLanguages.length, list: allLanguages.map(formatLanguageCode).join(' · ') }),
++                          value: t('{count} 个：{list}', { count: displayLanguages.length, list: displayLanguages.map(formatLanguageCode).join(' · ') }),
+                         },
+-                        { label: t('替换行数'), value: t('{count} 行', { count: parsed.rows.length }) },
++                        // 表格行数是**译文表总行数**，不是这次会替换的行数：替换多少要到扫描对账后才知道，
++                        // 这里写成「替换行数」会让用户以为整表都会改。
++                        { label: t('译文表行数'), value: t('译文表共 {count} 行', { count: parsed.rows.length }) },
+                         {
+-                          label: t('文件名'),
+-                          // 与真实产物一致：多语言时提交的是 `<base>__<N>-languages`（execute-step.tsx:1594 附近）
+-                          value:
+-                            allLanguages.length > 1
+-                              ? `${scopeOutputBaseName}__${allLanguages.length}-languages`
+-                              : scopeOutputBaseName,
++                          label: t('输出名称前缀'),
++                          // 只给前缀：多语言批量链交付时会在前缀后按语言追加后缀、目录也另建，
++                          // 把汇总名写进「文件名」会被读成设计稿的新文件名。
++                          value: scopeOutputBaseName,
+                           mono: true,
+                         },
+                         {
+diff --git a/tests/unit/batch-workspace-empty.test.tsx b/tests/unit/batch-workspace-empty.test.tsx
+index 81b48e4..d6acea3 100644
+--- a/tests/unit/batch-workspace-empty.test.tsx
++++ b/tests/unit/batch-workspace-empty.test.tsx
+@@ -21,7 +21,7 @@ describe('空批次素材入口', () => {
+     render(<BatchWorkspaceEmpty><StageFolderGate {...props} onReadFolder={read} /></BatchWorkspaceEmpty>)
+     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'C:/drafts' } })
+     expect(read).not.toHaveBeenCalled()
+-    fireEvent.click(screen.getByRole('button', { name: '扫描并自动配对' }))
++    fireEvent.click(screen.getByRole('button', { name: '读取清单并逐稿扫描' }))
+     expect(read).toHaveBeenCalledWith('C:/drafts')
+   })
+ })
+diff --git a/src/lib/workbench/workbench-mode-preference.ts b/src/lib/workbench/workbench-mode-preference.ts
+index e69de29..b83900b 100644
+--- /dev/null
++++ b/src/lib/workbench/workbench-mode-preference.ts
+@@ -0,0 +1,38 @@
++const STORAGE_KEY = 'tygf-workbench-mode-preference-v1'
++
++type SessionStorageLike = Pick<Storage, 'getItem' | 'setItem'>
++
++function getSessionStorage(): SessionStorageLike | null {
++  try {
++    return typeof window === 'undefined' ? null : window.sessionStorage
++  } catch {
++    return null
++  }
++}
++
++/** 标签页内只记单稿/多稿偏好，不保存设计稿、扫描、授权或执行状态。 */
++export function readWorkbenchModePreference(
++  storage: SessionStorageLike | null = getSessionStorage(),
++): boolean | null {
++  if (!storage) return null
++  try {
++    const value = storage.getItem(STORAGE_KEY)
++    return value === 'true' ? true : value === 'false' ? false : null
++  } catch {
++    return null
++  }
++}
++
++/** 存储不可用时不影响模式切换。 */
++export function writeWorkbenchModePreference(
++  isMultiDraft: boolean,
++  storage: SessionStorageLike | null = getSessionStorage(),
++): boolean {
++  if (!storage) return false
++  try {
++    storage.setItem(STORAGE_KEY, String(isMultiDraft))
++    return true
++  } catch {
++    return false
++  }
++}
+diff --git a/tests/unit/workbench-mode-preference.test.ts b/tests/unit/workbench-mode-preference.test.ts
+index e69de29..9312478 100644
+--- /dev/null
++++ b/tests/unit/workbench-mode-preference.test.ts
+@@ -0,0 +1,44 @@
++import { describe, expect, it, vi } from 'vitest'
++
++import {
++  readWorkbenchModePreference,
++  writeWorkbenchModePreference,
++} from '@/lib/workbench/workbench-mode-preference'
++
++const KEY = 'tygf-workbench-mode-preference-v1'
++
++describe('workbench mode preference', () => {
++  it('stores only the single/multi boolean in session storage', () => {
++    const values = new Map<string, string>()
++    const storage = {
++      getItem: (key: string) => values.get(key) ?? null,
++      setItem: (key: string, value: string) => values.set(key, value),
++    }
++
++    expect(writeWorkbenchModePreference(true, storage)).toBe(true)
++    expect(values.size).toBe(1)
++    expect([...values.entries()]).toEqual([[KEY, 'true']])
++    expect(readWorkbenchModePreference(storage)).toBe(true)
++
++    expect(writeWorkbenchModePreference(false, storage)).toBe(true)
++    expect(values.size).toBe(1)
++    expect([...values.entries()]).toEqual([[KEY, 'false']])
++    expect(readWorkbenchModePreference(storage)).toBe(false)
++  })
++
++  it('ignores missing or invalid preference values', () => {
++    const storage = { getItem: () => 'path-or-permission-state', setItem: vi.fn() }
++    expect(readWorkbenchModePreference(storage)).toBe(null)
++    expect(readWorkbenchModePreference(null)).toBe(null)
++    expect(writeWorkbenchModePreference(true, null)).toBe(false)
++  })
++
++  it('keeps the workbench usable when browser storage throws', () => {
++    const storage = {
++      getItem: () => { throw new Error('blocked') },
++      setItem: () => { throw new Error('blocked') },
++    }
++    expect(readWorkbenchModePreference(storage)).toBe(null)
++    expect(writeWorkbenchModePreference(true, storage)).toBe(false)
++  })
++})

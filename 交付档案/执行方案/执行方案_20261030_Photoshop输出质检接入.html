@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Photoshop 输出质检接入：执行方案</title>
+<style>
+:root{color-scheme:light dark;--bg:#f4f6f8;--card:#fff;--ink:#17212b;--muted:#586575;--line:#dce2e8;--teal:#087e73;--amber:#9a5b00;--soft:#f0fdfa}
+@media(prefers-color-scheme:dark){:root{--bg:#121820;--card:#1b2530;--ink:#edf2f7;--muted:#a8b4c2;--line:#344250;--teal:#60d4be;--amber:#ffcb72;--soft:#17312f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "IBM Plex Sans","Noto Sans SC",system-ui,sans-serif}.wrap{max-width:980px;margin:0 auto;padding:34px 20px 60px}.eyebrow{color:var(--teal);font-weight:700;letter-spacing:.04em}.verdict,.callout,.notes,.gate,.card,.stat,.split article{background:var(--card);border:1px solid var(--line);border-radius:12px}.verdict{padding:18px 20px;margin:18px 0;border-left:5px solid var(--teal)}.callout{padding:16px 20px;background:var(--soft)}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}.split article,.card,.gate,.notes{padding:16px 18px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{padding:14px}.stat strong{display:block;font-size:1.12rem}.muted{color:var(--muted)}h1{line-height:1.25;margin:8px 0 12px}h2{font-size:1.22rem;margin:26px 0 10px}h3{font-size:1rem;margin:10px 0 5px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}ul{padding-left:1.25rem}li{margin:.35rem 0}.gate{border-left:4px solid var(--amber);margin:10px 0}.footer{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);font-size:.88rem;color:var(--muted)}code{font-family:Consolas,monospace;font-size:.9em;overflow-wrap:anywhere}
+@media(max-width:650px){.split,.stats{grid-template-columns:1fr}.wrap{padding:22px 14px 40px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">实施方案 · 2026-10-30</div>
+<h1>Photoshop 输出质检接入</h1>
+<div class="verdict"><strong>结论：</strong>复用 Photoshop 保存后重开回读，生成逐文件复核结果，并在工作台显示摘要。未测到的项目标“未检测”；这项检查不改变执行成功或计费。</div>
+<section class="callout"><strong>对你意味着什么</strong><br>完成后能在交付报告里直接看到哪份文件、哪门语言、哪个图层要检查和原因。缺字、字体及视觉语义仍需人工确认。</section>
+<div class="stats"><div class="stat"><strong>现有采证</strong><span class="muted">重开文字、图层几何、最终文件摘要</span></div><div class="stat"><strong>新增可见结果</strong><span class="muted">逐文件 HTML 复核与工作台摘要</span></div><div class="stat"><strong>保持不变</strong><span class="muted">执行权限、计费和回执判定</span></div></div>
+<h2>最小闭环</h2>
+<div class="cards">
+<article class="card"><h3>1. 对齐真实输入与输出</h3><p>预期译文来自本次确认的执行清单；原稿范围来自用户所选 PSD 的输出前扫描。输出测量绑定到 Photoshop 重开后的同一文件摘要。</p></article>
+<article class="card"><h3>2. 覆盖每个计划图层</h3><p>逐项核对对象、语言、图层和文件身份。缺项、旧摘要或无法测量时保持待复核，不用默认值补成通过。</p></article>
+<article class="card"><h3>3. 把问题送到用户面前</h3><p>HTML 按输出文件和图层列原因；工作台显示当前输出的简短复核摘要。结果只留在本机。</p></article>
+</div>
+<h2>对抗式判据</h2>
+<div class="split"><article><h3>必须拦住</h3><ul><li>产物摘要不匹配</li><li>图层身份缺失或范围不完整</li><li>文字边界越出原稿范围</li><li>缺测数据被写成 0 并显示通过</li></ul></article><article><h3>明确未覆盖</h3><ul><li>当前无法可靠测量的缺字与缺字体</li><li>像素级图形遮挡和对比度</li><li>译文语义正确性及完整图层清单</li></ul></article></div>
+<div class="gate"><strong>安全边界：</strong>这只是生成后的只读复核提示，不参与执行、结算、回执或重试；不会自动修图、上传正文或启用学习规则。</div>
+<h2>现场与验收</h2>
+<ul><li>开工基线：worktrees/develop，HEAD 71529c7c10dae22db64305df042dd07d4392d9a1；工作区已有 89 项变更，本轮保留现场且不提交。</li><li>使用隔离合成 PSD 做实际 Photoshop 保存和重开采证；前后文档数一致，不读取或修改已打开的用户文档。</li><li>更新助手运行身份、报告版本并只在本地构建安装包；不安装、不推送、不部署。</li><li>对照产品宪法 P-003/P-005/P-008/P-009/P-011 与工作台规格 WF-001/WF-005。目标树没有找到产品功能全景文件，本次不推断该索引内的状态。</li></ul>
+<section class="notes"><strong>撤回方式</strong><p>按本轮差异逐项回退代码，不覆盖或清理已有文件。交付报告会记录实际验证结果与仍未检测的项目。</p></section>
+<div class="footer">执行方案只说明本地实施范围。真实客户稿、像素视觉验收、自动修复、自动学习、助手安装、GitHub 推送和两站部署均不在本轮。</div>
+</main></body></html>

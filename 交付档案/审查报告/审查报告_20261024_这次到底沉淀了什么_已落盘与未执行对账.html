@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>这次到底沉淀了什么：已落盘与未执行对账</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+    --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+    --line:#252c38; --line-strong:#38414f;
+    --accent:#78a8ff; --accent-soft:#17233a;
+    --ok:#54cf96; --ok-soft:#12291f;
+    --bad:#ff8d80; --bad-soft:#2c1614;
+    --warn:#e0b64a; --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015; --surface:#151a22; --sunk:#1b212b;
+  --ink:#e8ecf3; --ink-2:#c2cad7; --muted:#8d97a8;
+  --line:#252c38; --line-strong:#38414f;
+  --accent:#78a8ff; --accent-soft:#17233a;
+  --ok:#54cf96; --ok-soft:#12291f;
+  --bad:#ff8d80; --bad-soft:#2c1614;
+  --warn:#e0b64a; --warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font-body);font-size:16px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);
+  display:flex;flex-direction:column;gap:clamp(38px,6vw,60px);
+}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+  display:flex;flex-wrap:wrap;gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:1.25;
+  letter-spacing:-.01em;margin:0;text-wrap:balance;
+}
+.standfirst{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.meta{
+  display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);font-size:.76rem;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);font-weight:600;font-size:1.28rem;
+  line-height:1.35;margin:0;padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:12px;text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);font-size:.74rem;font-weight:500;
+  letter-spacing:.1em;color:var(--accent);flex:none;
+}
+h3{font-family:var(--font-display);font-weight:600;font-size:1rem;margin:0;line-height:1.5}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);font-size:.87em;background:var(--sunk);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+  word-break:break-all;
+}
+.verdict{
+  background:var(--surface);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);line-height:1.6;max-width:46ch;
+  font-weight:500;text-wrap:balance;
+}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 20px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.7rem;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.tag{
+  display:inline-block;font-family:var(--font-mono);font-size:.7rem;
+  letter-spacing:.06em;padding:2px 8px;border-radius:999px;
+  white-space:nowrap;border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;
+  background:var(--sunk);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px 18px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);flex:none}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;grid-template-columns:auto 1fr;gap:16px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);font-size:1.05rem;font-weight:500;
+  color:var(--accent);background:var(--accent-soft);
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+.callout{
+  background:var(--sunk);border:1px solid var(--line);
+  border-radius:var(--radius);padding:15px 18px;font-size:.9rem;
+  color:var(--ink-2);display:flex;flex-direction:column;gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);
+}
+footer{
+  border-top:1px solid var(--line);padding-top:18px;
+  font-size:.83rem;color:var(--muted);
+  display:flex;flex-direction:column;gap:6px;
+}
+footer p{max-width:70ch}
+footer a{color:var(--accent);word-break:break-all}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>账实对账</span><span class="sep">/</span>
+    <span>两轮沉淀 · 已落盘 vs 只在纸上</span><span class="sep">/</span>
+    <span>2026-10-24 23:16</span>
+  </p>
+  <h1>这次到底沉淀了什么</h1>
+  <p class="standfirst">两轮工作真正落盘的，是 4 个文件和 7 件可以直接拿去用的方法；报告里提的 12 项改造，10 项一项没动，1 项由别的工作补齐，1 项只固化了规则。下面把“盘上有什么”和“纸上有什么”逐条对上，数字全部来自本会话 23:16 的复核。</p>
+  <div class="meta">
+    <span>证据等级 A＝本会话实测 / B＝官方与论文 / C＝二手 / D＝推断</span>
+    <span>4 个文件 · 126,469 B</span>
+    <span>12 项：10 未执行 / 1 部分 / 1 已满足</span>
+    <span>0 行业务代码改动</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定：先分清“写完了”和“做完了”</h2>
+  <div class="verdict">
+    <span class="lb">一句话</span>
+    <p>沉淀下来的是<strong>可读、可拿去用的东西</strong>；改造项目的动作<strong>一件都没发生</strong>。<br>这不是遗漏，是这两轮的任务边界——只读盘点与调研，不动业务代码、不动记忆库。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>已经真正落盘的</h3>
+      <ul>
+        <li><strong>4 个文件</strong>：2 份报告，每份各配一份 md 与一份 HTML，共 126,469 B。</li>
+        <li><strong>2 次飞书投递成功</strong>：发送载体是 md，回执 <code>chunks=1</code>、退出码 0。</li>
+        <li><strong>7 件方法件</strong>：三态裁决、覆盖账本、敌意输入规则、反作弊 8 条、任务模板 A/B、5 个项目探针、L0–L6 阶梯。</li>
+        <li><strong>1 项既有能力被补齐</strong>：<code>skills/yt-adversarial-review</code> 已在盘上（746 行），但不是这两轮写的，见第 06 节。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>还只在纸上的</h3>
+      <ul>
+        <li><strong>12 项改造里 10 项未执行</strong>：记忆索引、台账白名单、新鲜度闸、空目录、交付索引、审查 eval、测试门映射、记忆月结、变异测试、三账索引。</li>
+        <li><strong>5 个探针全是方案</strong>（D 级），没有一条在本项目跑过。</li>
+        <li><strong>记忆索引仍超限</strong>：用户级 33,496 B、项目级 37,589 B，上限 25,000 B。</li>
+        <li><strong>能力清单仍停在 10-03</strong>，到今天 21 天没核；台账仍有 9 行枚举外状态。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">4</span><span class="k">个文件真实落盘</span></div>
+    <div class="stat"><span class="n">126,469</span><span class="k">字节，两份报告合计</span></div>
+    <div class="stat ok"><span class="n">2</span><span class="k">次飞书发送成功</span></div>
+    <div class="stat bad"><span class="n">10 / 12</span><span class="k">项改造未执行</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">行业务代码改动</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">这对你意味着什么</span>
+    <p>这份文档不是“已完成清单”，是“账实对账”。报告现在就能读；要变成能力，得另派人做——第 07 节给了三个可选的下一步，推荐 A 案，半天。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>已落盘的四个文件</h2>
+  <p class="lede">两份报告同一天产出，主题是接续的：第一份盘项目、给 12 项建议；第二份钻外部做法、给可复用战术。每份都配 HTML，按项目规矩 md 与 HTML 同目录同名。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>文件</th><th class="mono">字节</th><th class="mono">落盘时刻</th><th>飞书</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>调研报告 md<br><code>审查报告_20261024_全项目可沉淀资产与对抗式审查深水区_调研.md</code></td>
+          <td class="mono">22,929</td>
+          <td class="mono">16:47</td>
+          <td><span class="tag ok">已发</span> chunks=1</td>
+        </tr>
+        <tr>
+          <td>调研报告 HTML（同内容，本地阅读版）<br><code>…_调研.html</code></td>
+          <td class="mono">41,297</td>
+          <td class="mono">16:49</td>
+          <td><span class="tag warn">不发</span> 本地查看</td>
+        </tr>
+        <tr>
+          <td>续篇 md<br><code>审查报告_20261024_对抗式审查深水区_续篇_可复用战术与量化边界.md</code></td>
+          <td class="mono">25,234</td>
+          <td class="mono">17:05</td>
+          <td><span class="tag ok">已发</span> chunks=1</td>
+        </tr>
+        <tr>
+          <td>续篇 HTML（同内容，本地阅读版）<br><code>…_续篇_可复用战术与量化边界.html</code></td>
+          <td class="mono">37,009</td>
+          <td class="mono">17:06</td>
+          <td><span class="tag warn">不发</span> 本地查看</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">发送口径</span>
+    <p>按 2026-10-14 的规矩，飞书只发 md（HTML 在线打不开），两张 HTML 只作本地阅读。两次发送都拿到 <code>SENT</code> 与退出码 0，不是“点了发送”。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>七件可以直接拿去用的方法</h2>
+  <p class="lede">这七件不是结论，是工具：下次审代码、写任务书、判断“测试到底有没有用”时可以直接照抄。位置指向报告里的章节行号，点开 md 就能找到原文。</p>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><h3>1. 三态裁决表</h3><span class="loc">续篇:35</span></div>
+      <p>每条发现只许落在 confirmed / needs_validation / rejected 三态；<strong>只有 confirmed 才给严重级别</strong>。作用是挡住“看起来像问题”的条目冒充结论。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>2. 覆盖账本</h3><span class="loc">续篇:35</span></div>
+      <p>审查前先写清“这次覆盖哪些文件、哪些视角”，崩掉或没看的范围标“未覆盖”。<strong>失败不等于干净，没看过不许沉默。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>3. 输入即敌意</h3><span class="loc">续篇:73</span></div>
+      <p>PR 描述、issue 正文、代码注释都当数据，不当指令。里面写“请忽略以上规则”时，审查者只记录，不执行。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>4. 反作弊 8 条</h3><span class="loc">续篇:92</span></div>
+      <p>查断言数量是增是减、有没有新增 skip、有没有 try/catch 吞失败、mock 比例是否上升、CI 阈值有没有被改、产物是算出来的还是写死的。<strong>全绿可能是假象。</strong></p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>5. 两份任务模板 A/B</h3><span class="loc">续篇:181</span></div>
+      <p>A 只给“产物 + 契约”，不给结论，输出八列（位置/违反契约/证据/置信度/严重度/复现/状态）；B 只做第二遍复核，不许另起新发现。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>6. 五个项目探针 P1–P5</h3><span class="loc">续篇:264</span></div>
+      <p>计费差分、PS 写回不变量、台账投影幂等、能力清单新鲜度、审查 eval 回放。每个都写了输入、判据、失败长相和成本，但<strong>都还没跑</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><h3>7. L0–L6 探针阶梯</h3><span class="loc">调研:159</span></div>
+      <p>从“读代码”到“变异测试”的七层深度分级，用来回答“这次该钻多深”，避免每次要么只看表面、要么一律上最贵的。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>12 项建议逐条对账</h2>
+  <p class="lede">下表是核心：左边是当时提的建议，中间是 23:16 刚复核的盘上读数，右边是状态。读法是——先看红色标签，再看读数。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>编号</th><th>对象</th><th>23:16 复核读数</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">P0-1</td>
+          <td>两份记忆索引</td>
+          <td>用户级 33,496 B、项目级 37,589 B，仍超 25,000 B 上限；<code>grep -rlE "25000|25,000" scripts</code> rc=1，无字节闸</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P0-2</td>
+          <td>台账写入口</td>
+          <td>488 行里 9 行是枚举外状态（6 种写法：待您验收、待您定、已完成、待拍板、已提交待验、等 Owner 拍方向）；写入口脚本最后修改 10-21</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P0-3</td>
+          <td>能力清单新鲜度</td>
+          <td>最新仍是 <code>总控/产品功能全景_20261003.md</code>；<code>grep -rl "产品功能全景" scripts</code> rc=1，无过期检查</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P0-4</td>
+          <td>develop 空目录</td>
+          <td>72 个空目录（排除 node_modules / .git / .next），一个没删</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P1-5</td>
+          <td>交付档案索引</td>
+          <td>无 <code>交付档案/INDEX.md</code>；第一轮数的 1,082 件仍只能按文件名猜</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P1-6</td>
+          <td>审查 eval 集</td>
+          <td><code>REVIEW-EVALS.md</code> 仍是 2 条案例（1,520 B），最后修改 10-20 21:39，种子没抽</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P1-7</td>
+          <td>改动面 → 测试门</td>
+          <td>无 <code>scripts/gate*</code> 包装器；248 个 smoke 脚本仍是平铺</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P1-8</td>
+          <td>记忆月结</td>
+          <td>无 <code>TASK_LOG-*.md</code> 按月文件；TASK_LOG 已到 1,837,787 B / 539 节</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P2-9</td>
+          <td>项目专属对抗审查 skill</td>
+          <td><code>skills/yt-adversarial-review</code> 已存在：SKILL.md 185 行 + 4 个 references，合计 746 行；10-24 17:0x 写入，18:40 随 <code>ffbaa71</code> 入库</td>
+          <td><span class="tag ok">已满足</span><br><small>非本会话产出</small></td>
+        </tr>
+        <tr>
+          <td class="mono">P2-10</td>
+          <td>异构交叉评审</td>
+          <td>规则已写进 skill 第 35 行（跨模型有方向性：弱审查者审强起草者会负收益）；本项目的执行记录<strong>未核实</strong></td>
+          <td><span class="tag warn">部分</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P2-11</td>
+          <td>变异 / 属性 / 差分测试</td>
+          <td><code>grep -rliE "stryker|mutation[- ]testing|变异测试"</code> 对 develop 包与两处 scripts 跑，rc=1（0 命中）；没跑过</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+        <tr>
+          <td class="mono">P2-12</td>
+          <td>三账检索面</td>
+          <td>无目录、无“本周净增”看板；<code>总控/看板.md</code> 是 09-23 的旧一页（16,060 B），不是这件</td>
+          <td><span class="tag bad">未执行</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">为什么是 0 执行</span>
+    <p>这两轮的任务书写的是“盘点 + 调研”，性质是只读：没动业务代码、没跑业务测试、没碰两站、没写记忆库。所以 12 项全是建议，不是“做了没成”。唯一被满足的 P2-9 是盘上已有的另一手产物，我不能记在自己账上。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>记忆在长，但不是这两轮在写</h2>
+  <p class="lede">同一个盘点口径，16:47 和 23:16 各取一次。6.5 小时里记忆和台账都长了一截，而这两轮全程只读——说明另有会话在写。这恰好证明 P1-8 不是纸面问题：不做，它每天自己长。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>文件</th><th class="mono">16:47 读数</th><th class="mono">23:16 读数</th><th class="mono">增量</th><th>谁写的</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>AI_MEMORY/TASK_LOG.md</code></td>
+          <td class="mono">1,650,451 B / 481 节</td>
+          <td class="mono">1,837,787 B / 539 节</td>
+          <td class="mono now">+187,336 B / +58 节</td>
+          <td>别的会话（含 22:14 的写入）</td>
+        </tr>
+        <tr>
+          <td><code>AI_MEMORY/ledger.jsonl</code></td>
+          <td class="mono">357,748 B / 472 行</td>
+          <td class="mono">364,367 B / 488 行</td>
+          <td class="mono now">+6,619 B / +16 行</td>
+          <td>别的会话（含 22:14 的写入）</td>
+        </tr>
+        <tr>
+          <td>用户级 <code>MEMORY.md</code></td>
+          <td class="mono">33,496 B</td>
+          <td class="mono">33,496 B</td>
+          <td class="mono">0</td>
+          <td><span class="tag ok">本轮未变</span></td>
+        </tr>
+        <tr>
+          <td>项目级 <code>MEMORY.md</code></td>
+          <td class="mono">37,589 B</td>
+          <td class="mono">37,589 B</td>
+          <td class="mono">0</td>
+          <td><span class="tag ok">本轮未变</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">对账要点</span>
+    <p>“增量不是我写的”这一点很重要：如果我把它算成自己的产出，就会得出“记忆在良性增长”的假结论。真实情况是——<strong>系统在自动膨胀，而止损措施一项没上</strong>。另外，16:47 那份 481 节的读数是第一轮报告里的原值，本轮用 <code>grep -c "^## "</code> 重数得到 539 节，两次数法一致。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>盘上原有的沉淀：能接链，就别新建</h2>
+  <p class="lede">这几件在本轮之前就有，且经得起用。第一轮报告把它们列为“不要再造”的清单，本轮复核了路径与规模。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>资产</th><th>位置</th><th>复核读数</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>总控一轮机械流程</td>
+          <td><code>.qoder/skills/yt-zongkong-round/</code> 与 <code>skills/yt-zongkong-round/</code>（各有一份 <code>scripts/round-scan.mjs</code>）</td>
+          <td>两处都在（A）</td>
+        </tr>
+        <tr>
+          <td>控制面三件套</td>
+          <td><code>scripts/control-plane.sh</code>、<code>control-plane.mjs</code>、<code>feishu-readback.mjs</code></td>
+          <td>5,276 / 3,035 / 7,883 B；第一轮实跑会红、会点名（A）</td>
+        </tr>
+        <tr>
+          <td>投影对账夹具</td>
+          <td><code>scripts/test-sync-reconcile.sh</code></td>
+          <td>7,989 B；脚本自述 29 条断言，本轮<strong>未重跑</strong></td>
+        </tr>
+        <tr>
+          <td>台账投影</td>
+          <td><code>scripts/sync-task-ledger.sh</code></td>
+          <td>6,748 B，最后修改 10-21 10:15</td>
+        </tr>
+        <tr>
+          <td>交付 HTML 组件体系</td>
+          <td><code>审查报告_20261012_PSD原生改文字_五路对抗式审查.html</code></td>
+          <td>本报告与两份新报告都沿用其组件</td>
+        </tr>
+        <tr>
+          <td>测试资产</td>
+          <td><code>worktrees/develop/scripts/smoke-*.mjs</code>、<code>.github/workflows/</code></td>
+          <td>248 个 smoke 脚本；2 个工作流文件</td>
+        </tr>
+        <tr>
+          <td>对抗审查 skill</td>
+          <td><code>skills/yt-adversarial-review/</code>（用户级另有一份）</td>
+          <td>746 行；10-24 17:0x 写入、<code>ffbaa71</code> 入库（A）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">一句话</span>
+    <p>这个项目的沉淀不是“太少”，是“太散”：248 个探针、三套台账脚本、一套 HTML 组件都在，缺的是<strong>索引和止损闸</strong>。所以 12 项建议里最便宜的几项，都是“接线”，不是“重写”。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>如果只往前推一件</h2>
+  <p class="lede">三个案子的成本与收益都摆出来。我的推荐是 A：它是唯一一个“每开一个新会话都在流血”的口子。</p>
+  <div class="gates">
+    <div class="gate">
+      <div class="num">A</div>
+      <div class="body">
+        <h3>记忆索引瘦身 + 25,000 B 字节闸　<span class="tag ok">推荐</span></h3>
+        <p><strong>做法</strong>：两份 <code>MEMORY.md</code> 每条压到一行、细节下沉到 topic 文件；加一个小脚本，会话开场报字节数，超限即红。<strong>收益</strong>：新会话不再“只加载了一部分”，关键教训不会静默丢失。<strong>成本</strong>：约 0.5 人日。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">B</div>
+      <div class="body">
+        <h3>能力清单新鲜度闸 + 台账写入口白名单</h3>
+        <p><strong>做法</strong>：派工前检查最新一份能力清单日期，不等于当日工作日就报警；台账追加前校验状态白名单、due、claim。<strong>收益</strong>：不再把 10-03 的清单当权威；台账不再长出枚举外状态（现在 9 行）。<strong>成本</strong>：约 1 人日。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">C</div>
+      <div class="body">
+        <h3>变异测试</h3>
+        <p><strong>做法</strong>：先对计费与限额两块做变异，看现有测试能不能抓住人为植入的错误。<strong>收益</strong>：唯一能回答“测试有没有牙齿”的手段。<strong>成本</strong>：3–5 人日，最贵，建议排在 A、B 之后。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>这次明确没做什么</h2>
+  <ul class="notes">
+    <li><strong>没有改业务代码</strong>：两轮都是只读，<code>worktrees/develop</code> 的业务文件一行没动。</li>
+    <li><strong>没有跑业务测试</strong>：没跑 <code>tsc</code>、<code>lint</code>、任何 <code>test:*</code> 或 smoke；本报告里也没有“测试通过”的声称。</li>
+    <li><strong>没有碰两站</strong>：测试站、生产站都没登录、没部署、没推代码。</li>
+    <li><strong>没有写 AI_MEMORY</strong>：TASK_LOG 与 ledger 今日 22:14 的增量来自别的会话；本会话只读。</li>
+    <li><strong>没有把 C 级数字当结论</strong>：外部量化（如 ReviewBench 9.6%、AACR 25.10%、“45 个作弊方案”）只作参考，不作对外主张。</li>
+    <li><strong>没有把方案当实测</strong>：5 个探针全部是 D 级方案，没有一条在本项目跑过；本报告不给“已经验证”的字样。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>证据与复跑命令</h2>
+  <p class="lede">下面的命令都是本会话真实跑过的，读数取自 23:16。想复核任何一格，按原式重跑即可。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>读数</th><th>命令</th><th class="mono">结果</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>四个文件字节</td>
+          <td><code>ls -l --time-style=+%Y-%m-%d\ %H:%M 交付档案/审查报告/ | grep 20261024</code></td>
+          <td class="mono">22,929 / 41,297 / 25,234 / 37,009</td>
+        </tr>
+        <tr>
+          <td>两份记忆索引</td>
+          <td><code>wc -c "C:/Users/ivan/.qoder-cn/memory/MEMORY.md" "C:/Users/ivan/.qoder-cn/projects/F--------------/memory/MEMORY.md"</code></td>
+          <td class="mono">33,496 / 37,589</td>
+        </tr>
+        <tr>
+          <td>能力清单最新件</td>
+          <td><code>ls -1 总控/产品功能全景_*.md | tail -1</code></td>
+          <td class="mono">_20261003.md</td>
+        </tr>
+        <tr>
+          <td>台账行数</td>
+          <td><code>wc -l AI_MEMORY/ledger.jsonl</code></td>
+          <td class="mono">488</td>
+        </tr>
+        <tr>
+          <td>枚举外状态</td>
+          <td><code>node -e "…按 status 分组统计…"</code></td>
+          <td class="mono">6 种写法 / 9 行</td>
+        </tr>
+        <tr>
+          <td>记忆字节闸</td>
+          <td><code>grep -rlE "25000|25,000" scripts</code></td>
+          <td class="mono">rc=1（0 命中）</td>
+        </tr>
+        <tr>
+          <td>能力清单新鲜度闸</td>
+          <td><code>grep -rl "产品功能全景" scripts</code></td>
+          <td class="mono">rc=1（0 命中）</td>
+        </tr>
+        <tr>
+          <td>变异测试</td>
+          <td><code>grep -rliE "stryker|mutation[- ]testing|变异测试" worktrees/develop/package.json scripts worktrees/develop/scripts</code></td>
+          <td class="mono">rc=1（0 命中）</td>
+        </tr>
+        <tr>
+          <td>索引 / 测试门 / 月结</td>
+          <td><code>ls 交付档案/INDEX.md scripts/gate* AI_MEMORY/TASK_LOG-*.md</code></td>
+          <td class="mono">均不存在</td>
+        </tr>
+        <tr>
+          <td>空目录</td>
+          <td><code>find . -type d -empty -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/.next/*" | wc -l</code></td>
+          <td class="mono">72（在 develop 跑）</td>
+        </tr>
+        <tr>
+          <td>smoke 脚本数</td>
+          <td><code>ls worktrees/develop/scripts/smoke-*.mjs | wc -l</code></td>
+          <td class="mono">248</td>
+        </tr>
+        <tr>
+          <td>TASK_LOG 节数</td>
+          <td><code>grep -c "^## " AI_MEMORY/TASK_LOG.md</code></td>
+          <td class="mono">539</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>口径：证据等级 A＝本会话命令实测；B＝官方文档/论文；C＝二手转述；D＝推断。凡未复跑的项目已在上文标注，不冒充已复核。</p>
+  <p>边界：只读对账。未改业务代码、未跑业务测试、未碰测试站与生产站、未推未部署、未写记忆库。</p>
+  <p>同名 md：<a href="file:///F:/工具开发/图译工坊内测版/交付档案/审查报告/审查报告_20261024_这次到底沉淀了什么_已落盘与未执行对账.md">审查报告_20261024_这次到底沉淀了什么_已落盘与未执行对账.md</a></p>
+  <p>被对账的两份报告：<a href="file:///F:/工具开发/图译工坊内测版/交付档案/审查报告/审查报告_20261024_全项目可沉淀资产与对抗式审查深水区_调研.md">调研报告（第一轮）</a>　·　<a href="file:///F:/工具开发/图译工坊内测版/交付档案/审查报告/审查报告_20261024_对抗式审查深水区_续篇_可复用战术与量化边界.md">续篇（第二轮）</a></p>
+  <p>生成时间 2026-10-24 23:16　·　所有读数只对这一刻有效。</p>
+</footer>
+
+</div>
+</body>
+</html>

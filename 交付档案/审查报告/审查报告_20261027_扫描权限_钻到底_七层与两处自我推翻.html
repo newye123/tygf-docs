@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>钻到底 · 扫描权限这条链的七层证据与两处自我推翻</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13px}.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--amb);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:#f0b26b;font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head><body><main>
+<h1>钻到底：扫描权限这条链，七层证据与两处自我推翻</h1>
+<p class="sub">基线 develop <span class="mono">70814271</span> · 只读取证，未跑构建、未改代码、未碰两站 · 2026-10-27 18:0x–18:3x 本会话实测 · 方法 <span class="mono">yt-adversarial-review</span></p>
+
+<div class="verdict"><b>最底层不是"某人点了以管理员运行"</b><br>
+产品里从来没有「两侧完整性级别」这个观测量——所以正确的诊断早在 10-22 就写在盘上，却接在一个<b>永远不会到达的错误号</b>上；而"改了也到不了用户、仪表盘也看不见"这两处，才是它拖到今天的原因。</div>
+
+<h2>一、IS / IS-NOT 四维（先把偏差摆正）</h2>
+<table><thead><tr><th style="width:70px">维度</th><th>IS（坏了）</th><th>IS NOT（没坏）</th><th style="width:190px">差异点</th></tr></thead><tbody>
+<tr><td class="id">What</td><td>扫描必失败，报 429 → <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span>，界面按"未注册"引导</td><td><span class="mono">/ping</span> 200；同机普通权限探针秒通 <span class="mono">VERSION_OK 22.0.0</span>；网页与账务正常</td><td>唯一变量＝发起 COM 的进程级别</td></tr>
+<tr><td class="id">Where</td><td>助手内 <span class="mono">launchPS</span> → wscript → GetObject/CreateObject</td><td>文件读写、哈希、缓存、云端接口全正常</td><td>只坏在跨级别 COM 激活边界</td></tr>
+<tr><td class="id">When</td><td>10-25 17:44:35 起 6/6 全失败；10-23 23:28Z 还成功</td><td>10-25 08:14–17:44 同一 Photoshop 正常（未重启）</td><td>变化点＝助手被提权身份重新拉起</td></tr>
+<tr><td class="id">Extent</td><td>所有需要 Photoshop 自动化的操作</td><td>Photoshop 本身可用，文档可开可存</td><td>边界在"自动化驱动"，不在"PS 能不能用"</td></tr>
+</tbody></table>
+<p class="sub">合格判据：候选原因必须解释全部 IS 且不与任何 IS NOT 冲突。未注册／多版本冲突／票据失效／PS 没开四个候选，都被"同机普通权限秒通 22.0.0"打掉。</p>
+
+<h2>二、七层下钻</h2>
+<table><thead><tr><th style="width:56px">层</th><th style="width:210px">结论</th><th>证据（原式／读数）</th><th style="width:120px">还能钻吗</th></tr></thead><tbody>
+<tr><td class="id">L1 界面</td><td>报"未注册／自动化不可用"</td><td><span class="mono">engine.log</span> 6 行 scan_threw，durMs 709,486–771,326</td><td>能</td></tr>
+<tr><td class="id">L2 进程</td><td>助手/引擎 High(12288)，PS Medium(8192)</td><td>令牌探针实测回显（本会话）</td><td>能</td></tr>
+<tr><td class="id">L3 提权来源</td><td>由提权父进程拉起，非助手自提权</td><td>安装包清单 <span class="mono">asInvoker</span>；进程启动与 <span class="mono">unins000.dat</span> 相差 1 秒；Layers 无 RUNASADMIN（正控能读出 HIGHDPIAWARE 条目）</td><td>能</td></tr>
+<tr><td class="id">L4 谁启动</td><td><b>不是资源管理器双击</b></td><td>UserAssist 61 条命中里，历轮安装包都在（<span class="mono">Desktop\...3.7.7/8/10/11/13/14/15.exe</span>），<b>唯 3.7.28 一条都没有</b>；且 <span class="mono">[Run]</span> 带 <span class="mono">skipifsilent</span></td><td><b>到此</b>：具体命令无盘上残留（Security 日志该窗口 0 事件）⇒ 未核实</td></tr>
+<tr><td class="id">L5 代码接错线</td><td>正确诊断早在盘上，接在永不到达的错误号上</td><td><span class="mono">server.js:1794-1803</span> 已存在 <span class="mono">PHOTOSHOP_PERMISSION_MISMATCH</span>（触发号 70／-2147024891），而实测 VBS 只写 <span class="mono">ERR_COM: 429</span></td><td>能</td></tr>
+<tr><td class="id">L6 为什么会提权</td><td><b>我们自己在教用户提权</b>（20:40 复测：这样的地方是 <b>4 处</b>，不是 2 处）</td><td>出厂件 <span class="mono">diagnostics/README.txt:34</span>「右键…以管理员身份运行」；同文件 <span class="mono">:22</span>；<span class="mono">Fix-Photoshop-COM.ps1:138</span> 同一句话；<span class="mono">Run-Photoshop-COM-Fix.bat:18</span> 检测后自 <span class="mono">RunAs</span> 提权；<b>最可及的一处</b>＝安装器把它做成开始菜单项 <span class="mono">build/installer.iss:96</span>「修复 Photoshop COM」；UserAssist 里确有该 bat 两条启动记录；<span class="mono">ISSUES #253</span>（10-22）已登记镜像情形</td><td>能</td></tr>
+<tr><td class="id">L7 治理</td><td>改了到不了用户；仪表盘没有这根轴</td><td><span class="mono">ISSUES #259/#262</span> 原文命中今天；<span class="mono">control-plane.sh</span> 里 PHOTOSHOP=0、durMs/扫描=0（正控 在办/ledger=2）；口径件 PHOTOSHOP/权限=0</td><td><b>到底</b>：再往下是组织流程，非本仓可判定量</td></tr>
+</tbody></table>
+
+<h2>三、本轮推翻我自己两条说法</h2>
+<div class="callout bad"><b>错</b>：「本机没有 Inno Setup，所以出不了包」。<br>
+<b>对</b>：<span class="mono">C:\Users\ivan\AppData\Local\Programs\Inno Setup 6\ISCC.exe</span>（1,456,272 B，2026-05-22）实测运行回显 <span class="mono">Inno Setup 6 Command-Line Compiler</span> rc=0；HKCU 卸载项 Setup Version <b>6.7.3</b>；<b>3.7.28 包就是本机 10-25 15:48:03 出的</b>（25,545,674 B）。我只查了两个 <span class="mono">Program Files</span> 固定目录就下"没有"的结论——正是本项目明令禁止的错法。<br>
+<b>连带改判</b>：防复发不是"只能等构建机"；真正的拦路是脏树门（同树 38 项在飞）＋版本未 bump（#259/#262）＋装机要你授权。</div>
+<div class="callout bad"><b>降级为未核实</b>：上一轮"提权来自安装程序 postinstall 那一步"。① <span class="mono">[Run]</span> 带 <span class="mono">skipifsilent</span>（静默装不自启）；② 3.7.28 在用户启动记录里 0 命中。⇒ 正确表述：由一个已提权的父进程在安装完成同一秒拉起，<b>具体命令无法从盘上证实</b>。</div>
+
+<h2>四、确认住的地方（七把刀跑过的 Survived）</h2>
+<table><thead><tr><th style="width:70px">刀</th><th style="width:190px">问题</th><th>判定与依据</th></tr></thead><tbody>
+<tr><td>反例</td><td>其实是注册表坏了？</td><td class="ok">Survived — 同机普通权限秒通 22.0.0（17:12:18 rc=0）</td></tr>
+<tr><td>边界</td><td>PS 没开时说什么？</td><td class="ok">Survived — 守卫排在 202 之后，门内有顺序断言</td></tr>
+<tr><td>并发</td><td>两边都管理员会误伤？</td><td class="ok">Survived — 判据两侧实测；真值表 8 行；自检含 sameLevel429</td></tr>
+<tr><td>依赖</td><td>读不到级别会误拦？</td><td class="ok">Survived — 非数字即放行＋留痕</td></tr>
+<tr><td>时序</td><td>/ping 会变慢？</td><td class="ok">Survived — 只在助手 ≥12288 时付，60 秒 TTL</td></tr>
+<tr><td>观测</td><td>改了源码算出厂了吗？</td><td class="bad"><b>没 Survived</b> — 不 bump 不出包，用户机上还是错话术（#259/#262 原样命中）</td></tr>
+<tr><td>观测</td><td>这类卡住能被发现吗？</td><td class="bad"><b>没 Survived</b> — 控制面与第一指标口径权限/耗时维度 0 命中（已实测）</td></tr>
+</tbody></table>
+
+<h2>五、残留检验点与覆盖缺口（如实）</h2>
+<ul>
+<li><b>未核实</b>：① 17:44:35 那次启动的具体命令；② UserAssist 的 72 字节值布局（SYSTEMTIME／FILETIME 两种候选扫描全 null ⇒ 只用到"键名存在性"，值层未用）；③ 下载页／帮助文档是否还留着提权指引（本轮只查了出厂件）。</li>
+<li><b>没跑</b>：<span class="mono">test:contracts</span> 整串（他手在飞）；没装机、没部署、没推送；没实机构造"两侧都管理员"。</li>
+<li><b>重复登记</b>：根账 ISSUES 里 <b>#258≡#261、#259≡#262</b> 标题逐字相同（行 2020/2042、2028/2050）⇒ 同一问题两个号，状态会各走各的。</li>
+</ul>
+
+<h2>六、20:40 复测更正与两处新事实（同一会话内，逐条给命令）</h2>
+<ul>
+<li><b>路径抄错，事实不变</b>：初稿把 3.7.28 安装包写成 <span class="mono">build/dist/…3.7.28.exe</span>。复测 <span class="mono">ls download/local-assistant/build/dist/*.exe</span> ⇒ 那里最新只到 <b>3.7.6</b>（10-06）；真身在 <b><span class="mono">worktrees/develop/public/downloads/tygf-engine-setup-3.7.28.exe</span>，25,545,674 B，2026-10-25 15:48:03</b>，与初稿引的字节数与时刻<b>逐位相同</b> ⇒「本机出过包」成立，只是指针写歪。同目录 3.7.20～3.7.27 连续八枚在案。</li>
+<li><b>「教用户提权」是 4 处不是 2 处</b>（<span class="mono">grep -rn 以管理员身份|RunAs|需管理员 diagnostics/</span>）：<span class="mono">README.txt:22</span>、<span class="mono">README.txt:34</span>、<span class="mono">Fix-Photoshop-COM.ps1:138</span>、<span class="mono">Run-Photoshop-COM-Fix.bat:18</span>；<b>外加开始菜单项</b> <span class="mono">installer.iss:96</span>「修复 Photoshop COM」直指那个自提权脚本。⇒ 方案 B3 的范围按 <b>5 点</b>改，不能只改 <span class="mono">README.txt:34</span>。</li>
+<li><b>安装器正被另一会话重写</b>：<span class="mono">installer.iss</span> mtime 实测 <b>2026-10-27 18:16:49</b>，新增整段 <span class="mono">[Code]</span>（<span class="mono">PrepareToInstall</span> 先调 <span class="mono">--exit</span>、等互斥体 15 秒，兜底 <span class="mono">taskkill /F /IM</span> 按专名强关托盘与引擎），<span class="mono">AppVersion</span> 已是 <b>3.7.29</b>。⇒ 我原 B2 的「给 <span class="mono">[Run]</span> 加 <span class="mono">runasoriginaluser</span>」必须<b>等他落地</b>；3.7.29 这个号已被他占用，我的包只能顺延 <b>3.7.30</b> 或并入他这一枚。</li>
+<li><b>控制面轴位缺口复现</b>：<span class="mono">grep -a -c PHOTOSHOP scripts/control-plane.sh</span> ⇒ <b>0</b>（rc=1），本轮再测仍为 0。</li>
+</ul>
+<footer>图译工坊 · 钻到底报告 · 对应 md：交付档案/审查报告/审查报告_20261027_扫描权限_钻到底_七层与两处自我推翻.md</footer>
+</main></body></html>

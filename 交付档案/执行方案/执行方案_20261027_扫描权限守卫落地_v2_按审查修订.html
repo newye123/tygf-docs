@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案 v2 · 扫描权限守卫（按审查修订）</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13px}.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--grn);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:#7dd8a8;font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11.5px;color:var(--mut)}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>执行方案 v2 · 扫描权限守卫（按对抗式审查修订）</h1>
+<p class="sub">依据：审查报告 Round 1/3（VERDICT＝打回）· 基线 develop <span class="mono">70814271</span> · 2026-10-27 17:4x</p>
+
+<div class="verdict"><b>新判据（一句话，可判定）</b><br>
+只有「实测到本进程完整性级别<b>高于</b>实测到 Photoshop 进程的级别」才拒绝扫描。任何一方读不到 ⇒ <b>不拒绝</b>（宁可让老路径自己失败，也不新增一条会误伤的闸）。</div>
+
+<h2>一、六项改动</h2>
+<table><thead><tr><th style="width:50px">#</th><th style="width:70px">处置</th><th>改动</th><th style="width:210px">落点</th></tr></thead><tbody>
+<tr><td class="mono">D1</td><td>I-01</td><td>判据换成两侧级别比较：<span class="mono">photoshopRid &lt; assistantRid</span>；任一侧非数字 ⇒ false</td><td class="mono">scan-error-code.cjs:49-51</td></tr>
+<tr><td class="mono">D2</td><td>I-01</td><td>新增 <span class="mono">photoshopIntegrityRid()</span> 只读探针，按 PID 缓存；只在助手 ≥12288 时才付出开销</td><td class="mono">server.js:524 附近</td></tr>
+<tr><td class="mono">D3</td><td>I-01/I-02</td><td><span class="mono">assistantElevated()</span> 改为返回级别数字；PS 没跑 ⇒ rid=null ⇒ 不拒（顺带解掉引擎通道误拒）</td><td class="mono">server.js:5715-5718 · 5740-5746</td></tr>
+<tr><td class="mono">D4</td><td>I-03</td><td><span class="mono">markExecutionFailure</span> 的「置 unavailable」码清单补新码（全仓同类清单 6 处，唯此漏）</td><td class="mono">server.js:2682-2690</td></tr>
+<tr><td class="mono">D5</td><td>I-05</td><td>探针抛错留痕 <span class="mono">outcome=privilege_probe_failed side=…</span>，只写值与类型</td><td class="mono">server.js:535-536 · D2 新函数</td></tr>
+<tr><td class="mono">D6</td><td>I-04</td><td>仅源码生效的 <span class="mono">TYGF_DEBUG_ASSISTANT_RID</span>，用来真跑 422 与其负控</td><td class="mono">assistantIntegrityRid() 内</td></tr>
+<tr><td>—</td><td>D18 同训</td><td>429 分类与界面提示共用同一判据函数，不留第二套真值</td><td class="mono">server.js:1697-1725 · 3579-3587</td></tr>
+</tbody></table>
+
+<h2>二、验证门（执行后填真实读数）</h2>
+<table><thead><tr><th style="width:50px">#</th><th>命令 / 动作</th><th style="width:290px">期望</th></tr></thead><tbody>
+<tr><td>V1</td><td class="mono">node --check server.js</td><td>rc=0</td></tr>
+<tr><td>V2</td><td class="mono">node server.js --self-test-errors</td><td>rc=0</td></tr>
+<tr><td>V3</td><td class="mono">node scripts/smoke-preparation-failure-observation.mjs</td><td>rc=0，真值表换成级别比较 6 行</td></tr>
+<tr><td>V4</td><td>门内新增：清单含新码</td><td>PASS</td></tr>
+<tr><td>V5</td><td>负控：判据改成常量 <span class="mono">assistantRid === 12288</span></td><td><b>门必须红</b>（证明门在判事）</td></tr>
+<tr><td>V6</td><td class="mono">npx tsc --noEmit</td><td>只允许别手在飞那一条红；我的文件 0 条</td></tr>
+<tr><td>V7</td><td class="mono">npm run lint</td><td>rc=0</td></tr>
+<tr><td>V8</td><td><b>真跑 422</b>：临时目录源码实例（端口 49177 ＋ <span class="mono">TYGF_DEBUG_ASSISTANT_RID=12288</span>）真发一次扫描请求</td><td>HTTP 422 ＋ 新码 ＋ 未新建 <span class="mono">preparation_*</span> 任务目录</td></tr>
+<tr><td>V9</td><td><b>负控</b>：同实例改 <span class="mono">=8192</span> 再发一次</td><td><b>不是</b> 422（证闸不恒拒）</td></tr>
+<tr><td>V10</td><td>收尾</td><td>只按该实例 PID 收（不按镜像名批杀）；删临时件后 <span class="mono">git status</span> 与执行前一致</td></tr>
+</tbody></table>
+<div class="callout"><b>如实披露的副作用</b>：源码实例启动 300 毫秒会做一次<b>只读 COM 握手</b>（读 Photoshop 版本号，与 17:11 我跑过的 <span class="mono">/diagnostic</span> 同一动作；不改文档、不设 busy）。本机 Photoshop 此刻开着，所以这一步会发生。</div>
+
+<h2>三、边界</h2>
+<ul>
+<li>不提交、不推送、不出包、不部署；测试站与生产不碰；支付 flag 不动。</li>
+<li>不改 <span class="mono">installer.iss</span>（本机无 <span class="mono">ISCC.exe</span>；这条是事故源头，但属安装器路径，永远需人审＋构建机）。</li>
+<li>不碰同树别手在飞改动；不整树 <span class="mono">git add</span>。</li>
+<li>不重启、不杀现役助手（PID 46636／36708 属 Owner 正在用的实例，只读取证）。</li>
+</ul>
+
+<h2>四、回退法</h2>
+<ol>
+<li>执行前出 patch 存证：<span class="mono">git diff -- 我这 5 个文件 &gt; tmp/privilege-guard-20261027.patch</span></li>
+<li>回退 = <span class="mono">git apply -R</span> 该 patch；<b>不用</b> <span class="mono">git checkout --</span>（共享树上会连带吞别手在同文件的改动，审查 P-01 已证同树正在被写）。</li>
+</ol>
+
+<h2>五、交付后交给 Owner 的三选一</h2>
+<ul>
+<li><b>A</b> 改动留脏区不提交：零风险，但可能被别手提交吞掉或随他人部署意外上线。</li>
+<li><b>B</b> 我这 5 个文件单独提交（先逐 hunk 证明只含我的改动）：我的活不丢，测试站下次部署会带上（不部署不生效）。</li>
+<li><b>C</b> 连安装器根治一起排期（构建机＋签名＋三段轨）：别人不再踩，但要出包授权。</li>
+</ul>
+<p>推荐：<b>先 B，C 另立单</b>。</p>
+
+<footer>图译工坊 · 执行方案 v2 · 对应 md：交付档案/执行方案/执行方案_20261027_扫描权限守卫落地_v2_按审查修订.md</footer>
+</main></body></html>

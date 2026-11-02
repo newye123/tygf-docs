@@ -1,0 +1,478 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 第二轮 · 英文站说法修正 + 迁移门更正</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>执行报告（第二轮）｜英文站说法修正落地 + 我自己那条"发版会爆"的更正</h1>
+  
+  <div class="meta"><span>日期：2026-10-27 10:02（本机钟，<code>date</code> 两次取样 10:03:17／10:03:19 稳定）</span>
+    <span>钟点更正：本件页眉初稿曾写「00:2x」，那是把上一轮（封驳件重落盘，实测 mtime 00:04:38）的钟点误当本轮。按文件 mtime 定案：两处代码改动 <strong>09:55:27／09:55:33</strong>，真页面取数 <strong>10:01:44</strong>，本件落盘 <strong>10:02:46</strong>。初稿那行不回改，在此点名更正。</span>
+    <span>依据：Owner 对两问的选择——第一件（生产 nginx）<strong>待他单独点头</strong>；第二件（英文站）选 <strong>A：只收邮件，但把说法写清楚</strong>；那条 500 的雷按"必修"处理。</span>
+    <span>基线：开发树 <code>worktrees/develop@9048c13a</code>（未提交、未推送、未发版）</span>
+    <span>本轮我改的文件（2 个）：<code>M src/config/siteContentEn.ts</code>、<code>M src/components/site/home-view-en.tsx</code></span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话结论</h2>
+  <p><strong>英文站的说法改完了，真渲染验过；同时我要更正自己上一条判断——那颗雷比我说的窄，而且仓库里早就有那道门，我不该再造。</strong></p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>1. 做了什么：英文站"TRY IT"不再让人误以为能提交</h2>
+  <p>只改表达，不改行为。四处：</p>
+  <ul><li>章节标签 <code>08 / TRY IT</code> → <strong><code>08 / GET IN TOUCH</code></strong>（<code>home-view-en.tsx:556</code>）。原来那个标签配上一个只有邮件链接的区块，访客会以为往下能找到表单。</li><li>面板标题 <code>Request beta access</code> → <strong><code>Request beta access — by email</code></strong>。</li><li>正文首句新增一句明说：<strong><code>This page has no application form: email is the only way to reach us here.</code></strong></li><li>第一条要点 <code>Tell us your project size...</code> → <strong><code>In your email, tell us...</code></strong>（把"告诉我们"落到"在邮件里告诉我们"，不再暗示页面会收）。</li></ul>
+  <p><strong>没动</strong>：<code>mailto</code> 链接、区块结构、任何代码逻辑、中文站一个字。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>2. 真实运行证据</h2>
+  <p>验证方式：本机 <code>:3000</code> 上已有另一会话起的 dev 服务（PID 51216，同树 ⇒ 我的改动即时生效）。<strong>我没有杀它</strong>（按纪律只按 PID 收尾、且 :3000 历史上是 Owner 的隧道口），直接只读复用它取真页面。</p>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>期望</th><th>实测</th></tr></thead><tbody>
+  <tr><td><code>curl http://localhost:3000/en</code></td><td>200</td><td><code>EN_HTTP=200 bytes=50281</code></td></tr>
+  <tr><td>新标签 <code>GET IN TOUCH</code> 在</td><td>≥1</td><td><code>1</code></td></tr>
+  <tr><td>旧标签 <code>08 / TRY IT</code> 在英文站消失</td><td>0</td><td><code>0</code></td></tr>
+  <tr><td>"no application form" 声明在</td><td>≥1</td><td><code>1</code></td></tr>
+  <tr><td>标题含 <code>— by email</code></td><td>≥1</td><td><code>1</code></td></tr>
+  <tr><td><strong>负控</strong>：英文站仍无表单控件</td><td>0</td><td>`grep -c "&lt;input\</td><td>&lt;textarea" home-view-en.tsx<code> → </code>0`</td></tr>
+  <tr><td><strong>负控</strong>：<code>mailto</code> 仍在（证明没偷偷加表单）</td><td>≥1</td><td><code>3</code></td></tr>
+  <tr><td>中文站未受影响（仍 <code>08 / TRY IT</code>）</td><td>≥1</td><td><code>1</code></td></tr>
+  <tr><td>中文站上一轮的"（选填）"仍在</td><td>≥4</td><td><code>8</code></td></tr>
+  <tr><td><code>curl http://localhost:3000/</code></td><td>200</td><td><code>ZH_HTTP=200 bytes=108194</code></td></tr>
+  <tr><td>类型检查</td><td>rc=0</td><td><code>npx tsc --noEmit</code> → <strong>TSC_RC=0</strong></td></tr>
+  <tr><td>代码规范（我这两个文件）</td><td>rc=0</td><td><code>npx eslint siteContentEn.ts home-view-en.tsx</code> → <strong>ESLINT_RC=0</strong></td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>3. 更正我自己：F-11 那颗雷比我说得窄，而且门已经有了</h2>
+  <p>我上一轮写的是「<strong>下一次发版如果不带 <code>prisma migrate deploy</code>，官网申请会 100% 提交失败</strong>」，并建议「加一道自动检查：代码里有新表但没建表脚本，就不许出包」。本轮实测后要改口：</p>
+  <ol><li><strong>对测试站不成立。</strong> 那条迁移<strong>已经在测试站发布脚本的批准名单里</strong>：<code>deploy/deploy-test-release.sh:500</code> 有 <code>20261024120000_application_attribution</code>，还带 sha256 与预期表名/索引名。测试站发布会自动应用，不会漏。</li><li><strong>仓库里早就有那道门，我不该再造。</strong> <code>scripts/check-migration-drift.mjs</code>（页眉写明病根＝2026-10-10 <code>cebb737</code> 那次"部署脚本不认识新迁移目录 ⇒ 静默跳过"事故），npm 入口 <code>test:migration-drift</code>。它的自测本轮跑了一遍，<strong>7 例全绿</strong>（含 4 条负控：多一个未批准迁移必须 rc=1、<code>--baseline</code> 指向不存在目录必须 rc=2 不得静默退回、production 无名单必须 rc=2 不算通过、未知 target 必须 rc=2）。</li><li><strong>对生产成立，但机制不是"没有门"，而是"门拒绝盖章"。</strong> <code>deploy/deploy-release.sh</code> 里 <code>approved_migrations</code> 与 <code>migrate</code> 两条 grep <strong>全为空</strong> ⇒ 生产部署脚本根本不跑迁移；而 <code>node scripts/check-migration-drift.mjs --target production</code> 实测 <strong>rc=2</strong>，原文：<code>no approved-migration ledger rows found ... manual review required, this is not a pass</code>。</li><li><strong>今天真正爆的现场是本机开发库</strong>：develop 的开发库从没跑过 <code>migrate deploy</code>，所以本地测表单必 500（我本轮用隔离库 <code>tmp/en-check.db</code> 全量应用后 rc=0 才验通）。这是<strong>环境问题，不是发布缺陷</strong>。</li></ol>
+  <p><strong>所以动作改成这一条（不需要写代码）</strong>：生产发布清单里显式加一步——「生产库的 <code>prisma migrate deploy</code> 是<strong>独立人工动作</strong>；<code>check-migration-drift --target production</code> 恒回 rc=2，必须有人核对并签字，<strong>不得因为部署脚本退出码 0 就认为迁移已应用</strong>」。这条我落进本报告的 §5 待办，不新造门。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>4. 本轮没做（按上一轮我给你的约定）</h2>
+  <ul><li>没提交、没推送、没发版——这三件我说好单独问你要。</li><li>没动生产服务器（第一件仍等你一个字）。</li><li>没杀任何进程：<code>:3000</code> 那个 dev 是别会话的，我只读复用。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>5. 待办</h2>
+  <ol><li><strong>等你一个字</strong>：生产 nginx 加 <code>$host</code>/<code>$request_time</code>（改法、验证式、回滚式都在 v2 §3 B1）。这是唯一卡住"真人数"的口子。</li><li>发版时执行 §3 第 4 条那一步（生产库人工补迁移 + 核 rc=2）。</li><li>真人数量出来后，再定"当前批量台四步真素材录屏（T2b）"和"交互沙盘（try-sandbox）"要不要做。</li><li>埋点（B5）仍压在条款第五节变更后面，未开工。</li></ol>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>

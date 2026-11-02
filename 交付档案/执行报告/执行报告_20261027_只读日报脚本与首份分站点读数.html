@@ -1,0 +1,481 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 第四轮 · 只读日报脚本</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>执行报告（第四轮）｜只读日报脚本落地：官网真人候选数第一次每天早上自动出</h1>
+  
+  <div class="meta"><span>日期：2026-10-27 14:17（本机钟 <code>date</code> 回显）</span>
+    <span>授权：Owner「那就按A来」——加一只<strong>只读</strong>日报脚本并接进每早控制面。</span>
+    <span>本轮新增/改动（容器根，不在 develop 应用树内）：</span>
+    <span>未做：未提交、未推送、未发版；未碰生产配置（B1 上一轮已完成）。</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话结论</h2>
+  <ul><li><code>?? scripts/site-traffic-report.mjs</code>（新）</li><li><code>M  scripts/control-plane.sh</code>（加一段只读读数，失败不改变巡检结论）</li></ul>
+  <p><strong>能用了，而且第一份真读数已经出来。</strong> 每天早上一条命令（已接进你现有那条巡检）会告诉我们：官网有几个真人候选、几个爬虫、多少人打开下载页、有没有人提交申请、首页最慢多少秒。<strong>过程里抓到两个真缺陷，其中一个是"负控自己巧合通过"——那条最值钱。</strong></p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>2. 第一份真读数（B1 之后约 3.5 小时累计，只读聚合，本机不含 IP）</h2>
+  <p>```</p>
+  <p>官网：真人候选 IP 19｜爬虫 IP 6｜首页命中 20（真人首页 IP 8）｜下载页 1｜申请提交 0｜首页最慢 30.057s（&gt;2s 4 次）</p>
+  <p>  其中 23 次来自服务器自身 IP（健康检查），已单列</p>
+  <p>内测站：命中 459｜真人候选 IP 4｜申请提交 0（403 为其既有门禁）</p>
+  <p>覆盖诚实性：3797 行无 host=（B1 之前的历史），未计入任何站点</p>
+  <p>```</p>
+  <p>三条直接可读的含义：</p>
+  <ul><li><strong>官网与内测站第一次能分开</strong>：459 次内测站命中只来自 4 个 IP（那是助手与工作台在轮询接口），以前这些全混在"访问量"里。</li><li><strong><code>首页最慢 30.057 秒、&gt;2s 有 4 次</code></strong> 是这条链上第一次量到官网自身慢不慢——B1 加的 <code>rt=</code> 直接兑现。</li><li><strong>申请提交 0</strong> 与上一轮 nginx 结论一致（B1 之后仍然 0 次 POST）。</li></ul>
+  <p><strong>边界</strong>：3.5 小时不是完整一天，且"真人候选"仍会把带浏览器 UA 的机房代理算进来。<strong>首个可比窗口仍是明天 10-28 的整日。</strong></p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>3. 过程里抓到的两个真缺陷（这才是本轮的价值）</h2>
+  <p><strong>缺陷一：字段位假设反了。</strong> 我按"<code>$NF</code> 是 host"写解析，实际行尾是 <code>host=X rt=Y</code> ⇒ <code>$NF</code> 是 <code>rt=</code>。表现是<strong>所有计数为 0 而不报错</strong>——最坏的一种坏法。改成按前缀扫末尾字段，不靠位置。</p>
+  <p><strong>缺陷二（要紧）：我自己写的负控会巧合通过。</strong> 我有一条负控是"把爬虫 UA 换成浏览器 UA，真人 IP 应该变 3"。而当时爬虫正则只写了小写 <code>python</code>，<strong><code>Python-urllib</code> 根本没被识别成爬虫</strong> ⇒ 基线里它已经算真人 ⇒ 换不换都是 3 ⇒ <strong>负控绿着，探测器却是坏的</strong>。</p>
+  <p>修法两条：① 正则补大小写字符类（<code>[Pp]ython</code> 等，不用 gawk 的 <code>IGNORECASE</code>，因为服务端 <code>awk</code> 可能是 mawk）；② <strong>把该负控改成相对基线断言</strong>（"必须比基线恰 +1"），这样探测器坏掉时它必然变红。改后基线 真人 2／爬虫 2，负控 2→3 成立。</p>
+  <p>这条正是本项目反复记过的形状：<strong>判据自身要能被证伪，否则它只是在给自己盖章。</strong></p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>4. 运行证据</h2>
+  <div class="scrollx"><table><thead><tr><th>项</th><th>结果</th></tr></thead><tbody>
+  <tr><td>自测（跑的是<strong>同一份 awk</strong>，非 JS 复刻件）</td><td><code>node scripts/site-traffic-report.mjs --self-test</code> → <strong>15 例全部通过，rc=0</strong>（含 3 条负控）</td></tr>
+  <tr><td>真机读数</td><td><code>REPORT_RC=0</code>，输出见 §2</td></tr>
+  <tr><td>静默模式（给巡检用）</td><td><code>SITE-TRAFFIC ok new_format=578 legacy=3797</code>，rc=0</td></tr>
+  <tr><td>接入每早巡检</td><td><code>bash scripts/control-plane.sh</code> → 末段出现 <code>官网流量读数：SITE-TRAFFIC ok ...</code>，rc 与接入前一致</td></tr>
+  <tr><td><strong>负控 N1</strong>：读数自身失败要响亮</td><td><code>SITE_TRAFFIC_SSH_HOST=no-such-host-xyz ... --quiet</code> → <code>SITE-TRAFFIC UNAVAILABLE rc=255 ssh: Could not resolve hostname</code>，<strong>rc=1</strong></td></tr>
+  <tr><td><strong>负控 N2</strong>：读数挂了不许改变巡检结论</td><td>同一坏主机跑整条巡检 → 打印 <code>⚠ 官网流量读数不可用（…不影响本巡检结论）</code>，且 <code>ledger_exit=1 readback_exit=1</code> <strong>与健康那次逐字相同</strong></td></tr>
+  <tr><td>隐私边界</td><td>本机只接收聚合计数；IP、UA、正文均不出服务器（awk 在服务端跑，脚本里无字段外传）</td></tr>
+  <tr><td>Lint</td><td><strong>不适用</strong>：容器根无 eslint 配置（<code>npx eslint</code> rc=2 为"找不到配置"，非本文件问题）；develop 应用树未被本轮改动</td></tr>
+</tbody></table></div>
+  <p><strong>巡检本身是红的</strong>：<code>判定：ALARM ⛔ 121 项</code>（机器列漂移、重复行等），<strong>全部是既有台账问题，与本轮无关</strong>，我没有顺手改它们。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>5. 明天起怎么用</h2>
+  <ul><li>你不用记命令：<code>bash scripts/control-plane.sh</code> 每天早上那条，末尾会多一行官网流量读数。</li><li>要看明细：<code>node scripts/site-traffic-report.mjs</code>；要 JSON：加 <code>--json</code>。</li><li>不想看：<code>CONTROL_PLANE_SKIP_TRAFFIC=1</code> 前缀即可跳过。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>6. 下一步</h2>
+  <ol><li><strong>明天 10-28 给第一份整日读数</strong>，并附一句"这对你意味着什么"。</li><li>有了整日真人基线，才能判 T2b（当前批量台真素材录屏）值不值得做——如果真人一天只有个位数，先解决"来的是谁"而不是"给他看什么"。</li><li>浏览器埋点（B5）仍压在条款第五节变更后面。</li><li>提交/推送/发版仍等你单独点头；本轮 3 个文件改动留在容器根工作树未提交。</li></ol>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>

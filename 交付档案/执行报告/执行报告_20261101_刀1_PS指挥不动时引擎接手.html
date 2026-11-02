@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>刀1 交付：PS 指挥不动时引擎接手 · 2026-11-01</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.7rem,4.2vw,2.5rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.06rem);color:var(--ink-2);max-width:64ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{margin:0;font-size:1.08rem;line-height:1.65;max-width:60ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.42rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--warn)}
+.panel h3{margin:0;font-size:.94rem}.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>交付</span><span>/</span><span>免PS换手 · 刀1</span><span>/</span><span>2026-11-01</span></p>
+  <h1>左手不听指挥时，右手真的接上活了</h1>
+  <p class="standfirst">四刀方案的第一刀落地：通道判据从"Photoshop 进程在不在"改成"这次指挥得动吗"（只认实测），并且补上更要紧的一道护栏——缓存不再骗过换手。免PS通道没开的机器上，今天的行为一个字节都没变。未提交、未推送、未部署。</p>
+  <div class="meta"><span>7 文件</span><span>运行时门 7 格 rc=0</span><span>test:contracts rc=0</span><span>tsc rc=0</span><span>lint 0 error</span><span>单测 552/46</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论与影响</h2>
+  <div class="verdict">
+    <span class="lb">能力已就位，默认关着</span>
+    <p>你的 12 份稿仍按上次那句做（托盘退出助手 → 普通启动）。想真用引擎接手，需要你在那台机器上跑开心关（脚本规定必须你本人跑）。界面与云端目前还看不出是哪只手干的活——那是刀2，要动合同，我没先做。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">202</span><span class="k">指挥不动＋引擎齐备 ⇒ 真的接单（实测响应码）</span></div>
+    <div class="stat ok"><span class="n">3</span><span class="k">负控（引擎缺件／豁免被删／日志回退都变红）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">出厂行为变化（开关仍默认 false）</span></div>
+    <div class="stat warn"><span class="n">0.7s</span><span class="k">高权限机器上缓存命中最坏每 60 秒多付一次探针</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>改了哪五处</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><strong>判据换问题（只认实测）</strong><p><code>pc-channel.js:83-102</code> 新增 <code>psBlocked</code> 入参：指挥不动且引擎齐备才走 engine；引擎没备好或开关关 ⇒ 明确拒绝并保留今天那句"请以普通权限重启助手"，绝不假装换手。<b>故意不用</b>握手状态/超时当触发——那个数据源扫描成功不会刷新，会误判。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><strong>缓存必须带来源（更要紧的一道）</strong><p><code>server.js:5775-5805</code>：通道判定提到缓存快路径之前，命中前比来源 <code>observationChannelOf(...) === scanChannel.channel</code>。此前即使换手，界面也会拿"PS 早扫过"的旧结果直接显示"已扫描"，引擎一秒没跑。旧观测缺来源字段按 PS 处理 ⇒ 现役 PS↔PS 完全不变。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><strong>权限拦条只拦"还要用 Photoshop 的道"</strong><p><code>server.js:5820</code>：已换成引擎就不再拦（引擎不经过 COM）。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><strong>就绪扫描同一把尺</strong><p><code>server.js:6608-6619</code>：同类补齐，不留第二套真值。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><strong>门禁同步（强度只增不减）</strong><p>四处钉死旧文案的接线断言改成钉新形态（旗标关仍必须短路探针）；两个门断言数 7→8、57→59；新门 <code>smoke-assistant-privilege-log.mjs</code> 七格进 <code>test:assistant-auth-barrier</code>（发布门之一）。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">为什么这次不是假绿</span>
+    七格运行时门起七个隔离助手副本（临时目录、端口现取；"PS 在跑"和权限级别由测试注入；后台扫描短路）⇒ 不碰 E 盘现役助手、不碰你开着的 Photoshop。三枚负控都是故意把改动退回坏形态：引擎件不在 ⇒ 必须仍拒绝换手；把"引擎豁免"删掉 ⇒ 换手那格必须退回 422；把日志改回写死值 ⇒ 本门必须红。三枚都验证过"能红"。
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>验证读数（最终状态全部重跑）</h2>
+  <div class="split">
+    <div class="panel yes"><h3>实跑通过</h3><ul>
+      <li>运行时门 7 格 rc=0（含换手那格 HTTP 202 ＋ scanId）</li>
+      <li><code>smoke-pc-channel</code> 8/8；<code>smoke-pc-wiring-freeze</code> 9/9；<code>smoke-pc-readiness</code> 7/7；<code>smoke-pc-observation</code> 9/9</li>
+      <li><code>smoke-preparation-failure-observation</code> 59 条；<code>smoke-preparation-scan-contract</code> rc=0</li>
+      <li><code>npm run test:contracts</code> rc=0；<code>npx tsc --noEmit</code> rc=0；<code>npm run lint</code> 0 error；<code>npm run test:unit</code> 46 文件／552 条</li>
+    </ul></div>
+    <div class="panel no"><h3>没做／没装（不藏）</h3><ul>
+      <li>两手共用一把恢复锁（PS 卡出"需人工恢复"后只读引擎扫描仍进不来）——解锁要单独设计，不顺手放松安全锁</li>
+      <li>"PS 在跑但真卡死"仍缺可测信号，本刀只用权限那一票</li>
+      <li>执行段来源校验仍是死码（被写回冻结合法挡着）；写回解冻四条件一个没动</li>
+      <li>界面/云端看不出是哪只手 —— 刀2，要动合同（四层同步＋fixture）</li>
+      <li>未提交未推送；改动在助手源码 ⇒ 要进 3.7.31 助手包才到机器上</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>要你拍三件事</h2>
+  <div class="callout"><span class="lb">决定点</span>
+    ① 要不要提交并推 <code>origin/develop</code>（这棵树里还有别手未提交的官网 12×12 文案两处，我不碰也不会一起提）；② 要不要出 3.7.31 助手包，把刀1 与昨天那三处修复一起带出去；③ 刀2 是否开工（换手可见可数＝合同加字段）。
+  </div>
+</section>
+
+<footer>
+  出处：<code>AI_MEMORY/TASK_LOG.md</code> 2026-11-01 17:4x 刀1 段 · <code>AI_MEMORY/ISSUES.md</code> #296（状态追加：修掉两项、三项留作刀2 前置）· 台账 <code>PC-HANDOFF-KNIFE-1</code>（待复验，create=1）· 审查件 <code>交付档案/审查报告/审查报告_20261101_PS与免PS引擎如何配合_左右手.md</code>
+</footer>
+
+</div>
+</body>
+</html>

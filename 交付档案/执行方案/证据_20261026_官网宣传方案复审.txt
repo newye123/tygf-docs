@@ -1,0 +1,31 @@
+日期：2026-10-26（Asia/Singapore）
+基线：edec3f1111e21dca6a6bbd7e4f859241c7e5fcda，开始与收尾相同。
+
+探针一：在 %TEMP%/tuyigf-plan-review-20261026/empty-product 运行 node ../adversarial-verify.mjs。
+对象：上一轮隔离夹具，仅 11 个占位文件，安全字段在注释中，未实现业务。
+输出：ALL 31 ADVERSARIAL CHECKS PASSED!
+真实退出码：0。
+结论：旧脚本不能证明实现完成；这是成功复现缺陷，不是产品验收通过。
+
+探针二：node 调用 worktrees/develop/download/local-assistant/generated/binding-core.js 的 wrapTargetToSourceStructure。
+输入：sourceText=Sale；targetText=Ein sehr langer deutscher Werbetext fuer alle Produkte。
+输出：sourceLines=1,targetLines=1,maxWidthRatio=13.5,wrapped=false,skipReason=SOURCE_SINGLE_LINE。
+断言：wrapped 必须为 false 且 skipReason 必须为 SOURCE_SINGLE_LINE。
+真实退出码：0。
+结论：单行原稿跳过该结构换行算法；不等同于真机像素宽度验收。
+
+源码复核：
+首页公开内容读取实际位置 src/app/(zh)/page.tsx:47（修正方案初稿的 :49）。
+助手版本说明实际位置 src/app/api/local-assistant/latest/route.ts:24（修正方案初稿的 :23）。
+后台草稿过期检查 src/lib/server/site-settings.ts:698。
+CSV 模板 public/samples/translation-master-sample.csv:1。
+
+并行现场：收尾 git status --short 列出 5 个他人改动：
+src/components/workbench/step1-stage-view.tsx
+src/components/workbench/table-inventory-list.tsx
+src/components/workbench/table-picker-dialog.tsx
+src/lib/workbench/table-inventory.ts
+tests/unit/step1-stage-view.test.tsx
+本轮未修改上述文件，不提交，不打包。
+
+未运行：新方案各批功能测试、build、Photoshop 真机、测试站/生产部署与内容发布。

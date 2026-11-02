@@ -1,0 +1,408 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>执行报告｜多稿工作台 UI 展示收口（Luna）</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.report-section{margin-top:32px;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.report-section h2{margin-top:0}.report-section h3{margin-top:24px}p,li{overflow-wrap:anywhere}.report-toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:20px 0}.report-toolbar button{background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:8px;cursor:pointer}.report-section ol{padding-left:1.4em}footer{padding:24px 0;color:var(--muted)}</style></head><body><main class="wrap"><div class="report-toolbar"><span>图译工坊 · 本地交付文件 · 2026-10-29</span><button type="button" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark'">切换亮暗主题</button></div><h1>执行报告｜多稿工作台 UI 展示收口（Luna）</h1><div class="verdict"><span class="lb">执行范围</span><p>矩阵优先、身份可辨、状态准确、作用范围清楚。实施与独立复验分开进行。</p></div><section class="report-section"><h2>结论</h2><p>多稿工作台的展示优化已完成，独立终审结论为 CLEAN。矩阵、逐稿队列和范围提示现在能区分稿件身份、译文审查状态与待确认范围；真实权限、计费与执行流程没有改动。</p><p>主审在本地 12×12 合成矩阵页看到了新列头、状态和摘要。开发热更新后，当前真实页面是 0 稿空批次；此前已保存的译文仍在，但原 12 稿扫描选择未保留。为避免将译文误配到其他设计稿，本轮没有重扫或重配表，因此原 12 稿深态为 NOT RUN。</p><p>本轮没有运行真实 AI 检测或 Photoshop 生成。界面与组件验证通过，不代表真实批量生产全链路通过。下一步是重新导入真实批次后复验逐稿切换与状态展示。</p></section><section class="report-section"><h2>这次调整</h2><ul class="notes"><li>矩阵持续可见；覆盖率未知时保留未知提示，不把未估算覆盖率当作统一的扫描要求。列头和格子明确表示“配表待核对”或“译文审查已确认”。</li><li>队列和重复稿成员使用最短可区分路径；唯一文件名保持简短。用户选择稿件时仍绑定完整路径。</li><li>多稿检测范围标清为当前稿全部语言或当前语言；编辑译表、全部语言检测、当前语言检测及原有禁用保护均保留。</li><li>Step3 将待确认范围、必须处理项、版式复核和可选详情分别呈现。保持原文仍是建议；确认后对应对象保持原文、不写入、不扣积分。确认前不替用户作决定。</li><li>Step4 只补充当前稿的锁定原因；真实锁定和访客演示例外不变。</li></ul></section><section class="report-section"><h2>改动位置</h2><ul class="notes"><li>稿件标签共用逻辑：draft-display-labels.ts:12</li><li>矩阵状态与扫描提示：coverage-matrix.tsx:76、coverage-matrix.tsx:134</li><li>Step1 重复稿成员：step1-stage-view.tsx:1616</li><li>队列身份、当前稿和当前语言：multi-draft-stage-queue.tsx:49、multi-draft-stage-queue.tsx:66</li><li>多稿范围、Step3 后果和版式标题：workbench-view.tsx:5896、workbench-view.tsx:6141、workbench-view.tsx:6245、workbench-view.tsx:6454</li><li>中英文文案：dict-en.json:961、dict-en.json:2137、dict-en.json:2157</li><li>关键交互测试：multi-draft-stage-queue.test.ts:59、step1-stage-view.test.tsx:1205</li><li>显示保护：smoke-batch-workbench-guards.mjs:242、smoke-batch-workbench-guards.mjs:247</li></ul><p>以上路径均在当前 develop 工作树；完整路径索引见同目录下的 Luna 执行回包。</p></section><section class="report-section"><h2>验证结果</h2><ul class="notes"><li>定向组件测试：62/62 通过，退出码 0。六项现有保护均退出码 0：工作台 UI 合同、Step1 模拟稿合同、工作流、批量工作台保护、范围保护和用户文案检查。</li><li>TypeScript 检查退出码 0。定向 ESLint 退出码 0；全量目标文件有 17 条警告、0 条错误，最后修改的 workbench-view.tsx 单独复查为 3 条警告、0 条错误。git diff --check 退出码 0。</li><li>最后文案修订后，工作台 UI 合同、用户文案检查、英文 JSON 解析、TypeScript、目标文件 ESLint 和 diff 检查再次通过，均退出码 0。</li><li>负控把共享身份 helper 临时替换为仅用文件名的测试夹具；身份断言按预期失败（5 项失败、1 项通过）。运行源码没有注入退化，helper 的 SHA-256 前后相同。</li><li>精确字节补丁在隔离目录正向应用后 10/10 文件与目标 SHA 一致；反向恢复后 9/9 原文件 SHA 一致，新增 helper 已移除。真实 worktree 未执行回滚演练。</li></ul><p>测试日志、浏览器边界记录和字节补丁包保存在 F:/工具开发/图译工坊内测版/tmp/mdw-ux-20261029。详细命令退出码见其中的 luna-result.md；报告未附用户素材或译文。</p></section><section class="report-section"><h2>项目台账投影</h2><p>本任务记录已追加到本树 ledger.jsonl，13 行均能解析。只读 dry-run 退出码为 1：Windows Bash shim 在挂载 WSL2 磁盘时失败（ERROR_FILE_NOT_FOUND），脚本未进入拉取/投影阶段。未触发台账写入，也未使用强制选项；因此没有执行正常投影。日志保存在 tmp/mdw-ux-20261029/luna-ledger-dry-run.log。</p></section><section class="report-section"><h2>当前状态与下一步</h2><p>代码仍在 develop 工作树中，未提交、未推送、未部署。当前页面为 0 稿空批次，已保存译文仍在。待重新导入真实批次后，复验稿件切换、检测范围、未知覆盖率提示和 Step3/4 展示；AI 检测与 Photoshop 生成需要另行按真实验收流程验证。</p></section><footer>本文件用于本地阅读；飞书发送载体为同名 Markdown 文本。真实 Photoshop 批量生成以单独运行证据为准。</footer></main></body></html>

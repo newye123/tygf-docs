@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS 与免PS引擎如何配合（左右手）· 对抗式审查 2026-11-01</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.7rem,4.2vw,2.5rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.06rem);color:var(--ink-2);max-width:64ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{margin:0;font-size:1.08rem;line-height:1.65;max-width:60ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.42rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}.stat.bad .n{color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--bad)}
+.panel h3{margin:0;font-size:.94rem}.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;color:var(--ink-2)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:820px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);position:sticky;top:0}
+td.sev{font-family:var(--font-mono);font-size:.76rem;white-space:nowrap}
+td.sev.i{color:var(--bad)}td.sev.n{color:var(--warn)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>对抗式审查</span><span>/</span><span>Round 1</span><span>/</span><span>2026-11-01</span></p>
+  <h1>左右手的真相：现在一换手就会漏翻，而且没人拦</h1>
+  <p class="standfirst">审查对象是「本地助手调用 Photoshop」与「免PS引擎」的配合设计。基线 <code>50cf2466</code> ＋本刀未提交 8 文件。结论：现状不支持任何自动换手——触发条件问错了问题、换手会被缓存吞掉、跨手防线是死码、写回那一只手是被显式冻结的。四道前置补完，才谈得上"左右手"。</p>
+  <div class="meta"><span>VERDICT 打回</span><span>风险档 High</span><span>Important 7</span><span>Nit 3</span><span>未决 4</span><span>本次实测 2 条</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>这对你意味着什么</h2>
+  <div class="verdict">
+    <span class="lb">今天把开关打开，得到的是"看起来成功、实际漏翻或产物劣化"</span>
+    <p>你要的是 PS 不听指挥时另一只手接上。现在接不上：接上了也不安全，因为没有任何代码检查"这份层号是谁扫的"，而两只手对同一份稿给出的层号确实不是一套（本审查实测）。你那批稿的正解仍是"助手退出后普通启动"。</p>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">0</span><span class="k">跨手同源校验的生产调用点（死码）</span></div>
+    <div class="stat bad"><span class="n">0</span><span class="k">读取扫描来源（scanEngine）的代码</span></div>
+    <div class="stat warn"><span class="n">3</span><span class="k">写回冻结的上游 P0 未解</span></div>
+    <div class="stat ok"><span class="n">2008ms</span><span class="k">真引擎只读扫描一份 24MB 稿（母版零字节改动，实测）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>同一份稿，两只手的层号不是一套（本次实测）</h2>
+  <div class="split">
+    <div class="panel yes"><h3>实测怎么做</h3><ul>
+      <li>样本 <code>F:\改语言\数据\xlsx_probe\t\src.psd</code>（191,692 B，8 层，5 个文字层）。</li>
+      <li>用出厂打包的那只引擎（<code>build\vendor\photocraft\tygf-engine.exe</code>，哈希与钉值 <code>3cb06ed1…</code> 逐位一致）跑一次<b>只读</b>扫描，探针自身在扫描前后各取一次母版哈希：都是 <code>c5c0ffbe1d32…</code> ⇒ 没写一个字节。</li>
+      <li>再用 ag-psd 解析同一份文件，比对两边的层标识。</li>
+    </ul></div>
+    <div class="panel no"><h3>结果</h3><ul>
+      <li>引擎报的 layerId：<code>{3,4,6,7,8}</code>（来源 <code>pc-scanner.js:200</code>）。</li>
+      <li>ag-psd 报的文字层 id：<code>{5,7,11,13,…}</code>；PS 扫描器写的是 <code>Number(layer.id)</code>（<code>TYGF_V15_Preparation_Scanner.jsx:239</code>）。</li>
+      <li>只一个数字重合 ⇒ "各有各的层号空间"第一次被同文件并排钉住。<b>换手必须在目标那只手上重扫</b>，不能搬运层号。</li>
+      <li>未决：ag-psd 的 id 是否严格等于 ExtendScript 的 <code>Layer.Id</code>——需要一次真机 PS 扫描，我没动你的 Photoshop 现场。</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>findings（7 Important ＋ 3 Nit，全部带坐标）</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>ID</th><th>级别</th><th>坐标</th><th>失效场景</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td>F-1</td><td class="sev i">Important</td><td><code>pc-channel.js:88</code></td><td>PS 在跑但指挥不动（你今天的提权情形），判据仍选 ps，引擎从不被尝试</td><td><code>if (psAvailable) return {channel:'ps'}</code>；psAvailable＝<code>Get-Process -Name Photoshop</code> 取路径（<code>server.js:499-517</code>），只问在不在（A）</td></tr>
+      <tr><td>F-2</td><td class="sev i">Important</td><td><code>server.js:2742</code> <code>:2767</code> <code>:6873</code></td><td>想拿"近期握手失败"当触发，但数据源残缺：扫描成功不刷新、扫描失败不置灰</td><td><code>markPhotoshopReady</code> 只在诊断/自检/预热被调（6876/6879/8412/8474/8622/8754），预扫描链路一次都不写；TTL 30s（A）</td></tr>
+      <tr><td>F-3</td><td class="sev i">Important</td><td><code>server.js:5774→5785</code>；<code>preparation-cache.js:100</code></td><td>PS 扫过的件命中缓存直接回 <code>cached:true</code>，引擎根本没跑，界面显示"已扫描"</td><td>缓存快路径排在通道判定<b>之前</b>；lookup 与 verdict 都只看 size/mtime/fingerprint，三处均不看 <code>scanEngine</code>（A）</td></tr>
+      <tr><td>F-4</td><td class="sev i">Important</td><td><code>pc-channel.js:97-110</code>；<code>preparation-observation.js:16,33,37</code></td><td>引擎执行 PS 扫出的层号时本该被拒——防线不存在</td><td><code>decideExecuteChannel</code> 零生产调用方（只有自测 <code>smoke-pc-channel.mjs:94-101</code>）；<code>server.js:98</code> 没解构它；<code>scanEngine</code> 零读取方（A）</td></tr>
+      <tr><td>F-5</td><td class="sev i">Important</td><td><code>pc-scanner.js:200</code> vs <code>TYGF_V15_Preparation_Scanner.jsx:239</code></td><td>跨手复用层号指到"文本相同的兄弟层"时：前置比对通过、回读通过、回执全绿，该翻的层没翻</td><td>同一份文件两手 id 集 <code>{3,4,6,7,8}</code> 与 <code>{5,7,11,13…}</code> 仅一个重合；母版扫描前后同哈希（A，本次实测）</td></tr>
+      <tr><td>F-6</td><td class="sev i">Important</td><td><code>smoke-pc-wiring-freeze.mjs:57-72</code>（理由 <code>:13-17</code>）</td><td>以为开三键就能写回；实际 server.js 被负向断言禁止 require 写回执行器</td><td>该门已接进 <code>test:trust-chain</code>（<code>package.json:80</code>）与发布门（<code>release-preflight.cjs:171</code>）；引擎只接了只读扫描与就绪扫描（A）</td></tr>
+      <tr><td>F-7</td><td class="sev i">Important</td><td><code>pc-executor.js:408-411</code> vs <code>Thin_Executor.jsx:60-147</code></td><td>换手后用户勾的字体/行距/字距定制被静默丢弃，连拒绝码都没有</td><td>引擎只发 <code>type.edit</code>，全仓无 <code>type.setStyle</code>/排版写回；而排版数据随执行下发（<code>v15-runner.js:243</code>）（A）</td></tr>
+      <tr><td>F-8</td><td class="sev i">Important</td><td><code>smoke-pc-observation.mjs:198</code>；<code>batch-error-policy.ts</code>；<code>funnel-event-contract.ts</code></td><td>换手既看不见也数不出（违背"不得静默降级"），要可见就得改合同</td><td>来源字段被明令禁止进浏览器摘要；两白名单 <code>grep -c PC_</code>＝0；未知码被 <code>funnelSafeErrorCode</code> 折成泛化码（A）</td></tr>
+      <tr><td>F-9</td><td class="sev i">Important</td><td><code>server.js:2495-2501</code>＋<code>:5904</code>（解锁口 <code>:6690</code>）</td><td>PS 卡出"需人工恢复"后连只读引擎扫描也进不来——一只手抽筋，另一只手被同一把锁铐住</td><td><code>setBusy(true)</code> 见 latch 一律抛 <code>ASSISTANT_RECOVERY_REQUIRED</code>，两通道共用这把锁（A）</td></tr>
+      <tr><td>F-10</td><td class="sev n">Nit ×3</td><td><code>:5934-5952</code>／<code>Scanner.jsx:172,191</code> vs <code>pc-scanner.js:230,192</code>／<code>Scanner.jsx:85</code> vs <code>pc-scanner.js:207</code></td><td>①引擎失败落 502 不进锁（对，但码不在白名单）；②<strong>hangingPunctuation</strong> 只 PS 报、<strong>linesFitFrame</strong> 只引擎报，两手册子不同形；③字体名续写不同，会喂给字形覆盖判定</td><td>报告口径必须"按手分别说"，否则换手后检查项数量变化会被当成新缺陷（A）</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>更正：推翻我自己先前对你说的一句话</h2>
+  <div class="callout"><span class="lb">原说法 → 反证 → 新结论</span>
+    <p style="margin:0"><b>原话</b>：「C1 引擎扫描器 C2 来源凭记都在跑，跨来源会被拒，所以某稿改走引擎后它的执行也必须走引擎。」</p>
+    <p style="margin:0"><b>反证</b>：<code>decideExecuteChannel</code> 零生产调用方、<code>scanEngine</code> 零读取方（F-4），写回执行器还被负向断言禁止接入（F-6）。</p>
+    <p style="margin:0"><b>新结论</b>：今天不存在"跨手会被拦"。真实状态更糟——来源被记下来却没人看，所以换手是<b>危险的</b>，不是"有系统兜底"。</p>
+    <p style="margin:0"><b>另一条</b>：子代理报「<code>test:pc-channel</code>/<code>test:pc-wiring-freeze</code> 是没人跑的孤儿门」，我复核后证伪——两者串在 <code>test:trust-chain</code> 里，而那是发布门；本会话刚跑过它 rc=0。故不计入 findings。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>分刀方案（先不危险 → 再可见 → 再扩面）</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><strong>让判据问对问题</strong><p>触发条件从「PS 在不在」换成「PS 这次指挥得动吗」，只用确证信号（权限级别实测、COM 可用性、最近一次 VBS 错误码），不猜卡死。前置两件事必须同刀做，否则改了白改：缓存查询挪到通道判定之后且缓存键带来源（F-3）；只读扫描不再共用写回那把锁（F-9）。可测产出：给出「PS 在跑但级别不一致」的夹具，<code>decideScanChannel</code> 必须返回 engine（今天返回 ps）。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><strong>换手必须可见、可数（这是合同变更）</strong><p>新增一枚受控标签 <code>executorHand: 'photoshop' | 'engine'</code> 进浏览器投影与回执，五枚 <code>PC_*</code> 码补进两侧白名单，界面写「本稿由免PS引擎完成（Photoshop 不可控）」＋一个动作。按仓库纪律要四层同步（浏览器投影／助手 evidence／服务端报价／结算闸）＋补 <code>smoke-batch-row-contract</code> fixture，并显式改 <code>smoke-pc-observation.mjs:198</code> 那条负向断言（改成"只允许这一枚标签进"）。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><strong>只读换手先跑，写回不换</strong><p>引擎只接手扫描与就绪，写回继续 PS；若某稿只能由引擎扫出而 PS 不可控，就明确停在「需要 Photoshop 才能出件」并给动作。这是 F-6/F-7 的合法落点，也是唯一不踩红线的走法。做完这一刀，"PS 没装/坏了"的用户至少能完成读侧准备，不再整批停在第 1 步。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><strong>写回换手的解冻条件：是证据，不是时间</strong><p>四件齐了才谈解冻——三个上游 P0 的解掉证据（#6968 打开即崩、#6971 Txt2 不同步、#6129 重建 TySh 丢 13+ 字段）、你用 PS 2021 打开真稿的确认（#276 遗留第一条）、排版写回通道落地（F-7）、字号膨胀与混排字体丢失收口。解冻时显式改 <code>smoke-pc-wiring-freeze.mjs</code> 并把证据写进注释（它 :20-21 就是这么要求的）。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">覆盖缺口（本轮没查的）</span>
+    报价与结算代码未逐行读（换手/重扫是否重复扣费只有注释级证据）；没跑真机 PS 扫描做三方 id 比对；未审 v15-runner 信封构造；未查 <code>test:pc-*</code> 在 CI 的实际步骤；本轮没跑构建与打包。引擎能否吃 <code>.psb</code>（你 5857 那批全是 PSB）也未证——<code>psd-sanitize.js:23</code> 记着 <code>PSD_SANITIZE_UNSUPPORTED_PSB</code>。
+  </div>
+</section>
+
+<footer>
+  只读审查，未改代码。基线 <code>50cf2466</code> ＋本刀未提交 8 文件（+150/−30 实算；<code>risk_scan</code> 报的 17,355 行 churn 是 CRLF 归一化虚高）。
+  同名 md 与本 HTML 同目录；记账见 <code>AI_MEMORY/TASK_LOG.md</code> 2026-11-01 17:0x 段、<code>AI_MEMORY/ISSUES.md</code> #296 与 #159 的状态追加。
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行方案_20261025_授权链A批真修_超时对齐与验票租约_对抗式审查与执行</title>
+<style>
+:root{
+  --bg:#f4f5f7;--panel:#ffffff;--ink:#1a1c20;--muted:#5b6470;--line:#d8dde4;
+  --accent:#0f62fe;--accent-ink:#ffffff;--ok:#198038;--ok-bg:#e8f5e9;--warn:#b28600;--warn-bg:#fff8e1;
+  --bad:#da1e28;--bad-bg:#fdeaea;--code:#f0f2f5;--code-ink:#333a45;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#16181d;--panel:#1e2128;--ink:#e8eaee;--muted:#9aa3b0;--line:#343a44;--accent:#4c8dff;--ok:#42be65;--ok-bg:#122e1b;--warn:#f1c21b;--warn-bg:#2e2609;--bad:#ff8389;--bad-bg:#3a1113;--code:#262a33;--code-ink:#c8d0da;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.75 "IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;}
+.wrap{max-width:980px;margin:0 auto;padding:32px 20px 64px}
+header h1{font-size:21px;margin:0 0 6px}
+header .meta{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+.verdict{border-left:4px solid var(--accent);background:var(--panel);padding:16px 20px;border-radius:0 8px 8px 0;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.verdict b{font-size:15px}
+h2{font-size:16px;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:14px;margin:20px 0 6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:12px 0}
+.card.ok{border-left:4px solid var(--ok);background:var(--ok-bg)}
+.card.warn{border-left:4px solid var(--warn);background:var(--warn-bg)}
+.card.bad{border-left:4px solid var(--bad);background:var(--bad-bg)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.split{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px;margin:12px 0}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--code);font-weight:600}
+tr:last-child td{border-bottom:none}
+code{font-family:"IBM Plex Mono",Consolas,monospace;font-size:12.5px;background:var(--code);color:var(--code-ink);padding:1px 5px;border-radius:4px}
+.gate{display:flex;gap:10px;align-items:flex-start;margin:8px 0;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.gate .tick{color:var(--ok);font-weight:700}
+.notes{color:var(--muted);font-size:12.5px}
+.callout{border:1px dashed var(--warn);background:var(--warn-bg);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:13px}
+footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+ul{margin:6px 0 6px 20px;padding:0}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>执行方案_20261025 · 授权链A批真修：超时对齐＋验票租约＋绑定缓存10分钟</h1>
+<div class="meta">性质：执行方案（对抗式审查 → 直接执行 → 运行验证）｜树：worktrees/develop｜前序：同日「三机全卡终诊」</div>
+</header>
+
+<div class="verdict"><b>一句话结论：授权链本身没有坏——坏的是三处「每 10 秒就把跨境慢线再走一遍、且浏览器等不及就宣布失败」的放大器；本批改为「10 分钟内只走一次、浏览器等得起」。</b></div>
+
+<h2>0 · 背景与终诊引用</h2>
+<div class="card">
+三台电脑全卡＝三层叠加：<b>L1</b> 跨境线路劣化（实测 TLS 0.6~11.7s、整请求 8~20s、间歇全超时；服务器自身回环 6ms、CPU 1.6%＝服务器无病）；<b>L2</b> 每机门槛（激活码名额已放大×10，TYGF-9C2M-X7KD 现可 10 机通用）；<b>L3</b> 产品缺口（本批要修）。L1 是外部线路，只能靠产品侧不放大它的抖动。
+</div>
+
+<h2>1 · 对抗式审查（先审我自己的昨日结论）</h2>
+
+<div class="card bad"><b>R1 ·「重新连接按钮是假的」——证伪，公开修正</b><br>
+证据：<code>assistant-setup-banner.tsx:65</code> 的 <code>checkAssistant()</code> 内部先 <code>detectAssistant()</code>，DIRECT 模式（服务器 <code>.env:6</code> NEXT_PUBLIC_ASSISTANT_DIRECT=1 实证）下调 <code>ensureAssistantBinding()</code>，授权码可修复时自动 <code>pairAssistantFromInvite()</code> 迁移并复验（<code>local-assistant-client.ts:780-820</code>）。按钮会真配对——昨日「假按钮」结论作废。修正后的真缺口：
+<ul>
+<li><b>超时错位</b>：浏览器等 <code>/v1.5/authorization/check</code> 只 15s（<code>local-assistant-client.ts:187</code>），助手侧预算 30s（3.7.25 起）——跨境一慢（今晨实测单跳 10~20s），助手还在重试，浏览器已宣布失败。</li>
+<li><b>绑定缓存只有 10 秒</b>：<code>ASSISTANT_BINDING_CACHE_MS=10_000</code>（<code>local-assistant-client.ts:590</code>）——过期后任何动作重跑「开票＋验票」两跳跨境。</li>
+<li><b>助手侧验票无租约</b>：每次 check 都打云端（<code>server.js:2773</code>）。</li>
+</ul></div>
+
+<div class="split">
+<div class="card warn"><b>R2 · 超时对齐（15s→35s，仅 check 一处）</b><ul><li>「35s 挂起」vs 现状 15s 放弃→手点重试→再等一轮：一次等够优于两轮失败。</li><li>只改 <code>checkAssistantBinding</code> 的 <code>fetchLocal timeoutMs</code>，全局 15s 不动。</li><li>契约测试 <code>smoke-assistant-timeout-split.mjs</code> 改前对齐、改后必跑。</li></ul></div>
+<div class="card warn"><b>R3 · 验票租约（助手 3.7.27）攻击树</b><ul><li>撤销延迟 ≤10min：内测接受（与 D 批租约制同取舍）。</li><li>重放削弱：本地 seen 集（cap 512）一票一次。</li><li>op 混淆：误投 pair 票吃绿灯——check 只读无副作用；配对/执行路由永不查租约。</li><li>身份串槽：租约键=origin＋installId 钥匙；activation 失配→回云端；token 清除 6 码同步删租约。</li><li>内存：两 Map 有界。</li></ul></div>
+</div>
+
+<div class="split">
+<div class="card warn"><b>R4 · 绑定缓存 10s→10min</b><ul><li>账号切换时 contextKey 变→缓存立即失效，不串号（既有逻辑 <code>local-assistant-client.ts:786-792</code>）。</li><li>同号撤销感知 ≤10min（同 R3 取舍）。</li><li>命中路径仍每次本地 /ping 毫秒级复核版本与激活态。</li></ul></div>
+<div class="card warn"><b>R5 · 版本链 3.7.27</b><ul><li>现状已 drift：server.js 已 3.7.26、identity 仍 3.7.25（check-release-identity.cjs 实测 blocked）——本批收口 3.7.27。</li><li>站点最低版本随升：存量 3.7.25 机器收升级横幅（流程已有）；Owner 各机一次 UAC。</li><li>新机装的即 3.7.27，租约从第一天生效。</li></ul></div>
+</div>
+
+<div class="card"><b>R6 · 部署窗口</b>：劣化期上传 ~80MB 可能 2h+ → 分块 scp＋后台＋SHA-256 校验；部署闸不因网络劣化放宽；回滚＝重部署 b2eb1e01＋旧安装包仍在。</div>
+
+<h2>2 · 执行工单（E1-E8）</h2>
+<table>
+<tr><th>#</th><th>内容</th><th>文件</th></tr>
+<tr><td>E1</td><td>check 处理器接租约（命中免云端／未命中走原路／成功写租约／token 清除码删租约）＋/pair 成功写租约</td><td><code>download/local-assistant/server.js</code></td></tr>
+<tr><td>E2</td><td>租约纯函数模块＋单测 ≥10 例（命中/过期/重放拦/op 限定/身份失配/清除/cap）</td><td><code>download/local-assistant/verify-lease.cjs</code>＋<code>tests/unit/assistant-verify-lease.test.ts</code></td></tr>
+<tr><td>E3</td><td>check 专用浏览器超时 35s；绑定缓存 10min</td><td><code>src/lib/workbench/local-assistant-client.ts</code></td></tr>
+<tr><td>E4</td><td>版本链 3.7.27 全套（identity 版本＋buildId、server VERSION/BUILD_ID、report-renderer、package.json、.env.example、installer.iss、.gitattributes 3.7.25+3.7.27）＋build-engine.bat 出 exe＋git add -f</td><td>8 文件</td></tr>
+<tr><td>E5</td><td>门禁：新测试＋assistant 族＋timeout-split smoke＋tsc＋lint＋check-release-identity</td><td>—</td></tr>
+<tr><td>E6</td><td>push origin/develop（三段轨第一段，禁 force）</td><td>—</td></tr>
+<tr><td>E7</td><td>package-release 出包→分块 scp→deploy-test-release.sh（服务器 17 闸）</td><td>—</td></tr>
+<tr><td>E8</td><td>上站验证：provenance／下载口 3.7.27／curl /config 版本／真机租约命中日志</td><td>—</td></tr>
+</table>
+
+<h2>3 · 验证判据（可执行复现）</h2>
+<div class="gate"><span class="tick">✓</span><div><code>npx vitest run tests/unit/assistant-verify-lease.test.ts</code> 全绿（≥10 例）</div></div>
+<div class="gate"><span class="tick">✓</span><div><code>node scripts/smoke-assistant-timeout-split.mjs</code> 全绿（断言如更新，语义保留）</div></div>
+<div class="gate"><span class="tick">✓</span><div><code>npx tsc --noEmit</code> rc=0；<code>npm run lint</code> 无新增告警</div></div>
+<div class="gate"><span class="tick">✓</span><div><code>node scripts/check-release-identity.cjs</code> 由 blocked 转 PASS（3.7.27 全链一致）</div></div>
+<div class="gate"><span class="tick">✓</span><div><code>tygf-engine-setup-3.7.27.exe</code> 构建存在，SHA-256 与服务器逐位一致</div></div>
+<div class="gate"><span class="tick">✓</span><div>上站后 provenance 显示新 commit；<code>/download</code> 拉到 3.7.27</div></div>
+<div class="gate"><span class="tick">✓</span><div>真机（Owner UAC 后）：横幅消除；第二次 check 出现租约命中且无云端验票行</div></div>
+
+<h2>4 · 回滚</h2>
+<div class="card">站点＝重部署 b2eb1e01；助手＝3.7.25 安装包仍在 <code>public/downloads/</code>。回滚单元＝「站点＋助手」成对（站点最低版本已升时单独回助手会被版本闸拦）。</div>
+
+<h2>5 · 取舍登记（明示）</h2>
+<div class="callout">
+① 云端撤销（解绑/禁用）最多 10 分钟后本机感知——内测期接受，正式版随 D 批租约制再议收紧。<br>
+② check 最坏 35s 才出错误提示——换来 30s 预算内自动成功，不再两轮失败。<br>
+③ 存量 3.7.25 助手会被要求升级（一次 UAC）；不升级则一直看到升级横幅。
+</div>
+
+<footer><span>图译工坊 · 交付档案/执行方案</span><span>2026-10-25 · A批真修 · 对抗式审查与执行</span></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>访客免锁走完四步 · 英文修复 · 2026-10-29</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--blu:#175cd3;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:30px 22px 66px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--blu);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--blu);font-size:16.5px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13.5px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+pre{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:5px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat b{display:block;font-size:21px;line-height:1.2}
+.stat span{color:var(--mut);font-size:11.5px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h3{margin:0 0 6px;font-size:14px}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>访客现在真能走完四步：锁卡和弹窗都撤了，英文站同步修好</h1>
+<p class="sub">2026-10-29 · 已推 GitHub（442a7aab..518a2dae）· 测试站已上线 518a2dae · <b>生产未动</b></p>
+
+<div class="verdict"><b>结论：你截图里的四处都按你说的改了。</b><br>
+黄色说明条撤掉；「读取设计稿需要登录」锁卡与「多稿模式需要登录」弹窗都不再拦人；访客能从第 1 步一路走到第 4 步「生成交付」；英文站同一套行为，英文弹窗按钮撑破卡片的问题修好。唯一还会拦人的是调用 AI 模型的按钮——那是你最早定的硬规则。</div>
+
+<h2>这对你意味着什么</h2>
+<p>没注册的人第一次打开工作台，看到的是完整四步、真实按钮、真实的译文表导入和规则检查结果；走到「生成文件」这一步才要账号和本机助手。不会再有"点了没反应"，也不会再出现英文页冒中文、弹窗按钮掉出卡片。</p>
+
+<h2>一、改了哪四处</h2>
+<table>
+<tr><th>文件</th><th>改了什么</th><th>对应你哪张图</th></tr>
+<tr><td class="mono">guest-mode.tsx</td><td>删掉整条访客横幅、整块锁卡；注册引导弹窗只留给 AI 动作；顺手去掉弹窗里重复的同义说明</td><td>图一、图二</td></tr>
+<tr><td class="mono">workbench-view.tsx</td><td>第 3、4 步对访客解锁；底部主按钮按阶段逐级前进；「多个设计稿」不再弹窗；四处面板挂访客说明</td><td>图三 + 走到底</td></tr>
+<tr><td class="mono">workbench-action-bar.tsx</td><td>左右按钮按内容定宽、中间提示吃剩余宽度：不再压住「下一步」，也不再被省略号切半句</td><td>英文溢出</td></tr>
+<tr><td class="mono">dict-en.json</td><td>补 8 条英文（英文多稿首屏原先整块中文）＋底部状态句换成更短的新文案</td><td>英文的也一样</td></tr>
+</table>
+<p>登录用户的规则一个字没动：第 3、4 步的解锁只作用在访客分支上。</p>
+
+<h2>二、实测证据</h2>
+<div class="stats">
+  <div class="stat"><b>4 / 4</b><span>访客可点的阶段数（`disabled=false`）</span></div>
+  <div class="stat"><b>0</b><span>英文四步页面里的可见汉字数</span></div>
+  <div class="stat"><b>0</b><span>访客全程 AI／执行／邀请码请求条数</span></div>
+  <div class="stat"><b>0 error</b><span>tsc / eslint / 两条产品门</span></div>
+</div>
+
+<div class="split">
+<div class="card">
+<h3>中文站</h3>
+<ul>
+<li>首屏无说明条、无锁卡；导轨四项全可点。</li>
+<li>真导入 4 行 2 语 CSV → 「2 / 2 个语言已确认」。</li>
+<li>逐级点到第 4 步：显示「访客可以先看这次要生成的范围」+「这次要处理 2 个语言、4 行译文…」。</li>
+<li>多稿模式只给说明 +「选择文件夹」，无登录弹窗。</li>
+<li>点「检测全部语言」仍弹注册引导，四个控件都在卡片内。</li>
+</ul>
+</div>
+<div class="card">
+<h3>英文站</h3>
+<ul>
+<li>单稿首屏、多稿首屏、第 3 步、第 4 步：可见汉字 <b>0</b>（唯一中文是用户自己 CSV 表头「原文」）。</li>
+<li>文件夹入口卡（"这一版你会看到什么不一样"那段）全英文。</li>
+<li>弹窗按钮自动换行两行，最右元素距卡片右缘 25px，无横向滚动。</li>
+<li>底部提示 492px 完整显示（scrollWidth = clientWidth），与右侧按钮不重叠。</li>
+</ul>
+</div>
+</div>
+
+<h3>网络（访客全程）</h3>
+<pre>页面资源里的 /api/ 请求只有三类：
+  /api/site-content
+  /api/site/feature-flags
+  /api/workbench/feature-access
+AI 检测 / 执行 / 邀请码相关：0 条</pre>
+
+<h3>命令</h3>
+<pre>npx tsc --noEmit                    rc=0
+npx eslint（三个改动文件）            rc=0   0 error（3 条既有无障碍警告）
+node scripts/i18n-dict-qa.mjs        rc=0   硬伤 0 条（词典 2078 条）
+npm run test:identity-account-gate   rc=0   15 条高价值路由
+npm run test:workbench-ui-contract   rc=0
+npm run test:en-workbench            rc=1   红在英文词典覆盖率（见下，与本轮无关）</pre>
+
+<h2>三、一处要说明的红灯（不是这轮造成的）</h2>
+<div class="callout">
+<p><b>英文词典覆盖率门现在是红的：1457/1606，90.7%。</b></p>
+<p>我把本轮新增的 8 条从词典里去掉重算了一遍，结果一模一样——还是缺 149 条、还是 90.7%。所以这 149 条是历史缺口：批次工作台内部的交付物矩阵、归属与切片面板、排版浮窗等（<span class="mono">step1-stage-view.tsx</span> 93 条、<span class="mono">coverage-matrix.tsx</span> 29 条等）。</p>
+<p>这些位置要扫描设计稿之后才出现，访客走不到，所以<b>英文访客看到的界面已经是全英文</b>。要不要补这 149 条，是另一件独立的事（逐句翻译并过词典门），我没有代改。</p>
+</div>
+
+<h2>四、过程中的一个插曲</h2>
+<p>验证到一半页面白屏，控制台报 <span class="mono">Module not found: ./batch-workspace.css</span>。查下来是另一条并行会话正在往工作台加这个样式文件、文件还没落盘；一分钟后文件写好，页面自动恢复。我没有碰对方的文件。</p>
+
+<h2>五、上线记录（2026-10-29 10:05 测试站）</h2>
+<p>按发布三段轨走完前两段：</p>
+<ol>
+<li><b>推 GitHub</b>：<span class="mono">442a7aab..518a2dae</span> 快进推到 <span class="mono">origin/develop</span>，8 个文件、+331/−55。推之前把改动从共享工作树里单独抽出来，在另一棵干净的树上重跑检查（类型检查 rc=0、词典硬伤 0、工作台 UI 合同 rc=0、身份门 A6 PASS、ESLint 0 error），确认没夹带其他会话的改动。</li>
+<li><b>出测试包</b>：<span class="mono">tygf-test-518a2dae0ede.zip</span>（54,316,154 字节），收据里的 commit 与包内 <span class="mono">config/release-identity.json</span> 对得上；本机与服务器两侧 SHA-256 一致。</li>
+<li><b>上测试站</b>：服务器部署脚本做完备份、构建、切换、健康检查，自报 <span class="mono">deployed commit 518a2dae</span>；备份目录 <span class="mono">/var/www/tygf-test-backups/deploy-20261029_100528-518a2dae0ede</span>。</li>
+</ol>
+<div class="stats">
+  <div class="stat"><b>518a2dae</b><span>测试站 .deploy-commit（独立回读）</span></div>
+  <div class="stat"><b>200</b><span>回环健康探针 127.0.0.1:3001（0.034 秒）</span></div>
+  <div class="stat"><b>3 / 3</b><span>PM2 进程 online</span></div>
+  <div class="stat"><b>一致</b><span>公网 runtime-provenance 的 webCommitSha</span></div>
+</div>
+<div class="callout ok">
+<p><b>线上访客视角复测（未登录、真浏览器）：</b></p>
+<ul>
+<li>中文 <span class="mono">test.tuyigf.com/#workbench</span>：黄色说明条没了，第 1 步直接是真界面；第 3、4 步可点；点第 4 步地址变成 <span class="mono">?stage=delivery#workbench</span>，显示「当前阶段：生成交付」+「访客可以先看这次要生成的范围」+「生成由本地助手在 Photoshop 里逐层替换，要登录并装好助手才会真跑」。<b>「走到最后一步」在线上成立。</b></li>
+<li>英文 <span class="mono">/en/workbench</span>：同样访客态，访客说明是英文原文（无中文漏出），第 3、4 步同样可点。</li>
+<li>第 2 步「智能检测」保持"导入译文表后才能点"——登录用户也是这条规则，不是访客锁。</li>
+</ul>
+</div>
+<div class="callout">
+<p><b>两件没能线上自动复测、需要说明的：</b></p>
+<ul>
+<li><b>英文注册弹窗宽度</b>：弹窗要点「整理文本 / 智能检测」才出现，而这两个按钮要先导入表格；测试站有测试键门、浏览器自动化又被本机权限拦下，我没能在线上把弹窗点出来重测。这一条在本机同一份代码上实测过（三按钮换行成两行、最右元素距卡片右缘 25px、无横向滚动），线上跑的是同一份代码；你在英文站 30 秒即可自己确认。</li>
+<li>线上只走到第 4 步面板层面，没有真生成文件——访客本来就没有这条路（生成要登录 + 本机助手）。</li>
+</ul>
+</div>
+
+<h2>六、边界与下一步</h2>
+<ul>
+<li>已推 <span class="mono">origin/develop</span>（快进，未 force），测试站已换成这一版；<b>生产站一个字没动</b>。</li>
+<li>服务端授权口径没变（访客请求照样 403，界面只是提前说明）；阶段解锁只对访客生效，登录用户的数据门保持原样。</li>
+<li>下一步：你在测试站走一遍中文与英文四步（重点看第 4 步底部那句提醒和英文弹窗按钮）；通过后我再合 main、从 GitHub 推生产。那 149 条英文缺口要不要单独排期，你一句话。</li>
+</ul>
+
+<footer>图译工坊内测版 · 执行报告 · 2026-10-29 · 本机 dev + 真浏览器实测；测试站证据为本轮现取；file:line 指针见同名 md</footer>
+</main></body></html>

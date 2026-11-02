@@ -1,0 +1,647 @@
+<title>A 方案落地：字体缓存改好了，两处要你在 Cloudflare 点</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>站点性能</span><span class="sep">/</span>
+    <span>2026-10-25</span>
+  </p>
+  <h1>A 方案落地：字体缓存改好了，两处要你在 Cloudflare 点</h1>
+  <p class="standfirst">你拍的 A（改代码治标）里，能纯靠代码做掉的是字体缓存，已经改完并上了测试站；首页进边缘缓存和协议这两件事必须在 Cloudflare 后台点，钥匙不在我手上；原来想做的「合 chunk」我算完否掉了——只省 2 个请求、0 字节。</p>
+  <div class="meta">
+    <span>develop @ <code>cdc40807</code></span>
+    <span>已推 origin/develop</span>
+    <span>测试站已部署</span>
+    <span>生产站未动</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p><strong>A2 做完，A1/A4 要你点，A3 否掉。</strong>但要说实话：<strong>连 Cloudflare 已经缓存的 CSS，这条线路上也出现过 43 秒首字节和 60 秒超时</strong>。瓶颈不在「要不要回源」，而在「广州 → 边缘落洛杉矶」那一跳丢包 50%。A 能压次数，压不掉那一跳。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat warn"><span class="n">5 次</span><span class="k">每次冷访问凭空多出的<br>跨洋回源（字体分片 5 个）</span></div>
+    <div class="stat bad"><span class="n">4/6</span><span class="k">字体请求的边缘缓存状态<br>是 <code>REVALIDATED</code>（每回必问源站）</span></div>
+    <div class="stat bad"><span class="n">43.2s</span><span class="k">连 CF <strong>已缓存</strong>的 CSS<br>都出现过这么慢的首字节</span></div>
+    <div class="stat ok"><span class="n">0 B</span><span class="k">A3「合 chunk」能省的字节<br>所以不做</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>改了什么：字体分片的缓存头</h2>
+  <p class="lede">只动了一个文件 <code>next.config.ts</code>，加一条响应头规则，只作用于 <code>/fonts/*</code>：</p>
+
+  <div class="callout">
+    <p><strong>改法</strong>　<code>Cache-Control: public, max-age=3600, stale-while-revalidate=86400</code></p>
+    <p>意思是：边缘先存 1 小时，过期后先拿旧的顶着、同时在后台去源站取新的（最多顶 1 天）。常规访问不再回源。</p>
+  </div>
+
+  <p class="lede">为什么不能更狠（比如像 <code>/_next/static</code> 那样给一年 immutable）：字体分片文件名<strong>不带 hash</strong>——<code>public/fonts/shsc/manifest.json</code> 只记了 sha256，文件名永远是 <code>zh-subset-0..3.woff2</code>。给一年，以后换字体用户会长期拿旧的。1 小时是「改字体最多 1 小时生效」和「常规访问不回源」之间的折中。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>路径</th><th>改之前</th><th>改之后（实测）</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>/fonts/shsc/zh-subset-0.woff2</code></td><td><code>public, max-age=0</code></td><td><code>public, max-age=3600, stale-while-revalidate=86400</code></td><td>本次目标</td></tr>
+        <tr><td><code>/fonts/zh-supplement.woff2</code></td><td><code>public, max-age=0</code></td><td>同上</td><td>第 5 个分片也覆盖到</td></tr>
+        <tr><td><code>/_next/static/chunks/*.css</code></td><td>一年 immutable</td><td>未变</td><td>对照组：没误伤</td></tr>
+        <tr><td><code>/</code>（首页 HTML）</td><td><code>private, no-store, must-revalidate</code></td><td>未变</td><td>故意不动，见 03 节</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede"><strong>为什么首页 HTML 一行没碰：</strong>首页服务端要读草稿模式、会话 cookie（<code>src/app/(zh)/page.tsx:32,35</code>）、功能开关，HTML 里带着登录态摘要。把这种响应做成可缓存，一旦边缘规则没配好「带 cookie 就绕过」，就可能把 A 用户的登录页发给 B 用户。所以 HTML 缓存只能和 Cloudflare 规则<strong>成对</strong>上线。</p>
+
+  <div class="callout">
+    <p><strong>顺手否掉的一个假设：</strong>我原来怀疑「5 个字体分片全量预载＝浪费」。实测首页 585 个码位<strong>确实散落在全部 5 个分片上</strong>（命中 155 / 179 / 173 / 76 / 2），浪费 <strong>0 字节</strong>。全量预载是合理的，这条不动。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>A3「合 chunk」为什么否掉</h2>
+  <p class="lede">三条都量过，没有一条划算：</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag warn">CSS</span><span class="loc">3 个文件 · 线上 32.5 KB</span></div>
+      <p>并成一个只省 <strong>2 个请求、0 字节</strong>（Tailwind 23.5 KB + 首页样式 5.7 KB + 字体定义 3.4 KB，都是 gzip 后）。而且会把 9 KB 中文字体定义塞进英文站。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">JS</span><span class="loc">15 个 chunk · 线上 203 KB</span></div>
+      <p>最大两块 73 KB / 43 KB 是 React / Next 运行时本身，没有肥肉。其中 40 KB 那个是 <code>noModule</code> 旧浏览器专用，现代 Chrome 根本不下载。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">懒加载</span><span class="loc">framer-motion</span></div>
+      <p>动画库只被工作台用（<code>src/components/workbench/*</code> 六处），已经在懒加载包里，首页不下载。<strong>不需要动</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">真大头</span><span class="loc">字体 407 KB</span></div>
+      <p>占全站 712 KB 的 <strong>57%</strong>。但那是产品要用的字符集（首页 585 码位全命中），不是浪费，所以不动。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>A1：首页进边缘缓存——要你在 Cloudflare 点（约 3 分钟）</h2>
+  <p class="lede">这台机器上<strong>没有任何 Cloudflare 凭据</strong>：<code>CLOUDFLARE_API_TOKEN</code> / <code>CF_API_TOKEN</code> / <code>CLOUDFLARE_ACCOUNT_ID</code> 等在三处（User / Machine / Process）都不存在；项目里唯一读它们的是 <code>scripts/configure-mail-routing.mjs:35-36</code>（邮件路由脚本），也没配。</p>
+
+  <div class="callout">
+    <p><strong>路径</strong>　Cloudflare Dashboard → 选 <code>tuyigf.com</code> → <strong>Rules → Cache Rules → Create rule</strong>，名字填 <code>home-html-edge-cache</code>。</p>
+  </div>
+
+  <p class="lede"><strong>匹配表达式</strong>（用 Expression Editor 粘贴，一行一条）：</p>
+
+  <div class="callout">
+    <p><code>(http.request.uri.path in {"/" "/en"})</code><br>
+    <code>and not (http.cookie contains "tygf_user_session")</code><br>
+    <code>and not (http.cookie contains "__prerender_bypass")</code><br>
+    <code>and not (http.request.uri.query contains "_rsc")</code><br>
+    <code>and not (http.request.uri.query contains "edit")</code><br>
+    <code>and not any(http.request.headers["rsc"][*] eq "1")</code></p>
+  </div>
+
+  <p class="lede"><strong>Then 部分</strong>：Cache eligibility 选 <code>Eligible for cache</code>；Edge TTL 选 <code>Ignore cache-control header and use this TTL</code>，填 <strong>5 minutes</strong>；Browser TTL 保持默认。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>排除项</th><th>拦的是什么</th><th>少写会怎样</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>tygf_user_session</code></td><td>登录会话 cookie（<code>src/lib/auth/session.ts:23</code>）</td><td>登录用户的页面进了公共缓存，可能发给别人</td></tr>
+        <tr><td><code>__prerender_bypass</code></td><td>运营台「就地直改」的草稿会话</td><td>编辑者看到的是线上版，不是草稿</td></tr>
+        <tr><td><code>_rsc</code> / <code>RSC</code></td><td>App Router 客户端导航取的数据流</td><td>站内点链接可能拿回一整页 HTML，跳转坏掉</td></tr>
+        <tr><td><code>edit</code></td><td><code>?edit=1</code> 就地编辑入口</td><td>编辑态被缓存，改完看不到</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede"><strong>上线后怎么验</strong>：① 无痕窗口开两次 <code>https://tuyigf.com/</code>，第二次响应头应出现 <code>cf-cache-status: HIT</code>；② 登录后刷新应仍是 <code>BYPASS</code>/<code>DYNAMIC</code>（说明会话没被缓存）；③ 站内点几个链接，跳转要正常（说明 <code>_rsc</code> 排除生效）。</p>
+
+  <div class="callout">
+    <p><strong>代价</strong>　你在运营台改完文案，最多 5 分钟后才对访客生效。要立刻生效，就在 Cloudflare 点一次 Purge。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>A4：我上一版说反了，这里更正</h2>
+  <p class="lede">上一版报告写「关 h3」。实测后确认<strong>说反了</strong>——现在跑的是 h2，而 h2 正是那个 134 秒的元凶。</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">现场</span><span class="loc">真浏览器</span></div>
+      <p>23 个资源<strong>全部 <code>nextHopProtocol = h2</code></strong>，刷新后仍是 h2。8 个 JS chunk 同时第 11.4 秒发起、同时第 134.3 秒才拿到首字节——h2 队头阻塞的标准指纹。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">对照</span><span class="loc">同一台机器</span></div>
+      <p><strong>h1 五次里成三次（3/5），h2 五次全败（0/5）</strong>。高丢包下，一条连接扛所有文件反而是放大伤害。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">h3</span><span class="loc">Cloudflare 侧</span></div>
+      <p>响应头有 <code>alt-svc: h3=":443"; ma=86400</code>（直连源站没有，是 CF 注入的）⇒ <strong>h3 对我们域名是开着的</strong>，只是这段链路没跑起来。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">堵死</span><span class="loc">免费版限制</span></div>
+      <p>「关掉 HTTP/2 退回 h1.1 隔离丢包」这条路<strong>免费版走不通</strong>——Cloudflare 官方文档明写 Free 计划不能关闭 HTTP/2。</p>
+    </div>
+  </div>
+
+  <p class="lede"><strong>所以 A4 的正确动作</strong>：CF → <strong>Speed → Settings → Protocol Optimization</strong>，确认 <code>HTTP/3 (with QUIC)</code> 是 On（大概率已经是）。真正的验证只能<strong>换一条网络</strong>做：手机热点开一次站点，看导航的 <code>nextHopProtocol</code> 是不是 <code>h3</code>。是 ⇒ 本机联通拦了 QUIC；还是 h2 ⇒ 要在 CF 后台确认开关与 QUIC 端口。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>说实话：A 的天花板</h2>
+  <p class="lede">这轮最该记住的一个数——<strong>已经命中的缓存也要 43 秒</strong>。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>请求</th><th>期望</th><th>实测</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>/_next/static/chunks/05noaa5fb1i77.css</code>（CF <strong>已缓存 HIT</strong>）</td><td>快</td><td>3 次里 1 次 <strong>43.2 s</strong> 首字节，2 次 60 s 超时</td></tr>
+        <tr><td><code>/fonts/shsc/zh-subset-0.woff2</code>（<code>REVALIDATED</code>，要回源）</td><td>慢</td><td>60 s 超时 / 48.8 s / 5.07 s</td></tr>
+        <tr><td>源站直连（不经 CF）同一个文件</td><td>—</td><td>1.01 s 首字节，2.5 s 下完 80 KB</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>这对你意味着什么</strong>　A 类「减少回源」的动作能治一部分（少 5 次跨洋往返、重复访问首页不再每次都跨洋），但治不好「缓存命中也卡 43 秒」。要让站点从「打不开」变成「能打开」，得动 B：换边缘落点 / 换线路 / 换 CDN。那一步要你拍，我不擅自动。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>这次实际跑过的验证</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <p><strong>类型 + 静态检查</strong>　<code>npx tsc --noEmit</code> EXIT=0；<code>npm run lint</code> 0 error（49 条仓库既有 warning）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <p><strong>生产构建</strong>　<code>npx next build</code> EXIT=0（真构建，不是 dev 模式）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <p><strong>起真服务逐路径核对</strong>　<code>next start -p 3199</code> 后 <code>curl -I</code>：<code>/fonts/*</code> 已是新头；对照组 <code>/_next/static</code> 仍 immutable、<code>/</code> 仍 <code>no-store</code>（证明只动了字体）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <p><strong>出包预检</strong>　<code>npm run release:preflight:test</code> → <strong>17 门全 PASS</strong>；<code>git push origin develop</code> <code>a7c530bb..cdc40807</code>（未用 force）。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <p><strong>出包与测试站部署</strong>　<code>tygf-test-cdc40807b858.zip</code>（54,231,836 B，SHA-256 <code>6FAD4269…D28C8F3</code>）→ 服务器合并后 sha256 逐位一致 → 包内 <code>deploy-test-release.sh</code> 执行 <strong>rc=0</strong>；<code>.deploy-commit = cdc40807b858…</code>、备份 <code>deploy-20261025_215404-cdc40807b858</code>、健康检查 <code>http=200</code>、PM2 三进程 online/↺0。</p>
+        <p><strong>服务器侧同机前后对照</strong>（同一进程、同一路径 <code>curl -I 127.0.0.1:3001/fonts/shsc/zh-subset-0.woff2</code>）：改前 <code>public, max-age=0</code> → 改后 <code>public, max-age=3600, stale-while-revalidate=86400</code>；首页 HTML 仍 <code>no-store</code>，<code>/_next/static</code> 仍 immutable。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>遗留（如实）</h2>
+  <ul class="notes">
+    <li><strong>A1 / A4 没做</strong>：需要 Cloudflare 凭据或你手动点。给不了凭据，就把 03 / 04 两节当操作单。</li>
+    <li><strong>A2 的边缘命中还没在公网验到</strong>：测试站 <code>/fonts/*</code> 走访问门（<code>deploy/nginx.test.conf:136</code> 每次都带 <code>Set-Cookie</code>），Cloudflare 见到 <code>Set-Cookie</code> 不缓存，所以测试站测不出 <code>HIT</code>；要真验到得等生产站发布。</li>
+    <li><strong>多点位复测仍缺</strong>（ISSUES #279 路 2）：本轮所有「慢」的结论都来自这一台广州联通机器。</li>
+    <li><strong>真实用户分层耗时仍看不到</strong>：Cloudflare Browser Insights、nginx <code>$request_time</code> 都没上。</li>
+    <li><strong>没动的东西</strong>：生产站（<code>origin/main</code> 仍 <code>df93c257</code>）、支付 flag、会话/计费语义、<code>AI_MEMORY/CURRENT_STATUS.md</code>（单写者＝总控长槽）。</li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>本次动了什么</strong>：<code>next.config.ts</code> 一条字体缓存头；推 develop、出包、部署测试站。<strong>没动</strong>：Cloudflare 配置、nginx、源站、生产站代码、支付 flag、会话语义。</p>
+  <p>测点 广州联通 AS17623 · 边缘 LAX · 源站 Singapore · 2026-10-25 · 图译工坊内测版</p>
+</footer>
+
+</div>
+
+</body>
+</html>

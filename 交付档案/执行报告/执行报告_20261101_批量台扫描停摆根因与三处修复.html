@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量台扫描停摆：根因与三处修复 · 2026-11-01</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.8rem,4.4vw,2.6rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.08rem);color:var(--ink-2);max-width:62ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{margin:0;font-size:1.12rem;line-height:1.65;max-width:52ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.5rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}
+.stat.warn .n{color:var(--warn)}
+.stat.bad .n{color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--warn)}
+.panel h3{margin:0;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.93rem;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}
+.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.93rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>交付</span><span>/</span><span>批量台扫描停摆</span><span>/</span><span>2026-11-01</span></p>
+  <h1>不是站点坏了：助手被以管理员身份启动，扫描被它自己挡掉</h1>
+  <p class="standfirst">12 份稿第 1 份就停，界面只说「扫描失败」。实测你机器上助手权限级别 12288（管理员）、Photoshop 8192（普通），Windows 不允许管理员程序指挥普通权限的 Photoshop，助手在起扫前就拒了。把助手普通方式重开一次就能继续。代码侧补了三处，下次不必靠截图排障；尚未提交、尚未部署。</p>
+  <div class="meta"><span>worktree unified-opt-20261031</span><span>8 文件 +150/−30</span><span>单测 552/552</span><span>合同套件 rc=0</span><span>tsc rc=0</span><span>lint rc=0</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>现在能做什么</h2>
+  <div class="verdict">
+    <span class="lb">恢复只需十秒，不用重装</span>
+    <p>托盘右键退出助手 → 在桌面或开始菜单双击正常启动（别选「以管理员身份运行」）→ 回第 1 步再点「全部扫描」。Photoshop 不用关，稿件不用动。</p>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">15</span><span class="k">11:32–14:20 扫描请求全被拒（422）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">半成品数据（12 份一份没扫成，重扫不重复扣费）</span></div>
+    <div class="stat warn"><span class="n">12288</span><span class="k">助手权限级别（Photoshop 是 8192）</span></div>
+    <div class="stat ok"><span class="n">200</span><span class="k">测试站侧凭据请求（站点无责）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>证据怎么来的</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>实测到的（可复跑）</h3>
+      <ul>
+        <li>权限级别用助手自己内部那套读令牌的方法量：托盘 46228／引擎 59952 ＝ 12288，Photoshop 25528／27536 ＝ 8192。</li>
+        <li>助手日志 <code>assistant-events.log:2120-2134</code> 十五条 422「权限级别不一致」，最后一条 14:20:09，正是你截图那次。</li>
+        <li>同机 08:41 预扫描成功（<code>engine.log</code> 00:41Z 两条 prepared），跑的就是现在这两个 Photoshop 进程 ⇒ 提权发生在升级到 3.7.30 之后。</li>
+        <li>两个 exe 的清单都是「按调用者权限运行」，注册表兼容层没有管理员标记，开机自启是普通启动 ⇒ 这次是「以管理员身份运行」这一下人工动作带出来的。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>已排除 / 未核实</h3>
+      <ul>
+        <li>排除站点：扫描请求不过服务器（本机直连），nginx 只见取凭据请求且全 200。</li>
+        <li>排除稿件：同机同 Photoshop 早上成功过，不是文件问题。</li>
+        <li>界面那行新文案没在真实浏览器里跑过——复现需要助手处于管理员权限，你现役的助手我不会去重启。</li>
+        <li>写死的那行日志（<code>elevated=true</code>）已确认是字面量，不代表实测，所以以前谁被提权看不出来。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>改的三处</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><strong>停止条讲清为什么停</strong><p>按原因给一句能照做的话，例如「助手以管理员身份运行，请退出助手后正常启动再扫」；原因说不清时把内部编号放进鼠标悬停提示（与单张稿那条链一致）。英文站补 9 条词条，不会露出整段中文。判据出口收在 <code>batch-error-policy.ts</code> 的 <code>scanQueueStopReasonKey</code>。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><strong>助手日志写真实数字</strong><p>拒绝扫描时改打印实测的两侧级别（<code>assistant_rid</code>／<code>photoshop_rid</code>），删掉写死的 <code>elevated=true handshakeRecent=false</code>。拒绝判据本身一字未改。这条要进下一个助手包（3.7.31）才会到用户机器。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><strong>批量链每条失败都上报</strong><p>以前只有「没开 Photoshop」会上报，其他静悄悄，云端数不出有多少人卡同一个坑。现在六条失败出口逐条上报并带原因编号；顺手补了同类漏点：起扫就失败的两处原先把错误码直接丢掉。</p></div></div>
+  </div>
+  <div class="callout"><span class="lb">证伪后撤掉的一处</span>
+    审查手建议让轮询接住「扫描失败」状态。实测助手从不回这个状态（<code>server.js</code> 里 <code>state: 'error'</code> 零命中），失败一律以错误码抛出、现有分支已接住 ⇒ 加了就是永远跑不到的死代码，改动与判据一并撤下，判据位置留了撤销说明。
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>验证读数</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">23</span><span class="k">新单测：原因文案与词典登记</span></div>
+    <div class="stat ok"><span class="n">4/4</span><span class="k">新运行时门四格（含负控）</span></div>
+    <div class="stat ok"><span class="n">552</span><span class="k">全量单测（46 文件）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">合同套件／类型检查／lint 退出码</span></div>
+  </div>
+  <ul class="notes">
+    <li>新运行时门起四个隔离助手实例（整体复制到临时目录、端口现取、绝不碰你 E 盘那个安装）：12288/8192 与 16384/12288 两对都拒扫且日志数字跟着变；同级 12288/12288 不拒；第四格故意把日志改回写死值，按预期报错。已挂进 <code>npm run test:assistant-auth-barrier</code>，发布前必跑。</li>
+    <li>两枚负控证明断言能红：删一条新英文词条 ⇒ 单测红；日志改回写死值 ⇒ 运行时门红。</li>
+    <li>合同测试 <code>test:contracts</code> 退出码 0；文案与词典四道门全绿（含「界面不写后台术语」那一条）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>等你两句话</h2>
+  <div class="split">
+    <div class="panel yes"><h3>要拍的</h3><ul>
+      <li>提交并部署到测试站（代码改完验完，还没提交没推送）。</li>
+      <li>助手日志那处要不要跟着出 3.7.31 的包。</li>
+    </ul></div>
+    <div class="panel no"><h3>顺带报的</h3><ul>
+      <li>复发口子：安装脚本「装完启动助手」没要求以原用户身份启动，安装器一提权就带成管理员（<code>installer.iss:108</code>）。本机没装 Inno 编译器，改了当场验不了，所以没动——要补我在能出包的机器上验完再改。</li>
+      <li>与本刀无关的既有红门：<code>smoke-prepare-check-closure.mjs</code> 在未改动的 HEAD 上就红（binding-core 哈希与清单不符），且没有任何 npm／CI 入口。两条都已登记 ISSUES #294、#295。</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  出处：<code>AI_MEMORY/TASK_LOG.md</code> 2026-11-01 16:2x 段 · <code>AI_MEMORY/ISSUES.md</code> #294 #295 · 台账 <code>SCAN-STOP-REASON-PRIVLOG-20261101</code>（等您定）· 改动落在 <code>worktrees/unified-opt-20261031</code>（分支 codex/unified-opt-20261031，未提交）。
+</footer>
+
+</div>
+</body>
+</html>

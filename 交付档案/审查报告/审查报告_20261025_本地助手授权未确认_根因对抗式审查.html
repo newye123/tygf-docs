@@ -1,0 +1,628 @@
+<title>本地助手「授权尚未确认」根因审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>本地助手链路</span><span class="sep">/</span>
+    <span>2026-10-25</span>
+  </p>
+  <h1>本地助手「授权尚未确认」到底卡在哪</h1>
+  <p class="standfirst">不是授权问题。浏览器在 CORS 预检阶段就把请求拦下了，请求从没到过助手——所以助手一切正常、日志一片干净，每一轮排查都被「助手没问题」带回授权层，永远修不到真正那一跳。</p>
+  <div class="meta">
+    <span>基线 dbc434f</span>
+    <span>真实浏览器对照 A / B / C</span>
+    <span>受控 mock 对照</span>
+    <span>未 push · 未部署 · 未装包</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>当时是 BLOCK。根因已定位、已在工作树修好并加门；还差一次助手发版与你点一次安装。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">1</span><span class="k">个缺失的 CORS 放行头<br><code>x-tygf-install-id</code></span></div>
+    <div class="stat bad"><span class="n">18</span><span class="k">处助手调用全部被拦<br>（<code>fetchLocal</code> 调用点）</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k">条浏览器请求留在助手日志里</span></div>
+    <div class="stat ok"><span class="n">9.0s</span><span class="k">云端验票往返（次要风险）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先排除掉错误答案</h2>
+  <p class="lede">屏幕上是两句话打架：「本地助手已连接」和「当前授权尚未确认」。先证明助手本身没问题。</p>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>助手侧：健康</h3>
+      <ul>
+        <li><code>/ping</code> 返回 200，版本 3.7.27，<code>activationStatus=active</code>，有效期到 11-03。</li>
+        <li>测试站授权槽：安装号 <code>3d1550e7</code>，有效期到 <strong>11-08</strong>，<strong>bindings=3</strong>。</li>
+        <li>所以 10-25 上午补的配对并没有白做——授权数据是对的。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>浏览器侧：请求发不出去</h3>
+      <ul>
+        <li>同一浏览器、同一请求，只多一个 <code>x-tygf-install-id</code> 头，就从「成功」变成 <code>TypeError: Failed to fetch</code>。</li>
+        <li>助手日志里查不到 Owner 点浏览器的那几次——请求在浏览器里就被挡了。</li>
+        <li>能通的只有 <code>GET /ping</code>：简单请求，不带自定义头，不需要预检。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>证据链（可复跑）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">根因</span><span class="loc">server.js:2686</span></div>
+      <p>修复前助手的放行头只有 <code>Content-Type, x-tygf-ticket</code>。浏览器发请求前先问一句「我能带 <code>x-tygf-install-id</code> 吗」，助手回「不行」，于是请求<strong>根本没发出去</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">引入点</span><span class="loc">6c15cc4c · 2026-10-24 20:06</span></div>
+      <p>3.7.25「多绑定」给每个助手请求都加了 <code>x-tygf-install-id</code>（<code>local-assistant-client.ts:408-411</code>，在 <code>:279</code> 无条件注入），但那笔提交<strong>没有同步 CORS 放行表</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">浏览器对照</span><span class="loc">同机 · 同请求 · 只差一个头</span></div>
+      <p>A（不带该头）→ 成功 HTTP 403，可读，121 ms。B / C（带上该头）→ 浏览器拒绝，<code>TypeError: Failed to fetch</code>，31 / 35 ms。复跑两次都一样。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">受控 mock</span><span class="loc">排除探针失灵</span></div>
+      <p>两个本地 mock，唯一差别就是放行表里有没有这个头：不含 → 浏览器拒绝；含 → HTTP 200 且服务端确认 <code>sawInstallId=true</code>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">修复后闭环</span><span class="loc">同一浏览器</span></div>
+      <p>现役 49152：浏览器拒绝。打过补丁的同一份代码 49318：<strong>成功读到响应</strong>（403/HTTP_404 是隔离副本没有云端验票端点，与判定无关）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag">反证</span><span class="loc">日志面</span></div>
+      <p><code>engine.log</code> 尾部只有回执投递告警；<code>assistant-events.log</code> 最近的授权检查全部落在脚本作业时段。<strong>浏览器那几次一条都没有</strong>——这正是不该从助手日志里找根因的原因。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>为什么「一直修不好」</h2>
+  <p class="lede">四个环扣在一起，任何单环修复都会被下一环带回原点。</p>
+
+  <div class="tl">
+    <div class="tl-item">
+      <div class="dot"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>验证通道选错了</strong></div>
+        <p>所有「已修好」的终验都走 Node / curl 直连。Node 没有 CORS，浏览器才有。<strong>唯一会失败的通道，恰好是唯一没被用来验收的通道。</strong></p>
+        <p class="after">10-25 10:1x 的终验 <code>authorized:true, bindings:3</code> 就是脚本验的（TASK_LOG:63）。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>界面把「连不上」说成「授权失效」</strong></div>
+        <p><code>ASSISTANT_UNREACHABLE</code> 不在网络类码表里，横幅于是走第三分支，显示「授权尚未确认」并给出「重新授权」按钮——而这条路走的是同一个被拦的请求。</p>
+        <p class="after">assistant-setup-banner.tsx:157-165 · error-messages.ts:263-271</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot partial"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>按钮本身也不是真配对</strong></div>
+        <p>横幅上的「重新授权 / 重新连接」绑的是 <code>checkAssistant()</code>（只重查、不配对）。10-25 10:1x 已登记为「假按钮 / C4 未修」。</p>
+        <p class="after">assistant-setup-banner.tsx:240 · :256 · TASK_LOG:62</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="dot blind"></div>
+      <div class="tl-body">
+        <div class="hd"><strong>门禁不覆盖 CORS</strong></div>
+        <p>现有门只比对 prepare 载荷字段、只对 <code>isAllowedOrigin</code> 做源码正则；<strong>没有任何门检查「客户端发什么头 / 助手允什么头」</strong>。所以 3.7.25 加头、CORS 没跟，全套测试照样绿。</p>
+        <p class="after">verify-client-assistant-contract.cjs · smoke-assistant-origin-ticket.mjs</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>影响面</h2>
+  <p>从 3.7.25 起，<strong>任何已激活的浏览器</strong>都用不了工作台里需要助手的动作：选文件夹、预扫描、准备、执行、配对、诊断、排障上传。只有 <code>GET /ping</code> 能通——正好是截图里「已连接但什么都做不了」的样子。</p>
+  <div class="callout">
+    <span class="lb">容易误判</span>
+    <p>未激活、或本地没有安装号的浏览器不受影响。这也是为什么有些自测看起来是正常的——它不是同一个通道。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>本轮已落地（只改工作树）</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>改动</th><th>文件</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td>放行头补齐</td><td class="mono">server.js:2690</td><td>加 <code>x-tygf-install-id</code></td></tr>
+        <tr><td>失败归类纠正</td><td class="mono">error-messages.ts:263-271</td><td>「连不上」不再被说成「授权失效」</td></tr>
+        <tr><td>新增回归门</td><td class="mono">smoke-assistant-cors-preflight.mjs</td><td>从客户端源码现取实际发送的头，起真实助手发预检并断言覆盖</td></tr>
+        <tr><td>门禁接线</td><td class="mono">package.json</td><td>并入 <code>test:assistant-auth-barrier</code>（发布门之一）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>负控：修复前这道门必须红</h3>
+        <p>实跑结果：<code>CORS 放行头缺 x-tygf-install-id</code>，退出码 1。门是真的会拦，不是装饰。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>修复后全绿</h3>
+        <p><code>test:assistant-auth-barrier</code> EXIT=0（含新门 4 项断言）· <code>test:error-message-contract</code> EXIT=0 · <code>smoke-local-assistant-errors</code> passed · <code>tsc --noEmit</code> EXIT=0 · <code>release:check-identity</code> passed。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>残留与缺口（如实）</h2>
+  <ul class="notes">
+    <li><strong>修复还没到你机器上。</strong>改的是助手源码，必须打成新安装包（建议 3.7.28）并安装一次才生效。当前树里仍是 3.7.27 但行为已变，<strong>不是可发布态</strong>——发版前要把版本链五处一起升到 3.7.28 并实编安装包。本轮没做。</li>
+    <li><strong>云端验票往返偏慢</strong>：一次真实探针 9 001 ms（预算 30 s），历史上有过 10 010 ms 超时。CORS 修好后这条慢链路会重新暴露在用户路径上，属既有风险，不是本次引入。</li>
+    <li><strong>4 条历史回执仍投不出去</strong>：<code>ECONNREFUSED</code>，最老约 43.8 天。根因是助手 <code>serverUrl</code> 还指着 <code>localhost:3000</code>，与本问题同源于「本机地址误配」，但是另一笔账。</li>
+    <li><strong>没有在你的真实登录态 + 真实站点下复验</strong>（需要你的会话）。本机用「同源语义 + 同浏览器 + 同请求」替代，强度够，但严格说不是现场。</li>
+    <li>没审 3.7.26 / 3.7.27 的其他改动；本次只追这一条链路。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>你拍一个</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">A</div>
+      <div class="body">
+        <h3>推荐：按 3.7.28 打包 → 推 GitHub → 测试站部署 → 你点一次 UAC 装上</h3>
+        <p>发生什么：这条链路一次修好，Web 侧文案归类随同一次部署生效；装完当场用「选文件夹 → 预扫描」复验。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">B</div>
+      <div class="body">
+        <h3>临时绕过：前端停止发送这个头</h3>
+        <p>发生什么：单账号立刻可用，但同机多账号并存失效，退回 3.7.24 行为；下次谁再要这个能力，同一个坑会再踩一次。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">C</div>
+      <div class="body">
+        <h3>只改文案：把「授权尚未确认」改成「连不上本机助手」</h3>
+        <p>发生什么：不再误导你去重新授权，但功能仍然是坏的。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><strong>本次未动什么</strong>：未 push、未部署测试站/生产、未打包、未安装、未改支付 flag、未改任何授权/计费/执行判定、未动 <code>CURRENT_STATUS.md</code>。改动只落在 <code>worktrees/develop</code> 工作树。</p>
+  <p>基线 <code>dbc434ff</code> · 2026-10-25 · 图译工坊内测版</p>
+</footer>
+
+</div>
+
+</body>
+</html>

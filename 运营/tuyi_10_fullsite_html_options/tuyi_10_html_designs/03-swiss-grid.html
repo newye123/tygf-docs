@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 瑞士网格 · 编辑部排版 | 图译工坊全站模拟</title>
+<meta name="description" content="硬边界、规则网格、强标题与少量强调色，让复杂流程更易扫描。">
+<meta name="robots" content="noindex,nofollow">
+<style>
+
+:root{
+ --bg:#f7faf8;--surface:#fff;--surface-2:#f1f7f4;--ink:#17231e;--muted:#66766d;
+ --line:#dfe8e2;--accent:#009c86;--accent-ink:#fff;--accent-soft:#e4f7f1;
+ --warn:#ad721a;--warn-bg:#fff4d8;--bad:#b44238;--bad-bg:#fff0ed;--ok:#07885f;
+ --header:#ffffffdf;--shadow:0 12px 36px rgba(20,44,32,.07);--radius:18px;--radius-sm:11px;
+ --max:1240px;--font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 var(--font)}
+button,input,select,textarea{font:inherit}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+[hidden]{display:none!important}
+.wrap{width:min(var(--max),calc(100% - 42px));margin:0 auto}
+.topbar{position:sticky;top:0;z-index:30;background:var(--header);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.topbar-inner{width:min(1360px,calc(100% - 32px));margin:auto;min-height:68px;display:flex;align-items:center;gap:20px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;min-width:max-content;font-weight:850;letter-spacing:-.035em}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:950}
+.brand-sub{display:block;font-size:8px;letter-spacing:.13em;color:var(--muted);font-weight:800;margin-top:-2px}
+.nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.nav button{border:0;background:transparent;color:var(--muted);padding:9px 12px;border-radius:999px;font-size:12px;font-weight:750}
+.nav button:hover,.nav button.active{background:var(--surface-2);color:var(--ink)}
+.nav-actions{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;white-space:nowrap;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.warn{background:var(--warn-bg);border-color:#ebc77b;color:#765018}
+.btn.small{padding:7px 11px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.view{min-height:70vh}
+.hero{padding:68px 0 58px;background:linear-gradient(180deg,var(--surface-2),var(--bg))}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(430px,.94fr);gap:42px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--surface);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:850}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(40px,5vw,66px);line-height:1.05;letter-spacing:-.055em;margin:20px 0 18px;font-weight:800;max-width:800px}
+h1 .accent{color:var(--accent)}
+h2{font-size:clamp(28px,3.4vw,43px);line-height:1.12;letter-spacing:-.045em;margin:10px 0 14px;font-weight:780}
+h3{font-size:16px;line-height:1.35;margin:0 0 9px;font-weight:800}
+.lead{font-size:15px;line-height:1.85;color:var(--muted);max-width:650px}
+.sublead{font-size:12px;color:var(--muted);max-width:680px}
+.cta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:23px 0 12px}
+.fineprint{font-size:10px;line-height:1.7;color:var(--muted)}
+.kicker{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:900}
+.hero-note{font-size:11px;color:var(--muted);max-width:640px}
+.product-preview{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:13px;box-shadow:var(--shadow);min-width:0}
+.preview-label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;color:var(--muted);padding:3px 4px 12px}
+.demo-tag{display:inline-flex;border-radius:999px;background:var(--warn-bg);color:var(--warn);font-size:9px;padding:4px 8px;font-weight:850}
+.preview-app{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface)}
+.preview-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;font-weight:850}
+.preview-body{padding:13px}
+.preview-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:13px}
+.preview-step{border:1px solid var(--line);border-radius:9px;padding:9px 7px;font-size:9px;text-align:center;color:var(--muted)}
+.preview-step.active{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:850}
+.preview-file{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:12px}
+.file-icon{width:36px;height:42px;border-radius:7px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent);font-size:10px;font-weight:950;flex-shrink:0}
+.preview-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.preview-stat{background:var(--surface-2);border-radius:9px;padding:10px}
+.preview-stat b{display:block;font-size:17px}
+.preview-stat span{display:block;font-size:9px;color:var(--muted)}
+.section{padding:74px 0}
+.section.alt{background:var(--surface)}
+.section.soft{background:var(--surface-2)}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:28px}
+.section-head p{max-width:470px;color:var(--muted);font-size:12px;margin:0}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:21px;min-width:0}
+.card p{color:var(--muted);font-size:12px;margin-bottom:0}
+.card.tint{background:var(--surface-2)}
+.card.highlight{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.card-index{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:950;margin-bottom:15px}
+.pill-row{display:flex;flex-wrap:wrap;gap:7px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:10px;color:var(--muted)}
+.notice{border:1px solid #e7ce91;background:var(--warn-bg);color:#73501a;padding:12px 14px;border-radius:12px;font-size:11px}
+.notice.bad{border-color:#efc5c0;background:var(--bad-bg);color:#81352e}
+.notice.good{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--accent-soft);color:var(--ink)}
+.step-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.step-card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:18px}
+.step-card .num{display:grid;place-items:center;width:31px;height:31px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:900;margin-bottom:15px}
+.step-card p{font-size:11px;color:var(--muted)}
+.bento{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.bento .card.tall{grid-row:span 2}
+.footer{border-top:1px solid var(--line);padding:27px 0;background:var(--surface-2)}
+.footer-inner{display:flex;justify-content:space-between;align-items:start;gap:24px}
+.footer-links{display:flex;gap:10px 16px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.footer-note{font-size:10px;color:var(--muted);max-width:760px;margin:14px 0 0}
+.workbench-head{padding:27px 0 16px}
+.workbench-title-row{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.workbench-title{font-size:27px;letter-spacing:-.04em;margin:0;font-weight:850}
+.mode-switch{display:inline-flex;border:1px solid var(--line);border-radius:13px;padding:4px;background:var(--surface);gap:3px}
+.mode-switch button{border:0;background:transparent;color:var(--muted);border-radius:9px;padding:8px 12px;font-size:11px;font-weight:850}
+.mode-switch button.active{background:var(--ink);color:var(--bg)}
+.project-chip,.balance-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:8px 12px;font-size:11px;font-weight:750}
+.balance-chip{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.workbench-subtitle{color:var(--muted);font-size:13px;margin:9px 0 18px}
+.project-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:10px 0}
+.project-meta strong{color:var(--ink);font-size:13px}
+.status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:850;white-space:nowrap}
+.status.ok{background:#e2f7ed;color:#087c58}.status.warn{background:var(--warn-bg);color:var(--warn)}.status.bad{background:var(--bad-bg);color:var(--bad)}.status.neutral{background:var(--surface-2);color:var(--muted)}
+.app-shell{display:grid;grid-template-columns:228px minmax(0,1fr);gap:18px;align-items:start;padding:12px 0 46px}
+.step-nav{display:flex;flex-direction:column;gap:7px}
+.step-nav button{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid transparent;background:transparent;color:var(--ink);padding:14px 13px;border-radius:15px;font-size:12px;font-weight:850}
+.step-nav button .step-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:50%;background:var(--surface-2);color:var(--muted);flex-shrink:0}
+.step-nav button.done .step-icon{background:var(--accent);color:var(--accent-ink)}
+.step-nav button.active{background:var(--ink);color:var(--bg)}
+.step-nav button.active .step-icon{background:var(--accent);color:var(--accent-ink)}
+.step-nav small{display:block;font-size:9px;color:var(--muted);font-weight:600}
+.step-nav button.active small{color:#b5c5bc}
+.app-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;min-width:0;box-shadow:0 4px 16px rgba(20,44,32,.025)}
+.panel-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.panel-title{font-size:18px;font-weight:900;letter-spacing:-.03em;margin:0}
+.panel-meta{font-size:11px;color:var(--muted)}
+.subpanel{border:1px solid var(--line);border-radius:15px;padding:18px;margin-top:15px;background:var(--surface)}
+.subpanel-title{font-size:13px;font-weight:850;margin-bottom:12px}
+.form-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:10px;color:var(--muted);font-weight:850}
+.field input,.field select,.field textarea{min-width:0;width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--ink);font-size:12px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.path-input{flex:1;min-width:220px}
+.file-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-radius:13px;padding:14px;margin-top:12px}
+.file-info{display:flex;align-items:center;gap:10px;min-width:0}
+.file-info strong{display:block;font-size:12px;overflow-wrap:anywhere}
+.file-info small{display:block;font-size:10px;color:var(--muted)}
+.file-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.inline-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:13px}
+table{width:100%;border-collapse:collapse;font-size:11px;background:var(--surface)}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:9px;letter-spacing:.04em;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.row-input{width:100%;min-width:110px;border:1px solid var(--line);border-radius:7px;padding:7px;background:var(--surface);color:var(--ink);font-size:11px}
+.stat-grid-app{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:13px}
+.stat-box{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--surface-2)}
+.stat-box b{display:block;font-size:22px;letter-spacing:-.04em}
+.stat-box span{display:block;font-size:10px;color:var(--muted)}
+.panel-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+.text-link{border:0;background:transparent;color:var(--accent);font-weight:850;font-size:11px;padding:5px}
+.layout-warning{border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--accent-soft);border-radius:13px;padding:14px 16px;font-size:11px;color:var(--ink)}
+.layout-warning strong{display:block;margin-bottom:4px}
+.details-toggle{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:850;padding:8px 0}
+.detail-list{display:grid;gap:7px;margin-top:10px}
+.detail-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:11px}
+.ready-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:11px;color:var(--ink);font-size:11px;margin:15px 0}
+.summary-list{display:grid;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.summary-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:15px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:11px}
+.summary-row:last-child{border-bottom:0}
+.summary-row span:first-child{color:var(--muted)}
+.price-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;margin-top:10px}
+.price-row strong{font-size:20px}
+.account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.account-card{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px;min-width:0}
+.account-card.full{grid-column:1/-1}
+.account-card p{font-size:11px;color:var(--muted)}
+.account-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:11px;margin-top:9px}
+.account-row strong{display:block;font-size:11px;overflow-wrap:anywhere}
+.account-row small{display:block;font-size:10px;color:var(--muted)}
+.ledger-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}
+.ledger-toolbar input{flex:1;min-width:220px;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--ink)}
+.ledger-list{display:grid;gap:9px}
+.ledger-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.ledger-row strong{font-size:11px;display:block}
+.ledger-row small{display:block;color:var(--muted);font-size:10px}
+.ledger-amount{font-size:14px;font-weight:900;text-align:right}
+.ledger-amount.minus{color:var(--bad)}.ledger-amount.plus{color:var(--ok)}
+.download-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--surface)}
+.install-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.install-step{border:1px solid var(--line);border-radius:13px;padding:15px;background:var(--surface)}
+.install-step .num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:900;margin-bottom:12px}
+.faq-list{max-width:900px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-q{width:100%;display:flex;justify-content:space-between;gap:20px;text-align:left;border:0;background:transparent;color:var(--ink);font-weight:850;padding:16px 0;font-size:12px}
+.faq-a{display:none;padding:0 25px 17px 0;color:var(--muted);font-size:11px}
+.faq-item.open .faq-a{display:block}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:100;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);font-size:11px;display:none;max-width:calc(100% - 24px)}
+.toast.show{display:block}
+.mobile-menu{display:none}
+@media(max-width:980px){
+ .hero-grid{grid-template-columns:1fr}.product-preview{max-width:780px}
+ .nav{display:none}.nav.open{display:flex;position:absolute;top:65px;left:12px;right:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:var(--shadow);flex-direction:column;align-items:stretch}
+ .mobile-menu{display:inline-flex}.app-shell{grid-template-columns:180px minmax(0,1fr)}.grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+ .wrap{width:calc(100% - 26px)}.topbar-inner{width:calc(100% - 20px);min-height:58px;gap:8px}
+ .brand-sub{display:none}.brand{font-size:12px}.brand-mark{width:29px;height:29px}
+ .nav-actions .hide-small{display:none}.hero{padding:42px 0}.hero-grid{gap:25px}h1{font-size:42px}h2{font-size:30px}
+ .section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:10px}
+ .grid-2,.grid-3,.grid-4,.step-cards,.bento,.account-grid{grid-template-columns:1fr}
+ .card.tall{grid-row:auto}.app-shell{grid-template-columns:1fr}
+ .step-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ .step-nav button{padding:9px 8px;font-size:10px}
+ .step-nav small{display:none}.app-panel{padding:14px}
+ .workbench-title{font-size:23px}.project-chip{max-width:100%;overflow-wrap:anywhere}
+ .stat-grid-app{grid-template-columns:repeat(3,minmax(0,1fr))}.stat-box{padding:9px}.stat-box b{font-size:18px}
+ .summary-row{grid-template-columns:1fr;gap:4px}.install-grid{grid-template-columns:1fr}
+ .footer-inner{display:block}.footer-links{margin-top:14px}
+ .ledger-row{grid-template-columns:1fr auto}.account-card.full{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+
+
+body.theme-3{--bg:#f7f6f2;--surface:#fffefa;--surface-2:#eeece6;--ink:#171714;--muted:#67675f;--line:#c9c8bf;--accent:#df5b3f;--accent-ink:#fff;--accent-soft:#fbe9e2;--radius:2px;--radius-sm:2px;--shadow:none}
+.theme-3 .nav-shell{border-radius:0}.theme-3 .brand-mark,.theme-3 .btn,.theme-3 .card-index,.theme-3 .step-card .num{border-radius:2px}
+.theme-3 .hero{background:#f7f6f2;border-bottom:2px solid var(--ink)}
+.theme-3 .hero-grid{grid-template-columns:1.1fr .9fr;gap:32px}
+.theme-3 h1{font-size:clamp(42px,5.4vw,72px);font-weight:900;line-height:.98;letter-spacing:-.07em}
+.theme-3 .product-preview{box-shadow:none;border:2px solid var(--ink)}
+.theme-3 .app-panel,.theme-3 .card,.theme-3 .subpanel{border-width:1px}
+.theme-3 .section-head{border-bottom:1px solid var(--ink);padding-bottom:15px}
+.theme-3 .step-nav button.active{border-radius:2px;background:var(--ink);color:#fff}
+.theme-3 .mode-switch{border-radius:2px}.theme-3 .mode-switch button{border-radius:0}
+
+</style>
+</head>
+<body class="theme-3">
+
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="#" data-goto="home"><span class="brand-mark">译</span><span>图译工坊<small class="brand-sub">TUYI WORKSHOP · MULTILINGUAL DESIGN</small></span></a>
+<nav class="nav" aria-label="主导航">
+<button class="active" data-nav-view="home">官网首页</button>
+<button data-nav-view="workbench">工作台</button>
+<button data-nav-view="account">账户中心</button>
+<button data-nav-view="points">积分明细</button>
+<button data-nav-view="download">下载助手</button>
+<button data-nav-view="trial">申请试跑</button>
+</nav>
+<div class="nav-actions"><a class="btn small" href="index.html">10套方案</a><span class="pill hide-small">结构清晰</span><button class="btn small mobile-menu" data-mobile-menu>菜单</button></div>
+</div></header>
+
+<main>
+
+<section class="view" data-view="home">
+<section class="hero" id="top"><div class="wrap hero-grid">
+<div class="hero-copy"><div class="eyebrow"><span class="dot"></span> MULTILINGUAL DESIGN WORKFLOW</div>
+<h1>把多语言设计交付<br><span class="accent">拆成清楚的步骤。</span></h1><p class="lead">从译文表和文字图层开始，到按语言生成文件与最终 QA。每个状态都应有明确含义。</p>
+<div class="cta-row"><button class="btn primary" data-goto="trial">申请真实项目试跑 ↗</button><button class="btn" data-goto="workbench">查看完整工作台</button></div>
+<p class="hero-note">适用于 Amazon A+、主副图、产品详情页等多语言设计生产场景。产品不替代翻译，也不免除最终视觉与语言 QA。</p>
+<div class="notice" style="margin-top:18px">数据说明：PSD/PSB 文件本体按当前公开说明在本机处理；图层文字、译文与设计稿路径的处理范围请查看隐私政策。当前公开网站与截图中的助手版本存在版本号差异，正式发布前需核实。</div>
+</div>
+<div class="product-preview"><div class="preview-label"><span>工作台界面预览</span><span class="demo-tag">交互示意，非实时任务</span></div>
+<div class="preview-app"><div class="preview-head"><span>工作台 / 6877主副图.psb</span><span class="status ok">示意：已对齐</span></div><div class="preview-body">
+<div class="preview-flow"><div class="preview-step active">01 素材</div><div class="preview-step">02 检测</div><div class="preview-step">03 校对</div><div class="preview-step">04 交付</div></div>
+<div class="preview-file"><div class="file-icon">PSB</div><div style="flex:1;min-width:0"><strong>6877主副图.psb</strong><div class="fineprint">扫描到 44 个文字图层 · 隐藏 7 个</div></div><span class="status ok">已扫描</span></div>
+<div class="preview-stats"><div class="preview-stat"><b>34</b><span>当前语言替换对象</span></div><div class="preview-stat"><b>10</b><span>保留原文/不替换</span></div><div class="preview-stat"><b>15</b><span>版式提示，可重叠</span></div></div>
+</div></div>
+</div>
+</div></section>
+<section class="section alt"><div class="wrap"><div class="section-head"><div><div class="kicker">THE WORKFLOW</div><h2>四步完成一轮多语言设计处理。</h2></div><p>每一步都有独立的输入、状态和下一步动作。回读核对与最终视觉 QA 分开记录。</p></div>
+<div class="step-cards">
+<div class="step-card"><div class="num">01</div><h3>准备素材</h3><p>选择可编辑 PSD/PSB，扫描文字图层，导入已确认译文并选择目标语言。</p></div>
+<div class="step-card"><div class="num">02</div><h3>智能检测</h3><p>检查译文表中的歧义、断行和语义风险。需要判断的项目不应被静默跳过。</p></div>
+<div class="step-card"><div class="num">03</div><h3>设计稿校对</h3><p>检查版式提示、文字对象和 Photoshop 连接状态，明确哪些项可替换、哪些需人工处理。</p></div>
+<div class="step-card"><div class="num">04</div><h3>生成交付</h3><p>确认语言、输出文件名、保存位置和费用后，在本机执行替换，再检查报告与最终视觉。</p></div>
+</div></div></section>
+<section class="section"><div class="wrap"><div class="section-head"><div><div class="kicker">CAPABILITIES</div><h2>能力按工作结果组织。</h2></div><p>只展示当前产品流程中能解释、能核对的工作，不使用没有证据支撑的效率承诺。</p></div>
+<div class="bento">
+<div class="card tall highlight"><div class="card-index">01</div><h3>批量写入可编辑文字图层</h3><p>将已确认译文写入匹配的 Photoshop 文字图层，减少逐层查找和复制粘贴。适配度受源文件结构与匹配条件影响。</p><div class="pill-row" style="margin-top:17px"><span class="pill">PSD / PSB</span><span class="pill">已确认译文</span><span class="pill">本地助手</span></div></div>
+<div class="card"><div class="card-index">02</div><h3>按语言生成文件</h3><p>确认语言、命名和输出目录，清晰组织各语言版本。</p></div>
+<div class="card"><div class="card-index">03</div><h3>回读核对</h3><p>核对写入值是否与预期一致，不把它当成翻译或视觉质量保证。</p></div>
+<div class="card"><div class="card-index">04</div><h3>异常可见</h3><p>查看未命中、未覆盖、疑似未翻译、版式提示和执行失败。</p></div>
+</div></div></section>
+<section class="section soft"><div class="wrap grid-2"><div><div class="kicker">FIT & DATA</div><h2>先确认文件和数据边界，再申请试跑。</h2><p class="lead">当前公开下载页标注 Windows 10/11 64 位，并说明 Photoshop 2021（22.0）已实机验证，其他版本未逐项验证。用户截图中的本地助手显示 v3.7.28，公开下载页旧版号需由产品负责人确认后统一。</p><div class="pill-row"><span class="pill">单批最多 12 个目标语种（按公开页面）</span><span class="pill">需可编辑文字图层</span><span class="pill">需人工最终 QA</span></div><div class="cta-row"><button class="btn" data-goto="download">查看本地助手</button><button class="btn" data-goto="account">账户与设备</button></div></div>
+<div class="card"><h3>数据流必须说清楚</h3><p>PSD/PSB 文件本体与替换后图像按公开说明在本机处理。图层原文、译文表内容、设计路径与部分诊断信息的处理范围应以现行隐私政策和第三方处理方清单为准。</p><div class="cta-row"><button class="btn" data-goto="download">查看安全说明</button><button class="btn" data-goto="trial">申请试跑</button></div></div></div></section>
+<section class="section alt"><div class="wrap"><div class="section-head"><div><div class="kicker">QUALITY BOUNDARY</div><h2>机器核对与人工交付验收是两层工作。</h2></div></div><div class="grid-3">
+<div class="card"><div class="card-index">A</div><h3>自动核对</h3><p>写入值与回读值是否一致、是否存在未命中或未覆盖对象、执行是否失败。</p></div>
+<div class="card"><div class="card-index">B</div><h3>人工 QA</h3><p>语义、字体、字符显示、换行、溢出、可见性、RTL 排版和最终画面。</p></div>
+<div class="card"><div class="card-index">C</div><h3>交付确认</h3><p>按项目标准确认输出文件、异常处理、授权和最终验收记录。</p></div>
+</div></div></section>
+<section class="section"><div class="wrap"><div class="section-head"><div><div class="kicker">FAQ</div><h2>试跑前常见问题。</h2></div><button class="btn" data-goto="trial">申请真实项目试跑</button></div>
+<div class="faq-list">
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>图译工坊会自动翻译吗？</span><span>+</span></button><div class="faq-a">当前定位是处理已确认译文的设计交付流程，不替代译文生产与语言审校。</div></div>
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>所有 PSD/PSB 都能处理吗？</span><span>+</span></button><div class="faq-a">不能作此保证。栅格化文字、智能对象内部文字、特殊结构、字体和长译文都可能需要单独处理或人工复核。</div></div>
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>回读验证通过就能交付吗？</span><span>+</span></button><div class="faq-a">不能。回读验证只核对写入内容，仍需完成逐语言视觉和语言 QA。</div></div>
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>文件和译文数据会上传吗？</span><span>+</span></button><div class="faq-a">公开说明区分 PSD/PSB 文件本体与文字、译文、路径和诊断数据。请在试跑前阅读现行隐私政策，必要时由技术负责人确认。</div></div>
+</div></div></section>
+<section class="section soft"><div class="wrap grid-2"><div><div class="kicker">START WITH A REAL FILE</div><h2>用一份代表性项目验证适配度。</h2><p class="lead">先确认文件、语言、运行环境、数据权限和最终 QA 标准，再讨论试跑范围与交付物。</p><button class="btn primary" data-goto="trial">申请真实项目试跑 ↗</button></div><div class="card"><h3>试跑前要对齐</h3><ul><li>PSD/PSB 是否可编辑，译文是否定稿。</li><li>目标语言、文件数量和 Photoshop 版本。</li><li>数据处理范围与客户授权。</li><li>试跑费用、交付物、响应时间和 QA 标准。</li></ul></div></div></section>
+</section>
+<section class="view" data-view="workbench" hidden>
+<section class="workbench-head"><div class="wrap">
+<div class="workbench-title-row"><h2 class="workbench-title">工作台</h2>
+<div class="mode-switch"><button class="active" data-mode="single">单个设计稿</button><button data-mode="multi">多个设计稿</button></div>
+<span class="project-chip"><span class="dot"></span> 这份稿：6877主副图.psb</span>
+<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="balance-chip" data-goto="points">◉ 12,800 积分（示意）</button><button class="btn small" data-goto="points">◷ 明细</button><button class="btn small" data-goto="account">用户</button></div>
+</div>
+<p class="workbench-subtitle">扫描设计稿、导入译文并在本机生成多语言文件；设计文件不会上传。详细数据处理范围见隐私政策。</p>
+<div class="project-meta"><span class="dot"></span><strong>6877主副图.psb</strong><button class="text-link" data-action="已触发重新扫描示意。">重新扫描</button><span>· ID 6877</span><span>· 1 个语言</span><span class="status ok">✓ 已对齐</span></div>
+<div id="multi-banner" class="notice" hidden>多设计稿模式：此处为批量项目列表示意。实际可处理文件数量、任务并发和错误恢复能力需以当前版本实测为准。</div>
+</div></section>
+<section class="wrap app-shell">
+<aside class="step-nav" aria-label="工作台四步流程">
+<button class="active done" data-step="1"><span class="step-icon">✓</span><span>准备素材<small>当前阶段</small></span></button>
+<button data-step="2" class="done"><span class="step-icon">✓</span><span>智能检测</span></button>
+<button data-step="3" class="done"><span class="step-icon">✓</span><span>设计稿校对</span></button>
+<button data-step="4"><span class="step-icon">4</span><span>生成交付</span></button>
+</aside>
+<div class="app-panel">
+<div class="step-panel" data-step-panel="1">
+<div class="panel-top"><h3 class="panel-title">准备素材</h3><div class="panel-meta">6877主副图.psb · ID 6877 · 日语 <button class="btn small" data-action="排版定制入口为示意，未打开真实排版设置。">T 排版定制　›</button></div></div>
+<h3>选择设计文件 · 只读预扫描</h3>
+<div class="subpanel"><div class="subpanel-title">⌕ 选择要处理的 PSD 文件</div>
+<div class="form-row"><div class="field path-input"><input aria-label="设计文件路径" value="D:\Designs\6877主副图.psb" readonly></div><button class="btn" data-action="静态原型不能访问本机文件系统；真实版本请使用工作台文件选择器。">▱ 选择文件…</button><button class="btn primary" data-action="预扫描示意：已扫描 44 个文字图层，隐藏 7 个。">▣ 扫描</button></div>
+<div class="file-row"><div class="file-info"><div class="file-icon">PSB</div><div><strong>6877主副图.psb <span class="status ok">✓ 已扫描</span></strong><div class="inline-meta"><span class="pill">▱ 44 个文字图层</span><span class="pill">隐藏 7</span><span class="fineprint">只读预扫描，不修改源文件</span></div></div></div><div class="file-actions"><button class="btn small" data-action="重新扫描已模拟；未调用本地助手。">⟳ 重新扫描</button><button class="btn small" data-action="移除操作仅为界面示意，没有更改本地文件。">移除</button></div></div>
+<div id="multi-files" class="detail-list" hidden><div class="detail-item"><span>6877主副图.psb · 44 文字层</span><span class="status ok">已扫描</span></div><div class="detail-item"><span>5857 A+ 主图.psd · 示例待扫描</span><span class="status neutral">待扫描</span></div><div class="detail-item"><span>5294 副图.psd · 示例待扫描</span><span class="status neutral">待扫描</span></div></div>
+</div>
+<div class="subpanel"><div class="form-row"><div class="field" style="min-width:150px"><label for="lang-select">目标语言</label><select id="lang-select"><option>日语</option><option>英语</option><option>德语</option><option>法语</option><option>西班牙语</option></select></div><div class="field" style="flex:1;min-width:200px"><label>译文表状态</label><input value="已导入 · 1/1 个目标语种已确认" readonly></div><button class="btn warn" data-action="译文表重选入口为示意；没有读取或替换任何表格。">重选译文表</button></div>
+<div class="fineprint" style="margin-top:10px">准备阶段检查：源文件可编辑性、译文表对应关系、目标语言与批次范围。实际功能以当前版本为准。</div></div>
+<div class="panel-actions"><span class="fineprint">下一步会检查译文匹配与语义风险。</span><button class="btn primary" data-next="2">下一步：智能检测 →</button></div>
+</div>
+
+<div class="step-panel" data-step-panel="2" hidden>
+<div class="panel-top"><div><h3 class="panel-title">智能检测</h3><div class="panel-meta">1 / 1 个目标语种已确认 · 日语</div></div><div class="form-row"><button class="btn" data-action="译文编辑区为示意，下面的文本框可编辑本地演示内容。">编辑译表</button><button class="btn primary" data-action="智能检测模拟完成：当前示例 0 项需要确认。">检测全部语言（1种语言）</button></div></div>
+<div class="subpanel"><div class="subpanel-title">智能检测 · 日语</div><p class="sublead">译文可直接编辑；普通提示不阻断，真实歧义或硬信息风险需确认后继续。</p>
+<div class="stat-grid-app"><div class="stat-box"><span>需要确认</span><b id="need-confirm">0</b></div><div class="stat-box"><span>检测语言</span><b>1 / 1</b></div><div class="stat-box"><span>当前状态</span><b style="font-size:14px">待确认继续</b></div></div>
+<div class="table-wrap"><table><thead><tr><th>源文</th><th>日语译文（可编辑）</th><th>检查状态</th></tr></thead><tbody>
+<tr><td>Premium Quality</td><td><input class="row-input" value="高品質" aria-label="Premium Quality 日语译文"></td><td><span class="status ok">基础规则通过</span></td></tr>
+<tr><td>Learn More</td><td><input class="row-input" value="詳しく見る" aria-label="Learn More 日语译文"></td><td><span class="status ok">基础规则通过</span></td></tr>
+<tr><td>Limited Offer</td><td><input class="row-input" value="期間限定オファー" aria-label="Limited Offer 日语译文"></td><td><span class="status neutral">需结合上下文判断</span></td></tr>
+</tbody></table></div>
+<div class="notice good" style="margin-top:13px"><strong>✓ 日语无需额外处理的行（示意）</strong><br>基础规则暂无需要处理项；运行上方“智能检测”后可继续检查错位、断句和语义风险。</div>
+</div>
+<div class="panel-actions"><div class="form-row"><button class="btn" data-action="已生成当前语言对账结果示意，未创建文件。">导出对账结果（当前语言）</button><button class="btn" data-action="已生成缺译对象清单示意，未创建文件。">导出缺译对象清单（当前语言）</button></div><button class="btn primary" data-next="3">确认当前语言并继续 →</button></div>
+</div>
+
+<div class="step-panel" data-step-panel="3" hidden>
+<div class="panel-top"><h3 class="panel-title">设计稿校对</h3><span class="panel-meta">已完成基础对齐 · 可进入执行前检查</span></div>
+<div class="layout-warning"><strong>有译文比设计稿宽：只影响排版，不改写入内容</strong>建议根据项目规则选择缩字号、精简译文，或把该层改成段落文本框。下面的 15 处提示为示意，提示项可能与替换对象重叠。</div>
+<button class="details-toggle" data-toggle-details>▸ 逐条查看（15 处，可定位到图层并选择保留原文）</button>
+<div class="detail-list" id="layout-details" hidden>
+<div class="detail-item"><span>日语标题 / Layer 12 · 译文宽度偏长</span><button class="btn small" data-action="该条处置已标记为示意，未修改源文件。">选择保留原文</button></div>
+<div class="detail-item"><span>日语卖点 / Layer 18 · 换行需复核</span><button class="btn small" data-action="该条处置已标记为示意，未修改源文件。">选择保留原文</button></div>
+<div class="detail-item"><span>日语 CTA / Layer 27 · 文本框容量需复核</span><button class="btn small" data-action="该条处置已标记为示意，未修改源文件。">选择保留原文</button></div>
+<div class="detail-item"><span>其余 12 处提示</span><span class="status warn">示意汇总</span></div>
+</div>
+<div class="subpanel"><div class="subpanel-title">Photoshop 就绪检查</div><p class="sublead">确认本地助手和 Photoshop 可以安全执行替换；设计文件继续使用第 1 步的只读预扫描结果。</p>
+<div class="ready-bar"><span>✓ 已连接 · Photoshop 就绪（界面示意）</span><button class="btn small" data-action="已重新检查连接状态示意；未连接本地助手。">⟳ 重新检查</button></div>
+<div class="summary-list"><div class="summary-row"><span>扫描文字图层</span><strong>44</strong></div><div class="summary-row"><span>当前语言可替换对象</span><strong>34</strong></div><div class="summary-row"><span>保留原文 / 不替换对象</span><strong>10</strong></div><div class="summary-row"><span>版式提示</span><strong>15 处（可能与上列对象重叠）</strong></div></div>
+</div>
+<div class="panel-actions"><button class="btn" data-next="2">← 上一步</button><button class="btn primary" data-next="4">下一步：执行与报告 →</button></div>
+</div>
+
+<div class="step-panel" data-step-panel="4" hidden>
+<div class="panel-top"><div><h3 class="panel-title">生成交付</h3><div class="panel-meta">确认语言、文件名和费用后，在本机生成语言版本。</div></div><span class="status warn">最终 QA 仍需人工完成</span></div>
+<div class="subpanel"><div class="subpanel-title">第 4 步：确认并生成</div><p class="sublead">可按当前范围生成 1 个语言版本。确认项目、文件名、输出目录和费用后再执行。</p>
+<div class="field"><label for="project-name">项目与文件名称</label><input id="project-name" value="本地任务目录" aria-label="项目与文件名称"></div>
+<p class="fineprint">同时用于输出文件名和积分明细；不填写时使用 PSD 文件名，生成时自动追加语言缩写。</p>
+<div class="summary-list" style="margin-top:12px"><div class="summary-row"><span>保存到</span><strong>源 PSD 目录下自动新建“文件名__时间戳”文件夹（默认）</strong></div><div class="summary-row"><span>语言与行数</span><strong><span id="selected-lang-label">日语</span> · 译文表 50 行</strong></div><div class="summary-row"><span>替换对象</span><strong>34 个文字对象（示意）</strong></div><div class="summary-row"><span>保留原文</span><strong>10 个对象不替换（示意）</strong></div></div>
+<div class="price-row"><div><span class="fineprint">预计费用</span><div><strong>40 积分</strong><span class="fineprint"> · 失败按实际规则退回</span></div></div><span class="status ok">示意报价</span></div>
+<p class="fineprint" style="margin-top:10px">确认表 50 行；计费 40 单位；不替换也不计费 10 行；实际替换对象 34/34。行数计费与文字对象数量是不同口径，正式产品应保持说明一致。</p>
+<div class="ready-bar"><span>✓ 就绪 · 点击“开始替换”后，Photoshop 将在本机生成当前语言版本</span><span class="fineprint">原型不会执行本机操作</span></div>
+<div class="panel-actions"><button class="btn" data-next="3">← 上一步</button><button class="btn primary" data-action="静态演示：没有启动 Photoshop、没有生成文件，也没有扣除积分。">▷ 开始替换（演示）</button></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section class="view" data-view="account" hidden>
+<section class="section"><div class="wrap"><div class="section-head"><div><div class="kicker">ACCOUNT CENTER</div><h2>账户中心</h2></div><span class="demo-tag">示意账户信息已脱敏</span></div>
+<div class="account-grid">
+<div class="account-card"><h3>账户信息</h3><p>邮箱、设备与安全设置</p><div class="account-row"><div><strong>f***@example.com</strong><small>邮箱已验证（示意）</small></div><span class="status ok">已验证</span></div><div class="account-row"><div><strong>12,800 积分</strong><small>可用积分（示意）</small></div><button class="btn small" data-goto="points">积分明细</button></div></div>
+<div class="account-card"><h3>本地助手设备</h3><p>解绑只撤销所选电脑的本地助手授权，不会撤销内测资格或影响积分；换电脑前优先在这里解绑。</p><div class="account-row"><div><strong>助手设备 · TYG-****-A12</strong><small>引擎 v3.7.28 · 最近连接 2026/10/26 18:14</small></div><button class="btn small" data-action="已模拟解绑确认提示；没有修改真实设备授权。">解绑</button></div><div class="account-row"><div><strong>助手设备 · TYG-****-B07</strong><small>引擎 v3.7.28 · 最近连接 2026/10/25 19:29</small></div><button class="btn small" data-action="已模拟解绑确认提示；没有修改真实设备授权。">解绑</button></div></div>
+<div class="account-card"><h3>已激活电脑</h3><p>这里管理工作台内测资格，不是本地助手解绑。退出登录不会撤销资格；只有明确撤销激活才会让该安装失去资格。</p><div class="account-row"><div><strong>电脑 · TYG-9XEP-****</strong><small>激活于 2026/09/06 15:52</small></div><button class="btn small" data-action="已模拟撤销激活确认；没有更改真实资格。">撤销激活</button></div></div>
+<div class="account-card"><h3>登录设备管理</h3><p>查看当前登录的设备，可逐个下线或全部下线其他设备。</p><div class="account-row"><div><strong>Windows · 当前</strong><small>最近活跃 2026/10/27 21:18</small></div><span class="status ok">当前设备</span></div><div class="account-row"><div><strong>Chrome · 其他设备</strong><small>最近活跃时间示意</small></div><button class="btn small" data-action="已模拟下线设备确认；没有结束真实会话。">下线</button></div><div class="cta-row"><button class="btn" data-action="已模拟“下线其他设备”确认；没有结束任何真实会话。">下线其他设备</button><button class="btn" data-action="静态原型：已退出当前演示视图，没有清除真实登录状态。">退出登录</button></div></div>
+</div>
+</div></section>
+</section>
+<section class="view" data-view="points" hidden>
+<section class="section"><div class="wrap"><div class="section-head"><div><div class="kicker">POINTS LEDGER</div><h2>积分明细</h2><p>仅显示近期示意活动，执行失败时的原扣除与对应退回应能在明细中关联。</p></div><div class="balance-chip">◉ 当前可用：12,800 积分（示意）</div></div>
+<div class="notice">积分历史仅为界面示意。正式版本应显示项目、执行号、时间、确认表行数、计费单位、实际替换对象、退回金额与关联关系。</div>
+<div class="ledger-toolbar"><input id="ledger-search" placeholder="按项目名或执行号搜索" aria-label="搜索积分明细"><button class="btn" data-action="搜索条件保留在本地演示页面。">搜索</button><button class="btn" data-action="静态演示不提供真实CSV导出。">导出明细</button></div>
+<div class="ledger-list" id="ledger-list">
+<div class="ledger-row" data-ledger-text="6877主副图 执行 A1"><div><strong>项目使用 · 6877主副图（示意）</strong><small>PS 执行 · 执行号 DEMO-A1 · 2026/10/27 20:56</small><small>确认表 50 行 · 计费 40 单位 · 不替换不计费 10 行 · 实际替换 34/34</small></div><div><div class="ledger-amount minus">−40</div><small>项目使用</small></div></div>
+<div class="ledger-row" data-ledger-text="Amazon SR 项目 A 执行 B2"><div><strong>项目使用 · Amazon-SR 项目 A（示意）</strong><small>PS 执行 · 执行号 DEMO-B2 · 2026/10/27 17:03</small><small>报价 495 · 实际使用 495 · 退回 0 · QA 状态需以真实记录为准</small></div><div><div class="ledger-amount minus">−495</div><small>项目使用</small></div></div>
+<div class="ledger-row" data-ledger-text="项目 B 执行 C3"><div><strong>项目使用 · 电商主图项目 B（示意）</strong><small>PS 执行 · 执行号 DEMO-C3 · 2026/10/26 18:24</small><small>报价 360 · 实际使用 360 · 退回 0</small></div><div><div class="ledger-amount minus">−360</div><small>项目使用</small></div></div>
+<div class="ledger-row" data-ledger-text="项目 C 执行 D4"><div><strong>项目使用 · 多语言 A+ 项目 C（示意）</strong><small>PS 执行 · 执行号 DEMO-D4 · 2026/10/24 08:31</small><small>报价 348 · 实际使用 348 · 退回 0</small></div><div><div class="ledger-amount minus">−348</div><small>项目使用</small></div></div>
+<div class="ledger-row" data-ledger-text="执行退回 项目 D"><div><strong>执行退回 · 项目 D（示意）</strong><small>执行号 DEMO-E5 · 2026/10/22 20:51</small><small>确认表 81 行 · 实际替换 0/35 · 按示意规则退回</small></div><div><div class="ledger-amount plus">+65</div><small>执行退回</small></div></div>
+<div class="ledger-row" data-ledger-text="项目使用 项目 D"><div><strong>项目使用 · 项目 D（示意）</strong><small>执行号 DEMO-E5 · 2026/10/22 20:49</small><small>原扣除记录，与上一条退回记录对应</small></div><div><div class="ledger-amount minus">−65</div><small>项目使用</small></div></div>
+</div><p class="fineprint" style="margin-top:14px">示例项目名、执行号、积分余额和时间均为演示数据，个人邮箱和设备标识已脱敏。</p></div></section>
+</section>
+<section class="view" data-view="download" hidden>
+<section class="section"><div class="wrap"><div class="section-head"><div><div class="kicker">WINDOWS DESKTOP ASSISTANT</div><h2>下载本地助手</h2><p>在自己的电脑上完成 Photoshop 自动化替换与多语言排版执行；设计稿文件本体按当前公开说明在本机处理。</p></div><span class="status neutral">引擎版本 v3.7.28（用户截图）</span></div>
+<div class="download-card"><div class="panel-top"><div><h3>Windows 桌面端（含托盘程序与替换引擎）</h3><div class="panel-meta">tygf-engine-setup-3.7.28.exe · Windows 10 / 11（64 位）</div></div><button class="btn primary" data-action="静态原型没有真实安装包下载。上线前必须接入官方安装包与对应 SHA-256。">⇩ 下载安装包（示意）</button></div>
+<div class="notice bad">版本核验：当前截图显示本地助手 v3.7.28，而之前可读取的公开下载页为 v3.7.15。必须由产品负责人确认当前正式版本、安装包文件名和 SHA-256，再同步官网。</div>
+<div class="install-grid"><div class="install-step"><div class="num">1</div><h3>下载并安装</h3><p class="fineprint">双击运行安装程序，按提示完成安装。首次启动可能需要系统托盘权限。</p></div><div class="install-step"><div class="num">2</div><h3>打开 Photoshop</h3><p class="fineprint">打开待处理 PSD/PSB，保持本地助手与 Photoshop 同时运行。</p></div><div class="install-step"><div class="num">3</div><h3>回工作台验证</h3><p class="fineprint">点击重新检测；连接成功后再扫描、执行与检查报告。</p></div></div>
+<div class="subpanel"><h3>系统要求</h3><ul><li>Windows 10 / 11（64 位）。</li><li>Adobe Photoshop 2021（版本 22.0）已实机验证，其他版本未逐项验证。</li><li>首次激活与授权绑定需要联网。</li><li>macOS：截图页面显示“即将支持”，上线时需确认当前状态。</li></ul></div>
+<div class="subpanel"><h3>安全说明与数据流</h3><p class="sublead">当前公开说明称设计文件本体（.psd/.psb）与替换后的图像不上传，只在本机计算摘要用于对账；图层原文、译文与设计稿路径会按隐私政策处理，执行与核验状态会上传服务端。智能检测可能把文字内容发送给第三方 AI 模型服务。</p><div class="cta-row"><button class="btn" data-goto="home">查看产品流程</button><button class="btn" data-goto="trial">试跑前沟通数据范围</button></div></div>
+<div class="subpanel"><h3>常见问题</h3><div class="faq-list">
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>下载后如何验证文件完整？</span><span>+</span></button><div class="faq-a">正式页面应提供与安装包版本匹配的 SHA-256。当前原型不包含真实校验值，也不提供安装包。</div></div>
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>安装后工作台提示未连接？</span><span>+</span></button><div class="faq-a">确认本地助手和 Photoshop 均已启动，再点击工作台的重新检测。具体错误应按真实版本日志排查。</div></div>
+<div class="faq-item"><button class="faq-q" data-faq aria-expanded="false"><span>本地助手是否意味着所有数据都留在本机？</span><span>+</span></button><div class="faq-a">不应这样理解。文件本体、图层文字、译文表、路径和诊断信息需要分别核对其处理位置。</div></div>
+</div></div>
+</div></section>
+</section>
+<section class="view" data-view="trial" hidden>
+<section class="section"><div class="wrap grid-2"><div><div class="kicker">REAL PROJECT PILOT</div><h2>申请真实项目试跑</h2><p class="lead">先验证适配度，再讨论投入。试跑前明确文件要求、数据处理、测试范围、费用、交付物与最终 QA 标准。</p>
+<div class="card tint"><h3>合格项目条件</h3><ul><li>存在重复的多语言设计交付。</li><li>有可编辑 PSD/PSB 或愿意先做适配评估。</li><li>译文已经确认。</li><li>有权授权试跑，且能确认 QA 标准。</li><li>数据处理范围符合项目保密要求。</li></ul></div></div>
+<form class="card" data-trial-form><h3>项目基本信息</h3><div class="field"><label for="trial-name">称呼</label><input id="trial-name" required placeholder="称呼"></div><div class="field"><label for="trial-email">工作邮箱</label><input id="trial-email" type="email" required placeholder="name@company.com"></div><div class="field"><label for="trial-role">你的角色</label><select id="trial-role"><option>设计师</option><option>设计负责人</option><option>跨境电商运营</option><option>设计外包/代运营</option><option>本地化服务商</option><option>其他</option></select></div><div class="field"><label for="trial-scope">项目类型、文件数量与目标语言</label><textarea id="trial-scope" required placeholder="例如：Amazon A+，3套PSD，5个目标语种"></textarea></div><div class="field"><label for="trial-pain">目前流程中最耗时的步骤</label><textarea id="trial-pain" placeholder="逐层替换、输出管理、异常检查、最终QA等"></textarea></div><label class="fineprint"><input type="checkbox" required> 我已阅读数据处理说明，且不会提交未经授权的客户文件。</label><div class="cta-row"><button class="btn primary" type="submit">模拟提交申请</button></div><p class="fineprint">这是静态 HTML 原型。表单不会发送数据。费用、响应时间和交付物必须在真实试跑开始前书面确认。</p></form></div></section>
+</section>
+
+</main>
+<footer class="footer"><div class="wrap"><div class="footer-inner"><a class="brand" href="#" data-goto="home"><span class="brand-mark">译</span><span>图译工坊<small class="brand-sub">TUYI WORKSHOP</small></span></a><div class="footer-links"><a href="#" data-goto="home">官网首页</a><a href="#" data-goto="workbench">工作台</a><a href="#" data-goto="download">下载助手</a><a href="#" data-goto="trial">申请试跑</a></div></div><p class="footer-note">方案 03 · 03 瑞士网格 · 编辑部排版。这是独立静态 HTML 原型。页面数据均为演示数据，按钮仅模拟交互，不连接生产服务、不读取本地文件、不执行 Photoshop 替换或扣除积分。账户邮箱、设备标识和积分余额已使用示意值。</p></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+ const views=[...document.querySelectorAll('[data-view]')];
+ function goto(name){
+   views.forEach(v=>v.hidden=v.dataset.view!==name);
+   document.querySelectorAll('[data-goto]').forEach(b=>b.classList.toggle('active',b.dataset.goto===name));
+   document.querySelectorAll('[data-nav-view]').forEach(b=>b.classList.toggle('active',b.dataset.navView===name));
+   window.scrollTo({top:0,behavior:'smooth'});
+ }
+ document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>goto(b.dataset.goto)));
+ document.querySelectorAll('[data-nav-view]').forEach(b=>b.addEventListener('click',()=>goto(b.dataset.navView)));
+ document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.step)));
+ function setStep(n){
+   document.querySelectorAll('[data-step-panel]').forEach(p=>p.hidden=p.dataset.stepPanel!==String(n));
+   document.querySelectorAll('[data-step]').forEach(b=>{
+     const active=b.dataset.step===String(n);
+     b.classList.toggle('active',active);
+     b.setAttribute('aria-current',active?'step':'false');
+   });
+   const panel=document.querySelector('[data-step-panel="'+n+'"]');
+   if(panel) panel.scrollIntoView({block:'nearest',behavior:'smooth'});
+ }
+ document.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>setStep(b.dataset.next)));
+ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+   document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));
+   const multi=b.dataset.mode==='multi';
+   const banner=document.getElementById('multi-banner'),files=document.getElementById('multi-files');
+   if(banner) banner.hidden=!multi;if(files) files.hidden=!multi;
+   toast(multi?'已切换为多设计稿模式示意。':'已切换为单个设计稿模式示意。');
+ }));
+ document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>toast(b.dataset.action)));
+ document.querySelectorAll('[data-faq]').forEach(b=>b.addEventListener('click',()=>{
+   const item=b.closest('.faq-item'),open=item.classList.toggle('open');
+   b.setAttribute('aria-expanded',String(open));
+   const mark=b.querySelector('span:last-child');if(mark)mark.textContent=open?'−':'+';
+ }));
+ const detailsBtn=document.querySelector('[data-toggle-details]');
+ if(detailsBtn) detailsBtn.addEventListener('click',()=>{
+   const box=document.getElementById('layout-details');if(!box)return;
+   box.hidden=!box.hidden;detailsBtn.textContent=box.hidden?'▸ 逐条查看（15 处，可定位到图层并选择保留原文）':'▾ 收起逐条提示';
+ });
+ const lang=document.getElementById('lang-select');
+ if(lang) lang.addEventListener('change',()=>{
+   const label=document.getElementById('selected-lang-label');if(label)label.textContent=lang.value;
+   toast('目标语言已切换为'+lang.value+'（示意）。');
+ });
+ const search=document.getElementById('ledger-search');
+ if(search) search.addEventListener('input',()=>{
+   const q=search.value.toLowerCase();
+   document.querySelectorAll('[data-ledger-text]').forEach(row=>row.hidden=!row.dataset.ledgerText.toLowerCase().includes(q));
+ });
+ const form=document.querySelector('[data-trial-form]');
+ if(form) form.addEventListener('submit',e=>{e.preventDefault();toast('静态原型：申请数据没有发送，尚未创建真实工单。');});
+ const toastBox=document.getElementById('toast');
+ let timer;
+ function toast(message){
+   if(!toastBox)return;toastBox.textContent=message;toastBox.classList.add('show');
+   clearTimeout(timer);timer=setTimeout(()=>toastBox.classList.remove('show'),4300);
+ }
+ document.querySelector('[data-mobile-menu]')?.addEventListener('click',()=>{
+   const nav=document.querySelector('.nav');if(nav)nav.classList.toggle('open');
+ });
+})();
+</script>
+</body>
+</html>

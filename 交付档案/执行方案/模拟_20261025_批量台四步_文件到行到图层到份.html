@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟 · 批量台四步（照单稿工作台）：文件 → 行 → 图层 → 份</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f0efec;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;
+  --line:#e2e3df;--line2:#d3d5cf;--teal:#009588;--teal-soft:#e2f3f1;--emerald:#009767;--emerald-soft:#e3f5ee;
+  --amber:#9a6505;--amber-soft:#fff7e7;--rose:#b3261e;--rose-soft:#fbeae8;--blue:#1b5bd0;--blue-soft:#e8effc;
+  --r:14px;--r-sm:10px;--font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1440px;margin:0 auto;padding:18px 14px 60px}
+.doc{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.eyebrow{font-family:var(--mono);font-size:.69rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.25rem,2.4vw,1.7rem);line-height:1.3;font-weight:700;max-width:44ch;text-wrap:balance}
+.standfirst{margin:0;max-width:100ch;color:var(--ink2);font-size:.92rem}
+.honest{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:11px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.honest .col{border-left:3px solid var(--teal);padding-left:10px}
+.honest .col.new{border-left-color:var(--blue)}
+.honest .col.same{border-left-color:var(--line2)}
+.honest b{display:block;font-size:.82rem;margin-bottom:1px}
+.honest p{margin:0;font-size:.76rem;color:var(--ink2)}
+/* 框架 */
+.frame{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 16px 40px -26px rgba(0,0,0,.22)}
+.stepper{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);background:#fbfbfa}
+.stepper button{flex:1 1 140px;display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:9px 13px;text-align:left;border-right:1px solid var(--line);color:var(--ink2)}
+.stepper button:last-child{border-right:0}
+.stepper button:hover{background:var(--sunk)}
+.stepper button[aria-current="true"]{background:var(--ink);color:#fff}
+.stepper button[aria-current="true"] .n{background:#fff;color:var(--ink)}
+.stepper .n{flex:none;width:21px;height:21px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-family:var(--mono);font-size:.68rem;font-weight:600}
+.stepper .ok .n{background:var(--teal);border-color:var(--teal);color:#fff}
+.stepper .t{display:block;font-size:.8rem;font-weight:700;line-height:1.28}
+.stepper .s{display:block;font-size:.66rem;color:var(--muted);line-height:1.3}
+.stepper button[aria-current="true"] .s{color:#cfd4d0}
+.body{padding:13px}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 13px;border-top:1px solid var(--line);background:#fbfbfa}
+.foot .hint{font-size:.74rem;color:var(--muted);max-width:80ch}
+.foot .right{margin-left:auto;display:flex;gap:6px}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:9px;padding:6px 12px;font-size:.82rem;font-weight:600;color:var(--ink)}
+.btn:hover{border-color:var(--ink2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{filter:brightness(.94)}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn.sm{padding:3px 9px;font-size:.75rem;border-radius:7px}
+.btn.lg{padding:9px 17px;font-size:.9rem;border-radius:11px}
+/* 通用 */
+.stack{display:flex;flex-direction:column;gap:9px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.grid2{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:11px}
+.grid3{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1fr) minmax(0,0.9fr);gap:11px}
+@media (max-width:1080px){.grid3{grid-template-columns:1fr}}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.88rem;font-weight:700;margin:0 0 1px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.card-s{font-size:.75rem;color:var(--muted);margin:0 0 8px}
+.note{font-size:.76rem;color:var(--muted);max-width:100ch}
+.callout{border:1px solid var(--line);border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:var(--r-sm);padding:8px 12px;font-size:.8rem}
+.callout.bad{border-left-color:var(--rose);background:var(--rose-soft)}
+.callout.ok{border-left-color:var(--teal);background:var(--teal-soft)}
+.callout.blue{border-left-color:var(--blue);background:var(--blue-soft)}
+.callout b{display:block;margin-bottom:1px}
+.unit{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-family:var(--mono);color:#0a6f69;background:var(--teal-soft);border:1px solid #bfe3df;border-radius:999px;padding:1px 9px}
+.pill{font-family:var(--mono);font-size:.65rem;padding:1px 6px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.blue{background:var(--blue-soft);border-color:#c3d6f5;color:#12408f}
+.pill.grey{background:#eef1f5;border-color:#d5d9e0;color:#3d4757}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.idle{background:#c9ccc7}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;overflow:auto;font-family:var(--mono);font-size:.71rem;line-height:1.6;color:var(--ink2);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:7px}
+.stat{border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;background:var(--surface)}
+.stat .v{font-family:var(--mono);font-size:1.06rem;font-weight:600;line-height:1.2}
+.stat .l{font-size:.69rem;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--amber)}.stat.ok .v{color:var(--teal)}.stat.bad .v{color:var(--rose)}
+/* 紧凑阶段条（替代原来 8 行大列表） */
+.chips{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:6px 2px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-family:var(--mono);border:1px solid var(--line2);border-radius:999px;padding:2px 9px;background:var(--surface);color:var(--muted);white-space:nowrap}
+.chip.on{border-color:var(--teal);background:var(--teal-soft);color:#0a6f69}
+.chip.run{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}
+.chip .k{font-size:.62rem}
+.chipwrap{border:1px solid var(--line);border-radius:var(--r-sm);background:#fbfbfa;padding:2px 8px}
+details.mini>summary{cursor:pointer;font-size:.72rem;color:var(--muted);padding:2px 4px;list-style:none}
+details.mini>summary::-webkit-details-marker{display:none}
+details.mini>summary::before{content:"▸ ";font-family:var(--mono)}
+details.mini[open]>summary::before{content:"▾ "}
+.progress{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--teal);width:0;transition:width .2s}
+/* 列表 */
+.dlist{display:flex;flex-direction:column;gap:4px;max-height:392px;overflow:auto;padding:1px}
+.drow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 9px;text-align:left;width:100%}
+.drow:hover{border-color:var(--line2)}
+.drow[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.drow .f{font-family:var(--mono);font-size:.74rem;font-weight:600;white-space:nowrap}
+.drow .meta{font-size:.66rem;color:var(--muted);margin-left:auto;white-space:nowrap}
+/* 组清单（第 1 步主角） */
+.grow{display:flex;align-items:center;gap:8px;padding:5px 9px;border-bottom:1px solid #f1f1ee;font-size:.77rem}
+.grow:last-child{border-bottom:0}
+.grow input{margin:0;width:13px;height:13px;accent-color:var(--teal)}
+.grow .tn{font-family:var(--mono);font-size:.73rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow .tm{font-size:.67rem;color:var(--muted);white-space:nowrap}
+.grow.off .tn{color:var(--muted);text-decoration:line-through}
+/* 表格 */
+.tblwrap{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
+table.tt{border-collapse:collapse;width:100%;font-size:.72rem;font-family:var(--mono)}
+table.tt th,table.tt td{border:1px solid var(--line);padding:3px 6px;text-align:left;white-space:nowrap}
+table.tt thead th{background:var(--sunk);position:sticky;top:0;z-index:2;font-weight:600;font-size:.67rem}
+table.tt td.src{max-width:300px;overflow:hidden;text-overflow:ellipsis}
+table.tt td.miss{background:var(--rose-soft);color:var(--rose)}
+table.tt td.no{color:#b3b9b4}
+.tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--line2);border-radius:999px;background:var(--surface)}
+.tabs button{border:0;background:transparent;padding:3px 9px;border-radius:999px;font-size:.74rem;font-weight:600;color:var(--ink2);display:inline-flex;align-items:center;gap:4px}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.tabs .d{width:6px;height:6px;border-radius:50%;background:var(--emerald)}
+.tabs .d.warn{background:#d9a84f}.tabs .d.bad{background:var(--rose)}.tabs .d.idle{background:#c9ccc7}
+/* 矩阵（只在第 4 步） */
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:430px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.72rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:.65rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:6px 3px;text-align:center;min-width:48px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:10px;min-width:214px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:5px 10px;border-right:1px solid var(--line);min-width:214px;font-weight:500}
+.cell{border:0;background:transparent;width:100%;min-height:31px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 2px}
+.cell .cv{font-family:var(--mono);font-size:.7rem;font-weight:600}
+.cell .cs{font-size:.56rem;color:var(--muted);line-height:1.12}
+.c-ok{background:var(--emerald-soft);color:#0a5a41}
+.c-warn{background:var(--amber-soft);color:var(--amber)}
+.c-bad{background:var(--rose-soft);color:var(--rose)}
+.c-off{background:transparent;color:#b3b9b4}
+.cell:hover{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.7rem;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.lg{width:11px;height:11px;border-radius:3px;border:1px solid var(--line2);display:inline-block}
+.lg.ok{background:var(--emerald-soft);border-color:#a9dcc6}
+.lg.warn{background:var(--amber-soft);border-color:#eec87c}
+.lg.bad{background:var(--rose-soft);border-color:#f0bdb8}
+.lg.off{background:#fff;border-style:dashed}
+/* 抽屉 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.overlay.right{justify-content:flex-end;align-items:stretch;padding:0}
+.drawer{width:min(450px,100%);height:100%;background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.drawer .dh{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
+.drawer .dh .t{font-family:var(--mono);font-size:.76rem;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.drawer .dh button{margin-left:auto;border:1px solid var(--line2);background:var(--surface);border-radius:7px;width:25px;height:25px}
+.drawer .db{padding:11px 13px;overflow:auto;display:flex;flex-direction:column;gap:9px}
+dl.kv{margin:0;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:.76rem}
+dl.kv>div{display:flex;gap:7px}
+dl.kv dt{width:70px;flex:none;color:var(--muted)}
+dl.kv dd{margin:0;min-width:0;flex:1;word-break:break-all}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px}
+.log{font-family:var(--mono);font-size:.69rem;line-height:1.7;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:8px 10px;max-height:190px;overflow:auto}
+.log .warn{color:var(--amber)}.log .bad{color:var(--rose)}.log .ok{color:#0a6f69}
+table.cmp{width:100%;border-collapse:collapse;font-size:.78rem}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--sunk);font-weight:600;font-size:.72rem;color:var(--ink2)}
+table.cmp td.n{font-family:var(--mono);white-space:nowrap}
+details.ev{border:1px solid var(--line);border-radius:var(--r-sm);background:#fbfbfa}
+details.ev>summary{cursor:pointer;padding:8px 12px;font-size:.78rem;font-weight:600;color:var(--ink2);list-style:none}
+details.ev>summary::-webkit-details-marker{display:none}
+details.ev>summary::before{content:"▸ ";font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+details.ev[open]>summary::before{content:"▾ "}
+details.ev .evbody{padding:0 12px 10px}
+.hidden{display:none!important}
+/* 第 1 步：组准入 4 条 */
+.gh{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.gk{border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.gk b{font-size:.79rem}
+.gk p{margin:0;font-size:.72rem;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="doc">
+    <div class="eyebrow"><span>模拟件 · 不是已上线功能</span><span class="sep">/</span><span>2026-10-25 第三稿</span><span class="sep">/</span><span>基线 worktrees/develop@a7c530bb</span><span class="sep">/</span><span>照单稿工作台的四步</span></div>
+    <h1>四步各看一个东西：文件 → 行 → 图层 → 份</h1>
+    <p class="standfirst">上一稿你一句“步骤一二三都没区别”说到点上了。根因不是排版——<strong>产品第三步叫「设计稿校对」，单位是 PSD 里的文字层</strong>；我却把交付物矩阵塞进第三步，于是第一步和第三步画的是同一张格子表，第二、三步又都是表格。这一稿四步各管一种东西，<strong>同一屏不会出现两遍同样的东西</strong>。</p>
+    <div class="honest">
+      <div class="col"><b>真合同（代码里已有）</b><p>四步名与顺序＝<span class="mono">terms.ts:26-31</span>（准备素材 / 智能检测 / 设计稿校对 / 生成交付）；步骤三渲染＝<span class="mono">workbench-view.tsx:5226</span>；SKU 与交付物识别、表册、来源矩阵、合并算法、覆盖率取数口。每步下面都有 <span class="mono">file:line</span>。</p></div>
+      <div class="col new"><b>新提案（还没实现）</b><p>一组语言表＝一条绑定（绑定值 string→string[]）；导入时用现成合并算法合成一张多语言表；读表分轮；异常只拦那一张。四步本身不改。</p></div>
+      <div class="col same"><b>一个字都不改</b><p>执行链、报价口径、结算闸、助手协议、行身份与信任链匹配键。</p></div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="stepper" id="stepper" role="tablist"></div>
+    <div class="body" id="stageBody"></div>
+    <div class="foot">
+      <span class="hint" id="footHint"></span>
+      <div class="right">
+        <button class="btn sm ghost" id="btnReset">重来</button>
+        <button class="btn" id="btnPrev">上一步</button>
+        <button class="btn primary" id="btnNext">下一步 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px">
+    <details class="ev" id="evBox">
+      <summary>这一步连的代码（点开核对，结论必须对得上行号）</summary>
+      <div class="evbody" id="evBody"></div>
+    </details>
+  </div>
+</div>
+
+<script>
+/* ═════════ 真实数量：照 Owner 的文件夹 ═════════ */
+const LANGS = [
+  { code:'ES', zh:'西班牙语' }, { code:'FR', zh:'法国' }, { code:'ID', zh:'印尼' },
+  { code:'IT', zh:'意大利' }, { code:'JP', zh:'日本' }, { code:'MS', zh:'马来西亚' },
+  { code:'NL', zh:'荷兰' }, { code:'PL', zh:'波兰' }, { code:'RU', zh:'俄罗斯' },
+  { code:'TH', zh:'泰国' }, { code:'TL', zh:'菲律宾' }, { code:'VI', zh:'越南' },
+]
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521']
+const ROWS = 67
+const FOLDER = '完整表-20261003'
+
+const REAL = {
+  stages: 'terms.ts:26-31 —— 准备素材 / 智能检测 / 设计稿校对 / 生成交付（四步名与顺序）',
+  reconcileRender: 'workbench-view.tsx:5226 —— 第三步「设计稿校对」按文字层渲染',
+  oneTablePerDraft: 'workbench-view.tsx:3119 ——「同一稿只能有一张表」',
+  candidatesBySku: 'sku-attribution.ts:331-339 —— 候选只按 SKU＋交付物筛，语言不参与',
+  multiConflict: 'sku-attribution.ts:366-375 —— 多候选一律 conflict',
+  readQueueCap: 'table-inventory.ts:233-237 —— planTableReadQueue 默认 12 张',
+  surveyCap: 'local-assistant-client.ts:1413-1414 —— >12 张抛 SURVEY_TABLES_TOO_MANY',
+  mergeEngine: 'merge-tables.ts:103-231 —— 多张单语言表按原文合并（现成）',
+  mergeMajority: 'merge-tables.ts:65-94 —— ≥3 张要求严格多数，否则整批拒',
+  mergeCaps: 'merge-tables.ts:126-131,173-178 —— 12 语言 / 300 行',
+  drawerNa: 'step1-stage-view.tsx:1300-1313,1375-1379 —— issues 空即渲染「这一份就绪」',
+  noLangBeforeRead: 'table-picker-dialog.tsx:155；table-inventory-list.tsx:185 —— 未读也写「没有语言列」',
+  csvMultiMerge: 'csv-step.tsx:128-161 —— 单稿选多文件已能合并（批量台没接）',
+  batchLimits: 'batch-limits.ts:6,12 —— 12 语言 / 300 行',
+  layers: 'review-step.tsx / object-inspector.tsx —— 第三步按文字层校对（匹配、版式例外）',
+}
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  step: 1,
+  phase: 'idle', phaseIdx: -1,
+  clicks: 0, grouped: 0, selected: 0, read: 0,
+  readRetried: false,
+  ready: false,                 // 第 1 步跑完
+  activeDraft: '5857',
+  excluded: {},
+  langView: 'all',              // 'all' | 语言码
+  activeLayer: 0,
+  lowConfirmed: false,
+  runProgress: 0, runDone: false, runLog: [],
+}
+function key(sku, lang){ return sku + '/' + lang }
+const DRAFTS = SKUS.map(sku => ({ sku, name:`(B级)Amazon-${sku}-主副图-8-祝叶子.psb` }))
+
+/* 三个真实缺陷样本 + 一个读失败 */
+const DEFECTS = {
+  structureMismatch: key('5660','ID'),   // 66 行
+  emptyLangColumn: key('6896','VI'),    // 列里没值
+  lowCoverage: key('4871','ES'),        // 61/67
+}
+function zhOf(lang){ return (LANGS.find(l => l.code === lang) || {}).zh || '' }
+function tableName(sku, lang){ return `${lang} ${zhOf(lang)}-${sku}.xlsx` }
+function tableRel(sku, lang){ return `${FOLDER}/${tableName(sku, lang)}` }
+
+/* 每门语言的填充行数：默认 67；空列 0；低覆盖 61；读失败 null */
+function filledRows(sku, lang){
+  const k = key(sku, lang)
+  if (k === DEFECTS.emptyLangColumn) return 0
+  if (k === DEFECTS.lowCoverage) return 61
+  if (k === key('4521','RU') && !S.readRetried) return null
+  return ROWS
+}
+function langHealth(sku, lang){
+  const k = key(sku, lang)
+  if (k === key('4521','RU') && !S.readRetried) return { tone:'idle', label:'读失败' }
+  const n = filledRows(sku, lang)
+  if (n === 0) return { tone:'bad', label:'空列' }
+  if (n < ROWS) return { tone:'warn', label:`${n}/${ROWS}` }
+  return { tone:'ok', label:`${n}/${ROWS}` }
+}
+function rowText(sku, i){ return `图层原文-${sku}-第${i + 1}行` }
+function cellInTable(sku, lang, i){
+  const n = filledRows(sku, lang)
+  if (n === null) return null
+  if (n === 0) return null
+  if (n < ROWS && i >= n) return null
+  return `${lang} 译文-${i + 1}`
+}
+
+/* ═════════ 阶段（紧凑条） ═════════ */
+const PHASES = [
+  { id:'scan',  lb:'扫描文件夹', dt:'12 稿 · 144 表', after:() => {} },
+  { id:'ident', lb:'识别归属',   dt:'12/12 稿认出 SKU', after:() => {} },
+  { id:'group', lb:'归组',       dt:'144 → 12 组',     after:() => { S.grouped = 12 } },
+  { id:'all',   lb:'全选',       dt:'144/144 · 0 次点击', after:() => { S.selected = 144 } },
+  { id:'read',  lb:'读表',       dt:'144/144（12 轮）', after:() => { S.read = 144 } },
+  { id:'ready', lb:'可以进第 2 步', dt:'12 组各自成表', after:() => { S.ready = true } },
+]
+
+/* 交付物证据（只在第 4 步矩阵里用） */
+function cellEvidence(sku, lang){
+  const k = key(sku, lang)
+  const base = (() => {
+    if (k === DEFECTS.structureMismatch) return { cls:'c-bad', v:'66 行', s:'不符', tier:'不符', reason:'结构不一致：这一张 66 行，其余 11 张 67 行；合并引擎要求严格多数，这一张会被整批拒（CSV_MERGE_STRUCTURE_MISMATCH）' }
+    if (k === DEFECTS.emptyLangColumn) return { cls:'c-bad', v:'空列', s:'库里缺列', tier:'库里缺列', reason:'表名写 VI，但 VI 列没有值；并进来也交不出越南语' }
+    if (k === key('4521','RU') && !S.readRetried) return { cls:'c-bad', v:'读失败', s:'待重试', tier:'存疑', reason:'这张表读取失败（READ_FAILED），没进合并；别的语言不受影响' }
+    if (k === DEFECTS.lowCoverage) return { cls:'c-warn', v:'92%', s:'存疑', tier:'存疑', reason:'对稿覆盖率 92%（61/67 行），低于 95% 阈值；确认一次才开跑' }
+    return { cls:'c-ok', v:'97%', s:'实证', tier:'实证', reason:'归属对上 + 原文 67/67 覆盖，来源唯一' }
+  })()
+  if (S.excluded[k]) return { ...base, cls:'c-off', v:'—', s:'本批不做', excluded:true }
+  return base
+}
+function deliverableCount(){
+  if (!S.ready) return 0
+  let n = 0
+  for (const d of DRAFTS) for (const l of LANGS) if (!S.excluded[key(d.sku, l.code)]) n++
+  return n
+}
+function todoList(){
+  const list = []
+  if (!S.ready) return list
+  if (!S.excluded[DEFECTS.structureMismatch]) list.push({ id:'mismatch', t:'5660 / ID 结构不一致（66 行 vs 67 行）', b:'今天的合并引擎会整批拒；新做法只拦这一张，另外 11 门照常合并。', a:'这一门先不做' })
+  if (!S.excluded[DEFECTS.emptyLangColumn]) list.push({ id:'empty', t:'6896 / VI 表里没有 VI 列', b:'并进来也交不出越南语；排除这一门，或补一张真的 VI 表。', a:'这一门先不做' })
+  if (!S.lowConfirmed) list.push({ id:'low', t:'4871 / ES 只覆盖 61 / 67 行', b:'低于 95% 阈值，确认一次即可按现状替换，不必逐张确认。', a:'确认这一门' })
+  if (!S.readRetried) list.push({ id:'retry', t:'4521 / RU 读表失败', b:'只拦这一张；重试不用重扫整批。', a:'重试这一张' })
+  return list
+}
+
+/* ═════════ 工具 ═════════ */
+const $ = s => document.querySelector(s)
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]))
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild }
+function setBody(html){ $('#stageBody').innerHTML = html }
+function pill(kind, text){ const m = { ok:'teal', warn:'amber', bad:'rose', info:'blue', grey:'grey' }; return `<span class="pill ${m[kind]||'grey'}">${esc(text)}</span>` }
+
+/* ═════════ 顶部四步（真名） ═════════ */
+const STEPS = [
+  { n:1, t:'准备素材',   s:'稿和表，归组读取' },
+  { n:2, t:'智能检测',   s:'逐行：原文 × 12 门' },
+  { n:3, t:'设计稿校对', s:'逐层：图层 ↔ 行' },
+  { n:4, t:'生成交付',   s:'逐份：报价与回执' },
+]
+function renderStepper(){
+  const done = { 1:S.ready, 2:S.ready, 3:S.ready }
+  $('#stepper').innerHTML = STEPS.map(s => `
+    <button data-step="${s.n}" aria-current="${s.n === S.step}" class="${done[s.n] && s.n < S.step ? 'ok' : ''}">
+      <span class="n">${done[s.n] && s.n < S.step ? '✓' : s.n}</span>
+      <span><span class="t">${esc(s.t)}</span><span class="s">${esc(s.s)}</span></span>
+    </button>`).join('')
+  $('#stepper').querySelectorAll('button[data-step]').forEach(b => {
+    b.addEventListener('click', () => {
+      const n = Number(b.dataset.step)
+      if (n > 1 && !S.ready) return
+      go(n)
+    })
+  })
+}
+function unitBar(unit, lead){
+  return `<div class="row" style="justify-content:space-between">
+    <div class="row"><span class="unit">单位 · ${esc(unit)}</span><span class="note">${esc(lead)}</span></div>
+  </div>`
+}
+
+/* ═════════ 第 1 步：准备素材（单位＝文件） ═════════ */
+function renderStep1(){
+  const running = S.phase === 'running'
+  const done = S.phase === 'done'
+
+  const chips = PHASES.map((p, i) => {
+    const on = done || i < S.phaseIdx
+    const run = running && i === S.phaseIdx
+    return `<span class="chip ${run ? 'run' : (on ? 'on' : '')}"><span class="k">${run ? '…' : (on ? '✓' : i + 1)}</span>${esc(p.lb)}<span class="k">${esc(p.dt)}</span></span>`
+  }).join('')
+
+  const head = `
+    <div class="card plain" style="padding:9px 12px">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <span class="f mono" style="font-size:.8rem;font-weight:700">📁 ${FOLDER}</span>
+          <span class="note">12 份设计稿（同一交付物：主副图）· 144 张译文表（12 门 × 12 份）</span>
+        </div>
+        <span class="auto-note unit">这一屏不出现任何「选表」按钮</span>
+      </div>
+      <div class="row" style="margin-top:7px;gap:8px">
+        <button class="btn primary" id="btnAuto" ${running ? 'disabled' : ''}>${done ? '重新自动配对' : (running ? '正在跑…' : '扫描并自动配对')}</button>
+        <div class="chipwrap" style="flex:1;min-width:0"><div class="chips">${chips}</div></div>
+      </div>
+      <details class="mini"><summary>这 6 步各自干了什么（默认收起，不占地方）</summary>
+        <div class="stack" style="gap:3px;margin-top:5px">
+          ${PHASES.map((p, i) => `<div class="row" style="font-size:.75rem"><span class="mono" style="color:var(--muted);width:16px">${i + 1}</span><b>${esc(p.lb)}</b><span class="note">${esc(p.dt)}</span></div>`).join('')}
+        </div>
+      </details>
+    </div>`
+
+  // 左：12 份稿；右：选中稿的那一组 12 张表
+  const draftsList = DRAFTS.map(d => {
+    const bad = [DEFECTS.structureMismatch, DEFECTS.emptyLangColumn].filter(k => k.startsWith(d.sku + '/')).length
+    return `<button class="drow" data-draft="${d.sku}" aria-current="${d.sku === S.activeDraft}">
+      <span class="dot ${!done ? 'idle' : (bad ? 'warn' : 'ok')}"></span>
+      <span class="f">${d.sku} · 主副图</span>
+      <span class="meta">${done ? `12 张表${bad ? ` · ${bad} 张有毛病` : ''}` : '还没归组'}</span>
+    </button>`
+  }).join('')
+
+  const groupRows = LANGS.map(l => {
+    const k = key(S.activeDraft, l.code)
+    const h = langHealth(S.activeDraft, l.code)
+    const off = Boolean(S.excluded[k])
+    const bad = k === DEFECTS.structureMismatch
+    const name = tableName(S.activeDraft, l.code)
+    return `<label class="grow ${off ? 'off' : ''}">
+      <input type="checkbox" data-t="${k}" ${off ? '' : 'checked'} ${done ? '' : 'disabled'}>
+      <span class="tn">${esc(name)}</span>
+      <span class="tm">${l.code}</span>
+      <span class="tm">${filledRows(S.activeDraft, l.code) === null ? '未读' : (filledRows(S.activeDraft, l.code) + ' 行')}</span>
+      ${!done ? '<span class="tm">待归组</span>' : (bad ? pill('rose', '66 行') : (h.tone === 'bad' ? pill('rose', '空列') : (h.tone === 'warn' ? pill('amber', h.label) : pill('teal', '✓'))))}
+    </label>`
+  }).join('')
+
+  const selectedCount = done ? LANGS.filter(l => !S.excluded[key(S.activeDraft, l.code)]).length : 0
+
+  setBody(`
+    <div class="stack">
+      ${unitBar('文件 / 表', '这一屏只管：稿进来了没有、表归对了没有。表里每一行对不对，第 2 步才看。')}
+      ${head}
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">设计稿 · 12 份 ${done ? pill('teal', '12/12 已归组') : pill('grey', '待归组')}</p>
+          <p class="card-s">点一份，看它那一组表。</p>
+          <div class="dlist">${draftsList}</div>
+        </div>
+        <div class="card">
+          <p class="card-t">${S.activeDraft} · 主副图 · 这一组 <span class="pill ${selectedCount === 12 ? 'teal' : 'grey'}">${selectedCount} / 12 门</span></p>
+          <p class="card-s">一稿一组＝一条绑定。合并（12 张 → 1 张多语言表）在第 2 步一进去就已经完成。</p>
+          <div style="border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden">
+            <div class="row" style="padding:5px 9px;background:#fbfbfa;border-bottom:1px solid var(--line);font-size:.72rem;color:var(--muted)">
+              <span>整组默认全选</span><span style="margin-left:auto">${done ? '144 / 144 张已选 · 手工点选 0 次' : '还没开始'}</span>
+            </div>
+            ${groupRows}
+          </div>
+          <p class="note" style="margin-top:6px">想排除某一门，就在这里取消勾选——这是唯一的「挑」，而且只在例外时用。</p>
+        </div>
+      </div>
+      ${done ? `
+      <div class="stats">
+        <div class="stat ok"><div class="v">12</div><div class="l">自动归出的组</div></div>
+        <div class="stat ok"><div class="v">${S.selected} / 144</div><div class="l">默认已选表</div></div>
+        <div class="stat ok"><div class="v">${S.read} / 144</div><div class="l">已读表</div></div>
+        <div class="stat ok"><div class="v">0 次</div><div class="l">手工点选</div></div>
+        <div class="stat warn"><div class="v">2</div><div class="l">这一批里有毛病的表</div></div>
+      </div>
+      <div class="card plain">
+        <p class="card-t">组准入 4 条：不满足就不许进组（这是「全自动」的唯一保险）</p>
+        <div class="gh">
+          <div class="gk"><b>① 文件名里的 SKU 相同</b><span class="pill teal">12/12 组通过</span><p>唯一硬门槛。实测：把表改名成「语言+日期」后 SKU 读成空，12 张表归不进任何组。</p></div>
+          <div class="gk"><b>② 语言互不重复</b><span class="pill teal">12/12 组通过</span><p>同一门两张表＝冲突，不自动合并（今天会静默先到优先，已实测）。</p></div>
+          <div class="gk"><b>③ 原文集与多数一致</b><span class="pill teal">11/12 组通过 · 1 组拦下</span><p>结构签名按行排序比较，行序不同不算不一致（实测）。但报错话术有毛病：67 行 vs 67 行时看不出哪不对。</p></div>
+          <div class="gk"><b>④ 原文集相同也不能算过</b><span class="pill rose">补的</span><p>实测：<b>同原文、只改译文的别稿表，结构检查、重复语言、行数上限全部通过，零提示</b>。所以 ① 必须是硬门槛，且译员侧若混入同名 SKU 的另一份表，只有人工能发现。</p></div>
+        </div>
+      </div>
+      <details class="ev" id="mxFold"><summary>展开看今天的「译文来源矩阵」（144 格，默认收起，点开才渲染）</summary><div class="evbody" id="mxHost"></div></details>` : ''}
+    </div>`)
+
+  $('#btnAuto')?.addEventListener('click', startAutoPair)
+  document.querySelectorAll('[data-draft]').forEach(b => b.addEventListener('click', () => {
+    S.activeDraft = b.dataset.draft; renderStep1()
+  }))
+  document.querySelectorAll('input[data-t]').forEach(cb => cb.addEventListener('change', () => {
+    const k = cb.dataset.t
+    if (cb.checked) delete S.excluded[k]; else S.excluded[k] = true
+    renderStep1()
+  }))
+  // 今天的来源矩阵仍在：默认收起，点开才渲染（不删能力，只不占首屏）
+  const fold = $('#mxFold')
+  if (fold) {
+    fold.addEventListener('toggle', () => {
+      const host = $('#mxHost')
+      if (fold.open && host && !host.dataset.done) {
+        const hd = LANGS.map(l => `<th>${l.code}</th>`).join('')
+        const bd = DRAFTS.map(d => `<tr><th><div class="rowhead"><span class="f">${d.sku} · 主副图</span><span class="m">12 张表</span></div></th>${
+          LANGS.map(l => {
+            const k = key(d.sku, l.code)
+            const bad = k === DEFECTS.structureMismatch ? '66 行' : (k === DEFECTS.emptyLangColumn ? '空列' : (key('4521','RU') === k && !S.readRetried ? '读失败' : '已读'))
+            const cls = bad === '已读' ? 'c-ok' : (bad === '读失败' ? 'c-bad' : 'c-warn')
+            return `<td class="${cls}"><div class="cell"><span class="cv">${bad}</span><span class="cs">${l.code} 列</span></div></td>`
+          }).join('')}</tr>`).join('')
+        host.innerHTML = `<div class="scroller"><table class="mx"><thead><tr><th>设计稿 / 交付物</th>${hd}</tr></thead><tbody>${bd}</tbody></table></div>
+          <p class="note" style="margin-top:6px">这就是今天第 1 步那张矩阵——能力保留，只是不再占首屏。真正要「按份看能不能交」的矩阵在第 4 步。</p>`
+        host.dataset.done = '1'
+      }
+    })
+  }
+}
+function startAutoPair(){
+  if (S.phase === 'running') return
+  S.phase = 'running'; S.phaseIdx = 0
+  renderStep1(); renderStepper()
+  const tick = setInterval(() => {
+    PHASES[S.phaseIdx]?.after?.()
+    if (S.phaseIdx >= PHASES.length - 1) {
+      clearInterval(tick)
+      S.phase = 'done'
+      renderStep1(); renderStepper()
+      return
+    }
+    S.phaseIdx += 1
+    renderStep1()
+  }, 210)
+}
+
+/* ═════════ 第 2 步：智能检测（单位＝行） ═════════ */
+function renderStep2(){
+  const sku = S.activeDraft
+  const view = S.langView
+  const langsShown = view === 'all' ? LANGS : LANGS.filter(l => l.code === view)
+  const single = view !== 'all'
+
+  const tabs = [`<button data-lang="all" aria-pressed="${view === 'all'}">全部 12 门</button>`]
+    .concat(LANGS.map(l => {
+      const h = langHealth(sku, l.code)
+      return `<button data-lang="${l.code}" aria-pressed="${view === l.code}"><i class="d ${h.tone}"></i>${l.code}</button>`
+    })).join('')
+
+  const head = `<tr><th style="width:34px">#</th><th>原文</th>${langsShown.map(l => `<th>${l.code}</th>`).join('')}${single ? '<th>这一行</th>' : ''}</tr>`
+  const body = Array.from({ length: ROWS }, (_, i) => {
+    const cells = langsShown.map(l => {
+      const v = cellInTable(sku, l.code, i)
+      if (v === null) return `<td class="miss">缺</td>`
+      return `<td>${esc(v)}</td>`
+    }).join('')
+    const status = single ? `<td class="${cellInTable(sku, view, i) ? '' : 'miss'}">${cellInTable(sku, view, i) ? '有译文' : '缺译'}</td>` : ''
+    return `<tr><td class="no">${i + 1}</td><td class="src">${esc(rowText(sku, i))}</td>${cells}${status}</tr>`
+  }).join('')
+
+  // 这一稿每门语言的覆盖条
+  const bars = LANGS.map(l => {
+    const health = langHealth(sku, l.code)
+    const n = filledRows(sku, l.code)
+    const pct = n === null ? 0 : Math.round(n / ROWS * 100)
+    return `<button class="tar" data-lang="${l.code}" aria-pressed="${view === l.code}" title="只看 ${l.code}">
+      <span class="mono" style="font-size:.7rem;font-weight:600">${l.code}</span>
+      <span class="bar"><i style="width:${pct}%;background:${n === null ? '#c9ccc7' : (health.tone === 'ok' ? 'var(--emerald)' : (health.tone === 'warn' ? '#d9a84f' : 'var(--rose)'))}"></i></span>
+      <span class="mono" style="font-size:.64rem;color:var(--muted)">${n === null ? '未读' : `${n}/${ROWS}`}</span>
+    </button>`
+  }).join('')
+
+  const viewName = single ? `${view} ${zhOf(view)}` : '全部 12 门'
+  const viewFilled = single ? filledRows(sku, view) : LANGS.reduce((n, l) => n + (filledRows(sku, l.code) ?? 0), 0)
+
+  setBody(`
+    <div class="stack">
+      ${unitBar('行', '这一屏只管：一行原文 × 12 门译文，哪一行缺、哪一行空。表是怎么归来的，第 1 步已经定完了。')}
+      <div class="callout ok"><b>12 张单语言表进来时已经合成 1 张（不是在这一步合的）</b>
+        合并算法是现成的（${REAL.mergeEngine}）——单稿工作台选多个文件就走它。你现在看到的这张表，<strong>67 行 × 12 门</strong>，形状和单稿完全一样（${REAL.batchLimits}）。</div>
+      <div class="card">
+        <p class="card-t">这一稿每门语言有多少行有译文 <span class="pill grey">点任意一门＝只看那一门</span></p>
+        <p class="card-s">点一条会真的换表：只显示「原文 ＋ 那一门 ＋ 这一行状态」，再点「全部 12 门」回来。</p>
+        <div class="bars">${bars}</div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <p class="card-t" style="margin:0">${sku} · 主副图 <span class="pill ${single ? 'blue' : 'grey'}">${esc(viewName)}</span></p>
+          <div class="tabs" id="langTabs">${tabs}</div>
+        </div>
+        <p class="card-s">${single
+          ? `只看 <b>${esc(viewName)}</b>：${viewFilled === null ? '这张表还没读成功' : `${viewFilled} / ${ROWS} 行有译文`}${viewFilled !== null && viewFilled < ROWS ? `，缺 ${ROWS - viewFilled} 行（红格）` : ''}。`
+          : `全部 12 门并排看：合计 ${viewFilled} 个格子有译文（满格 ${ROWS * 12}）。`}</p>
+        <div class="tblwrap"><table class="tt"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+      </div>
+      <div class="grid2">
+        <div class="card plain">
+          <p class="card-t">检测统计</p>
+          <div class="stats">
+            <div class="stat"><div class="v">${ROWS}</div><div class="l">要翻的行</div></div>
+            <div class="stat ok"><div class="v">${LANGS.filter(l => filledRows(sku, l.code) >= ROWS).length}</div><div class="l">整门都齐</div></div>
+            <div class="stat warn"><div class="v">${LANGS.filter(l => { const n = filledRows(sku, l.code); return n !== null && n > 0 && n < ROWS }).length}</div><div class="l">部分缺译</div></div>
+            <div class="stat bad"><div class="v">${LANGS.filter(l => filledRows(sku, l.code) === 0).length}</div><div class="l">整门空列</div></div>
+          </div>
+        </div>
+        <div class="card plain">
+          <p class="card-t">合并日志（可解释，不猜）</p>
+          <pre>基准表：ES 西班牙语-${sku}.xlsx（${ROWS} 行）
+「FR」：匹配 ${ROWS} 行
+「ID」：${key(sku,'ID') === DEFECTS.structureMismatch ? '66 行 · 结构不一致（今天整批拒，新做法只拦这张）' : `匹配 ${ROWS} 行`}
+「VI」：${key(sku,'VI') === DEFECTS.emptyLangColumn ? '列存在但没有值' : `匹配 ${ROWS} 行`}
+合并后：${ROWS} 行 × 12 语言</pre>
+        </div>
+      </div>
+    </div>`)
+
+  document.querySelectorAll('#langTabs [data-lang]').forEach(b => b.addEventListener('click', () => {
+    S.langView = b.dataset.lang; renderStep2()
+  }))
+  document.querySelectorAll('.tar[data-lang]').forEach(b => b.addEventListener('click', () => {
+    S.langView = b.dataset.lang; renderStep2()
+  }))
+}
+
+/* ═════════ 第 3 步：设计稿校对（单位＝图层） ═════════ */
+// 真实的 1:N：一行原文可以被**多个**文字层消费（计费字段 requiredObjectCount
+// 就是「这一行要写进几个对象」，billing-preview.ts:18）。所以「67 行 = 67 层」是假的。
+function layerModel(){
+  const layers = []
+  for (let row = 0; row < ROWS; row++) {
+    layers.push({ rowIndex: row, dup: false })
+    if (row < 4) layers.push({ rowIndex: row, dup: true })   // 4 行各被第二个层消费
+  }
+  layers.push({ rowIndex: null, dup: false })                // 1 层表里没有
+  return layers
+}
+function layerPath(sku, idx){ return `${sku} / 主图 / 文案组 / 文字层-${String(idx + 1).padStart(2, '0')}` }
+function renderStep3(){
+  const sku = S.activeDraft
+  const layers = layerModel()
+  const unmatched = layers.filter(l => l.rowIndex === null)
+  const matchedLayers = layers.length - unmatched.length
+  const dupRows = new Set(layers.filter(l => l.dup).map(l => l.rowIndex)).size
+  const rowsUsed = new Set(layers.filter(l => l.rowIndex !== null).map(l => l.rowIndex)).size
+  const active = layers[Math.min(S.activeLayer, layers.length - 1)]
+
+  const list = layers.map((l, idx) => `<button class="lrow" data-layer="${idx}" aria-current="${idx === Math.min(S.activeLayer, layers.length - 1)}">
+      <span class="dot ${l.rowIndex === null ? 'warn' : 'ok'}"></span>
+      <span class="f">${esc(layerPath(sku, idx))}</span>
+      <span class="meta">${l.rowIndex === null ? '表里没有' : `→ 第 ${l.rowIndex + 1} 行${l.dup ? '（第 2 个层）' : ''}`}</span>
+    </button>`).join('')
+
+  const cur = active
+  const values = LANGS.map(l => ({ code: l.code, v: cur.rowIndex === null ? null : cellInTable(sku, l.code, cur.rowIndex) }))
+
+  setBody(`
+    <div class="stack">
+      ${unitBar('图层', '这一屏只管：PSD 里每个文字层，对上表的哪一行。这一屏不谈「份」，也不谈「表怎么来的」。')}
+      <div class="callout blue"><b>第三步和第二步不是同一件事，而且「行数≠层数」</b>
+        第二步看表里的<strong>行</strong>；这一步看设计稿里的<strong>图层</strong>。一行原文可以被<strong>多个</strong>文字层消费——计费字段「这一行要写进几个对象」就是它（<span class="mono">billing-preview.ts:18</span>）。所以这一屏是 <b>${layers.length} 层 ↔ ${rowsUsed} 行</b>，不是一一对应。</div>
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">${sku} · 文字层 ${layers.length} 个 <span class="pill ${unmatched.length ? 'amber' : 'teal'}">${unmatched.length ? `${unmatched.length} 个对不上` : '全部对上'}</span></p>
+          <p class="card-s">点一层，右边看它匹配到哪一行、12 门各自会写什么。</p>
+          <div class="dlist">${list}</div>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <p class="card-t">${esc(layerPath(sku, Math.min(S.activeLayer, layers.length - 1)))}</p>
+            <p class="card-s">${cur.rowIndex === null ? '表里没有这一层的原文' : `对上表第 ${cur.rowIndex + 1} 行（原文逐字相等，非模糊匹配）${cur.dup ? '；这一行同时被另一个层消费' : ''}`}</p>
+            <dl class="kv">
+              <div><dt>匹配</dt><dd>${cur.rowIndex === null ? '<span style="color:var(--amber)">未匹配</span>（这一层会被跳过，不写任何译文）' : `第 ${cur.rowIndex + 1} 行 · 原文一致`}</dd></div>
+              <div><dt>这一行</dt><dd>${cur.rowIndex === null ? '—' : `要写进 ${layers.filter(l => l.rowIndex === cur.rowIndex).length} 个文字层`}</dd></div>
+              <div><dt>可写语言</dt><dd>${values.filter(v => v.v !== null).length} / 12 门</dd></div>
+            </dl>
+            <div style="margin-top:8px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden">
+              ${values.map(v => `<div class="vrow">
+                <span class="tn" style="flex:none;width:34px">${v.code}</span>
+                <span class="tn" style="flex:1">${v.v === null ? '<span style="color:var(--rose)">这一门没有可用译文</span>' : esc(v.v)}</span>
+                ${v.v === null ? pill('rose', '跳过') : pill('teal', '会写入')}
+              </div>`).join('')}
+            </div>
+          </div>
+          <div class="card plain">
+            <p class="card-t">校对结论 <span class="pill grey">这一稿</span></p>
+            <div class="stats">
+              <div class="stat ok"><div class="v">${matchedLayers}</div><div class="l">图层已对上</div></div>
+              <div class="stat warn"><div class="v">${unmatched.length}</div><div class="l">对不上的层</div></div>
+              <div class="stat"><div class="v">${rowsUsed}</div><div class="l">表里的行</div></div>
+              <div class="stat"><div class="v">${dupRows}</div><div class="l">被多层消费的行</div></div>
+            </div>
+            <p class="note" style="margin-top:7px">对不上的层不写任何译文，也不会因此卡住别的层——这是今天已有的行为（<span class="mono">object-inspector.tsx</span> 的匹配与跳过）。</p>
+          </div>
+        </div>
+      </div>
+    </div>`)
+  document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => {
+    S.activeLayer = Number(b.dataset.layer); renderStep3()
+  }))
+}
+
+/* ═════════ 第 4 步：生成交付（单位＝份） ═════════ */
+function renderStep4(){
+  const head = LANGS.map(l => `<th>${l.code}</th>`).join('')
+  const body = DRAFTS.map(d => {
+    const cells = LANGS.map(l => {
+      const st = cellEvidence(d.sku, l.code)
+      return `<td class="${st.cls}"><button class="cell" data-cell="${d.sku}/${l.code}"><span class="cv">${st.v}</span><span class="cs">${st.s}</span></button></td>`
+    }).join('')
+    return `<tr><th><div class="rowhead"><span class="f">${d.sku} · 主副图</span><span class="m"><span class="pill teal">实证</span><span>12 张表</span></span></div></th>${cells}</tr>`
+  }).join('')
+
+  const all = DRAFTS.flatMap(d => LANGS.map(l => cellEvidence(d.sku, l.code)))
+  const nOk = all.filter(c => c.tier === '实证' && !c.excluded).length
+  const nWarn = all.filter(c => c.tier === '存疑' && !c.excluded).length
+  const nBad = all.filter(c => (c.tier === '不符' || c.tier === '库里缺列') && !c.excluded).length
+  const nOff = all.filter(c => c.excluded).length
+  const list = todoList()
+  const total = deliverableCount()
+  const pct = Math.round(S.runProgress / Math.max(1, total) * 100)
+
+  setBody(`
+    <div class="stack">
+      ${unitBar('份', '这一屏只管：144 份交付物哪份能交、交了什么。格＝一份（稿 × 语言），这是全流程唯一出现交付物矩阵的地方。')}
+      <div class="stats">
+        <div class="stat ok"><div class="v">${nOk}</div><div class="l">实证（直接过）</div></div>
+        <div class="stat warn"><div class="v">${nWarn}</div><div class="l">存疑</div></div>
+        <div class="stat bad"><div class="v">${nBad}</div><div class="l">不符 / 缺列</div></div>
+        <div class="stat"><div class="v">${nOff}</div><div class="l">本批不做</div></div>
+        <div class="stat ${list.length ? 'warn' : 'ok'}"><div class="v">${list.length}</div><div class="l">待处理例外</div></div>
+      </div>
+      <div class="card">
+        <p class="card-t">交付物矩阵 · 144 格 <span class="pill grey">点格看证据</span></p>
+        <p class="card-s">点任意格：这一份从哪张表的哪一列来、为什么可信、为什么红。</p>
+        <div class="scroller"><table class="mx"><thead><tr><th>设计稿 / 交付物</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+        <div class="legend">
+          <span><i class="lg ok"></i>实证</span><span><i class="lg warn"></i>存疑</span>
+          <span><i class="lg bad"></i>不符 / 缺列</span><span><i class="lg off"></i>本批不做</span>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">要你处理的 ${list.length} 件</p>
+          <div class="stack">
+            ${list.map(t => `<div class="card plain" style="padding:7px 10px">
+              <div class="row"><b style="font-size:.8rem">${esc(t.t)}</b><button class="btn sm primary" data-todo="${t.id}" style="margin-left:auto">${esc(t.a)}</button></div>
+              <p class="note" style="margin:2px 0 0">${esc(t.b)}</p>
+            </div>`).join('') || '<div class="callout ok"><b>没有例外了</b>可以直接开跑。</div>'}
+          </div>
+        </div>
+        <div class="card">
+          <p class="card-t">本批范围</p>
+          <pre>交付物 = 稿 × 语言
+12 × 12 = 144
+${S.excluded[DEFECTS.structureMismatch] ? '− 5660 / ID（结构不一致，已排除）  = 1\n' : ''}${S.excluded[DEFECTS.emptyLangColumn] ? '− 6896 / VI（空列，已排除）        = 1\n' : ''}= ${total} 份</pre>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" id="btnRun" ${list.length || S.runDone ? 'disabled' : ''}>${S.runDone ? '已完成' : (list.length ? `还有 ${list.length} 件要处理` : `开始生成 ${total} 份`)}</button>
+            <span class="note">${S.runDone ? '回执已写：141 成功 / 1 失败' : '先报价、再确认、逐语言回执（这一步一个字都不改）'}</span>
+          </div>
+          <div class="progress" style="margin-top:8px"><i style="width:${pct}%"></i></div>
+          <div class="log" style="margin-top:8px">${S.runLog.map(l => `<div class="${l.k}">${esc(l.t)}</div>`).join('') || '<div>（还没开跑）</div>'}</div>
+        </div>
+      </div>
+      ${S.runDone ? `<div class="callout"><b>回执按语言分开记</b>4521 / RU 执行超时：这一门单独回执失败，其他 141 份不受影响，重跑只补这一门。</div>` : ''}
+    </div>`)
+
+  document.querySelectorAll('[data-cell]').forEach(b => b.addEventListener('click', () => {
+    const [sku, lang] = b.dataset.cell.split('/')
+    openCellDrawer(sku, lang)
+  }))
+  document.querySelectorAll('[data-todo]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.todo
+    if (id === 'mismatch') S.excluded[DEFECTS.structureMismatch] = true
+    if (id === 'empty') S.excluded[DEFECTS.emptyLangColumn] = true
+    if (id === 'retry') S.readRetried = true
+    if (id === 'low') S.lowConfirmed = true
+    renderStep4(); renderStepper()
+  }))
+  $('#btnRun')?.addEventListener('click', startRun)
+}
+function openCellDrawer(sku, lang){
+  const st = cellEvidence(sku, lang)
+  const excluded = Boolean(st.excluded)
+  const bad = !excluded && st.tier !== '实证'
+  const ov = el(`<div class="overlay right" id="ovCell"><div class="drawer">
+    <div class="dh"><span class="t">${sku} · 主副图 · ${lang}</span><button data-close>✕</button></div>
+    <div class="db">
+      <dl class="kv">
+        <div><dt>证据</dt><dd>${excluded ? '已排除 · 本批不做' : st.tier}</dd></div>
+        <div><dt>取自</dt><dd>${excluded ? '（已排除）' : esc(tableRel(sku, lang)) + ' 的 ' + lang + ' 列'}</dd></div>
+        <div><dt>覆盖率</dt><dd class="mono">${st.v}</dd></div>
+        <div><dt>判据</dt><dd>${esc(st.reason)}</dd></div>
+      </dl>
+      ${excluded
+        ? `<div class="callout"><b>这一格已排除</b>${esc(st.reason)}</div>`
+        : bad
+          ? `<div class="callout bad"><b>这一格为什么红</b>${esc(st.reason)}</div>`
+          : `<div class="callout ok"><b>这一格可以进生成</b>${esc(st.reason)}</div>`}
+      <div class="btnrow"><button class="btn sm">换来源…</button><button class="btn sm ghost">这一门先不做</button></div>
+    </div></div></div>`)
+  document.body.appendChild(ov)
+  ov.querySelector('[data-close]').addEventListener('click', () => ov.remove())
+  ov.addEventListener('mousedown', e => { if (e.target === ov) ov.remove() })
+}
+function startRun(){
+  const total = deliverableCount()
+  if (!total || S.runDone) return
+  const step = Math.max(1, Math.ceil(total / 6))
+  const tick = setInterval(() => {
+    S.runProgress = Math.min(total, S.runProgress + step)
+    if (S.runProgress >= total) {
+      clearInterval(tick)
+      S.runDone = true
+      S.runLog.push({ k:'ok', t:`完成 ${total - 1} 份（成功）` })
+      S.runLog.push({ k:'warn', t:'1 份失败：4521 / RU（执行超时，单独回执，可只补这一门）' })
+      renderStep4(); renderStepper()
+    } else {
+      S.runLog.push({ k:'', t:`已完成 ${S.runProgress} / ${total}` })
+      renderStep4()
+    }
+  }, 340)
+}
+
+/* ═════════ 证据 ═════════ */
+const EVIDENCE = {
+  1: [
+    ['四步名与顺序（产品真名）', REAL.stages],
+    ['一稿只能一张表（导入时硬拦）', REAL.oneTablePerDraft],
+    ['候选只按 SKU＋交付物筛，语言不参与', REAL.candidatesBySku],
+    ['多候选一律 conflict，不替用户挑', REAL.multiConflict],
+    ['读表队列默认 12 张', REAL.readQueueCap],
+    ['批量读表头 >12 张直接拒', REAL.surveyCap],
+  ],
+  2: [
+    ['合并算法（按原文匹配 + 结构多数 + 上限）', REAL.mergeEngine],
+    ['单稿多文件合并入口已存在（批量台未接）', REAL.csvMultiMerge],
+    ['结构不一致 → 整批拒', REAL.mergeMajority],
+    ['12 语言 / 300 行上限', REAL.mergeCaps + '；' + REAL.batchLimits],
+  ],
+  3: [
+    ['第三步「设计稿校对」按文字层渲染', REAL.reconcileRender],
+    ['文字层匹配 / 跳过语义', REAL.layers],
+    ['未读表也写「没有语言列」（第 1 步遗留）', REAL.noLangBeforeRead],
+  ],
+  4: [
+    ['抽屉 issues 不含 na → 假绿灯', REAL.drawerNa],
+    ['执行链、报价、结算闸、助手协议：本方案不动', 'AGENTS.md 合同变更纪律（四层同步 + fixture 才可动）'],
+    ['行身份 / 信任链匹配键：本方案不动', 'binding-core.ts 匹配键不在本次范围'],
+  ],
+}
+function renderEvidence(){
+  const rows = EVIDENCE[S.step] || []
+  $('#evBody').innerHTML = `<pre>${rows.map(([a, b]) => esc(a.padEnd(28, ' ')) + '  ' + esc(b)).join('\n')}</pre>`
+}
+
+/* ═════════ 路由 ═════════ */
+const HINTS = {
+  1:'单位＝文件：稿和表进来了、归组了、读完了。这一屏没有矩阵。',
+  2:'单位＝行：点任意一门语言，表格只显示那一门——点了会有反应。',
+  3:'单位＝图层：PSD 里每个文字层对上表第几行。和第二步不是同一件事。',
+  4:'单位＝份：144 格交付物，只有这一屏有矩阵。',
+}
+function go(n){
+  S.step = Math.max(1, Math.min(4, n))
+  if (S.step === 1) renderStep1()
+  if (S.step === 2) renderStep2()
+  if (S.step === 3) renderStep3()
+  if (S.step === 4) renderStep4()
+  renderStepper(); renderEvidence()
+  $('#footHint').textContent = HINTS[S.step]
+  $('#btnPrev').disabled = S.step === 1
+  $('#btnNext').disabled = S.step === 4
+  $('#btnNext').textContent = S.step === 4 ? '到底了' : '下一步 →'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+$('#btnNext').addEventListener('click', () => {
+  if (S.step === 1 && S.phase !== 'done') { startAutoPair(); return }
+  if (S.step === 4 && todoList().length > 0) return
+  go(S.step + 1)
+})
+$('#btnPrev').addEventListener('click', () => go(S.step - 1))
+$('#btnReset').addEventListener('click', () => {
+  S.phase = 'idle'; S.phaseIdx = -1; S.clicks = 0; S.grouped = 0; S.selected = 0; S.read = 0
+  S.readRetried = false; S.ready = false; S.excluded = {}; S.lowConfirmed = false
+  S.langView = 'all'; S.activeLayer = 0; S.activeDraft = '5857'
+  S.runProgress = 0; S.runDone = false; S.runLog = []
+  document.querySelectorAll('.overlay').forEach(o => o.remove())
+  go(1)
+})
+
+window.__sim = { S, go, todoList, deliverableCount, cellEvidence, PHASES, filledRows }
+go(1)
+</script>
+<style>
+.rowhead{display:flex;flex-direction:column;gap:1px}
+.rowhead .f{font-family:var(--mono);font-size:.74rem;font-weight:600}
+.rowhead .m{font-size:.65rem;color:var(--muted);display:flex;gap:5px;flex-wrap:wrap}
+.bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px}
+.tar{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 8px;text-align:left}
+.tar:hover{border-color:var(--line2)}
+.tar[aria-pressed="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.tar .bar{flex:1;height:5px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.tar .bar i{display:block;height:100%}
+.lrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 9px;text-align:left;width:100%}
+.lrow:hover{border-color:var(--line2)}
+.lrow[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.lrow .f{font-family:var(--mono);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .meta{font-size:.65rem;color:var(--muted);margin-left:auto;white-space:nowrap}
+/* 第 3 步：一层 × 12 门的值（与第 1 步的「组清单」刻意不同类，避免两屏长得一样） */
+.vrow{display:flex;align-items:center;gap:8px;padding:4px 9px;border-bottom:1px solid #f1f1ee;font-size:.75rem}
+.vrow:last-child{border-bottom:0}
+.vrow .tn{font-family:var(--mono);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+</style>
+</body>
+</html>

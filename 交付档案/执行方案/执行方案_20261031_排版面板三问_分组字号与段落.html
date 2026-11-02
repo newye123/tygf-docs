@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案 · 排版面板三问：分组／字号／段落</title>
+<style>
+  :root{--bg:#f5f6f7;--card:#fff;--border:#e3e6ea;--fg:#161c22;--muted:#5d6874;--teal:#0d7d6c;--teal-soft:#e6f4f1;--amber-bg:#fff7e6;--amber-bd:#f0c36d;--amber-fg:#7a5410;--red:#b3261e;--shadow:0 6px 24px rgba(15,30,40,.10);--radius:12px}
+  @media (prefers-color-scheme: dark){:root{--bg:#0f151b;--card:#18212a;--border:#2a3641;--fg:#e9eef3;--muted:#93a1af;--teal:#2fbfa5;--teal-soft:#12332e;--amber-bg:#2a2210;--amber-bd:#8a6b25;--amber-fg:#f0cf8f;--red:#ff8a80;--shadow:0 6px 24px rgba(0,0,0,.45)}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;line-height:1.75;font-size:15px}
+  main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:24px;margin:6px 0 4px}h2{font-size:18px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;background:var(--teal-soft);color:var(--teal);padding:1px 5px;border-radius:4px;word-break:break-all}
+  .verdict{margin-top:16px;padding:16px 18px;border:1px solid var(--teal);border-left-width:5px;background:var(--teal-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--border)}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  th{background:var(--teal-soft);color:var(--teal);font-size:13px}
+  .gates{list-style:none;padding:0;margin:12px 0;display:grid;gap:7px}
+  .gates li{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);font-size:14px}
+  .crit::before{content:"阻塞 ";font-weight:800;color:var(--red)}.warn::before{content:"要改 ";font-weight:800;color:var(--amber-fg)}.note::before{content:"记录 ";font-weight:800;color:var(--muted)}
+  .callout{margin:14px 0;padding:13px 15px;border:1px solid var(--amber-bd);background:var(--amber-bg);color:var(--amber-fg);border-radius:var(--radius);font-size:14.5px}
+  .footer{margin-top:30px;padding-top:14px;border-top:1px dashed var(--border);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body><main>
+<div class="kicker">执行方案 · 2026-10-31 · 排版定制线 · 基线 develop@71529c7c（只读取证，未改代码）</div>
+<h1>排版面板三问：分组界面去哪了／字号要不要加回／段落那一套能不能接</h1>
+
+<div class="verdict"><b>一句话：</b>三问里只有一问是真缺陷（每行标识是单字符图标，既不像 PS 也读不懂），一问是<b>已定未做</b>（分组界面在模拟件里，真面板那一刀还没做），一问是<b>能加但会打断我们的取证腿</b>（字号与段落那套）。独立复核 agent 已在跑，结论回来再定稿。</div>
+
+<h2>一、分类：可验证的 vs 要你拍的</h2>
+<table><tr><th>你的问题</th><th>类型</th><th>定性</th></tr>
+<tr><td>单独选不同字体的选项不见了</td><td>可验证</td><td>不是回归——它从没进过真面板；模拟件里有</td></tr>
+<tr><td>加回独立调整字号</td><td>决策＋约束</td><td>技术上被<b>我们自己</b>锁在助手白名单外，解锁要同批改取证</td></tr>
+<tr><td>段落里这些都加上</td><td>混合</td><td>读侧已有、写侧全缺；七项里只有一项有真机证据能接</td></tr></table>
+
+<h2>二、逐条对账（file:line）</h2>
+<ul class="gates">
+<li class="warn">字号锁在 <code>typography-profile.js:25-29</code> 的 <code>LOCKED_KEYS</code>（含 fontSize/size），校验器对锁死项当场拒；执行器 <code>applyTypography</code> 里根本没有写字号那段。⇒ 加输入框之前必须先解决"改了字号我们怎么证明它生效了"</li>
+<li class="crit">取证判据是"数硬换行 0x0D ＋ 比包围盒宽高"。10-17 审查 B5 已坦白：只挪位置不改尺寸的旋钮会被记成"没变"。段落合成器实测会改折行（<code>outH5.json</code> 147×13→149×13＝行数变了）⇒ <b>接它＝在取证换血前先动它依赖的量</b>，不进本班车</li>
+<li class="warn">面板每行标识列 <code>typography-panel.tsx:150-155</code>：<code>grid-cols-[18px_…]</code> ＋ <code>text-[10px]</code> ＋ <code>aria-hidden</code>，放的是单字符 <code>field.icon</code>，真名只在 <code>title</code> 里。你截图那六个字（字/体/行/距/字/基）不是被裁，是我们自己定的单字图标——与你 10-27「文字图标完全跟 PS 的一样」不符</li>
+<li class="note">段落属性<b>读侧已存在</b>（别当新东西派活）：<code>typographyOf()</code> 已读 firstLineIndent/spaceBefore/spaceAfter/leftIndent/rightIndent/hangingPunctuation/paragraphAlignment；契约在 <code>preparation-contract.ts:238,243</code>、<code>learning/typography-contract.ts:95,103</code>。写侧精确符号名 grep 0 命中（中文词命中的全是"连字符"误匹配）</li>
+<li class="crit">避头尾法则设置：<b>未核实</b>——AM key 名一个出处都没有（Types-for-Adobe 列了 hyphenation/hangingPunctuation/textComposer，没列 kinsoku/mojikumi；UXP 属性页标 min 24.1 ⇒ PS 22 用不了）。唯一可靠办法＝真机手点一次读日志</li>
+</ul>
+
+<h2>三、能接什么（按 PS 段落面板逐项）</h2>
+<table><tr><th>项</th><th>能不能接</th><th>为什么</th></tr>
+<tr><td>对齐／首行缩进／左缩进／悬挂缩进／段前／段后</td><td><b>能写</b>（刀 B）</td><td>执行器已有逐字段 wanted/actual 读回形状；但"只挪位置"的项包围盒判据看不见，必须靠读回</td></tr>
+<tr><td>间距组合设置（段落合成器）</td><td><b>不进本班车</b>（刀 C）</td><td>成员名 ADOBEEVERYLINE 真机可写，但它改变行数＝动我们主判据</td></tr>
+<tr><td>避头尾法则设置</td><td><b>灰＋说明</b>，或先真机取 key</td><td>无出处不放开关——"看着能点就必须真能操作"是你定过的规矩</td></tr>
+<tr><td>连字</td><td>未核实</td><td>只在折行时起作用，点文本单行上设了也看不出效果</td></tr></table>
+
+<h2>四、执行三刀（各自可回退）</h2>
+<table><tr><th>刀</th><th>内容</th><th>依赖</th></tr>
+<tr><td><b>A 纯界面</b>（今天就能上测试站）</td><td>① 图标列放宽到 26px、换 PS 形记号（TT/VA/T↑/⇥/¶↑/¶↓），中文全名常驻；② <b>分组编辑器进真面板</b>（① 按脸默认＋② 按读数再拆，每组六字段＋默认档，说明折进「怎么用」）；③ 发送侧按助手版本决定发不发 groups，旧助手只发默认档并<b>明说</b>"分组要装新版安装包才生效"；④ 段落那套一律灰＋一句为什么</td><td>无（助手侧契约 <code>3843f6f8</code> 已在）</td></tr>
+<tr><td><b>B 动助手</b>（随新包 3.7.30 同车）</td><td>⑤ 字号独立调整：解锁 size ＋ 执行器写＋读回，<b>同批</b>把排版取证改成逐字段 wanted/actual；⑥ 段落安全四项（缩进／段前／段后／对齐）带读回接入</td><td>新安装包；且要改 <code>script-versions.json</code> 与配对闸</td></tr>
+<tr><td><b>C 研究项</b>（不占班车）</td><td>⑦ "软换行可取证"——把行数判据换成能与版面行数对齐的口径；清完才谈合成器、避头尾、连字</td><td>需真机取证</td></tr></table>
+<p><b>推荐</b>：A 立刻做（它解决你截图里所有看得见的毛病）；B 跟 3.7.30 同车（那包你本来要装）；C 挂研究项。</p>
+
+<div class="callout"><b>要你先给一句话的：</b>刀 C 的前置——避头尾／连字的真机 key 名只能在你这台 Photoshop 里手点一次读日志（只读、不改你的稿、开完即关）。要不要我动这一次？不给这句我就按"灰＋说明"处理，不放假开关。</div>
+
+<div class="footer">基线 develop@71529c7c · 本轮只读：未改业务代码、未跑门、未出包、未碰两站、未动 Photoshop · 独立复核 agent 在跑，回包后按 DISAGREE_EVIDENCE 逐条改判 · 同目录 md 为发送载体</div>
+</main></body></html>

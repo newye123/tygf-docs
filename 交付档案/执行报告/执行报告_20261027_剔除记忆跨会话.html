@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量台第 1 步 · 剔掉的语言跨会话记得住</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.gates{display:flex;flex-direction:column;gap:14px}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:.95rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  min-width:38px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+  padding:0 8px;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 · 批量台第 1 步 · 剔除记忆</span><span class="sep">/</span><span>图译工坊</span><span class="sep">/</span><span>2026-10-27</span></p>
+  <h1>剔掉的语言，跨会话记得住——键内容指纹，不键路径</h1>
+  <p class="standfirst">你说「要一劳永逸的」。这一轮把它落成「保留」这一案：记住的是「这份稿上次剔了哪几门」这个决定本身，而不是把草稿整体存起来。并且先把上一轮我写错的一句话更正掉。</p>
+  <div class="meta">
+    <span>提交 d1115c5a</span><span>5 个文件 +451/−5</span><span>未推远端 · 未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">00</span>一句话结论</h2>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>同一份设计稿，这次剔掉的语言，下次重新扫描还会是剔掉的；想恢复就点那一稿的「全选回来」，记忆一并删掉。沿用的时候第 1 步会明说，不许静默生效。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">104</span><span class="k">契约门判据（原 88），失败 0</span></div>
+    <div class="stat ok"><span class="n">16/16</span><span class="k">记忆模块单测</span></div>
+    <div class="stat ok"><span class="n">8/8</span><span class="k">负控全红，还原逐字节一致</span></div>
+    <div class="stat ok"><span class="n">120/120</span><span class="k">批量台回归（6 文件）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先更正我上一轮说错的一句话</h2>
+  <p>上一轮我写「切回稿 A、刷新，B 那门会回来」。这句<strong>不成立</strong>。实测：批量选择根本没有持久化——<code>multiPsdSelection</code> 初始化就是空表，全仓没有恢复它的地方。所以刷新之后，除最后在用的那一稿，<strong>其余稿在界面上根本不存在</strong>，谈不上「复活」。</p>
+  <p>真问题因此换了个说法：不是「剔除会自己回来」，而是<strong>「我上次剔掉的决定，这次重新扫描同一份稿时完全不记得」</strong>。这一轮修的是后者。这个更正也决定了设计方向：要持久化的是<b>决定</b>，不是「草稿槽」。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>做法：键内容指纹，不键路径</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>不能键路径（硬边界）</h3>
+      <p><code>src/lib/workbench/psd-selection.ts:2</code> 明写：「masterPath 只在浏览器内存与本地助手之间流转，绝不写入草稿（sessionStorage）或上传到云端」。路径一旦进存储就破线。</p>
+    </div>
+    <div class="panel yes">
+      <h3>键指纹就够用</h3>
+      <p>扫描摘要里的 <code>fingerprint</code> 是稿件内容的 SHA-256（<code>preparation-contract.ts:329</code> 的 <code>assertDigest</code> 只收 64 位小写十六进制）。换目录、改文件名都还认得出；内容一改，指纹就变，旧决定自动不套用。</p>
+    </div>
+  </div>
+  <p>存的地方是浏览器 <code>localStorage</code> 的 <code>tygf:workbench:language-exclusions:v1</code>，只放「指纹 → 剔掉了哪几门 + 时间」，上限 200 条，超出按时间从旧删。数据坏了、读写抛错一律当空处理，不炸界面。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>三条行为规则（都抽成纯函数，可单测）</h2>
+  <div class="gates">
+    <div class="gate">
+      <span class="num">R1</span>
+      <div class="body">
+        <h3>现场优先于记忆</h3>
+        <p>这一稿本轮实际选中的语言永远压过记忆，不会因为上次剔过就吞掉你这次刚加回来的语言。规则收在 <code>deriveLanguages()</code> 里，不埋在六千行的组件里。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">R2</span>
+      <div class="body">
+        <h3>只记真正的剔除</h3>
+        <p>剔掉才记；「这张表新出现了一列语言」不会被误记成剔除。点「全选回来」会把那条记忆删掉，不留空账。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">R3</span>
+      <div class="body">
+        <h3>沿用必须说出来</h3>
+        <p>一旦用上记忆，第 1 步明说「沿用了上次剔掉的语言（…）。要恢复就点那一稿的「全选回来」。」同一份稿只报一次（按指纹去重）。这是本项目的红线：不许静默生效。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>改了哪 5 个文件</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>文件</th><th>改动</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">src/lib/workbench/language-exclusion-memory.ts</td><td>新增 173 行：读写、坏数据兜底、指纹形校验、上限裁剪、<code>applyExclusions</code>、<code>deriveLanguages</code>（现场&gt;记忆）、<code>nextExclusions</code>（记新增剔除、忘掉恢复）。存储可注入，测试用假存储</td></tr>
+        <tr><td class="mono">src/components/workbench/workbench-view.tsx</td><td>六处：导入、指纹映射 memo、记忆 state、<code>languagesByDraftRuntime</code> 改走 <code>deriveLanguages</code>、告知 effect、<code>setDraftLanguages</code> 里唯一写入口</td></tr>
+        <tr><td class="mono">src/lib/i18n/dict-en.json</td><td>+2 条英文对照（上一轮漏的 <code>{file}：{langs}</code>，与本轮新句子）</td></tr>
+        <tr><td class="mono">tests/unit/language-exclusion-memory.test.ts</td><td>新增 166 行 / 16 条：存取往返、坏数据、抛错存储、上限裁剪、指纹形、空即删、顺序、记账口径、现场压过记忆、重扫场景，另有源码钉（组件确实在调这条链）</td></tr>
+        <tr><td class="mono">scripts/smoke-step1-mock-contract.mjs</td><td>+3 条契约 M1／M2／M3，判据 88 → 104 项</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>本轮重跑的证据</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项目</th><th>命令</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>类型检查</td><td class="mono">npx tsc --noEmit</td><td><span class="tag ok">rc=0</span></td></tr>
+        <tr><td>记忆模块单测</td><td class="mono">npx vitest run tests/unit/language-exclusion-memory.test.ts</td><td><span class="tag ok">16/16 通过，rc=0</span></td></tr>
+        <tr><td>第 1 步契约门</td><td class="mono">node scripts/smoke-step1-mock-contract.mjs</td><td><span class="tag ok">判据 104 项 · 行 32 条 · 失败 0 · PASS</span></td></tr>
+        <tr><td>工作台界面契约</td><td class="mono">npm run test:workbench-ui-contract</td><td><span class="tag ok">ok</span></td></tr>
+        <tr><td>工作台范围契约</td><td class="mono">npm run test:workbench-scope</td><td><span class="tag ok">ok（52 断言）</span></td></tr>
+        <tr><td>批量台回归</td><td class="mono">npm run test:workbench-batch-groups</td><td><span class="tag ok">6 文件 120/120</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>门是不是真拦得住：八条负控</h2>
+  <p>把每一处修法逐个改坏，看门或单测会不会变红。八条全红；每条改回来之后文件逐字节还原（模块 <code>f1691c316f4719b8</code>、组件 <code>0b1462d33a211015</code>，与改前同哈希）。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>编号</th><th>把什么改坏</th><th>谁变红</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">N1</td><td>导出函数改名</td><td><span class="tag bad">契约门 M1</span></td></tr>
+        <tr><td class="mono">N2</td><td><code>deriveLanguages(</code> 改成不存在的名字</td><td><span class="tag bad">契约门 M2</span></td></tr>
+        <tr><td class="mono">N3</td><td>删掉「沿用必须说出来」那句</td><td><span class="tag bad">契约门 M3</span></td></tr>
+        <tr><td class="mono">N4</td><td>不写存储</td><td><span class="tag bad">单测</span></td></tr>
+        <tr><td class="mono">N5</td><td><code>applyExclusions</code> 忽略剔除表</td><td><span class="tag bad">单测</span></td></tr>
+        <tr><td class="mono">N6</td><td><code>nextExclusions</code> 不记「这一门被剔」</td><td><span class="tag bad">单测</span></td></tr>
+        <tr><td class="mono">N7</td><td>剔除清空后仍留一条空账</td><td><span class="tag bad">单测</span></td></tr>
+        <tr><td class="mono">N8</td><td>记忆压过现场</td><td><span class="tag bad">单测</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">顺带抓到门自己的一个毛病</span>
+    <p><strong>N1 第一次没变红。</strong>判据写的是 <code>export function applyExclusions</code>，而我把函数改成 <code>applyExclusionsBroken</code> 之后，原串仍是它的前缀子串——门被骗过去了。修法：M1 的 5 条导出判据全部咬到「函数名 + 左括号」这种调用形态，改完 N1 立刻变红。</p>
+    <p>一句话教训：<strong>子串判据必须咬到调用形态，不能只咬名字前缀。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>真浏览器里点过</h2>
+  <p>真 Chromium 打开本机开发服务（<code>http://127.0.0.1:3000</code>，是另一个会话起的进程，我全程没杀它），用临时验证页（用完已删）跑了一遍真实链路，四步结果：</p>
+  <ul class="notes">
+    <li><strong>剔掉英文</strong>：存储里出现一条键为 64 位指纹、值为 <code>{"excluded":["en"]}</code> 的记录。</li>
+    <li><strong>模拟重新扫描、界面重开</strong>：清空现场只留表列，推导出 <code>['zh','ja']</code>——英文确实被沿用剔掉。</li>
+    <li><strong>现场再手动加回英文</strong>：推导出 <code>['zh','en','ja']</code>——现场压过记忆。</li>
+    <li><strong>另一份指纹不同的稿</strong>：<code>['zh','en','ja']</code>，不受影响。</li>
+  </ul>
+  <p>脚本结论 <code>BROWSER_FACTS=PASS</code>；截图 <code>交付档案/证据_20261027_剔除记忆/01-刷新后剔除仍在.png</code>。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>别手现场与提交隔离</h2>
+  <p>这棵 develop 上同时有其它会话在飞。<code>workbench-view.tsx</code> 里另有 <strong>4 处、9 行</strong>改动不是我的（超出量提示的文案与一处传参）。提交时我用临时索引把「HEAD + 我的改动」拼成一份混合 blob 提交，<strong>别手那 4 处原样留在未提交状态</strong>：提交后实测 <code>git diff --numstat</code> = 9/2、4 个 hunk，位置与提交前一致。</p>
+  <p>另：那次提交让真实 <code>.git/index</code> 落后于新 HEAD（我那 5 个文件在索引里显示为旧版／已删）。已用 <code>git reset -- &lt;这 5 个路径&gt;</code> <strong>只刷这 5 条索引记录</strong>——没有裸 <code>git reset</code>，也没有碰任何其它会话的暂存内容（实测当时除这 5 个文件外没有任何暂存条目）。现在 <code>git status</code> 里只剩别手自己的改动。</p>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>本轮没做什么</h2>
+  <ul class="notes">
+    <li>没推远端、没部署测试站或生产、没翻任何开关。</li>
+    <li>没碰计费、服务端、数据库；没删任何数据。</li>
+    <li>没按镜像名杀任何进程；临时验证页已删干净。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>还剩一件要你拍</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>A 留着「推定」这一档（我建议）</h3>
+      <p>含义清楚：没有归属证据、但这稿原文集全覆盖。它在界面里已经真实出现过，是认不出编号的稿唯一能说的一句话。</p>
+    </div>
+    <div class="panel no">
+      <h3>B 并进「声明」</h3>
+      <p>少一个档位、少一次解释；代价是丢掉「它凭什么能放行」的区别。跟本轮改动无关，随时能定。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">11</span>下一步</h2>
+  <p>建议做第 2 步的「口径合一」：现在同一屏并列着三套计数口径，是全流程里最容易让你看不懂的一屏。开工前先把「要改成什么样」拿给你看，再动手。</p>
+</section>
+
+<footer>
+  <p>代码在 <code>worktrees/develop</code>，提交 <code>d1115c5a</code>。本文所有读数为 2026-10-27 本轮实跑；截图与脚本在仓库内可复核。</p>
+  <p>图译工坊 · 批量台第 1 步 · 剔除记忆跨会话</p>
+</footer>
+
+</div>
+</body>
+</html>

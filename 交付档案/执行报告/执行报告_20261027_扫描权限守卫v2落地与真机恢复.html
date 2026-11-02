@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行报告 · 扫描权限守卫 v2 落地 ＋ 真机恢复</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--grn);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:#7dd8a8;font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.ok{color:var(--grn);font-weight:700}.bad{color:var(--red);font-weight:700}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 15px;font-size:14px}
+.card h3{margin:0 0 6px;font-size:15px}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>执行报告 · 扫描权限守卫 v2 落地 ＋ 这台机器的扫描已恢复</h1>
+<p class="sub">2026-10-27 17:5x · 链条：方案 v1 → 对抗式审查（打回）→ 方案 v2 → 按 v2 执行 → 本报告 · 全部读数为本会话实测</p>
+
+<div class="verdict"><b>三句结论</b><br>
+① <b>你这台机器的扫描已经好了</b>：助手降回普通权限后实测一次扫描 <b>24.2 秒成功</b>（此前每次卡 11.8–12.9 分钟再失败）。<br>
+② <b>防复发改动按 v2 全部落地并跑绿</b>：判据从"我是不是管理员"改成「<b>实测两边权限，我更高才拦</b>」，门从 42 条加到 <b>50 条断言</b>，并且<b>真跑出一发 422 和它的负控</b>。<br>
+③ <b>没提交、没推送、没出包、没部署</b>，也没动安装器——那些等你拍。</div>
+
+<h2>一、机器面怎么收口的（不靠猜）</h2>
+<table><thead><tr><th style="width:170px">事</th><th>实测读数</th></tr></thead><tbody>
+<tr><td>高权限实例怎么停的</td><td>提权助手脚本 <span class="mono">17:09:16–17:09:27</span> 执行：停助手 53524 与引擎 23568（<span class="mono">alive_after_stop=none</span>），经 <span class="mono">explorer.exe</span> 以普通权限重拉。结果文件 <span class="mono">%TEMP%\tygf-deelevate-result.txt</span>（335 B）</td></tr>
+<tr><td>谁点的 UAC</td><td><b>我不知道，也不是我点的</b>——<span class="mono">consent.exe</span> 只能由坐在机器前的人批准；盘上证据是脚本恰在 17:09:16 开始执行</td></tr>
+<tr><td>现在的权限级别</td><td>助手 <b>46636</b>／引擎 <b>36708</b> 实测 <span class="mono">integrityRID=8192</span>；Photoshop 25136 也是 8192 ⇒ 两侧同级，COM 通</td></tr>
+<tr><td>恢复后第一次扫描</td><td><span class="mono">2026-10-27T09:11:18.706Z [prep] durMs=24158 outcome=prepared</span>（本地 17:11:18，<b>24.2 秒</b>）</td></tr>
+<tr><td>进程内 COM 复检</td><td><span class="mono">POST /diagnostic</span> 17:52:17 → <span class="mono">200 PHOTOSHOP_READY</span>，<span class="mono">CONNECTED: 22.0.0</span>，time=0.284s，docCount=0</td></tr>
+</tbody></table>
+<div class="callout"><b>更正一条</b>：上一轮看门狗说「tasklist 里找不到任何 tygf 进程」——那是按<b>英文名</b>找的。真实进程名是中文（<span class="mono">图译工坊本地助手.exe</span>／<span class="mono">图译工坊引擎.exe</span>），按 <span class="mono">tygf</span> 过滤必然 0 命中；17:10:02 实测两只都在。根因与修复不受影响。</div>
+<div class="callout ok"><b>以后没人能点 UAC 时，你自己就能做的安全做法</b>：托盘图标右键 →「退出本地助手」，再从开始菜单正常双击启动。依据：托盘的 <span class="mono">ExitAssistant()</span> 会先 <span class="mono">StopEngine()</span> 再退出（<span class="mono">build/TrayHost.cs:277-286</span>），一次退出收掉两只进程。<b>回退法</b>：什么都不做也不会弄坏东西——最坏只是继续报"权限级别不一致"，不丢数据、不动 Photoshop、不动云端账务。</div>
+
+<h2>二、真实运行证据（命令 ＋ 退出码 ＋ 关键输出）</h2>
+<table><thead><tr><th style="width:340px">命令（原式）</th><th style="width:60px">rc</th><th>关键输出／时刻</th></tr></thead><tbody>
+<tr><td class="mono">node --check server.js ／ node --check scan-error-code.cjs</td><td class="ok">0</td><td>17:58:37</td></tr>
+<tr><td class="mono">node server.js --self-test-errors</td><td class="ok">0</td><td>「错误分类检查通过。」17:58:37</td></tr>
+<tr><td class="mono">node scripts/smoke-preparation-failure-observation.mjs</td><td class="ok">0</td><td><b>50 条断言全部通过</b>（42→50）</td></tr>
+<tr><td class="mono">node tmp/negcontrol-priv-guard.mjs</td><td class="ok">0</td><td>四条负控全 <span class="mono">RED_OK</span>（gate_rc=1）＋ <span class="mono">restored=true</span>（还原后哈希一致）＋ 复跑 gate_rc=0。四条＝判据退化成"只看我"／清单漏码／路由不接守卫／注入回落到真探针</td></tr>
+<tr><td class="mono">npx tsc --noEmit</td><td class="ok">0</td><td>17:55:45–17:56:32。<b>同一条命令 17:12:17 那次 rc=2</b>，唯一红在别手在飞的 <span class="mono">local-assistant-client.ts(427,30)</span>（当时 numstat 42/5、mtime 17:14:19），与本改动无关，他们改完后转绿</td></tr>
+<tr><td class="mono">npm run lint</td><td class="ok">0</td><td>48 条既有 a11y warning，0 error</td></tr>
+<tr><td class="mono">npm run test:error-message-contract</td><td class="ok">0</td><td>all invariants passed</td></tr>
+<tr><td class="mono">node --experimental-strip-types scripts/smoke-local-assistant-errors.mjs</td><td class="ok">0</td><td>[local-assistant-errors] passed</td></tr>
+<tr><td class="mono">node tmp/live-priv-guard.mjs（真跑 422）</td><td class="ok">0</td><td><span class="mono">LIVE_GUARD=PASS</span>；<span class="mono">pingRid=12288 ⇒ HTTP 422 code=PHOTOSHOP_PRIVILEGE_MISMATCH</span>，且 <span class="mono">taskRootBefore=0 taskRootAfter=0</span>（<b>没起后台任务</b>）</td></tr>
+<tr><td>同一次运行的负控</td><td>—</td><td><span class="mono">pingRid=8192 ⇒ HTTP 202 state=hashing</span>（闸不恒拒；普通权限用户完全不受影响）</td></tr>
+<tr><td>收尾自查</td><td>—</td><td>临时副本已删；我在共用临时目录那只 <span class="mono">preparation_2ebce2e6f2745ede</span>（mtime 17:49:53）已删，现 <span class="mono">ls -d preparation_*</span> 报 No such file；<span class="mono">wscript/cscript</span> 无残留</td></tr>
+</tbody></table>
+
+<h2>三、代码面按 v2 改了什么（行号本次实测）</h2>
+<table><thead><tr><th style="width:50px">#</th><th>改动</th><th style="width:230px">落点</th></tr></thead><tbody>
+<tr><td class="id">D1</td><td>判据＝两侧级别实测比较，任一侧读不到 ⇒ 放行</td><td class="mono">scan-error-code.cjs:55-59（常量 :42-43）</td></tr>
+<tr><td class="id">D2</td><td>Photoshop 级别只读探针，60 秒 TTL，只在助手 ≥12288 时付出 0.7 秒</td><td class="mono">server.js:556-586</td></tr>
+<tr><td class="id">D3</td><td>助手级别探针；守卫唯一出口；拒绝排在「Photoshop 未运行」之后</td><td class="mono">server.js:518-553 · :591-599 · :5798-5803</td></tr>
+<tr><td class="id">D4</td><td>审查 I-03：「置 unavailable」清单补新码（否则 /ping 假报就绪）</td><td class="mono">server.js:2753</td></tr>
+<tr><td class="id">D5</td><td>探针读不到时留痕 <span class="mono">outcome=privilege_probe_failed side=…</span></td><td class="mono">server.js:544 · 548 · 579 · 583</td></tr>
+<tr><td class="id">D6</td><td>仅源码生效的 <span class="mono">TYGF_DEBUG_ASSISTANT_RID</span>（打包产物忽略）</td><td class="mono">server.js:526-532</td></tr>
+<tr><td>—</td><td>429 分类与界面话术共用同一判据；重复文案改引同一常量</td><td class="mono">server.js:1755 · 1773-1780 · 3646-3653</td></tr>
+<tr><td>—</td><td>两处漏斗白名单同集收录（服务端不收＝整条事件被拒，<span class="mono">funnel-event-contract.ts:360</span>）</td><td class="mono">funnel-event-contract.ts:151 · batch-error-policy.ts:252</td></tr>
+</tbody></table>
+
+<h2>四、如实披露：跑测试动过什么</h2>
+<ul>
+<li>扫描要云端签发的票据。我<b>没有</b>联网找云端：在 <span class="mono">tmp/</span> 下的<b>临时副本</b>里把本地开发态 <span class="mono">betaMode</span> 打开（真树未改，副本已删）。⇒ 真跑证明的是「守卫本身＋路由接线＋不起后台任务」，<b>不覆盖票据链路</b>。</li>
+<li>副本引擎启动时做一次只读 COM 握手（读版本号）。实测后果：无 <span class="mono">wscript/cscript</span> 残留、Photoshop <span class="mono">docCount=0</span>、你的助手 17:52 复检仍 200 就绪；负控那一发只建了一只临时任务目录，已删。</li>
+<li>没点 UAC、没杀你的进程、没重启你的助手、没装任何东西。</li>
+</ul>
+
+<h2>五、我没做的（以及为什么）</h2>
+<ul>
+<li><b>没提交没推送</b>：属发布面，要你点头；patch 已存证 <span class="mono">tmp/privilege-guard-20261027-v1.patch</span>（<span class="mono">grep -c "^+++ b/"</span> = 5 实测）。</li>
+<li><b>没动 <span class="mono">installer.iss</span></b>：本机无 <span class="mono">ISCC.exe</span>；且 17:5x 实测该文件正被<b>另一个会话</b>在飞改（+131/−3，<span class="mono">TrayHost.cs</span> +97/−2）——不碰别人现场，他们的 diff 里权限关键字命中 0。</li>
+<li><b>没跑 <span class="mono">test:contracts</span> 整串</b>：同树 38 项在飞（<span class="mono">git status --porcelain | wc -l</span> = 38），跑出的红没法归属 ⇒ 作覆盖缺口记，不写成通过。</li>
+<li><b>没出包、没部署、没碰生产</b>；支付 flag 未动。</li>
+</ul>
+
+<h2>六、需要你拍的：A 还是 B（还是 C）</h2>
+<div class="split">
+<div class="card"><h3>第一件：这 5 个文件的改动怎么处置</h3>
+<p><b>A 先不提交</b>＝零外部影响；风险是同树 38 项在飞，别人的提交或部署可能把我的改动一起带走。</p>
+<p><b>B 我把这 5 个文件单独提交（推荐）</b>＝先逐 hunk 证明每个文件里只有我的改动，再只 <span class="mono">git add</span> 这 5 个路径。<b>不发生</b>推送与部署；测试站下次部署会自然带上，你不部署就不生效。</p>
+<p><b>C 连安装器根治一起排期</b>＝"别的用户不再踩"的那一步，需构建机（Inno Setup）＋代码签名＋GitHub 三段轨，并单独授权出包与部署。</p></div>
+<div class="card"><h3>第二件：这台机器要不要再验一次</h3>
+<p>现在就能直接用：打开测试站选稿扫描即可。</p>
+<p>要不要我陪一次<b>真稿（大文件）</b>的完整扫描并把 durMs 读数留给你？你说一句就行。</p>
+<p class="sub">批量台那条线不动：仍等你拍 O1 份口径／O2 宽表进多稿归组／O3 模板加不加出处两列／O4 读表 12 张/轮要不要提。</p></div>
+</div>
+
+<h2>七、遗留与风险登记</h2>
+<ol>
+<li><b>未核实</b>：那次安装被提权的具体上下文（安装程序未留日志）；下载页／帮助文档是否还留着"以管理员身份运行"的旧指引。</li>
+<li><b>构造不出来的测试</b>：「助手与 Photoshop 都是管理员」的组合在这台机器上没法真造（要第二次 UAC 批准），该分支目前只有真值表与单测覆盖。</li>
+<li><b>云端统计</b>：新码要等新版助手出厂才出现在漏斗里；在那之前只能按 <span class="mono">PHOTOSHOP_COM_UNAVAILABLE</span> ＋约 12 分钟耗时反查历史批次（<b>我没跑这个反查</b>）。</li>
+<li><b>同树并发</b>：<span class="mono">installer.iss</span>／<span class="mono">TrayHost.cs</span> 正被另一会话改；若他们也在处理同一件事，需要有人合流，别出两份互不认识的安装器改法。</li>
+</ol>
+
+<footer>图译工坊 · 执行报告 · 对应 md：交付档案/执行报告/执行报告_20261027_扫描权限守卫v2落地与真机恢复.md</footer>
+</main></body></html>

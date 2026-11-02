@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>四步工作台已上测试站 · fa822618</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.8rem,4.4vw,2.6rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.08rem);color:var(--ink-2);max-width:62ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{margin:0;font-size:1.12rem;line-height:1.65;max-width:52ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.5rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}
+.stat.warn .n{color:var(--warn)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--warn)}
+.panel h3{margin:0;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.93rem;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}
+.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.93rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>交付</span><span>/</span><span>四步工作台</span><span>/</span><span>2026-10-31</span></p>
+  <h1>已推 GitHub，已上测试站</h1>
+  <p class="standfirst">版本 <code>fa822618</code>。站点自检回报「版本已锁定（BOUND）」，三个后台进程在跑、零重启。生产站、收款开关、执行开关都没动。</p>
+  <div class="meta"><span>develop 6e69a8ca</span><span>出包件 fa822618</span><span>54,439,044 B</span><span>17 道门全 PASS</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">这一版现在在测试站上跑</span>
+    <p>四步界面整理、表格上限 20MB、第 1 步自动归组修复，都在这一版里。你要点验的四件事写在下面。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">440</span><span class="k">单测全过（原挂 1 条存量红）</span></div>
+    <div class="stat ok"><span class="n">17/17</span><span class="k">出包门全 PASS</span></div>
+    <div class="stat ok"><span class="n">BOUND</span><span class="k">测试站版本自检</span></div>
+    <div class="stat warn"><span class="n">107</span><span class="k">别手未提交文件（一个没碰）</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>顺手解决掉的</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>已经修好并验证</h3>
+      <ul>
+        <li>存量红测试：旧用例钉一行早已不存在的写法，改成当前两行写法；反向验证过它会红。</li>
+        <li>出包门抓到我一个真漏：第三步折叠层没写落点，补上「→ 同屏展开」后转绿。</li>
+        <li>第 1 步「一表一稿」旧闸撤除的修复本来在代码里、这次跟着上站。</li>
+        <li>落地页浏览器实测：1440×900 正常，控制台 0 报错。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>还等你或等别手</h3>
+      <ul>
+        <li>排版线等你一句「按我的建议来」。</li>
+        <li>执行器 1.4.0 的指纹未登记——它一提交就会挡住所有人出包。</li>
+        <li>「5857 刷出 12 门」要你登录刷新看。</li>
+        <li>真跑一稿要你本人确认扣积分。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>你要点验的四件事</h2>
+  <div class="gates">
+    <div class="gate"><div class="num">1</div><div class="body"><strong>第一步</strong><p>选文件后原地导表，导完能继续往下走（以前会卡在第一步）。</p></div></div>
+    <div class="gate"><div class="num">2</div><div class="body"><strong>第二三步</strong><p>统计卡的总数与矩阵格数对得上；「本批不做」单独列出，不混进总数。</p></div></div>
+    <div class="gate"><div class="num">3</div><div class="body"><strong>第四步</strong><p>「这一稿预估」与「本批合计」分开显示，不再混读。</p></div></div>
+    <div class="gate"><div class="num">4</div><div class="body"><strong>表格上限</strong><p>网页侧已认 20MB；本地助手要装新包才生效。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>现场与回滚</h2>
+  <ul class="notes">
+    <li>开发树里还有 107 个文件是别的对话没提交的活（排版执行器、视觉质检、官网），我一个没提交、没碰。那棵树现在落后远端三笔，他们下次提交前要先拉代码；其中 6 个文件跟我改的是同文件不同位置，可能需要先处理本地改动。</li>
+    <li>回滚：把 GitHub 上 <code>fa822618</code> 之后回退，测试站退回上一版即可；服务器上也留了备份 <code>deploy-20261031_141939-fa822618ae64</code>。</li>
+    <li>控制面还有 97 条历史告警（在办 15 条超过上限 2 条、92 条到期未交），不是这一轮弄出来的，没代你清。</li>
+  </ul>
+  <div class="callout">
+    <span class="lb">证据</span>
+    <p>出包件 SHA-256 <code>7E48718D…6FE4E5</code>，远端与本地逐位一致；部署脚本 DEPLOY_RC=0；独立复验 <code>.deploy-commit=fa822618ae64cf61a364b7cffaf7dca67be7c4c7</code>，<code>/api/runtime-provenance</code> 返回 BOUND／environment=test，loopback <code>/</code> 200、<code>/en</code> 200，PM2 三进程 online、restarts=0。</p>
+  </div>
+</section>
+
+<footer>
+  <p>本页与同名 md 同目录；飞书发的是 md。生产站、main、支付 flag、--ring、环境开关、执行开关均未动。</p>
+</footer>
+
+</div>
+</body>
+</html>

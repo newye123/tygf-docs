@@ -1,0 +1,490 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 · 按 v2 施工</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>执行报告｜按 v2 施工：申请表单降级 + 首页演示媒体位（B2/B4 完成，B1/B3/B6 停在授权门）</h1>
+  
+  <div class="meta"><span>日期：2026-10-26 23:5x — 2026-10-27 00:0x</span>
+    <span>依据：<code>交付档案/执行方案/执行方案_20261026_官网看得见运行与量得出转化_v2最终施工版.md</code></span>
+    <span>基线：开发树 <code>worktrees/develop@9048c13a</code>（未提交，改动留在工作树）</span>
+    <span>我改的文件（4 个，实测 <code>git status --porcelain</code> 逐行）：</span>
+    <span><code>M src/components/site/home-view.tsx</code>、<code>M src/config/siteContent.ts</code>、<code>?? src/components/site/hero-demo-media.tsx</code>、<code>?? src/config/siteDemoMedia.ts</code></span>
+    <span>同树另有他手在飞 11 项（<code>workbench-view.tsx</code>、<code>overflow-estimator.ts</code>、<code>download/local-assistant/<em></code>、<code>package.json</code>、<code>clearance</em></code> 等），<strong>我一项没碰，也没 <code>git add</code></strong>。</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话结论</h2>
+  <p><strong>能自己做完的两件做完了，并且是真跑过的</strong>：官网申请表单从 7 项必填降到 3 项（提交合同实测 201 通过、缺项 400 拦住、负控能抓到回退），首页有了"放真画面"的渲染能力（缺素材时访客 HTML 逐字节不变，有素材时 <code>&lt;video&gt;</code> 与三重标注同时出现）。</p>
+  <p><strong>另外挖出一条要紧的雷</strong>：<code>develop</code> 上的申请接口从 10-24 起就会 500，因为那条迁移从没落到库上——现在生产还没事，但<strong>下一次发布若不带 <code>prisma migrate deploy</code>，官网申请会 100% 提交失败</strong>。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>1. 本轮执行才暴露的新事实（审查阶段没看见的）</h2>
+  <div class="scrollx"><table><thead><tr><th>ID</th><th>事实</th><th>证据</th><th>级</th></tr></thead><tbody>
+  <tr><td><strong>F-11</strong></td><td><strong>申请链在 develop 上自 2026-10-24 起必然 500</strong>。<code>route.ts:249</code> 调 <code>tx.applicationAttribution.create()</code>，而本地库没有该表 ⇒ 任何提交都返回 <code>APPLICATION_CREATE_FAILED</code>。生产现役 <code>80eb4263</code> <strong>不含这条写路径</strong>（`git show 80eb4263:…route.ts \</td><td>grep attribution<code> 无输出），所以线上"0 申请"仍是"没人填"，不是"填了失败"。但 <strong>develop 一发到生产，若不同时跑 </code>migrate deploy`，官网申请会全量报错</strong></td><td>本机 dev 实测 <code>http=500 body={"error":"APPLICATION_CREATE_FAILED"}</code>；<code>dev3210.log</code> 原文 <code>The table 'main.ApplicationAttribution' does not exist in the current database</code>；迁移文件 <code>prisma/migrations/20261024120000_application_attribution/</code> 存在但未应用</td><td>A</td></tr>
+  <tr><td><strong>F-12</strong></td><td><strong>英文站没有申请表单是记档的决定，不是漏</strong>。<code>home-view-en.tsx:17</code> 文件头注释原文：<code>No application form here: beta contact stays email (mailto) until the channel question is settled.</code> 我 v2 里把它当缺陷要补，属于<strong>擅自推翻别人记过的决定</strong> ⇒ B3 停工，改成交回一句话给你拍</td><td>实读注释行；`grep -c "&lt;input\</td><td>&lt;textarea" home-view-en.tsx` → 0</td><td>A</td></tr>
+  <tr><td><strong>F-13（更正我自己）</strong></td><td>v2 §2 写的"2 必填＝称呼+邮箱"<strong>是错的，真值 3 必填</strong>。服务端 <code>route.ts:158</code> 还强制 <code>useCase</code>，而表单把 <code>problem</code> 同值送给 <code>useCase</code> 与 <code>painPoint</code> ⇒ 放开 <code>problem</code> 就 400。施工时按盘上事实改成 3 项，未照文档硬做</td><td><code>dev3210.log</code> + 探针 <code>V2-2b 缺场景应 400 → http=400 APPLICATION_USE_CASE_REQUIRED</code></td><td>A</td></tr>
+  <tr><td><strong>F-14</strong></td><td><code>test:seo-consistency</code> <strong>不能对着 localhost 跑</strong>：默认目标 <code>127.0.0.1:3000</code>（<code>smoke-seo-consistency.mjs:8</code>），而 sitemap/hreflang 用生产域名生成 ⇒ 打本机必红。本轮实测：对 <code>127.0.0.1:3210</code> 跑出 <code>assertion failures=59, fetch failures=0</code>，其中 <strong>59 条全部是 origin 不适配</strong>（hreflang／sitemap 绝对 URL），<strong>内容级断言（FAQ／JSON-LD／可见文本／占位符／生效日期）0 条红</strong></td><td>两轮原式对比；`grep FAIL \</td><td>grep -icE "faq\</td><td>json\</td><td>visible\</td><td>placeholder\</td><td>effective date"<code> → </code>0`</td><td>A</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>2. 做了什么</h2>
+  <h3>B2 中文站申请表单：7 必填 → 3 必填</h3>
+  <ul><li><code>home-view.tsx</code> 的 <code>requiredOk</code> 收敛为 <code>name &amp;&amp; email &amp;&amp; problem</code>；删掉 <code>roleOk/materialOk</code> 两个强制门。</li><li>去掉 <code>scope</code>/<code>manual_time</code>/<code>problem</code> 上多余的 <code>required</code>（<code>problem</code> 因 F-13 保留）。</li><li><code>siteContent.ts</code> 四个标签去掉尾部 <code>*</code>、改为"（选填）"：<code>roleLabel</code>、<code>materialLabel</code>、<code>scopeLabelB</code>、<code>manualTimeLabel</code>。</li><li><strong>没动</strong>：蜜罐、邮箱唯一键、限流、飞书通知、<code>/api/beta-applications</code> 请求体形状、服务端任何校验。</li></ul>
+  <h3>B4 首页演示媒体位</h3>
+  <ul><li>新增 <code>src/config/siteDemoMedia.ts</code> + <code>src/components/site/hero-demo-media.tsx</code>。</li><li><strong>偏差声明</strong>：v2 说把键放进 <code>homeV17.hero.demoMedia</code>，实际放进独立配置文件。理由：放进文案树会让媒体路径变成后台可编辑的字符串叶子，并牵动 <code>site-settings.ts:148-154</code> 那个 legacy <code>hero</code> 迁移垫片——正是 v2 §3 要求"一字不动"的东西。键名不变，位置变了。</li><li><code>src</code> 默认空 ⇒ 组件返回 <code>null</code>，访客 HTML 与改动前一致；三重标注（演示录屏／数据为示例／界面版本 2026-09 单稿流程）写在 DOM 而非烧进视频。</li><li><strong>本批没有放任何视频文件</strong>：T2b（当前批量台四步真素材）需为 5000+ 行 <code>workbench-view.tsx</code> 搭"真实组件＋边界替身"harness，不拿旧界面冒充当前能力。</li></ul>
+  <h3>停在门里的三件</h3>
+  <ul><li><strong>B1（nginx 加 <code>$host</code>/<code>$request_time</code>）</strong>：diff、验证式、回滚式已在 v2 §3 写清，<strong>需你一句话授权</strong>才能动生产配置。Cloudflare 那条绕路本轮已实测证伪（<code>GET /client/v4/accounts</code> 与 <code>GET /client/v4/zones?name=tuyigf.com</code> 均 <code>success:true</code> 但返回 0 行 ⇒ 这枚令牌看不到账户也看不到 zone）。</li><li><strong>B3（英文站补真入口）</strong>：见 F-12，交回你拍——"英文站只收邮件"还是"补表单"。</li><li><strong>B6（发布）</strong>：<code>develop</code> 领先 <code>origin/develop</code> 3 笔且同树有他手在飞 11 项，<strong>不推</strong>（v2 §1 的 F-07 前置：先清归属，不顺手替别人发布）。</li></ul>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>3. 运行证据（全部本会话原式实跑）</h2>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>结果</th><th>实测输出</th></tr></thead><tbody>
+  <tr><td>V2-1 三项齐全可提交</td><td><strong>PASS</strong></td><td><code>http=201 id=cmvpf6z460000vmgkrpocggko</code></td></tr>
+  <tr><td>V2-1b 其余五项全缺仍成功（证明降级真生效）</td><td><strong>PASS</strong></td><td><code>http=201 id=cmvpf6zjn0005vmgkn10yx7lv</code></td></tr>
+  <tr><td>V2-2a 缺邮箱</td><td><strong>PASS（按设计被挡）</strong></td><td><code>http=400 APPLICATION_EMAIL_INVALID</code></td></tr>
+  <tr><td>V2-2b 缺场景</td><td><strong>PASS（暴露 F-13）</strong></td><td><code>http=400 APPLICATION_USE_CASE_REQUIRED</code></td></tr>
+  <tr><td>V2-2c 缺称呼</td><td><strong>PASS（暴露 F-01）</strong></td><td><code>http=400 APPLICATION_NAME_REQUIRED</code></td></tr>
+  <tr><td>V2-3′ 真 DOM 必填位＝3</td><td><strong>PASS</strong></td><td><code>apply-name=REQUIRED / apply-email=REQUIRED / apply-problem=REQUIRED / apply-wechat·apply-scope·apply-manual-time=optional</code></td></tr>
+  <tr><td>V2-4 标签星号</td><td><strong>PASS</strong></td><td>首页 HTML 里 <code>（选填）</code> 出现 8 次（4 个可见标签 + 4 份序列化副本），带 <code> *</code> 的标签恰为 3 个</td></tr>
+  <tr><td>V4-1 缺素材零影响</td><td><strong>PASS</strong></td><td><code>grep -c '&lt;video'</code> → 0，且 <code>app-card</code> 仍在 → 1</td></tr>
+  <tr><td>V4-2 有素材时渲染＋三重标注</td><td><strong>PASS</strong></td><td><code>&lt;video&gt;</code> → 1；<code>演示录屏</code>=1、<code>数据为示例</code>=1、<code>界面版本 2026-09</code>=1</td></tr>
+  <tr><td>N2 空框/重复负控</td><td><strong>PASS</strong></td><td>src 置值后 <code>app-card</code> → 0（既不空框也不双份）</td></tr>
+  <tr><td>N4 回退负控</td><td><strong>PASS</strong></td><td>把 <code>required</code> 加回 <code>apply-scope</code> ⇒ 探针立刻抓到；还原后 MD5 <code>e61b1d08af51af2b67c52e68e5f71ce1</code> 与备份逐位相同</td></tr>
+  <tr><td>V4-3 未碰迁移垫片</td><td><strong>PASS</strong></td><td>`git diff --name-only \</td><td>grep -c site-settings.ts` → 0</td></tr>
+  <tr><td>类型门</td><td><strong>PASS</strong></td><td><code>npx tsc --noEmit</code> rc=0（2m23s）</td></tr>
+  <tr><td>Lint 门</td><td><strong>PASS</strong></td><td>全树 <code>0 errors, 48 warnings</code> rc=0；单独跑我 4 个文件 → rc=0 且 0 问题</td></tr>
+  <tr><td>SEO 门</td><td><strong>未验证（环境不适配，见 F-14）</strong></td><td>默认目标无服务 ⇒ <code>failures=1, fetch=33</code>；改指本机 ⇒ <code>failures=59, fetch=0</code>，其中内容级 0 红</td></tr>
+  <tr><td>条件门 trust-chain／行合同</td><td><strong>跳过（按 v2 F-09）</strong></td><td>diff 未命中 <code>trust-chain/</code> 与行合同目录</td></tr>
+</tbody></table></div>
+  <p>验证环境说明：为跑 V2 系列，我起了本机 dev（<code>next dev -p 3210</code>），并<strong>用隔离库</strong>（<code>tmp/b2-isolate.db</code>，<code>prisma migrate deploy</code> 全量应用后 rc=0）——共享的开发库一条数据没写。探针造的 2 行随隔离库一起删除；实例按 PID 停（47252，另早先 3708），未用任何按镜像名的批量杀。<code>tmp/b2-isolate.db</code> 已删。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>4. 下一步（按能立刻推进的顺序）</h2>
+  <ol><li><strong>F-11 优先</strong>：下一次发布清单里必须显式带 <code>prisma migrate deploy</code>（或 <code>db push</code>）；建议顺手加一道门——"代码里出现新 model 而迁移目录无对应 SQL ⇒ 出包红"。这条不修，官网漏斗随时会从"没人填"变成"填了就报错"。</li><li><strong>B1 你一句话</strong>：批准就改 nginx 那一行（含 <code>.bak</code> 与回滚式），当天就能把官网/内测站/爬虫拆开，真人绝对数才有解。</li><li><strong>B3 你一句话</strong>：英文站继续只收邮件（那我把这条写进对外口径，别让 "TRY IT" 区块看起来像有表单），还是补真表单。</li><li><strong>T2b</strong>：给批量台四步搭 harness 重采真素材，素材到位后把 <code>siteDemoMedia.ts</code> 的 <code>src</code> 填上即生效——渲染侧今天已经验完。</li><li><strong>B5 埋点</strong>：等条款第五节逐项表变更（另案），未改条款前不开采集。</li></ol>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>5. 覆盖缺口（不写成"没问题"）</h2>
+  <ul><li>没在真浏览器里点过这张表单（判据来自服务端响应码 + 访客 DOM 断言，<code>checkValidity()</code> 的浏览器端行为未实测）。</li><li>没测降级后垃圾申请比例——只能上线后看。</li><li>后台<strong>已发布内容版本</strong>里若存在同名标签键，会覆盖我改的默认值 ⇒ 访客仍会看到旧星号。这条必须在发布批次里同笔处理（v1 §3.3 的坑），本轮未动生产内容。</li><li>英文站本轮零改动。</li><li>SEO 门未获得一次真绿（缺适配目标环境），发布到测试站后须重跑。</li></ul>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>

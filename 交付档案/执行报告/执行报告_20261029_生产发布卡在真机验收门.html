@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生产发布卡在真机验收门 · 2026-10-29</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--blu:#175cd3;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:30px 22px 66px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--amb);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--amb);font-size:16.5px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13.5px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+pre{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:5px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat b{display:block;font-size:21px;line-height:1.2}
+.stat span{color:var(--mut);font-size:11.5px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h3{margin:0 0 6px;font-size:14px}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>生产发布卡在「3.7.28 真机验收」：代码已合进 GitHub，生产一行没动</h1>
+<p class="sub">2026-10-29 14:04 · 合流树 tmp/wt-prod-20261029 · GitHub 已推（develop＋main 均快进）· 生产未出包、未部署</p>
+
+<div class="verdict"><b>结论：代码已经上 GitHub（main = 972f0fe0），跟你验的测试站代码逐字节相同；但要上生产，还缺一条 3.7.28 的真机验收记录。</b><br>
+这道门要求「安装 / 配对 / 扫描 / 批跑 / 报告」五项在真机上全过。盘上只有 3.7.15 那条 10 月 12 日的记录——版本不对、也超了 14 天窗口。所以生产现在不能上；补这条记录需要你点一次 UAC，再做一个小批。</div>
+
+<h2>这对你意味着什么</h2>
+<p>要上生产，只差一件事：<b>用 3.7.28 在真机上把这五项真正跑一遍</b>。你出两个动作，其余我做——① 点一次 UAC，用普通权限重装一次 3.7.28；② 同意在测试站跑一小批（消耗一点额度）。跑完我把真实结论写进验收记录，然后重跑预检、出包、备份、部署、健康检查。</p>
+
+<div class="stats">
+  <div class="stat"><b>972f0fe0</b><span>已推 GitHub 的合流提交（main／develop 同一点）</span></div>
+  <div class="stat"><b>0 行</b><span>合后树与测试站 518a2dae 的差异</span></div>
+  <div class="stat"><b>16 / 16</b><span>预检里其余门单跑全绿</span></div>
+  <div class="stat"><b>0 条</b><span>3.7.28 的真机验收记录</span></div>
+</div>
+
+<h2>为什么盘上拿不出这条记录</h2>
+<div class="callout">
+<p><b>三个硬证据，都在盘上：</b></p>
+<ol>
+<li>本机助手回执目录最新一条是 <b>2026-09-19</b>（<span class="mono">Roaming/TYGF/receipts</span>）⇒ 3.7.28（10 月 25 日才出厂）从没跑过批。</li>
+<li>ISSUES #280：3.7.28 在 10 月 25 日装完后，授权检查全部 403（网页账号与本机助手绑定账号不一致），后来才修。</li>
+<li>10 月 27 日审查报告：助手以管理员身份（12288）运行、Photoshop 是普通身份（8192），两边不能互控 ⇒ 当时扫描必然失败；机器恢复只差一次普通权限重装。</li>
+</ol>
+<p>我刚实测（14:0x）：助手确实在跑 3.7.28（<span class="mono">127.0.0.1:49152/ping</span> 回 <span class="mono">3.7.28 / cors-preflight-20261025-r1</span>），PS 22.0 也在跑（PID 25136）且握手 ready；但助手服务器地址被配成了 <span class="mono">http://localhost:3000</span>（本机 dev），4 条回执投不出去。</p>
+</div>
+
+<h2>现在到哪一步</h2>
+<table>
+<tr><th>环节</th><th>状态</th><th>证据</th></tr>
+<tr><td>代码合流</td><td>完成</td><td>合并提交 <span class="mono">972f0fe0</span>，父提交 <span class="mono">80eb4263</span>（main）＋<span class="mono">518a2dae</span>（develop）；<span class="mono">git diff --stat 518a2dae HEAD</span> 输出 0 行</td></tr>
+<tr><td>推 GitHub</td><td>完成</td><td><span class="mono">origin/develop 518a2dae..972f0fe0</span>、<span class="mono">origin/main 80eb4263..972f0fe0</span>，均快进、未 force</td></tr>
+<tr><td>代码门禁</td><td>全绿</td><td>tsc 0；lint 0 error（44 条既有 a11y 警告）；i18n 硬伤 0；账号门 15 条 PASS；工作台 UI 契约 ok；其余 16 道门逐条 rc=0</td></tr>
+<tr><td>生产预检</td><td><b style="color:var(--red)">红</b></td><td>红在真机验收门：无 3.7.28 五项记录（唯一记录 3.7.15／10-12，已 17 天）</td></tr>
+<tr><td>出包／备份／部署</td><td>未做</td><td>未生成生产安装件、未上传、未碰生产机</td></tr>
+</table>
+<p>规模：相对生产现役 <span class="mono">80eb4263</span>，这次要上的差异是 <b>349 个文件、+41005／−2718 行</b>。</p>
+
+<h2>上生产的连带影响（先说清）</h2>
+<div class="callout">
+<p>一旦上生产，生产端要求的助手版本会从 <b>3.7.15 抬到 3.7.28</b>（<span class="mono">src/config/localAssistant.ts:10-11</span>、<span class="mono">src/lib/server/assistant-execution-contract.ts:69-72</span>）。现存还在 3.7.15 的客户，扫描和执行会被拦下、提示"升级本地助手"，直到重装为止。</p>
+<p>下载页有 3.7.28（<span class="mono">src/app/(zh)/download/page.tsx:125</span> 按发布身份拼文件名），但工作台那句报错文案<b>没有下载链接</b>。内测阶段能过，要不要在报错旁补一个下载入口，你一句话。</p>
+</div>
+
+<h2>还差一道口径（不拦本次，但要留底）</h2>
+<p><span class="mono">node scripts/check-migration-drift.mjs --target production</span> 返回 rc=2，意思是"机制与测试站不同、需人工复核，这不是通过"。生产部署脚本本身会跑 <span class="mono">npx prisma db push</span>（<span class="mono">deploy/deploy-release.sh:124</span>）补建缺表，所以 10 月 27 日担心的"申请表缺表会 500"在部署时会补上；但这条口径我没有独立核到绿，按项目规定记为未核实。</p>
+
+<h2>我等你的一句话</h2>
+<p>要不要现在就补真机验收（你点 UAC＋同意小批）？点完我一路做到生产上线并把结果回给你。若你更希望先只把 GitHub 合上、生产过两天再说，也告诉我——代码已经在 <span class="mono">main</span> 上，随时按同一个提交出包。</p>
+
+<footer>图译工坊内测版 · 执行报告 · 2026-10-29 · 全部读数为本会话实跑；合流树 tmp/wt-prod-20261029 保留待用</footer>
+</main></body></html>

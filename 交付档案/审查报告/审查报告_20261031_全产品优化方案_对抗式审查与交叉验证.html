@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全产品优化方案 · 对抗式审查与交叉验证</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:var(--pad) var(--pad) 72px;display:flex;flex-direction:column;gap:28px}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.25;margin:0;letter-spacing:-.01em}
+.standfirst{margin:0;color:var(--ink-2);max-width:74ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--muted);font-family:var(--font-mono)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.14rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+h2 .sn{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);font-weight:500}
+h3{font-size:.98rem;margin:0}
+p{margin:0;max-width:76ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdict p{font-size:clamp(1.02rem,2.2vw,1.18rem);line-height:1.6;max-width:60ch;font-weight:500}
+.contract{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-family:var(--font-mono);font-size:.82rem;line-height:1.9;white-space:pre-wrap;color:var(--ink-2)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;gap:8px;align-items:center;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-display);font-size:1.5rem;font-weight:600;line-height:1.2}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.84rem;min-width:640px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{background:var(--sunk);font-size:.74rem;letter-spacing:.04em;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.tag{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:.68rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:16px 18px;font-size:.93rem;color:var(--ink-2)}
+.callout strong{color:var(--warn)}
+.notes{font-size:.85rem;color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.78rem;color:var(--muted);font-family:var(--font-mono)}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">图译工坊 · 审查报告 / 2026-10-31 / Round 1 of 3</div>
+  <h1>全产品优化方案：对抗式审查与交叉验证</h1>
+  <p class="standfirst">审查对象是《落地版_审查稿v1》。两路独立取证 + 主审复现 + 一轮深挖。结论：方向成立，事实层不合格，已修订为 v2。</p>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>对 v1：打回。对 v2：有条件放行（E0 先收口、E1 先读 ACTIVE 覆盖、D1/D2/D3 由 Owner 拍板）。</p>
+  </div>
+  <div class="contract">VERDICT: 打回（对 v1）→ v2 已修订，待拍板决策点后为"有条件放行"
+范围: origin/develop e7d49ceb（本地 71529c7c + 107 项未提交不作基线）
+改动: 文档层；未改业务代码
+风险档: Medium
+已证实: 17 条（Important 15 / Nit 2 / Pre-existing 0）
+未决: 4 条
+覆盖缺口: 见第 7 节</div>
+  <div class="stats">
+    <div class="stat bad"><span class="n">9</span><span class="k">审查线 A findings（8 Important + 1 Nit）</span></div>
+    <div class="stat bad"><span class="n">8</span><span class="k">审查线 B findings（7 Important + 1 Nit）</span></div>
+    <div class="stat warn"><span class="n">5</span><span class="k">深挖新增结论</span></div>
+    <div class="stat ok"><span class="n">18</span><span class="k">v2 逐条闭合项</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>审查方法与边界</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>做了什么</h3>
+      <ul>
+        <li>两条独立取证的线，互不通气：A 对抗式审查、B 交叉验证</li>
+        <li>主审对每条线索独立复现：打开 file:line、跑只读命令、比对 origin 与本地树</li>
+        <li>追加一轮深挖：报告入口、12 与 13、多稿留存、20MB 分裂、官网控制面</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>没做什么</h3>
+      <ul>
+        <li>不跑构建、类型检查、smoke（按契约只读）</li>
+        <li>不上测试站核实际渲染与 ACTIVE 覆盖</li>
+        <li>不用真实助手包验报告落盘与 20MB</li>
+        <li>不审计费/回执/数据库合同层（方案声明不改合同）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>审查线 A：对抗式审查（9 条）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>级别</th><th>问题</th><th>证据</th><th>等级</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">A1</td><td><span class="tag bad">Important</span></td><td>指针取自本地脏树，按 v1 施工会改错位置</td><td class="mono">home-view.tsx:101 是 useView，useSiteContent 在 :104；report-renderer 742 行（v1 写 :775-793）</td><td>A</td></tr>
+        <tr><td class="mono">A2</td><td><span class="tag bad">Important</span></td><td>"只能从本批表里选"错误缩小了能力</td><td class="mono">workbench-view.tsx:2825-2831 允许当前文件夹任意表</td><td>A</td></tr>
+        <tr><td class="mono">A3</td><td><span class="tag bad">Important</span></td><td>验收引用不存在的脚本</td><td class="mono">test:wb-four-screens / check-wb-tokens.mjs 仅本地存在，origin package.json 0 命中</td><td>A</td></tr>
+        <tr><td class="mono">A4</td><td><span class="tag bad">Important</span></td><td>引用 origin 不存在的报告字段</td><td>overflowRiskTotal / outputQualityHtml 仅本地脏树</td><td>A</td></tr>
+        <tr><td class="mono">A5</td><td><span class="tag bad">Important</span></td><td>把"每稿一份报告"当纯展示决定，实际没有逐稿入口</td><td class="mono">execute-step.tsx:2530-2538；batch-result-panel.tsx:9/75/91</td><td>A</td></tr>
+        <tr><td class="mono">A6</td><td><span class="tag bad">Important</span></td><td>排版面板与 e7d49ceb、本地脏树同函数，v1 没写先合再改</td><td class="mono">typography-panel.tsx 两边都改</td><td>A</td></tr>
+        <tr><td class="mono">A7</td><td><span class="tag bad">Important</span></td><td>20MB 写成两侧对齐，实际助手包未发</td><td class="mono">read-table-path.js:17 已是 20MB；助手版本 3.7.28</td><td>A</td></tr>
+        <tr><td class="mono">A8</td><td><span class="tag bad">Important</span></td><td>判据不可判定（真人复述/无新增 error/截图或断言）</td><td>v1 原文</td><td>A</td></tr>
+        <tr><td class="mono">A9</td><td><span class="tag warn">Nit</span></td><td>"22 个指针"实际 23；:1980-1981 是文案不是函数</td><td>逐条清点</td><td>A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>审查线 B：交叉验证（8 条）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>级别</th><th>问题</th><th>复核结果</th><th>等级</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">B1</td><td><span class="tag bad">Important</span></td><td>12 门语言与 13 个语言版本混写</td><td>12＝去重语言门数；13＝逐稿语言格合计（execute-step.tsx:2400-2403）</td><td>A</td></tr>
+        <tr><td class="mono">B2</td><td><span class="tag bad">Important</span></td><td>脚本路径写错</td><td>tasklog-prepend / sync-task-ledger 只在容器根；字集检查＝build-zh-font-subset --check</td><td>A</td></tr>
+        <tr><td class="mono">B3</td><td><span class="tag bad">Important</span></td><td>冲突文件数说不准</td><td>7 个重叠；仅 workbench-scope-runtime.test.tsx 同锚点，必须人工合并</td><td>A</td></tr>
+        <tr><td class="mono">B4</td><td><span class="tag bad">Important</span></td><td>"报告未生成"会是假话</td><td>报告写在交付目录（v15-runner.js:905），reportFileName 回传（server.js:8137）</td><td>A</td></tr>
+        <tr><td class="mono">B5</td><td><span class="tag bad">Important</span></td><td>漏母方案 §8/§11/§12</td><td>同原文提示、恢复语义、滚动隔离与对比度，v1 均未落</td><td>A</td></tr>
+        <tr><td class="mono">B6</td><td><span class="tag bad">Important</span></td><td>漏英文站不可后台改</td><td>中文走 /api/site-content 合并；英文直接 import siteContentEn</td><td>A</td></tr>
+        <tr><td class="mono">B7</td><td><span class="tag bad">Important</span></td><td>"12×12"可能被读成并发</td><td>多稿逐份执行（execute-step.tsx:2528/2563/2616）</td><td>A</td></tr>
+        <tr><td class="mono">B8</td><td><span class="tag warn">Nit</span></td><td>把费用写进官网顺序</td><td>Owner 2026-10-31 明确费用不必上官网；首页现无价格段</td><td>A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>深挖一轮：入口到底断在哪</h2>
+
+  <h3>4.1 报告：有文件，没有直连</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>环节</th><th>事实</th><th>位置</th></tr></thead>
+      <tbody>
+        <tr><td>写报告</td><td>写到产物同目录，文件名《图译工坊执行报告.html》</td><td class="mono">v15-runner.js:905 / 965</td></tr>
+        <tr><td>回传</td><td>服务端返回 reportFileName</td><td class="mono">server.js:8137（批次）/ :6916（单语言）</td></tr>
+        <tr><td>界面说明</td><td>"HTML 报告已写入输出目录"</td><td class="mono">siteContent.ts:803</td></tr>
+        <tr><td>目录可复制</td><td>产物目录与文件路径可复制</td><td class="mono">execute-step.tsx:3356-3374</td></tr>
+        <tr><td>直连入口</td><td>没有：reportHtml 只被置 null；下载卡排除 local_assistant</td><td class="mono">execute-step.tsx:1851 / 2131 / 2295 / 2357 / 3411</td></tr>
+        <tr><td>重建报告</td><td>只重建、不重跑 PS、不重复冻费</td><td class="mono">server.js:8368-8413；execute-step.tsx:1973</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><strong>新发现：</strong>界面文案说"打开所选文件夹中的 report 目录"（siteContent.ts:801），仓库代码写在产物同目录（v15-runner.js:905）。若实际助手包一致，这是错误指引；E3 先用实际包实测再改这一句。</div>
+
+  <h3>4.2 12 与 13 是两个量纲</h3>
+  <p>12 份稿（<code>design-file-card.tsx:140</code>）＋每份 12 门语言（<code>batch-limits.ts:6</code>，报价接口 <code>quote/route.ts:53</code> 强制）＝可以对外写。13 是两稿语言格合计（<code>execute-step.tsx:2400-2403</code>），只在重复一门时出现。官网不能写"一次 144 个文件"，也不能写"13 门上限"。</p>
+
+  <h3>4.3 多稿只留最近一稿</h3>
+  <p><code>lastBatchId</code> 每稿覆盖；执行中"已完成/正在生成/等待处理"只在 running 时计算，结束后消失；没有手动停止，只有内存不足、助手忙、结果未知三类自动停。处理：v2 如实写，补入口列 D1/D2。</p>
+
+  <h3>4.4 20MB：代码到、包未到</h3>
+  <p>远端两端代码都是 20MB，但助手版本仍是 3.7.28，本地 3.7.30 未提交。新包前对外不写"已支持 20MB"。</p>
+
+  <h3>4.5 官网有两个控制面</h3>
+  <p>中文默认值会被后台 ACTIVE 覆盖合并；英文直接 import、只能发版。所以"改了代码线上没变"不是失败，而是必须先读覆盖。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>v2 逐条闭合</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>发现</th><th>v2 落点</th><th>闭合方式</th></tr></thead>
+      <tbody>
+        <tr><td>A1 / A9</td><td>§5 施工坐标</td><td>全部按 e7d49ceb 重取，标注按符号复核</td></tr>
+        <tr><td>A2</td><td>§1.3 / §5</td><td>删除"只能从本批表里选"</td></tr>
+        <tr><td>A3</td><td>§1.3</td><td>剔除不存在的门禁，只用远端脚本</td></tr>
+        <tr><td>A4</td><td>§5 / E3</td><td>按 origin 实际段落调整</td></tr>
+        <tr><td>A5</td><td>G5 / D1</td><td>如实写只留最近一稿</td></tr>
+        <tr><td>A6</td><td>§1.2 / E4</td><td>先合 e7d49ceb 改痕再改</td></tr>
+        <tr><td>A7</td><td>G8 / E6</td><td>新包前不写已支持</td></tr>
+        <tr><td>A8</td><td>§6</td><td>每条固定命令或配对截图</td></tr>
+        <tr><td>B1</td><td>§2 / T18</td><td>拆成两个量纲</td></tr>
+        <tr><td>B2</td><td>§10</td><td>写明容器根路径与命令</td></tr>
+        <tr><td>B3</td><td>§1.2</td><td>7 文件逐条合并判断</td></tr>
+        <tr><td>B4</td><td>§2 / §4.1 / E3</td><td>改为有文件无直连</td></tr>
+        <tr><td>B5</td><td>§8 / E2 / E3 / E5</td><td>补同原文、恢复语义、滚动与对比度</td></tr>
+        <tr><td>B6</td><td>G3 / E1</td><td>先读 ACTIVE；英文随发版</td></tr>
+        <tr><td>B7</td><td>§2 / G1</td><td>加逐份执行说明</td></tr>
+        <tr><td>B8</td><td>G2 / E1</td><td>不新增费用区块</td></tr>
+        <tr><td>4.1 新发现</td><td>G7 / E3</td><td>先实测落盘位置再改文案</td></tr>
+        <tr><td>Owner 12×12</td><td>§2 / E1 / T01</td><td>中文默认值 + 英文 + FAQ 三处同改</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>未决（4 条）</h2>
+  <ul class="plain">
+    <li>测试站 ACTIVE 文案覆盖内容：要在测试站调 /api/site-content，否则 E1 可能"改了看不见"。</li>
+    <li>实际助手包的报告落盘位置：仓库写产物同目录，界面说 report 目录。</li>
+    <li>生产后台写入是否被环境层拦截：代码层未见写锁，未实测。</li>
+    <li>本地 107 项未提交的归属会话与计划：未核实，影响 7 个重叠文件排期。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>覆盖缺口</h2>
+  <p>未跑任何构建/类型检查/smoke；未在测试站核实际渲染与覆盖；未用真实助手包验证报告落盘与 20MB；未核 origin/main 与生产现役是否一致；英文 SEO 结构化数据只看了断言方式未跑；未审计费/回执/数据库合同层。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>更正（推翻此前说法）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>原说法</th><th>反证</th><th>新结论</th></tr></thead>
+      <tbody>
+        <tr><td>多稿没入口、单稿有</td><td>单稿真实执行同样没有直连入口（reportHtml 从未赋值、local_assistant 被排除）</td><td>单稿多稿都只有文案＋目录；多稿还会被下一稿覆盖完成态</td></tr>
+        <tr><td>报告模板段落 :775-793</td><td>origin 文件共 742 行</td><td>真实段落 :710 / :716-725</td></tr>
+        <tr><td>12 份稿无代码支撑</td><td>MAX_PSD_ENTRIES = 12，三处入口强制</td><td>12 份稿同样是既有能力，可对外写</td></tr>
+        <tr><td>22 个指针</td><td>逐条清点是 23</td><td>以符号重核为准，不再报总数</td></tr>
+        <tr><td>只有中文可后台改</td><td>英文直接 import，无合并层</td><td>英文只能随代码发版</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>结论</h2>
+  <p>v1 的方向成立、事实不合格；v2 已逐条修订。审查者只出 findings，不占批准名额：合并、发布、真机扣费仍需 Owner 明确授权。</p>
+</section>
+
+<footer class="footer">
+  本报告仅审查文档与代码现场，未运行构建与测试，未修改业务代码。证据等级 A＝主审亲自复现；D＝推断（本报告未使用 D 级下结论）。
+</footer>
+
+</main>
+</body>
+</html>

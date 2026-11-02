@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案 · 完整性级别收口（六批可独立验收）</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}h2{font-size:18px;margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:16px 0 6px}
+.sub{color:var(--mut);font-size:13px}.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--grn);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:#7dd8a8;font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:12.5px;overflow:auto}
+.split{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 15px;font-size:14px}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head><body><main>
+<h1>执行方案 · 完整性级别收口（六批可独立验收）</h1>
+<p class="sub">基线 develop <span class="mono">70814271</span>（我的改动仍在脏区未提交）· 2026-10-27 18:3x · 依据：钻到底报告（同名件）</p>
+
+<div class="verdict"><b>本质（可判定一句）</b><br>
+把「两侧完整性级别」变成产品的<b>一等观测量</b>：判据用它、话术报它、出厂件带上它、仪表盘数它。少任何一件，同类故障还会再来。</div>
+
+<h2>B1 判据与错误码归一（今天可做）</h2>
+<table><tbody>
+<tr><th style="width:80px">动作</th><td>两侧级别判据保留；把 <span class="mono">PHOTOSHOP_PERMISSION_MISMATCH</span>（70／-2147024891 分支，<span class="mono">server.js:1794-1803</span>）与新码<b>归一</b>——同一病因只留一枚码，旧码作别名一版并注明；分类顺序固化「级别实测 → 未注册 → 忙/超时」</td></tr>
+<tr><th>为什么</th><td>钻到的 L5：正确诊断早就在盘上，却接在永不到达的错误号上；不归一就会出现两枚码，云端统计分叉</td></tr>
+<tr><th>验收</th><td class="mono">node server.js --self-test-errors rc=0；smoke-preparation-failure-observation rc=0；新增断言「权限族只允许 1 枚码」</td></tr>
+<tr><th>负控</th><td>70 分支改回旧码 ⇒ 门必须红（N5）</td></tr>
+</tbody></table>
+
+<h2>B2 让它真的出厂（主菜；此前我误判"本机做不到"）</h2>
+<div class="callout ok"><b>事实修正</b>：本机有 Inno Setup（<span class="mono">ISCC.exe</span> 1,456,272 B，实测运行 rc=0，Setup Version 6.7.3），且 3.7.28 包就是本机 10-25 15:48:03 出的（25,545,674 B，20:40 复测逐位相同；<b>路径更正</b>：真身在 <span class="mono">public/downloads/</span>，我初稿写的 <span class="mono">build/dist/</span> 是出包中间目录、那里最新只到 3.7.6 ⇒ 抄错、事实不变）；<span class="mono">csc.exe</span> 也可用（今天 17:26 他手编出过 <span class="mono">trayhost-probe.exe</span>）。</div>
+<table><tbody>
+<tr><th style="width:80px">动作链</th><td>提交我这 5＋2 文件（逐 hunk 证明只含我的改动）→ <span class="mono">git push origin develop</span>（禁 force）→ 从该 SHA 建 <b>detached 隔离树</b>（避开同树 38 项在飞）→ 在隔离树给 <span class="mono">installer.iss</span> 的 <span class="mono">[Run]</span> 加 <span class="mono">runasoriginaluser</span> → ISCC 编 <span class="mono">tygf-engine-setup-3.7.30.exe</span> → 版本 bump 同步面（<b>9 文件＋1 exe</b>）→ <span class="mono">release:preflight</span> → 产物与 SHA 交 Owner，<b>由 Owner 本机装</b></td></tr>
+<tr><th>拦路</th><td>⚠ <span class="mono">config/release-identity.json</span> 正被另一会话改（+5/−3 实测）——发布身份属永远需人批，两包不能同时抬版，须先落地或合流；⚠ 抬包版本 ≠ 抬 <span class="mono">minAssistantVersion</span>（那是 ASSIST-GATE-FIX-1 的线，我不碰）<br>⚠ <b>20:40 新增、比上条更硬</b>：<span class="mono">download/local-assistant/build/installer.iss</span> mtime 实测 <b>2026-10-27 18:16:49</b>，别手已在往里加整段 <span class="mono">[Code]</span>（装前自关助手：<span class="mono">--exit</span> → 等互斥体 15 秒 → 兜底 <span class="mono">taskkill /F /IM</span> 按专名强关托盘与引擎），且 <span class="mono">AppVersion</span> 已抬到 <b>3.7.29</b> ⇒ 我那笔"给同一文件 <span class="mono">[Run]</span> 加 <span class="mono">runasoriginaluser</span>"<b>必须等他落地</b>（同文件两改必撞），包号只能顺延 <b>3.7.30</b> 或直接并入他这一枚</td></tr>
+<tr><th>验收</th><td>包 size＋sha256 留底；ISCC rc=0；preflight rc=0；装后 <span class="mono">/ping</span> 回 <span class="mono">assistantIntegrityRid=8192</span>；<span class="mono">engine.log</span> 出现 <span class="mono">outcome=prepared</span> 且 durMs &lt; 60,000</td></tr>
+<tr><th>负控</th><td>故意不加 <span class="mono">runasoriginaluser</span> 编一包，提权安装 ⇒ 自启助手必须是 12288；正常包同法 ⇒ 必须 8192（证明这枚 flag 真起作用）</td></tr>
+<tr><th>不做</th><td>静默装机、替 Owner 点 UAC、部署两站、支付 flag、抬版本下限</td></tr>
+</tbody></table>
+
+<h2>B3 撤掉"教用户提权"的话术（L6 层）</h2>
+<table><tbody>
+<tr><th style="width:80px">动作</th><td><b>范围按 20:40 复测从 2 处扩到 5 处</b>：① <span class="mono">diagnostics/README.txt:34</span>「右键…以管理员身份运行」；② <span class="mono">README.txt:22</span>（"需管理员权限"）；③ <span class="mono">Fix-Photoshop-COM.ps1:138</span>（同一句话再抄一遍）；④ <span class="mono">Run-Photoshop-COM-Fix.bat:18</span>（检测后自 <span class="mono">-Verb RunAs</span> 提权）；⑤ <b>最可及的一处＝安装器开始菜单项 <span class="mono">build/installer.iss:96</span>「修复 Photoshop COM」</b>，用户不查文档也能一键点进 ④。每处统一改法：在提权指引<b>之前</b>加一句前置判断（先确认两侧级别一致、都普通；若助手被以管理员运行，先退出再正常启动，否则修注册表无效）；<span class="mono">server.js:3662</span> 非提权分支同此；<b>⑤ 删不删这个菜单项是单独一问</b>（删＝撤功能，默认建议保留入口、只加前置话术）</td></tr>
+<tr><th>为什么</th><td>实测：本机 UserAssist 里<b>确有</b> <span class="mono">Run-Photoshop-COM-Fix.bat</span> 两条启动记录；<span class="mono">ISSUES #253</span> 已登记镜像情形——修注册表不碰级别边界，照做完 429 大概率还在</td></tr>
+<tr><th>验收/负控</th><td>门针：出厂文案出现"以管理员身份运行"时，同一条必须出现"权限级别一致"；删掉前置句 ⇒ 红（N6）</td></tr>
+</tbody></table>
+
+<h2>B4 修"提权实例被当成没开"这半（#258/#261 存量）</h2>
+<table><tbody>
+<tr><th style="width:80px">动作</th><td><span class="mono">runningPsExe()</span>（<span class="mono">server.js:498-516</span>）现靠 <span class="mono">Get-Process … -ExpandProperty Path</span> 判在不在，取不到 Path 就返空 ⇒ 级别不对称时（PS 提权、引擎普通）PS 明明在跑却被判"没开"，用户永远收到 202。改为先按<b>进程名计数</b>判在不在，Path 只当可选信息</td></tr>
+<tr><th>证据等级</th><td>A——本会话亲撞同型现象：普通权限命令行读高权限进程 <span class="mono">.Path</span> 返回空串，而同进程 PID/RID 读得到</td></tr>
+<tr><th>归属</th><td>存量（#258/#261 已登记）：我改 或 原登记会话改，<b>二选一，不许两边同时改同一函数</b></td></tr>
+</tbody></table>
+
+<h2>B5 让这类卡住第二天就被看见（L7 层，两处不 Survived 之一）</h2>
+<table><tbody>
+<tr><th style="width:80px">动作</th><td>① <span class="mono">/ping</span> 已有 <span class="mono">assistantIntegrityRid</span>，再加 <span class="mono">photoshopIntegrityRid</span>（仅助手高权限时探）；② <span class="mono">scripts/control-plane.sh</span> 增两轴：本机助手是否提权 ＋ 扫描耗时/失败码分布（按新码与 durMs&gt;5 分钟计数）；③ 第一指标口径件补一行"卡首跑原因分类必须含权限级别不一致"</td></tr>
+<tr><th>实测依据</th><td class="mono">grep -c "PHOTOSHOP" control-plane.sh = 0；"durMs|扫描" = 0（正控 "在办|ledger" = 2）；口径件 "PHOTOSHOP|权限" = 0</td></tr>
+<tr><th>验收</th><td><span class="mono">bash scripts/control-plane.sh</span> rc=0 且两轴有读数；负控：删掉轴名必须报错而不是静默 0</td></tr>
+</tbody></table>
+
+<h2>B6 台账与治理</h2>
+<ul>
+<li>登记本次为新号（含两侧级别概念、出厂链路前置、话术整改）。</li>
+<li>把 <b>#258≡#261、#259≡#262</b> 两对逐字重复条目做号界处理：一处保留状态，另一处标"作废勿引"，<b>不改别人正文</b>（实测重复行：2020/2042、2028/2050）。</li>
+<li>未核实入册：17:44:35 启动命令、UserAssist 值布局、下载页/帮助文档旧指引。</li>
+</ul>
+
+<h2>顺序与依赖</h2>
+<pre>B1（判据归一）→ B2（提交 → 推 → 隔离树 → 抬版 → 编包 → 交你装）
+              ↗ B3（话术，必须先于 B2，否则出厂包里还是错话）
+B4（存量，归属二选一）—— 可并入 B2 同一包
+B5（可观测，不需出厂，可与 B2 并行）
+B6（每批交付各记一行）</pre>
+<p>唯一必须出包的批次是 <b>B1＋B3</b>；B2 是把它们送到用户机器上的通道本身；B4/B5 不出包也生效。</p>
+
+<h2>要 Owner 拍的三档</h2>
+<div class="split">
+<div class="card"><h3>甲 · 不出包</h3>做 B1＋B3＋B5＋B6。源码侧正确、话术不再误导、监控能看见；<b>但你机器以外的人仍装着会说错话的 3.7.28</b>。</div>
+<div class="card"><h3>乙 · 甲＋本机编包（推荐）</h3>需要你给两句话：① 允许我把这 5＋2 个文件提交并推 <span class="mono">origin/develop</span>；② 允许把包版本抬到 3.7.29（<b>不动版本下限</b>）。前置：<span class="mono">release-identity</span> 他手那笔要先落地或合流。装机由你点，我不代操作。</div>
+<div class="card"><h3>丙 · 乙＋B4</h3>连"提权实例被当成没开"这半存量一起收；代价是同函数改动可能与原登记会话撞车 ⇒ <b>B4 归属必须当场指定一人</b>。</div>
+</div>
+
+<h2>红线（不动面）</h2>
+<ul>
+<li>不静默装机、不替 Owner 点 UAC、不部署两站、不改支付 flag、不抬 <span class="mono">minAssistantVersion</span>、不碰 <span class="mono">binding-core</span> 匹配键与合同语义。</li>
+<li>不碰他手在飞文件（现测 38 项，其中 <span class="mono">config/release-identity.json</span>／<span class="mono">installer.iss</span>／<span class="mono">TrayHost.cs</span> 与发布身份直接相关 ⇒ 必须合流，不能并改）。</li>
+<li>只按 PID 收尾我起的进程；禁止按镜像名批杀。</li>
+</ul>
+
+<footer>图译工坊 · 执行方案 · 对应 md：交付档案/执行方案/执行方案_20261027_完整性级别收口_六批可独立验收.md</footer>
+</main></body></html>

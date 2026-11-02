@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>图译工坊 · 视觉方向四选一（现站基线 + 三套重设计）</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+/* ============ 共用骨架：四套方向渲染同一份内容，差别只在设计令牌 ============ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+/* 切换条（评审工具，不属于任何一套方向） */
+.bar{position:sticky;top:0;z-index:99;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 18px;background:#0d1015;color:#e8ecf3;border-bottom:1px solid #23282f}
+.bar b{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;color:#8d97a8;margin-right:6px}
+.bar button{font:600 13px/1 inherit;padding:9px 14px;border-radius:8px;border:1px solid #38414f;background:#151a22;color:#c2cad7;cursor:pointer}
+.bar button[aria-pressed="true"]{background:#e8ecf3;color:#0d1015;border-color:#e8ecf3}
+.bar .note{margin-left:auto;font-size:11.5px;color:#8d97a8}
+body{display:none}
+body.show{display:block}
+
+/* 方向容器 */
+[dir-root]{display:block;min-height:80vh}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+/* ============ D0 现站基线（实测令牌） ============ */
+[data-dir="d0"]{--bg:#fff;--surface:#fff;--sunk:#f7f8f7;--ink:#111311;--ink2:#3f453f;--muted:#626762;--faint:#6b7168;--line:#dfe3df;--brand:#2d7356;--brandInk:#fff;--cta:#121412;--ctaInk:#fff;--ok:#146c43;--warn:#8a5a00;--bad:#b3261e;--r:26px;--r2:12px;--sh:0 26px 72px rgba(30,45,36,.11)}
+/* ============ D1 专业设计生产力工具 ============ */
+[data-dir="d1"]{--bg:#f2f3f5;--surface:#fff;--sunk:#fbfbfc;--ink:#1c1f24;--ink2:#333a42;--muted:#5b636e;--faint:#616a75;--line:#dfe2e6;--brand:#1f6feb;--brandInk:#fff;--cta:#1c1f24;--ctaInk:#fff;--ok:#16794f;--warn:#9a5b00;--bad:#b3261e;--r:8px;--r2:6px;--sh:0 1px 2px rgba(16,20,26,.08),0 8px 24px rgba(16,20,26,.06)}
+/* ============ D2 现代工业软件（暗 + 朱红） ============ */
+[data-dir="d2"]{--bg:#0b0d10;--surface:#12151a;--sunk:#171b21;--ink:#e8ebef;--ink2:#c4ccd6;--muted:#98a2ae;--faint:#7c8794;--line:#23282f;--brand:#ff5c38;--brandInk:#12151a;--cta:#ff5c38;--ctaInk:#12151a;--ok:#3fbf87;--warn:#f2a516;--bad:#ff7a6b;--r:6px;--r2:4px;--sh:0 0 0 1px rgba(255,255,255,.03),0 18px 48px rgba(0,0,0,.5)}
+/* ============ D3 简约高端 SaaS ============ */
+[data-dir="d3"]{--bg:#fbfaf8;--surface:#fff;--sunk:#f4f2ee;--ink:#14161a;--ink2:#2b2f36;--muted:#6b6f76;--faint:#6a6f77;--line:#e6e3dd;--brand:#2b2f77;--brandInk:#fff;--cta:#14161a;--ctaInk:#fff;--ok:#2f6b52;--warn:#8a5a00;--bad:#a8322a;--r:16px;--r2:10px;--sh:0 2px 4px rgba(20,22,26,.04),0 24px 60px rgba(20,22,26,.07)}
+
+[dir-root]{background:var(--bg);color:var(--ink)}
+[data-dir="d3"] h2,[data-dir="d3"] .disp{font-family:"Noto Serif SC",Georgia,serif}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+[data-dir="d0"] .nav{background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(16px) saturate(1.3)}
+.nav-in{display:flex;align-items:center;gap:22px;height:var(--navH,68px)}
+[data-dir="d1"]{--navH:56px}
+[data-dir="d2"]{--navH:60px}
+[data-dir="d3"]{--navH:76px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.mark i{width:26px;height:26px;display:grid;place-items:center;background:var(--ink);color:var(--bg);border-radius:var(--r2);font-size:13px;font-style:normal;font-weight:700}
+[data-dir="d2"] .mark i{background:var(--brand);color:var(--brandInk)}
+.nlinks{display:flex;gap:var(--navGap,20px);margin-left:auto;font-size:var(--navFs,13px);color:var(--muted)}
+.nlinks a{color:inherit;text-decoration:none;padding:7px 10px;border-radius:var(--r2);display:inline-flex;align-items:center;min-height:44px}
+.nlinks a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:var(--r2);padding:var(--btnPad,11px 18px);font-size:var(--btnFs,14px);font-weight:600;cursor:pointer;text-decoration:none;min-height:44px}
+.btn-p{background:var(--cta);color:var(--ctaInk)}
+.btn-p:hover{background:var(--brand);color:var(--brandInk)}
+.btn-g{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-g:hover{border-color:var(--ink)}
+[data-dir="d0"] .btn{border-radius:999px;padding:13px 22px;font-size:15px}
+[data-dir="d1"] .btn{padding:9px 14px;font-size:13px}
+[data-dir="d2"] .btn{padding:10px 16px;font-size:13px;letter-spacing:.02em}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--heroGap,48px);padding:var(--heroPad,72px) 0 64px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:var(--eyebrowFs,12px);color:var(--muted);border:1px solid var(--line);border-radius:var(--r2);padding:6px 11px;background:var(--surface)}
+[data-dir="d1"] .eyebrow,[data-dir="d2"] .eyebrow{font-family:"IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+h1{margin:18px 0 14px;font-size:var(--h1,64px);line-height:var(--h1Lh,1.06);font-weight:var(--h1W,700);letter-spacing:var(--h1Ls,-.02em);overflow-wrap:anywhere}
+h1 em{font-style:normal;color:var(--brand)}
+.lede{font-size:var(--lede,17px);line-height:1.7;color:var(--muted);max-width:52ch;margin:0 0 26px;overflow-wrap:anywhere}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.trust{display:flex;flex-wrap:wrap;gap:var(--trustGap,18px);font-size:var(--trustFs,12.5px);color:var(--faint);border-top:1px solid var(--line);padding-top:16px}
+.trust span{display:inline-flex;align-items:center;gap:7px}
+.trust span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ok)}
+
+/* 工作台示意 */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+[data-dir="d0"] .panel{border-radius:26px}
+.pbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:5px}.dots i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.pbody{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px}
+.card{border:1px solid var(--line);border-radius:var(--r2);background:var(--surface);padding:12px}
+.card h4{margin:0 0 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.row:first-of-type{border-top:0}
+.row b{font-weight:600;color:var(--ink)}
+.row span{color:var(--faint);font-size:11px}
+.row.sel{background:color-mix(in srgb,var(--brand) 10%,transparent);box-shadow:inset 2px 0 0 var(--brand);padding-left:8px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 16px}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:var(--r2);padding:6px 10px;font-size:11.5px;color:var(--muted);background:var(--surface)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%}
+.pill.ok::before{background:var(--ok)}.pill.warn::before{background:var(--warn)}.pill.bad::before{background:var(--bad)}
+.schematic{font-size:11px;color:var(--faint);padding:0 16px 14px}
+
+/* 段落 */
+.sec{padding:var(--secPad,64px) 0;border-top:1px solid var(--line)}
+.kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+h2{margin:0 0 8px;font-size:var(--h2,34px);line-height:1.2;font-weight:var(--h2W,700);letter-spacing:-.015em;overflow-wrap:anywhere}
+.sub{margin:0 0 26px;color:var(--muted);font-size:15px;line-height:1.75;max-width:64ch;overflow-wrap:anywhere}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.feat{padding:16px;border:1px solid var(--line);border-radius:var(--r2);background:var(--surface)}
+.feat b{display:block;font-size:14px;margin-bottom:6px}
+.feat p{margin:0;font-size:12.5px;line-height:1.7;color:var(--muted);overflow-wrap:anywhere}
+.num{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.stat{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid var(--line);border-radius:var(--r2);background:var(--surface)}
+.stat small{font-size:11.5px;color:var(--faint)}
+
+/* 表 */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600}
+td b{color:var(--ink)}
+
+/* 表单 */
+.form{display:grid;gap:12px;max-width:640px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;min-height:44px;padding:11px 12px;font:inherit;font-size:13.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r2)}
+.field input:focus-visible,.field textarea:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.req{color:var(--bad)}
+
+footer{padding:34px 0;border-top:1px solid var(--line);font-size:12px;color:var(--faint)}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;padding-top:44px;gap:28px}
+  .pbody,.grid3,.grid2{grid-template-columns:1fr}
+  .nlinks{display:none}
+  h1{font-size:var(--h1M,34px)}
+}
+</style>
+</head>
+<body class="show">
+
+<div class="bar">
+  <b>视觉方向</b>
+  <button data-go="d0" aria-pressed="true">D0 现站基线</button>
+  <button data-go="d1" aria-pressed="false">D1 生产力工具</button>
+  <button data-go="d2" aria-pressed="false">D2 工业软件（暗+朱红）</button>
+  <button data-go="d3" aria-pressed="false">D3 高端 SaaS</button>
+  <span class="note">四套渲染同一份内容，只差设计令牌 · 内容只用已核实事实 · 界面均为示意</span>
+</div>
+
+<!-- ================= D0 现站基线 ================= -->
+<div dir-root data-dir="d0" id="d0">
+  <header class="nav"><div class="wrap nav-in">
+    <div class="mark"><i>图</i>图译工坊</div>
+    <nav class="nlinks"><a href="#cost">为何变重</a><a href="#easy">轻松在哪</a><a href="#how">如何处理</a><a href="#status">任务状态</a><a href="#">工作台</a><a href="#">登录</a></nav>
+    <a class="btn btn-p" href="#try" style="margin-left:18px">申请试跑</a>
+  </div></header>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">已有译文的多语言 PSD / PSB · 单次最多 12 个目标语种</span>
+        <h1>让设计师改语言<br><em>变轻松</em></h1>
+        <p class="lede">不是把设计交给工具。是不再按语言，一个个从头做。图译工坊先处理已经明确的文字替换，把撑版、换行、字体、版式和拿不准的地方集中留给你。</p>
+        <div class="cta-row"><a class="btn btn-p" href="#try">拿一套正在改语言的项目试跑 →</a><a class="btn btn-g" href="#how">看看它怎么改语言</a></div>
+        <div class="trust"><span>PSD / PSB 留在本机</span><span>有歧义不猜</span><span>写入后核对</span><span>最终视觉由你确认</span></div>
+      </div>
+      <div class="panel">
+        <div class="pbar"><span class="dots"><i></i><i></i><i></i></span><span class="mono">product-launch.psd · 图译工坊</span></div>
+        <div class="pbody">
+          <div class="card"><h4>Photoshop layers</h4>
+            <div class="row"><b>Hero / Badge</b><span>Text</span></div>
+            <div class="row sel"><b>Buttons / CTA</b><span>Text</span></div>
+            <div class="row"><b>Feature / Title</b><span>Text</span></div>
+            <div class="row"><b>Footer / Legal</b><span>Text</span></div>
+          </div>
+          <div class="card"><h4>translations.xlsx · 6 languages</h4>
+            <div class="row"><b class="mono">12</b><span>Buy Now → Comprar ahora</span></div>
+            <div class="row"><b class="mono">13</b><span>Free Shipping → Envío gratis</span></div>
+            <div class="row"><b class="mono">14</b><span>Learn More → Más información</span></div>
+          </div>
+        </div>
+        <div class="pills"><span class="pill ok">43 已核对完成</span><span class="pill warn">3 需要判断</span><span class="pill bad">1 执行失败</span></div>
+        <div class="schematic">示意界面 · 完成的先完成，需要你的集中留下</div>
+      </div>
+    </section>
+
+    <section class="sec" id="status"><div class="kicker">任务状态</div><h2>改完以后，更容易知道哪里还要看</h2><p class="sub">现站问题（实测）：h1 用 78px 常规字重，层级靠字号不靠字重；次要文字 9.6px 且对比度 2.68:1，正文级卡片文字 4.39:1，都不达 WCAG AA；桌面 58 个可点元素里 35 个小于 44px。</p>
+      <div class="grid3">
+        <div class="stat"><span class="num mono">48</span><small>全部（示意）</small></div>
+        <div class="stat"><span class="num mono">43</span><small>已核对完成（示意）</small></div>
+        <div class="stat"><span class="num mono">3 + 2</span><small>需要判断 + 无法处理/失败（示意）</small></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= D1 专业设计生产力工具 ================= -->
+<div dir-root data-dir="d1" id="d1" hidden>
+  <header class="nav"><div class="wrap nav-in">
+    <div class="mark"><i>图</i>图译工坊 <span style="font-weight:400;color:var(--faint);font-size:12px">PSD 多语言写回</span></div>
+    <nav class="nlinks"><a href="#">产品</a><a href="#">怎么用</a><a href="#">边界</a><a href="#">价格</a><a href="#">下载</a><a href="#">登录</a></nav>
+    <a class="btn btn-p" href="#try" style="margin-left:14px">用真实项目试跑</a>
+  </div></header>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Local Photoshop · 12 languages per batch</span>
+        <h1>把译文写进图层<br>把判断留给人</h1>
+        <p class="lede">你已经有译文表和一套母版 PSD。图译工坊在你本机的 Photoshop 里批量写入文字图层，写完逐层回读核对，把需要判断的地方单独列出来给你。</p>
+        <div class="cta-row"><a class="btn btn-p" href="#try">申请试跑（人工发码）</a><a class="btn btn-g" href="#how">看它怎么处理一个图层</a></div>
+        <div class="trust"><span>设计文件本体不出本机</span><span>逐层回读核对</span><span>栅格化与智能对象不处理</span><span>单批 12 语种上限</span></div>
+      </div>
+      <div class="panel">
+        <div class="pbar"><span class="dots"><i></i><i></i><i></i></span><span class="mono">product-launch.psd</span><span style="margin-left:auto" class="mono">12 langs · 48 targets</span></div>
+        <div class="pbody">
+          <div class="card"><h4>图层匹配</h4>
+            <div class="row sel"><b>Buttons / CTA</b><span class="mono">已确认</span></div>
+            <div class="row"><b>Feature / Title</b><span class="mono">待复查</span></div>
+            <div class="row"><b>Footer / Legal</b><span class="mono">需要你决定</span></div>
+            <div class="row"><b>Stamp（智能对象）</b><span class="mono">不处理</span></div>
+          </div>
+          <div class="card"><h4>回读核对</h4>
+            <div class="row"><b class="mono">ES · 12</b><span>Add to Cart → Añadir al carrito</span></div>
+            <div class="row"><b class="mono">DE · 07</b><span>文字变长，需重看版式</span></div>
+            <div class="row"><b class="mono">AR · 21</b><span>从右向左，行序待确认</span></div>
+          </div>
+        </div>
+        <div class="pills"><span class="pill ok">已确认</span><span class="pill warn">待复查</span><span class="pill bad">需要你决定</span></div>
+        <div class="schematic">示意界面，非真实处理结果。产品实际三态：已确认 / 待复查 / 需要你决定。</div>
+      </div>
+    </section>
+
+    <section class="sec" id="how"><div class="kicker">怎么做</div><h2>四步，每一步都能停下来</h2><p class="sub">明确项批量走，拿不准的先停。速度来自批量执行，不来自省掉检查。</p>
+      <div class="grid2">
+        <div class="feat"><b>01 检查输入</b><p>空译文、重复原文、同一原文多种译法，在执行前暴露出来，由人决定，不做猜测式替换。</p></div>
+        <div class="feat"><b>02 批量写入</b><p>按语言连续处理，单批上限 12 个目标语种；超出会被拦下并逐张给原因。</p></div>
+        <div class="feat"><b>03 逐层回读</b><p>写完重新打开文件逐对象比对身份与文字，不一致就不算完成。</p></div>
+        <div class="feat"><b>04 例外清单</b><p>栅格化、智能对象、文字转曲不进替换，在报告里逐条列出，交回 Photoshop 人工处理。</p></div>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="stat"><span class="num mono">12</span><small>单批目标语种上限（源码强制五层）</small></div>
+        <div class="stat"><span class="num mono">3</span><small>状态档：已确认 / 待复查 / 需要你决定</small></div>
+        <div class="stat"><span class="num mono">0</span><small>设计文件本体的上传字节（本体留本机）</small></div>
+      </div>
+    </section>
+
+    <section class="sec" id="try"><div class="kicker">申请试跑</div><h2>三个问题就够</h2><p class="sub">后台只校验三项：称呼、邮箱、场景。其余留到聊的时候再问。</p>
+      <form class="form" novalidate>
+        <div class="field"><label>你的称呼 <span class="req">*</span></label><input placeholder="如：小李"></div>
+        <div class="field"><label>邮箱 <span class="req">*</span></label><input type="email" placeholder="用于接收邀请码"></div>
+        <div class="field"><label>你的多语言改图场景 <span class="req">*</span></label><textarea rows="3" placeholder="例如：一套主图 + A+ 详情，12 个站点语言，译文已由译员定稿"></textarea></div>
+        <div class="field"><label>微信号（可选）</label><input></div>
+        <div><button class="btn btn-p" type="submit">提交申请 →</button></div>
+        <p style="font-size:12px;color:var(--faint);margin:0">用来联系你安排内测，不发广告。发码为人工操作，通常按项目真实度排队。</p>
+      </form>
+    </section>
+  </div>
+  <footer><div class="wrap">图译工坊 · 本机 Photoshop 执行 · 隐私政策 / 第三方处理方清单 / 用户协议</div></footer>
+</div>
+
+<!-- ================= D2 现代工业软件 ================= -->
+<div dir-root data-dir="d2" id="d2" hidden>
+  <header class="nav"><div class="wrap nav-in">
+    <div class="mark"><i>图</i>TUYI<span style="font-weight:400;color:var(--faint);font-size:12px">/ psd-writeback</span></div>
+    <nav class="nlinks"><a href="#">Engine</a><a href="#">Pipeline</a><a href="#">Limits</a><a href="#">Pricing</a><a href="#">Docs</a></nav>
+    <a class="btn btn-p" href="#try" style="margin-left:14px">Request access</a>
+  </div></header>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Runs inside your Photoshop · 12 langs / batch</span>
+        <h1>译文进图层<br><em>判断留给你</em></h1>
+        <p class="lede">批量写入、逐层回读、例外清单。设计文件本体不出本机；图层文字、原文与译文按隐私政策上传用于报价与结算。</p>
+        <div class="cta-row"><a class="btn btn-p" href="#try">申请试跑</a><a class="btn btn-g" href="#how">看执行链路</a></div>
+        <div class="trust"><span>逐对象回读</span><span>不一致不落盘</span><span>智能对象不处理</span><span>人工发码</span></div>
+      </div>
+      <div class="panel">
+        <div class="pbar"><span class="dots"><i></i><i></i><i></i></span><span class="mono">execution-batch #118</span><span style="margin-left:auto" class="mono">12 langs</span></div>
+        <div class="pbody">
+          <div class="card"><h4>Write-back</h4>
+            <div class="row sel"><b class="mono">ES · 12</b><span>已确认</span></div>
+            <div class="row"><b class="mono">DE · 07</b><span>待复查</span></div>
+            <div class="row"><b class="mono">AR · 21</b><span>需要你决定</span></div>
+            <div class="row"><b class="mono">JP · 03</b><span>不处理（智能对象）</span></div>
+          </div>
+          <div class="card"><h4>Reopen verify</h4>
+            <div class="row"><b class="mono">identity</b><span>逐对象 ID 比对</span></div>
+            <div class="row"><b class="mono">text</b><span>归一化后全文比对</span></div>
+            <div class="row"><b class="mono">gate</b><span>未过不得发布</span></div>
+          </div>
+        </div>
+        <div class="pills"><span class="pill ok">已确认</span><span class="pill warn">待复查</span><span class="pill bad">需要你决定</span></div>
+        <div class="schematic">示意界面，非真实处理结果</div>
+      </div>
+    </section>
+
+    <section class="sec" id="how"><div class="kicker">Pipeline</div><h2>检查 → 写入 → 重开回读 → 例外</h2><p class="sub">这条是产品真正的差异化，也是源码里最硬的一条：写完重新打开文件，逐对象比对身份与文字，不一致就不算完成。</p>
+      <table>
+        <thead><tr><th>环节</th><th>谁做</th><th>失败时</th></tr></thead>
+        <tbody>
+          <tr><td><b>输入审查</b></td><td>产品暴露，人决定</td><td>不猜，停在确认</td></tr>
+          <tr><td><b>批量写入</b></td><td>本机 Photoshop 执行</td><td>逐对象标记失败</td></tr>
+          <tr><td><b>重开回读</b></td><td>产品自动</td><td>不一致则整份不落盘</td></tr>
+          <tr><td><b>例外处理</b></td><td>人，在 Photoshop</td><td>报告逐条列出</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <footer><div class="wrap">TUYI · 隐私政策 / 第三方处理方清单 / 用户协议 · 本页为方向提案，未上线</div></footer>
+</div>
+
+<!-- ================= D3 简约高端 SaaS ================= -->
+<div dir-root data-dir="d3" id="d3" hidden>
+  <header class="nav"><div class="wrap nav-in">
+    <div class="mark"><i>图</i>图译工坊</div>
+    <nav class="nlinks"><a href="#">能力</a><a href="#">流程</a><a href="#">边界</a><a href="#">价格</a><a href="#">文档</a></nav>
+    <a class="btn btn-p" href="#try" style="margin-left:18px">预约试跑</a>
+  </div></header>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">多语言设计交付</span>
+        <h1 class="disp">一套母版，<br>十二个市场</h1>
+        <p class="lede">把已经定稿的译文，稳稳放回 PSD 的文字图层。谁该停下来等你，它会给出一份能核对的清单。</p>
+        <div class="cta-row"><a class="btn btn-p" href="#try">拿真实项目试一次</a><a class="btn btn-g" href="#how">了解它如何工作</a></div>
+        <div class="trust"><span>本机执行</span><span>逐层核对</span><span>例外可见</span><span>交付含报告</span></div>
+      </div>
+      <div class="panel">
+        <div class="pbar"><span class="dots"><i></i><i></i><i></i></span><span>product-launch.psd</span></div>
+        <div class="pbody">
+          <div class="card"><h4>图层</h4>
+            <div class="row sel"><b>Buttons / CTA</b><span>已确认</span></div>
+            <div class="row"><b>Feature / Title</b><span>待复查</span></div>
+            <div class="row"><b>Footer / Legal</b><span>需要你决定</span></div>
+          </div>
+          <div class="card"><h4>译文</h4>
+            <div class="row"><b>Buy Now</b><span>Comprar ahora</span></div>
+            <div class="row"><b>Free Shipping</b><span>Envío gratis</span></div>
+            <div class="row"><b>Learn More</b><span>Más información</span></div>
+          </div>
+        </div>
+        <div class="pills"><span class="pill ok">已确认</span><span class="pill warn">待复查</span><span class="pill bad">需要你决定</span></div>
+        <div class="schematic">示意界面，非真实处理结果</div>
+      </div>
+    </section>
+    <section class="sec"><div class="kicker">为什么值得看</div><h2 class="disp">省的不是设计，是重复</h2><p class="sub">一个语言改一遍，十二个语言就改十二遍。找图层、对译文、写入、保存、核对——这套动作被重复的次数，就是排期。</p>
+      <div class="grid3">
+        <div class="feat"><b>少做重复</b><p>明确的文字替换先批量处理，人回来主要看撑版、换行、字体与最终视觉。</p></div>
+        <div class="feat"><b>少找问题</b><p>完成的先完成，需要判断与无法处理的单独留下，不必等所有语言版走完。</p></div>
+        <div class="feat"><b>心里有底</b><p>写完逐层回读核对，失败明确留下，最终视觉由设计师确认。</p></div>
+      </div>
+    </section>
+  </div>
+  <footer><div class="wrap">图译工坊 · 隐私政策 / 用户协议 · 本页为方向提案，未上线</div></footer>
+</div>
+
+<script>
+(function(){
+  var btns=[].slice.call(document.querySelectorAll('.bar button'));
+  var roots=[].slice.call(document.querySelectorAll('[dir-root]'));
+  function go(id){
+    roots.forEach(function(r){ var on=r.getAttribute('data-dir')===id; r.hidden=!on; });
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.go===id)); });
+    location.hash=id;
+    window.scrollTo(0,0);
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ go(b.dataset.go); }); });
+  var h=(location.hash||'').replace('#','');
+  if(roots.some(function(r){return r.getAttribute('data-dir')===h;})) go(h);
+})();
+</script>
+</body>
+</html>

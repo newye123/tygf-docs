@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>脏树分推执行方案：推什么、不推什么</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+  --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:var(--pad) var(--pad) 72px;display:flex;flex-direction:column;gap:28px}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.25;margin:0;letter-spacing:-.01em}
+.standfirst{margin:0;color:var(--ink-2);max-width:72ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--muted);font-family:var(--font-mono)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-size:1.16rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+h2 .sn{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);font-weight:500}
+h3{font-size:.98rem;margin:0;color:var(--ink)}
+p{margin:0;max-width:74ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1.02rem,2.2vw,1.18rem);line-height:1.6;max-width:56ch;font-weight:500}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;line-height:1.7;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-display);font-size:1.5rem;font-weight:600;line-height:1.2}
+.stat .k{font-size:.78rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:580px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{background:var(--sunk);font-size:.76rem;letter-spacing:.04em;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.card p{font-size:.92rem;color:var(--ink-2)}
+.tag{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--radius);padding:16px 18px;font-size:.93rem;color:var(--ink-2)}
+.callout strong{color:var(--warn)}
+.notes{font-size:.85rem;color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding-top:16px;font-size:.78rem;color:var(--muted);font-family:var(--font-mono)}
+ul.plain{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px;font-size:.93rem;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">图译工坊 · 执行方案 <span class="sep">/</span> 2026-10-31 <span class="sep">/</span> 对抗式审查 Round 1/3</div>
+  <h1>脏树分推：推什么、不推什么</h1>
+  <p class="standfirst">107 项未提交改动分成 5 批推，5 类明确不推。输出质量＋字号＋助手 3.7.30 必须整批发布，拆开会出现"网页说 3.7.30、用户下不到"。</p>
+  <div class="meta">
+    <span>基线 origin/develop = e7d49ceb</span>
+    <span>本地 = 71529c7c（落后 4 个提交）</span>
+    <span>风险档 High</span>
+    <span>状态：方案定稿 / 未实施</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p>有条件放行：先封存现场，再按「术语 → 表格修复 → 本地预览 → 版本发布 → 视觉」五批推；版本发布批必须整批上，任何一项不齐就整批挂起。</p>
+    <p class="notes">最难的不是写代码，是这 107 项全部基于旧基线。7 个文件两边都改过，整文件覆盖会回退已上线的 R4 报价文案、排版预览上移、20MB 表格上限。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">107</span><span class="k">未提交条目（69 改 + 38 未跟踪）</span></div>
+    <div class="stat warn"><span class="n">7</span><span class="k">本地与远端都改过的文件</span></div>
+    <div class="stat ok"><span class="n">5</span><span class="k">推荐推送批次</span></div>
+    <div class="stat bad"><span class="n">5</span><span class="k">明确不推的类别</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>先对齐现场事实</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>不能说错的四件事</h3>
+      <ul>
+        <li>本地<strong>落后</strong>远端 4 个提交，不是领先。HEAD 是 origin/develop 的祖先。</li>
+        <li>远端那 4 个提交里已经上线了 R4 报价口径与排版预览上移，脏副本里都没有。</li>
+        <li><code>csv.ts</code> 脏副本仍是 2MB 上限，远端已统一到 20MB。</li>
+        <li>测试站 BOUND 在 e7d49ceb（助手 3.7.28），生产站 BOUND 在 80eb4263（助手 3.7.15）。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>能确认的好消息</h3>
+      <ul>
+        <li>107 项没有一项和远端重复，不是陈旧副本，是真未合并的工作。</li>
+        <li>术语改名、记录编号、输出质检都是有明确病根的修复，不是新花样。</li>
+        <li>除版本发布批外，其余批次互不依赖，可以小步走。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>推荐推送的五批</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>批次</th><th>包含什么</th><th>为什么推</th><th>前置与验证</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>P0 封存现场</strong><br><span class="tag warn">不推业务</span></td>
+          <td>把 107 项在本地分支做一次提交（不推送），并整树备份</td>
+          <td>不封存就 merge/rebase，107 项有丢的风险；封存后脏树只当素材库</td>
+          <td>需要你点头才提交</td>
+        </tr>
+        <tr>
+          <td><strong>P1 术语收口</strong><br><span class="tag ok">低风险</span></td>
+          <td><code>terms.ts</code> ＋ <code>workbench-machine.ts</code> ＋ <code>terms.test.ts</code></td>
+          <td>远端已是半截：屏头叫「审核确认」，按钮还叫「设计稿校对」，用户现在就能看到</td>
+          <td>三件套必须同批；跑 terms 单测</td>
+        </tr>
+        <tr>
+          <td><strong>P2 表格与模板</strong><br><span class="tag warn">中风险</span></td>
+          <td><code>translation-template.ts</code>、<code>csv.ts</code>（合到 20MB）、<code>stage-table-loader.ts</code>、<code>batch-error-policy.ts</code> 及相关单测</td>
+          <td>记录编号不合规会被助手整批拒（ISSUES #195 形态）；CSV 2MB 与 XLSX 20MB 的错配也在这一批修</td>
+          <td><code>csv.ts</code>／<code>stage-table-loader.ts</code> 必须 hunk 合并；跑 <code>test:table-grouping</code>、<code>test:contracts</code></td>
+        </tr>
+        <tr>
+          <td><strong>P3 本地预览</strong><br><span class="tag ok">可选</span></td>
+          <td><code>local-workbench-preview.ts</code> ＋ 两个门组件 ＋ 单测</td>
+          <td>只在开发模式＋开关＋localhost 三条同时满足时生效，线上无效</td>
+          <td>你不需要就不推</td>
+        </tr>
+        <tr>
+          <td><strong>P4 版本发布</strong><br><span class="tag bad">High · 必须整批</span></td>
+          <td>输出质检＋字号 1.4.0＋助手 3.7.30：助手侧 3 个文件、网页侧 6 个文件、身份/manifest/豁免行、3.7.30 安装包本体</td>
+          <td>拆开就是三种事故：网页说 3.7.30 但下载不到、字号框放开了但助手写不进去、报告 schema 对不上</td>
+          <td>过第四节 5 条硬闸；跑完整 <code>test:contracts</code></td>
+        </tr>
+        <tr>
+          <td><strong>P5 视觉</strong><br><span class="tag warn">待你拍</span></td>
+          <td>青绿主色、官网去英文小标、站点头部、四屏 smoke</td>
+          <td>对外观感变更，先看渲染对比更稳妥</td>
+          <td><code>smoke-wb-four-screens</code> 现在断言的是 R4 之前的旧文案，推前必须先改判据</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>明确不推的五类</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><strong>两个点验探针页</strong><span class="tag bad">不推</span><span class="loc">src/app/(zh)/tmp-matrix-probe/、tmp-walkthrough-probe/</span></div>
+      <p>文件头自写「Owner 看完即删」。且含「甲／乙／丙」三个字，会把中文字体子集门直接拉红。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>工作台旧备份</strong><span class="tag bad">不推</span><span class="loc">workbench-view.tsx.nc.bak（7073 行）</span></div>
+      <p>不是源码，被 <code>git add .</code> 带进去会污染编译面，还含旧术语。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>出血／裁切能力</strong><span class="tag bad">不推</span><span class="loc">clearance.js、psd-region.js、Region_Scanner.jsx</span></div>
+      <p>实测零接线：助手主进程、执行链、API 路由对这三个名字 0 命中。推了是死代码，等接好线再推。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>影子质检实验</strong><span class="tag bad">不推</span><span class="loc">quality-shadow.ts、audit-quality-shadow.mjs</span></div>
+      <p>文件头自注「never consumed by the execution chain」，产品路径 0 引用，纯离线实验。</p>
+    </div>
+    <div class="card">
+      <div class="top"><strong>依赖实机 PS 的 live smoke</strong><span class="tag bad">不推</span><span class="loc">smoke-photoshop-quality-live.mjs</span></div>
+      <p>进 CI 会红，留作本地工具。</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>另外两条纪律：</strong>3.7.30 的身份文件禁止在没有安装包的情况下单独推——推了不会自动上线，但会让合同测试与发布前检查变红，也给绕过门禁的部署埋雷；<code>package.json</code> 也不能单独推，它新挂的 6 个脚本全是未跟踪文件，漏一个就是「找不到文件」。
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>五条硬闸（实测，不满足不许推）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>实测事实</th><th>后果</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">G1</td><td>执行器 1.4.0 未登记：本地哈希 <code>39a3e280…</code>，登记表仍是 <code>f985bfc1…</code></td><td><code>test:contracts</code> 必红</td><td class="mono">A</td></tr>
+        <tr><td class="mono">G2</td><td>中文字体子集缺「甲、乙、丙、遮」4 字，官方检查 exit 1</td><td><code>test:contracts</code> 必红</td><td class="mono">A</td></tr>
+        <tr><td class="mono">G3</td><td>豁免行写成 3.7.29 且丢了 3.7.28；<code>.gitignore</code> 无 3.7.30 例外；manifest 仍是 3.7.28</td><td>3.7.30 包被 archive 排除；策略门与合同测试红</td><td class="mono">A</td></tr>
+        <tr><td class="mono">G4</td><td>两个未跟踪模块被产品文件 require/import：<code>production-quality.cjs</code>、<code>local-workbench-preview.ts</code></td><td>漏提交 → 助手启动崩溃 / 页面编译失败</td><td class="mono">A</td></tr>
+        <tr><td class="mono">G5</td><td>7 个重叠文件的脏副本缺 R4、缺预览上移、CSV 仍是 2MB</td><td>整文件覆盖 = 回退三项已上线改动</td><td class="mono">A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>对抗式审查记录</h2>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>有条件放行｜范围：107 项 × origin/develop e7d49ceb｜Round 1/3｜风险 High</p>
+    <p class="notes">已证实 12 条（Important 9 / Pre-existing 3）；未决 2 条；覆盖缺口：未跑构建与测试、未验证 3.7.30 能否构建成功、未验证视觉渲染、测试站助手版本分布无服务器访问。</p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>严重度</th><th>失效场景</th><th>证据</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">F1</td><td><span class="tag bad">Important</span></td><td>执行器改了但登记表没改，合同测试红</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F2</td><td><span class="tag bad">Important</span></td><td>字体子集缺字，合同测试红</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F3</td><td><span class="tag bad">Important</span></td><td>3.7.30 安装包被 archive 排除</td><td class="mono">A</td><td>本次（且回退了 3.7.28 豁免）</td></tr>
+        <tr><td class="mono">F4</td><td><span class="tag bad">Important</span></td><td>身份与 manifest 不一致，合同测试红</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F5</td><td><span class="tag bad">Important</span></td><td>漏提交依赖，助手启动即崩</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F6</td><td><span class="tag bad">Important</span></td><td>漏提交脚本，合同测试找不到文件</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F7</td><td><span class="tag bad">Important</span></td><td>整文件覆盖回退 R4 报价文案</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F8</td><td><span class="tag bad">Important</span></td><td>整文件覆盖回退预览上移</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F9</td><td><span class="tag bad">Important</span></td><td>CSV 上限从 20MB 回退到 2MB</td><td class="mono">A</td><td>本次</td></tr>
+        <tr><td class="mono">F10</td><td><span class="tag warn">Nit</span></td><td>四屏 smoke 断言旧文案，与 R4 冲突</td><td class="mono">B</td><td>本次</td></tr>
+        <tr><td class="mono">F11</td><td><span class="tag">Pre-existing</span></td><td>同一环节两种叫法</td><td class="mono">A</td><td>存量</td></tr>
+        <tr><td class="mono">F12</td><td><span class="tag">Pre-existing</span></td><td>零接线死代码风险</td><td class="mono">A</td><td>存量</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="split">
+    <div class="panel">
+      <h3>未决（还缺什么证据）</h3>
+      <ul>
+        <li>测试站用户实际装的是哪些助手版本：无服务器访问，未核实；只能确认站点期望 3.7.28。</li>
+        <li>10 个未提交单测是否全绿：未运行；其中模板出处测试依赖脏版导出，不能单独提交。</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>更正（审查推翻的两句）</h3>
+      <ul>
+        <li>「推身份文件会让测试站用户被硬拦」→ 修正：push 不触发部署，测试站是手工归档部署且部署前校验身份、缺包会停。准确说法是让门禁红、给绕门部署埋雷。</li>
+        <li>「本地领先 4 个提交」→ 修正：本地落后 4 个提交。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>执行与回滚</h2>
+  <ul class="plain">
+    <li>每批一个独立提交，提交信息写清：做了什么、怎么验证（真实命令＋退出码）、怎么回滚。</li>
+    <li>每批验证基线：类型检查、lint、合同测试；涉计费合同再加行合同与信任链两条。</li>
+    <li>推送走三段轨：先推 GitHub，再从 GitHub 取码部署测试站，你验收后再谈生产。生产站停在 80eb4263，不在本方案范围。</li>
+    <li>回滚：每批独立提交，单条 revert 即可；版本发布批整批回滚要连安装包与 manifest 一起退。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>需要你拍的三件事</h2>
+  <div class="callout">
+    <strong>一、</strong>是否允许我先做一次本地封存提交（不推送，只为不丢这 107 项）。<br>
+    <strong>二、</strong>3.7.30 安装包现在构不构；不构的话版本发布批整批挂起，其余四批照推。<br>
+    <strong>三、</strong>视觉批先看渲染对比再推，还是直接推。
+  </div>
+</section>
+
+<div class="footer">
+  图译工坊 · 脏树分推执行方案 · 2026-10-31 · 基线 origin/develop e7d49ceb ／ 本地 71529c7c ＋ 107 项 · 未实施
+</div>
+
+</main>
+</body>
+</html>

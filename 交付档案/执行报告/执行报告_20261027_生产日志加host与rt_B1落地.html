@@ -1,0 +1,475 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告 第三轮 · B1 生产日志落地</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>执行报告（第三轮）｜B1 落地：生产 nginx 日志加 `host=`/`rt=`，官网与内测站第一次能分开算</h1>
+  
+  <div class="meta"><span>日期：2026-10-27 10:43（本机钟 <code>date</code> 原式回显）</span>
+    <span>三次落笔时刻按备份文件名里的 UTC 戳换算 +8h 得出：失败尝试 02:35:33Z→<strong>10:35:33</strong>、http 级生效 02:37:57Z→<strong>10:37:57</strong>、测试站级生效 02:40:47Z→<strong>10:40:47</strong>。</span>
+    <span>授权：Owner 回「A」——批准改服务器日志格式。<strong>本件只覆盖这一件</strong>：未提交代码、未推送、未发版。</span>
+    <span>基线：生产机 <code>tygf-server</code>（43.134.175.26），nginx 1.24.0 (Ubuntu)</span>
+    <span>改动面：两处配置行（两个文件），全部带时间戳备份与自动还原守卫</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一句话结论</h2>
+  <p><strong>做到了。</strong> 日志现在每行末尾带 <code>host=&lt;哪个站&gt;</code> 与 <code>rt=&lt;耗时秒&gt;</code>，官网与内测站的访问从此能分开计数——这是"每天到底几个真人"这个问题的前置条件，2026-10-20 那份读数点名的缺口今天补上了。<strong>站点无中断，字段位未漂移，旧的分析脚本仍可复用。</strong></p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>2. 实际改了什么</h2>
+  <div class="scrollx"><table><thead><tr><th>文件</th><th>行</th><th>改动</th></tr></thead><tbody>
+  <tr><td><code>/etc/nginx/nginx.conf</code></td><td>40 → 40-41</td><td>原本 <code>access_log /var/log/nginx/access.log;</code>（用内建 combined）。新增 <code>log_format tygf_vhost '…combined 八字段… host=$host rt=$request_time';</code> 并让该行改用 <code>tygf_vhost</code></td></tr>
+  <tr><td><code>/etc/nginx/sites-available/tygf-test</code></td><td>11</td><td>该 server 块自带 <code>access_log … combined if=$tygf_test_loggable;</code> ⇒ <strong>server 级指令优先于 http 级</strong>，只改上面那处对它无效。把 <code>combined</code> 换成 <code>tygf_vhost</code>，<strong><code>if=$tygf_test_loggable</code> 条件原样保留</strong>（带 <code>?key=</code> 的探针流量仍不入日志，这是 10-08 那道测试站闸的行为，我没动）</td></tr>
+</tbody></table></div>
+  <p>格式串刻意<strong>只在末尾追加两个字段</strong>，前 11 个字段位置与内建 combined 完全一致 ⇒ 既有 awk 探针不用改。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>3. 过程与守卫（两次都按设计跑）</h2>
+  <p><strong>第一次尝试失败，守卫拦住了。</strong> 锚点正则我写成 <code>^access_log</code>，而配置里该行行首是制表符 ⇒ awk 返回 <code>ANCHOR_NOT_FOUND</code> rc=3，脚本按设计退出，<strong>配置未动、未重载</strong>（原式回显 <code>STEP2_PATCH_FAILED rc=3 (config untouched)</code>）。改正则为 <code>^[ \t]*access_log</code> 后重跑。</p>
+  <p><strong>中途差点下错结论。</strong> 改完 http 级后我自测两发，官网行带上了 <code>host=</code>、测试站行没有。当时我怀疑"重载未完成/旧 worker 残留"，用 <code>ps -o pid,etime -C nginx</code> 查了：两个 worker 都是 96 秒前起的，旧 worker 已全退 ⇒ 排除该假设，才去查站点级配置，找到 <code>tygf-test:11</code> 那条覆盖。</p>
+  <p><strong>顺带记一条工具教训</strong>：我先前用 <code>grep -rn access_log /etc/nginx/sites-enabled/</code> 得到"没有站点级日志"的<strong>假结论</strong>——<code>sites-enabled/</code> 里全是符号链接，<code>grep -r</code> 默认不跟随。改查 <code>sites-available/*</code> 真文件才看到。</p>
+  <p><strong>每次改动都有回滚点：</strong></p>
+  <ul><li><code>/etc/nginx/nginx.conf.bak-20261027T023757Z</code></li><li><code>/etc/nginx/sites-available/tygf-test.bak-logfmt-20261027T024047Z</code></li></ul>
+  <p>（另有一次失败尝试留下的 <code>nginx.conf.bak-20261027T023533Z</code>，内容与线上原版一致）</p>
+  <p>回滚一条命令即可：<code>sudo cp -a &lt;对应 .bak&gt; &lt;原文件&gt; &amp;&amp; sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>4. 运行证据</h2>
+  <div class="scrollx"><table><thead><tr><th>项</th><th>结果</th></tr></thead><tbody>
+  <tr><td>语法门（两次）</td><td><code>nginx: configuration file /etc/nginx/nginx.conf syntax is ok</code> + <code>test is successful</code>；不过则脚本自动还原且<strong>不发 reload</strong></td></tr>
+  <tr><td>重载</td><td><code>systemctl reload nginx</code>，无中断</td></tr>
+  <tr><td>官网健康</td><td><code>curl https://tuyigf.com/</code> → <strong>200，98,352 B，0.072772s</strong>；<code>/download</code> → <strong>200</strong></td></tr>
+  <tr><td>测试站健康</td><td><code>https://test.tuyigf.com/</code> → 403（<strong>它本来的门禁，改前改后一致</strong>）</td></tr>
+  <tr><td>新格式生效</td><td>单行实测：<code>127.0.0.1 - - [27/Oct/2026:10:40:50 +0800] "GET / HTTP/1.1" 403 162 "-" "curl/8.5.0" host=test.tuyigf.com rt=0.000</code>；同行官网侧 <code>host=tuyigf.com rt=0.014</code></td></tr>
+  <tr><td><strong>分桶（此前不可能）</strong></td><td>最近 3000 行内新格式 14 行：<code>tuyigf.com hits=8 uniq_ip=2</code>、<code>test.tuyigf.com hits=6 uniq_ip=3</code></td></tr>
+  <tr><td>字段位未漂移</td><td><code>awk '$6 ~ /"GET/ {print $7,$9,$11}'</code> 在<strong>新格式行</strong>上仍正确取出 路径/状态/来源</td></tr>
+  <tr><td><code>rt</code> 可读</td><td>官网首页样本 <code>rt</code> 最小 0.000、最大 0.017（秒）</td></tr>
+</tbody></table></div>
+  <p><strong>样本诚实性</strong>：那 14 行里 5 行是我自己的 <code>curl</code>（<code>127.0.0.1</code>），另有服务器自身 IP 的健康检查。<strong>这不是流量结论，只是仪器自检</strong>——真实分桶要等积累一整天数据。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>5. 下一步（仪器已就位，读数还差一只表）</h2>
+  <ol><li><strong>明天早上第一次真读数</strong>：按站点拆开的首页命中与去重 IP、爬虫占比、<code>rt</code> 分布。历史行没有 <code>host=</code>，<strong>只能往前新数据算</strong>，所以首个可比窗口是 2026-10-28。</li><li><strong>建议我接着做的一件事</strong>：写一个只读日报脚本（ssh 取当日 access.log → 按 <code>host=</code> 分桶 → 输出官网真人候选数、爬虫占比、<code>/download</code> 转化、<code>POST /api/beta-applications</code> 次数），接进现有每早控制面检查。<strong>要我做我就做，这不动生产、只加一个只读脚本。</strong></li><li>真人数量出来后，再定 T2b（当前批量台四步真素材录屏）与 try-sandbox 做不做。</li><li>上一轮那条发版清单提醒仍然有效：<strong>生产库补 <code>ApplicationAttribution</code> 表是独立人工动作，<code>check-migration-drift --target production</code> 恒回 rc=2，不得因部署退出码 0 就当已应用。</strong></li></ol>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>

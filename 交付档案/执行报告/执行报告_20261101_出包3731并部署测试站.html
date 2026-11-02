@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3.7.31 出包与测试站部署 · 2026-11-01</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.7rem,4.2vw,2.5rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.06rem);color:var(--ink-2);max-width:64ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{margin:0;font-size:1.08rem;line-height:1.65;max-width:60ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.42rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--warn)}
+.panel h3{margin:0;font-size:.94rem}.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;color:var(--ink-2)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>交付</span><span>/</span><span>助手包 3.7.31</span><span>/</span><span>测试站</span><span>/</span><span>2026-11-01</span></p>
+  <h1>新包出了，测试站也换了；生产一个字没动</h1>
+  <p class="standfirst">免PS换手的三刀——判断该不该换手、换手让用户看得见、只读扫描不再被 Photoshop 卡住——已经打进 3.7.31 安装包；测试站从 da518369 换到 ef1d7fcc，安装包能直接下载，下载到的字节与发布清单逐位一致。第一次部署撞上 Node 默认 1 GB 堆上限，第二次只放宽构建内存后成功，一道门都没跳。</p>
+  <div class="meta"><span>提交 ef1d7fcc</span><span>包 25,574,380 B</span><span>17 道门全绿</span><span>健康 200 ×3</span><span>重启 0 次</span><span>生产零操作</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">已出包 · 已上测试站 · 未启用新行为</span>
+    <p>测试站现在跑的就是这批代码，安装包也能下。但"备用引擎自动接手"仍然默认关着——现役机器不会突然换手，这次只是把判据、界面标签和只读扫描的放行备齐；要用上新助手，得装这次的 3.7.31 包。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">3.7.31</span><span class="k">助手版本（下限仍 3.7.30）</span></div>
+    <div class="stat ok"><span class="n">54.6 MB</span><span class="k">发布归档大小</span></div>
+    <div class="stat ok"><span class="n">200 ×3</span><span class="k">部署后健康检查</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">进程重启次数</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">数据库迁移</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>包体身份（都可复核）</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>安装包</h3>
+      <ul>
+        <li>文件名 <code>tygf-engine-setup-3.7.31.exe</code>，25,574,380 字节</li>
+        <li>SHA-256 <code>767E1731…D18F6</code>，未签名内测包</li>
+        <li>构建号 <code>ps-handoff-20261101-r1</code></li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>身份与合同</h3>
+      <ul>
+        <li>兼容下限保持 3.7.30，理由已写进身份件：本版没动报告合同，旧助手缺字段就按 Photoshop 处理</li>
+        <li>报告格式 schema <code>local-report-v3</code>、渲染器 <code>renderer-v4</code> 与上一版一致</li>
+        <li>版本号在 7 处同步：身份件、环境样例、部署脚本两处、助手版本常量、安装器、助手 package.json、发布清单</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>出包与归档</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><strong>先推 GitHub 再出包</strong><p>提交 <code>ef1d7fcc</code> 推上 develop，远端实读就是它，不是强推；出包树用独立工作树，避开别的会话正在改的文件。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><strong>17 道门全绿</strong><p>合同、信任链、助手鉴权屏障、脚本分发、身份一致性、迁移漂移等；最慢的一道是合同，约 3 分钟。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><strong>归档与收据</strong><p><code>tygf-test-ef1d7fcca2ad.zip</code> 54,607,394 字节，SHA-256 <code>928C0411…F11F</code>；包卫生检查为绿：无禁用路径、无疑似密钥、无缺执行位脚本。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>那次失败：Node 的 1 GB 堆上限，不是代码坏</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>发生了什么</h3>
+      <ul>
+        <li>编译本身成功了（34.1 秒），倒在后面的 TypeScript 检查</li>
+        <li>报错是 <code>JavaScript heap out of memory</code>，堆停在 1000.8 MB</li>
+        <li>失败候选被单独留在服务器上，没有删</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>为什么不是内存不够</h3>
+      <ul>
+        <li>当时物理内存 1967 MB、可用 1419 MB</li>
+        <li>交换区合计 6083 MB（4 GB 是 10 月 11 日专为构建加的）</li>
+        <li>失败全程现役站点一直 200，用户无感</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="lb">处置</span>
+    <span>同一条部署脚本、只把构建时的堆上限放到 3 GB 重跑，成功；迁移漂移、身份、依赖安装、数据库客户端生成、构建、健康检查、回滚点，一道门都没跳过。耐久修法（把堆上限写进部署脚本的构建步）本轮没擅自动，已登记 ISSUES #297。</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>部署后的实读</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">✓</span><div class="body"><strong>代码提交</strong><p>站点记录为 <code>ef1d7fcca2ad…</code>，与出包提交一致。</p></div></div>
+    <div class="gate"><span class="num">✓</span><div class="body"><strong>健康与进程</strong><p>健康检查 200 ×3（0.034 / 0.029 / 0.024 秒）；站点、邮件、智能审阅三个进程在线，重启 0 次。</p></div></div>
+    <div class="gate"><span class="num">✓</span><div class="body"><strong>站点自报身份</strong><p>运行时身份接口：期望助手版本 3.7.31、构建号 <code>ps-handoff-20261101-r1</code>，与身份件一致。</p></div></div>
+    <div class="gate"><span class="num">✓</span><div class="body"><strong>安装包真的能下</strong><p>从站点实际下载安装包再算哈希，与发布清单逐位一致；站点配置里的助手版本与下载地址已自动改到 3.7.31。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>边界与下一步</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>边界</h3>
+      <ul>
+        <li>生产零操作；没有翻任何开关（引擎执行器仍关）</li>
+        <li>支付相关开关没动；没删任何数据或备份</li>
+        <li>本批没有数据库迁移，库未被改动</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>待办</h3>
+      <ul>
+        <li>3.7.31 真机验收：普通权限启动、换手标签实拍、写回仍冻结</li>
+        <li>部署脚本构建步堆上限落码（ISSUES #297）</li>
+        <li>云端"数得出换手"差一列加一次迁移，等你单独点头</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  事实来源：出包收据 <code>release/test/tygf-test-ef1d7fcca2ad.zip.receipt.json</code>；服务器 <code>/var/www/tygf-test/.deploy-commit</code>、<code>/api/runtime-provenance</code>、PM2 进程表、站点下载回算哈希；记账见 <code>AI_MEMORY/TASK_LOG.md</code> 与 ISSUES #297。
+</footer>
+
+</div>
+</body>
+</html>

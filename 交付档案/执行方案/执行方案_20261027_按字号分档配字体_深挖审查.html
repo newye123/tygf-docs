@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行方案：按字号分档配字体（深挖审查 · 2026-10-27）</title>
+<style>
+  :root{
+    --bg:#f5f6f7; --card:#fff; --border:#e3e6ea; --fg:#161c22; --muted:#5d6874;
+    --teal:#0d7d6c; --teal-soft:#e6f4f1; --amber-bg:#fff7e6; --amber-bd:#f0c36d; --amber-fg:#7a5410;
+    --red:#b3261e; --red-soft:#fdecea; --green:#0f7b3f; --green-soft:#e8f5ec;
+    --shadow:0 6px 24px rgba(15,30,40,.10); --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f151b; --card:#18212a; --border:#2a3641; --fg:#e9eef3; --muted:#93a1af;
+      --teal:#2fbfa5; --teal-soft:#12332e; --amber-bg:#2a2210; --amber-bd:#8a6b25; --amber-fg:#f0cf8f;
+      --red:#ff8a80; --red-soft:#3a1c1a; --green:#69d38a; --green-soft:#14301f;
+      --shadow:0 6px 24px rgba(0,0,0,.45); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;line-height:1.75;font-size:15px}
+  main{max-width:1020px;margin:0 auto;padding:28px 20px 60px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:25px;margin:6px 0 4px}
+  h2{font-size:18px;margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  h3{font-size:15.5px;margin:16px 0 6px}
+  p{margin:10px 0}
+  code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;background:var(--teal-soft);color:var(--teal);padding:1px 5px;border-radius:4px;word-break:break-all}
+  .verdict{margin-top:16px;padding:16px 18px;border:1px solid var(--teal);border-left-width:5px;background:var(--teal-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .head{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 15px;margin:12px 0;font-size:14px;box-shadow:var(--shadow)}
+  .head b{color:var(--teal)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card)}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  th{background:var(--teal-soft);color:var(--teal);font-size:13px}
+  table,th:first-child{border-radius:var(--radius)}
+  table{border:1px solid var(--border);overflow:hidden}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+  .stat .n{font-size:19px;font-weight:800;font-family:"IBM Plex Mono",monospace}
+  .stat .l{font-size:12.5px;color:var(--muted)}
+  .gates{list-style:none;padding:0;margin:12px 0;display:grid;gap:7px}
+  .gates li{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);font-size:14px}
+  .crit::before{content:"阻塞 ";font-weight:800;color:var(--red)}
+  .warn::before{content:"注意 ";font-weight:800;color:var(--amber-fg)}
+  .pass::before{content:"通过 ";font-weight:800;color:var(--green)}
+  .note::before{content:"未核实 ";font-weight:800;color:var(--muted)}
+  .callout{margin:14px 0;padding:13px 15px;border:1px solid var(--amber-bd);background:var(--amber-bg);color:var(--amber-fg);border-radius:var(--radius);font-size:14.5px}
+  .steps{display:grid;gap:9px}
+  .step{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--teal);border-radius:10px;padding:10px 13px;font-size:14px}
+  .step b{font-family:"IBM Plex Mono",monospace}
+  .footer{margin-top:32px;padding-top:14px;border-top:1px dashed var(--border);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">执行方案 · 深挖对抗审查 · 2026-10-27</div>
+  <h1>按字号分档配字体：能不能做、卡在哪、怎么做</h1>
+
+  <div class="verdict">
+    <b>结论：能做，而且比 10-22 估的省——字号数据早就扫出来并传到浏览器了，缺的不是"扫描"，是"每种语言只有一份设置"这个模型，加上"失败说不清是哪一层"。</b>
+    本轮还推翻了原方案的一条硬前置：不必先把字号单位标定死，改成<b>锚定本稿实测字号</b>建档，单位风险就从"阻塞"降为"显示"。
+  </div>
+
+  <div class="head">
+    <b>基线</b> <code>develop@70814271</code>；只读取证，未改代码、未跑门、未碰两站。<br>
+    <b>方法</b> 固定基线 → 分面取证 → 逐条证伪 → verdict → 负控。<b>子代理并行取证被当日额度拦下，三路均由主审顺序自跑</b>——独立并行审查没做成，已记进覆盖缺口。
+  </div>
+
+  <h2>这对你意味着什么</h2>
+  <ul class="gates">
+    <li class="pass">你要的不是从零建：扫描器每层都读了字号（<code>fontSizePt</code>），学习子系统已在按「字体×字号×对齐」分桶</li>
+    <li class="warn">你的场景能覆盖，前提是标题与正文<b>字号不同</b>。同字号的"标题 vs 正文"光看字号分不出来，那要按图层覆盖（选项 B）</li>
+    <li class="crit">免 PS 通道今天一份排版都不落（实测 0 处引用），本轮不做；界面必须按通道如实说</li>
+  </ul>
+
+  <h2>10-22 那八条，对 HEAD 复验</h2>
+  <table>
+    <tr><th>原说法</th><th>今天</th><th>证据</th></tr>
+    <tr><td>每语言一份设置，套到每一层</td><td>仍成立</td><td><code>local-assistant-client.ts:1787</code>（单语）、<code>:2309</code>（批量）</td></tr>
+    <tr><td>执行器一份套每层</td><td>成立，但钩子已在手边</td><td><code>TYGF_V15_Thin_Executor.jsx:221</code>，<code>layer_id</code> 见 <code>:188</code></td></tr>
+    <tr><td>字号在助手白名单锁死</td><td>仍成立</td><td><code>typography-profile.js:27</code> 含 <code>fontSize</code>/<code>size</code>；<code>:53</code> 未知键一律拒</td></tr>
+    <tr><td>排版失败无界面消费</td><td>仍成立（负断言已证）</td><td><code>grep -rn typographyIssues src</code> → 无输出、rc=1</td></tr>
+    <tr><td>自动字距/伪粗伪斜浏览器不发</td><td>改一半：自动字距 10-23 已通；伪粗伪斜仍不发</td><td><code>typography-profile.js:94-98</code>／<code>:100-106</code></td></tr>
+    <tr><td>百分比行距第一次选不到</td><td>仍成立</td><td><code>typography-persistence.ts:173-179</code> 自陈"只产固定磅值"</td></tr>
+    <tr><td>清单读不到时手填也被关</td><td>仍成立</td><td><code>typography-panel.tsx:1007</code> <code>disabled={faces.length === 0}</code></td></tr>
+    <tr><td>预览把细/中等/黑体全渲染成 400</td><td>仍成立</td><td><code>typography-panel.tsx:83-98</code></td></tr>
+  </table>
+
+  <h2>本轮新钻出来的三条</h2>
+  <h3>F-1（阻塞级）字号单位标签被我们自己丢了——但不必阻塞</h3>
+  <p>扫描读 <code>textItem.size.value</code>，只取数值<b>不取 <code>.type</code></b>（<code>TYGF_V15_Preparation_Scanner.jsx:144</code>）；执行器读回 leading 时拿到的却是带单位的 <code>"30 pt"</code>（<code>TYGF_V15_Thin_Executor.jsx:102</code> 注释自陈）。字段名叫 <code>fontSizePt</code> 是猜的。</p>
+  <p><b>推翻原方案的硬前置</b>：同一份数据被两种单位口径各自用过——<code>overflow-estimator.ts:8-9</code> 记"实测与墨迹高 1:1，不乘 1.333"，<code>changes/active/20260921-external-display-denoise.md:44</code> 又把同一个数当"点"解释。两种解释都自洽 ⇒ "先钉死单位"短期拿不到唯一答案，把它设成前置＝整条链挂住。</p>
+  <p><b>改法</b>：档位阈值锚定<b>本稿实测字号</b>（你点的是"300 这一档"，不是"≥212 点"），匹配在同一台机同一通道内自洽，单位错只错在显示。同时廉价补回 <code>size.type</code>（一行 jsx＋契约一字段），让以后显示口径能钉死。</p>
+
+  <h3>F-2（阻塞级）失败清单连"哪一层"都说不出来</h3>
+  <p><code>typoIssue()</code> 的聚合键是 <code>字段|错误码</code>，只累加 <code>count</code>（<code>TYGF_V15_Thin_Executor.jsx:60-65</code>）。今天"字体被 PS 换成默认脸"最细只能说到"face 错了 3 次"。<b>必须先于档位上线</b>，否则逐层配脸做完就是"能设不能验"。</p>
+
+  <h3>F-3（注意）免 PS 通道不落排版，界面还不区分通道</h3>
+  <p><code>grep -c typography</code> 在 <code>pc-executor.js</code> = 0、<code>pc-channel.js</code> = 0；<code>workbench-view.tsx</code> 里搜"免PS/photoCraft"无输出。现措辞"字段会送出，但执行时不会被应用"只在能力位 false 时出现；免 PS 通道下能力位报什么<b>未核实</b>，若报 true 就是过度承诺、触"不得静默降级"红线。列为 P0 前置核实。</p>
+
+  <h2>执行方案 P0→P5</h2>
+  <div class="steps">
+    <div class="step"><b>P0 前置核实（半天）</b>：免 PS 通道下 <code>typographyApplyReady</code> 真值（<code>server.js:1569-1580</code> 配对规则＋真机一次）；扫描补带 <code>size.type</code>。不猜。</div>
+    <div class="step"><b>P1 失败可见（1 天）</b>：逐层取证（层号 ≤20、落档记录 ≤500 层，超出标 truncated 不丢计数）＋接进结果与本地回执面。后面每一步都靠它自证。</div>
+    <div class="step"><b>P2 字号分布只读（1 天，当天可给你看）</b>：面板加「本稿字号分布」——每个字号多少层、会落到哪一档，点一个字号就建档。零写回风险。</div>
+    <div class="step"><b>P3 档位模型与写回（3 天）</b>：每语言一组档位（≤8 档、阈值降序唯一、必须有默认档、只允许脸名/字距/行距/自动字距/伪粗/伪斜六字段）；旧单一设置升为默认档不清空；助手新增 <code>validateTypographyTiers</code> 旁挂信封（不动 manifest＝不动四层合同与报价）；执行器逐层命中后调 <code>applyTypography</code>。</div>
+    <div class="step"><b>P4 预览保真（1 天）</b>：字重按脸名样式词映射真值 100…900；本机没装就明说不可用，不拿默认字体冒充。</div>
+    <div class="step"><b>P5 真机整批＋上测试站</b>：三字号夹具一次跑完逐层读回；故意给一档不存在的脸，界面必须点名是哪层。生产按三段轨等你点头。</div>
+  </div>
+
+  <h2>验收判据与负控（没有负控的判据不算判据）</h2>
+  <ul class="gates">
+    <li class="pass">三字号夹具（大/中/小）一次执行，三层各按各档生效，本地回执含逐层"字号／命中档／想要脸／读回脸／行距期望与读回"</li>
+    <li class="pass">负控：故意给不存在的脸 ⇒ 清单必须点名 layerId；不点名即判红（现在这条必然红，因为 sink 没有层号）</li>
+    <li class="pass">负控：档位里塞 <code>fontSize</code> ⇒ 助手必须 <code>locked-field</code> 拒收</li>
+    <li class="pass">负控：新增测试必须能在<b>旧</b>执行器上变红，否则是假绿</li>
+    <li class="pass">单语链与批量链对同一 fixture 产出的逐层 profile 序列必须逐位相等（防两条链分叉）</li>
+    <li class="pass">旧格式（每语言一份）升级后原样生效，不清空、不变行为</li>
+    <li class="pass">现有五组排版测试继续全绿；<code>test:batch-row-contract</code> 与 <code>test:trust-chain</code> 不动即过（证明没碰合同）</li>
+  </ul>
+
+  <h2>要你拍的三个</h2>
+  <ol>
+    <li><b>同字号不同角色本轮做不做？</b> 推荐<b>不做</b>（选项 A：只做字号档位）。你这次是标题/正文，字号多半不同；若确有同字号分角色需求选 B，工期 +2 天。</li>
+    <li><b>档位轴？</b> 推荐<b>锚定本稿实测字号</b>（点字号建档），不是手输点数。</li>
+    <li><b>P2 要不要单独先上一版？</b> 推荐<b>要</b>：一天出活、零写回风险，你先拿真稿看分布对不对味，再定 P3 的档位数量与默认值。</li>
+  </ol>
+
+  <div class="callout">
+    <b>明确不做</b>（守范围防过度工程）：改字号（会重新折行、牵动行数判据与报价口径）、水平/垂直缩放、基线偏移、消除锯齿、语言方向/大小写/下划线删除线、免 PS 通道排版写回（#276 冻结中）、云端回执 schema 一个字段不动。
+  </div>
+
+  <h2>覆盖缺口（别当已审）</h2>
+  <ul class="gates">
+    <li class="note">独立并行审查没做成（子代理额度被拦），存在自审盲区——本 skill 明说这是最弱一环</li>
+    <li class="note">免 PS 通道能力位读数未实测（P0）</li>
+    <li class="note">学习子系统 <code>LearningTypographyLayer</code> 只看到写入侧（<code>typography-upload-client.ts:42</code>），消费侧与保留期未读</li>
+    <li class="note">每语言 ≤8 档 × 16 语言的持久化体积未实测</li>
+    <li class="note">批量多稿时"档位跨稿复用"的语义未定义（换一稿"48 以上"还是不是标题）</li>
+    <li class="note">伪粗/伪斜本轮是否一起接通未定（白名单已收，面板不发）</li>
+  </ul>
+
+  <div class="footer">
+    本次未动什么：未改任何业务代码；未跑测试门；未提交；未推 GitHub；未碰测试站与生产；未动其他会话在飞文件（<code>AI_MEMORY/ISSUES.md</code>、<code>src/app/(zh)/guide/ps-batch-replace-text/page.tsx</code> 原样）。
+    基线 <code>develop@70814271</code>。同名 md 与本报告同目录。
+  </div>
+</main>
+</body>
+</html>

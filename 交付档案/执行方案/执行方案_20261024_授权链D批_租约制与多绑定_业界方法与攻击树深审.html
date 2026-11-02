@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案：授权链 D 批——租约制＋多绑定（业界方法＋攻击树深审）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f1f2ee;--ink:#1b1f1d;--ink2:#4c5450;--muted:#737b76;
+  --line:#e3e5df;--line2:#d2d6ce;--teal:#0f766e;--teal-soft:#e6f4f1;--amber:#9a5b08;--amber-soft:#fdf1d8;
+  --rose:#a33a32;--rose-soft:#fbe9e6;--violet:#6b4b9a;--violet-soft:#f0eafa;--sky:#2563a8;--sky-soft:#e8f0fb;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--sans:"Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:14px;--shadow:0 1px 0 rgba(0,0,0,.03),0 10px 30px -24px rgba(0,0,0,.28)
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111513;--surface:#171d1a;--sunk:#1f2622;--ink:#eef2ee;--ink2:#b7c0ba;--muted:#8d9890;--line:#2a332e;--line2:#3a453e;--teal:#5fd3c4;--teal-soft:#16312c;--amber:#f2bf66;--amber-soft:#33270f;--rose:#f08b80;--rose-soft:#361b18;--violet:#c4a8f0;--violet-soft:#271d38;--sky:#8ab8f2;--sky-soft:#15263d}
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,var(--surface),var(--teal-soft));border-radius:20px;padding:26px 28px;box-shadow:var(--shadow)}
+.kicker{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+h1{font-size:clamp(24px,3.4vw,38px);line-height:1.2;letter-spacing:-.03em;margin:0 0 10px}
+.lede{margin:0;max-width:70ch;color:var(--ink2);font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;font-size:12px;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;font-size:11px;white-space:nowrap}
+.tag.ok{background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 35%,transparent);color:var(--teal)}
+.tag.warn{background:var(--amber-soft);border-color:color-mix(in srgb,var(--amber) 35%,transparent);color:var(--amber)}
+.tag.bad{background:var(--rose-soft);border-color:color-mix(in srgb,var(--rose) 35%,transparent);color:var(--rose)}
+.tag.info{background:var(--sky-soft);border-color:color-mix(in srgb,var(--sky) 30%,transparent);color:var(--sky)}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0 0}
+.verdict>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink2)}
+.verdict b{display:block;color:var(--ink);font-size:13px;margin-bottom:3px}
+section{margin-top:26px}
+h2{font-size:18px;letter-spacing:-.015em;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+h2 .n{font:500 11px var(--mono);color:var(--teal);border:1px solid color-mix(in srgb,var(--teal) 30%,transparent);background:var(--teal-soft);border-radius:999px;padding:2px 7px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 8px;font-size:14px}.panel p{margin:0;color:var(--ink2);font-size:13px}
+.panel ul{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:13px}.panel li+li{margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.card .head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:6px}
+.card .title{font-weight:700;font-size:13.5px}.card p{margin:0;color:var(--ink2);font-size:12.5px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:none}.mono{font-family:var(--mono);font-size:11.5px}
+.callout{border:1px solid var(--line2);border-radius:12px;padding:13px 15px;font-size:12.5px;color:var(--ink2);background:var(--surface)}
+.callout.warn{border-color:color-mix(in srgb,var(--amber) 35%,transparent);background:var(--amber-soft)}
+.callout.bad{border-color:color-mix(in srgb,var(--rose) 35%,transparent);background:var(--rose-soft)}
+.callout.ok{border-color:color-mix(in srgb,var(--teal) 35%,transparent);background:var(--teal-soft)}
+.callout b{color:var(--ink)}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font:12px/1.55 var(--mono);color:var(--ink2)}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px}
+.gate b{display:block;font-size:12.5px;margin-bottom:2px}.gate span{color:var(--muted)}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;display:flex;flex-wrap:wrap;gap:8px 18px}
+a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}
+@media(max-width:760px){.split{grid-template-columns:1fr}.wrap{padding:18px 14px 36px}.hero{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">Execution Plan · 2026-10-24 · Deep-Adversarial Edition</div>
+    <h1>授权链 D 批：租约制＋多绑定</h1>
+    <p class="lede">按你的令，先把 GitHub／业界「对抗式深挖」的方法挖上来（制作者检查者分离、攻击树、pre-mortem、风险分级），再用这套最深的打法重审我们的授权链，给出结构解：配对一次拿 <b>72 小时签名租约</b>、本地核验零云端往返、后台续租、多账号并存不互顶。</p>
+    <div class="meta">
+      <span>状态：<span class="tag warn">方案待拍板 · 未改代码</span></span>
+      <span>定位：A/B 止痛 → C 批 3.7.25 止血 → <b>D 批 3.7.26 结构解</b></span>
+      <span>规模：4–6 人日 · 计费/信任链零接触</span>
+    </div>
+    <div class="verdict">
+      <div><b>方法升级（借业界）</b>攻击树把「越权用」和「堵死用户」两棵树拆到叶子；pre-mortem 假设失败倒推十种死因；验收人≠实现人成文化。</div>
+      <div><b>结构解核心</b>每次操作的云端验票取消 → 慢网络不再堵操作；多绑定 → 换账号/多浏览器不再互顶；离线 72h 内照常干活。</div>
+      <div><b>安全不降级</b>租约签名防伪造、轮换＋复用检测防偷、DPAPI 存储、到期硬停不静默、撤销窗口 ≤72h 明示。</div>
+      <div><b>铁律区零接触</b>租约只管「能不能用」；计费/结算/信任链一行不动。</div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">01</span>业界方法 → 我们怎么用</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>方法</th><th>业界核心</th><th>来源</th><th>本批用法</th></tr></thead>
+        <tbody>
+          <tr><td><b>制作者/检查者分离</b></td><td>写者永不审己；审查者新鲜上下文＋只读＋跨模型</td><td class="mono">AugmentCode 指南（实证：LLM 在代码最错处最宽容——分权才破）</td><td>已实践（Flash 执行＋主会话复跑），本批成文化：验收人≠实现人</td></tr>
+          <tr><td><b>攻击树</b></td><td>对手目标拆成子目标×手段，叶叶对缓解</td><td class="mono">UK NCSC / Airbus</td><td>§02 两棵树（越权用／堵死用户）</td></tr>
+          <tr><td><b>Pre-mortem</b></td><td>假设已失败，倒推死因</td><td class="mono">Plan Review Adversarial</td><td>§02 十条死因→挡法内建</td></tr>
+          <tr><td><b>风险分级路由</b></td><td>授权/支付＝最高优先，阻塞门</td><td class="mono">AugmentCode</td><td>D 批全部门阻塞化（不走 advisory）</td></tr>
+          <tr><td><b>租约/轮换模式</b></td><td>短命访问令牌＋刷新轮换＋复用检测；离线宽限行业 14–30 天；DPAPI 存储</td><td class="mono">Auth0 / WorkOS / oauth.net / Cryptlex / LicenseSpring / 10Duke</td><td>§03 设计逐项对照</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span>攻击树 × Pre-mortem（深审）</h2>
+    <div class="split">
+      <div class="panel">
+        <h3>树 A：让无权者用上本机能力</h3>
+        <ul>
+          <li><b>A1 拷走会话文件到他机</b>→ 机器指纹绑定挡（现有）＋租约签名含指纹（更硬）</li>
+          <li><b>A2 重放旧票据</b>→ 现有短命＋代际挡；租约加 exp/jti＋轮换，窗口更小</li>
+          <li><b>A3 浏览器内顶绑劫持</b>→ pairingTicket 由登录态签发＝先盗登录；多绑定后「顶绑」概念消失，攻击面不扩大</li>
+          <li><b>A4 离线超期白嫖</b>→ 租约 72h 硬停＋续租需有效轮换族；宽限内全功能（行为可预期）</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>树 B：让合法用户被堵死（吃过的一树）</h3>
+        <ul>
+          <li><b>B1 慢网每跳验票超时</b>→（C2）本地核验无云端往返，<b>叶消失</b></li>
+          <li><b>B2 换账号/多浏览器互顶</b>→（今天实锤）多绑定按票据选授权，<b>叶消失</b></li>
+          <li><b>B3 配对收尾卡半路</b>→（C5）配对变一次性小载荷，组件同步解耦后台补齐</li>
+          <li><b>B4/B5 错误码怼脸＋入口消失</b>→ A 批先修；租约状态常驻卡头＋剩余时长可视化</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th style="width:44px">#</th><th>Pre-mortem 死因（假设 D 批失败）</th><th>挡法</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1-2</td><td>硬停太早掐断飞机用户／太晚拉大白嫖窗口</td><td>72h＋到期前 24h 预警＋退避重试；行业上限 14–30 天我们取短侧</td></tr>
+          <tr><td class="mono">3</td><td>令牌被从 DPAPI 挖出复制</td><td>机器指纹签名他机无效＋轮换作废旧令牌</td></tr>
+          <tr><td class="mono">4</td><td>多绑定＝一台机器无限账号</td><td>发租约时服务器判 maxMachines（非配对时一次性）；助手侧上限 3</td></tr>
+          <tr><td class="mono">5</td><td>绕过计费/信任链</td><td>租约只管能用否；执行计费/行合同/结算闸照走服务器链，零接触</td></tr>
+          <tr><td class="mono">6</td><td>静默降级</td><td>停＝真停＋人话报错＋事件日志（铁律）</td></tr>
+          <tr><td class="mono">7</td><td>迁移丢现有绑定</td><td>现绑定自动兑首张租约；flag 回退；测试站灰度 48h 再生产</td></tr>
+          <tr><td class="mono">8</td><td>签发接口被刷</td><td>登录态＋频控＋签发审计表＋异常告警</td></tr>
+          <tr><td class="mono">9</td><td>时钟回拨骗租约</td><td>exp 服务器签；本地漂移&gt;阈值以最近成功续租封顶</td></tr>
+          <tr><td class="mono">10</td><td>又修出「点了没反应」</td><td>每态人话＋日志；验收含慢网/断网/换号/双浏览器四剧本回放</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span>设计要点（业界对照）</h2>
+    <pre>配对＝登录态签发刷新令牌（DPAPI 存储＋机器指纹绑定）
+续租＝后台静默换 72h 签名租约（每次轮换；旧族复用＝被盗→整族吊销）
+本机操作＝本地验租约签名（内置公钥，伪造不了）——零云端往返
+多账号＝助手并存 ≤3 租约，按票据 activationId 匹配，互不顶替
+撤销＝解绑→代际+1→下轮续租即拒（已发租约 ≤72h 自然到期，明示）</pre>
+    <div class="callout ok" style="margin-top:12px"><b>与批次关系：</b>A/B 立即做（止痛）→ C 批 3.7.25 照发（止血＋批量读表头＋现代文件夹框）→ D 批 3.7.26 结构解（间隔≥1 周观察）。C 批的超时/重试在 D 批后大部分自然过时，但过渡期必需，不白做。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span>阶段与决策点</h2>
+    <div class="gates">
+      <div class="gate"><b>D0 纯函数</b><span>威胁模型＋签名/验签＋单测（攻击树逐叶有测试锚）</span></div>
+      <div class="gate"><b>D1 服务端</b><span>签发/续租/吊销端点＋审计表＋频控＋迁移脚本</span></div>
+      <div class="gate"><b>D2 助手 3.7.26</b><span>DPAPI＋本地验签＋后台续租＋多绑定（四剧本实跑）</span></div>
+      <div class="gate"><b>D3 前端</b><span>租约状态常驻＋人话全套＋i18n</span></div>
+      <div class="gate"><b>D4 灰度</b><span>测试站 48h→生产（三段轨＋助手发版轨）</span></div>
+      <div class="gate"><b>决策</b><span>D-1 做不做（建议做）｜D-2 租约 72h｜D-3 并存≤3｜D-4 C 先 D 后隔一周</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>图译工坊 · 执行方案 2026-10-24</span>
+    <span>方法源：AugmentCode・NCSC・Airbus・arXiv:2608.18167｜令牌源：Auth0・WorkOS・oauth.net・Cryptlex・LicenseSpring・10Duke（链接见 md 版附录）</span>
+    <span>未改代码 · 生产零操作 · 铁律区零接触</span>
+  </footer>
+</div>
+</body>
+</html>

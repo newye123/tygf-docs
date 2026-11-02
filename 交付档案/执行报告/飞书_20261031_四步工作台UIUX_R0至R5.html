@@ -1,0 +1,605 @@
+<title>四步工作台 UI/UX · R0–R5 交付报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:52ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:640px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--ok);
+  box-shadow:0 0 0 4px var(--ok-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+figure img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
+figcaption{padding:10px 14px;font-size:.8rem;color:var(--muted);line-height:1.55}
+figcaption code{font-size:.85em}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>四步工作台 UI/UX</span><span class="sep">/</span>
+    <span>2026-10-31</span>
+  </p>
+  <h1>四步工作台界面整理：R0–R5 全部完成，停在提交之前</h1>
+  <p class="standfirst">按《执行方案_20261031_四步工作台UIUX_研究与对抗审查定稿》分六批推进：R0 取证 → R1 第一步 → R2 就地导表 → R4 第四步 → R3 第二三步 → R5 整合验收。本报告是收口记录：审查结论、修掉的 6 个真问题、一轮复跑的门禁读数、缺口与未做的事。</p>
+  <div class="meta">
+    <span>基线 HEAD 71529c7c</span>
+    <span>17 改 + 4 新，+1417 / −476</span>
+    <span>全部未提交</span>
+    <span>未推远端 · 未出包 · 未部署</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">结论 · 放行到「提交前」</span>
+    <p>六批都做完了，审查抓到 6 个真问题、全部修好并留了永久用例；证伪 1 条不成立；1 条产品口径冲突留给你拍。<br>代码没提交、没合并、没上站——按规矩，提交和发布每次都等你点头。</p>
+  </div>
+  <div class="split">
+    <div class="panel yes">
+      <h3>这次真落地了</h3>
+      <ul>
+        <li>第一步一屏放得下，每稿旁可直接导表；出错不再卡在「正在读表」。</li>
+        <li>第二步概况压成一行，问题按门分组；第三步矩阵常显、两栏计数卡与矩阵同口径。</li>
+        <li>第四步把「这一稿预估」与「本批合计」两笔钱分开说清。</li>
+        <li>判据只加不减：第 1 步契约门 102 → 113 项，失败 0。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>这次没做 / 不该做</h3>
+      <ul>
+        <li>没提交、没合并、没推 GitHub、没出包、没部署任何一站。</li>
+        <li>没为对齐方案去加「助手常驻提示条」——推翻你 10-11 的明令，不做。</li>
+        <li>表上限已按你的决定整链统一到 20MB（含助手侧，需出新包生效）。</li>
+        <li>没顺手改别人的红色用例（<code>language-exclusion-memory.test.ts:144</code>）。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>六批做了什么</h2>
+  <div class="tl">
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <div class="hd"><strong>R0 · 现场取证</strong><span class="tag ok">完成</span></div>
+      <p>锁定基线 8 个文件差异、入口迁移对照、失败测试基线。确认探针页只配假数据，不读真稿、不花钱。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <div class="hd"><strong>R1 · 第一步布局减负</strong><span class="tag ok">完成</span></div>
+      <p>真组件改造，不是画图：7 稿 / 11 稿两种规模在 1440 与 1366 宽下实拍；表库、退出态一并收进同一屏。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <div class="hd"><strong>R2 · 第一步就地导表</strong><span class="tag ok">完成</span></div>
+      <p>单文件归到单稿、坏文件保留旧表、切稿时迟到的响应不串到别的稿。浏览器实拍三态。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <div class="hd"><strong>R4 · 第四步范围与费用标签</strong><span class="tag ok">完成</span></div>
+      <p>把「当前稿预估」和「本批合计」拆成两处，不再让一个数代表两件事；11 稿与 7 稿两种规模实拍。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <div class="hd"><strong>R3 · 第二三步信息整理</strong><span class="tag ok">完成</span></div>
+      <p>概况压成一行、矩阵常显、统计压紧。统计口径重做：<code>total = ok + warn + bad + unreviewed</code>，「本批不做」单列；列集合改成全批并集，与矩阵同一个算法。11 稿读数 115 格，与页头交付物数相等。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot partial"></span><div class="tl-body">
+      <div class="hd"><strong>R5 · 整合验收与交付</strong><span class="tag warn">完成，剩你点头</span></div>
+      <p>写审分离做对抗审查，一轮收敛：6 条修好、1 条证伪、1 条待拍。门禁全部复跑，本报告与飞书件是本批产物。</p>
+      <p class="after">逐稿卡带只做了代码核对；整链真机未走完；R5 没重新截图（dev 缺 DATABASE_URL），仅改文案与逻辑。</p>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>审查抓到的 6 个真问题（都已修）</h2>
+  <p class="lede">写代码的人不自审；审查只出问题、不给自己批条。每一条都落到具体行，并配一条能红的用例。</p>
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>严重度</th><th>落点</th><th>改前的失效场景</th><th>修法与证据</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">I-1</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:3232</td>
+          <td>就地导入的表导完后，第 1 步仍判「表还在读／读表失败」，用户永远过不去。</td>
+          <td class="fix">导入成功处补写 <code>importedTableReadState</code> 到 ref 与 state。真闸探针：不补 → <code>unread</code> 挡住；补 ready → 放行（4 条用例）。</td>
+        </tr>
+        <tr>
+          <td class="mono">A2</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:3177</td>
+          <td>文件被占用／无权限时 <code>arrayBuffer()</code> 抛出，界面停在「正在读表」——假状态比报错更糟。</td>
+          <td class="fix">try/catch 落 error 并给一句可读文案；契约门 R5-2 锁定。</td>
+        </tr>
+        <tr>
+          <td class="mono">A4</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">workbench-view.tsx:2848</td>
+          <td>先导入、再从本批表里挑另一张：界面说「已换上」，归组仍用导入那张。</td>
+          <td class="fix">挑本批表时先撤掉该稿的导入表与导入态；契约门 R5-3 锁定。</td>
+        </tr>
+        <tr>
+          <td class="mono">A5</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">table-grouping.ts:278</td>
+          <td>稿名读不出 SKU、但用户亲手把表指给它：原逻辑整稿判死，界面说换了、组里 0 张。</td>
+          <td class="fix">「亲手指定」优先于 SKU 判断；新用例＋负控（空表 → 仍报 <code>DRAFT_SKU_UNKNOWN</code>）。</td>
+        </tr>
+        <tr>
+          <td class="mono">I-3</td><td><span class="tag bad">Important</span></td>
+          <td class="mono">cell-count-cards.tsx:35</td>
+          <td>统计卡抬头「共 N 格」不含「本批不做」，与下面五行、与矩阵两个口径。</td>
+          <td class="fix">改成「共 N 格要交付 · 另有 M 格本批不做」；用例断言五行和 = total + off。</td>
+        </tr>
+        <tr>
+          <td class="mono">D-legend</td><td><span class="tag warn">Nit</span></td>
+          <td class="mono">coverage-matrix.tsx:263</td>
+          <td>矩阵实际画了「未审」虚线灰格，图例没有这一项，读者易当成本稿不做。</td>
+          <td class="fix">图例补第 6 项；用例断言 <code>data-cell-kind="none"</code> 与图例文案同屏。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>一条证伪 · 一条已拍</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">证伪</span><span class="loc">A3 · 未改代码</span><h3>「就地导入的表到不了覆盖率矩阵」不成立</h3></div>
+      <p>矩阵取的是按稿解析表，导入成功那一刻就写进去了；全局解析表只是绑定证据的兜底，且按稿表优先（<code>binding-evidence.ts:282-285</code>）。不改。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">已定</span><span class="loc">A7 · Owner 2026-10-31「提到 20MB」</span><h3>表上限整链统一到 20MB</h3></div>
+      <p>原来界面 5MB（<code>table-file.ts:14</code>）、解析 2MB（<code>csv.ts:12</code>），3MB 的表会「界面放行、解析报错」。只改解析层等于没改——用户仍被界面和助手挡在 5MB，所以四处一起改：CSV 解析、浏览器与导入守卫共用的表上限、助手读表端点（<code>read-table-path.js</code>）、助手表头调查（<code>table-survey.cjs</code>）。</p>
+      <p>文案同步「超过 20 MB」；批量导入的拒绝理由改成按常量算数字。用例钉两个常量各为 20MB、超出 1 字节必报过大。助手两处要出新包才生效。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>门禁读数（12:2x 上限改动后复跑）</h2>
+  <div class="stats">
+    <div class="stat ok"><span class="n">113</span><span class="k">第 1 步契约判据（原 102）· 失败 0</span></div>
+    <div class="stat ok"><span class="n">439</span><span class="k">全量单测通过 / 440（1 红为存量）</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">新增 eslint 告警（27 条全部既存）</span></div>
+    <div class="stat ok"><span class="n">2470</span><span class="k">词典条数 · 硬伤 0</span></div>
+  </div>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><h3>类型与结构</h3><p><code>tsc --noEmit</code> rc=0。工作台 5 个测试文件 103 条全过，rc=0。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>契约门</h3><p>第 1 步契约门：判据 113 项 · 行 37 条 · 失败 0，rc=0（原 102/32，只加不减）。工作台范围契约 54 条断言 ok；批量台守卫 39 项 ok。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>文案与字体</h3><p>排版 114 条 ok；词典 2470 条、硬伤 0（边界差异 97 条为提示）；英文字体子集 rc=0；中文字体子集 rc=0——删夹具页后由红转绿，证明 R3 新文案不缺字。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>全量单测</h3><p>35 files · 439 passed / 1 failed。红的是 <code>language-exclusion-memory.test.ts:144</code>：它钉的字面在 HEAD 里 0 次命中（HEAD 是两行写法 <code>workbench-view.tsx:2411-2412</code>），属存量、非本轮，单列上报。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>截图证据（19 张，节选）</h2>
+  <div class="gallery">
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r1-第一步/11-detail-viewport.png" alt="第一步 11 稿首屏"><figcaption>R1 · 第一步 11 稿首屏（1440 宽），一屏放得下</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r1-第一步/7-detail-viewport.png" alt="第一步 7 稿首屏"><figcaption>R1 · 第一步 7 稿首屏，逐稿可导表</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r2-第一步导表/1-unpaired-import-entry.png" alt="未配对时的导入入口"><figcaption>R2 · 稿未配对时也有就地导表入口</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r2-第一步导表/3-good-file-replaces-source.png" alt="好文件换掉源表"><figcaption>R2 · 好文件换掉源表并明说</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r3-第二三步/step2-13langs-top.png" alt="第二步 13 门"><figcaption>R3 · 第二步 13 门，概况压成一行</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r3-第二三步/step3-11drafts.png" alt="第三步 11 稿矩阵"><figcaption>R3 · 第三步 11 稿矩阵与两栏计数卡同口径（115 格）</figcaption></figure>
+    <figure><img src="../审查报告/配图_20261031_四步UIUX/r4-第四步/step4-11-drafts.png" alt="第四步 11 稿"><figcaption>R4 · 第四步 11 稿，当前稿预估与本批合计分开</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>缺口与一处偏差</h2>
+  <ul class="notes">
+    <li><strong>R5 没重新截图</strong>：本地 dev 起不来（缺 <code>DATABASE_URL</code>），而 R5 只动了文案与四段逻辑、没动视觉。新增的两句抬头改用真实 DOM 用例验证（渲染真组件），没有新照片。</li>
+    <li><strong>整链真机未走完</strong>：从第 1 步真导表 → 第 2 步逐门确认 → 第 3 步 → 第 4 步执行，需要助手、真稿与费用。当前证据是「每步真组件单测」＋「每步浏览器实拍」两段拼接，端到端留给上测试站。</li>
+    <li><strong>第二步只到渲染层</strong>：13 门都渲染了真 <code>ReviewStep</code>，但夹具 <code>onProceed</code> 为空，没有逐门点完再走下一步。</li>
+    <li><strong>矩阵「—」仍有两个含义</strong>：本稿不做（点线）与表里缺列（虚线），靠图例与悬停区分；换字形属新增视觉符号，未做。</li>
+    <li><strong>第二步「0 项」与「1 行缺译文」同屏</strong>：两个数不是一件事（待确认 vs 待补写），说明句已限定范围，未合并。</li>
+    <li><strong>没有真 Photoshop 验收</strong>：界面整理不碰执行链，真机验收随上站补。</li>
+    <li><strong>与方案的一处偏差</strong>：方案 §6 写「助手正常状态一条提示」，现行产品按 Owner 2026-10-11 的话完全静默（<code>assistant-setup-banner.tsx:149-150</code>）。没有为对齐方案加常驻提示；故障态仍是一张可处理卡。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>边界：本轮没做的动作</h2>
+  <div class="callout">
+    <span class="lb">未执行</span>
+    <p>没有任何提交、合并、推送、出包或部署；工作树之外零改动。夹具页 <code>src/app/(zh)/tmp-step1-probe/</code> 是 R1 新建的未跟踪文件，已在 R5 删除，仓库里不留痕。</p>
+    <p>按发布三段轨，本方案不构成上线授权。下一步要你点名：只提交 / 合并并推 develop / 出包上测试站。</p>
+  </div>
+</section>
+
+<footer>
+  <p>工作树：<code>worktrees/wb-uiux-20261031</code> · 基线 <code>71529c7c</code> · 记录册 <code>changes/active/20261031-workbench-four-step-uiux.md</code>（含逐批明细与行号）</p>
+  <p>证据分级：门禁读数为本轮实测输出；截图拍摄于 R1–R4，对应工作树当时的未提交状态；R5 新增文案无截图，见 §07。</p>
+  <p>2026-10-31 · 本文件仅本地查看；飞书发送载体为同名 md。</p>
+</footer>
+
+</div>

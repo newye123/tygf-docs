@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>执行方案：本地助手授权链五处修法</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f1f2ee;--ink:#1b1f1d;--ink2:#4c5450;--muted:#737b76;
+  --line:#e3e5df;--line2:#d2d6ce;--teal:#0f766e;--teal-soft:#e6f4f1;--amber:#9a5b08;--amber-soft:#fdf1d8;
+  --rose:#a33a32;--rose-soft:#fbe9e6;--violet:#6b4b9a;--violet-soft:#f0eafa;--sky:#2563a8;--sky-soft:#e8f0fb;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--sans:"Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:14px;--shadow:0 1px 0 rgba(0,0,0,.03),0 10px 30px -24px rgba(0,0,0,.28)
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111513;--surface:#171d1a;--sunk:#1f2622;--ink:#eef2ee;--ink2:#b7c0ba;--muted:#8d9890;--line:#2a332e;--line2:#3a453e;--teal:#5fd3c4;--teal-soft:#16312c;--amber:#f2bf66;--amber-soft:#33270f;--rose:#f08b80;--rose-soft:#361b18;--violet:#c4a8f0;--violet-soft:#271d38;--sky:#8ab8f2;--sky-soft:#15263d}
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,var(--surface),var(--teal-soft));border-radius:20px;padding:26px 28px;box-shadow:var(--shadow)}
+.kicker{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+h1{font-size:clamp(24px,3.4vw,38px);line-height:1.2;letter-spacing:-.03em;margin:0 0 10px}
+.lede{margin:0;max-width:70ch;color:var(--ink2);font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;font-size:12px;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;font-size:11px;white-space:nowrap}
+.tag.ok{background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 35%,transparent);color:var(--teal)}
+.tag.warn{background:var(--amber-soft);border-color:color-mix(in srgb,var(--amber) 35%,transparent);color:var(--amber)}
+.tag.bad{background:var(--rose-soft);border-color:color-mix(in srgb,var(--rose) 35%,transparent);color:var(--rose)}
+.tag.info{background:var(--sky-soft);border-color:color-mix(in srgb,var(--sky) 30%,transparent);color:var(--sky)}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0 0}
+.verdict>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink2)}
+.verdict b{display:block;color:var(--ink);font-size:13px;margin-bottom:3px}
+section{margin-top:26px}
+h2{font-size:18px;letter-spacing:-.015em;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+h2 .n{font:500 11px var(--mono);color:var(--teal);border:1px solid color-mix(in srgb,var(--teal) 30%,transparent);background:var(--teal-soft);border-radius:999px;padding:2px 7px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 8px;font-size:14px}.panel p{margin:0;color:var(--ink2);font-size:13px}
+.panel ul{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:13px}.panel li+li{margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.card .head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:6px}
+.card .title{font-weight:700;font-size:13.5px}.card p{margin:0;color:var(--ink2);font-size:12.5px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:none}.mono{font-family:var(--mono);font-size:11.5px}
+.callout{border:1px solid var(--line2);border-radius:12px;padding:13px 15px;font-size:12.5px;color:var(--ink2);background:var(--surface)}
+.callout.warn{border-color:color-mix(in srgb,var(--amber) 35%,transparent);background:var(--amber-soft)}
+.callout.bad{border-color:color-mix(in srgb,var(--rose) 35%,transparent);background:var(--rose-soft)}
+.callout.ok{border-color:color-mix(in srgb,var(--teal) 35%,transparent);background:var(--teal-soft)}
+.callout b{color:var(--ink)}
+.gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px}
+.gate b{display:block;font-size:12.5px;margin-bottom:2px}.gate span{color:var(--muted)}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;display:flex;flex-wrap:wrap;gap:8px 18px}
+@media(max-width:760px){.split{grid-template-columns:1fr}.wrap{padding:18px 14px 36px}.hero{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">Execution Plan · 2026-10-24</div>
+    <h1>本地助手授权链：五处修法</h1>
+    <p class="lede">从你今天撞上的「ASSISTANT_INSTALL_BINDING_MISMATCH」出发，把这条链上的五个问题（绑定提示、验票超时、回调错地址、重新授权入口、配对收尾失败）一次审清。分三批修：<b>A 批纯前端立即修、B 批服务端小修、C 批助手 3.7.25 一次发版办三件事</b>（需你批）。</p>
+    <div class="meta">
+      <span>状态：<span class="tag warn">A/B 可立即执行 · C 批待批</span></span>
+      <span>关联：交接文档 C1–C5 ＋ 3.7.25 待批项（批量读表头＋现代文件夹框）并车</span>
+      <span>生产站零操作 · 支付链零接触</span>
+    </div>
+    <div class="verdict">
+      <div><b>「顶掉另一个账号」＝重新配对</b>机制本身支持（一机一账号，换绑即顶）。但配对最后一步「组件同步」在这台电脑已失败两次——C 批不修，换绑随时卡半路。</div>
+      <div><b>五个问题一个链条</b>绑定不匹配是提示不说人话；超时是阈值按快网设的；回调 403 是两套地址来源不一致；入口被关后没兜底；配对收尾是一次性无重试。</div>
+      <div><b>A/B 批不等 C 批</b>提示与入口体验先好起来；慢通道超时与换绑卡壳靠 C 批根治。</div>
+      <div><b>一次发版办三件事</b>C 批授权链四修＋批量读表头端点＋现代文件夹框，合并为 3.7.25 一次审批。</div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">01</span>五个问题与证据（今天实测复核）</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>问题</th><th>证据</th><th>根因一句话</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">C1</td><td>换账号后报 MISMATCH，错误码怼脸上</td><td class="mono">ticket/verify/route.ts:167-174；实测：助手绑 163 账号 vs 浏览器持审计身份</td><td>机制正确，<b>错在提示不说人话、不给出路</b></td></tr>
+          <tr><td class="mono">C2</td><td>验票单跳超时堵死本机操作</td><td class="mono">助手日志多条 elapsedMs=1000x；单跳实测 1.9–6.4s，阈值 10s/预算 12s</td><td>阈值按快网络设定，没考虑慢通道</td></tr>
+          <tr><td class="mono">C3</td><td>4 条回调打向 localhost:3000 得 403</td><td class="mono">server.js:711 默认值 ＋ :3954 serverBase 与 requestCloudBase 双轨并存</td><td>部分调用按配置（默认本机）走、部分按页面来源走</td></tr>
+          <tr><td class="mono">C4</td><td>「重新授权」关掉后无入口；「重试」只重查不修复</td><td class="mono">assistant-setup-banner dismiss 无兜底；local-assistant-client.ts:573 pair 只在全新激活调用</td><td>入口缺口＋按钮文案骗人</td></tr>
+          <tr><td class="mono">C5</td><td>配对收尾失败（今天 12:51、10-21 各一次）</td><td class="mono">pair-completion.cjs:126-154 四步流水线，第④步组件同步最脆</td><td>一次性同步无重试；失败后用户不知道「已绑一半、别解绑」</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span>对抗式审查 R1–R10</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:44px">#</th><th style="width:56px">级</th><th>最坏情况</th><th>挡法</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">R1</td><td><span class="tag bad">🔴</span></td><td>错误码翻译得太好，排障信息丢了</td><td>人话＋原码并存；error-messages.ts 单源表扩键，形制不变量有门守</td></tr>
+          <tr><td class="mono">R2</td><td><span class="tag bad">🔴</span></td><td>「重试」真做 pair → 半成功状态重复配对出脏数据</td><td>云端幂等（@@unique(code,machine) 重复兑换不+count）；本地四步每步幂等＋回读校验</td></tr>
+          <tr><td class="mono">R3</td><td><span class="tag bad">🔴</span></td><td>放宽超时 → UI 卡更久像死了</td><td>分级：首跳 10s 不变，重试跳 22s/总预算 30s；可取消＋显示第几次</td></tr>
+          <tr><td class="mono">R4</td><td><span class="tag bad">🔴</span></td><td>组件同步后台重试 → 没 ready 就放行＝静默降级</td><td>重试只解决到达 ready；componentReady 硬闸原样保留，执行前未 ready 明确报「同步中」</td></tr>
+          <tr><td class="mono">R5</td><td><span class="tag warn">🟠</span></td><td>直接改 .tygf_session 写坏会话文件</td><td>不直接改混淆文件；正解是代码统一按签发 origin，serverUrl 降为兜底显示</td></tr>
+          <tr><td class="mono">R6</td><td><span class="tag warn">🟠</span></td><td>换绑一步化 → 别人一点就顶走你的助手</td><td>pairingTicket 由登录态签发＝身份确认；明示「顶掉后 X 账号失效」；回执写明代际</td></tr>
+          <tr><td class="mono">R7</td><td><span class="tag warn">🟠</span></td><td>常驻入口又塞满卡头</td><td>复用既有「本地助手状态」点位，不加新按钮</td></tr>
+          <tr><td class="mono">R8</td><td><span class="tag">🟡</span></td><td>三批互相等待拖成都不发</td><td>A/B 不等 C；C 与既有待批项（批量读表头＋现代文件夹框）并一车</td></tr>
+          <tr><td class="mono">R9</td><td><span class="tag">🟡</span></td><td>服务端 verify 单跳 3.7–6.4s 本身慢</td><td>B 批拆解慢点（DB/绑定查证/出口），能消则消；消不掉 C 批分级兜底</td></tr>
+          <tr><td class="mono">R10</td><td><span class="tag">🟡</span></td><td>修完没有验收尺</td><td>每项带实测：慢通道 20 连验票 0 超时；断网配对→恢复自动补齐；grep 无 localhost 调用；换账号出现人话提示</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span>修法清单（三批）</h2>
+    <div class="cards">
+      <div class="card"><div class="head"><span class="title">A 批 · 纯前端</span><span class="tag ok">立即 · 不发版</span></div>
+        <p>A1 卡头「本地助手状态」点常驻成入口（banner 可关，入口不丢）；A2「重试」接真 pair（幂等已证）或改文案「重新检查状态」；A3 三个错误码的人话映射：MISMATCH→「登录账号与助手绑定账号不是同一个」＋两条出路；组件同步失败→「已绑一半，稍后刷新，别解绑」；验票超时→「网络较慢，稍后再试」。人话与原码并存。</p></div>
+      <div class="card"><div class="head"><span class="title">B 批 · 服务端小修</span><span class="tag ok">随 develop 下轮</span></div>
+        <p>B1 verify 路由性能核查（单跳 3.7–6.4s 拆解，能消则消）；B2 MISMATCH 响应附带两侧激活掩码预览，让人话提示能显示「绑定的是 35***@163.com 那台」。</p></div>
+      <div class="card"><div class="head"><span class="title">C 批 · 助手 3.7.25</span><span class="tag warn">需 Owner 批</span></div>
+        <p>C1' 验票分级超时（10s/22s/30s、重试 2、可取消）；C2' 组件同步幂等后台重试（硬闸不降）；C3' 云端调用统一按签发 origin，消灭 localhost 双轨；C4' 换绑一步化（登录目标账号点「连接助手」即顶掉，明示旧账号失效）。与「批量读表头端点＋现代文件夹框」合并一次发版。</p></div>
+    </div>
+    <div class="callout warn" style="margin-top:12px"><b>唯一决策点 D-3.7.25：批不批这次助手发版。</b>批 → 三件事并一车（约 1.5–2 人日＋发版流程）；不批 → A/B 批照做，慢通道超时与换绑卡半路继续在。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span>验收</h2>
+    <div class="gates">
+      <div class="gate"><b>A 批</b><span>vitest 新用例＋error-message-contract＋workbench-ui-contract</span></div>
+      <div class="gate"><b>B 批</b><span>assistant-auth-barrier／device-policy 等既有门全绿（不碰判定语义）</span></div>
+      <div class="gate"><b>C 批</b><span>慢通道 20 连验票 0 超时；断网配对→恢复自动补齐；grep 无 localhost；安装包卫生门</span></div>
+      <div class="gate"><b>场景回归</b><span>退 gmail→登 163→读取文件夹一遍通；换绑 gmail 一遍通（C 批后）</span></div>
+      <div class="gate"><b>不做</b><span>不改判定语义；不改 .tygf_session；不静默降级；不动生产与支付</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>图译工坊 · 执行方案 2026-10-24</span>
+    <span>证据：助手日志＋服务器 DB 实测＋pair-completion.cjs/server.js 源读</span>
+    <span>生产零操作 · 支付链零接触 · A/B 批不碰助手二进制</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟 · 批量台「默认全选」：一稿 12 份语言表怎么走完（真实合同版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f0efec;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;
+  --line:#e2e3df;--line2:#d3d5cf;--teal:#009588;--teal-soft:#e2f3f1;--emerald:#009767;--emerald-soft:#e3f5ee;
+  --amber:#9a6505;--amber-soft:#fff7e7;--rose:#b3261e;--rose-soft:#fbeae8;--blue:#1b5bd0;--blue-soft:#e8effc;
+  --r:16px;--r-sm:12px;--font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.66;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1500px;margin:0 auto;padding:22px 18px 80px}
+.doc{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.35rem,2.8vw,1.9rem);line-height:1.3;font-weight:700;max-width:44ch;text-wrap:balance}
+.standfirst{margin:0;max-width:96ch;color:var(--ink2);font-size:.95rem}
+.honest{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:13px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.honest .col{border-left:3px solid var(--teal);padding-left:11px}
+.honest .col.new{border-left-color:var(--blue)}
+.honest .col.same{border-left-color:var(--line2)}
+.honest b{display:block;font-size:.85rem;margin-bottom:2px}
+.honest p{margin:0;font-size:.79rem;color:var(--ink2)}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}}
+.rail{position:sticky;top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px}
+.rail .rt{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px 6px}
+.step{display:flex;gap:9px;align-items:flex-start;text-align:left;border:1px solid transparent;background:transparent;border-radius:10px;padding:7px 8px;color:var(--ink2)}
+.step:hover{background:var(--sunk)}
+.step[aria-current="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.step[aria-current="true"] .sn{background:#fff;color:var(--ink)}
+.step[aria-current="true"] small{color:#cfd4d0}
+.step.done .sn{background:var(--teal);color:#fff;border-color:var(--teal)}
+.sn{flex:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-family:var(--mono);font-size:.66rem;font-weight:500;margin-top:1px}
+.step .st{display:block;font-size:.82rem;font-weight:600;line-height:1.35}
+.step small{display:block;font-size:.68rem;color:var(--muted);line-height:1.4;margin-top:1px}
+.counter{margin-top:8px;border-top:1px solid var(--line);padding:9px 8px 3px;display:flex;flex-direction:column;gap:5px}
+.counter .k{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.counter .v{font-family:var(--mono);font-size:.74rem;color:var(--ink);font-weight:600}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 14px 36px -22px rgba(0,0,0,.2)}
+.appbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:#fbfbfa}
+.appbar h2{margin:0;font-size:.98rem;font-weight:700}
+.appbar .where{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.appbar .right{margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:7px 13px;font-size:.84rem;font-weight:600;color:var(--ink)}
+.btn:hover{border-color:var(--ink2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{filter:brightness(.94)}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn.sm{padding:4px 10px;font-size:.77rem;border-radius:8px}
+.btn.link{border:0;background:transparent;padding:2px 4px;color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+.body{padding:16px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:14px}
+@media (max-width:960px){.grid2{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.92rem;font-weight:700;margin:0 0 2px;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.card-s{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+.stack{display:flex;flex-direction:column;gap:11px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pill{font-family:var(--mono);font-size:.66rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.blue{background:var(--blue-soft);border-color:#c3d6f5;color:#12408f}
+.pill.grey{background:#eef1f5;border-color:#d5d9e0;color:#3d4757}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.idle{background:#c9ccc7}.dot.blue{background:var(--blue)}
+.note{font-size:.79rem;color:var(--muted);max-width:96ch}
+.callout{border:1px solid var(--line);border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:var(--r-sm);padding:11px 13px;font-size:.82rem}
+.callout.bad{border-left-color:var(--rose);background:var(--rose-soft)}
+.callout.ok{border-left-color:var(--teal);background:var(--teal-soft)}
+.callout.blue{border-left-color:var(--blue);background:var(--blue-soft)}
+.callout b{display:block;margin-bottom:2px}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;overflow:auto;font-family:var(--mono);font-size:.72rem;line-height:1.6;color:var(--ink2);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.stat{border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;background:var(--surface)}
+.stat .v{font-family:var(--mono);font-size:1.15rem;font-weight:600;line-height:1.2}
+.stat .l{font-size:.71rem;color:var(--muted);margin-top:1px}
+.stat.warn .v{color:var(--amber)}.stat.ok .v{color:var(--teal)}.stat.bad .v{color:var(--rose)}
+/* 矩阵 */
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:520px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.74rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--mono);font-size:.66rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:7px 3px;text-align:center;min-width:52px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:11px;min-width:238px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:6px 11px;border-right:1px solid var(--line);min-width:238px;font-weight:500}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f5fbfb}
+.rowhead{display:flex;flex-direction:column;gap:2px}
+.rowhead .f{font-family:var(--mono);font-size:.76rem;font-weight:600;display:flex;align-items:center;gap:5px}
+.rowhead .m{font-size:.68rem;color:var(--muted);display:flex;gap:4px 8px;flex-wrap:wrap}
+.cell{border:0;background:transparent;width:100%;min-height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px}
+.cell .cv{font-family:var(--mono);font-size:.72rem;font-weight:600}
+.cell .cs{font-size:.58rem;color:var(--muted);line-height:1.15}
+.c-ok{background:var(--emerald-soft);color:#0a5a41}
+.c-warn{background:var(--amber-soft);color:var(--amber)}
+.c-bad{background:var(--rose-soft);color:var(--rose)}
+.c-unread{background:#f4f4f1;color:#8b938d}
+.c-off{background:transparent;color:#b3b9b4}
+.cell:hover{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:.72rem;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:12px;height:12px;border-radius:3px;border:1px solid var(--line2);display:inline-block}
+.lg.ok{background:var(--emerald-soft);border-color:#a9dcc6}
+.lg.warn{background:var(--amber-soft);border-color:#eec87c}
+.lg.bad{background:var(--rose-soft);border-color:#f0bdb8}
+.lg.unread{background:#f4f4f1}
+.lg.off{background:#fff;border-style:dashed}
+/* 列表 */
+.dlist{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding:2px}
+.drow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;text-align:left;width:100%}
+.drow:hover{border-color:var(--line2)}
+.drow[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.drow .f{font-family:var(--mono);font-size:.76rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow .meta{font-size:.68rem;color:var(--muted);margin-left:auto;white-space:nowrap}
+.gcard{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface)}
+.ghead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 12px;background:#fbfbfa;border-bottom:1px solid var(--line)}
+.ghead .gt{font-family:var(--mono);font-size:.8rem;font-weight:600}
+.gbody{padding:2px 0}
+.trow{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #f1f1ee;font-size:.78rem}
+.trow:last-child{border-bottom:0}
+.trow input{margin:0;width:14px;height:14px;accent-color:var(--teal)}
+.trow .tn{font-family:var(--mono);font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.trow .tm{font-size:.68rem;color:var(--muted);white-space:nowrap}
+.trow.off .tn{color:var(--muted);text-decoration:line-through}
+/* 弹窗 / 抽屉 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{width:min(660px,100%);max-height:82vh;background:var(--surface);border-radius:14px;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px -20px rgba(0,0,0,.4)}
+.modal .mh{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid var(--line)}
+.modal .mh h3{margin:0;font-size:.9rem;font-weight:700}
+.modal .mh .c{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.modal .mh button{margin-left:auto;border:1px solid var(--line2);background:var(--surface);border-radius:8px;width:26px;height:26px;line-height:1}
+.modal .ms{padding:10px 15px;border-bottom:1px solid var(--line)}
+.modal .ms input{width:100%;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;font-size:.8rem;background:var(--surface)}
+.modal .ml{overflow:auto;flex:1}
+.modal .mf{display:flex;align-items:center;gap:10px;padding:10px 15px;border-top:1px solid var(--line);font-size:.74rem}
+.mrow{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;border:0;border-bottom:1px solid #f1f1ee;background:transparent;padding:9px 15px}
+.mrow:hover{background:var(--sunk)}
+.mrow .mn{flex:1;min-width:0}
+.mrow .mn .a{display:block;font-size:.79rem;font-weight:500;word-break:break-all}
+.mrow .mn .b{display:block;font-size:.68rem;color:var(--muted);margin-top:1px}
+.mrow .pick{font-size:.74rem;color:var(--muted);flex:none}
+.drawer{width:min(440px,100%);margin-left:auto;height:100%;max-height:100%;background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;animation:slide .18s ease-out}
+@keyframes slide{from{transform:translateX(18px);opacity:.4}to{transform:none;opacity:1}}
+.overlay.right{justify-content:flex-end;align-items:stretch;padding:0}
+.drawer .dh{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.drawer .dh .t{font-family:var(--mono);font-size:.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.drawer .dh button{margin-left:auto;border:1px solid var(--line2);background:var(--surface);border-radius:8px;width:26px;height:26px}
+.drawer .db{padding:13px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+dl.kv{margin:0;display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.78rem}
+dl.kv>div{display:flex;gap:8px}
+dl.kv dt{width:72px;flex:none;color:var(--muted)}
+dl.kv dd{margin:0;min-width:0;flex:1;word-break:break-all}
+.btnrow{display:flex;flex-wrap:wrap;gap:7px}
+.progress{height:7px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--teal);width:0;transition:width .25s}
+.log{font-family:var(--mono);font-size:.7rem;line-height:1.7;color:var(--ink2);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:9px 11px;max-height:220px;overflow:auto}
+.log .warn{color:var(--amber)}.log .bad{color:var(--rose)}.log .ok{color:#0a6f69}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:11px 16px;border-top:1px solid var(--line);background:#fbfbfa}
+.foot .hint{font-size:.75rem;color:var(--muted);max-width:70ch}
+.foot .right{margin-left:auto;display:flex;gap:7px}
+.tabs{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--line2);border-radius:999px;background:var(--surface)}
+.tabs button{border:0;background:transparent;padding:5px 12px;border-radius:999px;font-size:.78rem;font-weight:600;color:var(--ink2)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+table.cmp{width:100%;border-collapse:collapse;font-size:.8rem}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--sunk);font-weight:600;font-size:.74rem;color:var(--ink2)}
+table.cmp td.n{font-family:var(--mono);white-space:nowrap}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="border:2px solid #b3261e;background:#fbeae8;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.9rem;line-height:1.6">
+    <b style="display:block;margin-bottom:4px">⚠ 这一稿已作废（2026-10-25 第二稿推翻）</b>
+    它把流程做成了 8 步走法，而产品本来只有四步；第一屏还是那个「一张一张选」的弹窗，看起来像在替旧做法辩护。
+    请改用同目录下：<span style="font-family:Consolas,monospace">模拟_20261025_批量台四步_全自动归组_交付物矩阵.html</span>（四步、全流程无选表按钮、jsdom 真跑 34/34 通过）。
+    审查报告：<span style="font-family:Consolas,monospace">交付档案/审查报告/审查报告_20261025_批量台默认全选_一稿多语言表_对抗式深挖.md</span>。
+  </div>
+  <div class="doc">
+    <div class="eyebrow"><span>模拟件 · 不是已上线功能</span><span class="sep">/</span><span>2026-10-25</span><span class="sep">/</span><span>基线 worktrees/develop@a7c530bb</span></div>
+    <h1>批量台「默认全选」：一稿 12 份语言表，到底怎么走完</h1>
+    <p class="standfirst">你在弹窗里看到的 12 行「选」，不是排版问题：现在的数据模型是<strong>一稿只能绑一张表</strong>，而你的真实数据是<strong>一稿 12 份单语言表</strong>。这份模拟用你的真实数量（12 份稿 × 12 门语言 = 144 张表 / 144 份交付物），把每一步点什么都走一遍；左边是步骤，右边是界面，底部是「这一步在代码里对应哪一段」。</p>
+    <div class="honest">
+      <div class="col"><b>哪些是真合同（已在代码里）</b><p>SKU / 交付物识别、候选表来源、表册、译文来源矩阵、合并算法（按原文匹配 + 结构多数 + 12 语言 / 300 行上限 + 重复语言先到优先）、覆盖率取数口。每一步底部都标了 <span class="mono">file:line</span>。</p></div>
+      <div class="col new"><b>哪些是这份模拟的新提案</b><p>「一组语言表默认全选」＝绑定从「一稿一表」改成「一稿一组表」，导入时合并成一张多语言表；读表分轮（每轮 12 张）；异常只拦那一张表，不拦整批。这些<strong>还没实现</strong>。</p></div>
+      <div class="col same"><b>哪些一个字都不改</b><p>执行链、报价口径、结算闸、助手协议、行身份（记录编号）与信任链匹配键。合并后的结果仍然是一张 <span class="mono">ParsedCsv</span>，下游拿到的形状和今天完全一样。</p></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="rail" aria-label="步骤">
+      <div class="rt">走法 · 共 8 步</div>
+      <div id="railSteps" class="stack" style="gap:3px"></div>
+      <div class="counter">
+        <div class="k"><span>已手工点选</span><span class="v" id="cClicks">0 次</span></div>
+        <div class="k"><span>可产出交付物</span><span class="v" id="cDeliv">0 / 144</span></div>
+        <div class="k"><span>已读表</span><span class="v" id="cRead">0 / 144</span></div>
+      </div>
+    </nav>
+
+    <section class="stage" id="stage">
+      <div class="appbar">
+        <h2 id="stageTitle">第 0 步 · 今天这一屏</h2>
+        <span class="where" id="stageWhere">批量工作台 · 第 1 步 准备素材</span>
+        <div class="right">
+          <button class="btn sm ghost" id="btnReset" title="回到第 0 步并清空状态">重来</button>
+        </div>
+      </div>
+      <div class="body" id="stageBody"></div>
+      <div class="foot">
+        <span class="hint" id="footHint"></span>
+        <div class="right">
+          <button class="btn" id="btnPrev">上一步</button>
+          <button class="btn primary" id="btnNext">下一步 →</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ───────────────────────────── 数据：完全照 Owner 的真实数量 ───────────────────────────── */
+const LANGS = [
+  { code:'ES', zh:'西班牙语' }, { code:'FR', zh:'法国' }, { code:'ID', zh:'印尼' },
+  { code:'IT', zh:'意大利' }, { code:'JP', zh:'日本' }, { code:'MS', zh:'马来西亚' },
+  { code:'NL', zh:'荷兰' }, { code:'PL', zh:'波兰' }, { code:'RU', zh:'俄罗斯' },
+  { code:'TH', zh:'泰国' }, { code:'TL', zh:'菲律宾' }, { code:'VI', zh:'越南' },
+]
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521']
+const ROWS = 67
+
+// 现状（代码里真有的限制）
+const REAL = {
+  oneTablePerDraft: 'workbench-view.tsx:3119（同一稿只能有一张表）',
+  candidatesBySkuOnly: 'sku-attribution.ts:331-339（只按 SKU＋交付物筛，语言不参与）',
+  conflictReason: 'sku-attribution.ts:366-375（多候选一律 conflict，不替用户挑）',
+  readQueueCap: 'table-inventory.ts:233-237（planTableReadQueue 默认 limit 12）',
+  surveyCap: 'local-assistant-client.ts:1413-1414（>12 张直接抛 SURVEY_TABLES_TOO_MANY）',
+  matrixOneTable: 'table-inventory.ts:164,189（一稿一表：格的语言来自唯一绑定表）',
+  mergeEngine: 'merge-tables.ts:103-231（多张单语言表按原文合并）',
+  mergeMajority: 'merge-tables.ts:65-94（≥3 张时要求严格多数结构，否则整批拒）',
+  mergeRowCap: 'merge-tables.ts:126-131,173-178（12 语言 / 300 行上限）',
+  drawerFalseGreen: 'step1-stage-view.tsx:1300-1313,1375-1379（issues 为空即渲染「这一份就绪」，na 不进 issues）',
+  noLangBeforeRead: 'table-picker-dialog.tsx:155；table-inventory-list.tsx:185（未读也写「没有语言列」）',
+}
+
+/* ───────────────────────────── 状态 ───────────────────────────── */
+const S = {
+  step: 0,
+  clicks: 0,           // 手工点选次数（旧流程）
+  bindMode: 'none',    // none | one | group
+  boundDraft: null,    // 旧流程点过的那一份
+  boundTable: null,    // 旧流程选中的那张表（TH）
+  modalOpen: false,
+  drawer: null,        // {draft, lang}
+  groups: [],          // 新流程的 12 组
+  readDone: 0,         // 已读表数
+  reading: false,
+  readLog: [],
+  failedRead: { sku:'4521', lang:'RU', done:false }, // 首轮读失败，重试成功
+  excluded: {},        // key: `${sku}/${lang}` → true（被排除的表）
+  mergeDone: false,
+  runProgress: 0,
+  runDone: false,
+  runLog: [],
+}
+
+function key(sku, lang){ return sku + '/' + lang }
+function draftOf(sku){ return { sku, name:`(B级)Amazon-${sku}-主副图-8-祝叶子.psb`, deliverable:'主副图' } }
+const DRAFTS = SKUS.map(draftOf)
+function tablesOf(sku){ return LANGS.map(l => ({ sku, lang:l.code, zh:l.zh, rel:`完整表-20261003/${l.code} ${l.zh}-${sku}.xlsx`, rows: ROWS })) }
+const ALL_TABLES = SKUS.flatMap(tablesOf)
+
+// 只影响「异常」的设定：5660 的 ID 表 66 行；6896 的 VI 表里没有 VI 列；4871 的 ES 覆盖率 92%
+const DEFECTS = {
+  structureMismatch: key('5660','ID'),
+  emptyLangColumn: key('6896','VI'),
+  lowCoverage: key('4871','ES'),
+}
+
+/* ───────────────────────────── 小工具 ───────────────────────────── */
+const $ = (sel) => document.querySelector(sel)
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild }
+function setBody(html){ $('#stageBody').innerHTML = html }
+function statusPill(kind, text){
+  const map={ok:'teal',warn:'amber',bad:'rose',info:'blue',grey:'grey'}
+  return `<span class="pill ${map[kind]||'grey'}">${esc(text)}</span>`
+}
+
+/* ───────────────────────────── 步骤定义 ───────────────────────────── */
+const STEPS = [
+  { n:0, t:'今天这一屏', s:'12 行「选」+ 假绿灯' },
+  { n:1, t:'自动归组', s:'144 张 → 12 组，默认全选' },
+  { n:2, t:'分轮读表', s:'每轮 12 张，跑完 144 张' },
+  { n:3, t:'合并预检', s:'每稿合成一张 12 语言表' },
+  { n:4, t:'来源矩阵', s:'144 格，每格说清来自哪张表' },
+  { n:5, t:'只处理例外', s:'缺 1 门 / 结构不一致 / 92%' },
+  { n:6, t:'开跑与回执', s:'142 份怎么跑、失败怎么收' },
+  { n:7, t:'对比与施工顺序', s:'旧 12 次 vs 新 0 次' },
+]
+
+function renderRail(){
+  $('#railSteps').innerHTML = STEPS.map(s => `
+    <button class="step ${s.n===S.step?'':''} ${s.n<S.step?'done':''}" data-step="${s.n}" aria-current="${s.n===S.step}">
+      <span class="sn">${s.n}</span>
+      <span><span class="st">${esc(s.t)}</span><small>${esc(s.s)}</small></span>
+    </button>`).join('')
+  $('#railSteps').querySelectorAll('button[data-step]').forEach(b => {
+    b.addEventListener('click', () => { if (Number(b.dataset.step) <= maxReachable()) go(Number(b.dataset.step)) })
+  })
+  const possible = deliverableCount()
+  $('#cClicks').textContent = S.clicks + ' 次'
+  $('#cDeliv').textContent = possible + ' / 144'
+  $('#cRead').textContent = S.readDone + ' / 144'
+}
+function maxReachable(){
+  if (S.step === 0) return 0
+  if (!S.mergeDone && S.step >= 3) return Math.max(1, S.step)
+  return S.step
+}
+function deliverableCount(){
+  if (S.bindMode === 'none') return 0
+  if (S.bindMode === 'one') return 1
+  // 组绑定：按「取消勾选 / 已排除」扣减
+  let n = 0
+  for (const d of DRAFTS) for (const l of LANGS){
+    const k = key(d.sku, l.code)
+    if (S.excluded[k]) continue
+    const g = S.groups.find(x => x.sku === d.sku)
+    const t = g && g.tables.find(x => x.lang === l.code)
+    if (t && !t.checked) continue
+    n++
+  }
+  return n
+}
+
+/* ───────────────────────────── 步骤 0：今天这一屏 ───────────────────────────── */
+function renderStep0(){
+  const st = S.bindMode === 'one' ? 1 : 0
+  const rows = DRAFTS.map(d => {
+    const bound = S.bindMode === 'one' && S.boundDraft === d.sku
+    return `<button class="drow" data-draft="${d.sku}" aria-current="${bound}">
+      <span class="dot ${bound?'warn':'idle'}"></span>
+      <span class="f">${d.sku} · 主副图</span>
+      <span class="meta">${bound ? '已绑 1 张 · 只能出 1 门' : '配对待确认 · 同 SKU 有 12 张候选表'}</span>
+    </button>`
+  }).join('')
+
+  const head = LANGS.map(l => `<th>${l.code}</th>`).join('')
+  const body = DRAFTS.map(d => {
+    const bound = S.bindMode === 'one' && S.boundDraft === d.sku
+    const cells = LANGS.map((l, i) => {
+      if (bound && l.code === 'TH') return `<td class="c-warn"><div class="cell"><span class="cv">读表中</span><span class="cs">TH</span></div></td>`
+      return `<td class="c-off"><div class="cell"><span class="cv">—</span><span class="cs">未配表</span></div></td>`
+    }).join('')
+    return `<tr><th><div class="rowhead"><span class="f">${d.sku} · 主副图</span><span class="m">${
+      bound ? '<span class="pill amber">已绑 1 张（TH）</span><span>这份稿只出 TH</span>' : '<span class="pill grey">未配表</span><span>12 张候选表等你选</span>'
+    }</span></div></th>${cells}</tr>`
+  }).join('')
+
+  setBody(`
+    <div class="stack">
+      <div class="callout bad"><b>先说结论：这不是「弹窗做得不好」，是数据模型接不住你的数据</b>
+        弹窗之所以一行一个「选」，是因为系统规定<strong>一份稿只能有一张表</strong>（<span class="mono">${REAL.oneTablePerDraft}</span>）。
+        你的真实数据是<strong>一份稿 12 张单语言表</strong>——选第 1 张，后面 11 张就永远进不来；选错哪张，那一门就用错表（截图里 ES 这一份取自 TH 表，就是活例）。</div>
+
+      <div class="stats">
+        <div class="stat"><div class="v">12</div><div class="l">设计稿</div></div>
+        <div class="stat"><div class="v">144</div><div class="l">文件夹里的表</div></div>
+        <div class="stat warn"><div class="v">${deliverableCount()}</div><div class="l">本批要做的交付物</div></div>
+        <div class="stat"><div class="v">144</div><div class="l">矩阵格数</div></div>
+        <div class="stat bad"><div class="v">${12 - (S.bindMode==='one'?1:0)}</div><div class="l">「配对待确认」待办</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">设计稿 · 12 份 <span class="pill grey">每份都在等一次点击</span></p>
+          <p class="card-s">点任意一份会打开你截图里那个弹窗；点「选」后右侧抽屉出来。</p>
+          <div class="dlist">${rows}</div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn primary" id="btnOpenModal">打开「选择这张稿的译文表」</button>
+            <span class="note">这就是你截图里那一步。</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-t">译文来源矩阵 · 12 × 12 = 144 格</p>
+          <p class="card-s">格＝一份交付物（稿 × 语言）。灰＝没有可信来源，不是「没做」。</p>
+          <div class="scroller">
+            <table class="mx"><thead><tr><th>设计稿 / 交付物</th>${head}</tr></thead><tbody>${body}</tbody></table>
+          </div>
+          <div class="legend"><span><i class="lg off"></i>未配表</span><span><i class="lg unread"></i>待读全文</span><span><i class="lg warn"></i>待确认</span></div>
+        </div>
+      </div>
+
+      ${S.bindMode==='one' ? `
+      <div class="callout"><b>你刚点的那一下，系统只记住了 1 张表</b>
+        「12 份稿都点完」＝12 次点击 → <strong>12 / 144 格有来源</strong>，其余 132 格是「本稿不做」。
+        要凑出 144 份交付物，今天只能把同一份稿复制 12 份、每份绑一张表——这不是操作习惯问题，是模型缺口。</div>` : ''}
+    </div>`)
+
+  $('#btnOpenModal')?.addEventListener('click', () => { S.modalOpen = true; renderModal() })
+  document.querySelectorAll('.drow').forEach(b => b.addEventListener('click', () => openOldDrawer(b.dataset.draft)))
+}
+
+function openOldDrawer(sku){
+  S.boundDraft = sku
+  S.modalOpen = true
+  renderModal()
+}
+
+function renderModal(){
+  if (!S.modalOpen) return
+  const rows = LANGS.map(l => `
+    <button class="mrow" data-pick="${l.code}">
+      <span class="mn">
+        <span class="a">表 ${l.code} ${l.zh}-${S.boundDraft || '5857'}.xlsx</span>
+        <span class="b">XLSX · 未读 · 没有语言列 — 未用</span>
+      </span>
+      <span class="pick">选</span>
+    </button>`).join('')
+  const ov = el(`<div class="overlay" id="ov">
+    <div class="modal" role="dialog" aria-label="选择这张稿的译文表">
+      <div class="mh"><h3>选择这张稿的译文表</h3><span class="c">12 张表</span><button data-close>✕</button></div>
+      <div class="ms"><input placeholder="搜索表名或路径" aria-label="搜索表名或路径"></div>
+      <div class="ml">${rows}</div>
+      <div class="mf"><button class="btn link" data-close>逐稿手动导入…</button><button class="btn sm" data-close style="margin-left:auto">取消</button></div>
+    </div>
+  </div>`)
+  document.body.appendChild(ov)
+  ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => { S.modalOpen=false; ov.remove() }))
+  ov.addEventListener('mousedown', e => { if (e.target === ov){ S.modalOpen=false; ov.remove() } })
+  ov.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+    S.clicks += 1
+    S.bindMode = 'one'
+    S.boundTable = b.dataset.pick
+    S.modalOpen = false
+    ov.remove()
+    renderStep0(); renderRail()
+    openOldDrawerForReal()
+  }))
+}
+
+// 复刻 Owner 截图里的抽屉：ES 这一份、取自 TH 表、却写「这一份就绪」
+function openOldDrawerForReal(){
+  const sku = S.boundDraft || '5857'
+  const table = S.boundTable || 'TH'
+  const ov = el(`<div class="overlay right" id="ov2">
+    <div class="drawer">
+      <div class="dh"><span class="t">(B级)Amazon-${sku}-主副图-8-祝叶子.psb · ES</span><button data-close>✕</button></div>
+      <div class="db">
+        <dl class="kv">
+          <div><dt>状态</dt><dd><span class="dot warn"></span> 读表中…</dd></div>
+          <div><dt>这一份</dt><dd class="mono">ES</dd></div>
+          <div><dt>取自</dt><dd>完整表-20261003/${table} ${(LANGS.find(l=>l.code===table)||{}).zh||''}-${sku}.xlsx</dd></div>
+          <div><dt>对稿覆盖率</dt><dd class="mono">—</dd></div>
+          <div><dt>交付物</dt><dd>${sku} · 主副图</dd></div>
+        </dl>
+        <div class="callout ok"><b>这一份就绪</b>覆盖率达到阈值，人工确认后即可进入生成。</div>
+        <div class="callout bad"><b>但这一门根本没有来源</b>这一张表里没有 ES 列——ES 这一份是「本稿不做」（矩阵里是 <span class="mono">na</span>）。抽屉却没有 na 分支，issues 空着就渲染成「就绪」（<span class="mono">${REAL.drawerFalseGreen}</span>）。</div>
+        <div class="row"><span class="pill grey">当前：${table} 泰国-${sku}.xlsx</span><button class="btn sm">换一张表…</button></div>
+        <p class="note">只取一张表（一稿一表）；同一张表被 1 份稿共用时只读一次。</p>
+        <div class="btnrow">
+          <button class="btn sm">查看该稿审核</button>
+          <button class="btn sm">读这张表的全文</button>
+          <button class="btn sm ghost" style="margin-left:auto">跳过这份稿（可撤销）</button>
+        </div>
+      </div>
+    </div>
+  </div>`)
+  document.body.appendChild(ov)
+  ov.querySelector('[data-close]').addEventListener('click', () => ov.remove())
+  ov.addEventListener('mousedown', e => { if (e.target === ov) ov.remove() })
+}
+
+/* ───────────────────────────── 步骤 1：自动归组 ───────────────────────────── */
+function ensureGroups(){
+  if (S.groups.length) return
+  S.groups = DRAFTS.map(d => ({
+    sku: d.sku,
+    tables: LANGS.map(l => ({ lang: l.code, zh: l.zh, checked: true })),
+    evidence: d.sku === '6896' ? 'declared' : 'proven',
+  }))
+}
+function groupStats(){
+  const groups = S.groups.length
+  const selected = S.groups.reduce((n,g) => n + g.tables.filter(t=>t.checked).length, 0)
+  const suspect = S.groups.filter(g => g.evidence !== 'proven').length
+  return { groups, selected, suspect }
+}
+function renderStep1(){
+  ensureGroups()
+  const { groups, selected, suspect } = groupStats()
+  const cards = S.groups.slice(0, 6).map(g => `
+    <div class="gcard">
+      <div class="ghead">
+        <span class="gt">${g.sku} · 主副图</span>
+        ${g.evidence==='proven' ? statusPill('ok','实证 · 12 门语言互不重复') : statusPill('amber','存疑 · VI 表里没有 VI 列')}
+        <span class="pill grey">${g.tables.filter(t=>t.checked).length} / 12 已选</span>
+        <button class="btn sm link" data-toggle-group="${g.sku}" style="margin-left:auto">展开/收起</button>
+      </div>
+      <div class="gbody" data-body="${g.sku}" hidden>
+        ${g.tables.map(t => `
+          <label class="trow ${t.checked?'':'off'}">
+            <input type="checkbox" data-group="${g.sku}" data-lang="${t.lang}" ${t.checked?'checked':''}>
+            <span class="tn">${t.lang} ${t.zh}-${g.sku}.xlsx</span>
+            <span class="tm">${t.lang} 列 · ${ROWS} 行</span>
+            ${t.lang==='VI' && g.evidence!=='proven' ? statusPill('amber','列里没有值') : statusPill('ok','可并入')}
+          </label>`).join('')}
+      </div>
+    </div>`).join('')
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>默认全选＝把「一稿 12 张语言表」当成一个组，一次绑完</b>
+        不是把弹窗改成多选后还让你点 12 下：扫描完就直接按「同 SKU ＋ 同交付物 ＋ 语言互不重复」归组，<strong>12 组默认全勾</strong>，你只在例外上动手。</div>
+      <div class="stats">
+        <div class="stat"><div class="v">${groups}</div><div class="l">语言表组</div></div>
+        <div class="stat"><div class="v">${ALL_TABLES.length}</div><div class="l">文件夹里的表</div></div>
+        <div class="stat ok"><div class="v">${selected}</div><div class="l">默认已选表</div></div>
+        <div class="stat ${suspect?'warn':'ok'}"><div class="v">${suspect}</div><div class="l">存疑组</div></div>
+        <div class="stat ok"><div class="v">0</div><div class="l">需要逐稿点击</div></div>
+      </div>
+      <div class="card">
+        <p class="card-t">归组结果 <span class="pill teal">12 组 · 144 张 · 每组 12 门</span></p>
+        <p class="card-s">每行是一份稿；展开可逐张取消（只在例外时用）。下面是前 6 组，滚动看全部。</p>
+        <div class="stack" style="max-height:420px;overflow:auto">${cards}</div>
+      </div>
+      <div class="card plain">
+        <p class="card-t">为什么这 12 张能算一组（判据全部可解释）</p>
+        <p class="card-s">任一条不成立，就不自动勾，落进「要你处理」——不猜。</p>
+        <p class="note">① 文件名里的 4 位 SKU 相同（<span class="mono">sku-attribution.ts:71-88</span>）；② 交付物相同（<span class="mono">:53-59</span>）；③ 12 张表的语言互不重复（同语言两张＝冲突，只让你选一张）；④ 合并前会再核一次原文结构（<span class="mono">merge-tables.ts:65-94</span>），结构不一致的那一张单独拦，不拦整批。</p>
+      </div>
+    </div>`)
+  document.querySelectorAll('[data-toggle-group]').forEach(b => b.addEventListener('click', () => {
+    const body = document.querySelector(`[data-body="${b.dataset.toggleGroup}"]`)
+    body.hidden = !body.hidden
+  }))
+  document.querySelectorAll('input[data-group]').forEach(cb => cb.addEventListener('change', () => {
+    const g = S.groups.find(x => x.sku === cb.dataset.group)
+    const t = g.tables.find(x => x.lang === cb.dataset.lang)
+    t.checked = cb.checked
+    renderStep1(); renderRail()
+  }))
+}
+
+/* ───────────────────────────── 步骤 2：分轮读表 ───────────────────────────── */
+function renderStep2(){
+  const pct = Math.round(S.readDone / ALL_TABLES.length * 100)
+  const round = Math.min(12, Math.floor(S.readDone / 12) + (S.readDone % 12 ? 1 : 0))
+  const failedDone = S.failedRead.done
+  setBody(`
+    <div class="stack">
+      <div class="callout blue"><b>144 张表不可能「一次读完」——今天连读都读不完</b>
+        现在的读表队列默认只取 12 张（<span class="mono">${REAL.readQueueCap}</span>），批量读表头的助手端点超过 12 张直接报错（<span class="mono">${REAL.surveyCap}</span>）。
+        144 张里剩下的 132 张永远是「未读」，矩阵也就永远不知道它们有什么语言——这才是弹窗上「未读 · 没有语言列」的来源。</div>
+      <div class="card">
+        <p class="card-t">分轮读表 <span class="pill ${S.readDone===144?'teal':'grey'}">${S.readDone} / 144</span></p>
+        <p class="card-s">每轮 12 张（一票一验，失败不影响下一轮）；表只读一次，多稿共用不重读。</p>
+        <div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnRead" ${S.reading||S.readDone===144?'disabled':''}>${S.readDone===144?'已读完全部 144 张':'开始/继续读表（每轮 12 张）'}</button>
+          <span class="note">第 ${round} / 12 轮</span>
+          ${S.readDone===144?statusPill('ok','144 / 144 已读'):''}
+        </div>
+        ${S.readDone>0 && !failedDone ? `
+          <div class="callout" style="margin-top:10px"><b>有 1 张读失败：4521 / RU</b>
+            读失败只拦这一张，不拦整批。别的表照常进合并。<button class="btn sm" id="btnRetry" style="margin-left:8px">重试这一张</button></div>` : ''}
+        ${failedDone ? `<div class="callout ok" style="margin-top:10px"><b>4521 / RU 重试成功</b>该格恢复，不需要重扫整批。</div>` : ''}
+        <div class="log" id="readLog" style="margin-top:10px">${S.readLog.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('') || '<div>（还没开始）</div>'}</div>
+      </div>
+    </div>`)
+  $('#btnRead')?.addEventListener('click', startReading)
+  $('#btnRetry')?.addEventListener('click', () => {
+    S.failedRead.done = true
+    S.readLog.push({ k:'ok', t:'[重试] 4521 / RU 读取成功（此前：READ_FAILED）' })
+    renderStep2()
+  })
+}
+function startReading(){
+  if (S.reading || S.readDone >= 144) return
+  S.reading = true
+  S.readLog = S.readLog.length ? S.readLog : []
+  const timer = setInterval(() => {
+    const step = 12
+    const from = S.readDone
+    S.readDone = Math.min(144, S.readDone + step)
+    const r = Math.ceil(S.readDone / 12)
+    S.readLog.push({ k:'', t:`第 ${r} 轮：${from+1}-${S.readDone} 张，12/12 成功` })
+    if (S.readDone >= 144) {
+      clearInterval(timer)
+      S.reading = false
+      S.readLog.push({ k:'warn', t:'首轮异常：4521 / RU 读失败（READ_FAILED）；其余 143 张已读' })
+    }
+    renderStep2(); renderRail()
+  }, 260)
+}
+
+/* ───────────────────────────── 步骤 3：合并预检 ───────────────────────────── */
+function renderStep3(active = '5857'){
+  const d = DRAFTS.find(x => x.sku === active) || DRAFTS[0]
+  const rows = LANGS.map(l => {
+    const k = key(d.sku, l.code)
+    const excluded = Boolean(S.excluded[k])
+    const mismatch = k === DEFECTS.structureMismatch
+    const emptyCol = k === DEFECTS.emptyLangColumn
+    const failed = k === key('4521','RU') && !S.failedRead.done
+    let state = 'matched', detail = `${ROWS} / ${ROWS} 行按原文对上`
+    if (excluded) { state='excluded'; detail='已排除：这一门本批不做' }
+    else if (mismatch) { state='mismatch'; detail='这张表 66 行，与其余 11 张（67 行）结构不一致 → 合并会整批拒' }
+    else if (emptyCol) { state='empty'; detail='表名是 VI，但 VI 列没有值 → 并进来也交不出 VI' }
+    else if (failed) { state='failed'; detail='读失败，未进合并' }
+    return { l, k, state, detail }
+  })
+  const matched = rows.filter(r => r.state==='matched').length
+  const pill = (state) => state==='matched'?statusPill('ok','已对上')
+    : state==='excluded'?statusPill('grey','已排除')
+    : state==='mismatch'?statusPill('bad','结构不一致')
+    : state==='empty'?statusPill('amber','列里没值')
+    : statusPill('bad','读失败')
+
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>合并这一步是现成的：12 张单语言表 → 1 张 12 语言表</b>
+        算法早就在（<span class="mono">${REAL.mergeEngine}</span>），单稿工作台选多个文件时就走它；只是批量台这一步没用上。
+        按原文匹配，不按行号硬拼；对不上的会写「N 行已追加」，重复语言保留先到的那份并提示。</div>
+      <div class="row">
+        <span class="note">选一份稿看它的合并结果：</span>
+        <div class="tabs" id="draftTabs">
+          ${DRAFTS.slice(0,4).map(x => `<button data-d="${x.sku}" aria-pressed="${x.sku===d.sku}">${x.sku}</button>`).join('')}
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">${d.sku} · 主副图 · 12 门语言</p>
+          <p class="card-s">来源与行数（合并前预检；这一步还没写任何文件）。</p>
+          <div class="stack" style="gap:2px">
+            ${rows.map(r => `<div class="trow">
+              <span class="tn">${r.l.code} ${r.l.zh}-${d.sku}.xlsx</span>
+              <span class="tm">${esc(r.detail)}</span>
+              ${pill(r.state)}
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="card plain">
+          <p class="card-t">合并结果 <span class="pill ${matched===12?'teal':'amber'}">${matched} / 12 门可用</span></p>
+          <p class="card-s">下游拿到的仍然是一张表（67 行 × ${matched} 语言），和今天单稿模式完全同一个形状。</p>
+          <pre>基准表：ES 西班牙语-${d.sku}.xlsx（67 行）
+「FR」：匹配 67 行
+「ID」：匹配 67 行
+…
+「VI」：⚠ 列里没有值（不计入可用语言）
+合并后：67 行 × ${matched} 语言</pre>
+          <div class="callout" style="margin-top:10px"><b>异常只拦那一张</b>
+            5660 的 ID 表结构不一致：只拦 ID，别的 11 门照常合并；你可以「排除这张」或「改好重读」，不用重扫整批。</div>
+          <div class="btnrow" style="margin-top:8px">
+            <button class="btn sm" id="btnExcludeMismatch">排除 5660 / ID 这一张</button>
+            <button class="btn sm ghost" id="btnExcludeEmpty">排除 6896 / VI 这一张</button>
+          </div>
+        </div>
+      </div>
+    </div>`)
+  $('#draftTabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => renderStep3(b.dataset.d)))
+  $('#btnExcludeMismatch')?.addEventListener('click', () => {
+    S.excluded[DEFECTS.structureMismatch] = true
+    renderStep3('5660'); renderRail()
+  })
+  $('#btnExcludeEmpty')?.addEventListener('click', () => {
+    S.excluded[DEFECTS.emptyLangColumn] = true
+    renderStep3('6896'); renderRail()
+  })
+}
+
+/* ───────────────────────────── 步骤 4：矩阵 ───────────────────────────── */
+function cellState(sku, lang){
+  const k = key(sku, lang)
+  // 判据（reason）与颜色分开算：被排除的格也保留原判据，抽屉才说得清「为什么当初判它红」
+  const base = (() => {
+    if (k === DEFECTS.structureMismatch) return { cls:'c-bad', v:'66 行', s:'结构不一致', reason:'结构不一致：这一张 66 行，其余 11 张 67 行；合并引擎要求严格多数，这一张会让整组合并被拒（merge-tables.ts:65-94）' }
+    if (k === DEFECTS.emptyLangColumn) return { cls:'c-bad', v:'空列', s:'没有译文', reason:'表名写着 VI，但 VI 列里没有值；并进来也交不出越南语' }
+    if (k === key('4521','RU') && !S.failedRead.done) return { cls:'c-bad', v:'读失败', s:'重试', reason:'这张表读取失败（READ_FAILED），没进合并；别的语言不受影响' }
+    if (k === DEFECTS.lowCoverage) return { cls:'c-warn', v:'92%', s:'待确认', reason:'对稿覆盖率 92%，低于 95% 阈值；需要你确认一次才能开跑' }
+    return { cls:'c-ok', v:'97%', s:'ES 列', reason:'归属对上 + 原文 67/67 覆盖，覆盖率 97%，来源唯一' }
+  })()
+  if (S.excluded[k]) return { ...base, cls:'c-off', v:'—', s:'本批不做', excluded:true }
+  return base
+}
+function renderStep4(){
+  const head = LANGS.map(l => `<th>${l.code}</th>`).join('')
+  const all = DRAFTS.flatMap(d => LANGS.map(l => cellState(d.sku, l.code)))
+  const nOk = all.filter(c => c.cls === 'c-ok').length
+  const nWarn = all.filter(c => c.cls === 'c-warn').length
+  const nBad = all.filter(c => c.cls === 'c-bad').length
+  const nOff = all.filter(c => c.cls === 'c-off').length
+  const todo = nWarn + nBad
+  const body = DRAFTS.map(d => {
+    const cells = LANGS.map(l => {
+      const st = cellState(d.sku, l.code)
+      return `<td class="${st.cls}"><button class="cell" data-cell="${d.sku}/${l.code}"><span class="cv">${st.v}</span><span class="cs">${st.s}</span></button></td>`
+    }).join('')
+    return `<tr><th><div class="rowhead"><span class="f">${d.sku} · 主副图</span><span class="m"><span class="pill teal">实证</span><span>12 张来源表</span></span></div></th>${cells}</tr>`
+  }).join('')
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>矩阵才是主角：每一格都点名「这份交付物从哪张表的哪一列来」</b>
+        点任意格看抽屉。和今天最大的区别：今天一份稿只有一张表，非绑定语言全是「本稿不做」；现在 144 格各有各的来源，错一格就红一格。</div>
+      <div class="stats">
+        <div class="stat ok"><div class="v">${nOk}</div><div class="l">就绪</div></div>
+        <div class="stat warn"><div class="v">${nWarn}</div><div class="l">待确认（<95%）</div></div>
+        <div class="stat bad"><div class="v">${nBad}</div><div class="l">有问题</div></div>
+        <div class="stat"><div class="v">${nOff}</div><div class="l">本批不做</div></div>
+        <div class="stat ${todo?'warn':'ok'}"><div class="v">${todo}</div><div class="l">要你处理</div></div>
+      </div>
+      <div class="scroller">
+        <table class="mx"><thead><tr><th>设计稿 / 交付物</th>${head}</tr></thead><tbody>${body}</tbody></table>
+      </div>
+      <div class="legend">
+        <span><i class="lg ok"></i>就绪</span><span><i class="lg warn"></i>待确认（<95%）</span>
+        <span><i class="lg bad"></i>有问题</span><span><i class="lg off"></i>本批不做（已排除）</span>
+      </div>
+    </div>`)
+  document.querySelectorAll('[data-cell]').forEach(b => b.addEventListener('click', () => {
+    const [sku, lang] = b.dataset.cell.split('/')
+    openCellDrawer(sku, lang)
+  }))
+}
+function openCellDrawer(sku, lang){
+  const st = cellState(sku, lang)
+  const excluded = Boolean(st.excluded)
+  const bad = !excluded && st.cls !== 'c-ok'
+  const zh = (LANGS.find(l => l.code === lang) || {}).zh || ''
+  const ov = el(`<div class="overlay right" id="ov3"><div class="drawer">
+    <div class="dh"><span class="t">${sku} · 主副图 · ${lang}</span><button data-close>✕</button></div>
+    <div class="db">
+      <dl class="kv">
+        <div><dt>状态</dt><dd>${excluded ? '已排除 · 本批不做' : (bad ? '要处理' : '就绪')}</dd></div>
+        <div><dt>取自</dt><dd>${excluded ? '（已排除，本批不做）' : `完整表-20261003/${lang} ${zh}-${sku}.xlsx 的 ${lang} 列`}</dd></div>
+        <div><dt>覆盖率</dt><dd class="mono">${st.v}</dd></div>
+        <div><dt>交付物</dt><dd>${sku} · 主副图 · ${lang}</dd></div>
+        <div><dt>判据</dt><dd>${esc(st.reason)}</dd></div>
+      </dl>
+      ${excluded
+        ? `<div class="callout"><b>这一格已排除，不进本批</b>${esc(st.reason)}。要恢复就把它勾回来。</div>`
+        : bad
+          ? `<div class="callout bad"><b>这一格为什么红</b>${esc(st.reason)}。处置只影响这一格：换来源 / 排除这一门 / 修表重读。</div>`
+          : `<div class="callout ok"><b>这一格可以进生成</b>${esc(st.reason)}，无需人工确认。</div>`}
+      <div class="btnrow"><button class="btn sm">换来源…</button><button class="btn sm ghost">这一门先不做</button></div>
+    </div></div></div>`)
+  document.body.appendChild(ov)
+  ov.querySelector('[data-close]').addEventListener('click', () => ov.remove())
+  ov.addEventListener('mousedown', e => { if (e.target === ov) ov.remove() })
+}
+
+/* ───────────────────────────── 步骤 5：只处理例外 ───────────────────────────── */
+// 例外项一共 4 件（结构不一致 / 空列 / 92% / 读失败）；处置过的不再出现——
+// 清单只会变短，不会「点完又冒出来」。
+function todos(){
+  const list = []
+  if (!S.excluded[DEFECTS.structureMismatch]) list.push({ id:'mismatch', title:'5660 / ID 结构不一致（66 行 vs 67 行）', body:'合并会整批拒。二选一：排除这一门，或把表改好重读。', action:'排除这一门' })
+  if (!S.excluded[DEFECTS.emptyLangColumn]) list.push({ id:'empty', title:'6896 / VI 表里没有 VI 列', body:'并进来也交不出越南语。可以排除，或补一张真的 VI 表。', action:'排除这一门' })
+  if (!S.lowConfirmed) list.push({ id:'low', title:'4871 / ES 覆盖率 92%（低于 95%）', body:'未达阈值，需要你确认一次才能开跑（确认后按现状替换）。', action:'确认这一门' })
+  if (!S.failedRead.done) list.push({ id:'retry', title:'4521 / RU 读失败', body:'只拦这一张，重试即可，不影响别的语言。', action:'重试' })
+  return list
+}
+function handledCount(){
+  return (S.excluded[DEFECTS.structureMismatch] ? 1 : 0)
+    + (S.excluded[DEFECTS.emptyLangColumn] ? 1 : 0)
+    + (S.lowConfirmed ? 1 : 0)
+    + (S.failedRead.done ? 1 : 0)
+}
+function renderStep5(){
+  const list = todos()
+  const total = deliverableCount()
+  const done = handledCount()
+  const ready = Math.max(0, total - list.length)
+  const deductions = [
+    S.excluded[DEFECTS.structureMismatch] ? '− 5660 / ID（结构不一致，已排除） = 1' : '',
+    S.excluded[DEFECTS.emptyLangColumn] ? '− 6896 / VI（空列，已排除）      = 1' : '',
+  ].filter(Boolean).join('\n')
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>确认页只列例外，不列 144 格</b>
+        全批 ${total} 份里，<strong>${ready} 份</strong>已经有实证来源、可以直接过；还要你处理 <strong>${list.length} 件</strong>。
+        已经就地处置过 ${done} 件（清单只减不增，不用回头重扫整批）。这就是「默认全选」真正的价值：把 144 次判断压成 4 件例外。</div>
+      <div class="grid2">
+        <div class="card">
+          <p class="card-t">要你处理的 ${list.length} 件</p>
+          <p class="card-s">每件都能就地处置，处置完清单自己变短。</p>
+          <div class="stack">
+            ${list.map(t => `<div class="card plain" style="padding:10px 12px">
+              <div class="row"><b style="font-size:.83rem">${esc(t.title)}</b><button class="btn sm primary" data-todo="${t.id}" style="margin-left:auto">${esc(t.action)}</button></div>
+              <p class="note" style="margin:4px 0 0">${esc(t.body)}</p>
+            </div>`).join('') || '<div class="callout ok"><b>没有例外了</b>可以直接开跑。</div>'}
+          </div>
+        </div>
+        <div class="card">
+          <p class="card-t">本批范围</p>
+          <p class="card-s">按当前选择算出来的真实数字。</p>
+          <div class="stats">
+            <div class="stat ok"><div class="v">${total}</div><div class="l">份交付物</div></div>
+            <div class="stat"><div class="v">12</div><div class="l">份设计稿</div></div>
+            <div class="stat"><div class="v">144</div><div class="l">张来源表</div></div>
+            <div class="stat ${list.length?'warn':'ok'}"><div class="v">${list.length}</div><div class="l">待处理例外</div></div>
+          </div>
+          <pre style="margin-top:10px">交付物 = 稿 × 语言
+12 × 12 = 144
+${deductions ? deductions + '\n' : ''}= ${total} 份</pre>
+          <button class="btn primary" id="btnConfirm" ${list.length ? 'disabled' : ''} style="margin-top:10px">${list.length ? `还有 ${list.length} 件要处理` : '确认范围并开跑 →'}</button>
+        </div>
+      </div>
+    </div>`)
+  document.querySelectorAll('[data-todo]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.todo
+    if (id === 'mismatch') S.excluded[DEFECTS.structureMismatch] = true
+    if (id === 'empty') S.excluded[DEFECTS.emptyLangColumn] = true
+    if (id === 'retry') S.failedRead.done = true
+    if (id === 'low') S.lowConfirmed = true
+    renderStep5(); renderRail()
+  }))
+  $('#btnConfirm')?.addEventListener('click', () => {
+    if (todos().length > 0) return
+    S.runDone = false; S.runProgress = 0; S.runLog = []
+    go(6)
+  })
+}
+
+/* ───────────────────────────── 步骤 6：开跑与回执 ───────────────────────────── */
+function renderStep6(){
+  const total = deliverableCount()
+  const pct = Math.round(S.runProgress / Math.max(1,total) * 100)
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>开跑后按「稿 × 语言」逐份交付，回执按语言分开记</b>
+        这一步不动执行合同：仍然是先报价、再确认、再逐语言回执；失败的语言可以有独立回执，已成功的不会被重跑。</div>
+      <div class="card">
+        <p class="card-t">本批 ${total} 份 <span class="pill ${S.runDone?'teal':'grey'}">${S.runDone?'已完成':'待开跑'}</span></p>
+        <div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnRun" ${S.runDone?'disabled':''}>${S.runDone?'已完成':'开始生成'}</button>
+          <span class="note">${S.runDone?'回执已写：部分成功 1 份':'模拟：按现有执行链逐语言推进'}</span>
+        </div>
+        <div class="log" style="margin-top:10px">${S.runLog.map(l=>`<div class="${l.k}">${esc(l.t)}</div>`).join('') || '<div>（还没开跑）</div>'}</div>
+      </div>
+      ${S.runDone ? `<div class="callout"><b>回执要能回答「哪一门成功了、哪一门没有」</b>
+        例如 4521 / RU 执行超时：该门单独回执失败，别的 141 份不受影响；重跑只补这一门。这条语义今天就有，不需要改。</div>` : ''}
+    </div>`)
+  $('#btnRun')?.addEventListener('click', startRun)
+}
+function startRun(){
+  const total = deliverableCount()
+  const timer = setInterval(() => {
+    S.runProgress = Math.min(total, S.runProgress + Math.ceil(total/6))
+    if (S.runProgress >= total){
+      clearInterval(timer)
+      S.runDone = true
+      S.runLog.push({ k:'ok', t:`完成 ${total-1} 份（成功）` })
+      S.runLog.push({ k:'warn', t:'1 份失败：4521 / RU（执行超时，单独回执，可只补这一门）' })
+      renderStep6()
+    } else {
+      S.runLog.push({ k:'', t:`已完成 ${S.runProgress} / ${total}` })
+      renderStep6()
+    }
+  }, 420)
+}
+
+/* ───────────────────────────── 步骤 7：对比与施工 ───────────────────────────── */
+function renderStep7(){
+  setBody(`
+    <div class="stack">
+      <div class="callout ok"><b>一句话：不是「多选框没做」，是绑定模型少了「一组」这一层</b>
+        弹窗加多选＝还要点 144 下；改模型＝0 下。差别在于「稿 → 表」这条边从一对一改成一对多，导入时合并回一张表。</div>
+      <div class="card">
+        <p class="card-t">旧 vs 新（同一批真实数据）</p>
+        <table class="cmp">
+          <thead><tr><th>口径</th><th>今天</th><th>本模拟</th><th>差在哪</th></tr></thead>
+          <tbody>
+            <tr><td>要你手工点选</td><td class="n">12 次</td><td class="n">0 次（只处理 3 件例外）</td><td>一稿一表 → 一稿一组</td></tr>
+            <tr><td>能产出的交付物</td><td class="n">12 / 144</td><td class="n">142 / 144</td><td>每组 12 张表合成 12 语言</td></tr>
+            <tr><td>能读到的表</td><td class="n">12 / 144</td><td class="n">144 / 144</td><td>单轮上限 12 → 分轮</td></tr>
+            <tr><td>错配语言能否发现</td><td class="n">不能（ES←TH 还写「就绪」）</td><td class="n">每格点名来源，错就红</td><td>格按语言取表</td></tr>
+            <tr><td>一张坏表的影响</td><td class="n">整批合并不了</td><td class="n">只拦那一张</td><td>异常按表处理</td></tr>
+            <tr><td>执行 / 计费 / 回执</td><td class="n">不变</td><td class="n">不变</td><td>合并后仍是一张 ParsedCsv</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <p class="card-t">施工顺序（每步都有验收判据，不是一次大改）</p>
+        <pre>P0  归组内核（纯函数）＋单测
+    buildLanguageTableGroups(稿, 表) → 组 + 证据 + 冲突
+    验收：12 稿 × 12 表 ⇒ 12 组；缺 1 门 ⇒ 存疑；同语言两张 ⇒ 冲突；不猜
+
+P1  绑定从 string 改成 string[]（只改第 1 步与导入）
+    choices: Record<draft, string[]>；同一稿多表只在这里合法
+    验收：负控——同一稿两张表不再报「同一稿只能有一张表」；跨交付物共用仍允许
+
+P2  导入时合并（复用 mergeParsedTables）＋分轮读表（12/轮）
+    验收：12 张 → 67 行 × 12 语言；一张 66 行 ⇒ 只拦那张；>12 张不报错
+
+P3  矩阵与抽屉按语言取表；补 na 分支与「没有语言列」的措辞
+    验收：ES 格绑 TH 表 ⇒ 不得出现「就绪」；未读表不得写「没有语言列」
+
+P4  例外清单与确认页
+    验收：144 格只列 3 件例外；每件可单点处置，处置后范围数字同步</pre>
+        <p class="note" style="margin-top:8px">P1/P2 是这次的重点；P0 必须先做（纯函数、可单测），否则又会出现「界面一套、闸一套」。</p>
+      </div>
+      <div class="card plain">
+        <p class="card-t">要你拍的三件事</p>
+        <p class="note">① 组内缺 1 门（如 6896 缺 VI）：默认<b>排除该门照跑</b>，还是<b>整组停</b>？建议排除并标红，不拖累另外 11 门。<br>
+        ② 同一门有两张表（重复语言）：默认<b>让你选一张</b>（不按时间挑），还是按目录优先？建议让你选。<br>
+        ③ 合并基准表：默认用<b>行数最多的那张</b>，并列时用文件名排序第一张——可以吗？</p>
+      </div>
+      <div class="card plain">
+        <p class="card-t">这份模拟连的代码（可逐条核对）</p>
+        <pre>候选只按 SKU＋交付物筛   sku-attribution.ts:331-339
+多候选一律 conflict       sku-attribution.ts:366-375
+一稿一表（导入时硬拦）    workbench-view.tsx:3119
+表册一稿一表类型          table-inventory.ts:53-58,164
+矩阵语言来自唯一绑定表    table-inventory.ts:189
+读表队列默认 12           table-inventory.ts:233-237
+批量读表头 >12 直接拒     local-assistant-client.ts:1413-1414
+合并算法（现成）          merge-tables.ts:103-231
+合并结构多数 / 行数上限   merge-tables.ts:65-94,126-131,173-178
+抽屉「就绪」不含 na       step1-stage-view.tsx:1300-1313,1375-1379
+未读也写「没有语言列」    table-picker-dialog.tsx:155</pre>
+      </div>
+    </div>`)
+}
+
+/* ───────────────────────────── 路由 ───────────────────────────── */
+const HINTS = {
+  0:'你现在看到的就是线上这一版：一份稿只能绑一张表，选完 ES 还是取自 TH。',
+  1:'归组是纯函数，先算出来给你看；默认全勾，你只在例外上取消。',
+  2:'144 张必须分轮读：一票 12 张，失败只影响那一张。',
+  3:'合并前先给你看每门语言对上多少行；结构不一致的那张单独点名。',
+  4:'矩阵每格点名来源表；点格可查、可换、可排除。',
+  5:'确认页只列例外——把 144 次判断压成 3 次。',
+  6:'开跑后按语言逐份回执，失败那一门可单独补。',
+  7:'对比、施工顺序、要你拍的三件事。',
+}
+function go(n){
+  S.step = Math.max(0, Math.min(7, n))
+  renderRail()
+  $('#stageTitle').textContent = `第 ${S.step} 步 · ${STEPS[S.step].t}`
+  $('#stageWhere').textContent = S.step===0 ? '批量工作台 · 第 1 步 准备素材' : `批量工作台 · 第 1 步 · ${STEPS[S.step].t}`
+  $('#footHint').textContent = HINTS[S.step]
+  $('#btnPrev').disabled = S.step === 0
+  $('#btnNext').disabled = S.step === 7
+  $('#btnNext').textContent = S.step === 7 ? '到底了' : '下一步 →'
+  if (S.step === 0) renderStep0()
+  if (S.step === 1) renderStep1()
+  if (S.step === 2) renderStep2()
+  if (S.step === 3) renderStep3()
+  if (S.step === 4) renderStep4()
+  if (S.step === 5) renderStep5()
+  if (S.step === 6) renderStep6()
+  if (S.step === 7) renderStep7()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+$('#btnNext').addEventListener('click', () => {
+  if (S.step === 1 && S.bindMode === 'none'){ S.bindMode = 'group' }
+  if (S.step === 2 && S.readDone < 144){ go(2); return }
+  go(S.step + 1)
+})
+$('#btnPrev').addEventListener('click', () => go(S.step - 1))
+$('#btnReset').addEventListener('click', () => {
+  S.clicks = 0; S.bindMode='none'; S.boundDraft=null; S.boundTable=null; S.groups=[]
+  S.readDone=0; S.readLog=[]; S.failedRead.done=false; S.excluded={}; S.mergeDone=false
+  S.runProgress=0; S.runDone=false; S.runLog=[]; S.lowConfirmed=false
+  document.querySelectorAll('.overlay').forEach(o=>o.remove())
+  go(0)
+})
+
+renderRail(); go(0)
+</script>
+</body>
+</html>

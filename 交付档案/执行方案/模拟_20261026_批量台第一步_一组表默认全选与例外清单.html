@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模拟件 · 批量台第 1 步：一组表默认全选与例外清单</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --sunk:#f0f2f4; --sunk2:#e9ecef;
+  --ink:#16181c; --ink2:#3a4049; --muted:#6b7280; --faint:#9aa1ab;
+  --line:#e2e5ea; --strong:#cbd1d8;
+  --accent:#1f5fd0; --accent-soft:#eaf0fb; --accent-line:#b9cdf3;
+  --ok:#0f7a4d; --ok-soft:#e7f4ed; --warn:#8a5a00; --warn-soft:#fbf2dd;
+  --bad:#ad2a20; --bad-soft:#fbeae8;
+  --row:30px; --r:7px;
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161a20; --sunk:#1c2128; --sunk2:#232a33;
+    --ink:#e8ebf0; --ink2:#c3cad4; --muted:#8f98a5; --faint:#6f7885;
+    --line:#262d37; --strong:#3a4350;
+    --accent:#79a6ff; --accent-soft:#182437; --accent-line:#2f4a75;
+    --ok:#5ccf9b; --ok-soft:#12291f; --warn:#e0b64a; --warn-soft:#2a2210;
+    --bad:#ff8f82; --bad-soft:#2c1714;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ── app shell ── */
+.app{height:100vh;display:grid;grid-template-rows:44px 38px minmax(0,1fr) 30px}
+
+.topbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:12px;font-weight:700}
+.crumb{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--ink2);font-weight:600}
+.seg{display:flex;border:1px solid var(--strong);border-radius:6px;overflow:hidden;margin-left:auto}
+.seg button{padding:4px 10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);font-weight:600}
+.counters{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);white-space:nowrap}
+.counters b{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.counters .k{color:var(--muted)}
+.iconbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--muted);display:grid;place-items:center;font-size:12px}
+.iconbtn:hover{border-color:var(--strong);color:var(--ink)}
+
+.stepper{display:flex;align-items:center;gap:0;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow:hidden}
+.stepper button{display:flex;align-items:center;gap:6px;padding:0 14px;height:38px;font-size:12.5px;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+.stepper button .n{width:16px;height:16px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:10px;font-family:var(--mono)}
+.stepper button[aria-current="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.stepper button[aria-current="true"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stepper .sep{width:14px;height:1px;background:var(--line);flex:0 0 auto}
+
+.main{display:grid;grid-template-columns:238px minmax(0,1fr) 318px;min-height:0}
+.rail{min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--panel);border-right:1px solid var(--line)}
+.rail.right{border-right:0;border-left:1px solid var(--line)}
+.rail-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rail-head b{color:var(--ink2);font-weight:600}
+.rail-head .tag{margin-left:auto}
+
+.drow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+.drow:hover{background:var(--sunk)}
+.drow[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.drow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.drow.t-warn .dot{background:var(--warn)}
+.drow.t-bad .dot{background:var(--bad)}
+.drow .sku{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.drow .sub{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .pill{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--strong);color:var(--muted);white-space:nowrap}
+.drow.t-ok .pill{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.drow.t-warn .pill{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.drow.t-bad .pill{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+.stage{min-height:0;overflow:auto;padding:14px 16px 24px}
+.wrap{max-width:940px}
+
+/* ── empty / loading ── */
+.empty{max-width:560px;margin:9vh auto 0;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:26px 26px 22px}
+.empty h1{margin:0 0 6px;font-size:19px;line-height:1.35;letter-spacing:-.01em}
+.empty p{margin:0 0 16px;color:var(--ink2);font-size:13px}
+.empty ul{margin:0 0 20px;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.9}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--strong);border-radius:6px;background:var(--panel);font-size:12.5px;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+
+.scanbox{max-width:520px;margin:9vh auto 0;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:22px}
+.bar{height:4px;background:var(--sunk2);border-radius:99px;overflow:hidden;margin:14px 0 16px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .32s ease}
+@media (prefers-reduced-motion:reduce){ .bar i{transition:none} }
+.ph{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.ph li{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--faint)}
+.ph li .s{width:14px;height:14px;border-radius:50%;border:1px solid var(--strong);display:grid;place-items:center;font-size:9px}
+.ph li.on{color:var(--ink)}
+.ph li.on .s{border-color:var(--accent);color:var(--accent)}
+.ph li.done{color:var(--muted)}
+.ph li.done .s{background:var(--ok);border-color:var(--ok);color:#fff}
+.ph li em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+/* ── verdict line ── */
+.verdict-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:8px;margin-bottom:12px}
+.verdict-line b{font-size:13.5px;font-weight:600}
+.verdict-line .n{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--accent-line);border-radius:5px;padding:1px 6px;color:var(--accent)}
+.verdict-line .sub{color:var(--ink2);font-size:12px}
+
+/* ── group card ── */
+.gcard{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden}
+.ghead{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ghead h2{margin:0;font-size:14px;font-weight:600;line-height:1.45;word-break:break-all}
+.ghead .meta{color:var(--muted);font-size:11.5px;margin-top:3px}
+.ghead .right{margin-left:auto;text-align:right;white-space:nowrap}
+.ghead .right .big{font-size:13px;font-weight:600}
+.ghead .right .small{display:block;font-size:11px;color:var(--muted)}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--strong);color:var(--muted);vertical-align:1px}
+.badge.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.badge.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.badge.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:6px;padding:12px 14px}
+.chip{display:grid;grid-template-columns:15px 1fr;align-items:center;gap:7px;text-align:left;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.chip:hover{border-color:var(--strong)}
+.chip .box{width:14px;height:14px;border:1px solid var(--strong);border-radius:3px;display:grid;place-items:center;font-size:9px;color:transparent;background:var(--panel)}
+.chip[aria-checked="true"] .box{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .t{display:block;font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .t small{color:var(--muted);font-size:10.5px;margin-left:3px}
+.chip .m{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.chip[aria-checked="false"]{background:var(--sunk);border-style:dashed}
+.chip[aria-checked="false"] .t{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.chip[aria-checked="false"] .m{color:var(--ink2)}
+.chip.dim{opacity:.62}
+.chip.q{border-color:var(--warn);border-style:dashed}
+.chip.q .m{color:var(--warn)}
+.chip.blocked{border-color:var(--bad)}
+.chip.blocked .m{color:var(--bad)}
+
+.note{display:flex;gap:8px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);background:var(--sunk);font-size:12px;color:var(--ink2)}
+.note .acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+details.ev{border-top:1px solid var(--line)}
+details.ev summary{cursor:pointer;padding:8px 14px;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.ev summary::-webkit-details-marker{display:none}
+details.ev summary::before{content:"▸";font-size:9px;color:var(--faint)}
+details.ev[open] summary::before{content:"▾"}
+.evbody{padding:2px 14px 12px;display:flex;flex-direction:column;gap:6px}
+.evbody .li{display:grid;grid-template-columns:64px 1fr;gap:8px;font-size:12px;color:var(--ink2)}
+.evbody .li b{color:var(--muted);font-weight:500}
+
+/* ── next step ── */
+.nextbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.nextbar .hint{font-size:11.5px;color:var(--muted)}
+
+/* ── exceptions rail ── */
+.exc{border-bottom:1px solid var(--line);padding:10px 11px;display:flex;flex-direction:column;gap:7px;transition:box-shadow .2s ease}
+.exc.done{background:var(--panel)}
+.exc.focus{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.exc-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;line-height:1.45}
+.exc-head .no{font-family:var(--mono);font-size:10.5px;width:16px;height:16px;border-radius:4px;background:var(--sunk2);color:var(--ink2);display:grid;place-items:center;flex:0 0 auto}
+.exc.done .exc-head{font-weight:500;color:var(--muted)}
+.exc p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.exc .why{color:var(--muted);font-size:11px}
+.filerow{display:grid;grid-template-columns:15px 1fr;gap:6px;align-items:start;padding:5px 7px;border:1px solid var(--line);border-radius:5px;text-align:left;width:100%}
+.filerow:hover{border-color:var(--strong);background:var(--sunk)}
+.filerow[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.filerow .nm{display:block;font-size:11.5px;word-break:break-all;line-height:1.45}
+.filerow .mt{display:block;font-size:10.5px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto;justify-content:center}
+.decision{font-size:11.5px;color:var(--ok);display:flex;gap:6px;align-items:center}
+.decision .undo{margin-left:auto;color:var(--muted);text-decoration:underline;font-size:11px}
+
+/* ── status bar ── */
+.statusbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.statusbar .path{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.statusbar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+.statusbar b{color:var(--ink2);font-weight:600;font-family:var(--mono)}
+
+/* ── old way ── */
+.oldhead{max-width:760px}
+.oldhead h1{font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
+.oldhead p{margin:0 0 12px;color:var(--ink2);font-size:12.5px}
+.dialog{max-width:620px;border:1px solid var(--strong);background:var(--panel);border-radius:10px;box-shadow:0 6px 22px rgba(16,24,40,.08);overflow:hidden}
+.dialog .dh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600}
+.dialog .dh .steps{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+.dialog .db{padding:10px 12px;display:flex;flex-direction:column;gap:4px;max-height:340px;overflow:auto}
+.cand{display:grid;grid-template-columns:15px 1fr auto;gap:8px;align-items:center;padding:5px 7px;border:1px solid var(--line);border-radius:5px;text-align:left;width:100%}
+.cand:hover{border-color:var(--strong);background:var(--sunk)}
+.cand[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.cand .nm{font-size:11.5px;word-break:break-all}
+.cand .nm small{display:block;color:var(--muted);font-size:10.5px;font-family:var(--mono)}
+.cand .rc{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.dialog .df{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line);background:var(--sunk);font-size:11.5px;color:var(--muted)}
+.dialog .df .acts{margin-left:auto}
+.result{max-width:620px;border:1px solid var(--bad);background:var(--bad-soft);border-radius:10px;padding:16px 16px 14px;margin-top:14px}
+.result .big{font-size:16px;font-weight:600;color:var(--ink);line-height:1.4}
+.result .big b{color:var(--bad);font-family:var(--mono)}
+.result p{margin:6px 0 0;font-size:12.5px;color:var(--ink2)}
+.bars{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-width:420px}
+.bars .row{display:grid;grid-template-columns:78px 1fr 74px;gap:8px;align-items:center;font-size:11.5px;color:var(--ink2)}
+.bars .track{height:14px;background:var(--panel);border:1px solid var(--strong);border-radius:4px;overflow:hidden}
+.bars .track i{display:block;height:100%}
+.bars .row.ok .track i{background:var(--ok)}
+.bars .row.bad .track i{background:var(--bad)}
+.bars .row b{font-family:var(--mono);text-align:right}
+
+/* ── modal ── */
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.42);display:none;place-items:center;padding:20px;z-index:50}
+.modal[data-open="true"]{display:grid}
+.sheet{width:min(620px,100%);max-height:82vh;overflow:auto;background:var(--panel);border:1px solid var(--strong);border-radius:12px;padding:18px 20px}
+.sheet h2{margin:0 0 10px;font-size:15px}
+.sheet h3{margin:14px 0 5px;font-size:12.5px;color:var(--ink2)}
+.sheet p,.sheet li{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.sheet ul{margin:0;padding-left:16px}
+.sheet .mono{color:var(--ink2)}
+.sheet .close{margin-top:16px}
+
+@media (max-width:1180px){
+  .counters .opt{display:none}
+  .main{grid-template-columns:200px minmax(0,1fr) 286px}
+}
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{height:auto;grid-template-rows:44px 38px auto auto}
+  .main{grid-template-columns:1fr}
+  .rail{max-height:min(42vh,300px);border-right:0;border-bottom:1px solid var(--line)}
+  .rail.right{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .statusbar{position:sticky;bottom:0}
+  .stepper button{padding:0 9px;font-size:11.5px}
+  .empty,.scanbox{margin-top:18px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <span class="mark" aria-hidden="true">图</span>
+    <span class="brand">图译工坊 <span style="color:var(--faint);font-weight:400">/ 批量处理</span></span>
+    <span class="crumb">Amazon-主副图 · <b id="crumbDrafts">12 份稿</b> · 一个文件夹</span>
+    <div class="seg" role="group" aria-label="对照：今天怎么做 vs 提案">
+      <button data-act="mode" data-mode="old" aria-pressed="false">今天的做法</button>
+      <button data-act="mode" data-mode="new" aria-pressed="true">一组表（提案）</button>
+    </div>
+    <div class="counters">
+      <span><span class="k">手工选表</span> <b id="cClicks">0</b> 次</span>
+      <span id="segBound"><span class="k">已绑定</span> <b id="cBound">0</b>/<span id="segTotal">144</span> 格</span>
+      <span class="opt"><span class="k">可交付</span> <b id="cOut">0</b> 份</span>
+    </div>
+    <button class="iconbtn" data-act="info" aria-label="这是什么">?</button>
+  </div>
+
+  <div class="stepper" id="stepper" role="tablist" aria-label="四步">
+    <button data-step="1" aria-current="true"><span class="n">1</span>准备素材</button>
+    <span class="sep"></span>
+    <button data-step="2" disabled title="先做完这一步"><span class="n">2</span>智能检测</button>
+    <span class="sep"></span>
+    <button data-step="3" disabled title="先做完这一步"><span class="n">3</span>设计稿校对</button>
+    <span class="sep"></span>
+    <button data-step="4" disabled title="先做完这一步"><span class="n">4</span>生成交付</button>
+  </div>
+
+  <div class="main">
+    <aside class="rail left" aria-label="稿">
+      <div class="rail-head"><b>稿</b><span id="railCount">12 份 · 全部主副图</span><span class="tag mono" id="railTag">未扫描</span></div>
+      <div id="draftList"></div>
+    </aside>
+
+    <section class="stage" id="stage"></section>
+
+    <aside class="rail right" aria-label="例外清单">
+      <div class="rail-head"><b>要你定的</b><span id="excLeft">4 件</span><span class="tag mono" id="excTag">—</span></div>
+      <div id="excList"></div>
+    </aside>
+  </div>
+
+  <div class="sr" aria-live="polite" id="announce"></div>
+
+  <div class="statusbar">
+    <span class="path" id="sbPath">完整表-20261003 · 只读，不会改你的文件</span>
+    <span class="r" id="sbRight"></span>
+  </div>
+</div>
+
+<div class="modal" id="info" data-open="false" role="dialog" aria-modal="true" aria-label="这是什么">
+  <div class="sheet">
+    <h2>这是第 1 步的可玩件，不是截图</h2>
+    <p>数据照真实语料的比例：12 份稿（同一交付物「主副图」）× 12 门语言 × 67 行。文件夹里一共 145 个表文件：144 个格位里有 143 张表，另有 1 张重复的西班牙语表、1 张表名带两个 SKU 的孤表。</p>
+    <h3>哪些是真的（代码里已有）</h3>
+    <ul>
+      <li>四步名称与顺序：<span class="mono">terms.ts:26-31</span></li>
+      <li>今天「一稿只能有一张表」：<span class="mono">workbench-view.tsx:3119</span></li>
+      <li>多张单语言表按原文合并的引擎：<span class="mono">merge-tables.ts:103-231</span>；结构不符时整批拒：<span class="mono">merge-tables.ts:65-94</span></li>
+      <li>读表一次只排 12 张：<span class="mono">table-inventory.ts:233-237</span>；客户端表头探测 12 张硬上限：<span class="mono">local-assistant-client.ts:1413-1414</span></li>
+      <li>抽屉「这一份就绪」的假绿灯：<span class="mono">step1-stage-view.tsx:1300-1313</span></li>
+    </ul>
+    <h3>哪些是提案（还没实现）</h3>
+    <ul>
+      <li>一组表＝一次绑定（绑定值从「一张表」变成「一组表」）</li>
+      <li>整组默认全选；例外单独列出，不替你猜</li>
+      <li>读表分轮，直到整组读齐再进第 2 步</li>
+      <li>取消勾选的那张真的从绑定里剔除，不只是减显示数</li>
+    </ul>
+    <h3>不会发生的事</h3>
+    <p>按钮不会碰你的文件，也不会连服务器。这里所有数字都是状态派生出来的，不是写死的。</p>
+    <button class="btn close" data-act="info-close">知道了</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═════════ 真实口径 ═════════ */
+const LANGS = [
+  {code:'ES',zh:'西班牙语'},{code:'FR',zh:'法语'},{code:'ID',zh:'印度尼西亚语'},{code:'IT',zh:'意大利语'},
+  {code:'JP',zh:'日语'},{code:'MS',zh:'马来语'},{code:'NL',zh:'荷兰语'},{code:'PL',zh:'波兰语'},
+  {code:'RU',zh:'俄语'},{code:'TH',zh:'泰语'},{code:'TL',zh:'菲律宾语'},{code:'VI',zh:'越南语'},
+];
+const SKUS = ['5857','6896','5660','5477','5294','5168','5012','4950','4871','4733','4602','4521'];
+const ROWS = 67, FOLDER = '完整表-20261003';
+const DRAFTS = SKUS.map(sku => ({sku, deliverable:'主副图', name:`(B级)Amazon-${sku}-主副图-8-祝叶子.psb`}));
+const SLOTS = DRAFTS.length * LANGS.length;   // 144 个格位
+const READ_TABLES = SLOTS;                    // 143 个格位有表 + 1 张重复的西班牙语表 = 144 张进本批
+const TABLE_FILES = READ_TABLES + 1;          // 再加 1 张归属不明的孤表 = 145 个表文件
+const READ_BATCH = 12;                        // 客户端一次只排 12 张（表头探测硬上限）
+const READ_ROUNDS = Math.ceil(READ_TABLES / READ_BATCH);
+
+/* 四个例外，全部来自真实语料形态 */
+const EXC_TOTAL = 4;  // ① 两张同语言 ② 缺一门 ③ 行数不符 ④ 归属不明
+const EX = {
+  dup:  { sku:'5857', lang:'ES' },          // 两张西班牙语表（干净名 / 带哈希副本）
+  miss: { sku:'6896', lang:'VI' },          // 缺一门
+  bad:  { sku:'5660', lang:'ID' },          // 66 行
+  orphan: '5389 5390.xlsx',                 // 表名两个 SKU
+};
+const isDup   = (s,l) => s===EX.dup.sku && l===EX.dup.lang;
+const isMiss  = (s,l) => s===EX.miss.sku && l===EX.miss.lang;
+const isBad   = (s,l) => s===EX.bad.sku && l===EX.bad.lang;
+
+/* ═════════ 状态 ═════════ */
+const S = {
+  mode:'new',                 // 'new' | 'old'
+  phase:'idle',               // idle | scanning | ready
+  scanIdx:-1,
+  active:'5857',
+  excluded:{},                // 'sku/LANG' -> true
+  dupPick:null,               // 'clean' | 'hash'
+  missPolicy:null,            // 'exclude' | 'stop'
+  badPolicy:null,             // 'block' | 'stop'
+  orphan:'unknown',           // 'unknown' | 'read' | 'removed'
+  touched:{ miss:false, bad:false, orphan:false },  // 这几条是你改过的，不是默认套的
+  focusEx:null,               // 从格位点过来的那件例外，右栏保持高亮直到你处置它
+  nextHint:false,             // 点过「下一步」：可玩件到此为止，明说出来
+  clicks:0,
+  old:{ picks:0, chosen:{}, done:false },
+};
+
+const key = (s,l) => s + '/' + l;
+const zhOf = (l) => (LANGS.find(x => x.code===l) || {}).zh || l;
+const draftOf = (sku) => DRAFTS.find(d => d.sku===sku);
+function tableName(sku, lang){
+  if (isDup(sku,lang)) return `ES 西班牙语-${sku}.xlsx`;
+  return `${lang} ${zhOf(lang)}-${sku}.xlsx`;
+}
+function rowsOf(sku, lang){
+  if (isMiss(sku,lang)) return null;
+  if (isBad(sku,lang)) return 66;
+  return ROWS;
+}
+
+/* ═════════ 派生 ═════════ */
+const stopped = (sku) =>
+  (sku===EX.miss.sku && S.missPolicy==='stop') || (sku===EX.bad.sku && S.badPolicy==='stop');
+
+/* 单个格位是否已绑定 */
+function slotBound(sku, lang){
+  if (stopped(sku)) return false;
+  if (isMiss(sku,lang)) return false;                       // 没有这张表
+  if (S.excluded[key(sku,lang)]) return false;             // 人取消勾选
+  if (isDup(sku,lang) && !S.dupPick) return false;         // 两张重复，系统不挑
+  if (isBad(sku,lang)) return false;                       // 66 行那张被单独拦下
+  return true;
+}
+function slotPending(sku, lang){
+  if (stopped(sku)) return false;
+  if (isDup(sku,lang) && !S.dupPick) return true;
+  if (isMiss(sku,lang) && !S.missPolicy) return true;
+  if (isBad(sku,lang) && !S.badPolicy) return true;
+  return false;
+}
+function groupBound(sku){
+  let n=0; for (const l of LANGS) if (slotBound(sku,l.code)) n++;
+  return n;
+}
+function boundTotal(){
+  if (S.phase!=='ready') return 0;
+  return DRAFTS.reduce((n,d)=>n+groupBound(d.sku),0);
+}
+function pendingTotal(){
+  if (S.phase!=='ready') return 0;
+  let n = 0;
+  if (!S.dupPick) n++;
+  if (!S.missPolicy) n++;
+  if (!S.badPolicy) n++;
+  if (S.orphan!=='removed') n++;
+  return n;
+}
+const deliverable = () => (S.mode==='old' ? S.old.picks : boundTotal());
+const pendingSlots = () => (S.phase!=='ready' ? 0 : DRAFTS.reduce((n,d)=>n+LANGS.filter(l=>slotPending(d.sku,l.code)).length,0));
+
+function draftTone(sku){
+  if (stopped(sku)) return {tone:'t-bad', label:'整组停', badge:'整组停'};
+  if (sku===EX.dup.sku && !S.dupPick) return {tone:'t-warn', label:'待定 1', badge:'待定'};
+  if (sku===EX.miss.sku && !S.missPolicy) return {tone:'t-warn', label:'缺 1 门', badge:'待定'};
+  if (sku===EX.bad.sku && !S.badPolicy) return {tone:'t-warn', label:'拦 1 张', badge:'待定'};
+  if (sku===EX.miss.sku) return {tone:'t-warn', label:`${groupBound(sku)} 门 · 缺 1`, badge:'缺 1 门 · 已排除'};
+  if (sku===EX.bad.sku) return {tone:'t-warn', label:`${groupBound(sku)} 门 · 拦 1`, badge:'拦 1 张 · 已拦下'};
+  return {tone:'t-ok', label:`${groupBound(sku)} 门`, badge:'自动配好'};
+}
+
+/* ═════════ 渲染：顶部计数 ═════════ */
+function renderCounters(){
+  const old = S.mode==='old';
+  document.getElementById('cClicks').textContent = old ? S.old.picks : S.clicks;
+  document.getElementById('segBound').style.display = old ? 'none' : '';
+  document.getElementById('cBound').textContent = S.phase==='ready' ? boundTotal() : 0;
+  document.getElementById('cOut').textContent = S.phase==='ready' ? deliverable() : 0;
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.mode===S.mode)));
+  const tag = document.getElementById('railTag');
+  tag.textContent = S.phase==='ready' ? `${DRAFTS.length} 组` : (S.phase==='scanning' ? '扫描中' : '未扫描');
+  const excLeft = document.getElementById('excLeft'), excTag = document.getElementById('excTag');
+  if (S.phase!=='ready'){ excLeft.textContent='待扫描'; excTag.textContent='—'; }
+  else if (S.mode==='old'){ excLeft.textContent='旧做法不显示'; excTag.textContent='—'; }
+  else { excLeft.textContent = pendingTotal()===0 ? '都处置完了' : `${pendingTotal()} 件`; excTag.textContent = `${EXC_TOTAL-pendingTotal()}/${EXC_TOTAL}`; }
+  const sb = document.getElementById('sbRight');
+  if (S.phase!=='ready'){ sb.textContent = S.phase==='scanning' ? '扫描中…' : '等扫描'; }
+  else if (S.mode==='old'){ sb.innerHTML = `<span>已选 <b>${S.old.picks}</b>/${DRAFTS.length} 份稿 · 每份只带 1 门语言</span>`; }
+  else { sb.innerHTML = `<span>读表 <b>${READ_TABLES}</b>/${READ_TABLES} · ${READ_ROUNDS} 轮 · 手工选表 <b>${S.clicks}</b> 次</span>`; }
+}
+
+/* ═════════ 渲染：左栏 ═════════ */
+function renderDrafts(){
+  const box = document.getElementById('draftList');
+  if (S.phase!=='ready'){
+    box.innerHTML = DRAFTS.map(d=>`<div class="drow t-ok" style="opacity:.55"><span class="dot"></span><span><span class="sku">${d.sku}</span><span class="sub">${d.name}</span></span><span class="pill">—</span></div>`).join('');
+    return;
+  }
+  box.innerHTML = DRAFTS.map(d=>{
+    const n = groupBound(d.sku);
+    if (S.mode==='old'){
+      const picked = S.old.chosen[d.sku];
+      return `<button class="drow ${picked?'t-ok':'t-warn'}" data-act="pick-draft" data-sku="${d.sku}" aria-current="${String(d.sku===S.active)}" title="${d.name}">
+        <span class="dot"></span>
+        <span><span class="sku">${d.sku}</span><span class="sub">${d.deliverable} · 可交付 ${picked?1:0} 份</span></span>
+        <span class="pill">${picked?'1 门':'未选'}</span>
+      </button>`;
+    }
+    const st = draftTone(d.sku);
+    return `<button class="drow ${st.tone}" data-act="pick-draft" data-sku="${d.sku}" aria-current="${String(d.sku===S.active)}" title="${d.name}">
+      <span class="dot"></span>
+      <span><span class="sku">${d.sku}</span><span class="sub">${d.deliverable} · 可交付 ${n} 份</span></span>
+      <span class="pill">${st.label}</span>
+    </button>`;
+  }).join('');
+}
+
+/* ═════════ 渲染：中栏 ═════════ */
+function emptyHTML(){
+  return `<div class="empty">
+    <h1>还没扫描这个文件夹</h1>
+    <p>一个文件夹里 <b>${TABLE_FILES} 个表</b>、${DRAFTS.length} 份稿、${LANGS.length} 门语言。今天要做的第一件事，是把「哪个表属于哪份稿」配清楚。</p>
+    <ul>
+      <li>扫描只读文件名和表头，不动原文件。</li>
+      <li>归组只看三件事：稿的 SKU、交付物、组内语言互不重复。</li>
+      <li>拿不准的按默认处理（缺一门只排除那一门、对不上的只拦那一张、归属不明先读表），右边逐条写明，你随时能改。</li>
+      <li>只有真没法替你决定的才等你：同一门语言有两张表，用哪张只有你知道。</li>
+    </ul>
+    <button class="btn primary" data-act="scan">扫描并自动配对</button>
+  </div>`;
+}
+function scanningHTML(){
+  const items = [
+    ['扫描文件夹', `${TABLE_FILES} 个文件`],
+    ['认 SKU 与交付物', `${DRAFTS.length}/${DRAFTS.length} 认出`],
+    ['归组', `${TABLE_FILES} → ${DRAFTS.length} 组`],
+    ['读表头', `${READ_TABLES} 张 · ${READ_ROUNDS} 轮`],
+  ];
+  return `<div class="scanbox">
+    <h1 style="font-size:15px;margin:0">正在配对</h1>
+    <div class="bar"><i id="scanBar" style="width:${Math.max(6,(S.scanIdx+1)*25)}%"></i></div>
+    <ul class="ph">${items.map(([t,m],i)=>{
+      const cls = i<S.scanIdx ? 'done' : (i===S.scanIdx ? 'on' : '');
+      const s = i<S.scanIdx ? '✓' : (i===S.scanIdx ? '·' : '');
+      return `<li class="${cls}"><span class="s">${s}</span>${t}<em>${m}</em></li>`;
+    }).join('')}</ul>
+  </div>`;
+}
+function chipHTML(d, l){
+  const k = key(d.sku, l.code), on = slotBound(d.sku, l.code);
+  const rows = rowsOf(d.sku, l.code);
+  let cls = 'chip', meta = rows===null ? '没有这张表' : `${rows}/${ROWS} 行`, jump = '';
+  if (isDup(d.sku,l.code)){
+    cls += ' q'; jump = 'dup';
+    meta = S.dupPick ? `已选：${S.dupPick==='clean'?'干净名那张':'带哈希那张'}` : '两张 · 点这里去选';
+  } else if (rows===null){ cls += ' blocked'; jump = 'miss'; }
+  else if (rows!==ROWS){ cls += ' blocked'; meta = `${rows}/${ROWS} · 拦下`; jump = 'bad'; }
+  else if (!on && S.excluded[k]) { meta = '已排除'; }
+  return `<button class="${cls}" role="checkbox" aria-checked="${String(on)}"
+    data-act="chip" data-k="${k}" data-jump="${jump}" title="${tableName(d.sku,l.code)}">
+    <span class="box">✓</span>
+    <span><span class="t">${l.code}<small>${l.zh}</small></span><span class="m">${meta}</span></span>
+  </button>`;
+}
+function readyHTML(){
+  const d = draftOf(S.active);
+  const n = groupBound(d.sku);
+  const tone = draftTone(d.sku);
+  const stoppedRow = stopped(d.sku);
+  const exN = pendingTotal();
+  /* 真的还停在默认上的条数——你改过的就不算默认了 */
+  const defaulted = (S.missPolicy==='exclude' && !S.touched.miss ? 1 : 0)
+                  + (S.badPolicy==='block' && !S.touched.bad ? 1 : 0)
+                  + (S.orphan==='removed' && !S.touched.orphan ? 1 : 0);
+  const pendingHere = LANGS.filter(l=>slotPending(d.sku,l.code)).length;
+  const missHere = LANGS.some(l=>isMiss(d.sku,l.code));
+  const badHere = LANGS.some(l=>isBad(d.sku,l.code));
+
+  const excludedHere = LANGS.filter(l=>S.excluded[key(d.sku,l.code)]);
+  let note = `这一组会合成 <b>1 张 ${n} 语言表</b>，第 2 步以后拿到的还是一张表，下游不用改。`;
+  if (stoppedRow){
+    note = `<b style="color:var(--bad)">这一组整组停</b>：${d.sku} 的表先不参与，改完再回来。`;
+  } else {
+    const parts = [];
+    if (excludedHere.length) parts.push(`已排除 ${excludedHere.map(l=>l.zh).join('、')}`);
+    if (pendingHere) parts.push(`还有 <b>${pendingHere} 个格位</b>在右边等你定`);
+    else if (missHere) parts.push('缺 1 门（越南语），补表后重扫会自动接上');
+    else if (badHere) parts.push('印尼语那张 66 行已按默认单独拦下，其余门照跑');
+    if (parts.length) note = `${parts.join('；')}；本稿现在可交付 <b>${n} 份</b>。`;
+  }
+
+  const evRows = [];
+  evRows.push(['归属', `文件名里的 SKU <span class="mono">${d.sku}</span> 与稿一致；交付物「${d.deliverable}」一致。这两个是身份，语言不是。`]);
+  evRows.push(['覆盖', isMiss(d.sku, EX.miss.lang)
+    ? `${n} 门各有 ${ROWS} 行原文，逐行一致；越南语这张在文件夹里找不到。`
+    : (isBad(d.sku, EX.bad.lang)
+      ? `${n} 门各有 ${ROWS} 行原文；印尼语那张只有 66 行，第 67 行对不上，所以单独拦下。`
+      : `${n} 门各有 ${ROWS} 行原文，逐行一致（对齐 ${n}×${ROWS}）。`)]);
+  evRows.push(['唯一', isDup(d.sku, EX.dup.lang)
+    ? '组内语言不重复，只有西班牙语出现了两张：系统不按时新挑，留给你。'
+    : '组内语言不重复。缺门按默认只排除那一门、对不上的只拦那张；同门两张不自动挑，留给你。']);
+
+  return `
+  <div class="wrap">
+    <div class="verdict-line">
+      <span class="n">${DRAFTS.length} 组</span>
+      <b>${boundTotal()} 张表已经自动配上，${S.clicks===0 ? '你一次都没点' : `你只点了 ${S.clicks} 次`}。</b>
+      <span class="sub">${exN===0
+        ? `${EXC_TOTAL} 件都有结论了，可以直接进第 2 步。${S.clicks? `那 ${S.clicks} 次是自己在几张重复表里挑的，不是逐份选表。`:''}`
+        : (defaulted===EXC_TOTAL-1 && exN===1 && !S.dupPick
+          ? `${defaulted} 件按默认处理好了（右栏逐条写明），只有 1 件要你定：5857 的两张西班牙语用哪张。`
+          : `${EXC_TOTAL-exN} 件已经有结论（${defaulted} 件是默认），剩 ${exN} 件要你定。`)}</span>
+    </div>
+
+    <div class="gcard">
+      <div class="ghead">
+        <div>
+          <h2>${d.name} <span class="badge ${tone.tone==='t-bad'?'bad':(tone.tone==='t-warn'?'warn':'ok')}">${tone.badge}</span></h2>
+          <div class="meta">SKU <span class="mono">${d.sku}</span> · 交付物 ${d.deliverable} · ${LANGS.length} 门语言 · 每门 ${ROWS} 行</div>
+        </div>
+        <div class="right">
+          <span class="big">${n} 门 · 可交付 ${n} 份</span>
+          <span class="small">${pendingHere ? `+${pendingHere} 个格位待定` : (badHere ? '1 张已拦下' : (missHere ? '缺 1 门' : '全部就位'))}</span>
+        </div>
+      </div>
+
+      <div class="chips">${LANGS.map(l=>chipHTML(d,l)).join('')}</div>
+
+      <div class="note">
+        <span>${note}</span>
+        <span class="acts">
+          ${excludedHere.length ? `<button class="btn sm ghost" data-act="toggle-all" data-sku="${d.sku}">全选回来</button>` : ''}
+        </span>
+      </div>
+
+      <details class="ev">
+        <summary>凭什么归到这一组（3 条证据，点开看）</summary>
+        <div class="evbody">
+          ${evRows.map(([k,v])=>`<div class="li"><b>${k}</b><span>${v}</span></div>`).join('')}
+        </div>
+      </details>
+    </div>
+
+    <div class="nextbar">
+      <button class="btn primary" data-act="next" ${exN? 'disabled':''}>下一步：智能检测</button>
+      <span class="hint">${exN
+        ? `还有 ${exN} 件要你定`
+        : (S.nextHint ? '可玩件到这里：第 2 步的界面还没做。' : `${EXC_TOTAL} 件都有结论了，可以进下一步`) }</span>
+    </div>
+  </div>`;
+}
+
+/* ═════════ 渲染：右栏（例外） ═════════ */
+function fileRow(name, rows, time, act, which, on){
+  return `<button class="filerow" data-act="${act}" data-which="${which}" aria-pressed="${String(Boolean(on))}">
+    <span class="box" style="width:13px;height:13px;border:1px solid var(--strong);border-radius:3px;margin-top:2px;${on?'background:var(--accent);border-color:var(--accent)':''}"></span>
+    <span><span class="nm">${name}</span><span class="mt">${rows} 行 · ${time}</span></span>
+  </button>`;
+}
+function excHTML(){
+  if (S.phase!=='ready'){
+    return `<div class="exc"><p class="why">扫描完才有。这里只会出现「系统拿不准」的，不会把 144 张表列给你点。</p></div>`;
+  }
+  if (S.mode==='old'){
+    return `<div class="exc"><p class="why">今天的做法不告诉你这些：两张重复的表、缺的那门、66 行对不上的那张，全都混在选表框的候选里，长得一模一样。</p></div>`;
+  }
+  const cards = [];
+
+  /* ① 两张西班牙语表 */
+  if (S.dupPick){
+    cards.push(`<div class="exc done">
+      <div class="exc-head"><span class="no">①</span>两张西班牙语表</div>
+      <div class="decision">已用「${S.dupPick==='clean'?'ES 西班牙语-5857.xlsx':'ES 西班牙语-5857-3e338c29100d.xlsx'}」<button class="undo" data-act="undo" data-which="dup">撤销</button></div>
+    </div>`);
+  } else {
+    cards.push(`<div class="exc${S.focusEx==='dup'?' focus':''}">
+      <div class="exc-head"><span class="no">①</span>5857 有两张西班牙语表</div>
+      <p>两张原文完全一样，译文有 3 行不同（第 12、31、58 行）。系统不替你按时新挑——改之前它会静默先用先读到的那张。</p>
+      ${fileRow('ES 西班牙语-5857.xlsx', 67, '10:12', 'dup', 'clean', false)}
+      ${fileRow('ES 西班牙语-5857-3e338c29100d.xlsx', 67, '10:19', 'dup', 'hash', false)}
+      <p class="why">你想用哪张就点哪张，点一下即定。</p>
+    </div>`);
+  }
+
+  /* ② 缺一门 */
+  const missBound = stopped(EX.miss.sku) ? 0 : groupBound(EX.miss.sku);
+  if (S.missPolicy){
+    const lead = S.touched.miss ? '你选了' : '已按默认';
+    cards.push(`<div class="exc done">
+      <div class="exc-head"><span class="no">②</span>6896 缺越南语</div>
+      <p class="why">这组其余 11 门都与稿逐行对得上，只有越南语这张在文件夹里找不到。补表后重扫会自动接上。</p>
+      <div class="decision">${S.missPolicy==='exclude'?`${lead}排除这一门 · 6896 其余 11 门照跑`:`${lead}整组停 · 6896 出 0 份，等补表`}<button class="undo" data-act="undo" data-which="miss">改</button></div>
+    </div>`);
+  } else {
+    cards.push(`<div class="exc${S.focusEx==='miss'?' focus':''}">
+      <div class="exc-head"><span class="no">②</span>6896 缺越南语</div>
+      <p>这一组 11 门齐、67 行都对得上，只有越南语这张在文件夹里找不到。</p>
+      <div class="acts">
+        <button class="btn sm primary" data-act="miss" data-which="exclude">排除，其余 11 门照跑</button>
+        <button class="btn sm" data-act="miss" data-which="stop">整组停</button>
+      </div>
+      <p class="why">推荐排除：缺一门不该拖住另外 11 门；补表后重扫会自动接上。</p>
+    </div>`);
+  }
+
+  /* ③ 66 行 */
+  if (S.badPolicy){
+    const lead = S.touched.bad ? '你选了' : '已按默认';
+    cards.push(`<div class="exc done">
+      <div class="exc-head"><span class="no">③</span>5660 印尼语表 66 行</div>
+      <p class="why">同组其余 11 张都是 67 行，只有它少第 67 行——是跟这份稿的对齐基准不一样，不是「行太多」。</p>
+      <div class="decision">${S.badPolicy==='block'?`${lead}只拦这一张 · 5660 其余 11 门照跑`:`${lead}整组停 · 5660 出 0 份，等这张修好`}<button class="undo" data-act="undo" data-which="bad">改</button></div>
+    </div>`);
+  } else {
+    cards.push(`<div class="exc${S.focusEx==='bad'?' focus':''}">
+      <div class="exc-head"><span class="no">③</span>5660 的印尼语表只有 66 行</div>
+      <p>同组其余 11 张都是 67 行，只有它少第 67 行。这跟「行太多」不是一回事：这张表跟这份稿的对齐基准不一样。</p>
+      <div class="acts">
+        <button class="btn sm primary" data-act="bad" data-which="block">只拦这一张</button>
+        <button class="btn sm" data-act="bad" data-which="stop">整组停</button>
+      </div>
+      <p class="why">推荐只拦这一张：剩下 11 门不受影响。错误文案会写「这张表与这份稿对不上」，不写「行太多」。</p>
+    </div>`);
+  }
+
+  /* ④ 归属不明 */
+  if (S.orphan==='removed'){
+    cards.push(`<div class="exc done">
+      <div class="exc-head"><span class="no">④</span>5389 5390.xlsx 归属不明</div>
+      <p class="why">读表结果：67 行原文与 <span class="mono">5390</span> 的稿逐行一致，但 5390 不在本批 12 份稿里——表名里有两个 SKU，不等于哪个都行。</p>
+      <div class="decision">${S.touched.orphan ? '你让它读表后移出本批' : '已按默认：先读表再判，移出本批'}<button class="undo" data-act="undo" data-which="orphan">改</button></div>
+    </div>`);
+  } else if (S.orphan==='read'){
+    cards.push(`<div class="exc${S.focusEx==='orphan'?' focus':''}">
+      <div class="exc-head"><span class="no">④</span>5389 5390.xlsx 归属不明</div>
+      <p><b>读完了：</b>67 行原文与 <span class="mono">5390</span> 的稿逐行一致，但 5390 不在本批 12 份稿里。</p>
+      <div class="acts"><button class="btn sm primary" data-act="orphan-remove">移出本批</button></div>
+      <p class="why">不猜：「表名里两个 SKU」不等于「哪个都行」。读表头这一步对本批外的表也做，才不用你先绑定再判。</p>
+    </div>`);
+  } else {
+    cards.push(`<div class="exc${S.focusEx==='orphan'?' focus':''}">
+      <div class="exc-head"><span class="no">④</span>5389 5390.xlsx 表名里有两个 SKU</div>
+      <p>两个 SKU 都在本批之外，也可能只是复制时带了旧名。系统不猜，也不会把它当垃圾丢掉。</p>
+      <div class="acts"><button class="btn sm primary" data-act="orphan-read">读这张表判归属</button></div>
+      <p class="why">这张表还没绑定，照样能读表头——修的是「只有已绑定的表才读得到」那个死循环。</p>
+    </div>`);
+  }
+
+  return cards.join('');
+}
+
+function candidates(sku){
+  const out = [];
+  for (const l of LANGS){
+    out.push({ lang:l.code, name:`${l.code} ${l.zh}-${sku}.xlsx` });
+    if (isDup(sku,l.code)) out.push({ lang:l.code+'#hash', name:`ES 西班牙语-${sku}-3e338c29100d.xlsx` });
+  }
+  return out;
+}
+
+/* ═════════ 渲染：旧做法 ═════════ */
+function oldHTML(){
+  if (S.phase!=='ready'){
+    return `<div class="wrap"><div class="oldhead"><h1>今天的做法：一稿一张表</h1>
+      <p>先扫描，再看它怎么逼你选。</p></div>
+      <button class="btn primary" data-act="scan">扫描并自动配对</button></div>`;
+  }
+  const total = DRAFTS.length;
+  if (S.old.done){
+    return `<div class="wrap">
+      <div class="oldhead"><h1>今天的做法：一稿一张表</h1>
+      <p>每份稿的候选都是同 SKU、同交付物的全部 12 张表——语言不参与身份，所以每一份都会弹一次「请选一张」。</p></div>
+      <div class="result">
+        <div class="big">你点了 <b>${S.old.picks}</b> 次 → 最后能交 <b>${S.old.picks}</b> 份</div>
+        <p>每份稿只带 1 门语言；另外 <b>${SLOTS - S.old.picks}</b> 张表根本没被读、也进不去第 2 步。</p>
+        <div class="bars">
+          <div class="row ok"><span>一组表</span><span class="track"><i style="width:${(boundTotal()/SLOTS*100).toFixed(1)}%"></i></span><b>${boundTotal()} 份</b></div>
+          <div class="row bad"><span>一稿一张</span><span class="track"><i style="width:${(S.old.picks/SLOTS*100).toFixed(1)}%"></i></span><b>${S.old.picks} 份</b></div>
+        </div>
+        <div style="margin-top:14px"><button class="btn" data-act="mode" data-mode="new">回到「一组表」</button></div>
+      </div>
+      <p style="margin-top:14px;color:var(--muted);font-size:12px">这一步不是让你选方案，是让你点一下感受差别：${S.old.picks} 次 vs ${S.clicks} 次。</p>
+    </div>`;
+  }
+  const idx = S.old.picks;
+  const d = DRAFTS[idx];
+  const chosen = S.old.chosen[d.sku] || null;
+  return `<div class="wrap">
+    <div class="oldhead"><h1>今天的做法：一稿一张表</h1>
+    <p>第 ${idx+1} 份稿弹出了选表框。候选十几张，全是同 SKU、同交付物，只有语言不同——但语言不在身份里，所以系统不敢替你挑。</p></div>
+    <div class="dialog">
+      <div class="dh">请为这一稿选一张表 <span class="steps">${idx+1} / ${total} 份 · 已点 ${S.old.picks} 次</span></div>
+      <div class="db">
+        ${candidates(d.sku).map(c=>{
+          return `<button class="cand" data-act="old-pick" data-lang="${c.lang}" aria-pressed="${String(chosen===c.lang)}">
+            <span class="box" style="width:13px;height:13px;border:1px solid var(--strong);border-radius:50%;${chosen===c.lang?'border:4px solid var(--accent)':''}"></span>
+            <span class="nm">${c.name}<small>${c.lang.replace('#hash','')} ${zhOf(c.lang.replace('#hash',''))}</small></span>
+            <span class="rc">67 行</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="df">
+        <span>选中后，这一稿就只带这一门语言。</span>
+        <span class="acts">
+          ${idx>0?`<button class="btn sm ghost" data-act="old-fast">剩下的 ${total-idx} 份都按第一张走（等于你点了 ${total-idx} 次）</button>`:''}
+          <button class="btn sm primary" data-act="old-confirm" ${chosen?'':'disabled'}>确定这张</button>
+        </span>
+      </div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:12px">今天这 ${DRAFTS.length} 次点完，交付物矩阵只有 ${DRAFTS.length} 格是满的（${DRAFTS.length}/${SLOTS}）。</p>
+  </div>`;
+}
+
+/* ═════════ 总渲染 ═════════ */
+function render(){
+  renderCounters();
+  renderDrafts();
+  const stage = document.getElementById('stage');
+  if (S.mode==='old'){ stage.innerHTML = oldHTML(); }
+  else if (S.phase==='idle'){ stage.innerHTML = emptyHTML(); }
+  else if (S.phase==='scanning'){ stage.innerHTML = scanningHTML(); }
+  else { stage.innerHTML = readyHTML(); }
+  document.getElementById('excList').innerHTML = excHTML();
+  document.getElementById('info').dataset.open = String(Boolean(S._info));
+}
+
+/* ═════════ 动作 ═════════ */
+/* 三条默认口径（Owner 2026-10-26 拍）：缺一门只排除这一门、行数对不上只拦这张、归属不明先读表再判。
+   套的是默认，不是静默：右栏四条照样逐条写明，你随时能改。 */
+function applyDefaults(){
+  if (!S.missPolicy) S.missPolicy = 'exclude';
+  if (!S.badPolicy)  S.badPolicy  = 'block';
+  if (S.orphan==='unknown') S.orphan = 'removed';
+}
+
+function scan(){
+  if (S.phase!=='idle') return;
+  S.phase='scanning'; S.scanIdx=0; render();
+  const tick = setInterval(()=>{
+    S.scanIdx++;
+    if (S.scanIdx>=4){
+      clearInterval(tick);
+      S.phase='ready'; S.scanIdx=-1;
+      applyDefaults();
+      render();
+    } else { render(); }
+  }, 320);
+}
+
+/* 只在状态真变了的时候说一句，整块重渲染不进朗读器 */
+function announce(msg){
+  const el = document.getElementById('announce');
+  if (el) el.textContent = msg;
+}
+
+function toggleLang(k){
+  if (!S.phase||S.phase!=='ready') return;
+  const [sku, lang] = k.split('/');
+  if (isDup(sku,lang) && !S.dupPick) return;     // 重复那张要在右栏选
+  if (isMiss(sku,lang)) return;                  // 没这张表
+  if (isBad(sku,lang)) return;                   // 已单独拦下
+  if (stopped(sku)) return;
+  S.excluded[k] = !S.excluded[k];
+  render();
+  announce(`${zhOf(lang)}${S.excluded[k]?'已排除':'已加回'}，${sku} 现在可交付 ${groupBound(sku)} 份`);
+}
+
+function bindAll(sku){
+  for (const l of LANGS) delete S.excluded[key(sku,l.code)];
+  render();
+  announce(`${sku} 已全部加回，可交付 ${groupBound(sku)} 份`);
+}
+
+const EXC_ORDER = { dup:0, miss:1, bad:2, orphan:3 };
+function focusExc(which){
+  S.focusEx = which;
+  render();
+  const card = document.querySelectorAll('#excList .exc')[EXC_ORDER[which]];
+  if (card) card.scrollIntoView({ block:'nearest' });
+}
+function clearFocus(){
+  if (!S.focusEx) return;
+  S.focusEx = null;
+}
+
+const ACT = {
+  scan: () => scan(),
+  mode: (el) => { S.mode = el.dataset.mode; render(); },
+  info: () => { S._info = true; render(); const b = document.querySelector('[data-act="info-close"]'); if (b) b.focus(); },
+  'info-close': () => { S._info = false; render(); const b = document.querySelector('[data-act="info"]'); if (b) b.focus(); },
+  'pick-draft': (el) => { S.active = el.dataset.sku; render(); },
+  chip: (el) => {
+    const j = el.dataset.jump;
+    if (j){ focusExc(j); return; }
+    toggleLang(el.dataset.k);
+  },
+  'toggle-all': (el) => bindAll(el.dataset.sku),
+  dup: (el) => {
+    if (!['clean','hash'].includes(el.dataset.which)) return;
+    S.dupPick = el.dataset.which; S.clicks++; clearFocus(); render();
+  },
+  miss: (el) => { S.missPolicy = el.dataset.which; S.touched.miss = true; clearFocus(); render(); },
+  bad: (el) => { S.badPolicy = el.dataset.which; S.touched.bad = true; clearFocus(); render(); },
+  'orphan-read': () => { S.orphan='read'; S.touched.orphan = true; render(); },
+  'orphan-remove': () => { S.orphan='removed'; S.touched.orphan = true; clearFocus(); render(); },
+  undo: (el) => {
+    const w = el.dataset.which;
+    if (w==='dup'){ if (S.dupPick) S.clicks--; S.dupPick=null; }
+    if (w==='miss'){ S.missPolicy=null; S.touched.miss=true; }
+    if (w==='bad'){ S.badPolicy=null; S.touched.bad=true; }
+    if (w==='orphan'){ S.orphan='unknown'; S.touched.orphan=true; }
+    clearFocus(); render();
+  },
+  next: () => { S.nextHint = true; render(); },
+  'old-pick': (el) => { S.old.chosen[DRAFTS[S.old.picks].sku] = el.dataset.lang; render(); },
+  'old-confirm': () => {
+    const d = DRAFTS[S.old.picks];
+    if (!S.old.chosen[d.sku]) return;
+    S.old.picks++;
+    if (S.old.picks>=DRAFTS.length) S.old.done = true;
+    render();
+  },
+  'old-fast': () => {
+    for (let i=S.old.picks;i<DRAFTS.length;i++){
+      S.old.chosen[DRAFTS[i].sku] = S.old.chosen[DRAFTS[i].sku] || LANGS[0].code;
+    }
+    S.old.picks = DRAFTS.length; S.old.done = true;
+    render();
+  },
+};
+
+document.addEventListener('click', (e)=>{
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const fn = ACT[el.dataset.act];
+  if (fn) { e.preventDefault(); fn(el); }
+});
+document.addEventListener('keydown', (e)=>{
+  if (e.key==='Escape' && S._info){ S._info=false; render(); }
+});
+
+/* 调试/断言入口 */
+window.__sim = {
+  S, LANGS, DRAFTS, SLOTS, TABLE_FILES, READ_TABLES, READ_ROUNDS,
+  boundTotal, deliverable, pendingTotal, groupBound, slotBound, pendingSlots,
+  draftTone,
+};
+
+/* 骨架上的静态数字也从常量来，免得改数据时漏改 */
+document.getElementById('segTotal').textContent = SLOTS;
+document.getElementById('crumbDrafts').textContent = `${DRAFTS.length} 份稿`;
+document.getElementById('railCount').textContent = `${DRAFTS.length} 份 · 全部${DRAFTS[0].deliverable}`;
+
+render();
+</script>
+</body>
+</html>

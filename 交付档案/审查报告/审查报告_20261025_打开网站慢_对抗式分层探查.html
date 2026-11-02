@@ -1,0 +1,641 @@
+<title>打开网站这么慢，到底卡在哪一层</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>站点性能</span><span class="sep">/</span>
+    <span>2026-10-25</span>
+  </p>
+  <h1>打开网站这么慢，到底卡在哪一层</h1>
+  <p class="standfirst">慢的不是网站，是你到网站之间那段网线。请求从广州被路由到美国洛杉矶，再跨洋回源到新加坡的服务器，绕地球一圈半；这一段实测一半的包会丢，所以页面经常传一半就断。服务器本身 16 毫秒就能吐完首页。</p>
+  <div class="meta">
+    <span>本机＝广州联通 AS17623</span>
+    <span>边缘落点 LAX</span>
+    <span>源站 Singapore</span>
+    <span>未改任何配置</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p><strong>三层根因，主因在链路。</strong>改代码只能省掉跨洋回源的那几秒（方案 A）；要让网站从「打不开」变成「秒开」，必须换一条网络路径（方案 B），那一步要你拍。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">50%</span><span class="k">广州到 Cloudflare 的丢包率<br>（12 发 6 收，RTT 299ms）</span></div>
+    <div class="stat bad"><span class="n">6/20</span><span class="k">下载首页拿不完的次数<br>真浏览器 <code>ERR_TIMED_OUT</code></span></div>
+    <div class="stat warn"><span class="n">1.34MB</span><span class="k">首页要下 23 个文件<br>15KB/s 下要 89 秒</span></div>
+    <div class="stat ok"><span class="n">16ms</span><span class="k">服务器自己吐完 98KB<br>网站本身不慢</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>现场：真浏览器里的 263 秒</h2>
+  <p class="lede">先看现象，再看原因。用真实浏览器打开 <code>https://tuyigf.com/</code>，读它自己的性能时间线：</p>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">1.46s</span><span class="k">首页 HTML 拿到首字节<br>这一段其实不慢</span></div>
+    <div class="stat bad"><span class="n">134s</span><span class="k">8 个 JS 文件同时卡住<br>才等到第一个字节</span></div>
+    <div class="stat bad"><span class="n">263s</span><span class="k">整批资源拖到 4 分 24 秒<br>取数时仍未完成</span></div>
+    <div class="stat warn"><span class="n">0</span><span class="k"><code>domInteractive</code> / <code>DCL</code> / <code>load</code><br>页面从未真正加载完成</span></div>
+  </div>
+
+  <div class="callout">
+    <p><strong>8 个文件同时卡住、同时恢复</strong>——它们都在第 11.4 秒发起请求，都在第 134.3 秒拿到首字节。这是 <strong>HTTP/2 队头阻塞</strong>的标准指纹：所有文件共用一条连接，只要有一个包丢了，整条连接上的所有文件一起等，直到重传成功才集体放行。配合下一层实测的 50% 丢包，这个 134 秒就是这么来的。</p>
+  </div>
+
+  <p class="lede"><strong>这对你意味着：</strong>你感觉到的「打开这么慢」，不是首页 HTML 慢（它 1.46 秒就到了），而是<strong>页面卡在 JS 上，转圈转了几分钟</strong>。网站渲染不出来，看起来就像「网站挂了」。</p>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>先排除掉错误答案</h2>
+  <p class="lede">对抗式审查第一步是证伪。三个「看起来像根因」的嫌疑人都被实测否掉了。</p>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>被排除的</h3>
+      <ul>
+        <li><strong>服务器太慢？</strong> 服务器自己访问自己：16 毫秒吐完 98KB。</li>
+        <li><strong>Cloudflare 配置错？</strong> 新加坡服务器访问同一域名：TLS 38ms、全程 99ms——就近调度正常。</li>
+        <li><strong>页面太大？</strong> 今天已做字体分片，14.13 MiB → 446,865 B，已解决一大半。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>真正的对照</h3>
+      <p>同一个 Cloudflare IP <code>104.21.11.101</code>，同一时刻，不同出发点：</p>
+      <ul>
+        <li><strong>新加坡服务器</strong> ping：8 发 8 收，<strong>0% 丢包，2.076 毫秒</strong></li>
+        <li><strong>你的网络</strong> ping：12 发 6 收，<strong>50% 丢包，299 毫秒</strong></li>
+      </ul>
+      <p>差 144 倍延迟 + 半数丢包。问题不在 Cloudflare，不在网站，在「广州 → 边缘节点」这段路由。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>第 1 层：到边缘的链路掉一半的包（占大头）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag bad">落点</span><span class="loc">CF-RAY 响应头</span></div>
+      <p>4 次请求全部落在 <strong>LAX（洛杉矶）</strong>。对照新加坡服务器访问同一域名，3 次全部落在 <strong>SIN（新加坡）</strong>——说明 Cloudflare 就近调度本身正常，是中国出海流量被运营商路由到了美西。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">成功率</span><span class="loc">20 次连测</span></div>
+      <p>建 TCP 连接：<strong>15 成功 / 5 失败</strong>（p50 = 234ms）。完整下载首页：<strong>14 次拿全 / 6 次只拿到一半</strong>。传输速度 <strong>1.4 – 16 KB/s</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag bad">真浏览器</span><span class="loc">Chromium 实测</span></div>
+      <p>直接打开 <code>https://tuyigf.com/</code> 报 <strong><code>ERR_TIMED_OUT</code></strong>，页面根本没渲染出来。这就是你「打开这么慢」的现场。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag warn">协议</span><span class="loc">h1 / h2 各 5 次</span></div>
+      <p>HTTP/1.1 成功 3 次，<strong>HTTP/2 成功 0 次</strong>——高丢包下多路复用反而更糟：一个包丢，整条流都卡住。HTTP/3 未测（本机 curl 不支持）。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>为什么是洛杉矶？</strong> 这不是我们能配的。Cloudflare 官方社区确认：中国大陆出海流量走哪个节点，主要由运营商的路由决定，「很多流量被送到 LAX」是已知现象。Cloudflare 在大陆没有普通版节点，要国内节点必须 Enterprise 企业版 + 中国网络附加包 + ICP 备案。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>第 2 层：首页每次都跨洋回源——绕了两趟太平洋</h2>
+  <p class="lede">首页被声明为强制动态渲染（<code>src/app/(zh)/page.tsx:12</code> <code>export const dynamic = 'force-dynamic'</code>），因为它要在服务端读 cookie 注入登录态（<code>:35</code>）、合并功能开关（<code>:38</code>）、判断编辑态（<code>:42</code>）。副作用是响应头带 <code>no-store</code> + <code>cf-cache-status: DYNAMIC</code>，<strong>Cloudflare 永远不缓存，每次都回源</strong>。</p>
+  <p class="lede">源站在新加坡、边缘在洛杉矶 → 每次回源都是跨太平洋。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead>
+        <tr><th>#</th><th>边缘命中（不回源）</th><th>回源</th><th>回源多花</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>1.903s</td><td>1.791s</td><td>-0.112s</td><td>噪声范围内</td></tr>
+        <tr><td>2</td><td>0.326s</td><td>0.960s</td><td>+0.634s</td><td>正常回源</td></tr>
+        <tr><td>3</td><td>0.710s</td><td>0.687s</td><td>-0.023s</td><td>噪声范围内</td></tr>
+        <tr><td>4</td><td>1.322s</td><td>7.032s</td><td><strong>+5.71s</strong></td><td>跨洋丢包重传</td></tr>
+        <tr><td>5</td><td>0.319s</td><td>1.933s</td><td><strong>+1.614s</strong></td><td>正常回源</td></tr>
+        <tr><td>6</td><td>1.524s</td><td>20.007s</td><td><strong>+18.48s</strong></td><td>直接超时</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="notes" style="margin-top:.6rem">算法：把 TLS 握手扣掉，只算「拿到首字节」的纯等待时间，命中与回源交错采样。中位多花 0.7–1.6 秒，长尾 5.7 秒，最坏超时。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>第 3 层：1.34 MB、23 个文件</h2>
+
+  <div class="stats">
+    <div class="stat warn"><span class="n">760KB</span><span class="k">JS 15 个文件</span></div>
+    <div class="stat warn"><span class="n">407KB</span><span class="k">字体 5 个分片<br>（今天刚优化）</span></div>
+    <div class="stat warn"><span class="n">174KB</span><span class="k">CSS 3 个文件</span></div>
+    <div class="stat bad"><span class="n">89.4s</span><span class="k">按实测 15KB/s<br>下完全部资源</span></div>
+  </div>
+
+  <ul class="notes">
+    <li>数据从源站直连取得（不经 Cloudflare），23 个资源全部可达，合计 <strong>1,341,513 字节</strong>；首页 HTML 文本 98,126 字节，18 个 <code>&lt;script&gt;</code>、14 个 <code>&lt;link&gt;</code>。</li>
+    <li>换算：15 KB/s 下要 <strong>89.4 秒</strong>；即使链路正常到 150 KB/s 也要 <strong>8.9 秒</strong>。今天没做字体分片的话，同样链路要 16 分钟。</li>
+    <li><strong>顺带发现一个可改点</strong>：字体在源站的头是 <code>Cache-Control: public, max-age=0</code>（立即过期），导致 Cloudflare 每次都回头源校验（状态 <code>REVALIDATED</code>）。JS 的头是对的（<code>max-age=604800, public, immutable</code>），字体应该照做。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>「现在更慢」——待确认</h2>
+  <p class="lede">我只有当前时刻的读数，没有同条件历史基线，所以不能断言「比以前慢了 X 倍」。</p>
+  <div class="split">
+    <div class="panel no">
+      <h3>历史记录（CHANGELOG 文字，非同条件复测）</h3>
+      <ul>
+        <li>首字节 3.0–4.4 秒</li>
+        <li>12 次复测有 5 次 20 秒只传一半</li>
+        <li>TLS 1,629 毫秒</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>本次实测</h3>
+      <ul>
+        <li>首字节 0.69–20 秒（波动大）</li>
+        <li>20 次有 6 次传不完</li>
+        <li>TLS 0.57–11.4 秒</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>「传一半就断」是老问题，不是新出现的</strong>（历史 5/12，本次 6/20，同一量级）。今天的字体分片是净改善。所以「现在更慢」更可能是这条链路本来就时好时坏，而不是某次改版引入——<strong>这句判断证据不足，标为待确认</strong>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>优化方案（请拍一个）</h2>
+
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">A</div>
+      <div class="body">
+        <h3>改代码，我现在就能做（治标）</h3>
+        <p><strong>A1</strong> 让未登录访客的首页可被边缘缓存（现在读 cookie 导致永不缓存）→ 省掉每次 0.7–18 秒的跨洋回源。唯一红线：必须严格区分带/不带 cookie 的请求，否则登录态可能被缓存泄漏。<br>
+        <strong>A2</strong> 字体头 <code>max-age=0</code> → <code>immutable</code>，不再每次回源校验。<br>
+        <strong>A3</strong> 合并 3 个 CSS、收紧 15 个 JS 分片，23 次往返降下来——50% 丢包下失败概率显著下降。<br>
+        <strong>A4</strong> 关 HTTP/3：第三方称国内部分网络干扰 QUIC，<strong>未核实</strong>（本机 curl 不支持 h3，需真浏览器验证）。</p>
+        <p><strong>天花板</strong>：即使 100% 命中边缘，你到洛杉矶那 50% 丢包还在。A 能去掉「白等几秒回源」，<strong>不能让网站从打不开变成秒开</strong>。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">B</div>
+      <div class="body">
+        <h3>换网络路径（治本，要拍 + 可能有成本）</h3>
+        <p><strong>B1</strong> Cloudflare 中国网络：国内有真实节点、几十毫秒延迟；企业版 + 中国网络附加包 + ICP 备案，贵。<br>
+        <strong>B2</strong> 换/加一层国内 CDN（阿里云、腾讯云）：国内 &lt;50ms；需 ICP 备案 + 改 DNS。<br>
+        <strong>B3</strong> 优选 Cloudflare IP：低成本、可能立竿见影；但不稳——IP 会被墙、会变，要长期维护。<br>
+        <strong>B4</strong> 源站从新加坡迁到香港：回源从跨洋变近距离；迁移工作量 + 确认新加坡机器其它用途。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">C</div>
+      <div class="body">
+        <h3>先补齐测量（建议先做，再拍 B）</h3>
+        <p><strong>C1</strong> 多点位复测——我只有广州联通一个点，你在电信/移动、或让外地朋友各测一次，就能分清是全国性还是联通局部。<br>
+        <strong>C2</strong> 开 Cloudflare Browser Insights（免费），拿真实用户数据代替我这台机器的样本。<br>
+        <strong>C3</strong> 给 nginx 日志加耗时字段——实测确认当前日志是默认格式，没有 <code>$request_time</code>，无法统计真实用户平均等多久。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>我的建议：A 立刻做（没风险，纯赚），同时做 C1（你换个网络测一次只要两分钟），拿到结果再拍 B。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>残留与缺口（如实）</h2>
+  <ul class="notes">
+    <li><strong>只有一个测点</strong>：广州联通。所有网络结论都基于这一台机器，样本单点，不能代表所有用户。</li>
+    <li><strong>「更慢」的时间对比待确认</strong>：没有同条件历史基线，只有 CHANGELOG 文字记录。</li>
+    <li><strong>HTTP/3 未测</strong>：本机 curl 报 <code>the installed libcurl version does not support this</code>。响应头 <code>alt-svc: h3=":443"</code> 说明站点支持 h3，效果未知。</li>
+    <li><strong>没动任何生产配置</strong>：Cloudflare 规则、nginx、源站位置全部未改；A 方案的代码改动也还没做，等你拍。</li>
+    <li><strong>真浏览器取证受限</strong>：本机浏览器打开站点报 <code>ERR_TIMED_OUT</code>，拿不到加载瀑布图——这本身就是最直接的证据。</li>
+    <li>今天的字体分片（<code>main</code> 分支 <code>df93c257</code>）已生效，5 个分片实测全部可达，共 406,956 字节，与方案数字逐位一致。</li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>本次动了什么</strong>：只做只读实测与报告产出。<strong>没动</strong>：Cloudflare 配置、nginx、源站、生产站代码、支付 flag、<code>CURRENT_STATUS.md</code>。</p>
+  <p>测点 广州联通 AS17623 · 边缘 LAX · 源站 Singapore · 2026-10-25 · 图译工坊内测版</p>
+</footer>
+
+</div>
+
+</body>
+</html>

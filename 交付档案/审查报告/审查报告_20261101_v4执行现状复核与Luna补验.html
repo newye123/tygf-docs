@@ -1,0 +1,430 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>v4 执行现状复核</title><style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+main{max-width:1040px;margin:auto;padding:32px 24px}p{line-height:1.9;overflow-wrap:anywhere}h2{margin-top:2em}</style><main><div class="verdict">已实施并进入测试站；内容覆盖与验收缺项仍待收口。</div><h1>v4 已执行到测试站，尚未完成全部验收与正式站发布</h1>
+<p>承接：Owner 指定 20261031 官网与四步工作台模拟件、统一落地版 v4，要求对抗审查，未执行部分交给 GPT-6 Luna 最高档。<br>方法：不采信旧报告标题，逐级核 GitHub、实际运行身份、网页正文与内容数据库；独立执行手补查验收缺项。<br>结论：不是没执行。主体代码与 3.7.30 助手已进入测试站；正式站仍是另一版本，测试站中文官网又被旧内容覆盖。不能重复派整套重做，也不能说全套验收已经完成。</p>
+<p>VERDICT: CONCERNS。核验日期：2026-11-01。</p>
+<h2>已经核实的事实</h2>
+<p>- GitHub develop 与 codex/unified-opt-20261031 两分支均返回 50cf2466df1c6d95e88f1bd2ecde16344d7ce846。命令：git ls-remote origin refs/heads/develop 与同名侧枝，rc=0。<br>- 原执行七笔的末笔 886b18ff 是 50cf2466 的祖先。git merge-base --is-ancestor 886b18ff 50cf2466 返回 rc=0。原方案实施不只停在侧枝。<br>- 服务器测试进程 3001 的 /api/runtime-provenance 返回 BOUND、50cf2466、expectedAssistantVersion=3.7.30、report-v3/renderer-v4；正式进程 3000 返回 BOUND、94bda516、3.7.28、report-v2/renderer-v3。SSH 执行两个 curl 的命令 rc=0。这是本轮运行实测，不是旧日志。<br>- 测试进程 /api/local-assistant/latest 返回 available=true、3.7.30、SHA256=489FD400CEEF7713EAF51E1D8C7A3FAB130056DBD3EA68F342956C0C5DC3B890。只读元数据，不声称本轮下载校验或安装了包。<br>- 实际候选目录是 worktrees/unified-opt-20261031；旧 worktrees/develop 工作目录仍停在71529c7c。候选目录现有10项未提交路径属于后续扫描故障修复，本轮未改。</p>
+<p>证据导航：AI_MEMORY/TASK_LOG.md:32、39、58、63，以上历史记录已用本轮远端与运行查询交叉核验；扫描修复在该文件:1，未提交状态本轮 git status 实测10项。</p>
+<h2>为什么看起来没有改</h2>
+<p>测试站部署的新代码已经包含“单批最多12份稿，逐份执行，每份最多12个目标语种”，但网页实际仍显示旧句。Node 在服务器分别读取两个进程首页，剔除 script/style 后，新句均未命中，旧句均命中；两个请求 HTTP 200，执行 rc=0。</p>
+<p>进一步用 sqlite3 -readonly 查询测试库 /var/www/tygf-test/db/custom.db，只读取公开内容字段：SiteContentPublication 当前 test 发布指针关联修订6，状态 frozen；homeV17.hero.eyebrow 是“已有译文的多语言 PSD / PSB · 单次最多12个目标语种”。查询 rc=0。</p>
+<p>这证明测试站首屏没变化的具体原因是已发布内容覆盖代码默认值。生产站则还没有部署该版代码。两种情况不能混为“代码未实现”。（历史旁证 AI_MEMORY/TASK_LOG.md:65）</p>
+<h2>对旧交付结论的裁决</h2>
+<p>- “安装包没出、不能合 develop”：已经过期，本轮不采信；最新运行身份与下载元数据直接反驳。<br>- “S0—S6全部收口”：只可理解为当时的实现交付，不能理解为 v4 所有验收通过。旧报告自身列出同样本前后截图、首次使用六状态、3.7.30 真机验收未闭合。<br>- “官网已更新”：代码层成立，测试中文访客可见层尚不成立。内容发布是单独步骤。<br>- “七笔必须整体合入”：已被后续独立拆分实验推翻，见 AI_MEMORY/TASK_LOG.md:75；本轮不沿用原报告的笼统回滚建议。<br>- 我上一轮运营分析主要检查旧 develop 目录和生产官网，漏掉独立执行树，不能用那轮源码读数代表最新测试能力。运营建议仍是建议，不替代本次指定 v4 范围；例如 v4 明确不新增官网价格区块，不据运营建议擅自加做。</p>
+<p>模拟 HTML 是冻结的候选稿，不是最终实施清单：其第447行仍写“未实施”，不能用作今天的状态；第887行的手动停止按 v4 第142行暂不做，官网价格区块按 v4 第90行不新增，第三步旧名也已由 S1 改为“审核确认”。因此不应要求把模拟中的所有按钮逐个补进产品。另已确认候选中文检查清单有7条但标题/说明仍说6项，已交 Luna 在隔离副本做最小修复与回归验证，不发布。</p><h2>仍需完成的事项与执行安排</h2>
+<p>1. 当前代码与基线的同样本、同视口对照，以及 S0—S7/T01—T26 验收证据归档：已派 GPT-6 Luna，reasoning_effort=max，执行任务 /root/luna_v4_remaining。只补遗漏验证，不重写已交付主体、不碰并行脏改。<br>2. 测试站中文内容发布：尚未执行。可审修订范围来自提交886b18ff：hero.eyebrow 改为“已有译文的多语言 PSD / PSB · 单批最多12份稿，逐份执行，每份最多12个目标语种”；cost.batchChip 改为“单批最多12份稿 · 每份最多12个目标语种”；检查清单加入稿件上限问答，并核清“六件事”标题与新增问答数量的一致性。发布前须以当前修订完整差异核对，不能整份覆盖其他运营改字。<br>3. 真机验收：docs/acceptance 下 *3.7.30* 文件名匹配计数为0。这只证明该目录没有对应版本记录，不证明从未有人试跑；本轮未运行客户 Photoshop 任务或收费任务。<br>4. 扫描权限故障修复仍在其他会话未提交现场，不能混入本次验收或声称已经上线。<br>5. 生产发布尚未进行，需完成适用验收并取得明确发布确认。测试站内容发布也属于发布动作，遵循用户提供 AGENTS 的逐次确认规则，本轮未修改数据库。</p>
+<h2>本轮边界</h2>
+<p>未提交、未推送、未部署、未改内容库、未安装助手、未翻开关、未删除文件。只读服务器公开身份与指定官网内容字段，没有导出账号或客户数据。Graphify 查询命令不存在，改用源码与实际运行证据。业务测试未跑，不把历史测试重新标为本轮 PASS。Luna 完成后另附补验结果。<br></p><h2>本轮补执行与主审复验结果</h2>
+<p>执行手为 GPT-6 Luna / max。它完成三文件补丁、正常检查 rc=0、标题改回6的负控 rc=1并恢复摘要、git apply --check rc=0；随后工作区额度耗尽停止，截图和整合由主审接手，没有将未完成工作算到它名下。</p>
+<p>主审独立复核后，仅将 src/config/siteContent.ts、src/config/siteContentEn.ts、scripts/smoke-content-studio-v1.mjs 三文件补丁应用到 worktrees/unified-opt-20261031。应用前这些路径无本地差异；另10项并行文件应用前后 SHA256 全相同。修复中英文标题6→7、摘要补齐7个条件，并把每批12语种改为每份稿12语种。未修改计费或实际容量限制。</p>
+<p>整合后实际运行：node scripts/smoke-content-studio-v1.mjs PASS rc=0；git diff --check 指定三文件 rc=0；node scripts/build-zh-font-subset.mjs --check rc=0（4片、401656B、1218码位全部覆盖）。没有为此文案修复重跑无关业务链。</p>
+<p>主审补做真实清单组件的静态渲染切片：直接取三个版本的 ChecklistItem/ChecklistSection、实际文案和样式，以 React 服务端渲染，只有内容上下文/编辑标记是夹具，并强制 reveal 可见；不是完整 Next 应用、交互或登录验收。e7d49ceb 基线为6标题/6条；50cf2466为6标题/7条；修复后为7标题/7条。三版本×中英文×1440/390像素共12张图，横向溢出均0，浏览器脚本rc=0。已目检修复后中文窄屏图。工具及数据在 F:/工具开发/tmp/v4-ab-20261101/render-checklist.cjs 与 screens/metrics.json；截图命名 patched-zh-390.png 等。</p>
+<p>完整P4/S6官网与四步工作台同样本A/B仍未完成，本轮只补清单组件切片，不能宣布全产品视觉验收。Codex管理worktree工具因当前聊天允许根限制拒绝创建，故采用明确提交的本机archive副本；smoke脚本被export-ignore排除，已从对应Git提交按Buffer补齐，不判仓库缺脚本。</p>
+<h2>v4验收矩阵：本轮可证明的边界</h2>
+<p>- S0：历史快照和迁移已有记录，本轮未重做恢复抽验。<br>- S1/S2：实现提交已在远端当前祖先链；本轮不重复宣布行为全验。<br>- S3：按最终方案默认可不纳入，不当作漏做。<br>- S4：包和测试运行身份已实测；真实客户文件与3.7.30正式验收记录仍未闭合。<br>- S5：代码已部署测试；中文现行内容覆盖未发布；本轮7项文案修复已落本地候选，未提交发布。<br>- S6：已有显示层实现；本轮新增清单12张对照切片，全产品对照仍待补。<br>- S7：测试已部署；生产未部署此版，不能称整体交付完成。<br>- T01：当前官网文案/容量实测，含已发现覆盖与清单口径问题；用户理解访谈未做。<br>- T02：历史入口检查存在，本轮没有提交真实申请或跑账号到执行。<br>- T03：内容覆盖只读查实；双语清单回归及切片完成；共享站新修订未发布。<br>- T04：首次使用六状态端到端 NOT RUN。<br>- T05、T06、T07、T08、T09、T10：11稿、扫描读表次数、余缺表、来源、失败保旧、迟到响应，本轮 NOT RUN；不可拿文案smoke代替。<br>- T11、T12、T13、T14、T15、T16：确认失效、查看不改范围、0项状态、编辑不串语言、矩阵同源、归属确认，本轮 NOT RUN。<br>- T17、T18、T19：排版范围、13/24版本范围与费用、确认过期，本轮 NOT RUN，未触发收费任务。<br>- T20、T21、T22、T23：真实回执、未知状态、部分失败账务、报告恢复与输出留存，本轮 NOT RUN。<br>- T24：仅清单1440/390切片无溢出；完整页面、键盘、200%缩放与对比度未补验。<br>- T25：单稿全路径 NOT RUN。<br>- T26：清单组件三版本同视口完成；全产品同样本配对未完成。</p>
+<p>上述NOT RUN指本轮，没有据此断言历史从未验证。未覆盖的真机/付费与发布步骤仍按项目授权和证据边界办理。</p><h2>通知与台账结果</h2><p>完整报告飞书发送成功。台账预演因本机签名密钥不可用失败，未强推。</p></main></html>

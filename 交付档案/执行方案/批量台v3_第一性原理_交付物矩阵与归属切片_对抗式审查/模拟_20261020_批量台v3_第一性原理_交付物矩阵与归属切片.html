@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量台 v3 · 第一性原理推导版模拟（交付物矩阵 / 归属切片 / 绑定证据）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--sunk:#f0efec;--ink:#121412;--ink2:#3c443f;--muted:#6c756f;
+  --line:#e2e3df;--line2:#d3d5cf;--teal:#009588;--teal-soft:#e2f3f1;--emerald:#009767;--emerald-soft:#e3f5ee;
+  --amber:#9a6505;--amber-soft:#fff7e7;--rose:#b3261e;--rose-soft:#fbeae8;--blue:#1b5bd0;--blue-soft:#e8effc;
+  --r:16px;--r-sm:12px;--font:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.68;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+.wrap{max-width:1460px;margin:0 auto;padding:24px 20px 70px}
+.doc{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.eyebrow .sep{color:var(--line2)}
+h1{margin:0;font-size:clamp(1.4rem,3vw,1.95rem);line-height:1.28;font-weight:700;max-width:38ch;text-wrap:balance}
+.standfirst{margin:0;max-width:82ch;color:var(--ink2);font-size:.95rem}
+.axioms{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.ax{border-left:3px solid var(--teal);padding:2px 0 2px 12px}
+.ax .n{font-family:var(--mono);font-size:.7rem;color:var(--teal);letter-spacing:.08em}
+.ax b{display:block;font-size:.92rem;margin:2px 0 3px}
+.ax p{font-size:.82rem;color:var(--ink2);margin:0}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);align-self:flex-start}
+.tabs button{border:0;background:transparent;padding:7px 16px;border-radius:999px;font-size:.86rem;font-weight:600;color:var(--ink2)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 12px 32px -18px rgba(0,0,0,.18)}
+.appbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);background:#fbfbfa}
+.appbar h2{margin:0;font-size:1rem;font-weight:700}
+.appbar .right{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:10px;padding:7px 13px;font-size:.84rem;font-weight:600;color:var(--ink)}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn.sm{padding:4px 10px;font-size:.78rem;border-radius:8px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;background:var(--surface)}
+.card.plain{background:#fbfbfa}
+.card-t{font-size:.93rem;font-weight:700;margin:0 0 3px}
+.card-s{font-size:.79rem;color:var(--muted);margin:0 0 11px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.input{width:100%;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;font-size:.86rem;font-family:var(--mono);background:var(--surface);color:var(--ink)}
+.pill{font-family:var(--mono);font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.pill.teal{background:var(--teal-soft);border-color:#bfe3df;color:#0a6f69}
+.pill.amber{background:var(--amber-soft);border-color:#eec87c;color:var(--amber)}
+.pill.rose{background:var(--rose-soft);border-color:#f0bdb8;color:var(--rose)}
+.pill.blue{background:var(--blue-soft);border-color:#c3d6f5;color:#12408f}
+.pill.share{background:#eef1f5;border-color:#d5d9e0;color:#3d4757}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.dot.ok{background:var(--emerald)}.dot.warn{background:#d9a84f}.dot.bad{background:var(--rose)}.dot.idle{background:#c9ccc7}.dot.blue{background:var(--blue)}
+.note{font-size:.8rem;color:var(--muted);max-width:92ch}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 15px;overflow:auto;font-family:var(--mono);font-size:.75rem;line-height:1.6;color:var(--ink2);margin:0}
+
+/* 矩阵 */
+.mxwrap{padding:16px 18px 20px}
+.mhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.mhead .t{font-size:.92rem;font-weight:700}
+.mhead .s{font-family:var(--mono);font-size:.71rem;color:var(--muted)}
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);max-height:520px}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.75rem}
+table.mx th,table.mx td{border-bottom:1px solid var(--line);padding:0}
+table.mx thead th{position:sticky;top:0;z-index:3;background:var(--sunk);font-family:var(--font-mono);font-size:.67rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line2);padding:7px 3px;text-align:center;min-width:60px}
+table.mx thead th:first-child{left:0;z-index:4;text-align:left;padding-left:12px;min-width:268px}
+table.mx tbody th{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:7px 12px;border-right:1px solid var(--line);min-width:268px;font-weight:500}
+table.mx tbody tr:hover th,table.mx tbody tr:hover td{background:#f5fbfb}
+table.mx tbody th:hover{background:#f1f8f8}
+.rowhead{display:flex;flex-direction:column;gap:3px}
+.rowhead .f{font-family:var(--mono);font-size:.79rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.rowhead .m{font-size:.7rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.cell{border:0;background:transparent;width:100%;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:5px 2px}
+.cell .cv{font-family:var(--mono);font-size:.75rem;font-weight:600}
+.cell .cs{font-size:.6rem;color:var(--muted);line-height:1.15}
+.c-ok{background:var(--emerald-soft);color:#0a5a41}
+.c-warn{background:var(--amber-soft);color:var(--amber)}
+.c-bad{background:var(--rose-soft);color:var(--rose)}
+.c-miss{background:transparent;color:var(--rose);box-shadow:inset 0 0 0 1px var(--rose)}
+.c-off{background:transparent;color:#a8aea9}
+.c-none{background:transparent;color:#a8aea9}
+.cell.sel{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--muted);margin-top:9px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:13px;height:13px;border-radius:4px;border:1px solid var(--line2);display:inline-block}
+.lg.on{background:var(--teal);border-color:var(--teal)}
+.lg.unconf{background:var(--amber-soft);border-color:var(--amber)}
+.lg.miss{background:var(--rose-soft);border-color:var(--rose);border-style:dashed}
+.lg.off{border-style:dashed}
+.lg.blue{background:var(--blue-soft);border-color:var(--blue)}
+
+/* 详情 */
+.split{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:560px}
+.rail{border-right:1px solid var(--line);background:#fbfbfa;display:flex;flex-direction:column;min-width:0}
+.rail-head{padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+.rail-head .t{font-size:.88rem;font-weight:700}
+.rail-head .s{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.rail-list{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px;max-height:640px}
+.sku{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:9px 11px;display:flex;flex-direction:column;gap:4px}
+.sku:hover{border-color:var(--line2)}
+.sku[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset;background:#f5fcfb}
+.sku .f{font-family:var(--mono);font-size:.79rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.sku .meta{font-size:.72rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:3px 8px}
+.detail{padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.filecard{border:1px solid var(--line2);border-radius:var(--r-sm);padding:12px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.filecard .fn{font-family:var(--mono);font-size:.9rem;font-weight:600}
+.filecard .sub{font-size:.77rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:3px 12px}
+.filecard .sp{margin-left:auto;display:flex;gap:8px}
+.langrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.lchip{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:.84rem;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:5px}
+.lchip.src{border-color:var(--teal);color:#0a6f69;background:var(--teal-soft)}
+.lchip.on{border-color:var(--teal);background:var(--teal);color:#fff}
+.lchip.on.unconfirmed{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}
+.lchip.off{color:var(--muted);border-style:dashed;background:transparent}
+.lchip.miss{border-color:var(--rose);color:var(--rose);background:var(--rose-soft);border-style:dashed}
+.lchip .pk{font-family:var(--mono);font-size:.66rem;opacity:.85}
+.ev{border-radius:var(--r-sm);padding:10px 13px;font-size:.82rem;display:flex;flex-direction:column;gap:3px}
+.ev.ok{background:var(--emerald-soft);border:1px solid #b8e0cd;color:#0a5a41}
+.ev.warn{background:var(--amber-soft);border:1px solid #eec87c;color:var(--amber)}
+.ev.bad{background:var(--rose-soft);border:1px solid #f0bdb8;color:var(--rose)}
+.ev.info{background:var(--blue-soft);border:1px solid #c3d6f5;color:#12408f}
+.ev.plain{background:var(--sunk);border:1px solid var(--line);color:var(--ink2)}
+.ev b{font-weight:700}
+table.plain{border-collapse:collapse;width:100%;font-size:.78rem}
+table.plain th{font-family:var(--mono);font-size:.67rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line2);background:var(--sunk)}
+table.plain td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plain td.m{font-family:var(--mono);font-size:.75rem}
+table.plain tr:last-child td{border-bottom:none}
+.dsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px}
+.ds{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.ds h4{margin:0;font-size:.85rem;font-family:var(--mono);word-break:break-all}
+.ds .sl{display:flex;flex-wrap:wrap;gap:4px}
+.slice{border:1px solid var(--line2);border-radius:8px;padding:2px 7px;font-family:var(--mono);font-size:.68rem;background:var(--sunk)}
+.slice.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.arrow{font-family:var(--mono);color:var(--muted);font-size:.75rem}
+.tmplrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:.72rem}
+.tcell{border:1px solid var(--line2);border-radius:6px;padding:2px 8px;background:var(--sunk)}
+.tcell.new{border-color:var(--teal);background:var(--teal-soft);color:#0a6f69;font-weight:600}
+.tcell.dim{border-style:dashed;color:var(--muted);background:transparent}
+.scrim{position:fixed;inset:0;background:rgba(18,20,18,.42);display:none;align-items:center;justify-content:center;padding:24px;z-index:60}
+.scrim.on{display:flex}
+.drawer{background:var(--surface);border-radius:var(--r);max-width:940px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 30px 70px -24px rgba(0,0,0,.4)}
+.drawer header{display:flex;align-items:center;gap:12px;padding:15px 19px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+.drawer header h3{margin:0;font-size:.98rem}
+.drawer .body{padding:17px 19px;display:flex;flex-direction:column;gap:13px}
+.drawer footer{display:flex;gap:10px;justify-content:flex-end;padding:13px 19px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--surface)}
+.legacy{padding:18px;display:flex;flex-direction:column;gap:14px}
+.legnote{position:relative;border-left:3px solid var(--rose);background:var(--rose-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 13px;font-size:.82rem;color:var(--rose)}
+.legnote.ok{border-left-color:var(--emerald);background:var(--emerald-soft);color:#0a5a41}
+.legnote.blue{border-left-color:var(--blue);background:var(--blue-soft);color:#12408f}
+.legnote b{font-weight:700}
+footer.docf{border-top:1px solid var(--line);margin-top:24px;padding-top:13px;font-size:.79rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+@media (max-width:980px){.split{grid-template-columns:1fr}.rail{border-right:0;border-bottom:1px solid var(--line)}.rail-list{max-height:240px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow"><span>第一性原理推导 · 对抗式审查</span><span class="sep">/</span><span>批量台 v3 模拟</span><span class="sep">/</span><span>2026-10-20</span><span class="sep">/</span><span>12 SKU × 12 语种 ＝ 144 份交付物</span></p>
+  <h1>把「表」从文件上拆下来：归属才是原语</h1>
+  <p class="standfirst">这一版不是把上一版的矩阵换个画法，是把问题的根改掉。<b>表不是「每个文件的表」，表是数据集；文件是「归属」这个维度上的一个取值。</b>于是「12 个 SKU 各自的表怎么区分」不再是配对问题，而是<b>归属能不能被证明</b>的问题。</p>
+
+  <div class="axioms">
+    <div class="ax"><span class="n">公理 1</span><b>交付物才是主角</b><p>真正被生产出来的东西是 (设计稿 × 语种) 一份新稿。12 SKU × 12 语种 = <b>144 份交付物</b>。矩阵不是「覆盖率表」，是这 144 份东西的状态表；图二那排语言 = 矩阵的一行。</p></div>
+    <div class="ax"><span class="n">公理 2</span><b>表是数据集，文件是切片</b><p>一张表装着 (归属, 原文, 序号, 语种) → 译文 的行。文件的表 = 数据集按归属切出的一片。「每稿一表」与「一表十二片」是同一件事的两种摆法。</p></div>
+    <div class="ax"><span class="n">公理 3</span><b>行身份必须带归属</b><p>现在匹配键只有「原文」（<span class="mono">binding-core.ts:657</span>、<span class="mono">match.ts:58</span>）。但「模块/MODULE/SECTION」列解析层早就有了（<span class="mono">csv.ts:423</span>）——<b>它没进写入层</b>。</p></div>
+    <div class="ax"><span class="n">公理 4</span><b>绑定要能被证明，不能靠猜</b><p>模板导出把源文逐字抄自 PSD，却只写 <span class="mono">source + 语言列</span>（<span class="mono">translation-template.ts:58</span>）——<b>出处被扔了</b>。同文案的 two SKU 导出的模板逐字节相同。所以「这张表是谁的」这问题，产品从来没回答过。</p></div>
+  </div>
+
+  <div class="tabs" role="group" aria-label="视图切换">
+    <button type="button" data-view="matrix" aria-pressed="true">交付物矩阵（144 格）</button>
+    <button type="button" data-view="detail" aria-pressed="false">单稿详情（＝图二那一行）</button>
+    <button type="button" data-view="slice" aria-pressed="false">译库与切片</button>
+    <button type="button" data-view="legacy" aria-pressed="false">现状对照（图一）</button>
+  </div>
+</header>
+
+<div class="app">
+  <div class="appbar">
+    <h2>批量工作台 · 准备素材</h2>
+    <span class="pill teal">12 SKU</span>
+    <span class="pill blue">12 语种</span>
+    <span class="pill share">144 份交付物</span>
+    <div class="right">
+      <button class="btn primary" type="button" id="scanAll">全部扫描（按顺序）</button>
+      <button class="btn" type="button" id="openPair">配表提案（按命名规则）</button>
+      <button class="btn ghost" type="button" id="clearAll">清除全部</button>
+    </div>
+  </div>
+
+  <!-- ① 交付物矩阵 -->
+  <section id="v-matrix">
+    <div class="mxwrap">
+      <div class="mhead">
+        <span class="t">交付物矩阵 · 144 格</span>
+        <span class="s">行 = 物料　列 = 语种　格 = 这一份交付物的状态　行头 = 绑定证据等级</span>
+      </div>
+      <div id="mxHost"></div>
+      <div class="legend">
+        <span><i class="lg on"></i>已确认可执行</span>
+        <span><i class="lg unconf"></i>待确认 / 覆盖率不足</span>
+        <span><i class="lg miss"></i>表里缺这一列</span>
+        <span><i class="lg off"></i>本稿不做</span>
+        <span><i class="lg blue"></i>绑定存疑（这一行整行都要人看一眼）</span>
+      </div>
+      <div style="margin-top:12px" id="mxAlerts"></div>
+    </div>
+  </section>
+
+  <!-- ② 单稿详情 -->
+  <section id="v-detail" hidden>
+    <div class="split">
+      <aside class="rail">
+        <div class="rail-head">
+          <span class="t">物料栏 · 12 个 SKU</span>
+          <span class="s" id="railSum"></span>
+        </div>
+        <div class="rail-list" id="rail"></div>
+      </aside>
+      <div class="detail" id="detail"></div>
+    </div>
+  </section>
+
+  <!-- ③ 译库与切片 -->
+  <section id="v-slice" hidden>
+    <div class="stack" style="padding:18px">
+      <div class="card plain">
+        <p class="card-t">模板导出：把「出处」写回表里（这是整件事的根）</p>
+        <p class="card-s">今天导出的模板只有 <span class="mono">source + 语言列</span>。两份文案相同的 SKU 导出的模板<b>逐字节相同</b>——所以「这张表是谁的」只能靠文件名猜。改法：导出时多带两列，<b>列名解析层早就认了</b>（<span class="mono">csv.ts:422-423</span>）。</p>
+        <div class="stack">
+          <div>
+            <div class="note" style="margin-bottom:5px">今天：<span class="mono">translation-template.ts:58</span> → <span class="mono">header = ['source', ...codes]</span></div>
+            <div class="tmplrow">
+              <span class="tcell">source</span><span class="tcell dim">EN 英语</span><span class="tcell dim">DE 德语</span><span class="tcell dim">FR 法语</span>
+              <span class="arrow">← 没有任何一列说明这是哪个 SKU 的</span>
+            </div>
+          </div>
+          <div>
+            <div class="note" style="margin-bottom:5px">改后：</div>
+            <div class="tmplrow">
+              <span class="tcell">source</span><span class="tcell new">记录编号</span><span class="tcell new">模块</span><span class="tcell dim">EN 英语</span><span class="tcell dim">DE 德语</span><span class="tcell dim">FR 法语</span>
+            </div>
+            <div class="note"><span class="tcell new" style="display:inline-block">记录编号</span> = 层级身份（表内唯一，<span class="mono">csv.ts:769-777</span> 已在强制）；<span class="tcell new" style="display:inline-block">模块</span> = 归属（SKU 码 / 文件名 / 组名）。解析零改动，<b>缺这两列的老表照样能用</b>（降级到「推定」档）。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-t">译库（数据集） → 每稿切片</p>
+        <p class="card-s">这是第一性原理的核心形态：<b>你手里的文件是「译库」，每个 SKU 从里面取一片。</b>「每稿一表」＝每片一个库；「一套物料共用一张表」＝一个库切多片；「12 个 SKU 一张合表」＝一个库切 12 片。<b>三者是同一件事。</b></p>
+        <div class="dsgrid" id="dsGrid"></div>
+      </div>
+
+      <div class="card">
+        <p class="card-t">切片是怎么切出来的（点击上面的库看它的片）</p>
+        <div id="sliceDetail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 现状对照 -->
+  <section id="v-legacy" hidden>
+    <div class="legacy">
+      <div class="legnote"><b>图一的病根不是布局，是模型。</b>它把「文件名单」和「表名单」并排放，是因为代码里表真的按文件存（<span class="mono">workbench-view.tsx:349</span>）；而表按文件存的根因是——<b>表里从来没有「这是谁的」这一列</b>（<span class="mono">translation-template.ts:58</span>）。所以界面只能把两份名单摞起来给人看。</div>
+      <div class="legnote blue"><b>改完之后，界面会自己塌成一张表。</b>因为「表」不再是文件的一个属性，而是「归属」维度上的一个切片；一份文件 ↔ 一个切片 ↔ 12 个交付物，天然就是矩阵那一行，图二那一排语言就是那一行。</div>
+      <div class="card plain">
+        <p class="card-t">逐块对照</p>
+        <table class="plain">
+          <thead><tr><th>图一现状块</th><th>病根</th><th>v3 落点</th></tr></thead>
+          <tbody>
+            <tr><td>① 多设计稿选择（文件夹 / 粘贴路径 / 全部扫描）</td><td>文件是唯一被承认的轴</td><td>保留为「物料栏」，但每张卡多带<b>证据徽章</b>（实证/推定/存疑/不符）</td></tr>
+            <tr><td>② 译文表 · 每个设计稿一张（第二份名单）</td><td>表被塞进文件里</td><td><b>消失</b>：表变成切片，行头一枚徽章说清这片从哪来</td></tr>
+            <tr><td>③ 语言行（原文/德语/法语/选择语言/重选译文表）</td><td>只画当前稿</td><td>变成矩阵<b>一行</b>：这一行的 12 个交付物</td></tr>
+            <tr><td>④ 覆盖率矩阵（每稿一段、段内一行）</td><td>不是矩阵</td><td>交付物矩阵：144 格，粘性表头，点格跳那一格</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="legnote ok"><b>顺带解掉的三个老问题：</b>①「这套物料共用一个语言表」不再是二选一——它就是「一个库切多片」；②「一稿多表」不做——因为切片天然就是「一稿一片」，多片意味着归属有歧义；③「刷新要重配 12 次」——要存的是 <span class="mono">(稿 → 库 + 归属值)</span>，不是 12 份表副本。</div>
+    </div>
+  </section>
+</div>
+
+<!-- 配表提案抽屉 -->
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-label="配表提案预览">
+  <div class="drawer">
+    <header>
+      <h3>配表提案 · 按命名规则</h3>
+      <span class="pill amber">9 条确定 · 3 条要人拍板</span>
+      <button class="btn sm" type="button" style="margin-left:auto" id="closePair">关闭</button>
+    </header>
+    <div class="body">
+      <p class="note">规则命中即生成<b>提案</b>，<b>不直接生效</b>——提案里同时给出「切片的归属值」和「证据等级」，人确认后才写进绑定。<b>这是本批唯一一处批量写入动作。</b></p>
+      <div class="tmplrow" style="margin-bottom:2px">
+        <span class="pill teal">规则 1 · 同名同目录</span><span class="pill teal">规则 2 · 同 SKU 码</span>
+        <span class="pill teal">规则 3 · 表名含 SKU 码且唯一</span><span class="pill amber">规则 4 · 表在「翻译/」子目录</span>
+      </div>
+      <table class="plain" id="pairTable">
+        <thead><tr><th>设计稿</th><th>候选译库</th><th>归属值</th><th>规则</th><th>判定</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="legnote"><b>3 处必须人拍板：</b>① <span class="mono">SKU-08</span> 有 2 张同名表（<span class="mono">SKU-08.xlsx</span> / <span class="mono">SKU-08_终稿.xlsx</span>）→ 一对多不自动选；② <span class="mono">SKU-12</span> 零候选 → 留空并点名；③ <span class="mono">SKU-01…04</span> 四稿指向同一库 → 这是<b>组</b>，要你确认「4 稿真的共用」还是「该各自一张」。</div>
+    </div>
+    <footer>
+      <button class="btn" type="button" id="pairCancel">取消</button>
+      <button class="btn primary" type="button" id="pairApply">应用 9 条提案，3 条留给我自己配</button>
+    </footer>
+  </div>
+</div>
+
+<footer class="docf">
+  <p>2026-10-20 · <b>方案模拟</b>，不是线上界面；数据为示意（12 SKU / 12 语种 / 144 份交付物 / 8 个译库 / 5 类异常样本）。</p>
+  <p>代码依据 <span class="mono">worktrees/develop@99baaf6</span>：<span class="mono">translation-template.ts:53-70</span>（模板只写 source+语言列）·<span class="mono">csv.ts:422-423</span>（记录编号/模块列别名已存在）·<span class="mono">csv.ts:759-761</span>（模块已解析）·<span class="mono">binding-core.ts:657</span> / <span class="mono">match.ts:58</span>（匹配键只有原文）·<span class="mono">binding-core.ts:933-939</span>（同原文不同译文才拦）·<span class="mono">workbench-view.tsx:349</span>（表按稿存副本）·<span class="mono">workbench-view.tsx:1950-1959</span>（每稿一张，互不共用）·<span class="mono">coverage.ts:169-185</span>（每稿一表取数口）。</p>
+</footer>
+</div>
+
+<script>
+/* ═══════════ 数据：译库（数据集）/ 归属 / 切片 ═══════════ */
+const LANGS=[
+ {c:'de',n:'德语'},{c:'fr',n:'法语'},{c:'en',n:'英语'},{c:'es',n:'西班牙语'},{c:'ja',n:'日语'},{c:'ko',n:'韩语'},
+ {c:'pt',n:'葡萄牙语'},{c:'it',n:'意大利语'},{c:'ru',n:'俄语'},{c:'ar',n:'阿拉伯语'},{c:'zh-TW',n:'繁体中文'},{c:'nl',n:'荷兰语'}
+];
+const LMAP=Object.fromEntries(LANGS.map(l=>[l.c,l.n]));
+const ALL=LANGS.map(l=>l.c);
+
+/* 译库：kind=per-file | group | wide */
+const DS=[
+ {id:'DS-A', name:'主表A_通用8语.xlsx', kind:'group', owner:'主图组', langs:['de','fr','en','es','ja','ko','pt','it'],
+  slices:['SKU-01','SKU-02','SKU-03','SKU-04'], prov:'实证（组声明成员）', provKind:'ok', note:'4 个 SKU 共用；组是显式声明的归属，不是「顺手指过去」。'},
+ {id:'DS-05',name:'SKU-05_德法英.xlsx',kind:'per-file',owner:'SKU-05',langs:['de','fr','en'],
+  slices:['SKU-05'],prov:'实证（模块=SKU-05）',provKind:'ok',note:'模板带 模块 列，归属值与本稿一致 ⇒ 绑定可证。'},
+ {id:'DS-06',name:'SKU-06_英西.xlsx',kind:'per-file',owner:null,langs:['en','es'],
+  slices:['SKU-06'],prov:'推定（表无模块列，靠原文集覆盖）',provKind:'warn',note:'老表没有出处列 ⇒ 只能靠「表原文集覆盖本稿全部原文」推定。'},
+ {id:'DS-07',name:'SKU-07_九语.xlsx',kind:'per-file',owner:'SKU-07',langs:['de','fr','en','es','ja','ko','ru','ar','zh-TW'],
+  slices:['SKU-07'],prov:'实证（模块=SKU-07）',provKind:'ok',note:'归属对，但切片里有 8 行本稿没有的原文 ⇒ 切多了。',extraRows:8},
+ {id:'DS-W',name:'全SKU合表_12SKU×12语.xlsx',kind:'wide',owner:'SKU-01…SKU-12',langs:ALL,
+  slices:ALL.map((_,i)=>'SKU-'+String(i+1).padStart(2,'0')),prov:'实证（模块列含 12 个 SKU 值）',provKind:'ok',
+  note:'一张合表按 模块 切成 12 片 —— 这就是电商行业里最常见的那张表。'},
+ {id:'DS-10',name:'SKU-10_十语.xlsx',kind:'per-file',owner:'SKU-10',langs:['de','fr','en','es','ja','ko','pt','it','ru','ar'],
+  slices:['SKU-10'],prov:'实证（模块=SKU-10）',provKind:'ok',note:'表只有 10 列，本稿要做 12 语 ⇒ 2 个交付物做不出来。'},
+ {id:'DS-11',name:'SKU-11_六语.xlsx',kind:'per-file',owner:'SKU-11',langs:['de','fr','en','es','ja','ko'],
+  slices:['SKU-11'],prov:'实证（模块=SKU-11）',provKind:'ok',note:'归属没问题，但覆盖率偏低。'},
+];
+
+/* 物料：绑定 = {dsId, scope[]} */
+const SKUS=[
+ {id:'SKU-01',file:'SKU-01_主图.psd',layers:12,scan:'scanned',ds:'DS-A',scope:['de','fr','en','es','ja','ko','pt','it'],conf:['de','fr','en','es','ja','ko','pt','it'],cov:{de:100,fr:100,en:100,es:98,ja:100,ko:96,pt:100,it:99}},
+ {id:'SKU-02',file:'SKU-02_主图.psd',layers:12,scan:'scanned',ds:'DS-A',scope:['de','fr','en','es','ja','ko','pt','it'],conf:['de','fr','en'],cov:{de:100,fr:97,en:100,es:95,ja:93,ko:88,pt:100,it:94}},
+ {id:'SKU-03',file:'SKU-03_主图.psd',layers:11,scan:'scanned',ds:'DS-A',scope:['de','fr','en','es'],conf:['de','fr'],cov:{de:100,fr:96,en:100,es:91}},
+ {id:'SKU-04',file:'SKU-04_主图.psd',layers:12,scan:'scanned',ds:'DS-A',scope:['de','fr','en','es','ja','ko','pt','it'],conf:[],cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,pt:100,it:100}},
+ {id:'SKU-05',file:'SKU-05_主图.psd',layers:9,scan:'scanned',ds:'DS-05',scope:['de','fr','en'],conf:['de','fr','en'],cov:{de:100,fr:100,en:100}},
+ {id:'SKU-06',file:'SKU-06_主图.psd',layers:7,scan:'scanned',ds:'DS-06',scope:['en','es'],conf:['en'],cov:{en:100,es:86}},
+ {id:'SKU-07',file:'SKU-07_主图.psd',layers:16,scan:'scanned',ds:'DS-07',scope:['de','fr','en','es','ja','ko','ru','ar','zh-TW'],conf:['de','fr','en','es'],cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,ru:98,ar:100,'zh-TW':92}},
+ {id:'SKU-08',file:'SKU-08_主图.psd',layers:14,scan:'scanned',ds:null,scope:['de','fr','en','es','ja','ko','pt','it'],conf:[],cov:{},
+  flag:'pair',flagText:'两张同名表：SKU-08.xlsx / SKU-08_终稿.xlsx —— 一对多，不自动选，请指一张。'},
+ {id:'SKU-09',file:'SKU-09_主图.psd',layers:21,scan:'scanned',ds:'DS-W',scope:ALL,conf:['de','fr','en','es','ja','ko','pt','it','ru','ar'],cov:{de:100,fr:100,en:100,es:100,ja:100,ko:100,pt:100,it:100,ru:100,ar:97,'zh-TW':89,nl:83}},
+ {id:'SKU-10',file:'SKU-10_主图.psd',layers:18,scan:'scanned',ds:'DS-10',scope:ALL,conf:['de','fr','en','es','ja','ko','pt','it','ru','ar'],cov:{de:100,fr:100,en:100,es:99,ja:100,ko:97,pt:100,it:100,ru:100,ar:100}},
+ {id:'SKU-11',file:'SKU-11_主图.psd',layers:31,scan:'scanned',ds:'DS-11',scope:['de','fr','en','es','ja','ko'],conf:['de','fr'],cov:{de:100,fr:100,en:94,es:88,ja:71,ko:66}},
+ {id:'SKU-12',file:'SKU-12_主图.psd',layers:10,scan:'not',ds:null,scope:[],conf:[],cov:{},
+  flag:'noscan',flagText:'这一稿还没扫描，还看不出该配哪个库；配表提案里也是零候选。'},
+];
+
+let activeId='SKU-01', selCell=null, activeDs='DS-W';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sku=id=>SKUS.find(s=>s.id===id);
+const dsOf=s=>s&&s.ds?DS.find(d=>d.id===s.ds):null;
+
+/* 交付物格状态 */
+function cell(s,lang){
+  const d=dsOf(s);
+  if(s.scan!=='scanned') return {k:'none',v:'—',t:s.scan==='not'?'未扫描':'未扫描完'};
+  if(!d) return {k:'none',v:'缺表',t:'未配译库'};
+  const inScope=s.scope.includes(lang), inLib=d.langs.includes(lang);
+  if(inScope&&!inLib) return {k:'miss',v:'缺列',t:'这一片里没有这一列 ⇒ 这个交付物做不出来'};
+  if(!inScope) return {k:'off',v:'—',t:'本稿不做这个语种'};
+  const cov=s.cov[lang];
+  if(cov===undefined) return {k:'none',v:'—',t:'本稿没有这一列'};
+  const conf=s.conf.includes(lang);
+  if(cov<80) return {k:'bad',v:cov+'%',t:'覆盖率低于 80%'};
+  if(cov<95) return {k:'warn',v:cov+'%',t:'覆盖率低于 95% 阈值'};
+  return conf?{k:'ok',v:cov+'%',t:'已确认，可执行'}:{k:'warn',v:cov+'%',t:'已覆盖，待人工确认'};
+}
+function rowEv(s){
+  const d=dsOf(s);
+  if(s.scan!=='scanned') return {k:'idle',t:'未扫描',p:'—'};
+  if(!d) return {k:'bad',t:'未配译库',p:'—'};
+  if(d.provKind==='warn') return {k:'blue',t:'推定',p:d.prov};
+  return {k:'ok',t:'实证',p:d.prov};
+}
+
+/* ═══════════ ① 交付物矩阵 ═══════════ */
+function renderMatrix(){
+  const head=`<thead><tr><th>物料 × 语种 ＝ 144 份交付物</th>${LANGS.map(l=>`<th>${l.n}</th>`).join('')}<th style="min-width:104px">本稿进度</th></tr></thead>`;
+  const body=SKUS.map(s=>{
+    const ev=rowEv(s);
+    const cells=LANGS.map(l=>{
+      const st=cell(s,l.c);
+      const sel=selCell&&selCell.skuId===s.id&&selCell.lang===l.c;
+      const tinted=(ev.k==='blue'&&st.k!=='off'&&st.k!=='none')?' style="background:var(--blue-soft)"':'';
+      return `<td${tinted}><button class="cell c-${st.k}${sel?' sel':''}" data-c="${s.id}|${l.c}" title="${esc(s.file)} · ${l.n} · ${esc(st.t)}"><span class="cv">${st.v}</span>${st.k==='miss'?'<span class="cs">缺列</span>':''}</button></td>`;
+    }).join('');
+    const done=s.conf.length,total=s.scope.length;
+    const prog=total===0?'<span class="pill">—</span>':done===total?`<span class="pill teal">${done}/${total}</span>`:done>0?`<span class="pill amber">${done}/${total}</span>`:`<span class="pill rose">0/${total}</span>`;
+    const d=dsOf(s);
+    return `<tr><th><span class="rowhead"><span class="f"><i class="dot ${ev.k}"></i>${esc(s.file)}</span><span class="m"><span class="pill ${ev.k==='ok'?'teal':ev.k==='blue'?'blue':'rose'}">绑定·${ev.t}</span>${d?`<span>${esc(d.name)}</span>`:'<span>未配译库</span>'}<span>${s.layers} 图层</span></span></span></th>${cells}<td>${prog}</td></tr>`;
+  }).join('');
+  $('#mxHost').innerHTML=`<div class="scroller"><table class="mx">${head}<tbody>${body}</tbody></table></div>`;
+  $('#mxHost').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const [id,lang]=b.dataset.c.split('|'); activeId=id; selCell={skuId:id,lang};
+    show('detail'); render();
+  }));
+  /* 行级告警 */
+  const alerts=[
+    ...SKUS.filter(s=>s.flag==='pair').map(s=>({k:'warn',t:`${s.file}：两张同名表，一对多不自动选 —— 提案里留给你点。`})),
+    ...SKUS.filter(s=>dsOf(s)&&dsOf(s).extraRows).map(s=>({k:'warn',t:`${s.file}：这一片比本稿多 ${dsOf(s).extraRows} 行原文（切多了）—— 执行前要人看一眼。`})),
+    ...SKUS.filter(s=>s.scope.some(l=>dsOf(s)&&!dsOf(s).langs.includes(l))).map(s=>({k:'bad',t:`${s.file}：本稿要做 ${s.scope.length} 语，库里只有 ${dsOf(s).langs.length} 列 ⇒ ${s.scope.filter(l=>!dsOf(s).langs.includes(l)).map(l=>LMAP[l]).join('、')} 这 ${s.scope.filter(l=>!dsOf(s).langs.includes(l)).length} 个交付物做不出来。`})),
+    ...SKUS.filter(s=>dsOf(s)&&dsOf(s).provKind==='warn').map(s=>({k:'blue',t:`${s.file}：绑定是「推定」不是「实证」（表里没有 模块 列）。这一行的交付物在执行前要人确认一次。`})),
+  ];
+  $('#mxAlerts').innerHTML=alerts.length?alerts.map(a=>`<div class="ev ${a.k==='warn'?'warn':a.k==='bad'?'bad':'info'}" style="margin-bottom:7px">${esc(a.t)}</div>`).join(''):'<div class="ev ok">没有行级告警。</div>';
+}
+
+/* ═══════════ ② 物料栏 + 详情 ═══════════ */
+function renderRail(){
+  $('#rail').innerHTML=SKUS.map(s=>{
+    const d=dsOf(s), ev=rowEv(s);
+    const total=s.scope.length, done=s.conf.length;
+    return `<button class="sku" data-sku="${s.id}" aria-current="${s.id===activeId}">
+      <span class="f"><i class="dot ${ev.k}"></i>${esc(s.file)}</span>
+      <span class="meta"><span class="pill ${ev.k==='ok'?'teal':ev.k==='blue'?'blue':'rose'}">${ev.t}</span>
+      ${total?`<span class="pill ${done===total?'teal':done>0?'amber':'rose'}">${done}/${total}</span>`:'<span class="pill">—</span>'}</span>
+    </button>`;
+  }).join('');
+  $('#rail').querySelectorAll('[data-sku]').forEach(b=>b.addEventListener('click',()=>{activeId=b.dataset.sku;selCell=null;render();}));
+  const sc=SKUS.filter(s=>s.scan==='scanned').length, bd=SKUS.filter(s=>dsOf(s)).length;
+  const cs=SKUS.reduce((a,s)=>a+s.conf.length,0), ss=SKUS.reduce((a,s)=>a+s.scope.length,0);
+  $('#railSum').textContent=`已扫描 ${sc} · 已配片 ${bd} · 已确认 ${cs}/${ss}`;
+}
+function renderDetail(){
+  const s=sku(activeId), d=dsOf(s), ev=rowEv(s);
+  const chips=LANGS.map(l=>{
+    const st=cell(s,l.c); let cls='',mark='';
+    if(st.k==='miss'){cls='miss';mark='缺';}
+    else if(s.scan!=='scanned'||!d){cls='off';}
+    else if(!s.scope.includes(l.c)){cls='off';mark='不做';}
+    else if(s.conf.includes(l.c)){cls='on';}
+    else {cls='on unconfirmed';mark='待确认';}
+    return `<span class="lchip ${cls}" title="${esc(l.n)}｜${esc(st.t)}">${l.n}${mark?`<span class="pk">${mark}</span>`:''}</span>`;
+  }).join('');
+  const bind=d?`<div class="row" style="gap:8px">
+      <span class="mono" style="font-size:.86rem;font-weight:600">${esc(d.name)}</span>
+      <span class="pill ${d.kind==='group'?'share':d.kind==='wide'?'blue':'teal'}">${d.kind==='group'?'组库 · 4 稿共用':d.kind==='wide'?'合表 · 按模块切片':'单片'}</span>
+      <span class="pill">归属值 ${esc(d.owner||'（无）')}</span>
+      <span class="note">${d.langs.length} 列 · 这一片 ${s.scope.length} 个交付物</span>
+      <button class="btn sm" style="margin-left:auto">换一片</button></div>`
+    :`<div class="row"><span class="mono" style="color:var(--muted)">这一稿还没配译库</span><button class="btn sm" style="margin-left:auto">选一片</button></div>`;
+  const evid = ev.k==='ok'?`<div class="ev ok"><b>绑定证据 · 实证</b>${esc(d?d.prov:'')} —— 归属值与本稿一致，绑定可证。</div>`
+    : ev.k==='blue'?`<div class="ev info"><b>绑定证据 · 推定</b>${esc(d?d.prov:'')} —— 表里没有出处列，只能靠「这一片的原文集覆盖本稿全部原文」推定。<b>这一行的交付物在执行前需要人确认一次。</b></div>`
+    : ev.k==='bad'?`<div class="ev bad"><b>绑定证据 · 缺</b>${esc(s.flagText||'这一稿没有绑定译库。')}</div>`
+    : `<div class="ev plain"><b>绑定证据 · 未扫描</b>${esc(s.flagText||'')}</div>`;
+  $('#detail').innerHTML=`
+    <div class="card plain">
+      <p class="card-t">选择设计文件 · 只读预扫描</p>
+      <p class="card-s">矩阵里的一行 = 一个物料。12 稿各扫各的，互不影响。</p>
+      <div class="stack">
+        <div class="row">
+          <input class="input" style="flex:1 1 260px" value="D:\\项目\\${esc(s.file)}" readonly>
+          <button class="btn">选择文件…</button>
+          <button class="btn primary">${s.scan==='scanned'?'重新扫描':'扫描'}</button>
+        </div>
+        <div class="filecard">
+          <span style="font-size:19px">📁</span>
+          <div style="min-width:0">
+            <div class="fn">${esc(s.file)}</div>
+            <div class="sub"><span>${s.scan==='scanned'?'已扫描':'未扫描'}</span><span>${s.layers} 个文字图层</span><span>${d?`译库：${esc(d.name)}`:'未配译库'}</span></div>
+          </div>
+          <div class="sp"><button class="btn sm">重新扫描</button><button class="btn sm">移除</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-t">这一稿的 12 个交付物</p>
+      <p class="card-s">实心＝已确认可执行；描边＝本稿要做但待确认；虚线＝本稿不做；红框＝<b>这一片里没有这一列，做不出来</b>。</p>
+      <div class="langrow"><span class="lchip src">原文</span>${chips}
+        <button class="btn sm">选择语言</button>
+        <button class="btn sm" style="border-color:#d9a84f;color:var(--amber)">换译库</button>
+      </div>
+      <div class="legend" style="margin-top:9px">
+        <span><i class="lg on"></i>已确认</span><span><i class="lg unconf"></i>待确认</span>
+        <span><i class="lg off"></i>本稿不做</span><span><i class="lg miss"></i>库里缺列</span>
+      </div>
+      <div style="margin-top:12px">${bind}</div>
+      <div style="margin-top:9px">${evid}</div>
+      ${d&&d.extraRows?`<div class="ev warn" style="margin-top:9px"><b>切多了</b>这一片里有 ${d.extraRows} 行原文在本稿的文字图层里找不到（可能是混进了别的 SKU 的行）。执行前必须人看一眼。</div>`:''}
+    </div>`;
+}
+
+/* ═══════════ ③ 译库与切片 ═══════════ */
+function renderSlices(){
+  $('#dsGrid').innerHTML=DS.map(d=>`
+    <div class="ds" data-ds="${d.id}" style="${d.id===activeDs?'border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset':''}">
+      <h4>${esc(d.name)}</h4>
+      <div class="row" style="gap:5px">
+        <span class="pill ${d.kind==='group'?'share':d.kind==='wide'?'blue':'teal'}">${d.kind==='group'?'组库':d.kind==='wide'?'合表':'单片库'}</span>
+        <span class="pill ${d.provKind==='ok'?'teal':'amber'}">${d.prov}</span>
+      </div>
+      <div class="note">${d.langs.length} 个语种列 · 切成 <b>${d.slices.length}</b> 片</div>
+      <div class="sl">${d.slices.slice(0,12).map(sl=>`<span class="slice ${skusHas(sl,d.id)?'on':''}">${sl}</span>`).join('')}</div>
+      <div class="note">${esc(d.note)}</div>
+    </div>`).join('');
+  $('#dsGrid').querySelectorAll('[data-ds]').forEach(b=>b.addEventListener('click',()=>{activeDs=b.dataset.ds;renderSlices();}));
+  const d=DS.find(x=>x.id===activeDs);
+  const rows=[
+    ['译库本体', esc(d.name)],
+    ['归属怎么来的', d.kind==='wide'?'表里 <span class="mono">模块</span> 列有 12 个 SKU 值 → 按值切' : d.kind==='group'?'表里 <span class="mono">模块</span> = 组名「'+esc(d.owner)+'」→ 组是显式声明的成员表' : d.owner?('表里 <span class="mono">模块</span> = <span class="mono">'+esc(d.owner)+'</span> → 按值切'):'表里没有 <span class="mono">模块</span> 列 → 只能整片用，绑定靠推定'],
+    ['切成几片', d.slices.length+' 片'],
+    ['片里的行', d.kind==='wide'?'每片只含本 SKU 的行（行身份 = 模块 + 原文 + 序号）':'整片就是这一片（每稿一张表的传统形态）'],
+    ['语种列', d.langs.map(l=>LMAP[l]).join(' · ')],
+    ['证据等级', d.prov],
+  ];
+  const bound=SKUS.filter(s=>s.ds===d.id);
+  $('#sliceDetail').innerHTML=`
+    <table class="plain"><tbody>
+      ${rows.map(r=>`<tr><td class="m" style="white-space:nowrap;color:var(--muted)">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+      <tr><td class="m" style="color:var(--muted)">当前绑定的片</td><td>${bound.length?bound.map(s=>`<span class="pill teal">${esc(s.id)}</span>`).join(' '):'<span class="note">暂无（本演示里 DS-W 的 12 片只把 SKU-09 绑上）</span>'}</td></tr>
+    </tbody></table>
+    <div class="ev plain" style="margin-top:10px"><b>为什么这三种形态是同一件事</b>
+      「每稿一表」＝每片一个库；「一套物料共用一张表」＝一个库切多片；「12 个 SKU 一张合表」＝一个库按 <span class="mono">模块</span> 切 12 片。
+      界面只需要一个动作：<b>给每一稿指一片，并说清这片从哪来</b>。所以上一版里的「共享表」和「独立表」不该是两种模式，而是同一种动作的两种参数。</div>`;
+}
+function skusHas(id,dsId){return SKUS.some(s=>s.id===id&&s.ds===dsId);}
+
+/* ═══════════ 配表提案 ═══════════ */
+const PROPOSALS=[
+ ['SKU-01_主图.psd','主表A_通用8语.xlsx','主图组','规则 2 · 同 SKU 码','shared','4 稿指向同一库 → 共享，要你确认'],
+ ['SKU-02_主图.psd','主表A_通用8语.xlsx','主图组','规则 2 · 同 SKU 码','shared','同上'],
+ ['SKU-03_主图.psd','主表A_通用8语.xlsx','主图组','规则 2 · 同 SKU 码','shared','同上'],
+ ['SKU-04_主图.psd','主表A_通用8语.xlsx','主图组','规则 2 · 同 SKU 码','shared','同上'],
+ ['SKU-05_主图.psd','SKU-05_德法英.xlsx','SKU-05','规则 1 · 同名同目录','ok',''],
+ ['SKU-06_主图.psd','SKU-06_英西.xlsx','（无模块列）','规则 1 · 同名同目录','ok','表无出处列 ⇒ 落「推定」档'],
+ ['SKU-07_主图.psd','SKU-07_九语.xlsx','SKU-07','规则 1 · 同名同目录','ok','归属对，但切片多 8 行 → 要人看'],
+ ['SKU-08_主图.psd','SKU-08.xlsx ／ SKU-08_终稿.xlsx','—','—','amb','一对多，不自动选'],
+ ['SKU-09_主图.psd','全SKU合表_12SKU×12语.xlsx','SKU-09','规则 3 · 表名含 SKU 码且唯一','ok','合表按模块切片'],
+ ['SKU-10_主图.psd','SKU-10_十语.xlsx','SKU-10','规则 1 · 同名同目录','ok','只有 10 列 → 2 个交付物缺列'],
+ ['SKU-11_主图.psd','SKU-11_六语.xlsx','SKU-11','规则 1 · 同名同目录','ok','覆盖率偏低'],
+ ['SKU-12_主图.psd','（无候选）','—','—','miss','零命中，留空并点名'],
+];
+function renderPairs(){
+  const b=k=>k==='ok'?'<span class="pill teal">确定</span>':k==='shared'?'<span class="pill share">共享</span>':k==='amb'?'<span class="pill amber">要你选</span>':'<span class="pill rose">没配上</span>';
+  $('#pairTable tbody').innerHTML=PROPOSALS.map(p=>`<tr><td class="m">${esc(p[0])}</td><td class="m">${esc(p[1])}</td><td class="m">${esc(p[2])}</td><td class="m">${esc(p[3])}</td><td>${b(p[4])}${p[5]?`<div class="note" style="margin-top:2px">${esc(p[5])}</div>`:''}</td></tr>`).join('');
+}
+
+/* ═══════════ 视图切换 ═══════════ */
+function show(v){
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.view===v)));
+  ['matrix','detail','slice','legacy'].forEach(k=>document.getElementById('v-'+k).hidden=(k!==v));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.view);render();}));
+
+$('#openPair').addEventListener('click',()=>{renderPairs();$('#scrim').classList.add('on');});
+$('#closePair').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#pairCancel').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#pairApply').addEventListener('click',()=>$('#scrim').classList.remove('on'));
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')$('#scrim').classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#scrim').classList.remove('on');});
+$('#scanAll').addEventListener('click',()=>{SKUS.forEach(s=>{if(s.scan==='not')s.scan='scanned';});render();});
+$('#clearAll').addEventListener('click',()=>{SKUS.forEach(s=>{s.ds=null;s.conf=[];s.cov={};});render();});
+
+function render(){renderMatrix();renderRail();renderDetail();renderSlices();}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图译工坊 · 项目交接说明（给 AI 读）· 2026-10-31</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f2; --surface:#ffffff; --surface-2:#fbfaf8; --line:#e3e0d9; --line-strong:#cfcbc2;
+    --ink:#1c1b19; --ink-2:#4a4741; --ink-3:#7b766c;
+    --accent:#8a5a2b; --accent-soft:#f3e9dd;
+    --ok:#1f7a4d; --ok-soft:#e6f4ec;
+    --warn:#8a6a10; --warn-soft:#fbf2da;
+    --stop:#a33a30; --stop-soft:#fbe9e6;
+    --shadow:0 1px 2px rgba(28,27,25,.04),0 8px 24px rgba(28,27,25,.05);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#141312; --surface:#1c1b19; --surface-2:#222020; --line:#302d2a; --line-strong:#413d38;
+      --ink:#f2efe9; --ink-2:#c9c4bb; --ink-3:#8d877d;
+      --accent:#d9a970; --accent-soft:#2e2418;
+      --ok:#6ecf9a; --ok-soft:#16291f;
+      --warn:#e0c069; --warn-soft:#2b2413;
+      --stop:#e58b7f; --stop-soft:#2e1917;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+    font-size:15.5px; line-height:1.75;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:56px 28px 96px}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.855em}
+  code{background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:.1em .38em;color:var(--ink-2)}
+  header.head{margin-bottom:40px;padding-bottom:26px;border-bottom:1px solid var(--line-strong)}
+  .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px}
+  h1{font-size:33px;line-height:1.25;margin:0 0 14px;font-weight:700;letter-spacing:-.01em}
+  .lede{font-size:17px;color:var(--ink-2);max-width:76ch;margin:0 0 20px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 10px;font-size:12.5px;color:var(--ink-3)}
+  .meta span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+
+  .verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:22px 26px;margin:0 0 38px;box-shadow:var(--shadow)}
+  .verdict h2{margin:0 0 10px;font-size:14px;letter-spacing:.02em;color:var(--accent);text-transform:uppercase;font-weight:600}
+  .verdict p{margin:0 0 10px}
+  .verdict p:last-child{margin-bottom:0}
+
+  section{margin:0 0 44px}
+  h2.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:19.5px;margin:0 0 12px;font-weight:600}
+  h4{font-size:14.5px;margin:20px 0 8px;font-weight:600;color:var(--ink-2)}
+  p{margin:0 0 13px}
+  ul,ol{margin:0 0 14px;padding-left:1.3em}
+  li{margin:0 0 7px}
+  li::marker{color:var(--ink-3)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin:0 0 32px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .stat .n{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:500;line-height:1.1}
+  .stat .l{font-size:12.5px;color:var(--ink-3);margin-top:5px}
+
+  .cards{display:grid;gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow)}
+  .card .tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:2px 8px;font-weight:600;margin-bottom:10px}
+  .card h3{margin-top:0}
+
+  .tbl-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--surface-2);font-weight:600;font-size:12.5px;letter-spacing:.03em;color:var(--ink-2);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:1.5px 9px;white-space:nowrap;font-family:"IBM Plex Mono",monospace}
+  .pill.ok{color:var(--ok);background:var(--ok-soft)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft)}
+  .pill.stop{color:var(--stop);background:var(--stop-soft)}
+
+  pre.flow{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;overflow-x:auto;font-family:"IBM Plex Mono",monospace;font-size:12.8px;
+    line-height:1.85;color:var(--ink-2);margin:0 0 20px;white-space:pre;
+  }
+  pre.flow b{color:var(--ink);font-weight:600}
+
+  .callout{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 24%,transparent);border-radius:12px;padding:16px 20px;margin:0 0 20px;font-size:14.5px}
+  .callout.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 26%,transparent)}
+  .callout.stop{background:var(--stop-soft);border-color:color-mix(in srgb,var(--stop) 26%,transparent)}
+  .callout p:last-child{margin-bottom:0}
+  .callout .h{font-weight:700;margin-bottom:6px;display:block}
+
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:12px;margin:0 0 22px}
+  .gate{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 18px;border-top:2px solid var(--line-strong)}
+  .gate.stop{border-top-color:var(--stop)}
+  .gate .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+  .gate .v{font-weight:600;margin-bottom:4px;font-size:14.5px}
+  .gate .d{font-size:13px;color:var(--ink-2);line-height:1.6}
+
+  .notes{font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:16px}
+  .notes p{margin:0 0 8px}
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line-strong);font-size:12.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow">项目交接说明 · 给 AI 读</div>
+  <h1>图译工坊（tygf）<br>PSD 多语言版本的生产线</h1>
+  <p class="lede">目标：让接手的 AI 在 20 分钟内建立准确心智模型——<strong>有哪些能力、各自什么状态、改哪里会炸</strong>。不是营销材料，不能对外当宣传口径用。</p>
+  <div class="meta">
+    <span>代码根 worktrees/develop</span>
+    <span>基线 71529c7c</span>
+    <span>含 2026-10-31 未提交改动（字号）</span>
+    <span>结论均附 file:line</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <h2>先记住这四句</h2>
+  <p><strong>它是容器仓库 + 多 worktree。</strong>根目录只有记忆系统，真实代码在 <code>worktrees/*</code>；只允许改 <code>worktrees/develop</code>。</p>
+  <p><strong>它不做机器翻译。</strong>吃的是用户自带的译文表；DeepSeek 只做文本清洗与双语对齐。</p>
+  <p><strong>它不接管设计。</strong>默认不动字号/字距/行距/颜色/位置/对齐，只解决"塞不塞得下"；用户在面板上的显式设置是另一条路径。</p>
+  <p><strong>设计稿不出本机。</strong>PSD/PSB 全程在用户电脑，云端只经手译文表与状态数据。</p>
+</div>
+
+<section>
+  <h2 class="sec">形态与规模</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">11.9万</div><div class="l">Web 端代码行（593 个 ts/tsx）</div></div>
+    <div class="stat"><div class="n">164</div><div class="l">API 路由</div></div>
+    <div class="stat"><div class="n">68</div><div class="l">数据表</div></div>
+    <div class="stat"><div class="n">2.0万</div><div class="l">助手 JS 行数</div></div>
+    <div class="stat"><div class="n">3935</div><div class="l">PS 侧脚本行数</div></div>
+    <div class="stat"><div class="n">23</div><div class="l">助手本机接口</div></div>
+  </div>
+  <div class="tbl-wrap">
+  <table>
+    <tr><th>端</th><th>技术</th><th>干什么</th></tr>
+    <tr><td><strong>Web 站</strong></td><td>Next.js 16 · React 19 · TS · Tailwind 4 · Prisma/SQLite</td><td>官网 + 工作台四步 + 运营后台 + API</td></tr>
+    <tr><td><strong>本地助手</strong></td><td>Node 22 exe，<code>127.0.0.1:49152</code></td><td>读写本机文件、驱动 PS、执行与出报告</td></tr>
+    <tr><td><strong>中间层</strong></td><td>HTTPS + 设备令牌 + 机器绑定加密</td><td>授权、报价、票据、回执、结算</td></tr>
+  </table>
+  </div>
+  <p>边界铁律：<strong>浏览器负责"看见并确认"，助手负责"在你机器上真动手"，服务端负责"算钱和留证据"</strong>。三者不越界。</p>
+</section>
+
+<section>
+  <h2 class="sec">工作台工作流程 · 四步与闸门</h2>
+  <p>阶段枚举唯一来源 <code>src/lib/workbench/workbench-machine.ts:2-6</code>；闸门是纯函数 <code>deriveWorkbenchReadiness</code>（<code>:31-63</code>）。</p>
+  <pre class="flow">materials → translation_review → design_reconcile → delivery
+
+<b>reviewOpen</b>           = translationCommitted
+<b>allLanguagesReviewed</b> = 每个选中语言都有 digest，且 reviewedDigest === digest
+<b>reconcileOpen</b>        = designReady && allLanguagesReviewed
+<b>reconcileComplete</b>    = reconcileOpen && reconcileCurrent && reconcileReady
+<b>deliveryOpen</b>         = reconcileComplete && photoshopReady</pre>
+  <div class="callout">
+    <span class="h">关键机制：语言级 digest 快照</span>
+    <p>审的是"某一版译文"，审完记下 reviewedDigest。<strong>译文一改 digest 就变，该语言立刻退回"未审"</strong>——这是防"审了 A 版、跑了 B 版"的唯一机制。任何改译文内容的代码路径都必须让 digest 变化，否则闸门失效。</p>
+    <p style="margin-bottom:0">UI 折叠、手动切步骤<strong>不影响</strong> <code>deliveryOpen</code>——门禁只认这个纯函数。</p>
+  </div>
+
+  <div class="tbl-wrap">
+  <table>
+    <tr><th style="width:96px">步骤</th><th>做什么</th><th>硬约束</th></tr>
+    <tr>
+      <td><strong>1 准备素材</strong><br><span class="mono" style="font-size:11.5px;color:var(--ink-3)">materials</span></td>
+      <td>选文件夹、导入译文表</td>
+      <td>取前 12 个 PSD；单表 5MB；最多 12 语种 / 300 行；多 sheet 未选中的全部进警告不静默丢；该屏常驻保活，卸载即断轮询</td>
+    </tr>
+    <tr>
+      <td><strong>2 智能检测</strong><br><span class="mono" style="font-size:11.5px;color:var(--ink-3)">translation_review</span></td>
+      <td>洗表、对号、挑歧义</td>
+      <td>确定的自动做，拿不准的一律停；不得 0 warning 就跳步；不得静默应用</td>
+    </tr>
+    <tr>
+      <td><strong>3 设计稿校对</strong><br><span class="mono" style="font-size:11.5px;color:var(--ink-3)">design_reconcile</span></td>
+      <td>对账（多行 / 缺译）+ PS 就绪检查</td>
+      <td><strong>PS 就绪必须在这一步完成</strong>，不许拖到第 4 步（产品硬规定）</td>
+    </tr>
+    <tr>
+      <td><strong>4 生成交付</strong><br><span class="mono" style="font-size:11.5px;color:var(--ink-3)">delivery</span></td>
+      <td>确认语言/文件名/位置/费用 → 真实执行</td>
+      <td>只负责确认与启动；产出 psd + jpg + report.html</td>
+    </tr>
+  </table>
+  </div>
+
+  <h3 style="margin-top:26px">一次执行的完整数据流</h3>
+  <pre class="flow">① 扫描（助手 → PS 只读扫描器）
+      ↓ 文字层清单（原文/字体/字号/行数/对齐）
+② 云端对账 + 智能检测（DeepSeek 只做对齐）
+      ↓ 逐语言 digest（审完冻结）
+③ 报价（标准行×语种）→ 冻结积分 → jobId
+      ↓
+④ 助手 prepare：绑定计划 + Readiness + attempt + 不可变清单（含排版偏好）
+      ↓
+⑤ 服务端签一次性票据（防重放窗口 + nonce 表）
+      ↓
+⑥ PS 瘦执行器：逐层「确认还是原来那层」→ 写文字 → 写排版 → 读回比对 → 保存
+      ↓
+⑦ 关闭再重开验证（确认真的持久化，不是内存假成功）
+      ↓
+⑧ 回执（脱敏）→ 结算（完成率 &lt;95% 则比例 0）→ 本地报告 + 网页对账</pre>
+  <p><strong>每一步 fail-closed</strong>：任何一环拿不到凭据/对不上就停下报错，不静默降级（第一红线）。</p>
+</section>
+
+<section>
+  <h2 class="sec">十大子系统</h2>
+  <div class="cards">
+
+    <div class="card">
+      <span class="tag">01 · 只读扫描</span>
+      <h3>PSD 预扫描 <span class="pill ok">RUNNING</span></h3>
+      <p>不改动设计稿一个字节，读出所有文字层信息交给云端对账。五个 PS 侧脚本：预扫描（嵌套组递归）、就绪检查、几何扫描、重开验证、字体清单导出。</p>
+      <p style="margin-bottom:0"><strong>为什么字体必须问 PS：</strong>本机目录扫出 1293 个字体、PS 认 1587 个，只重合 1235 个——扫目录会漏 352 个 PS 能用的、多给 58 个 PS 不认的（<code>TYGF_Fonts_Probe.jsx:1-7</code>）。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">02 · 洗表对号</span>
+      <h3>智能检测 + 双语对齐 <span class="pill ok">RUNNING</span></h3>
+      <p>检五类：技术元数据行 → 内部保留；同原文同译文重复 → 自动合并；<strong>同原文多译文 → 必须人选</strong>；AI 判的对齐异常 → 建议重排/丢孤儿/排除；对账问题 → 缺译、多行、原文变了、歧义等。</p>
+      <p><strong>双语对齐</strong>：窗口化 DP 序列对齐，零 token 零写入，每行命运唯一——要么落地，要么显式标 DROP/FLAG/EXCLUDE，不允许静默消失。</p>
+      <p style="margin-bottom:0"><strong>AI 角色：</strong>DeepSeek 只做清洗与对齐（单次 ≤12 万字符 / ≤300 行），不做翻译；结果未知由管理员裁决，不自动重试。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">03 · 排得下</span>
+      <h3>译前版式适配 <span class="pill ok">RUNNING（档①）</span></h3>
+      <p>六条硬不变量：行数不变 · 只换行 · 行宽预算 · 合法断点 · 做不到就上报 · 可复现（逐字节）。</p>
+      <div class="tbl-wrap" style="margin:12px 0">
+      <table style="min-width:0">
+        <tr><th>档位</th><th>动作</th><th>状态</th></tr>
+        <tr><td>① 换行</td><td>按原稿行结构重排</td><td><span class="pill ok">生效</span></td></tr>
+        <tr><td>② 连字符</td><td>词内加 <code>-</code> 断行</td><td><span class="pill warn">查无实现</span></td></tr>
+        <tr><td>③ +1 行</td><td>需区域数据</td><td><span class="pill warn">未生效</span></td></tr>
+        <tr><td>④ 缩字号</td><td>自动缩小</td><td><span class="pill stop">已排除</span></td></tr>
+        <tr><td>⑤ 扩区域</td><td>—</td><td><span class="pill warn">未做</span></td></tr>
+      </table>
+      </div>
+      <p style="margin-bottom:0"><strong>例外清单</strong>只在四种情况出条目：估算超宽、<strong>写入行数少于原稿（结构缺陷必报）</strong>、无合法断点、字体兜底。BOXTEXT 不插换行，交给 PS 折行。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">04 · 字体</span>
+      <h3>字体与排版系统 <span class="pill ok">RUNNING</span></h3>
+      <p><strong>写入链路保守到苛刻</strong>：只写 PostScript 脸名（写显示名会被 PS 静默换成 MyriadPro-Regular），写完立刻读回比对，不一致就记码上报。原则：宁可发不出去，也不发错。</p>
+      <h4>面板真正下发的 5 个键</h4>
+      <div class="tbl-wrap" style="margin:10px 0">
+      <table style="min-width:0">
+        <tr><th>键</th><th>含义</th><th>备注</th></tr>
+        <tr><td><code>face</code></td><td>PostScript 脸名</td><td>空＝不改字体</td></tr>
+        <tr><td><code>size</code></td><td>字号 pt</td><td><strong>2026-10-31 加回</strong></td></tr>
+        <tr><td><code>tracking</code></td><td>字距 ‰em</td><td>0 是合法值，不能当"没设"</td></tr>
+        <tr><td><code>leading</code></td><td>行距</td><td>只发固定磅值</td></tr>
+        <tr><td><code>autoKerning</code></td><td>自动字距</td><td>度量标准 / 视觉</td></tr>
+      </table>
+      </div>
+      <p>偏好存本机 localStorage，不上传；每个字段标四态（可写 / 可写未接入 / 写不进 / 未实测），不假装全能。</p>
+      <p style="margin-bottom:0"><strong>有代码未接线：</strong>字形覆盖检查、版式几何（只测量不门禁）、DP 换行求解器、按源稿分组配字体。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">05 · 可追溯</span>
+      <h3>执行信任链 <span class="pill ok">RUNNING</span></h3>
+      <p>五段，每段 fail-closed：<strong>就绪 → 执行记录 → 一次性票据（防重放窗口 + nonce 表）→ 执行（逐层确认"还是原来那层" + 写 + 读回）→ 关闭重开验证</strong>。</p>
+      <p style="margin-bottom:0">跨来源防护：PS 扫描出来的稿交给引擎执行会被直接拒——凭记来源必须与执行通道一致。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">06 · 免 PS</span>
+      <h3>免 PS 引擎 <span class="pill warn">扫描 GATED</span> <span class="pill stop">写回 FROZEN</span></h3>
+      <p>外挂独立 Rust 可执行文件（约 43.3 MB，随安装包出厂），助手用标准输入输出逐行驱动，改写图层级文字块与文档级字距块。</p>
+      <p><strong>与 PS 并行，PS 优先</strong>：PS 在跑一定走 PS；只有"无 PS + 开关开 + 引擎哈希已固定"三条同时满足才走引擎，其余一律拒绝，禁止静默降级。</p>
+      <p><strong>已跑通</strong>：175 层真稿保存成功、字距校验通过、175/175 层新文字、字节级与 PS 原件一致。</p>
+      <div class="callout stop" style="margin:12px 0">
+        <p style="margin-bottom:0"><strong>但写回是冻结的</strong>：写回链在助手里被负向断言钉死不许接，三个开关默认全关，现行产物 PS 打开尚未复核。对外只能说"免 PS 扫描，内测默认关"。</p>
+      </div>
+      <p class="mono" style="margin-bottom:0;font-size:12px;color:var(--ink-3)">pcExecutorEnabled / pcExePath / pcExeSha256 —— 默认 false / '' / ''</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">07 · 学习</span>
+      <h3>学习功能系统 <span class="pill ok">采集 RUNNING</span> <span class="pill warn">规则 CODE_ONLY</span></h3>
+      <p>记录"系统建议什么 → 用户改成什么 → 结果验证没有"，六段证据：before / proposal / action / correction / final / verification。10 类决策族实采前 4 类；特征白名单只有 15 个键。</p>
+      <h4>四级作用域＝"个人库 / 公共库"</h4>
+      <div class="tbl-wrap" style="margin:10px 0">
+      <table style="min-width:0">
+        <tr><th>作用域</th><th>叫法</th><th>晋级门槛</th></tr>
+        <tr><td>personal</td><td>个人经验</td><td>5 任务 / 90% 接受率</td></tr>
+        <tr><td>template</td><td>同模板经验</td><td>逐级抬升</td></tr>
+        <tr><td>brand</td><td>同品牌经验</td><td>逐级抬升</td></tr>
+        <tr><td>public</td><td>公共经验</td><td>10 品牌 / 50 用户 / 200 次验证 + 30 天影子期</td></tr>
+      </table>
+      </div>
+      <p><strong>隐私三层闸</strong>：无同意不记（fail-closed）→ 白名单 + 值级扫描 → 字段名与值双黑名单（路径/盘符/机器 ID），服务端再拦一次。</p>
+      <div class="callout warn" style="margin:12px 0">
+        <p style="margin-bottom:0"><strong>真实状态：只记录、不执行。</strong>采集在跑；聚合只能手动跑脚本（默认 dry-run）；规则解析器生产零引用且恒返回空建议。对真实执行影响<strong>恒为 0</strong>——这是刻意的安全设计，规则部署只准"影子"模式。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="tag">08 · 钱</span>
+      <h3>计费与积分 <span class="pill ok">RUNNING</span> <span class="pill stop">支付 OFF</span></h3>
+      <p><strong>口径 = 标准行 × 语种</strong>：每行取原文与该语种译文里更长的一个，每满 200 字符 1 标准行（向上取整），单行单语种封顶 15。单次最低 20 分。50 行 × 12 语种 = 600 分。</p>
+      <p>一批一份报价、一次预留、一次结算；被忽略/未匹配行不计费。</p>
+      <p><strong>结算门：</strong>结果不可用或完成率 &lt; 95% → 结算比例 0（"做不出来就不收钱"的硬实现）。</p>
+      <p style="margin-bottom:0"><strong>积分：</strong>预冻结 → 按实际结算 → 失败释放，原子更新；冻结 10 分钟未结算可释放。内测分账 100 + 788 = 888 守恒上限。支付 6 个开关全 false。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">09 · 后台</span>
+      <h3>运营后台 <span class="pill ok">RUNNING</span></h3>
+      <p style="margin-bottom:0">4 组 14 个面板：概览（数据统计 / 站点流量 / 用户旅程）· 用户与资格（内测申请 / 邀请码 / 装机与积分 / 用户反馈）· 交易（积分订单 / 收入分析，仅 owner）· 系统（设备授权 / 学习候选 / 失败案例 / 审计日志 / 运营设置，仅 owner）。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">10 · 门面</span>
+      <h3>官网与合规 <span class="pill ok">RUNNING</span></h3>
+      <p>首页八区块（文案单一来源，可经运营台覆盖免发版）：为何变重 / 轻松在哪 / 如何处理 / 任务状态 / 价值 / 开工前 6 件事 / FAQ / 试跑。</p>
+      <p style="margin-bottom:0"><strong>对外主张：</strong>让设计师改语言变轻松；信任四项——PSD/PSB 留在本机 · 有歧义不猜 · 写入后核对 · 最终视觉由你确认。合规侧有中英双语法律页、子处理方清单、内容漂移守卫（源码 46 断言 + 发布前第 17 道门）、用户可见面禁展示后台实现。</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">状态总表</h2>
+  <div class="tbl-wrap">
+  <table>
+    <tr><th>子系统</th><th>状态</th><th>一句话</th></tr>
+    <tr><td>PSD 预扫描</td><td><span class="pill ok">RUNNING</span></td><td>每份稿都过</td></tr>
+    <tr><td>智能检测 / 双语对齐</td><td><span class="pill ok">RUNNING</span></td><td>洗表对号挑歧义</td></tr>
+    <tr><td>译前版式适配</td><td><span class="pill ok">RUNNING</span> <span class="pill warn">仅档①</span></td><td>只换行；②③⑤ 未生效</td></tr>
+    <tr><td>字体写入</td><td><span class="pill ok">RUNNING</span></td><td>5 键，写后读回</td></tr>
+    <tr><td>字体面板</td><td><span class="pill ok">RUNNING</span></td><td>存本机不上传</td></tr>
+    <tr><td>字形覆盖 / 几何 / DP 求解器</td><td><span class="pill warn">CODE_ONLY</span></td><td>未进执行链</td></tr>
+    <tr><td>执行信任链</td><td><span class="pill ok">RUNNING</span></td><td>五段 fail-closed</td></tr>
+    <tr><td>免 PS 扫描</td><td><span class="pill warn">GATED</span></td><td>已接线，默认关</td></tr>
+    <tr><td>免 PS 写回</td><td><span class="pill stop">FROZEN</span></td><td>底座通，链路刻意切断</td></tr>
+    <tr><td>学习系统</td><td><span class="pill ok">采集 RUNNING</span> <span class="pill warn">规则 CODE_ONLY</span></td><td>对执行影响 0</td></tr>
+    <tr><td>计费积分</td><td><span class="pill ok">RUNNING</span></td><td>标准行×语种</td></tr>
+    <tr><td>支付</td><td><span class="pill stop">OFF</span></td><td>6 开关全 false</td></tr>
+    <tr><td>运营后台</td><td><span class="pill ok">RUNNING</span></td><td>14 面板</td></tr>
+    <tr><td>批量执行</td><td><span class="pill stop">OFF</span></td><td>组合闸 false</td></tr>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">术语表（看到别猜）</h2>
+  <div class="tbl-wrap">
+  <table>
+    <tr><th style="width:190px">词</th><th>含义</th></tr>
+    <tr><td><strong>attempt</strong></td><td>一次执行记录，绑定稿件指纹 + 语言范围</td></tr>
+    <tr><td><strong>ticket</strong></td><td>服务端一次性执行票据，带防重放窗口与 nonce 表</td></tr>
+    <tr><td><strong>readiness</strong></td><td>本机环境自检（PS 版本 / 字体 / 权限 / 脚本可用）</td></tr>
+    <tr><td><strong>digest</strong></td><td>内容指纹。语言级 digest 变了＝译文改了，必须重审</td></tr>
+    <tr><td><strong>bindingPlan</strong></td><td>绑定计划：译文行 ↔ PSD 文字层的对应关系，唯一编译点</td></tr>
+    <tr><td><strong>evidence / 证据</strong></td><td>执行留下的可核验事实（写入值、读回值、层 ID）</td></tr>
+    <tr><td><strong>标准行</strong></td><td>计费单位：每 200 字符 1 个，单行单语种封顶 15</td></tr>
+    <tr><td><strong>假绿</strong></td><td>测试通过但没覆盖真实路径——本项目最忌的东西</td></tr>
+    <tr><td><strong>静默降级</strong></td><td>做不到却不报错、假装成功。<strong>第一红线</strong></td></tr>
+    <tr><td><strong>PC / photocraft</strong></td><td>免 PS 的 Rust 引擎（tygf-engine.exe）</td></tr>
+    <tr><td><strong>瘦执行器</strong></td><td>PS 侧只做"查层→写→读回→保存"的脚本，不含业务判断</td></tr>
+    <tr><td><strong>围栏 / fence</strong></td><td>负向断言，钉死"某能力不许被接上"</td></tr>
+    <tr><td><strong>worktree</strong></td><td>git 工作树。多棵并存，只有 develop 是活动目录</td></tr>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">红线与"不能说的话"</h2>
+  <h3 style="font-size:16px">红线（违反即停）</h3>
+  <ol>
+    <li><strong>不得静默降级</strong>；未完成能力必须明确报错。</li>
+    <li>不得从 develop 直接构建生产站；不得静默替换下载 URL。</li>
+    <li><code>BATCH_EXECUTION_READY</code> 保持 false，未获明确批准不得翻转。</li>
+    <li>助手行为变更必须走版本纪律（改 PS 脚本＝必须发版重装）。</li>
+    <li>生产支付开放须满足 checklist，缺一不可。</li>
+    <li>用户可见面不得展示后台实现（不写能力位、错误码解释、执行器、运营字段）。</li>
+    <li>禁止 <code>git reset --hard</code> / <code>checkout -- .</code> / <code>clean -fd</code> / <code>restore .</code> / force push。</li>
+    <li>发布走三段轨：先推 GitHub → 测试站从 GitHub 取 → 通过后生产从 GitHub 取。</li>
+  </ol>
+  <h3 style="font-size:16px;margin-top:24px">现在不能对外说的六句话</h3>
+  <div class="gates">
+    <div class="gate stop"><div class="k">免 PS</div><div class="v">不能说"支持免 PS 写回"</div><div class="d">写回链被负向断言钉死不许接，现行产物 PS 打开未复核。</div></div>
+    <div class="gate stop"><div class="k">翻译</div><div class="v">不能说"自动翻译"</div><div class="d">不吃原文出译文，吃的是用户自带译文表。</div></div>
+    <div class="gate stop"><div class="k">排版</div><div class="v">不能说"自动缩字号适配"</div><div class="d">缩字号档已被排除；用户手动设字号是另一条路径。</div></div>
+    <div class="gate stop"><div class="k">学习</div><div class="v">不能说"越用越聪明"</div><div class="d">规则解析器恒返回空，对执行零影响。</div></div>
+    <div class="gate stop"><div class="k">支付</div><div class="v">不能说"支付可用"</div><div class="d">6 个支付开关全 false，这是发布安全态要求。</div></div>
+    <div class="gate"><div class="k">批量</div><div class="v">不能说"批量全自动"</div><div class="d">官网自己写着：确定的先走，拿不准的先停。</div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">本次改动（2026-10-31，未提交）</h2>
+  <div class="callout">
+    <span class="h">Owner 令：字号加回去</span>
+    <p>助手白名单 <code>size</code> 从锁死清单移入可写（0.1–1296 pt，<code>fontSize</code> 仍锁死——不是 PS DOM 属性）；PS 执行器增加 <code>item.size</code> 写入 + 读回比对 + 新码 <code>SIZE_NOT_APPLIED</code>，版本 1.3.0 → 1.4.0；浏览器侧加 <code>sizePt</code> 全链（形状 / 校验 / 归一 / 映射 / 面板 / 结算）；能力表 6 格 → 7 格。</p>
+    <p><strong>测试</strong>：profile 159 / picker 256 / customization 115 / wiring 57 / 新增 fontsize 14（行为级：抽取执行段用假 item 跑，证明真的写、真的比对、失败真的记码）/ vitest 17；<code>test:feature-flag-whitelist</code> 全链 rc=0；<code>tsc --noEmit</code> rc=0。</p>
+    <p style="margin-bottom:0"><strong>尚未做</strong>：PS 真机复跑。在此之前"字号能写"只在代码逻辑层成立，不算真机验证。</p>
+  </div>
+  <h3 style="font-size:16px">改排版字段的连带影响（踩过）</h3>
+  <p>改一个字段要同步 <strong>6 处</strong>，漏一处就出"界面说会发、实际没发"或"保存即丢"：</p>
+  <ol>
+    <li>助手白名单 <code>typography-profile.js</code>（可写键 / 锁死键 / 范围 / 是否算"动过"）</li>
+    <li>PS 执行器 <code>TYGF_V15_Thin_Executor.jsx</code>（写入 + 读回 + issue 码）</li>
+    <li>浏览器形状与映射 <code>typography-persistence.ts</code>（<strong>归一必须显式补键</strong>，否则保存永远失败）</li>
+    <li>能力表与结算 <code>typography-capabilities.ts</code></li>
+    <li>面板控件 <code>typography-panel.tsx</code></li>
+    <li>测试 4 个 smoke + 1 个 vitest（含负向断言：撤下的字段有守卫不许回潮）</li>
+  </ol>
+</section>
+
+<section>
+  <h2 class="sec">已知文档漂移（别被带偏）</h2>
+  <ol>
+    <li><code>AI_MEMORY/PROJECT_CONTEXT.md:12-13</code> 写"云端 AI 翻译（DeepSeek）产出译文"——<strong>已过期</strong>，实测只做清洗与对齐。</li>
+    <li><code>AI_MEMORY/CURRENT_STATUS.md</code> 最新条目停在 2026-10-20；之后的事实以 <code>TASK_LOG.md</code> 顶部与 <code>ledger.jsonl</code> 为准。</li>
+    <li><code>总控/产品功能全景_*.md</code> 最新是 20261003，只作方向索引；引用前必须实测 <code>file:line</code>。</li>
+    <li>根目录 <code>graphify-out/</code> 是空壳图，<code>graphify query</code> 结果不可信，请用 grep / Read。</li>
+  </ol>
+</section>
+
+<div class="notes">
+  <p><strong>取数说明：</strong>本文全部结论读自 <code>worktrees/develop</code>（基线 <code>71529c7c</code> + 2026-10-31 未提交改动），每条附 <code>file:line</code>，可原样复核。</p>
+  <p>未标注证据的表述视为"未核实"，不构成结论。这份文档是给 AI 建立心智模型用的，不能直接当对外宣传口径。</p>
+</div>
+
+<footer>
+  <span>图译工坊 · 项目交接说明</span>
+  <span class="mono" style="font-size:12px">2026-10-31 · develop@71529c7c + 字号改动 · 助手 3.7.30</span>
+</footer>
+
+</div>
+</body>
+</html>

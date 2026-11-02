@@ -1,0 +1,549 @@
+<title>本地助手 3.7.28 发版与测试站部署</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行报告</span><span class="sep">/</span>
+    <span>本地助手 3.7.28</span><span class="sep">/</span>
+    <span>2026-10-25</span>
+  </p>
+  <h1>3.7.28 已出厂并上测试站</h1>
+  <p class="standfirst">修好的那一版叫 3.7.28：助手把自己“允许浏览器带哪些头”的名单补齐了。你打开测试站工作台会看到「本地助手有新版本 v3.7.28」，点下载装一次，那两句打架的提示就会消失——不用重新授权，配置文件也不会丢。</p>
+  <div class="meta">
+    <span>代码 <code>c0478308</code> / <code>511b823e</code> / <code>d317bb7f</code></span>
+    <span>安装包 SHA 458D25EB…420A1F0</span>
+    <span>测试站 d317bb7f</span>
+    <span>生产站未动</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <span class="lb">Verdict</span>
+    <p>SHIPPED。17 道发布闸全过，安装包真机编译并在 49318 端口实测预检放行，测试站已切到本次提交、健康 200、最新助手接口返回 3.7.28。<strong>剩下只有一步：你点一次安装。</strong></p>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">17/17</span><span class="k">发布闸全 PASS</span></div>
+    <div class="stat ok"><span class="n">204</span><span class="k">出厂件预检实测<br>（放行头三件齐）</span></div>
+    <div class="stat ok"><span class="n">200</span><span class="k">测试站健康检查<br>33 毫秒</span></div>
+    <div class="stat warn"><span class="n">1</span><span class="k">处首版文案被我拦下重做</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">01</span>这一版到底改了什么</h2>
+  <p class="lede">一句话：助手把自己的「放行名单」补上了，浏览器不再把请求整包丢掉。</p>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>现在（3.7.28）</h3>
+      <ul>
+        <li>助手回预检时说：可以带 <code>Content-Type</code>、<code>x-tygf-ticket</code>、<code>x-tygf-install-id</code>。</li>
+        <li>浏览器于是真的把请求发出去；助手日志里能看到这些请求。</li>
+        <li>连不上就报「连不上本机助手」，不再冒充「授权尚未确认」。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>之前（3.7.25 ~ 3.7.27）</h3>
+      <ul>
+        <li>名单里只有前两个头，第三个不在。</li>
+        <li>浏览器规矩：名单里没有就整包拒收，请求根本到不了助手。</li>
+        <li>界面只能报「无法连接本地助手」，横幅又把它说成授权问题——于是每次都去修授权，修不到点上。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>证据（都是实跑）</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="top"><span class="tag ok">出厂件</span><span class="loc">引擎 49318 端口实测</span></div>
+      <p>把装进安装包的那一枚引擎跑起来，它自报 v3.7.28；再用浏览器同语义的预检去问它——<strong>HTTP 204</strong>，放行头是 <code>Content-Type, x-tygf-ticket, x-tygf-install-id</code>，三个头齐全。修复前这一问的响应里没有第三个头。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">安装包</span><span class="loc">ISCC 实编</span></div>
+      <p><code>tygf-engine-setup-3.7.28.exe</code>，<strong>25,545,674 字节</strong>，SHA-256 <code>458D25EB…420A1F0</code>，未签名内测态。发布身份全链一致（网页/部署脚本/引擎/安装脚本/下载清单五处同号）。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">发布闸</span><span class="loc">release-preflight</span></div>
+      <p>17 道门全 PASS：助手授权屏障、信任链、批次行合同、错误文案合同、脚本分发、部分索引守卫、法务页漂移等。其中“助手授权屏障”里含我上一轮新加的 CORS 预检门。</p>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tag ok">上站后现读</span><span class="loc">test.tuyigf.com</span></div>
+      <p>现役提交 <code>d317bb7f</code>；本机健康 200（33 毫秒）；PM2 三进程 online、重启 0 次；「最新助手」接口 3.7.28 available；安装包实拉 HTTP 206，服务器上的文件 SHA 与本地逐位一致。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>中途被拦下的一件事（如实）</h2>
+  <div class="callout">
+    <p>第一次上站其实成功了（提交 <code>80065a44</code>），但我回读「最新助手」接口时发现发布说明首句还停在旧文案——它会把 3.7.28 说成「执行临时副本移出素材文件夹」，跟你真正遇到的问题完全不搭。按发版纪律（首句只写本版变化）改掉首句、重新走了一遍全链，才有了现在的 <code>d317bb7f</code>。代价是多花了一轮出包与上传。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>你需要做的（两分钟）</h2>
+  <div class="gates">
+    <div class="gate first">
+      <div class="num">1</div>
+      <div class="body">
+        <h3>打开测试站工作台，看横幅</h3>
+        <p>应该出现「本地助手有新版本 v3.7.28 / 当前版本 v3.7.27」。没有的话刷新一次页面即可。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">2</div>
+      <div class="body">
+        <h3>点「下载更新」并安装</h3>
+        <p>系统会弹授权窗，点允许；发布者未知的提示点“仍要运行”。安装保留配置与授权，<strong>不用重新验证</strong>。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="num">3</div>
+      <div class="body">
+        <h3>回工作台复验</h3>
+        <p>先看那两句打架的提示是否消失；再点「选择文件夹」→「预扫描」，确认能跑到结果。如果仍报「无法连接本地助手」，把浏览器控制台的报错发我——那会是另一条线索（例如本机安全软件拦 127.0.0.1），不再是这个根因。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>没做的与取舍</h2>
+  <ul class="notes">
+    <li><strong>生产站一个字没动</strong>：这一版只在测试站（生产仍跑 <code>origin/main</code>）。要上生产得单独授权，从 <code>main</code> 出包。</li>
+    <li><strong>安装包未签名</strong>：内测态，会触发“未知发布者”，属既有状态。</li>
+    <li><strong>云端验票会重新暴露</strong>：CORS 通了之后，请求真的走到助手，跨境验票这一步会显形（一次真实探针 9 秒，预算 30 秒；历史有超时记录）。这一版带 10 分钟租约压次数，但不是零风险。</li>
+    <li><strong>另一笔账没动</strong>：助手配置里 <code>serverUrl</code> 还指着 <code>localhost:3000</code>，4 张回执卡住约 43 天。同源不同处，不属本版。</li>
+    <li><strong>真机复验缺口</strong>：我没有你的登录态，无法替你在真实站点点“选文件夹→预扫描”。所以最后一步必须你来点。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>回滚</h2>
+  <p class="lede">测试站可回到上一版：备份在服务器 <code>/var/www/tygf-test-backups/deploy-20261025_172255-d317bb7f903b</code>；上一版归档 <code>80065a44</code>。旧安装包 3.7.27 仍在下载目录，站点与助手要成对回退。</p>
+</section>
+
+<footer>
+  <p><strong>本次动了什么</strong>：只动 <code>worktrees/develop</code> 与测试站。<strong>没动</strong>：生产站、支付 flag、授权/计费/执行判定、<code>CURRENT_STATUS.md</code>。</p>
+  <p>代码 <code>d317bb7f</code> · 测试站现役 <code>d317bb7f</code> · 2026-10-25 · 图译工坊内测版</p>
+</footer>
+
+</div>
+
+</body>
+</html>

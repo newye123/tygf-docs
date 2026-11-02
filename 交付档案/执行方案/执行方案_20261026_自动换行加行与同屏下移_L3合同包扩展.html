@@ -1,0 +1,622 @@
+<title>自动换行 · 加行与同屏下移 · 执行方案（含通稿性实测）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>执行方案</span><span class="sep">/</span>
+    <span>自动换行 · 加行 + 同屏下移</span><span class="sep">/</span>
+    <span>L3 合同包扩展</span><span class="sep">/</span>
+    <span>2026-10-26 22:26</span>
+  </p>
+  <h1>让 Photoshop 自己量一次：写文字 → 加行 → 重读边界 → 按实测差值下移</h1>
+  <p class="standfirst">你拍了「加行 + 同屏下移」（不破字号、不改文案、不扩屏高）。真机探针跑完了，六条地基都拿到，其中一条推翻了我上一轮自己的算法：<strong>加一行实测只增高 73px，闭式公式说 88px</strong>——所以位移量禁止预算，必须改完文字再量一次。这条直接决定了执行器的动作顺序。</p>
+  <div class="meta">
+    <span>PS 22.0.0 真机实测</span>
+    <span>通道＝出厂执行器同一条 DoJavaScriptFile</span>
+    <span>临时稿已全部不保存关闭</span>
+    <span>本件只是方案，未动代码</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>方案骨架与代价</h2>
+  <div class="verdict">
+    <span class="lb">一句话</span>
+    <p>扫描侧补采"这一屏下方还剩多少空间"，求解器放开 +1 行，执行器在写完文字后<strong>重读该层边界、按实测差值把同屏下方元素整体下移</strong>，报告逐条留痕；救不回来的显式报人，并说明是<strong>"这一屏没给多语言留空间"</strong>，不写成"译文太长"。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">2 / 7</span><span class="k">出框层里<br>不用挪任何元素的层数</span></div>
+    <div class="stat warn"><span class="n">40–55px</span><span class="k">需要下挪时的位移量<br>最多 10 个元素（组内一次挪完）</span></div>
+    <div class="stat bad"><span class="n">73≠88</span><span class="k">实测增高 vs 闭式推算<br>位移量禁止预算</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>六条地基（真机探针，全部实测回显）</h2>
+  <p class="lede">探针 <code>tmp/ps-spike-20261026/K2.jsx</code>，结果落盘 mtime 22:24:45。只碰新建的 <code>TYGF_SPIKE_*</code> 空白稿，测后不保存关闭、<code>displayDialogs</code> 已还原、<code>docCountFinal=0</code>。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>问题</th><th>实测读数</th><th>对方案的意义</th></tr></thead>
+      <tbody>
+        <tr><td>加一行往哪边长？</td><td class="now">单行 <code>101,142,431,216</code> → 两行 <code>101,142,431,289</code>；top 不变、bottom +73、锚点仍 <code>100,200</code></td><td><span class="tag ok">方向确认</span> 只向下长 ⇒ "把下方元素往下推"是对的动作</td></tr>
+        <tr><td>增高能用公式预算吗？</td><td class="was">字号 72、手设行距 88 ⇒ 闭式 <code>h=(n−1)·leading+h₁</code> 该长 88px，<strong>实测长 73px</strong></td><td><span class="tag bad">禁止预算</span> 必须"改完文字 → 重读 bounds → 按差值挪"，这决定了执行器顺序</td></tr>
+        <tr><td>文字层能挪并回读吗？</td><td class="now"><code>translate(0,55)</code> ⇒ <code>142,289 → 197,344</code>，精确 +55</td><td><span class="tag ok">可实施</span> 位移可取证，不是黑箱</td></tr>
+        <tr><td>图片/像素层能挪吗？</td><td class="now"><code>100,900,600,1000 → 100,955,600,1055</code></td><td><span class="tag ok">可实施</span> 下方产品图能一起让位</td></tr>
+        <tr><td>图层组能整体挪吗？</td><td class="now">组 <code>translate(0,88)</code> ⇒ <code>955 → 1043</code>，<strong>子层 bounds 同步变</strong></td><td><span class="tag ok">实现面收窄</span> 同屏下方元素若在组里，<strong>一次调用挪完</strong>，不必逐个</td></tr>
+        <tr><td>能凭空造文字层吗？</td><td class="was">DOM <code>addTextLayer()</code>「没有这种元素」；AM <code>make textLayer</code>「命令"制作:"当前不可用」；只有 <code>layer.kind = LayerKind.TEXT</code> 可行</td><td><span class="tag warn">堵死取巧路</span> "溢出部分另起一层"这种实现不存在，只能改现有层</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">本轮踩出来的一条硬约束（新增，必须进执行器）</span>
+    <p>对<strong>空图层</strong>调 <code>translate</code>，Photoshop 不是返回错误，而是<strong>弹模态框把整条自动化通道挂死</strong>——本轮实测把你的 PS 卡住约 20 分钟，弹窗文案「无法变换，因为最初的定界矩形是空的。」。加上前置断言「bounds 非空才允许 transform」后重跑，同类操作只返回 <code>SKIPPED_EMPTY</code>、<strong>不再挂死</strong>（K1 实证）。真跑批弹模态框＝整批停摆，这条比前六条都要命。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>先改法条，再改代码</h2>
+  <div class="split">
+    <div class="panel yes">
+      <h3>规格 <code>product-specs/typography-fit.md</code> 要改的</h3>
+      <ul>
+        <li><strong>I1「行数不变」</strong>→「默认不变；<code>wrapProfile.maxExtraLines ≥ 1</code> 时允许 +1 行，且必须逐条留痕」。</li>
+        <li><strong>新增 I2b「同屏下移」</strong>：允许把该层下方、水平投影重叠 ≥20px 的元素整体下移 <code>Δ = 实测增高 − 下方空隙</code>；<strong>Δ 必须实测，不得预算</strong>。</li>
+        <li>档位表 <code>:32</code>「允许 +1 行」由<strong>未生效 → 生效</strong>；新增档位⑥「同屏下移」＝生效。</li>
+        <li>例外清单加一种情形：<strong>下挪会顶出本屏内容底 ⇒ 报人</strong>，原因码 <code>NO_VERTICAL_ROOM</code>。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>明确不做的</h3>
+      <ul>
+        <li><strong>不自动缩字号</strong>（你早已排除，且＝静默降级）。</li>
+        <li><strong>不自动改文案、不扩屏高</strong>（会改导出尺寸，平台规范未核）。</li>
+        <li><strong>不做"转段落文本让 PS 自己折"</strong>——它只解决折行，解决不了 33px 的空间问题，还会让"数 <code>0x0D</code> 的渲染行数"主法错报。</li>
+        <li><strong>不动计费口径</strong>（加行不改"行"的语义；若报价要按实际排版行数计价，另案）。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>五个切片：能不能单独发版，一目了然</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">S1</span>
+      <div class="body">
+        <h3>扫描侧补采区域数据 · 不动摘要 · 可单独发版</h3>
+        <p>每层所属屏的内容底、下方最近元素的顶边、水平重叠宽度、是否在组里。<strong>只增字段，不改既有语义。</strong>验证门：新增 <code>smoke-typography-region.mjs</code>，拿本轮 ag-psd 离线实测的「图3 标题下方空隙 33px」当判据逐项对齐——防"扫上来的数没人对"。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">S4</span>
+      <div class="body">
+        <h3>报告与界面诚实性 · 不动摘要 · 可单独发版（建议抢在 S2 之前）</h3>
+        <p>三件事一起做：① <code>widthRatio === null</code> 必须显示「本版未测宽」，<strong>不得计入 0</strong>（钉死第二轮 F-6：报告显示 0 时实测仍裁 2 层）；② 界面块由 <code>total &gt; 0 &amp;&amp;</code> 改三态（有风险／未采集／已测无风险）；③ <code>report-renderer.js:430/432</code> 的 <code>slice(0,40)</code> 后拿长度当计数，改成「显示 40 条 / 共 N 条」。新增列：本层加了几行、下挪几个元素各多少 px。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">S2</span>
+      <div class="body">
+        <h3>求解器放开 +1 行 · <strong>动摘要</strong> · 必须走合同包班车</h3>
+        <p>接线 <code>wrap-planner.ts:310</code> 的 <code>planWrap</code>（含禁则、放不下显式失败）。译文变 ⇒ <code>assignmentDigest</code> 变，且 <code>wrapProfile</code> 要进 <code>bindingPlanDigest</code> v3 ⇒ <strong>四层同步</strong>（浏览器投影／助手 evidence／服务端报价／结算闸）+ 更新 <code>smoke-batch-row-contract</code> fixture。守卫那条「2: 单行原稿不干预」断言按新语义改写。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">S3</span>
+      <div class="body">
+        <h3>执行器加"实测后下移" · 动作不进摘要，但要进回执</h3>
+        <p>固定顺序：写 contents（含 CR）→ <strong>重读该层 bounds 得实测增高</strong> → 算 Δ → 对下方元素所在组（或逐层）<code>translate</code> → 再读一次边界回证。硬前置两条：<code>nonEmpty(bounds)</code> 才允许 transform；<code>app.displayDialogs = DialogModes.NO</code> 进执行器并在结束/异常时恢复。回执新增 <code>layoutShift</code> 字段 ⇒ 助手协议增列，随 S2 同批。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">S5</span>
+      <div class="body">
+        <h3>真机验收（你在场）</h3>
+        <p>装包 → 跑 5857 主副图 12 语种 → 判据：那 <strong>30 个出框层×语对全部归零</strong>；图3/图4/图6/图7 的下方元素位移逐条与回执一致；<strong>PS 全程无模态框、无停摆</strong>。装完必须核 <code>/ping</code> 的 5 枚脚本 sha 与发布身份相等（#74 教训），并彻底退出旧助手进程。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>负控五条：每条都必须真红一次</h2>
+  <ul class="notes">
+    <li><strong>1</strong> 把 <code>maxExtraLines</code> 设 0 ⇒ 报告必须回到"单行超宽"清单，<strong>不许</strong>出现任何加行痕迹。</li>
+    <li><strong>2</strong> 造一个"下方空隙 0"的层 ⇒ 必须落 <code>NO_VERTICAL_ROOM</code> 报人，<strong>不许</strong>自动压字或重叠。</li>
+    <li><strong>3</strong> 把某层 <code>fontSizePt</code> 置空 ⇒ 界面与报告必须出现「本版未测宽」；<strong>不出现即门红</strong>（这条钉死 F-6）。</li>
+    <li><strong>4</strong> 对空图层下 <code>translate</code> ⇒ 执行器必须跳过并记 <code>SKIPPED_EMPTY</code>，<strong>PS 不得弹模态框</strong>（挂死即红）。本轮已用真机证过这个前置有效。</li>
+    <li><strong>5</strong> 篡改回执 <code>shiftPx</code> 与实测 bounds 差值 ⇒ 结算闸必须拒收。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>风险与诚实预期</h2>
+  <div class="callout">
+    <span class="lb">发版</span>
+    <p>S2/S3 动摘要与助手协议 ⇒ <strong>一次 web＋助手成对发版窗口，你在场装包</strong>。装完不核脚本 sha 就等于没发（#74 当年 5 枚里 3 枚是旧的）。</p>
+    <p><span class="lb" style="display:inline">不可逆面</span>　挪层相对原稿是不可逆动作 ⇒ 只在母版独立副本上执行（既有行为），且回执必须带"改前/改后边界"，否则无法自证没压到别的元素。</p>
+    <p><span class="lb" style="display:inline">成功率别照旧数报</span>　5857 主副图 7 层里 2 层不用挪、5 层要挪（最多 10 个元素、Δ 40–55px）。<strong>A+ 稿与另外 30 个客户项目未测</strong>；旧文档里"+1 行覆盖 93%"那个数<strong>只算了宽度、没算垂直空间</strong>，不能当本方案的成功率。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>通稿性实测：Owner 一句「不能只对一个尺寸适合」引出来的重测</h2>
+  <p class="lede">上面 §0–§6 的判据全部来自 5857 主副图一份稿。跨 15 份真母版（1109 个文字层，含 72 与 300 ppi、psd 与 psb、宽 1080–6700）重测后：<strong>5857 主副图恰好是全样本里最宽松的那一份</strong>，按它设计会把覆盖率看得过高。脚本 <code>tmp/wrapaudit-20261026/{general,rooms2}.mjs</code>，只读可复跑。</p>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">76%</span><span class="k">5857 主副图<br>"加行不用挪版"占比（样本最高）</span></div>
+    <div class="stat warn"><span class="n">44%</span><span class="k">15 份稿的中位<br>区间 17%–76%</span></div>
+    <div class="stat bad"><span class="n">66%</span><span class="k">需挪版的层里<br>挪完会顶出画板底</span></div>
+  </div>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>通稿变量</th><th>实测分布</th><th>对我原方案的打击</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">文档宽度</td><td class="was">1080／1600／2120／2135／2137／2144／2164×3／2176／2187／2700／4429／6156／6700；长宽比 0.11–4.74</td><td>写死的"画板宽 1600""Δ 40–55px"全部失效；5857 是样本里最窄之一、且 0.11 的超长竖稿独一份</td></tr>
+        <tr><td class="mono">分辨率</td><td class="was">72 与 <strong>300 ppi</strong> 两档（5389 那份 300）</td><td>我所有 px 数在 300ppi 稿上量纲错 4.2 倍 ⇒ 必须换算 <code>px = pt × 分辨率 ÷ 72</code>，位移档改用"行距倍数"</td></tr>
+        <tr><td class="mono">图层缩放</td><td class="was"><strong>743/1110 = 67%</strong> 的文字层 <code>transform[0] ≠ 1</code>（5857 也有 20/37）</td><td>宽度与位移必须先换算到图层自身缩放空间；我上一轮<strong>没做这个换算</strong></td></tr>
+        <tr><td class="mono">"屏"容器</td><td class="now">artboard 真矩形在 <code>layer.artboard.rect</code>（绝对坐标）；artboard 图层<strong>自身 bounds 恒为 0,0,0,0</strong></td><td>我原方案倾向"按分组框算"＝<strong>错的</strong>（第二轮把屏间空带算成负数就是这么来的）。按 artboard 口径 <strong>1090/1109 层有宿主（98%）</strong></td></tr>
+        <tr><td class="mono">段落文本层</td><td class="was">box 层 10/1109（5192／5196／5682／5339 各 2–3 层）</td><td>这些层 PS 自己折行，<strong>禁止</strong>再插行 ⇒ S2 必须有分支（规格 <code>typography-fit.md:51</code> 已有，方案要接上）</td></tr>
+        <tr><td class="mono">竖排</td><td class="now">0/1110（本语料没有）</td><td>不能当"没有"⇒ 保守档：竖排一律不自动加行（"下移"对竖排方向是错的）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="split">
+    <div class="panel no">
+      <h3>压力测试口径下的真实覆盖率</h3>
+      <ul>
+        <li><strong>假设每个文字层都要加一行</strong>：空隙够、不用挪版 <strong>445/1080 ≈ 41%</strong>；每稿中位 44%，最低 <strong>17%</strong>（5684 A+移动端），最高 <strong>76%</strong>（5857 主副图）。</li>
+        <li>需挪版 635 例，挪动量中位 28px、p90 79px、最大 349px。</li>
+        <li><strong>其中 417 例（66%）整体下移后会顶出画板底</strong> ⇒ "加行 + 同屏下移"在通稿上只覆盖约 <strong>1/3</strong> 的挪版场景。</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>因此方案加的四条（不改方向，改适用范围）</h3>
+      <ul>
+        <li><strong>判据全部相对化</strong>：÷ 所属画板可用宽、按图层自身缩放空间算、位移用行距倍数；验收跨 72/300ppi 与 1080/6700 宽各跑一稿。</li>
+        <li><strong>容器口径写死 artboard.rect</strong>；无宿主画板 ⇒ "未采集、不自动动版"，禁止退化成分组框或文档边界。</li>
+        <li><strong>新增安全阀档 <code>SHIFT_OVERFLOWS_ARTBOARD</code></strong>：挪了会顶出画板底 ⇒ 不许自动挪、报人并给"可用高 vs 需求量"。</li>
+        <li><strong>box 层分支</strong>：只提示不插行。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="lb">把话说在前面（这句最重要）</span>
+    <p>按通稿实测，这个特性的真实收益是<strong>"约四成层全自动修好，其余当场点名报人"</strong>，不是"以后都能换行"。要把覆盖率往上抬只剩两条：允许扩画板高（会改导出尺寸，<strong>Amazon 各模块是否允许改高本仓无任何依据＝未核实</strong>），或允许缩字号（你已排除）。<strong>别等做完再打折，现在就知道上限。</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>未决、更正、覆盖缺口</h2>
+  <ul class="notes">
+    <li><strong>为什么实测长 73px 而闭式说 88px</strong>：疑与"手设 leading 后单行 bounds 不含完整行距"有关，<strong>未证</strong>。方案已按实测设计，但闭式在 #75 渲染行数判据里的可用性要重估。</li>
+    <li><strong>报价是否受影响</strong>：加行不改"行"的语义，但若客户按"排版行数"看交付，报告口径要提前与销售对齐。未拍。</li>
+    <li><strong>~~屏内容底怎么定~~ 已定</strong>：用 <code>layer.artboard.rect</code>（离线可读、绝对坐标、98% 层有宿主）。原方案倾向"分组框"是错的——分组框自身 bounds 恒为 <code>0,0,0,0</code>。</li>
+    <li><strong>顶出画板那 66% 怎么兜</strong>：放开"扩画板高"能救，但会改导出尺寸——<strong>Amazon 主副图／A+ 模块是否允许改高，本仓无任何依据，未核实</strong>，要查得查平台现行规范原文。</li>
+    <li><strong>41% 是压力口径，不是真口径</strong>：真数要"该层确实需要加一行"才算，只有 5857 有 12 语种译文可对，其余 14 份稿无译文 ⇒ 通稿真覆盖率<strong>未核实</strong>，只能给上下界。</li>
+    <li><strong>本次未动</strong>：未改任何业务代码、未改规格本体（本件只是方案）、未跑门禁、未部署、未提交、未 push，两站一行未动。你的 Photoshop 已恢复：<code>docCountFinal=0</code>、<code>displayDialogs</code> 已还原、临时稿全部不保存关闭。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>承接 <code>执行方案_20260920_排版质量_第一性原理与实测复用.md</code> 的 L3 合同包（wrapProfile v3），把"只加行"扩成"加行 + 让版"，并补上当年缺的垂直维度。根因与量化见同日两份审查报告（第一轮／第二轮深挖）。</p>
+  <p>2026-10-26 22:26 立项 · 探针结果落盘 mtime 22:24:45 · 只读开发树未改动，探针与日志留在 <code>tmp/ps-spike-20261026/</code>。</p>
+</footer>
+
+</div>
+

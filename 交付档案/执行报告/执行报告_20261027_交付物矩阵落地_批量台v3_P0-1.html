@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>交付物矩阵落地 · 批量台 v3 的 P0-1 那一格</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:32px 22px 70px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub{color:var(--mut);font-size:13px}.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--grn);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:#4bb78a;font-size:18px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11.5px;color:var(--mut)}
+.id{font-weight:700;white-space:nowrap}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:6px 0}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head><body><main>
+<h1>交付物矩阵落地：批量台 v3 的 P0-1 那一格</h1>
+<p class="sub">基线 develop <span class="mono">619b448a</span>（20:48 别手一笔）· 本会话 21:0x–21:26 实测 · 全部改动在脏区，未提交、未推送、未部署</p>
+
+<div class="verdict"><b>这 144 份里哪几份还没开始，现在一眼看得见了</b><br>
+原来那块"覆盖率矩阵"不是矩阵：每稿一段，段里一排语种小方块，而且<b>各语种的数字必然相同</b>——取数口把每个语种列都当成原文列，调用侧又把表里真实存在的译文扔掉。现在每格里两个数：上行覆盖率（口径一字未改），下行"这一列真填了几行译文 · 状态"。</div>
+
+<h2>一、为什么过去看不出来</h2>
+<ul>
+<li>取数口 <span class="mono">src/lib/workbench/coverage.ts:188</span> 把每个语种列映射成同一份<b>原文列</b> ⇒ 同一稿各语种覆盖率恒等。</li>
+<li>调用侧 <span class="mono">workbench-view.tsx</span> 原先只取 <span class="mono">row.source</span>（原 <span class="mono">:3600</span>，本轮改后 <span class="mono">:3603</span>），而 <span class="mono">ParsedCsv.rows[i].translations</span>（<span class="mono">src/lib/types.ts:138</span> 明写了各语种译文）被丢弃。</li>
+<li>后果：一行译文都没填的稿，格子仍是<b>实心绿＋100%</b>。眼睛读到的是"好了"。</li>
+</ul>
+
+<h2>二、改了什么（<span class="mono">git diff --numstat</span> 实测）</h2>
+<table><tbody>
+<tr><td class="id">coverage-matrix.tsx</td><td>＋223／−130</td><td>渲染层重写：真表格＋双向粘性表头＋四态取色＋点格明细</td></tr>
+<tr><td class="id">coverage.ts</td><td>＋23／−1</td><td>新增纯函数 <span class="mono">countLangFilledRows</span>；入参类型加<b>可选</b> <span class="mono">translations</span></td></tr>
+<tr><td class="id">workbench-view.tsx</td><td>＋14／−3</td><td>把译文传给矩阵。<b>此文件同时有别手在飞改动</b>，我只动我那 5 行</td></tr>
+<tr><td class="id">smoke-batch-workbench-guards.mjs</td><td>＋53</td><td>9 道新针（含旧标题反向锁死）</td></tr>
+<tr><td class="id">smoke-batch-workbench-logic.mjs</td><td>＋34</td><td>6 条新断言（含"带不带译文覆盖率必须相同"）</td></tr>
+</tbody></table>
+
+<h2>三、三条不能碰的线，都守住了</h2>
+<div class="callout ok"><b>① 覆盖率只有一个来源。</b>组件与执行前闸都走 <span class="mono">calcCoverageMatrixForDraftTables</span>；门里钉了反向针：组件内不得直接调 <span class="mono">calcCoverage</span>。</div>
+<div class="callout ok"><b>② 填充率不进执行闸。</b>闸签名仍只取原文列。界面读数不许改执行语义——这条是本项目"合同变更"纪律的边界。</div>
+<div class="callout ok"><b>③ 旧说法同批撤。</b>标题「覆盖率矩阵 · 每稿一表」删除并加针锁死不得复现（只撤判据不撤文案＝上线一句对外假话）。</div>
+
+<h2>四、真实运行证据</h2>
+<table><tbody>
+<tr><td class="id">npx tsc --noEmit</td><td>rc=0</td></tr>
+<tr><td class="id">npm run lint</td><td>rc=0，0 errors／48 warnings（<b>改动前后同为 48</b>，未新增警告）</td></tr>
+<tr><td class="id">test:batch-workbench-guards</td><td>rc=0，passed: <b>50</b> checks（改动前 39）</td></tr>
+<tr><td class="id">test:batch-workbench-logic</td><td>rc=0，passed: <b>114</b> checks（改动前 108）</td></tr>
+<tr><td class="id">test:workbench-ui-contract</td><td>rc=0，"workbench UI product contract: ok"</td></tr>
+<tr><td class="id">负控五连</td><td>rc=0：N1 不走纯函数／N2 不传译文／N3 旧标题复现／N4 取数口偷读译文／N5 未开始涂成实心绿 ⇒ <b>五条全部改坏即门红、还原后 sha256 逐位相同</b></td></tr>
+</tbody></table>
+<div class="callout bad"><b>我自己的一条错，写在这里不藏。</b>N4 第一次跑出的"红"是<b>脏的</b>——那时我的用例自己写坏了（把稿数组当单份传），rc=1 可能来自用例而不是负控。修好用例后重跑，那条红才算数。</div>
+
+<h2>五、真浏览器点验（数出来的，不是看着像）</h2>
+<p>临时路由 <span class="mono">/tmp-matrix-probe</span> 挂 12 稿 × 12 语种夹具，复用这台机器上<b>已经在跑的本树 dev</b>（端口 3000，PID 51216——没起新服务、没碰那个进程）。</p>
+<ul>
+<li>表头 13 格（行头＋12 语种）、数据 12 行、<b>总格数 144</b>、可点 126（＝144 − 未导入表整行 12 − 本稿不做 6）</li>
+<li><span class="mono">thead</span> 与行头 computed style 均为 <span class="mono">position: sticky</span></li>
+<li>状态计数：就绪 47／未开始 67／<b>进行中 12</b>（第一版夹具漏了"进行中"，补一份半填稿才点全四态）</li>
+<li>SKU-03 × EN：<span class="mono">覆盖率 100%，该列已填 0/4 行</span>，边框 <span class="mono">dashed</span>（过去这一格是实心绿）</li>
+<li>SKU-08 表只有 6 列 ⇒ 后 6 格「本稿不做」；SKU-12 未导入表 ⇒ 整行虚线</li>
+<li>点格出明细：「这一份交付物 SKU-03.psd EN 覆盖率 100% · 可翻译文本 4 条 该列已填 0/4 精确匹配 4 空白等价 0 部分包含 0 未匹配 0」</li>
+<li><b>点验件已删除</b>：删后该 URL 实测 <span class="mono">http=404</span>，<span class="mono">git status</span> 无残留</li>
+</ul>
+
+<h2>六、覆盖缺口（不粉饰）</h2>
+<ol>
+<li>四态里的「待放行」（填满但覆盖率低于 95%）本次夹具没造出这一格 ⇒ <b>未实测</b>。</li>
+<li>状态标签函数在组件内部未导出 ⇒ <b>没有常驻单测</b>，只有真浏览器那一轮数过；要常驻得挪进 <span class="mono">coverage.ts</span>。</li>
+<li>12×12 是夹具，不是真客户稿；真跑 12 份母版要连助手与真表，本轮没做。</li>
+<li>v3 还要求的<b>行头绑定证据徽章</b>（实证/推定/存疑/不符）没接进这张矩阵——徽章目前只在第 1 步稿卡上（<span class="mono">binding-evidence.ts</span> 已落地，矩阵行头未引）。这是 P3 剩下的那一半。</li>
+</ol>
+
+<h2>七、这条线还剩什么</h2>
+<ul>
+<li><b>P3 未完</b>：矩阵行头接绑定证据徽章；语言页签与"一表多稿（1:N）"口径归位</li>
+<li><b>P4 未完</b>：份数口径与例外清单收口</li>
+<li><b>等你拍</b>：份口径（按稿算还是按稿×语种算）／宽表要不要进多稿归组／模板加不加「记录编号·模块」两列／读表要不要 12 张每轮</li>
+</ul>
+
+<footer>图译工坊 · 批量台 v3 P0-1 执行报告 · 对应 md：交付档案/执行报告/执行报告_20261027_交付物矩阵落地_批量台v3_P0-1.md</footer>
+</main></body></html>

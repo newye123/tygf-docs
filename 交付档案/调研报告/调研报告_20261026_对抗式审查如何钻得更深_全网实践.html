@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>调研报告 · 对抗式审查怎么钻得更深</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;
+    --line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+    --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding-block:clamp(26px,5vw,52px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,5vw,48px)}
+.masthead{display:flex;flex-direction:column;gap:13px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line-strong)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4vw,2.15rem);line-height:1.28;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1rem}
+.verdict{border:1px solid var(--line-strong);border-left-width:6px;background:var(--surface);border-radius:var(--radius);padding:15px 18px;display:flex;flex-direction:column;gap:5px}
+.verdict .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.verdict .v{font-family:var(--font-display);font-weight:700;font-size:1.12rem;color:var(--ink)}
+.verdict p{margin:0;font-size:.88rem;color:var(--ink-2)}
+.verdict.acc{border-color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+.verdict.acc .k{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px}
+.stat{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:10px 12px}
+.stat .v{font-family:var(--font-mono);font-size:1.22rem;font-weight:600;line-height:1.2}
+.stat .l{font-size:.72rem;color:var(--muted);margin-top:2px;line-height:1.4}
+.stat.ok .v{color:var(--ok)}.stat.bad .v{color:var(--bad)}.stat.warn .v{color:var(--warn)}.stat.acc .v{color:var(--accent)}
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-family:var(--font-display);font-size:1.14rem;font-weight:700;margin:0;letter-spacing:-.005em}
+h2 .n{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);margin-right:8px;letter-spacing:.06em}
+.lead{margin:0;color:var(--ink-2);font-size:.93rem;max-width:72ch}
+.table{width:100%;border-collapse:collapse;font-size:.84rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.table thead th{background:var(--sunk);font-family:var(--font-mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.table tbody tr:last-child td{border-bottom:0}
+.table td.mono,.mono{font-family:var(--font-mono);font-size:.79rem}
+.table td.mono{white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.card .h{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700;flex-wrap:wrap}
+.card p{margin:0;font-size:.82rem;color:var(--ink-2)}
+.tag{font-family:var(--font-mono);font-size:.65rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);white-space:nowrap}
+.tag.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.tag.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.tag.acc{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:11px 14px;font-size:.86rem;color:var(--ink-2)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout b{display:block;color:var(--ink);margin-bottom:2px;font-size:.9rem}
+.gates{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.gate{display:grid;grid-template-columns:52px minmax(0,1fr) minmax(0,1fr);gap:12px;padding:10px 13px;border-bottom:1px solid var(--line);font-size:.84rem}
+.gate:last-child{border-bottom:0}
+.gate .p{font-family:var(--font-mono);font-weight:600;font-size:.8rem;color:var(--accent)}
+.gate .a strong{display:block;font-size:.86rem}
+.gate .a span{color:var(--muted);font-size:.78rem}
+.gate .b{color:var(--ink-2);font-size:.8rem}
+.gate .b em{font-style:normal;color:var(--warn);font-weight:600}
+@media (max-width:760px){.gate{grid-template-columns:44px 1fr}.gate .b{grid-column:2}}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.7;color:var(--ink-2);margin:0}
+.notes{display:flex;flex-direction:column;gap:8px;font-size:.86rem;color:var(--ink-2)}
+.notes .li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+.notes .li b{color:var(--ink)}
+.notes .num{font-family:var(--font-mono);font-size:.76rem;color:var(--muted);padding-top:2px}
+.footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.78rem;display:flex;flex-direction:column;gap:5px}
+.footer b{color:var(--ink-2)}
+ul.tight{margin:0;padding-left:18px;color:var(--ink-2);font-size:.86rem}
+ul.tight li{margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow"><span>调研报告</span><span class="sep">/</span><span>2026-10-26</span><span class="sep">/</span><span>GitHub 公开 skill 原文 ＋ 红队框架 ＋ 论文 ＋ 中文实践</span></div>
+    <h1>对抗式审查怎么钻得更深：公开实践里真正起作用的是结构，不是"更努力地想"</h1>
+    <p class="standfirst">这轮不看别人怎么夸对抗式审查，只看他们把流程写成了什么形状。读了四个公开 skill 的原文（含验证模板和维度规则文件）、三个红队框架、几篇论文摘要和中文实践文章。结论之一是：我们自己的 skill 已经踩到了大部分硬思想；差的是把它们变成可复核的机械动作。</p>
+    <div class="verdict acc">
+      <span class="k">核心结论</span>
+      <span class="v">深度来自"几道互相独立的关卡"，不是更长的提示词</span>
+      <p>审查者不写代码 → 验证者不是审查者 → 每条意见先找反例、再给三态裁决 → 结论绑住被测物指纹 → 漏网的变成下次必须失败的攻击用例。公开实现把这五步都做成了固定格式；我们做到的是"两个 agent、自由文本、绑 commit"。</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="stats">
+      <div class="stat acc"><div class="v">6</div><div class="l">公开做法<br>（按对深度的贡献排）</div></div>
+      <div class="stat acc"><div class="v">5</div><div class="l">可直接抄的升级<br>（0.5–2 天/件）</div></div>
+      <div class="stat bad"><div class="v">4</div><div class="l">"别抄错"<br>反面证据</div></div>
+      <div class="stat ok"><div class="v">4</div><div class="l">我们已做对<br>别改掉</div></div>
+      <div class="stat warn"><div class="v">4 份</div><div class="l">skill 原文<br>curl 直读（A 级）</div></div>
+      <div class="stat"><div class="v">1 天</div><div class="l">最高性价比的一件<br>（方案指纹）</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">0</span>一句话</h2>
+    <div class="callout"><b>对我们最有用的一句</b>"钻得深"在公开实践里几乎都被翻译成了同一件事：<b>把审查拆成几道互相独立的关卡，并且每道关卡的产出都能被机器复核</b>。审查者不写代码；验证者不是审查者；结论绑住被测物的指纹；每条意见必须先找反例；历史漏网变成下次的攻击用例。我们的 skill 已经踩到了其中大部分思想，缺的是机械化——规则还写在脑子里、裁决还不是结构化数据、批准还没有绑方案指纹。</div>
+    <p class="lead">这对你意味着什么：同样的模型、同样的时间，只把流程改成"审查／验证分人 + 意见结构化 + 结论绑哈希"，就能把"看起来审过了"变成"审过哪一版、哪条被证伪、哪条还缺证据"可查。下面五件事都能在一到两天内落地，都不需要换模型。</p>
+  </section>
+
+  <section>
+    <h2><span class="n">1</span>六个做法（按对"深度"的贡献排序）</h2>
+    <table class="table">
+      <thead><tr><th>#</th><th>做法</th><th>公开实现里的原话 / 形状</th><th>我们的现状</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">1.1</td>
+          <td><b>审查者必须换人，最好换厂</b></td>
+          <td class="wrap-cell">read-frog 写死硬约束：reviewers MUST run via the opposite model's CLI，<b>不许用子代理</b>；claudex-loop 让 Claude 写、Codex 审，终检用<b>全新会话</b>；deep-review：「an agent that just wrote the code is grading its own homework」，且「Review and verify must never share an agent」</td>
+          <td>已是"分面取证 + 主审证伪"两个人，但<b>同模型同会话</b>；skill 里有跨模型方向性数据，却没落成硬闸</td>
+        </tr>
+        <tr>
+          <td class="mono">1.2</td>
+          <td><b>规则写成可执行清单，并写明"什么不算问题"</b></td>
+          <td class="wrap-cell">deep-review 14 个维度文件，每个四段：Quick checklist / How to check / Violations / <b>Not violations</b>；配一张剪枝表；还有一条：改 <span class="mono">AGENTS.md</span>、prompt、skill 的 diff <b>不算文档，按代码审</b></td>
+          <td>切面按对象临时定，没沉淀成可版本化规则；深度差异主要来自这里</td>
+        </tr>
+        <tr>
+          <td class="mono">1.3</td>
+          <td><b>意见过独立验证关，裁决机器可读</b></td>
+          <td class="wrap-cell">验证模板十步：<b>先找反例</b>（上游保证/提前返回/框架行为）；区分 introduced 与 exposed_legacy；校准到代码库现状（<span class="mono">over-scrutiny:</span> 前缀）；三态 <span class="mono">confirmed / false_positive / need_more_context</span> + 四类 override；去重判据＝"一处修复能否同时解决两条"</td>
+          <td>三分处置思路一致，但自由文本、无 schema、无理由前缀、无"同根"判据</td>
+        </tr>
+        <tr>
+          <td class="mono">1.4</td>
+          <td><b>结论绑被测物指纹，改了就失效</b></td>
+          <td class="wrap-cell">claudex-loop：批准记录方案路径 + <b>SHA256</b>，方案一改批准失效；终检记录构建前 commit + 改动指纹（<b>含已暂存与未跟踪文件</b>）</td>
+          <td>绑 commit 有了，<b>方案文本没有指纹</b>——这轮施工图在被审期间被另一只手改过，说不清审的是哪一版</td>
+        </tr>
+        <tr>
+          <td class="mono">1.5</td>
+          <td><b>反方固定镜头，过半存活才采信</b></td>
+          <td class="wrap-cell">fable-harness 三反方：skeptic（逻辑漏洞）/ red-team（安全与失效）/ <b>simplifier（过度工程）</b>，三镜头过半存活结论才采信；read-frog 按 diff 规模配 1/2/3 个镜头</td>
+          <td>分面贴合对象是优点，但缺专门盯过度工程的那一路</td>
+        </tr>
+        <tr>
+          <td class="mono">1.6</td>
+          <td><b>把"找茬"变成"证伪"：负控 / 变异 / 攻击库</b></td>
+          <td class="wrap-cell">变异测试杀不死的变异体＝测试真实盲区；promptfoo（26,422★）用攻击成功率并<b>把历史失败沉淀成回归集</b>；garak（9,699★）、PyRIT（4,687★）同理</td>
+          <td>负控已有且写得比公开实现细；缺变异测试，缺"漏网→可重放"的入口</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>四条"别抄错"的反面证据</h2>
+    <div class="cards">
+      <div class="card"><div class="h"><span class="tag bad">反面 1</span>没有外部信号的自我纠错无效</div><p>Huang et al. (ICLR 2024)：内在自我纠错在推理任务上常无提升、甚至下降。近期工作把反思重新定义为"受限再生成"——没有新信息时，迭代只是重采样。<b>所以"再想想"不是深度，加一道独立验证才是。</b></p></div>
+      <div class="card"><div class="h"><span class="tag bad">反面 2</span>强制"每人至少报一条"会逼出捏造</div><p>我们 skill 里记的实测：为凑数的 hedge 会被判捏造（3/5 条）。claudex-loop 也写死：「Zero findings is valid; a large number of findings is <b>not</b> a quality score.」</p></div>
+      <div class="card"><div class="h"><span class="tag warn">反面 3</span>找茬式审查诱发过度工程</div><p>被要求找茬的审查者即使没问题也会报东西；追着每条改会催生多余抽象和防御性代码。deep-review 用 <b>Not violations</b> 段和 <span class="mono">over-scrutiny:</span> 前缀对抗它。</p></div>
+      <div class="card"><div class="h"><span class="tag warn">反面 4</span>裁判偏差是结构性的</div><p>MT-Bench（arXiv 2306.05685）列了位置 / 冗长 / 自我增强三类偏差，缓解手段是<b>换顺序各判一次</b>、多裁判、剥离长度与风格信号。对审查的含义：先看到谁会影响判决；报告长度不能当质量。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>五件可以直接抄进我们 skill 的（按代价排序）</h2>
+    <div class="gates">
+      <div class="gate"><div class="p">A</div><div class="a"><strong>方案审查绑指纹 · 半天</strong><span>审完记录 <span class="mono">sha256(方案文件)</span>；后续编辑让批准失效</span></div><div class="b">判据可复跑：改一个字 → 批准状态必须变"失效"；报告页首写清"审的是哪一版文字"</div></div>
+      <div class="gate"><div class="p">B</div><div class="a"><strong>审查／验证分人，裁决结构化 · 1–2 天</strong><span>验证子代理只吃意见清单与范围，不吃审查者推理</span></div><div class="b">三态 + 证据 + 缺失项；JSON 字段 <span class="mono">id/verdict/evidence/blocks_release/can_auto_fix/overrides</span>；<em>false_positive 必须带理由前缀</em>；去重判据改"一处修复能否同时解决两条"</div></div>
+      <div class="gate"><div class="p">C</div><div class="a"><strong>维度规则库落文件 · 2 天</strong><span><span class="mono">references/dimensions/*.md</span>，四段 + skip_when</span></div><div class="b">先落六个最贵的：支付结算 / 权限授权 / 删除与保留期 / 跨层合同 / 发布闸与回滚 / UI 状态；<em>每份必须有 Not violations 段</em></div></div>
+      <div class="gate"><div class="p">D</div><div class="a"><strong>固定加一个 simplifier 镜头 · 半天</strong><span>只回答"这里有什么可以删掉而不损失目标"</span></div><div class="b">产出"可删清单 + 理由"，与 findings 分开列；专治审查驱动的过度工程</div></div>
+      <div class="gate"><div class="p">E</div><div class="a"><strong>历史漏网 → 可重放攻击 · 1 天</strong><span><span class="mono">REVIEW-EVALS.md</span> 每行补一条可跑负控</span></div><div class="b">加入口 <span class="mono">npm run review-evals</span> 全量重放；<em>漏网缺陷只有在重放里变红才算销账</em></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>拿新尺子量我这一轮（自指）</h2>
+    <table class="table">
+      <thead><tr><th>项</th><th>本轮实际</th><th>按新尺子</th></tr></thead>
+      <tbody>
+        <tr><td>独立性</td><td>子代理分面 + 主审证伪，同模型同会话</td><td>只做到"换上下文"，没做到"换厂"；应标 <span class="mono">independence: same-model</span></td></tr>
+        <tr><td>方案版本</td><td>写了基线 commit，但方案文件当时正被另一只手改</td><td>缺方案指纹；应写清"审的是哪一版文字"</td></tr>
+        <tr><td>裁决形态</td><td>自由文本表 + 严重度 + A–D 证据等级</td><td>无 JSON、无 <span class="mono">false_positive</span> 理由前缀</td></tr>
+        <tr><td>证据强度</td><td>F-01/02/03/06/07 都有探针复现</td><td>A 级成立</td></tr>
+        <tr><td>F-05（覆盖率比执行宽）</td><td>代码对照证明两处口径不同（A 级），但<b>没跑</b>"含 NBSP 的行进 runMatch 会漏"的端到端探针</td><td>应降为 <b>A−</b>，并把端到端复现列入未决</td></tr>
+        <tr><td>过度工程</td><td>13 条里 3 条是存量，已标"来源"列</td><td>符合校准口径，但没有 Not violations 段说明<b>排除了什么</b></td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><b>这节不是自我批评表演</b>它给出的是下一版 skill 的验收点：没有这几项，审查报告就是"我说我审了"。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>我们比公开实践做得好的地方（别改掉）</h2>
+    <ul class="tight">
+      <li><b>负控</b>：弄红一次才算数。公开实现只有零星的 "proof checks"，我们把它写成了四式。</li>
+      <li><b>分歧离散化</b>（AGREE / DISAGREE_EVIDENCE / DISAGREE_CONCERN，F1 0.457 → 0.533）：公开实现只做"验证者改判"，没有强制批评者给离散结尾。</li>
+      <li><b>覆盖缺口节</b>与 <b>NOT RUN 就写 NOT RUN</b>：公开模板有 <span class="mono">need_more_context</span>，但没把"这次没查什么"当正式交付项。</li>
+      <li><b>成本闸</b>：按风险配额开对抗环（约 4.5× token）。公开实现有 round 上限，但没有风险分档。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>覆盖缺口（本次没查的）</h2>
+    <ul class="tight">
+      <li>Reddit / Twitter / 小红书 / B 站评论区：本机 <span class="mono">agent-reach</span>、<span class="mono">mcporter</span>、<span class="mono">gh</span> 均不可用（命令不存在，不是权限问题），这轮走 WebSearch + curl 直连 GitHub API，<b>社区讨论口径缺失</b>。</li>
+      <li>论文只读摘要与二手笔记，未读全文；涉及具体百分比的数字（变异分数 34–52%、顺序翻转率 0.469）<b>均为 C 级</b>，只能当线索。</li>
+      <li>星数是 2026-10-26 的 API 快照，会变。</li>
+      <li>没安装或运行 promptfoo / garak / PyRIT，只读描述与文档摘要。</li>
+      <li>没实测"跨厂审查"在本项目的效果；+18.1pp / −8.6pp 来自我们 skill 里已有引用，本轮未复跑。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">附</span>出处清单（可逐条复读）</h2>
+    <pre>A 级 · 本轮 curl 直读的 skill 原文
+lobehub/lobehub (83,490★)  .agents/skills/deep-review/
+  SKILL.md · references/verify-prompt.md · references/consolidate-prompt.md
+  references/dimensions/logic.md
+chaseai-yt/claudex-loop (3,231★)  README.md
+mengxi-ream/read-frog  .agents/skills/adversarial-review/SKILL.md
+  + references/reviewer-lenses.md
+Miguok/fable-harness (204★)  README.md
+
+B 级 · 红队框架描述与文档摘要
+promptfoo/promptfoo (26,422★)      NVIDIA/garak (9,699★)
+microsoft/PyRIT (4,687★)
+
+B 级 · 论文与综述（摘要/二手）
+Huang et al., LLMs Cannot Self-Correct Reasoning Yet (ICLR 2024)
+Du et al., Multiagent Debate (arXiv:2305.14325)
+Zheng et al., MT-Bench / LLM-as-a-Judge (arXiv:2306.05685)
+Chain-of-Verification (ACL 2024) · CRITIC (ICLR 2024)
+github.com/lobehub/awesome-rsi（自改进研究地图）
+
+C 级 · 中文实践（二手，只当线索）
+《让 AI 审查自己的代码，它会作弊》
+《安全评估里的 LLM 评委：近一半结论取决于回答的摆放顺序》(freebuf，自述模拟实验)
+《覆盖率骗了你：用 mutation score 量一量测试集到底有没有杀伤力》
+rmax.ai, Evidence-Carrying Changes</pre>
+  </section>
+
+  <div class="footer">
+    <div><b>配套</b>：调研报告_20261026_对抗式审查如何钻得更深_全网实践.md（本页为同名 HTML）</div>
+    <div><b>口径</b>：出处分级 A＝本轮直读原文；B＝官方文档/论文摘要；C＝二手转述，只当线索。数字与星数为 2026-10-26 快照。</div>
+    <div><b>本次未动</b>：业务代码、skill 文件、两站、支付 flag 均未触碰；本报告只做调研与建议。</div>
+  </div>
+
+</div>
+</body>
+</html>

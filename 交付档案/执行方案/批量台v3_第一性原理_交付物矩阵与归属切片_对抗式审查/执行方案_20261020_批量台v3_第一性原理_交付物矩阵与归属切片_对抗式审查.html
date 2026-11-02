@@ -1,0 +1,293 @@
+<title>批量台 v3 · 第一性原理推导 + 对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#0f766e;--accent-soft:#e2f3f1;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--blue:#1b5bd0;--blue-soft:#e8effc;--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--accent:#5eead4;--accent-soft:#122a22;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;--blue:#78a8ff;--blue-soft:#17233a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding-block:clamp(28px,5vw,56px);padding-inline:var(--pad);display:flex;flex-direction:column;gap:clamp(30px,4.6vw,50px)}
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.eyebrow .sep{color:var(--line)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4.2vw,2.25rem);line-height:1.26;margin:0;text-wrap:balance}
+.standfirst{margin:0;max-width:66ch;color:var(--ink-2);font-size:1rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.2rem;margin:0;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+h2 .sn{font-family:var(--font-mono);font-size:.74rem;font-weight:500;letter-spacing:.1em;color:var(--accent);flex:none}
+h3{margin:6px 0 0;font-size:.98rem;font-weight:600}
+p{margin:0;max-width:72ch}strong{font-weight:700;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:clamp(18px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdict p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:1.62;max-width:58ch;font-weight:500}
+.verdict ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:.94rem;max-width:66ch}
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:600px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+thead th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:.79rem}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.acc{background:var(--accent-soft);color:var(--accent)}.tag.blue{background:var(--blue-soft);color:var(--blue)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+.gate .body{display:flex;flex-direction:column;gap:5px}
+.gate h3{margin:0;font-size:.97rem;font-weight:600}
+.gate p{font-size:.89rem;color:var(--ink-2);max-width:68ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;font-size:.89rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--ok-soft);border-color:var(--ok)}
+.callout.blue{background:var(--blue-soft);border-color:var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:flex;flex-direction:column;gap:6px}
+.card .n{font-family:var(--font-mono);font-size:.7rem;color:var(--accent);letter-spacing:.08em}
+.card h3{margin:0;font-size:.95rem;font-weight:600}
+.card p{font-size:.85rem;color:var(--ink-2);max-width:none}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow:auto;font-family:var(--font-mono);font-size:.76rem;line-height:1.6;color:var(--ink-2);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.stat .v{font-family:var(--font-mono);font-size:1.25rem;font-weight:500;color:var(--accent)}
+.stat .l{font-size:.75rem;color:var(--muted)}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.notes li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px;font-size:.88rem;color:var(--ink-2);display:flex;gap:12px}
+.notes li .n{font-family:var(--font-mono);color:var(--accent);flex:none;font-weight:500;min-width:38px}
+.notes li b{color:var(--ink)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow"><span>Critical Thinking → Fetch → Deep Thinking → Review</span><span class="sep">/</span><span>批量台 v3</span><span class="sep">/</span><span>2026-10-20</span></p>
+  <h1>把「表」从文件上拆下来：归属才是原语</h1>
+  <p class="standfirst">第一性原理推导 ＋ 三轮对抗式审查。这不是把上一版的矩阵换个画法，是把问题的根改掉：<strong>表不是「每个文件的表」，表是数据集；文件是「归属」这个维度上的一个取值。</strong></p>
+  <div class="meta"><span>基线 worktrees/develop@99baaf6</span><span>事实核 X1–X15</span><span>审查 D1–D18</span><span>自我更正 E1–E3</span><span>推翻 v7 的 F9</span><span>待拍板 O1′–O3′</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+  <div class="verdict">
+    <span class="lb">Verdict · 方案可执行 · 一条硬约束必须写进 P1</span>
+    <p>Owner 的问题「12 个 SKU 各自的表怎么区分」在第一性原理下<strong>不是配对问题，是「归属能不能被证明」的问题</strong>。根因已定位到一行代码：<strong>模板导出把源文逐字抄自 PSD，却只写 <code>source + 语言列</code>，把出处扔了</strong> ⇒ 两份文案相同的 SKU 导出的模板逐字节相同 ⇒「这张表是谁的」产品从来没回答过。</p>
+    <ul>
+      <li><strong>推翻同日 08:59 已批准的 v7 审查 F9「写错风险＝0」</strong>：① 引错了文件（<code>match.ts</code> 是浏览器预览，写入真相在信任链 <code>binding-core.ts</code>）；② 结论只在「外稿行与本稿行不同文」时成立，多 SKU 场景里外稿行<strong>必然命中</strong>；③ 漏了「错绑 ＋ 无冲突」这一档 ⇒ <strong>错的译文会写进客户 PSD，全程无报警</strong>。<strong>推翻的是风险评估，不是 v7 的每稿一表设计。</strong></li>
+      <li><strong>D17 是本轮最有价值的发现，且正好落在今天刚发生过的事故上</strong>：我们自己生成的「记录编号」会作为行标识进助手清单，受 <code>^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$</code> 约束；不守规矩＝亲手复刻 ISSUES #195 那场生产事故（manifest 拒、批次卡住、孤儿 attempt）。</li>
+      <li><strong>Owner 的「每稿一表 / 共用一张表」之争被消解</strong>：两者是同一件事的参数——「一片覆盖几稿」。旧的 O1 问题不再存在，只剩「组成员怎么声明」。</li>
+      <li><strong>P0 不改执行层</strong>：交付物矩阵 ＋ 证据分级 ＋ 缺列体检，全部限定在绑定与展示层；行身份升级（改匹配键）推到 P2 独立一单，避免把 UI 任务变成合同变更。</li>
+    </ul>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="v">144</span><span class="l">份交付物 ＝ 12 SKU × 12 语种（矩阵即交付物表）</span></div>
+    <div class="stat"><span class="v">X15</span><span class="l">条实读事实，全部带 file:line</span></div>
+    <div class="stat"><span class="v">D18</span><span class="l">条对抗式审查发现（3 轮自我攻击）</span></div>
+    <div class="stat"><span class="v">0</span><span class="l">行业现成方案可抄 ⇒ 自研，模型压到最简</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>阶段一 · Critical Thinking</h2>
+  <p>这个工作台真正生产的东西不是「表」、不是「文件」，是 <strong>(设计稿 × 语种) → 一份新的设计稿</strong>。12 SKU × 12 语种 = <strong>144 份交付物</strong>。一行译文的键是 <strong>(归属, 原文, 序号, 语种)</strong>——<strong>里面没有「文件」</strong>。</p>
+  <div class="cards">
+    <div class="card"><span class="n">公理 A · 交付物轴</span><h3>交付物的键 ＝ (文件, 语种)</h3><p>界面主角必须是这 144 个东西。图二那排语言 ＝ 矩阵的一行。</p></div>
+    <div class="card"><span class="n">公理 B · 归属轴</span><h3>译文的键 ＝ (归属, 原文, 序号)</h3><p>文件不是原语，归属才是；文件只是归属这个维度上的一个取值（或归属缺失）。</p></div>
+    <div class="card"><span class="n">公理 C</span><h3>绑定必须可证，不能靠猜</h3><p>若产品能接受「猜错了用户自己看出来」，则不需证据分级——但这与「不可逆写进客户文件」不相容。</p></div>
+    <div class="card"><span class="n">公理 D</span><h3>「每稿一表」是安全装置，不是自然法则</h3><p>v7 的 F11 缺表门是在「绑定无法验证」前提下的兜底。绑定一旦可证，一稿用多稿的表就不是危险，而是合法。</p></div>
+  </div>
+  <div class="callout blue">
+    <span class="lb">三条结构性结论</span>
+    <p><strong>①「表」根本不是按文件分的东西。</strong>正确形态是「表 ＝ 数据集；文件 ＝ 按归属切出的一片」。于是「每稿一表」与「一套物料共用一张表」不是两种模式，而是同一个动作的<strong>两个参数</strong>（这片覆盖 1 稿还是 4 稿）。<br><strong>② 界面之所以是「两份名单」，是因为模型是「两份名单」。</strong>不是排版没排好，是代码里表真的按文件存（<code>workbench-view.tsx:349</code>）。<br><strong>③ 表里从来没有「这是谁的」这一列。</strong>模板导出把源文逐字抄自 PSD，却只写 <code>source + 语言列</code>（<code>translation-template.ts:58</code>）——<strong>两份文案相同的 SKU，导出的模板逐字节相同</strong>。所以「这张表是谁的」这个问题，产品从来没有回答过。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>阶段二 · Fetch（事实核）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>事实</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">X1</td><td>模板导出<strong>只写 source + 语言列</strong>，不带出处</td><td class="mono">translation-template.ts:58</td></tr>
+        <tr><td class="mono">X2</td><td>源文确实逐字来自 PSD 扫描（出处本来就在手上）</td><td class="mono">translation-template.ts:1-4, 60-66；photoshop-step.tsx:73-90</td></tr>
+        <tr><td class="mono">X3</td><td>表格式<strong>已有</strong>「记录编号」「模块/MODULE/SECTION」两列的解析</td><td class="mono">csv.ts:422-423 / :647-648 / :755-761</td></tr>
+        <tr><td class="mono">X4</td><td>「模块」只被 merge 当行键用，<strong>没进写入层</strong></td><td class="mono">merge-tables.ts:50-52（用）；binding-core.ts:657、match.ts:58（不用）</td></tr>
+        <tr><td class="mono">X5</td><td>写入真相在信任链 <code>binding-core.ts</code>；<code>match.ts</code> 是浏览器预览</td><td class="mono">binding-core.ts:612/657/942-947；match.ts:41-97</td></tr>
+        <tr><td class="mono">X6</td><td>信任链只拦「同原文<strong>不同</strong>译文」，<strong>不拦「错表且无冲突」</strong></td><td class="mono">binding-core.ts:665-672、:930-939</td></tr>
+        <tr><td class="mono">X7</td><td>行标识 ＝ 表的「记录编号」，无则 <code>row-N</code>；进助手清单</td><td class="mono">binding-core.ts:598-603、:584/:590</td></tr>
+        <tr><td class="mono">X8</td><td>助手清单的行标识有<strong>纯 ASCII 白名单</strong>，不合规即整批拒</td><td class="mono">execution-manifest.js:9 / :168；同族 execution-journal.js:34、runtime-provenance.js:9</td></tr>
+        <tr><td class="mono">X9</td><td><strong>#195 就是今天为这件事发生的生产事故</strong>：记录编号含中文/空格/全角 → manifest 失败 → 批次卡住、孤儿 attempt</td><td class="mono">ISSUES #195（2026-10-20 17:11/17:16 生产实测）；csv.ts:646/751-753、:765-770</td></tr>
+        <tr><td class="mono">X10</td><td>「模块」若含义是分区不是 SKU，按它切片就是错的归属</td><td class="mono">csv.ts:423（别名含 SECTION）</td></tr>
+        <tr><td class="mono">X11</td><td>覆盖判定已有<strong>三档口径</strong>，且要求组件与闸共用同一口径</td><td class="mono">coverage.ts:98-140、:106-110（明文教训）</td></tr>
+        <tr><td class="mono">X12</td><td>现有「覆盖率矩阵」不是矩阵（每稿一段）</td><td class="mono">coverage-matrix.tsx:95-157</td></tr>
+        <tr><td class="mono">X13</td><td>表按稿存副本；闸门明文「每稿一张，互不共用」</td><td class="mono">workbench-view.tsx:349、:1950-1959</td></tr>
+        <tr><td class="mono">X14</td><td>每稿一表的取数口已存在，可复用</td><td class="mono">coverage.ts:169-185</td></tr>
+        <tr><td class="mono">X15</td><td>电商主流形态就是「行=SKU、列=多语言」的一张合表</td><td class="mono">Amazon Seller Central bulk listing 模板；与 X3 的「模块」列天然对应</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout bad">
+    <span class="lb">2.1 · 既有结论里错的那一条（必须点名）</span>
+    <p>同日 08:59《v7：每稿一表 · 对抗式审查》F9：「<strong>写错风险＝0</strong>：<code>match.ts:41-53</code> 归一化原文严格相等配对，外稿行配不上、不会误写。」<br><strong>三处错：</strong>① <strong>引错了文件</strong>——<code>match.ts</code> 是预览，写入真相在信任链；② <strong>结论只在「外稿行与本稿行不同文」时成立</strong>——信任链按原文键匹配（<code>binding-core.ts:657</code>），外稿行只要原文一样就照样命中，而多 SKU 场景「同一套文案改几个词」是常态；③ <strong>漏了「错绑＋无冲突」这一档</strong>——只拦「同原文不同译文」，错绑表若与本稿无冲突则一路绿灯，<strong>错译文写进客户 PSD</strong>。<br>⇒ <strong>推翻的是 v7 的风险评估结论，不是 v7 的每稿一表设计。</strong></p>
+  </div>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>19:55 那版（我自己的上一稿）的说法</th><th>更正</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">E1</td><td>共享表 ＝ 表提为实体 ＋ 每稿存引用</td><td><strong>不够</strong>：那版模型里 slice 不是一等对象，<strong>表达不了「一张合表切 12 片」</strong>——而那正是电商最主流的那张表（X15）</td></tr>
+        <tr><td class="mono">E2</td><td>A1 的证据引用 <code>match.ts:41-53</code></td><td><strong>引错文件</strong>（见 2.1）。<strong>结论不变</strong>（信任链同样按原文键匹配），依据换成 <code>binding-core.ts:657/942-947</code></td></tr>
+        <tr><td class="mono">E3</td><td>O2「一稿多表不做」</td><td><strong>在新模型里被消解</strong>：切片天然是「一稿一片」，多片 ＝ 归属有歧义，本就该报</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>阶段三 · Deep Thinking（推导）</h2>
+  <pre>Dataset（译库）  { datasetId, name, rows[], langColumns[], hasOwnerColumn }
+  └─ Slice（片）   { datasetId, ownerValue, rows[]  ← 按归属值切出 }
+       └─ Binding   { draftKey → { datasetId, ownerValue, languageScope } }
+            └─ Evidence { tier: 实证 | 声明 | 推定 | 存疑 | 不符 }</pre>
+  <p>对照现状：今天只有 <code>parsedTables[draftKey]</code>（一份副本）；新模型是<strong>三层引用</strong>——表只存一份，每稿只存「哪一片」。</p>
+  <h3>三种「共用」形态被统一</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>形态</th><th>数据模型</th><th>界面人话</th></tr></thead>
+      <tbody>
+        <tr><td>每稿一张表</td><td class="mono">1 库 → 1 片</td><td>独占一片</td></tr>
+        <tr><td>几个 SKU 共用一张</td><td class="mono">1 库 → N 片（成员显式声明）</td><td>几稿共用一片</td></tr>
+        <tr><td>12 个 SKU 一张合表</td><td class="mono">1 库 → 12 片（按「模块」值切）</td><td>合表按模块切片</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout ok">
+    <span class="lb">Owner 的 O1 问题在这套模型里不再存在</span>
+    <p>它变成「一片覆盖几稿」的一个参数。<strong>术语归内部，界面说人话。</strong></p>
+  </div>
+  <h3>绑定证据分级：把「猜」变成「分级」</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>档</th><th>判据</th><th>界面</th><th>执行前</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag ok">实证</span></td><td>归属值对上 <strong>且</strong>这一片的原文集<strong>覆盖</strong>本稿全部原文</td><td>绿徽章</td><td>不拦</td></tr>
+        <tr><td><span class="tag blue">声明</span></td><td>只有归属值对上（原文集未核）</td><td>蓝徽章</td><td>提示</td></tr>
+        <tr><td><span class="tag blue">推定</span></td><td>无归属列，但原文集<strong>覆盖</strong>本稿全部原文</td><td>蓝徽章</td><td>提示</td></tr>
+        <tr><td><span class="tag warn">存疑</span></td><td>原文集<strong>部分</strong>重叠（既没覆盖也没排斥）</td><td>琥珀徽章</td><td><strong>要求确认一次</strong></td></tr>
+        <tr><td><span class="tag bad">不符</span></td><td>归属值指向别的稿，<strong>或</strong>原文集与本稿无交集</td><td>红徽章</td><td><strong>拦批</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lb">口径纪律</span>
+    <p>所有比较必须走 <code>coverage.ts</code> 已有的<strong>同一套三档口径</strong>（strict / whitespace / substring）。否则会出现「矩阵说 100%、体检说不符」的<strong>第二套真值</strong>——这正是 <code>coverage.ts:106-110</code> 明文记过的教训（X11）。</p>
+  </div>
+  <h3>模板要带出处（这是整件事的根）</h3>
+  <pre>今天：  source | EN 英语 | DE 德语 | FR 法语
+改后：  source | 记录编号 | 模块 | EN 英语 | DE 德语 | FR 法语
+                ↑ 新增     ↑ 新增（两列的别名解析层早就有了，X3）</pre>
+  <p>「记录编号」＝<strong>层级路径的稳定编码</strong>（不能由文字生成——同文图层会撞）；「模块」＝归属值。缺这两列的老表<strong>自动降级到「推定」档</strong>，不影响存量。</p>
+  <h3>界面：交付物矩阵 ＋ 详情 ＝ 图二那一行</h3>
+  <p><strong>交付物矩阵</strong>（144 格）：行=物料、列=语种、格=这一份交付物做到哪一步；行头一枚徽章说清「绑定·实证/推定/存疑/不符」＋ 从哪个库哪一片来。<strong>详情区＝图二那一行</strong>——图二的单稿形态不是另一个页面，是矩阵一行的展开。另加<strong>译库与切片视图</strong>：一个库 → 它的片，把「12 SKU 一张合表」当场切给 Owner 看。</p>
+  <div class="callout ok">
+    <span class="lb">行身份升级：P0 不做（重要取舍）</span>
+    <p>理论上行身份应是 (归属, 原文, 序号)（公理 B）。但对「每稿一张独占表」的现有路径，归属是常量，升级<strong>零影响</strong>；只有「一个库多片且同表同文」才需要改匹配键 ⇒ 那是 <strong>P2 独立一单</strong>（触发 AGENTS.md 合同变更纪律：四层同步 ＋ fixture）。<strong>P0/P1 全部限定在「绑定与展示层」，绝不触碰 <code>binding-core</code> 的匹配键</strong>——把一个 UI 任务变成执行合同变更是最常见的跑偏方式。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>阶段四 · Review（三轮对抗式审查）</h2>
+  <h3>第一轮：攻击推导本身</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td><span class="tag warn">🟠</span></td><td>「归属进模型」只是把问题推后——归属是<strong>用户写的</strong>，可以写错</td><td>归属不能是唯一判据，必须与「原文集覆盖」交叉验证 ⇒ <strong>「实证」必须是双证据</strong>（归属对上 ＋ 覆盖）；单靠归属只算「声明」档</td></tr>
+        <tr><td class="mono">D2</td><td><span class="tag warn">🟠</span></td><td>加列破坏用户现有工作流（译员删列/改列名、老表没列）</td><td>别名解析层已有 ⇒ <strong>缺列自动降级，纯增量</strong>。另补两条：记录编号须由<strong>层级路径</strong>生成（不能由文字生成）；编号<strong>只在同一次导出内有效</strong> ⇒ 不能做跨次凭证，跨次凭证只能是「归属＋原文集」</td></tr>
+        <tr><td class="mono">D3</td><td><span class="tag warn">🟠</span></td><td>按「模块」切可能切错——用户的「模块」含义可能是分区不是 SKU</td><td><strong>切片不自动发生</strong>：只有模块列取值<strong>命中候选归属集</strong>时才允许切，且切前预览「这一片有 N 行」。仍是「提案→确认」</td></tr>
+        <tr><td class="mono">D4</td><td><span class="tag ok">🟡</span></td><td>「144 份交付物」会不会把覆盖率降级、造成概念混乱</td><td>格<strong>同时</strong>是覆盖率格与交付物格；改名只讲清「这格在管什么」。<strong>取数口径不动</strong>（沿用 <code>coverage.ts:169</code>），只换画法</td></tr>
+        <tr><td class="mono">D5</td><td><span class="tag warn">🟠</span></td><td>会不会推导过重</td><td>分档：<strong>P0 的证据分级只需「推定/存疑」两档，不依赖新列 ⇒ 不改模板就能上线</strong>（改模板要走译员协作约定，贵）。P1 才是模板加列＋切片</td></tr>
+        <tr><td class="mono">D6</td><td><span class="tag ok">🟡</span></td><td>界面全讲「切片」，Owner 会不会听不懂</td><td><strong>术语归内部，界面说人话</strong>：独占一片 / 几稿共用一片 / 合表按模块切片</td></tr>
+        <tr><td class="mono">D7</td><td><span class="tag warn">🟠</span></td><td>「表比稿多行」在新模型里会不会变成常态噪音</td><td>是常态且正常（改版了）⇒ <strong>那条提示必须改语义</strong>：从「可能混稿」改成「这一片里有本稿没有的 N 行（改版/表多给了）」。<strong>混稿的判断责任从「行数差」转移到「归属证据」</strong> ⇒ 属<strong>语义替换</strong>，文案与闸须同步改</td></tr>
+        <tr><td class="mono">D8</td><td><span class="tag warn">🟠</span></td><td>行身份升级会不会把 UI 任务变成执行合同变更</td><td><strong>P0 不做</strong>（见 04 节末）。P0/P1 限定在绑定与展示层</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>第二轮：攻击 19:55 那版（我自己的上一稿）</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D9</td><td><span class="tag warn">🟠</span></td><td>上一版「表提为实体＋每稿存引用」表达不了合表切 12 片</td><td><strong>承认</strong>：新模型把 slice 提为一等对象</td></tr>
+        <tr><td class="mono">D10</td><td><span class="tag bad">🔴</span></td><td>上一版 A1 引用 <code>match.ts</code> 当写入证据</td><td><strong>引错文件</strong>。<strong>结论不变</strong>（信任链同样按原文键匹配），依据换成信任链</td></tr>
+        <tr><td class="mono">D11</td><td><span class="tag warn">🟠</span></td><td>上一版说宽表会被 <code>V15_DUPLICATE_SOURCE_ROW</code> 拦下——是好事吗</td><td><strong>是好事但是症状</strong>：系统「知道有歧义」却不知道歧义来自哪个归属 ⇒ 解法不是加闸，是<strong>把归属带进切片</strong>（歧义本不该出现）</td></tr>
+        <tr><td class="mono">D12</td><td><span class="tag ok">🟡</span></td><td>上一版的 #199（12 语种上限被一列备注打死）还成立吗</td><td><strong>成立</strong>。新模型只对<strong>我们生成的模板</strong>解决，用户自带表仍要猜 ⇒ #199 仍要修</td></tr>
+        <tr><td class="mono">D13</td><td><span class="tag ok">🟡</span></td><td>上一版的 O1（每稿一表是否硬约束）</td><td><strong>被消解</strong>：变成「一片覆盖几稿」的参数；剩下要拍的是「组成员怎么声明」</td></tr>
+        <tr><td class="mono">D14</td><td><span class="tag ok">🟡</span></td><td>上一版的 A5（矩阵密度）</td><td><strong>更重</strong>：每格多一个证据维度 ⇒ 行头徽章<strong>颜色＋文字双编码</strong>，矩阵默认可收起</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>第三轮：攻击交付形态（模拟件与文档本身）</h3>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>级</th><th>攻击</th><th>处置</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D15</td><td><span class="tag ok">🟡</span></td><td>模拟里合表覆盖 12 个 SKU 却只绑 1 个，自相矛盾吗</td><td>不矛盾，但<strong>界面必须说清「这个库有 12 片，你现在用了 1 片」</strong>，否则用户以为整表都在跑 ⇒ 行头徽章写「合表 · 12 片 · 本稿用第 9 片」</td></tr>
+        <tr><td class="mono">D16</td><td><span class="tag ok">🟡</span></td><td>「推定」档会不会天天报警</td><td>会（老表长期是推定）⇒ <strong>降噪</strong>：同一片同会话不重复提示；执行时<strong>一次</strong>确认即可，不是每语种一次</td></tr>
+        <tr><td class="mono">D17</td><td><span class="tag bad">🔴</span></td><td><strong>我们自己生成的「记录编号」会不会亲手制造 #195 那场生产事故？</strong></td><td><strong>会。</strong>链路已追通：记录编号 → 行标识（<code>binding-core.ts:599</code>）→ <code>fragment_row_ids</code>（<code>:584/:590</code>）→ 助手清单 → 白名单 <code>^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$</code>（<code>execution-manifest.js:9</code>）→ 不合规即 <code>MANIFEST_FRAGMENT_ROWS_INVALID</code>（<code>:168</code>）＝<strong>#195 的原样事故</strong>。<br>⇒ <strong>硬约束写进 P1：记录编号必须纯 ASCII、只含 <code>[A-Za-z0-9._:-]</code>、首字符字母数字、≤128；层级路径里的中文/空格/全角必须先转码。</strong>验收判据里要有这一条。<br>⇒ <strong>本轮最有价值的发现：它正好落在今天刚发生过的事故形态上。</strong></td></tr>
+        <tr><td class="mono">D18</td><td><span class="tag ok">🟡</span></td><td>覆盖判定该用 strict 还是 loose</td><td>必须<strong>分层</strong>且与 <code>coverage.ts</code> 三档一致；证据判定若另算一套 ⇒「矩阵 100% / 体检不符」的<strong>两套真值</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>阶段五 · 落地与门</h2>
+  <div class="gates">
+    <div class="gate first"><span class="num">1</span><div class="body"><h3>P0-1 · 交付物矩阵</h3><p>144 格真矩阵、粘性表头、点格跳详情；物料栏行头带证据徽章。<code>tsc</code> rc=0 ／ <code>lint</code> rc=0 ／ 浏览器实拍 12×144。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><h3>P0-2 · 证据分级（不依赖新列）</h3><p>新增纯函数 <code>src/lib/workbench/binding-evidence.ts</code>，以原文集覆盖关系判「推定/存疑/不符」；<strong>口径必须复用 <code>coverage.ts</code> 三档</strong>。单测：覆盖／部分／无交集。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><h3>P0-3 · 缺列体检</h3><p>本稿要做但库里没有这一列 ⇒ 红框 ＋ 拦批。手工造 3 例（缺表/缺列/共享）逐一验闸。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><h3>P1-1 · 模板带出处（含 D17 硬约束）</h3><p><code>source + 记录编号 + 模块 + 语言列</code>；<strong>编号必须过助手 ID 白名单</strong>。单测：编号全 ASCII 且匹配 <code>^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$</code>；中文/空格/全角路径必须已转码。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><h3>P1-2 · 切片</h3><p>按「模块」值切；命中候选归属集才允许切，切前预览行数。单测：合表切 12 片／模块值不命中 ⇒ 不切。</p></div></div>
+    <div class="gate"><span class="num">6</span><div class="body"><h3>P1-3 · 配表提案</h3><p>规则只产<strong>提案</strong>（含归属值＋证据等级），人确认才写绑定；一对多/零命中必须不自动决定。</p></div></div>
+    <div class="gate"><span class="num">7</span><div class="body"><h3>P2 · 组声明与持久化；行身份升级</h3><p>只存 <code>稿→库＋归属值</code>（不存表内容）。行身份升级改匹配键 ⇒ <strong>独立一单，走合同变更门</strong>（四层同步 ＋ <code>test:batch-row-contract</code> ＋ <code>test:trust-chain</code>）。</p></div></div>
+  </div>
+  <div class="callout">
+    <span class="lb">不动</span>
+    <p>执行链、报价口径、结算闸、助手协议、支付 flag、<code>binding-core</code> 匹配键（P0/P1 全部限定在绑定与展示层）。测试站部署需 Owner 单点授权；G3 合同变更门只对 P2 触发。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>阶段六 · 待 Owner 拍板（3 件 → 2 件半，且更具体）</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>选项</th><th>建议</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">O1′</td><td><strong>组成员怎么声明？</strong>（新问题，取代旧 O1）</td><td>① 显式勾选成员 ② 靠「模块」列的值 ③ 两者都要</td><td><strong>③</strong>。显式勾选解决「模块列乱填」，模块值解决「一张合表自动切 12 片」</td></tr>
+        <tr><td class="mono">O2′</td><td><strong>模板加不加「记录编号 / 模块」两列？</strong></td><td>① 加 ② 不加（只做推定档）</td><td><strong>①</strong>，但<strong>必须带 D17 的编号转码约束</strong>，且要给译员协作约定（可保留列、可改名、<strong>不可填中文</strong>）。若译员侧不可控，退 ②（P0-2 已能挡大部分错绑）</td></tr>
+        <tr><td class="mono">O3′</td><td><strong>绑定关系要不要能恢复？</strong></td><td>① 不做 ② 存 <code>稿→库＋归属值</code>（不存表内容）</td><td><strong>②</strong>。要存的是<strong>绑定</strong>，不是 12 份表副本——这正是新模型比旧模型轻的地方</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">旧的 O2「一稿多表不做」已被消解（见 D13）。</p>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>附 · 模拟件走法</h2>
+  <p class="note">文件：<code>交付档案/执行方案/模拟_20261020_批量台v3_第一性原理_交付物矩阵与归属切片.html</code>（单文件，双击即开，无外部依赖；实测 0 console error，12 行 / 144 格 / 7 个译库 / 4 条行级告警）。</p>
+  <ul class="notes">
+    <li><span class="n">1</span><div><strong>交付物矩阵</strong>（默认页）：12 行 × 12 列 ＝ 144 格，行头带证据徽章；点格跳到那一格；行级告警区点名 4 类异常。</div></li>
+    <li><span class="n">2</span><div><strong>单稿详情</strong>（＝图二那一行）：左物料栏、右详情区；语言片三态（已确认／待确认／本稿不做／库里缺列）；带「绑定证据」块。</div></li>
+    <li><span class="n">3</span><div><strong>译库与切片</strong>：先看<strong>模板加出处的前后对照</strong>，再看每个库切成几片；点「全SKU合表」看它切 12 片。</div></li>
+    <li><span class="n">4</span><div><strong>现状对照（图一）</strong>：逐块标注病根与新落点。</div></li>
+    <li><span class="n">5</span><div>异常样本：SKU-08 一对多待选 ｜ SKU-07 切片多 8 行 ｜ SKU-10 库里缺 2 列 ｜ SKU-11 覆盖率 71%/66% ｜ SKU-06 无出处列（推定档）｜ SKU-12 零候选未扫描。</div></li>
+  </ul>
+</section>
+
+<footer>
+  <p>2026-10-20 · 只读取证＋方案设计（未改业务代码）· 基线 worktrees/develop@99baaf6 · 事实核 X1–X15 · 审查 D1–D18 · 自我更正 E1–E3 · 推翻 v7 F9 与 19:55 那版 3 处结论。</p>
+</footer>
+</div>

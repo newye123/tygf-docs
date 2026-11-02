@@ -1,0 +1,620 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查 · 根因深挖</span><span class="sep">/</span>
+    <span>官网访客零申请：演示与视频是不是解药</span><span class="sep">/</span>
+    <span>2026-10-26 23:2x</span>
+  </p>
+  <h1>卡住的不是"没东西可看"，是我们根本没有眼睛</h1>
+  <p class="standfirst">Owner 提的两条（带访客体验一次 / 首页放一段运行视频）方向都对，<strong>但都不是第一张多米诺</strong>。实测：申请表单<strong>近 10 天 0 次提交</strong>，生产库最后一条申请停在 <strong>2026-09-29 17:05</strong>（到今天 27 天）；而"每天 100 多人"是含爬虫、含自家接口轮询的域名级读数——首页"像人"的前 10 个 IP 全是机房地址，外部搜索来路 10 天只有个位数。更关键：<strong>真实工作台画面从没上过官网</strong>，可素材早在 9 月 19 日就拍好了（17.3 秒真组件录屏），只是首页组件里连一个 <code>&lt;video&gt;</code> 都没有。</p>
+  <div class="meta">
+    <span>只读：未改码 · 未发版 · 未跑门</span>
+    <span>生产 web <code>80eb4263</code> / 开发树 <code>develop@9048c13a</code></span>
+    <span>两站库与 nginx 只读实测</span>
+    <span>视频抽帧目视 3 条</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">VERDICT</span>
+    <p><strong>有条件放行</strong>——两条候选方案都可以做，但顺序必须是「先装眼睛 → 再放真画面 → 再把唯一动作改便宜」。在没有访客级观测之前上线演示或视频，<strong>改完之后我们无法判断有没有用，也无法判断有没有变坏</strong>。</p>
+    <p style="font-size:1rem;font-weight:400;color:var(--ink-2)">对你意味着什么：这不是"再等一个功能"，而是三件事里有一件（拆官网/内测站/爬虫的日志）不改产品代码、当天就能做；另一件（放真画面）素材已经有了，缺的只是首页渲染；第三件（把 7 项必填砍到 2 项）是纯表单层。都不碰授权、计费、合同。</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><span class="n">0 / 27天</span><span class="k">申请表单提交次数（nginx 10 天）<br>最后一条申请停在 09-29 17:05</span></div>
+    <div class="stat warn"><span class="n">968 → ?</span><span class="k">首页 10 天独立 IP 数<br>其中爬虫 IP 165，真人绝对值量不出来</span></div>
+    <div class="stat warn"><span class="n">7 项</span><span class="k">申请表必填字段<br>含两段"小作文"</span></div>
+    <div class="stat ok"><span class="n">17.3s</span><span class="k">已存在的真组件录屏<br>09-19 拍，首页至今没渲染</span></div>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>本轮实测到的硬事实</h3>
+      <ul>
+        <li><strong>"0 申请"是真的，而且比 Owner 以为的久。</strong>两条独立探针吻合：生产库 <code>BetaApplication</code> 全历史 <strong>12 行</strong>（invited 8 / new 2 / testing 2），nginx 近 10 天 <code>POST /api/beta-applications</code> <strong>0 次</strong>（那 3 行命中全是扫描器 <code>GET → 405</code>）。</li>
+        <li><strong>不是"申请了没通知你"。</strong>生产 <code>.env</code> 里 <code>ADMIN_NOTIFY_MODE=webhook</code> 实测在位（<code>grep -c</code> → 1）。</li>
+        <li><strong>现在的 68 个账号不是官网带来的。</strong><code>BetaUser</code> 68、<code>InviteCodeActivation</code> 37、<code>InviteCode</code> 70（用过 26），而申请只有 12 条 ⇒ 用户几乎全是你手工发码拉来的，<strong>官网从来没当过获客渠道</strong>。</li>
+        <li><strong>访客看到的"产品界面"是假的。</strong>首屏那台 PSD 图层 + <code>translations.xlsx</code> + "43 已核对／3 需要判断／1 执行失败"是 CSS 手绘、数字写死（<code>home-view.tsx:193-219</code>、<code>:386-389</code>）；"看看它怎么改语言"只是滚到一张静态插图（<code>:187</code>、<code>:299-355</code>）。</li>
+        <li><strong>首页放不了视频是代码事实。</strong>文案里 <code>hero.video.src</code> 是空串、注释写"src 为空则不渲染"（<code>siteContent.ts:24-29</code>），而现行组件里 <code>grep -rn "&lt;video" src --include=*.tsx</code> → <strong>0 命中</strong>，<code>public/videos/</code> 目录不存在。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能当"已解决"或"有依据"的</h3>
+      <ul>
+        <li><strong>09-19 那段录屏不能直接放。</strong>它拍的是单稿流程界面，10-21 之后重做的批量台四步没进片；且元数据自标 <code>reuseMode: 真实组件树 + 网络/助手边界替身</code>——真组件、<strong>假数据</strong>，不带标识放出去就是"对外主张失真"同族。</li>
+        <li><strong>10-24 那批 <code>v5-animatic</code> 不是运行画面。</strong>我抽帧目视：排版字卡 + 画出来的假卡片；第 7 镜还同时写着"0/175 层"和三行"已写入"，自相矛盾。</li>
+        <li><strong>"真人远低于 100/天"只是方向性判断（C 级）。</strong>因为 <code>$host</code> 没进 nginx 日志、浏览器端零埋点，<strong>真人绝对数现在给不出来</strong>。</li>
+        <li><strong>不拿任何百分比承诺收益。</strong>流传的"落地页放视频转化 +86%"追到源头是 2010 年代初一次没公开方法的 A/B 测试；Wistia/Vidyard/Unbounce 的百分比都是厂商自报。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>访客到底是谁：一次不客气的拆分</h2>
+  <p class="lede">口径：nginx 近 10 天（60,302 行，含轮转）＋生产库只读计数。两站同机且 <code>$host</code> 未入日志，凡"官网 vs 内测站"分不开处已注明。</p>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>探针</th><th>读数</th><th>取数方式</th><th>级</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">首页 / 与 /en 命中</td><td>3,705 次</td><td class="was"><code>awk '$6 ~ /"GET/ &amp;&amp; ($7=="/" || $7=="/en")'</code></td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono">独立 IP</td><td>968 个（≈97/天）</td><td class="was">同上去重计数</td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono">UA 级爬虫 IP</td><td>165 个</td><td class="was">bot-UA 正则分组</td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono">"像人"的前 10 个 IP</td><td><strong>全是机房 IP</strong>：含服务器自己 <code>43.134.175.26</code>、GCP <code>35.252.148.145</code>、Hetzner <code>5.102.169.102</code>、<code>136.117.78.37</code>、<code>213.209.159.133</code></td><td class="now">UA 非爬虫分组的 top 命中行</td><td><span class="tag warn">需继续查</span></td></tr>
+        <tr><td class="mono">外部搜索来路（10 天）</td><td>google 3、bing 2、gemini 1、duckduckgo 1</td><td class="was">referer 分组计数</td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono">知乎/小红书/CSDN/微信 referer</td><td><strong>0 次</strong></td><td class="was"><code>grep -icE 'zhihu|xiaohongshu|weixin|bilibili|csdn|juejin'</code> → 0</td><td><span class="tag bad">0 命中</span></td></tr>
+        <tr><td class="mono">安装包下载</td><td>33 次，版本横跨 3.7.15→3.7.28</td><td class="was"><code>"GET /downloads/</code> 按路径分组</td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono"><code>/download</code> 页面</td><td>579 次（≈58/天）</td><td class="was">同上</td><td><span class="tag ok">A</span></td></tr>
+        <tr><td class="mono"><strong>POST /api/beta-applications</strong></td><td><strong>0 次</strong>（3 行命中全为 <code>GET → 405</code>，无 referer）</td><td class="now">方法+状态码逐行打印复核</td><td><span class="tag bad">阻塞</span></td></tr>
+        <tr><td class="mono">请求量前两名</td><td><code>/api/site/feature-flags</code> 10,981、<code>/api/workbench/feature-access</code> 8,282</td><td class="was">路径分组——说明"访问量"这个词不能直接用</td><td><span class="tag ok">A</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p><strong>最底层的观测缺口只有一句话：</strong>站内唯一的事件接口 <code>/api/workbench/funnel/event</code> 要求"已激活安装"（<code>route.ts:5</code> 引入 <code>requireActiveInstallation</code>），生产库 <code>BetaFunnelEvent</code> 1,868 行<strong>全是已装用户在产品里的行为，匿名访客一条都没记</strong>。所以"有没有滚到申请表""是谁点了又走"今天无从谈起。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>根因链：从"0 申请"钻到"无法验收"</h2>
+  <div class="tl">
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <h3>L1 现象</h3><p>官网 27 天 0 申请；Owner 感知"每天 100 多人进来没人申请"。</p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <h3>L2 分母本身不成立</h3><p>94.7/天是 Cloudflare 按<strong>整个域名</strong>去重的读数，官网＋内测站＋后台接口混在一起；nginx 侧首页 IP 头部被机房占据、外部搜索来路个位数。<strong>真人很可能只有几十/天，且现在给不出绝对值。</strong></p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <h3>L3 就算是目标设计师，也没有任何证据面让他相信"这玩意能替我干活"</h3><p>首屏是 CSS 画的假界面，"看看它怎么改语言"滚到静态插图；没有真截图、没有录屏、没有价格、没有案例。<strong>而产品价值主张（批量写回 + 逐层回读核对）本质上必须"看见"才可信。</strong></p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <h3>L4 唯一动作贵到不像邀请</h3><p>7 项必填含两段小作文（<code>home-view.tsx:657-663</code> 的 <code>requiredOk</code> 六条 + 两个强制选择组），提交后还要等人工发码（<code>schema.prisma:325-343</code>，<code>maxActivations 1</code>、<code>trialDays 14</code>、<code>source: from_application</code>）。<strong>同类竞品首屏是"免费下载 / 观看视频"两个按钮。</strong></p>
+    </div></div>
+    <div class="tl-item"><span class="dot"></span><div class="tl-body">
+      <h3>L5 本质（不可再分）</h3><p><strong>没有访客级观测 ⇒ L2 到 L4 每一层我们都只能"合理怀疑"，既不能证明，也不能在改完之后证明改对了。</strong>这就是"卡死"——不是缺方案，是方案无法验收。</p>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>大家怎么做：同类目与工具面</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="top">
+        <span class="loc">pszhuli.com/mb · 影刀 RPA 飞书方案页 · 即时设计插件市场</span>
+        <h3>同类目（PS 插件 / 设计稿多语言）：不设申请漏斗</h3>
+        <span class="tag ok">直接可对照</span>
+      </div>
+      <p><strong>PS 助理</strong>：首屏两个按钮"免费下载""观看视频"，分 macOS/Windows，无表单无门槛。</p>
+      <p><strong>影刀</strong>：同一场景（跨境电商详情页多语言替换）不卖概念，直接给可算的数——"每月 30 张详情页 × 每张 20 个文本图层 = 3000 次复制粘贴"，流程写清"PSD 模板 + Excel 表 → 机器人开 PS 批量替换 → 自动导出全部语言版本"。</p>
+      <p><strong>即时设计插件市场</strong>：插件卡就一个"安装"，文本翻译类插件安装量 99w+，卖点写"一键生成不同语言设计稿，告别手动翻译和复制粘贴"。</p>
+      <p><strong>对我们的含义</strong>：这个类目的用户预期是"先看/先装，再谈"。我们的"先填 7 项再等发码"是反着来的。</p>
+    </div>
+    <div class="card">
+      <div class="top">
+        <span class="loc">Arcade / Storylane / HowdyGo · GitHub: usertour 2,325★、intro.js 23,455★、driver.js、spotlane</span>
+        <h3>交互式演示：可借鉴的是"截图热点式"，不是"应用内导览"</h3>
+        <span class="tag warn">一半适用</span>
+      </div>
+      <p><strong>关键区分</strong>：intro.js / driver.js / usertour 这类要求<strong>产品真在浏览器里跑起来</strong>才能高亮导览。我们的核心动作发生在客户本机的 Photoshop 里，浏览器跑不起来 ⇒ <strong>这条路对我们不适用</strong>。</p>
+      <p><strong>适用的是两型</strong>：① 截图热点式可点演示（Arcade 明确支持非 Web 产品，开源侧 <code>headlessButSmart/spotlane</code> 同型）；② 录屏式。而这两样我们<strong>素材和链路都已具备</strong>：<code>交付档案/执行方案/</code> 下 73 份可点模拟件（实测 <code>ls | grep -c 模拟</code> → 73）＋ 09-19 那套逐帧采集/合成链路。</p>
+      <p><strong>不建议</strong>为这事买 SaaS 工具或引入 <code>opendemo</code>（0★，玩具级）。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>处置梯：第 1 步是 2–5 的前置</h2>
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>先装眼睛（1a 当天可做，不改产品代码）</h3>
+        <p><strong>1a</strong>：nginx 日志格式加 <code>$host</code> 与 <code>$request_time</code>，把官网／内测站／接口／爬虫拆开——这正是 10-20 那份读数点名、被本机权限层挡住没执行的那条改动。<strong>1b</strong>：匿名访客级埋点（首页曝光、"看看它怎么改语言"点击、滚到申请表、表单首次聚焦、放弃、提交），只存事件与匿名 id，不存正文。<strong>1c</strong>：UTM 接上——表单已在发 <code>attribution</code>、服务端已有 <code>sanitizeApplicationAttribution</code>（<code>beta-applications/route.ts:15</code>），但生产库 <strong>没有 <code>ApplicationAttribution</code> 表</strong>（实测 <code>no such table</code>）⇒ 特性未上线，发布须带迁移。</p>
+        <p><strong>红线</strong>：新增采集必须与隐私政策/服务条款披露一致，<strong>不能先采后说</strong>。这条不满足就不开 1b。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>把真画面放上首页（不新拍，用现成链路重采一次）</h3>
+        <p>对着<strong>当前</strong>批量台四步界面重跑采集→合成，出 15–25 秒 1920×1080 录屏；画面持续带"演示录屏 · 数据为示例"；<strong>聚合数字（"43 已核对／1 失败""0/175 层"这类）一律不入画</strong>。首页补 <code>&lt;video&gt;</code> 渲染 + <code>public/videos/</code> + 填 <code>hero.video.src</code>，并把首屏那张 CSS 假界面换成真实截图或直接用它的首帧当 poster。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>把唯一动作改便宜：7 必填 → 2 必填</h3>
+        <p>只留邮箱 + 一句话说清你要处理什么；角色/物料两组保留但改成"默认不拦人"，人工耗时等挪到申请后的第一封邮件里问。<strong>不删字段，只把"必填"降级为"选填"</strong>——那两项你定价和写文案还要用。纯表单与文案层，不动授权、计费、合同。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">4</span>
+      <div class="body">
+        <h3>交互沙盘（今天那份方案的"第二批" <code>try-sandbox</code>）排第四</h3>
+        <p>不是没价值，是排序：它是工程活（新路由 + 新组件 + 脱敏固定数据 + V7/V8 双验），内容却可以从 73 份模拟件里拼；且在第 1 步之前<strong>无法验收</strong>。今天实测 <code>src/app/(zh)/</code> 与 <code>src/app/en/</code> 下都<strong>还没有 try-sandbox 目录</strong>。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">5</span>
+      <div class="body">
+        <h3>免申请直接下载 + 自动发 14 天码：要你单独拍，本轮不建议碰</h3>
+        <p>这条动授权链（对应今天方案第九节 A"真实匿名试跑"：临时凭证、安装绑定、有效期、撤销、单设备额度识别、并发原子扣减、重放、成本归属），风险等级远高于前四步。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>对抗式审查：第一刀砍我自己这套建议</h2>
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>#</th><th>攻击</th><th>处置</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td>视频和演示都治不了"来的人不是买家"。若埋点量出真人里设计师占比极低，第 2、3 步全白做。</td><td>所以第 1 步是前置；并把 1a（零代码）单拆出来，保证今天可完成。</td><td><span class="tag ok">已入方案</span></td></tr>
+        <tr><td class="mono">2</td><td>09-19 录屏是"真实组件＋替身边界"，直接放＝拿假数据当真实成果，属本项目"对外主张失真"同族。</td><td>第 2 步强制"演示·示例数据"标识，聚合数字不入画。</td><td><span class="tag ok">已入方案</span></td></tr>
+        <tr><td class="mono">3</td><td>"真人远低于 100/天"给不出绝对值。</td><td>降级为方向性判断（C 级），真人绝对数列入未核实，禁止下游当依据。</td><td><span class="tag warn">诚实标注</span></td></tr>
+        <tr><td class="mono">4</td><td>砍表单会丢掉现在唯一在收的定性信息（人工耗时、常处理物料）。</td><td>不删字段，只把必填降级为选填，申请后第一封邮件补齐。</td><td><span class="tag ok">已改方案</span></td></tr>
+        <tr><td class="mono">5</td><td>"先装眼睛"会不会又变成三周后才有眼睛？</td><td>会——若只做 1b。故 1a 当天可拿到官网/内测站/爬虫拆分，1b 随后。</td><td><span class="tag ok">已拆步</span></td></tr>
+        <tr><td class="mono">6</td><td>本建议会不会推翻今天那份《官网宣传与演示修订》三批制？</td><td>不会：它的第二批＝本处第 4 步、第三批＝第 2 步；本处新增的是它没查到的两条事实（素材早在 09-19 就有、首页无 <code>&lt;video&gt;</code> 渲染能力）＋第 1 步观测。</td><td><span class="tag ok">细化非推翻</span></td></tr>
+        <tr><td class="mono">7</td><td>替代解释没排除："有人提交了但服务端 500"。</td><td>已用生产库缺 <code>ApplicationAttribution</code> 表这条线索去查 nginx：10 天内该端点仅 3 行、全为 <code>GET → 405</code>，POST 0 次 ⇒ <strong>本窗口内排除</strong>（不覆盖 09-29 之前那 12 条的提交路径）。</td><td><span class="tag ok">已闭合</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>未决与覆盖缺口</h2>
+  <ul class="notes">
+    <li><strong>U-1｜真人绝对数</strong>：需 1a 落地后重测。现在只能给"968 独立 IP／10 天、UA 级爬虫 165、像人的 top10 全是机房 IP"。</li>
+    <li><strong>U-2｜那 33 次安装包下载是谁下的</strong>：版本横跨 3.7.15→3.7.28，可能是内测用户自动更新（<code>/downloads/local-assistant-release.json</code> 轮询 4 次），也可能有人在装新版。本轮没查。</li>
+    <li><strong>U-3｜知乎/小红书到底带没带人来</strong>：referer 0 命中<strong>不等于</strong>没带人——外链跳转可能剥 referer。未核实。</li>
+    <li><strong>U-4｜12 条申请里有几条是陌生人自填</strong>：本轮只数总量与状态，未读正文（避免取个人信息）。</li>
+    <li><strong>U-5｜本轮纯只读</strong>：未跑构建与任何门禁，不产生代码正确性主张。</li>
+    <li><strong>覆盖缺口</strong>：没做真人 UA 的完整机房占比统计（只看了 top10）；没读 Cloudflare 侧配置；没验 <code>ADMIN_NOTIFY_MODE</code> 之外的通知投递成功率（<code>ApplicationNotification</code> 表本轮未查）。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>方法：先证伪再下结论。所有 git/库/日志读数均为本会话原式实跑；引外部数字一律标证据等级，厂商自报的转化率百分比不进结论。</p>
+  <p>2026-10-26 23:2x · 只读实测：生产与测试库 <code>sqlite3 "file:…?mode=ro"</code> 计数（未取任何 codePreview／contact／ipHash／正文）、nginx <code>sudo -n</code> 只读计数、视频抽帧目视、GitHub/网络检索。未改代码、未提交、未部署、未跑门、未新建任务书。探针：<code>tmp/funnel-probe.sql</code>、<code>tmp/funnel-probe2.sql</code>、<code>tmp/nginx-funnel.sh</code>、<code>tmp/nginx-funnel2.sh</code>、<code>tmp/c6.sh</code>、<code>tmp/vframe/*.png</code>。</p>
+</footer>
+
+</div>

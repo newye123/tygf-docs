@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>20 套官网模拟件 · 对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>20 套官网模拟件</span><span class="sep">/</span>
+    <span>2026-10-28</span>
+  </p>
+  <h1>20 套官网模拟件联合审查</h1>
+  <p class="standfirst">对 <code>运营/site20_20261028/</code> 下 20 个单文件官网模拟件的核验：虚假能力宣称、模拟界面被当成真实证据、20 套同质化、单字成行、换行与字体措辞、英文文案质量、性能与可访问性。</p>
+  <p class="standfirst">整目录未入 git（<code>git status</code> 回报 <code>?? 运营/</code>），所以基线用文件清单加 sha256 固定，不用提交号。</p>
+  <div class="meta">
+    <span>Round 1/3</span>
+    <span>风险档 Low</span>
+    <span>5 个源文件改动</span>
+    <span>21 个生成件</span>
+    <span>全部读数取自同一次构建</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p><strong>有条件放行</strong>——作为「挑方向的模拟件」可以放；作为「直接上线的官网」不行。<br>不放的原因是两件具体的事：视频位还是示意动画，断行只在本机 Chrome 上验过。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>可以信任的部分</h3>
+      <ul>
+        <li><strong>没有编造营销证据</strong>：全套零客户数、零客户 logo、零评价、零认证、零效率百分比。「100%」只出现在 CSS 的 <code>width:100%</code>。</li>
+        <li><strong>单字成行确实是 0</strong>：20 套 × 中英 × 1440/1024/768/390 共 160 次页面视图，实测 0 例。</li>
+        <li><strong>演示真能点</strong>：12 项交互全部通过，包括批量表格跑批、排版实验室、长文断行回读、自查问卷、工时重算、语言切换。</li>
+        <li><strong>完全离线</strong>：20 个站点里外部脚本、外部样式、外部字体、外部图片数量均为 0。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能当成能力证据的部分</h3>
+      <ul>
+        <li><strong>每一处产品界面都是 CSS 画的</strong>。每页 16–28 处「示意」标注撑着这条边界；删掉标注，它就变成了一张假截图。</li>
+        <li><strong>视频位是示意动画</strong>，不是录屏。页面上写了，但真实投放时读者会跳过这行小字。</li>
+        <li><strong>「12 稿 × 12 语」是画出来的</strong>，未对生产环境逐条实测——这属于产品侧口径核对，不在本次范围。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>这轮改了什么</h2>
+  <p class="lede">5 个源文件改动，21 个生成件重生。改的都是体检出来的硬问题，没有为了好看而改。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>文件</th><th>改了什么</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">build/data.mjs</td>
+          <td>4 个浅色主题的次要文字色加深；4 个主题的强调色加深；6 处标题样式改为按类名匹配</td>
+          <td>前者是对比度不达标；后者给「装饰文字不再当标题」让路</td>
+        </tr>
+        <tr>
+          <td class="mono">build/assets/base.css</td>
+          <td>状态徽标四色向主题墨色拉 45%；箭头链接下内边距 3px→5px；6 处标题样式加别名</td>
+          <td>徽标在深色面板上看不清；链接点按区只有 23px</td>
+        </tr>
+        <tr>
+          <td class="mono">build/assets/extra.css</td>
+          <td>便当盒标题、角色卡标题改用新类名；开关标签加最小高度 24px</td>
+          <td>同上；开关的点击区低于 24×24</td>
+        </tr>
+        <tr>
+          <td class="mono">build/ui.mjs</td>
+          <td>9 个页面里 30 处装饰性插画标题从 h3/h4 改为 div，保留同名样式类</td>
+          <td>消除标题层级跳级</td>
+        </tr>
+        <tr>
+          <td class="mono">build/interact.mjs</td>
+          <td>电商卡片选择器 h4 → .shop-name</td>
+          <td>DOM 改了，测试选择器不跟着改就会假红</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>已证实的缺陷</h2>
+  <p class="lede">证据等级一律 A：本会话亲自跑出的命令与读数。5 条 Important 全部已修，1 条 Nit 未修并披露。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>证据</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">F-01</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">data.mjs 主题变量</td>
+          <td>侧栏小字与徽标在浅底或深底上对比度不足 4.5:1，低视力用户读不出</td>
+          <td>修复前审计报对比度问题 339 处；修复后 <code>contrast 0</code></td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-02</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">ui.mjs 9 个页面</td>
+          <td>标题从 h1 直跳 h3——插画里的装饰文字被当成章节标题，屏幕阅读器按标题导航时结构断裂</td>
+          <td>修复前标题跳级列表含 9 页；修复后该行为空</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-03</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">base.css .link-arrow</td>
+          <td>行内箭头链接点按区 23×23px，低于 24×24，手指容易点空</td>
+          <td>修复前过小目标 30 处；下内边距 3→5px 后为 0</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-04</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">interact.mjs</td>
+          <td>卡片标题由 h4 改 div 后测试选择器命中不到，交互测试直接失败</td>
+          <td>改 DOM 后该项 FAIL；改选择器后 12/12 通过——这条同时证明测试不是摆设</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-05</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">extra.css .switch</td>
+          <td>排版实验室和换行演示的开关，复选框 13×13、外层标签仅 19px 高，点击区不足 24×24</td>
+          <td>实测修复前 76×19 / 87×19；加 <code>min-height:24px</code> 后 76×24 / 87×24</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-06</td>
+          <td><span class="tag warn">Nit</span></td>
+          <td class="mono">含排版实验室的 5 套</td>
+          <td>390px 下控件行内部超出 2px（滑块轨道），页面级无横向滚动，不影响操作</td>
+          <td>demo 视图实测控件行宽 324、scrollWidth 326；<code>min-width:0</code> 无效已回退</td>
+          <td><span class="tag bad">未修</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">F-02 的连带风险</span>
+    <p>把 h3 换成 div 会改变字号、行高、外边距。所以每个位置都补了同名样式类（<code>.b-h</code> <code>.m-h</code> <code>.tl-h</code> <code>.lp-h</code> <code>.ap-h</code> <code>.canvas-h</code> <code>.shop-name</code>），CSS 值与原来的 h3/h4 逐项对齐，并在 20 套桌面上逐页比对过版式。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>逐项核查通过的</h2>
+  <p class="lede">这些不是「没发现问题」，是跑过、有读数、有分母。</p>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">0</span><span class="k">对比度 / 触控 / 标题跳级<br>重复 id / 无标签 / 无 alt</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">单字成行<br>160 次页面视图</span></div>
+    <div class="stat ok"><span class="n">12/12</span><span class="k">交互测试通过</span></div>
+    <div class="stat ok"><span class="n">0/20</span><span class="k">页面横向溢出<br>桌面与手机</span></div>
+  </div>
+
+  <ul class="notes">
+    <li><strong>单字不成行</strong>：CSS <code>text-wrap:pretty</code> + 段末 nowrap 锁字 + 加载后逐字符 Range 测量三层；字体变化、切语言、缩放都会重跑。20 套 × 中英 × 四宽度，0 例。</li>
+    <li><strong>没有编造的营销证据</strong>：全套没有客户数量、客户 logo、用户评价、认证、奖项、效率提升百分比。</li>
+    <li><strong>绝对化表述逐句读过</strong>：全文抽出 8 句含「保证 / guarantee / never / 绝不」的独立句子，全部处于边界说明或否定语境。例如「要求所有 Photoshop 版本、所有复杂结构都保证可用」是在描述做不到的期待；「It is not a compatibility guarantee」是在否认兼容承诺。</li>
+    <li><strong>示意标签密度</strong>：每页 16–28 处「示意」（英文页 18–36 处同类标记），首屏之后一屏内必出现一处。</li>
+    <li><strong>英文文案</strong>：439 条英文串，机检 0 处双空格、0 处标点后缺空格、0 处重复词；9 条「小写开头」逐条查看，全部是被 span 拆开的句中片段。</li>
+    <li><strong>外链无死链</strong>：页脚四个 <code>tuyigf.com</code> 地址实测全部 200。</li>
+    <li><strong>零外部依赖</strong>：20 个站点外部 script/link 标签数量为 0，无外部字体与图片，完全离线。</li>
+    <li><strong>同质化有数</strong>：两两模块重合度平均 0.429，最高 0.750（03 与 17），没有任何两套模块顺序完全相同，首屏视觉 20 套 20 种，宣传主轴 19 类。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>未决</h2>
+  <p class="lede">还缺什么证据，写清楚；不写成「应该没问题」。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>问题</th><th>还缺什么</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">U-01</td><td>macOS / iOS 上断行是否同样守得住</td><td>只在 Windows + Chrome 量过。守卫是运行时测量，理论上跨平台自适应，但没有实测。要补一台 Mac 跑同一套 160 次视图。</td></tr>
+        <tr><td class="mono">U-02</td><td>Safari / Firefox 渲染是否一致</td><td>对比度计算里有 <code>color-mix(in srgb, …)</code>，Chrome 与 Safari 15+ 行为一致，但未实测渲染差异。</td></tr>
+        <tr><td class="mono">U-03</td><td>「12 稿 × 12 语」与产品对外口径是否一致</td><td>本套只是把产品已承诺的能力画出来，没有对生产环境逐条实测；属产品侧口径核对，不在本次范围。</td></tr>
+        <tr><td class="mono">U-04</td><td>03 与 17 模块重合 0.750，要不要合并</td><td>两套首屏、排版、语气差异明显，但模块构成重合 6/8。是取舍不是缺陷，留给你决定：若压缩到 12 套，这两套是首选合并对象。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>覆盖缺口</h2>
+  <p class="lede">这次明确没查的部分——没查不等于没问题。</p>
+  <ul class="notes">
+    <li>没在真机测，只有 Chrome 桌面窗口模拟 390 / 768 / 1024 / 1440。</li>
+    <li>没做屏幕阅读器实读（NVDA / VoiceOver），只做了静态语义检查。</li>
+    <li>没做性能预算对比，只记录单页字节、DOM 节点数、本地加载耗时三项读数。</li>
+    <li>没评估转化效果——哪一套更容易让人点申请，静态检查回答不了。</li>
+    <li>没对产品真实能力逐条实测（见 U-03）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>上线前三件事</h2>
+  <p class="lede">这是「有条件放行」里的那个条件。</p>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>视频位换成真实录屏</h3>
+        <p>01 与 06 的首屏播放器现在是示意动画，页面已标「示意动画 · 非真实录屏」。一旦对外投放，这行标注会被读者跳过——只有真录屏能解决。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>「示意」标签一个都不能删</h3>
+        <p>全套 300 多处，它们是把「模拟件」和「能力证据」隔开的那条线。任何一次文案精简，先查这条线还在不在。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>在 Mac 上复测断行</h3>
+        <p>现在这个「单字成行 0 例」只在 Windows + Chrome 上成立。复测过了，才能把这句话写进对外说明。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>更正</h2>
+  <div class="callout">
+    <span class="lb">原说法</span>
+    <p>本轮的检查「全部通过」。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">反证</span>
+    <p>第一轮里，静态审计结果文件的时间戳是 10:06，而当次构建发生在 10:11——我一度拿旧构建的读数去证明新构建的绿。第二轮修开关点按区时又发生一次：先跑出的索引页检查是 10:12，而新构建是 10:22。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">新结论</span>
+    <p>所有读数已重跑到最新构建（构建 10:22；结果文件 10:23–10:28；截图 10:25–10:27）。数字与第一轮一致，但只有这一轮是同一基线。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>附表 · 基线读数</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>读数</th></tr></thead>
+      <tbody>
+        <tr><td>对比度 / 触控 / 标题跳级 / 重复 id / 无标签 / 无 alt</td><td><span class="fix">0 / 0 / 0 / 0 / 0 / 0</span></td></tr>
+        <tr><td>控制台报错</td><td><span class="fix">none（20 页）</span></td></tr>
+        <tr><td>单页最大字节</td><td>307,369（02 能力全景）</td></tr>
+        <tr><td>DOM 节点最多</td><td>2,141（02 能力全景）</td></tr>
+        <tr><td>本地加载最慢</td><td>371 ms</td></tr>
+        <tr><td>单字成行</td><td><span class="fix">0 例 / 160 次视图</span></td></tr>
+        <tr><td>交互</td><td><span class="fix">12 / 12</span></td></tr>
+        <tr><td>桌面横向溢出 / 手机文档宽度</td><td><span class="fix">0 / 20 页；20 页全部 390 = 390</span></td></tr>
+        <tr><td>索引页</td><td>20 卡片 / 20 内嵌页 / 文档宽 1440 / 报错 0</td></tr>
+        <tr><td>模块重合度</td><td>平均 0.429，最高 0.750（03 与 17）</td></tr>
+        <tr><td>英文串</td><td>439 条，机检缺陷 0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:20px">基线文件 sha256（10:2x 读数）：<code>data.mjs</code> ab5c27d9…7cf4e4 · <code>ui.mjs</code> b97bcb94…2efce9 · <code>page.mjs</code> 906e2f7b…cec0e0 · <code>build.mjs</code> 5ae70a7f…986311 · <code>base.css</code> 14e98acd…57221 · <code>extra.css</code> 005b0fd7…4b2a8 · <code>interact.mjs</code> d629f94f…bbe56</p>
+</section>
+
+<footer>
+  <p>审查范围：20 个站点 + 索引页 + 5 个构建源文件；风险档 Low（营销件，不触及产品代码、支付、鉴权、CI、迁移）。</p>
+  <p>2026-10-28 · 本地实测，未部署、未提交；整目录未入库，基线以 sha256 固定。</p>
+</footer>
+
+</div>
+</body>
+</html>

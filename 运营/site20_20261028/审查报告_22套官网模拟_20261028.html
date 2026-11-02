@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>22 套官网模拟件 · 对抗式审查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <p class="eyebrow">
+    <span>对抗式审查</span><span class="sep">/</span>
+    <span>22 套官网模拟件 · 分人群两页</span><span class="sep">/</span>
+    <span>2026-10-28</span>
+  </p>
+  <h1>22 套官网模拟件审查：加了两页人群页，并把「不是…而是」做成了闸</h1>
+  <p class="standfirst">这一轮要解决三件事：文案里不许再出现「不是 A，而是 B」这类修辞对立句；给亚马逊卖家和已经在用外包的团队各做一套专门页；22 套全部重新构建、逐项体检。</p>
+  <p class="standfirst">整目录未入 git（<code>git status</code> 回报 <code>?? 运营/site20_20261028/</code>），所以基线用文件清单加 sha256 固定，不用提交号。</p>
+  <div class="meta">
+    <span>Round 1/1</span>
+    <span>风险档 Low</span>
+    <span>新增 2 套</span>
+    <span>7 个源文件 + 1 条闸</span>
+    <span>全部读数取自同一次构建</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>判定</h2>
+
+  <div class="verdict">
+    <span class="lb">结论</span>
+    <p><strong>有条件放行</strong>——作为「挑方向的模拟件」可以放：22 套都是完整可点、中英双语、离线的单文件。<br>作为「直接上线的官网」还不行：视频位仍是示意动画，断行只在 Windows + Chrome 上验过，而且这个目录只有本机一份、还没入 git。</p>
+  </div>
+
+  <div class="split">
+    <div class="panel yes">
+      <h3>可以信任的部分</h3>
+      <ul>
+        <li><strong>文案闸真的会拦</strong>：7 条模式扫源文件与 22 个生成页，命中 0；临时塞 3 句违规文案进去，命中 3、退出码 1。</li>
+        <li><strong>单字成行是 0</strong>：22 套 × 中英 × 1440/1024/768/390，共 176 次页面视图，实测 0 例。</li>
+        <li><strong>新加的两页真能点</strong>：逐站点页签换语后笔记跟着换；分工板点一下换人，底部「工具 4 段 · 乙方 1 段 · 你 2 段」立刻变成 3 / 1 / 3。</li>
+        <li><strong>和已有的 13、14 不是一套皮</strong>：21 独有「逐站点」「行前核」，22 独有「分工」，首屏视觉与主题都是新写的。</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3>不能当成能力证据的部分</h3>
+      <ul>
+        <li><strong>每一处产品界面都是 CSS 画的</strong>。21 有 25 处「示意」（英文 27 处），22 有 22 处（英文 26 处）撑着这条边界；删掉标注，它就变成了一张假截图。</li>
+        <li><strong>视频位是示意动画</strong>，不是录屏。</li>
+        <li><strong>「12 稿 × 12 语」是画出来的</strong>，没有对生产环境逐条实测。</li>
+        <li><strong>21 里的站点差异写着「以卖家后台为准」</strong>——这是有意不承诺，不是核实过的平台规则；拿去做培训材料之前要逐条对官方文档核。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">22</span><span class="k">套完整站点<br>4 个视图 / 中英双语</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">「不是…而是」命中<br>白名单放行 12 处</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="k">单字成行<br>176 次页面视图</span></div>
+    <div class="stat ok"><span class="n">14/14</span><span class="k">交互测试通过<br>真浏览器</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>这轮改了什么</h2>
+  <p class="lede">两条腿：一条是把文案口径变成可复跑的闸，一条是两套人群页；剩下的改动都是体检逼出来的。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>文件</th><th>改了什么</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">_build/data.mjs</td>
+          <td>新增 21 亚马逊卖家痛点、22 外包分工页两个方向；新增 <code>marketplace</code>、<code>docket</code> 两套主题；首屏与过渡句按新口径重写</td>
+          <td>按人群切页；新主题是为了让两页在视觉上与 13、14 分开</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/ui.mjs</td>
+          <td>新增两个首屏视觉；新增三段结构（逐站点 / 行前核 / 分工）；「分工」标题改写；行前核徽标由「你」改成「你确认」</td>
+          <td>前两项是新页内容；后两项是体检抓出来的缺陷（F-02、F-04）</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/assets/client.js</td>
+          <td>新增 <code>initSites()</code>（页签切面板）与 <code>initScope()</code>（换人并重算段数）</td>
+          <td>这两段要能点，不做成死图</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/build.mjs</td>
+          <td>索引页排位、分组、标题改成 22 套；页脚那句「只作阅读顺序建议」按新口径重写</td>
+          <td>新增两套进索引；页脚原句是「不是…而是」句式</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/review-copy.mjs</td>
+          <td>新增「不是…而是」闸：7 条模式 + 12 处诚实限定白名单 + 白名单清单自动打印</td>
+          <td>让这条口径可以复跑，而不是靠我记得</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/interact.mjs</td>
+          <td>新增 2 项：逐站点页签、分工换人重算（12 → 14 项）</td>
+          <td>新加的交互要有断言，不能只截图</td>
+        </tr>
+        <tr>
+          <td class="mono">_build/shots.mjs</td>
+          <td>新增截图工具：按套名抓 1440 / 390 / 中英四张</td>
+          <td>上一轮截图是一次性脚本，这轮沉成工具</td>
+        </tr>
+        <tr>
+          <td class="mono">README.md</td>
+          <td>22 套、新行、新模块、新读数；<strong>7 行模块构成按代码纠偏</strong></td>
+          <td>纠偏见 F-06——文档抄了自己上一版的想象</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">生成物：<code>sites/*.html</code> 22 件 + <code>index.html</code>，最后一次构建在 2026-10-28 11:44 之后、体检全部在其后。</p>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>新增的两页</h2>
+  <p class="lede">两页都是「先给这个人看他自己的问题，再给流程」，不写平台规则、不写报价。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th></th><th>21 亚马逊卖家痛点</th><th>22 外包分工页</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">给谁看</td>
+          <td>同时打理几个站点、主图和 A+ 图反复换语的卖家 / 运营</td>
+          <td>已经把图片本地化外包出去、想知道哪几段还能收回工具的团队</td>
+        </tr>
+        <tr>
+          <td class="mono">首屏</td>
+          <td>「一个站点一版，同一套 A+ 图改到第几遍了？」+ 市场页版式的商品卡</td>
+          <td>「外包买到了人手，重复的活儿还留在流程里。」+ 三行六段分工单</td>
+        </tr>
+        <tr>
+          <td class="mono">独有段落</td>
+          <td>逐站点：德 / 法 / 西 / 日 / 阿 / 泰，各写文字侧、版面侧、先核什么<br>行前核：六项检查清单，每项标谁来做</td>
+          <td>分工：七段活 × 乙方 / 工具 / 你，可点换人，底部实时重算各占几段</td>
+        </tr>
+        <tr>
+          <td class="mono">事实边界</td>
+          <td>不抄平台图片、不引平台规则条文；每条差异都写「以卖家后台为准」</td>
+          <td>不写价格、账期、责任划分；分工与报价一律标示意，实际按各家合同</td>
+        </tr>
+        <tr>
+          <td class="mono">体量</td>
+          <td>314,242 字节（全套最大），首屏 h1 78px</td>
+          <td>248,938 字节，首屏 h1 67.2px</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">怎么证明没做成 13 / 14 的复制件</span>
+    <p>13 讲跨境电商的 A+ 与详情页场景，首屏是商品卡、粉色系，模块里没有站点差异；21 首屏是市场页版式，独有「逐站点」「行前核」，也是全套唯一用 <code>marketplace</code> 主题的。14 讲乙方自己的产能与交接，首屏是服务商版式；22 独有「分工」，首屏是单据版式。量化上：22 套两两模块重合度平均 0.413，最高 0.750（03 与 17，不是这两套），没有任何两套模块顺序完全相同，首屏视觉 22 套 22 种。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>已证实的缺陷</h2>
+  <p class="lede">证据等级一律 A：本会话跑出的命令与读数，且全部取自同一次构建。三条 Important 全部已修；三条 Nit 里两条已修、一条等你定。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>严重度</th><th>位置</th><th>失效场景</th><th>证据</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">F-01</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">data.mjs · marketplace 主题</td>
+          <td>强调色 <code>#b4570c</code> 在页面软底 <code>#eef1f4</code> 上只有 4.30:1，10px 加粗小标题（逐站点 / 批量总表 / 执行报告）低视力用户读不出</td>
+          <td>修复前 <code>review-a11y</code> 报 9 处对比度问题，全部落在 21；换成 <code>#a34d08</code>（硬底 5.40 / 软底 5.11）后 <code>contrast 0</code></td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-02</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">ui.mjs · 行前核徽标</td>
+          <td>徽标只有一个字（「你」），被单字成行检测抓出 16 例：4 条清单 × 4 个宽度，每个宽度都是 <code>bad:["你"]</code></td>
+          <td>修复前 <code>review-lines</code> 报 <code>files with issues: 1 instances: 16</code>；标签改成「你确认 / You confirm」后 <code>0 / 0</code></td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-03</td>
+          <td><span class="tag bad">Important</span></td>
+          <td class="mono">ui.mjs:1105 · 21 的行前核第三条</td>
+          <td>闸上线后第一次跑就是红的：英文半句 <code>, not rasterized into pixels</code> 命中 <code>, not X</code> 模式 2 处（源文件 + 生成页）。这句是我自己上一轮写的</td>
+          <td>闸输出 <code>ANTITHESIS hits: 2</code>；改成 <code>The text to change lives in editable text layers.</code> 后 <code>hits: 0</code></td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-04</td>
+          <td><span class="tag warn">Nit</span></td>
+          <td class="mono">22 · 分工段标题</td>
+          <td>「同一批活，七段，先摆到人身上。」在 1440 宽下断成「……先摆到人 / 身上。」：按单字规则 3 个字算过，但把「人身上」这个词劈开了</td>
+          <td>修复前截图 <code>screens/22-outsource-home-1440.png</code>；改成「七段活，先看谁在做。」后单行排完，<code>verify.json</code> 的疑似孤行列表里不再有这条</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+        <tr>
+          <td class="mono">F-05</td>
+          <td><span class="tag warn">Nit</span></td>
+          <td class="mono">本目录</td>
+          <td>整个目录未被 git 跟踪：现在只有本机这一份，机器坏了就没了；也没法逐行回溯上一版的文案</td>
+          <td><code>git status --porcelain -- 运营/site20_20261028</code> 回报 <code>?? "运营/site20_20261028/"</code></td>
+          <td><span class="tag bad">未修</span>（等你定）</td>
+        </tr>
+        <tr>
+          <td class="mono">F-06</td>
+          <td><span class="tag warn">Nit</span></td>
+          <td class="mono">README.md · 模块构成列</td>
+          <td>7 行与代码不符：03 / 11 / 12 / 16 / 17 / 19 把「首屏那一段」重复计了一次；13 写了一个不存在的模块「电商」。演示表里 12×12 那一行还漏了 08、13、21 三套</td>
+          <td>以 <code>data.mjs</code> 的 <code>modules</code> 数组 + <code>ui.mjs:1179-1184</code>「首屏段与 visual 同名则移出」的规则逐行对齐后改</td>
+          <td><span class="tag ok">已修</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="lb">F-03 值得单说一句</span>
+    <p>这条不是别人挑出来的，是闸自己拦下来的：我上一轮写下的英文句子，按新口径就是违规。这也顺带证明了闸的有效性——它拦得住写它的人。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>逐项核查通过的</h2>
+  <p class="lede">这些不是「没发现问题」，是跑过、有读数、有分母。</p>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">0</span><span class="k">对比度 / 触控 / 标题跳级<br>重复 id / 无标签 / 无 alt</span></div>
+    <div class="stat ok"><span class="n">0/176</span><span class="k">单字成行<br>22 套 × 中英 × 四宽度</span></div>
+    <div class="stat ok"><span class="n">0/22</span><span class="k">横向溢出（桌面）<br>手机 22 页全部 390 = 390</span></div>
+    <div class="stat ok"><span class="n">0.413</span><span class="k">模块重合度均值<br>最高 0.750（03 与 17）</span></div>
+  </div>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>闸是什么</h3>
+        <p>7 条模式：中文「不是…而是」「不是…，是」「而不是」，英文 <code>not…but</code>、<code>Not X — Y</code>、<code>is not A. It is B</code>、<code>, not X</code>。扫 3 个源文件（含 <code>file:line</code> 定位）与 22 个生成页的可见文字。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>现在的读数</h3>
+        <p><code>ANTITHESIS hits: 0</code>，退出码 0。负控跑过：临时塞 3 句违规文案进夹具，<code>hits: 3</code>、退出码 1。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>例外是白名单，不是漏网</h3>
+        <p>共 12 处被放行，全是给数字和主张加诚实限定的否定句：<code>not a real screen recording</code>、<code>not a real screenshot</code>、<code>not efficiency claims</code>、<code>not performance claims</code>、<code>not evidence of capability</code>、<code>not a time or efficiency claim</code>、<code>not a time claim</code>、<code>not measurements</code>、<code>not durations</code>、<code>not a speed comparison</code>。删掉它们就会变成假话，所以按关键词放行，清单由脚本自己打印。</p>
+      </div>
+    </div>
+  </div>
+
+  <ul class="notes">
+    <li><strong>改写前的旧句没有逐条留档</strong>（目录未入 git），所以本报告不宣称「改了多少条」，只宣称「现在的口径是 0 命中」。</li>
+    <li><strong>单字不成行</strong>：CSS <code>text-wrap:pretty</code> + 段末 nowrap 锁字 + 加载后逐字符 Range 测量三层；字体变化、切语言、缩放都会重跑。</li>
+    <li><strong>交互 14/14</strong>：新增两项都是实打实改状态——逐站点页签 <code>de → ja</code> 后笔记文字变了；分工换人后底部从「工具 4 段 · 乙方 1 段 · 你 2 段」变成「3 / 1 / 3」。</li>
+    <li><strong>索引页</strong>：22 张卡片、22 个内嵌预览、文档宽 1440、报错 0。</li>
+    <li><strong>英文文案</strong>：526 条英文串，双空格 0、标点后缺空格 0、重复词 0；11 条「小写开头」逐条看过，全部是被 <code>&lt;span&gt;</code> 切开的句中片段。</li>
+    <li><strong>示意标签密度</strong>：21 中文 25 / 英文 27 处，22 中文 22 / 英文 26 处，与原有 20 套（20–25 / 21–35）同一量级。</li>
+    <li><strong>绝对化词</strong>：机检只定位不判定。逐条读过，命中分三类：技术术语（智能对象、自动换行）、否定语境（「不自动加行」「要求所有 Photoshop 版本、所有复杂结构都保证可用」说的是做不到的期待）、误报（<code>execution</code> 里含 <code>cut</code>、<code>second line</code> 里的 second）。</li>
+    <li><strong>完全离线</strong>：22 个站点外部脚本、外部样式、外部字体、外部图片数量均为 0。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>未决</h2>
+  <p class="lede">还缺什么证据，写清楚；不写成「应该没问题」。</p>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>ID</th><th>问题</th><th>还缺什么</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">U-01</td><td>macOS / iOS 上断行是否同样守得住</td><td>只在 Windows + Chrome 量过。要补一台 Mac 跑同一套 176 次视图。</td></tr>
+        <tr><td class="mono">U-02</td><td>Safari / Firefox 渲染是否一致</td><td>对比度计算里有 <code>color-mix(in srgb, …)</code>；未实测这两个浏览器的渲染差异。</td></tr>
+        <tr><td class="mono">U-03</td><td>21 里「各站点排版风险」的说法是否准确</td><td>现在全部写成「以卖家后台为准」，属于有意不承诺，不是核实过的平台事实。要对外用作培训材料，得逐条对官方文档核。</td></tr>
+        <tr><td class="mono">U-04</td><td>22 的七段分工是否符合行业实际</td><td>分工是示意，没有对任何真实合同或报价核过。</td></tr>
+        <tr><td class="mono">U-05</td><td>03 与 17 模块重合 0.750，要不要合并</td><td>取舍问题：若压缩到 12 套，这两套是首选合并对象。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>覆盖缺口</h2>
+  <p class="lede">这次明确没查的部分——没查不等于没问题。</p>
+  <ul class="notes">
+    <li>没在真机测，只有 Chrome 桌面窗口模拟 390 / 768 / 1024 / 1440。</li>
+    <li>没做屏幕阅读器实读（NVDA / VoiceOver），只做了静态语义检查。</li>
+    <li>没评估转化效果——哪一套更容易让人点申请，静态检查回答不了。</li>
+    <li>没对生产环境的真实能力逐条实测（属于产品侧口径核对，不在本次范围）。</li>
+    <li>没对 21 的平台规则、22 的报价与合同做外部核实（见 U-03 / U-04）。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>投入使用前三件事</h2>
+  <p class="lede">这是「有条件放行」里的那个条件。</p>
+
+  <div class="gates">
+    <div class="gate first">
+      <span class="num">1</span>
+      <div class="body">
+        <h3>视频位换成真实录屏</h3>
+        <p>01 与 06 的首屏播放器现在是示意动画，页面已标「示意动画 · 非真实录屏」。一旦对外投放，这行标注会被读者跳过——只有真录屏能解决。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">2</span>
+      <div class="body">
+        <h3>「示意」标签一个都不能删</h3>
+        <p>22 套一共几百处，它们是把「模拟件」和「能力证据」隔开的那条线。任何一次文案精简，先查这条线。</p>
+      </div>
+    </div>
+    <div class="gate">
+      <span class="num">3</span>
+      <div class="body">
+        <h3>把这个目录纳入 git</h3>
+        <p>现在它只有本机一份（F-05）。在决定「拿哪套去改真站」之前就要解决，否则一次误删就全没了。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>更正</h2>
+
+  <div class="callout">
+    <span class="lb">原说法</span>
+    <p>我读到的 <code>a11y.out</code> / <code>verify.out</code> / <code>gallery-check.out</code> 三个结果文件都是绿的。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">反证</span>
+    <p>这轮我把五个检查脚本串成一个后台任务跑，其中 <code>a11y</code> 最后才写文件。中途我去读结果时，<code>a11y.out</code> 还是空的，而另外三个 <code>.out</code> 是上一轮构建留下的旧值——我一度把旧读数当成新构建的绿，还据此复述过一次「22 页无溢出」。</p>
+  </div>
+  <div class="callout">
+    <span class="lb">新结论</span>
+    <p>等后台任务整体结束（退出码 0）后重取，本报告所有数字都来自同一次构建：<code>review-a11y.json</code>、<code>review-lines.json</code>、<code>interact.json</code>、<code>verify.json</code>、<code>gallery-check.out</code>、<code>homog.out</code> 与 <code>screens/contact-zh.png</code> 的时间戳都晚于最后一次 <code>build.mjs</code>。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">10</span>附表 · 基线读数</h2>
+
+  <div class="scrollx">
+    <table>
+      <thead><tr><th>项</th><th>读数</th></tr></thead>
+      <tbody>
+        <tr><td>对比度 / 触控 / 标题跳级 / 重复 id / 无标签 / 无 alt</td><td><span class="fix">0 / 0 / 0 / 0 / 0 / 0</span></td></tr>
+        <tr><td>控制台报错</td><td><span class="fix">none（22 页）</span></td></tr>
+        <tr><td>单页最大字节</td><td>314,242（21 亚马逊卖家痛点）</td></tr>
+        <tr><td>DOM 节点最多</td><td>2,147</td></tr>
+        <tr><td>本地加载最慢</td><td>403 ms</td></tr>
+        <tr><td>单字成行</td><td><span class="fix">0 例 / 176 次视图</span></td></tr>
+        <tr><td>交互</td><td><span class="fix">14 / 14</span></td></tr>
+        <tr><td>桌面横向溢出 / 手机文档宽度</td><td><span class="fix">0 / 22 页；22 页全部 390 = 390</span></td></tr>
+        <tr><td>索引页</td><td>22 卡片 / 22 内嵌页 / 文档宽 1440 / 报错 0</td></tr>
+        <tr><td>模块重合度</td><td>平均 0.413，最高 0.750（03 与 17）；重复顺序 0 对；首屏视觉 22 种；主轴 21 类</td></tr>
+        <tr><td>英文串 / 中文串</td><td>526 / 362 条，机检缺陷 0</td></tr>
+        <tr><td>「不是…而是」</td><td><span class="fix">命中 0，白名单放行 12 处；负控 3 命中 rc=1</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:20px">基线文件 sha256（11:5x 读数，全表见同名 md 附表 A）：<code>data.mjs</code> cad2d88d…5369ae · <code>ui.mjs</code> 2eaf2db7…41ada2 · <code>page.mjs</code> 906e2f7b…cec0e0 · <code>build.mjs</code> d53835e9…c53e11 · <code>client.js</code> e387301a…0e4f97 · <code>review-copy.mjs</code> 8c20c57c…d3b2679d · <code>review-lines.mjs</code> b1c3581b…ef5d592 · <code>review-a11y.mjs</code> b0053ad0…8682770 · <code>shots.mjs</code> df4315c4…3c17369b</p>
+</section>
+
+<footer>
+  <p>审查范围：22 个站点 + 索引页 + 12 个构建源文件；风险档 Low（营销件，不触及产品代码、支付、鉴权、CI、迁移）。</p>
+  <p>2026-10-28 · 本地实测，未部署、未提交；整目录未入库，基线以 sha256 固定。</p>
+</footer>
+
+
+</div>
+</body>
+</html>

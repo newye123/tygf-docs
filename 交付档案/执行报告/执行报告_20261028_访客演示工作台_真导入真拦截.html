@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>访客演示工作台：真导入、真拦截 · 2026-10-28</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1a1a1a;--mut:#6b6b6b;--line:#dedad2;--card:#fff;--red:#b42318;--amb:#b54708;--grn:#087443;--blu:#175cd3;--ink:#e8e4dc}
+@media(prefers-color-scheme:dark){:root{--bg:#151513;--fg:#ececec;--mut:#9b9b9b;--line:#33312c;--card:#1d1d1b;--ink:#111}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 "Noto Sans SC","IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:30px 22px 66px}
+h1{font-size:25px;line-height:1.35;margin:0 0 6px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.verdict{background:var(--ink);border-left:6px solid var(--blu);border-radius:8px;padding:14px 17px;margin:14px 0}
+.verdict b{color:var(--blu);font-size:16.5px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13.5px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mut)}
+pre{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6}
+.callout{border:1px solid var(--line);border-left:5px solid var(--amb);background:var(--card);border-radius:8px;padding:12px 15px;margin:12px 0;font-size:14px}
+.callout.ok{border-left-color:var(--grn)}.callout.bad{border-left-color:var(--red)}
+ol,ul{padding-left:21px}li{margin:5px 0}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;border:1px solid var(--line)}
+.b1{color:var(--blu)}.b2{color:var(--amb)}.b3{color:var(--red)}.b4{color:var(--grn)}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:12px}
+</style></head>
+<body><main>
+<h1>没注册也能进真工作台：译文表真导入、检查真出结果，AI 和执行一律挡到注册</h1>
+<p class="sub">2026-10-28 · 改在 <span class="mono">worktrees/develop</span> · 未提交、未推 GitHub、未部署 · 没登录就是访客</p>
+
+<div class="verdict"><b>结论：你要的「真实的、用户直接就能上传点击的」是代码，不是模拟页。</b><br>
+访客打开工作台就能真传译文表、真看浏览器里算出来的检查结果；点到要调模型的、要在电脑上干活的动作，弹一句「为什么」再带他去注册，而且一个请求都不会发出去。</div>
+
+<p>这对你意味着什么：以前没注册的人看到的是「请先登录」一张卡片，什么也摸不到；现在他能自己走一遍「导表 → 看检查」，摸到价值再决定注不注册。</p>
+
+<h2>一、访客现在能真做什么</h2>
+<table>
+<tr><th>动作</th><th>访客</th><th>说明</th></tr>
+<tr><td>打开工作台首页</td><td><span class="badge b4">能</span></td><td>顶部常驻琥珀色说明条：哪些能真用、哪些要登录，右侧「登录」「注册内测」两个入口</td></tr>
+<tr><td>上传译文表（CSV / TSV / TXT / XLSX / XLS）</td><td><span class="badge b4">能，真解析</span></td><td>真读文件、真出「N 个语言」，自动进第 2 步</td></tr>
+<tr><td>表格规则检查（缺行、重复、空译文等）</td><td><span class="badge b4">能，真算</span></td><td>全程在浏览器里算，不上传、不调用任何模型</td></tr>
+<tr><td>下载模板</td><td><span class="badge b4">能</span></td><td>和登录用户同一个模板文件</td></tr>
+<tr><td>AI 智能检测 / 检测全部语言 / 单语重跑</td><td><span class="badge b3">挡</span></td><td>弹「AI 智能检测需要登录」（<span class="mono">review-step.tsx:396</span>、<span class="mono">workbench-view.tsx:1472 / :1525</span>）</td></tr>
+<tr><td>AI 整理文本（粘贴文本走模型）</td><td><span class="badge b3">挡</span></td><td>弹「AI 整理文本需要登录」，并说明 CSV/Excel 导入不调模型、现在就能用（<span class="mono">csv-step.tsx:235</span>）</td></tr>
+<tr><td>读取设计稿（PSD 扫描）</td><td><span class="badge b3">挡</span></td><td>第 3 步整块换成锁卡（<span class="mono">workbench-view.tsx:5361 / :6016</span>）</td></tr>
+<tr><td>多个设计稿（多稿模式）</td><td><span class="badge b3">挡</span></td><td>弹「多稿模式需要登录」，模式不切换（<span class="mono">workbench-view.tsx:4053</span>）</td></tr>
+<tr><td>生成文件（Photoshop 写回）</td><td><span class="badge b3">挡</span></td><td>第 4 步整块换成锁卡（<span class="mono">workbench-view.tsx:6349</span>）</td></tr>
+</table>
+<p>挡的这五件，弹窗里都不是干巴巴一句「请登录」，而是各写了一句为什么——比如设计稿：<b>设计稿不经过浏览器，是你电脑上的本地助手在 Photoshop 里读，助手只认登录并激活过的账号</b>。这也是实话，不是话术。</p>
+
+<h2>二、怎么做的（三处关键）</h2>
+<ol>
+  <li><b>未登录不再停在门口</b>：账号门拿到 401 就进「访客」状态，把工作台正常渲染出来，外面套一层访客上下文（<span class="mono">account-gate.tsx:60 / :139-140</span>，访客模式本体在 <span class="mono">guest-mode.tsx</span>）。</li>
+  <li><b>激活门对访客整体跳过</b>：这里踩了一个坑——组件里的「提前返回」只挡界面，挡不住页面加载时自动跑的那段检查，访客仍会空发一次「查我的内测资格」然后吃 403。所以守卫写进了请求之前（<span class="mono">activation-gate.tsx:141</span>），实测访客全程 0 条邀请码请求。</li>
+  <li><b>工作台拆成「外壳 + 内层」</b>：访客上下文由账号门渲染，读它的必须是它的子组件。原来是同一个组件自己渲染又自己读，永远读到默认值——访客界面压根不出现。这是本轮在浏览器里实测才抓到的问题（<span class="mono">workbench-view.tsx:384-394</span>）。</li>
+</ol>
+<div class="callout ok">服务端一个字没改：访客真要硬调接口，照样 403。界面的作用只是把「点了没反应 / 冒一串错误」换成「说清为什么 + 带你去注册」。</div>
+
+<h2>三、实测证据（本轮真跑，未登录状态）</h2>
+<ul>
+  <li>首页出现访客说明条、第 3 步「读取设计稿需要登录」、第 4 步「生成文件需要登录」、设计文件区锁卡。</li>
+  <li>真上传一份 4 行 2 语的 CSV：解析成功、显示「2 个语言」、自动跳到第 2 步，规则检查给出「西班牙语 无需要处理的行」。</li>
+  <li>依次点「智能检测」「检测全部语言」「整理内容」「多个设计稿」「设计稿锁卡按钮」：五次都弹出对应弹窗，文案各不相同。</li>
+  <li>网络面板核对：全程只有 <span class="mono">/api/auth/me</span>(401)、站点内容、功能开关、功能权限；<b>0 条 AI 请求、0 条执行请求、0 条邀请码请求</b>。</li>
+  <li>英文站 <span class="mono">/en/workbench</span>：访客首屏汉字 0，说明条与弹窗都是英文。</li>
+</ul>
+<pre>npx tsc --noEmit                        rc=0
+npx eslint（改动文件定向）               0 error（7 条既有无障碍 warning）
+npm run test:identity-account-gate       rc=0
+npm run test:workbench-ui-contract       rc=0
+node scripts/i18n-dict-qa.mjs            硬伤 0 条</pre>
+
+<h2>四、还红着的一条，以及为什么不是这次的错</h2>
+<div class="callout bad"><span class="mono">npm run test:smoke:en-workbench</span> 里「英文词典覆盖率 ≥100%」没通过（实得 90.7%，145 条缺英文）。<br>
+不是本次新增的文案：本次新增的 22 条英文逐条核过都在词典里；缺的那 145 条主要来自<b>另一个会话还没提交的</b> <span class="mono">coverage-matrix.tsx</span> 改动（同一文件在 HEAD 里没有这些词，HEAD 的词典里也没有）。我没有代改别人正在写的东西。</div>
+
+<h2>五、要你拍两件事</h2>
+<ol>
+  <li><b>要不要推到测试站，让你在手机上或者别的电脑上点一遍？</b> 要的话按规矩来：先推 GitHub，从 GitHub 取代码更新测试站，测试通过再说生产。现在什么都没推。</li>
+  <li><b>要不要给访客一份「演示样稿」，让他看到第 3、4 步长什么样？</b> 现在第 3、4 步只能看到锁卡，看不到对账矩阵和生成结果。加样稿能让访客看见「做完了是什么样」，但要额外做一套只读假数据界面，成本比这一刀高。</li>
+</ol>
+
+<h2>六、边界</h2>
+<ul>
+  <li>未提交、未推送、未部署；开发树里还有别的会话的在飞改动，我一律没碰。</li>
+  <li>服务端授权口径没动，支付开关没动，密钥没进任何文件。</li>
+  <li>访客能看见的「检查结果」是浏览器里的规则检查，<b>不是 AI 检测结果</b>——界面文案里也说清楚了。</li>
+</ul>
+
+<footer>证据可复跑：设备与浏览器实测为 2026-10-28 本机 dev（未登录 401）；命令行读数见第三节。<br>
+台账已记：<span class="mono">AI_MEMORY/TASK_LOG.md</span> 置顶一节、<span class="mono">AI_MEMORY/ledger.jsonl</span> 一行（任务 ID <span class="mono">GUEST-WORKBENCH-DEMO-20261028</span>，飞书台账同名行已建档，回读 0 处漂移）。</footer>
+</main></body></html>

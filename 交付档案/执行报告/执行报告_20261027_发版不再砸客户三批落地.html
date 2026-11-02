@@ -1,0 +1,490 @@
+<title>5857 换行深挖第二轮 · 钻到最深处与处置梯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:1.7rem;
+  font-weight:500;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow"><span>执行报告</span><span class="sep">/</span><span>图译工坊 · 官网转化</span><span class="sep">/</span><span>2026-10-26</span></p>
+  <h1>执行报告｜发版不再砸客户 ＋ 装新版不再需要手动退出（三批全部落地）</h1>
+  
+  <div class="meta"><span>日期：2026-10-27 18:22（本行钟点为同轮 <code>date</code> 回显；各验证结果以命令退出码为准）</span>
+    <span>按 <code>执行方案_20261027_发版不再砸客户_讲人话定稿.md</code> 的第 1、2、3 批做完，第 4 批（一键升级）按方案只留了接口与开关位置，没动工。</span>
+    <span><strong>一句实话先说在前面</strong>：这三批改的是"下一版怎么发"，<strong>您现在装到客户机上的还是 3.7.28</strong>。要让您看到效果，还差出包→测试站→生产那条线（四条前置没动，见第五节）。</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>一、今天做完的事（讲人话）</h2>
+  <ol><li><strong>发新版不再顺手抬兼容下限。</strong> 以前配置文件里只有一个版本号，它同时干三份工作：给客户的"当前版本"、发布说明的版本号、以及"低于它就拒绝服务"的下限。所以每次发新版更新这个数字，就等于把所有老客户往下砸一刀——3.7.15–3.7.27 那批客户就是这么被迫重装的。现在下限是一个<strong>独立字段</strong> <code>minAssistantVersion</code>，发新版只动上面那个，砸不到人。</li></ol>
+  <p>   本次特意把下限留在 <strong>3.7.28</strong>、发布版本升到 <strong>3.7.29</strong> ⇒ <strong>这是第一版"老客户不用重装"的发布</strong>。</p>
+  <ol><li><strong>抬下限要有书面理由，否则出包直接红。</strong> 新字段旁边必须写原因，原因必须以那个版本号开头。只改版本不写原因 = 门拦下。这条不是"靠自觉"，是机器闸（下面有负控证据）。</li><li><strong>构建号不再当拒绝条件。</strong> 那道门原本是"两个构建号不相等就拒"，方向是反的——连<strong>比网页更新的助手</strong>也会被拒。现在构建号照常进签名的执行清单（还是证据），但不再据此拒人；真正的判据换成报告格式两项（schema／renderer）。</li><li><strong>被挡的时候当场给出口。</strong> 批量执行被版本门挡下时，那句提示旁边现在直接挂"下载安装包 v3.7.29"的链接，不再只说一句"请升级"让客户自己找页面。</li><li><strong>装新版不再需要手动退出软件（Owner 追加令）。</strong> 安装程序现在自己会：判断助手忙不忙 → 叫它自己干净退出 → 等它真的走掉 → 覆盖文件 → 装完自动把助手拉起来。忙的时候<strong>中止安装并说清楚原因</strong>，不打断正在跑的批，也不硬杀。</li><li><strong>顺手堵了一个今天就存在的老虎</strong>：托盘菜单"退出本地助手"以前不看忙不忙直接杀引擎，客户跑批时手点它，会把助手锁进"恢复确认前不接收新任务"的状态。现在这条路径也要先过忙判断。</li></ol>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>二、真实验证（原式与退出码，不是我推测）</h2>
+  <p><strong>第 1 批（拆字段／头门控／下载入口）</strong></p>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>命令</th><th>结果</th></tr></thead><tbody>
+  <tr><td>类型</td><td><code>npx tsc --noEmit</code></td><td><strong>rc=0</strong></td></tr>
+  <tr><td>静态检查</td><td><code>npm run lint</code></td><td><strong>rc=0</strong>（48 条既有告警，0 error）</td></tr>
+  <tr><td>下限接线</td><td><code>node scripts/smoke-assistant-auth-barrier.mjs</code></td><td><strong>rc=0</strong>（含新加的正／负控一对：下限缺省跟 version 时 3.7.20 被拦；显式把下限降到 3.7.20 后同一台助手放行 ⇒ 判据真的取的是新字段）</td></tr>
+  <tr><td>身份一致</td><td><code>node scripts/smoke-release-consistency.mjs</code></td><td><strong>rc=0</strong>，53 项</td></tr>
+  <tr><td>其余相关门</td><td><code>smoke-execute-step-reset</code> / <code>smoke-user-visible-copy</code> / <code>smoke-batch-timeout-messaging</code> / <code>i18n-guard-lib-unwrapped</code> / <code>i18n-dict-qa</code></td><td>各 <strong>rc=0</strong></td></tr>
+</tbody></table></div>
+  <p><strong>第 2 批（构建号降级／抬下限机器闸）</strong></p>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>结果</th></tr></thead><tbody>
+  <tr><td><code>check-release-identity</code> 新增 6 条下限负控</td><td><strong>6 条全部执行</strong>，逐条打印（抬下限不写原因⇒拒、理由太短⇒拒、删原因⇒拒、非 x.y.z⇒拒、下限高于当前版本⇒拒、真实身份成对存在⇒过）</td></tr>
+  <tr><td><code>smoke-photoshop-script</code>（四个下限消费点的钉子）</td><td><strong>rc=0</strong></td></tr>
+  <tr><td><code>test:trust-chain</code></td><td><strong>rc=0</strong></td></tr>
+  <tr><td><code>test:batch-row-contract</code></td><td><strong>rc=0</strong></td></tr>
+  <tr><td><code>test:assistant-script-distribution</code>、<code>test:assistant-auth-barrier</code></td><td>各 <strong>rc=0</strong></td></tr>
+</tbody></table></div>
+  <p><strong>第 3 批（安装不再需要手动退出）</strong></p>
+  <div class="scrollx"><table><thead><tr><th>判据</th><th>结果</th></tr></thead><tbody>
+  <tr><td>托盘源码编译</td><td><code>csc … TrayHost.cs</code> ⇒ <strong>CSC_RC=0</strong></td></tr>
+  <tr><td>发布配置校验</td><td><code>node build/validate-release-config.cjs config.example.json</code> ⇒ <strong>rc=0</strong></td></tr>
+  <tr><td><strong>正式安装脚本编译</strong></td><td><code>ISCC /O&lt;临时目录&gt; installer.iss</code> ⇒ <strong>Successful compile (17.718 sec)，ISCC_RC=0</strong>（产物只落临时目录，没覆盖树里已发布的 3.7.28 成品）</td></tr>
+  <tr><td>合成件实测</td><td>见 <code>审查报告_20261027_装新版不用手动退出_封驳与合成件实测.md</code>：T0 rc=0、T2 忙⇒安装 rc=7 且不误杀、<strong>T3 负控（不自关）⇒ rc=5 停在被占用的 exe</strong>、T4b 改后实现⇒rc=0 且 1.1 秒释放、T5 孤儿引擎⇒rc=0、T7/T9 叫不动⇒rc=7 中止不硬装、T8 拉起闸真落</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>三、我判错了一次，被自家门抓回来（如实记）</h2>
+  <p>我一度认为 <code>CloseApplicationsFilter</code> 那行三个名字用分号分隔是笔误，动手时顺手改成 <code><em>.exe,</em>.dll</code>。<strong>门立刻红了</strong>：<code>scripts/smoke-pc-bundled-engine.mjs:321</code> 就是按分号切这一行、并要求里面列出内置引擎文件名（<code>TRUST_RC=1</code>，报错原文点名 <code>tygf-engine.exe</code>）。已改回原样、并在脚本里留注释"不要改成逗号"。</p>
+  <p>教训一句话：<strong>上游文档语义不明的地方，改之前先找仓库里有没有门在管这行</strong>；我那次是没找就改。</p>
+  <p>还有一处方案漏写：我原来以为兼容下限只有一个消费点，实际有<strong>四个</strong>（计费证据合同、批量门控、执行路由、脚本分发路由）。少改一个，等于下限照旧被抬。这条已经补进门里：<code>smoke-photoshop-script</code> 现在同时钉四个点，谁回退谁红。</p>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>四、为什么中文子集那道门现在是红的（不是我这次弄的）</h2>
+  <p>完整合同链 <code>npm run test:contracts</code> <strong>rc=1</strong>，红在 <code>[zh-font]</code>：说文案里用了子集里没有的 5 个字（○ ● ◐ 剔 黄）。</p>
+  <p>定责证据：这 5 个字<strong>逐个</strong>用 <code>git grep -F &lt;字&gt; HEAD</code> 在<strong>已提交</strong>的源里命中（主战场是 <code>src/components/workbench/step1-stage-view.tsx</code>，另有 <code>workbench-view.tsx</code>、<code>candidate-aggregator.ts</code>），而我这轮的 diff 里含这些字的新增行只有 1 行，且那行不是我写的文案（是别的会话往 <code>dict-en.json</code> 里加的一句，我只是在同一文件末尾追加了一条翻译）。</p>
+  <p><strong>我没有替谁重新生成子集</strong>：那会把这棵树上另外几个会话<strong>还没提交</strong>的文案一起烘进生成物，而门自己要求"重新生成请在已提交状态下跑"。这条留给发布那一步在干净树里做，或者由文案的主人来。</p>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>五、离"客户看到效果"还差什么</h2>
+  <ol><li><strong>出 3.7.29 的包</strong>：<code>build-engine.bat</code>（需要受控环境的 pkg）→ Inno 编译 → <code>publish-local-assistant.cjs</code>。现在只到"源码能编出包"这一步，<strong>没出包、没发布</strong>。</li><li><strong>生产发布仍卡在那四条前置</strong>（合回生产独有 2 笔、生产库补 <code>ApplicationAttribution</code> 表、助手随发决定、多稿那句声明），本轮一条都没动——本轮解决的是"以后发版不再砸客户"和"装的时候不用手动退"。</li><li><strong>真机覆盖安装未做</strong>：不在您这台机器上跑真助手安装（49152 被 PID 23568 占着、托盘 PID 53524 在跑，动它＝改别人现场）。整条自关链是用同形状的合成件证的，真机上还要验三处取值：互斥体名、端口、注册表 <code>InstallLocation</code>。</li><li><strong>旧版兜底那条按名字强杀不是零风险</strong>（会带走同机同名进程，含别的账户里的副本），只在"没有 --exit 的旧助手"这条路径上允许，且必须先过忙判断。</li><li><strong>第 4 批（一键升级）没动工</strong>，位置留在方案里。它必须排在第 1、2 批之后——原因写在方案 §三：版本门没修好之前上自动更新，等于把一次事故同时滚到每台客户机上。</li></ol>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>六、这轮改了哪些文件</h2>
+  <p><strong>网页与服务端</strong>：<code>config/release-identity.json</code>、<code>src/config/localAssistant.ts</code>、<code>src/lib/server/assistant-execution-contract.ts</code>、<code>src/lib/server/batch-execution-mode.ts</code>、<code>src/app/api/local-assistant/photoshop/execute/route.ts</code>、<code>src/app/api/local-assistant/scripts/distribute/route.ts</code>、<code>src/lib/workbench/assistant-compatibility.ts</code>、<code>src/lib/workbench/local-assistant-client.ts</code>、<code>src/components/workbench/execute-step.tsx</code>、<code>src/lib/i18n/dict-en.json</code></p>
+  <p><strong>助手与安装器</strong>：<code>download/local-assistant/build/TrayHost.cs</code>、<code>download/local-assistant/build/installer.iss</code>、<code>download/local-assistant/server.js</code>、<code>download/local-assistant/report-renderer.js</code>、<code>download/local-assistant/package.json</code></p>
+  <p><strong>版本声明同步面</strong>：<code>.env.example</code>、<code>deploy/server-setup.sh</code>、<code>.gitattributes</code></p>
+  <p><strong>门与测试</strong>：<code>scripts/check-release-identity.cjs</code>、<code>scripts/smoke-release-consistency.mjs</code>、<code>scripts/smoke-assistant-auth-barrier.mjs</code>、<code>scripts/smoke-photoshop-script.mjs</code></p>
+  <p><strong>验证件（临时，不在交付链）</strong>：<code>tmp/selfexit/</code>（假托盘＋假引擎＋测试安装器＋八条 case 的日志），测试程序已卸载、目录已清理，<code>%LOCALAPPDATA%\tygf-selfexit-probe</code> 实测为 0 命中。</p>
+</section>
+
+<footer>
+  <p>本件由 <code>tmp/md2report.mjs</code> 从同名 md 生成，样式沿用 <code>交付档案/审查报告/审查报告_20261026_5857换行深挖第二轮_钻到最深处与处置梯.html</code> 的组件体系。md 为真相层，本 HTML 供阅读与分享。</p>
+</footer>
+
+</div>
