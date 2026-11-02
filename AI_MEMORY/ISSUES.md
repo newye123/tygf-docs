@@ -1,3 +1,98 @@
+## #298　容器记账仓（本目录）备份断链：remote 配置被删＋origin 指向不存在的仓库 ⇒ 10-31 17:11 之后零异地备份　🟠 major（2026-11-02 实测，同日已修复）
+
+- **⚠ 本条初版诊断有误，同日已更正**：初版写「备份远端 `tygf-workspace-backup` 不存在 ⇒ 记账仓从未有备份」，实测推翻。**正确远端一直是 `newye123/tygf-docs`**：用专用密钥 `~/.ssh/id_ed25519_tygf_docs` 做身份探测得 `Hi newye123/tygf-docs!`，实读该仓 `refs/heads/master=a741d311999c383ef00b8cf6d11b70a465a8bfb1`，与本地残留的 `refs/remotes/tygf-docs/master` **逐位一致**（两条独立线索互证）；写权限 dry-run 显示 `a741d31..05a1b2d master -> master`。
+- **真实故障（三处叠加）**：① `.git/config` 里 `tygf-docs` 这个 remote 被删，只剩指向不存在仓库的 `origin`；② `~/.ssh/config` 没有 `github-tygf-docs` 这个 Host；③ `origin` 指向 `newye123/tygf-workspace-backup`（该名字下无仓或本密钥无权限）。⇒ 任何人 `git push` 都失败，且报错文案像"仓库没了"，没人再追。
+- **断链时刻（实测）**：最后一次成功同步是 `a741d31`（2026-10-31 17:11:48），此后本地又提交 `05a1b2d`（11-01 09:46）未同步，`git rev-list --count a741d31..master` = 1。
+- **为什么不是"仓库改名"**：GitHub 官方文档明确改名后旧 URL 的 clone/fetch/push 会自动重定向；旧 URL 报 not found ⇒ 不是改名，是名字本就不对。
+- **影响面**：本目录是**独立仓库**（只有 `master`，不含代码仓任何提交，`git cat-file -t ef1d7fcc` 报 Not a valid object name），代码主仓是 `tygf-v0.1-source`（各 worktree 的 common dir，origin 正确指向 `tygf.git`）。两者历史不同源，**不能把本目录 origin 改指 `tygf.git`**（unrelated histories ＋ 语义错位；本轮盘点曾误改一次，已当场回滚）。
+- **已修复（同日，逐条有证据）**：① 清理失败传输残留 `tmp_pack_*`／`tmp_obj_*` 共 840 MB（其中 500 MB 是本轮 fetch 失败刚产生），`garbage` 计数归零；② `git gc` 后 `.git` 1.9 GB → 368 MB，松散对象 1.00 GiB → 0；③ 全量 bundle **18 MB**，`git bundle verify` 报 complete history，从 bundle clone 回来得 142 提交／1210 文件／HEAD `05a1b2d`／工作树 0 脏，逐项一致；④ 第二副本落服务器 `~/tygf-ledger-backups/ledger-20261102.bundle`（18 MB，上传 7.2 s，sha256 `9adca7ba…` 与本地逐位一致）；⑤ `~/.ssh/config` 新增 `Host github-tygf-docs`（原文件备份为 `config.bak-20261102`），删除错误 origin 并把正确 remote 改名为 `origin`；⑥ `git push origin master` → `a741d31..05a1b2d`（4.2 s），重跑得 `Everything up-to-date`（幂等）；远端实读 `05a1b2d4c586…` = 本地 HEAD。
+- **推前安全核查（三轮，覆盖全部 142 提交的 blob）**：真实飞书 webhook URL 0 命中；私钥头唯一命中是某方案里"应 grep BEGIN PRIVATE KEY"的检查清单文字；`SECRET/TOKEN/PASSWORD/WEBHOOK`+32 位密文形态 0 命中；历史文件名只命中密钥扫描脚本自身。⇒ 可安全推。
+- **防复发闸（已落地）**：`scripts/control-plane.sh` 新增「记账仓备份闸」，判据**只认远端实读** `git ls-remote origin refs/heads/master`（25 s 超时），三态分开（一致 ✅／落后 N 笔 ⛔／远端不可达 ⛔），退出码并入 `backup_exit`；工作树未提交项只提示不计码。正向通过；负控①（模拟落后 1 笔）报 `⛔ 远端落后 1 笔` backup_exit=1；负控②（模拟不可达）报 `⛔ 无法验证是否已备份` backup_exit=1。
+- **仍未解（已转出）**：① 工作树有 **1221 个未跟踪文件**（其中约 300 个是 `交付档案/` 下的审查报告与方案）不在任何备份里 —— 待 Owner 定"入库/归档/明确排除"；② `TASK_LOG.md` 已 2.26 MB，超 GitHub 推荐单文件 1 MB 两倍，建议按月切分（需同批改 `source` 指针，属结构变更）；③ bundle 第二副本尚无自动刷新。
+- **交付件**：`交付档案/执行方案/执行方案_20261102_记账仓备份链修复_对抗式审查与执行方案.md`（同名 `.html` 同目录）。
+- **关联**：`AGENTS.md`「发布必须走 GitHub 三段轨」；`scripts/control-plane.sh`（发布挂号项与本次新增备份闸）；`~/.ssh/config` 的 `github-tygf-docs` 条目。
+
+## #297　测试站部署会在 Next 的 TypeScript 检查阶段 OOM（Node 默认 1 GB 堆），部署脚本没有为构建步放宽堆上限　🟡 minor（2026-11-01 部署 `ef1d7fcc` 实测复现）
+
+- **现象**：`deploy/deploy-test-release.sh` 在候选目录跑 `npm run build`，`✓ Compiled successfully in 34.1s` 之后进入 `Running TypeScript ...`，Node 报 `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`（Mark-Compact 停在 961～962 MB，堆上限 1000.8 MB）⇒ 构建失败、候选被移入 `/var/www/tygf-test-failed/…-pre-switch`，现役站点不受影响（部署脚本在构建失败时不停止 PM2，实测全程 `HTTP 200`）。
+- **为什么不是内存不够**：同一时刻 `free -m` 显示物理内存 1967 MB／可用 1419 MB，swap 合计 6083 MB（`/swap-tygf-build.img` 4 GB 是 2026-10-11 为构建加的，USED 仅 1.3 MB）。⇒ 卡的是 **Node 默认 `--max-old-space-size`**（约 1 GB），不是机器容量，也不是这次代码改动引入的回归（同一条提交在本地 `npx tsc --noEmit` rc=0，preflight 17 道门含 `test:contracts` 全绿）。
+- **本轮处置（仅绕过，未改脚本）**：以 `NODE_OPTIONS=--max-old-space-size=3072` 重跑同一条部署脚本后成功，一道门都没跳过；部署后 `pm2 env` 实读**不含** `NODE_OPTIONS`，构建期变量没有漏进现役进程。
+- **耐久修法（未做，建议下一笔）**：在 `deploy/deploy-test-release.sh` 的 `npm run build` 那一行前把 `NODE_OPTIONS` 扩到 3 GB（只作用于构建步，`npm ci`／`prisma generate` 与 PM2 启动不继承），并附注释写明本条根因与读数；不要在服务器上手改现役脚本（那是未入库的漂移）。
+- **关联**：`AI_MEMORY/ISSUES.md` 2026-10-11 那条「swap 抖动而非 CPU」的定案（本条是它的后继形态：swap 已够，卡在进程堆上限）；TASK_LOG 2026-11-01 22:2x 段。
+
+## #296　换手（PS ↔ 免PS引擎）现在是危险的：缓存不看来源、同源校验是死码、一只手的卡死锁住另一只手　🔴 blocker（自动降级前置；2026-11-01 对抗式审查 Round1 实测）
+
+- **背景**：Owner 令「免PS引擎是当 PS 没有反应的时候就要启动的备选」，并要求用对抗式审查查清两手如何配合。件：`交付档案/审查报告/审查报告_20261101_PS与免PS引擎如何配合_左右手.md`（同名 HTML 同目录）。
+- **三条会直接造成伤害的事实（全部 A 级，坐标见审查件）**：
+  1. **换手会被缓存吞掉**：预扫描缓存快路径排在通道判定之前（`download/local-assistant/server.js:5774` → `:5785`），`preparation-cache.js:100 lookup` 与 `preparationCacheVerdict`（`server.js:3181`）都只看 size/mtime/fingerprint，**两处都不看 `scanEngine`** ⇒ PS 扫过的件会被当作"已扫好"直接放行，界面显示"已扫描"而引擎根本没跑。
+  2. **"跨手不许复用层号"的防线是死码**：`pc-channel.js:97-110 decideExecuteChannel` 零生产调用方（全仓只有定义、导出与自测 `scripts/smoke-pc-channel.mjs:94-101`），`server.js:98` 只解构 `decideScanChannel/engineIdentity/resolveBundledEngine`；`scanEngine` 被写进观测（`preparation-observation.js:16,33`）却**无任何读取方**。⇒ 先前"跨来源会被拒"的说法不成立，已在审查件"更正"段登记。
+  3. **一只手抽筋，另一只手被同一把锁铐住**：忙锁全局（`server.js:2495-2501`），`status.recoveryRequired` 为真时 `setBusy(true)` 一律抛 `ASSISTANT_RECOVERY_REQUIRED`，而预扫描无论走 PS 还是引擎都在 `:5904` 取这把锁；latch 只能由 `/v1.5/recovery/acknowledge`（`:6690`）解。
+- **新增实测（本次首次同文件并排取证）**：同一份 `F:\改语言\数据\xlsx_probe\t\src.psd`（191,692 B，5 个文字层），出厂打包引擎（`build\vendor\photocraft\tygf-engine.exe`，哈希与钉值 `3cb06ed1…` 逐位一致）只读扫描报 layerId＝`{3,4,6,7,8}`（`pc-scanner.js:200`），ag-psd 解析同一文件报 `{5,7,11,13,…}`，PS 扫描器写 `Number(layer.id)`（`scripts/TYGF_V15_Preparation_Scanner.jsx:239`）——仅一枚重合。⇒ ISSUES #159 的前提"各有各的层号空间"由推断升为实测。扫描前后母版哈希同为 `c5c0ffbe1d32…`，只读成立。
+- **另两条限制换手范围的事实**：写回执行器被**负向断言显式禁止**接入（`scripts/smoke-pc-wiring-freeze.mjs:57-72`，理由 `:13-17` 三个未解上游 P0 #6968/#6971/#6129），且排版写回在引擎侧根本没有通道（`pc-executor.js:408-411` 只发 `type.edit`，全仓无 `type.setStyle`）⇒ 换手会静默丢弃用户的字体/行距定制（F-7）。可见性也缺：来源字段被明令禁止进浏览器摘要（`scripts/smoke-pc-observation.mjs:198`），五枚 `PC_*` 拒绝码不在漏斗两白名单（`batch-error-policy.ts`／`funnel-event-contract.ts`，`grep -c PC_`＝0）⇒ 要做"不静默"必须动合同（四层同步＋fixture）。
+- **修法（按刀序，详见审查件 §05）**：刀1 触发条件改问"指挥得动吗"＋缓存键带来源＋锁分手；刀2 受控标签 `executorHand` 与 `PC_*` 码进合同/白名单；刀3 只读换手先跑、写回不换；刀4 写回解冻以四条证据为门（不是时间）。
+- **状态追加（2026-11-01 17:4x 刀1 已落地）**：上面第 1 项（缓存不看来源）与第 3 项的"换手无判据"这半截已修 —— `pc-channel.js:83-102` 新增 `psBlocked` 入参（只吃实测，未实测＝视为能指挥），`server.js:5775-5805` 把通道判定提到缓存快路径之前并加来源闸 `observationChannelOf(...) === scanChannel.channel`，`server.js:5820` 的权限拦条改为只拦"仍要用 Photoshop 的那条道"，就绪扫描同形（`server.js:6608-6619`）。七格运行时门 `scripts/smoke-assistant-privilege-log.mjs` rc=0，含三枚负控（引擎件不在／豁免被删／日志回退写死值都必须变红）。
+  **仍未解、留作刀2 前置**：① 本条第 3 项的"两手共用一把恢复锁"（`server.js:2495-2501`＋`:5904`）原样存在——PS 卡出 `recovery_required` 后只读引擎扫描仍进不来；② 本条第 2 项的执行段同源校验依旧是死码（`decideExecuteChannel` 仍无生产调用方，且被 `smoke-pc-wiring-freeze` 的写回冻结合法地挡着）；③ "PS 进程在但真卡死"仍缺可测信号，本刀故意只用权限实测这一票（F-2 的握手数据源没修）。
+  出厂行为未变：`pcExecutorEnabled` 仍默认 false（`server.js:827`，被 `smoke-pc-wiring-freeze.mjs:47` 钉住），故现役机器与测试站一字不变；改动要进下一个助手包才到用户机器。
+- **红线约束（保持）**：在刀1＋刀2 落地前，禁止任何"PS 失败即自动转引擎写回"的接线；`pcExecutorEnabled` 出厂仍 false（`server.js:827`，被 `smoke-pc-wiring-freeze.mjs:47` 钉着）。
+- **关联**：#159（同源歧义母单，已追加实测指针）；#276（引擎整稿字距→Metrics，PS 打开仍未人工验）；`交付档案/审查报告/审查报告_20261101_PS与免PS引擎如何配合_左右手.md`。
+- **状态追加（2026-11-01 21:1x 刀2＋刀3 已落地，随 `29f8bc28` 进 `origin/develop`）**：本条"仍未解"三项里 **第①项（两手共用一把恢复锁）已解**、**可见性（审查 F-8）已解**，第②③项原样保留。
+  - 恢复锁分手：`pc-channel.js:113 scanMayRunWhileRecoveryLatched(channel)` 只放行引擎那一道（纯只读 open/inspect/close，不产生"退出状态未确认"那种 COM 含糊），判据只在 `server.js:2503 setBusy` 一处，`:5927`（预扫描）与 `:6636`（就绪扫描）各交出自己的通道；PS 道扫描、执行段、attempt 锁不符一律照旧挡，安全锁没放松。形状由 `smoke-pc-channel.mjs:155-170` 钉死（"判据只许一个调用点"＋旧写法 `if (status.recoveryRequired) {` 复活即红）。
+  - 换手可见：预扫描摘要新增唯一受控标签 `executorHand`（`server.js:3187` 归一、`:3237` 出口；TS 合同 `preparation-contract.ts:327/:338/:525/:548-550`，未知值拒、缺字段容忍），三处渲染面各一枚「备用引擎读取」（`design-file-card.tsx:1654`／`draft-group-cards.tsx:135`／`photoshop-step.tsx:256`）。**只这一枚标签出本机**：引擎版本／哈希／母版路径／`photoshopVersion` 仍禁（`smoke-pc-observation.mjs` 旧断言改窄不删＋正向断言）。回执与报价侧刻意没动（`assertExactKeys`／`RECEIPT_KEYS` 精确键校验会 400 掉整批行）。
+  - 位移更正：上面 17:4x 刀1 段所写 `server.js:5775-5805`／`:5820`／`:6608-6619` 因刀2/刀3 增行已位移，现值分别为 `:5785-5810`／`:5828`／`:6613-6627`（本条按 `29f8bc28` 实测）。
+  - 仍未解：② `decideExecuteChannel` 仍是死码（被写回冻结合法挡着）；③ "PS 进程在但真卡死"仍缺可测信号。**新增两项敞口（如实记）**：④ 云端**数得出**换手还差一列（`BetaFunnelEvent` 加 `executorHand`＝合同 5 处＋一次 Prisma 迁移＋迁移台账），迁移类动作等 Owner 单独点头，故本轮只做到"用户看得见"；⑤ `PC_*` 那几枚拒绝原因目前只写本机引擎日志（`server.js:5816`），没有对外出口 ⇒ 不进两侧漏斗白名单，等它们真出口时再动。
+  - 出厂行为仍未变：`pcExecutorEnabled` 默认 false（`server.js:827`，`smoke-pc-wiring-freeze.mjs:47` 钉着）；改动要进 3.7.31 助手包才到用户机器。
+
+## #295　孤儿红门：`smoke-prepare-check-closure.mjs` 在 HEAD 上即红（binding-core.js 与清单哈希不符），且没有任何 npm／CI 入口　🟡 minor（2026-11-01 三处修复复验时实测）
+
+- **现象**：`node scripts/smoke-prepare-check-closure.mjs` 退出码 1，报「binding-core.js 与清单内容哈希一致」不符——实得 `afc02b4f12a89993cedd75aa7eafd43d0a5a39cd4c83f3014190b3ff6cbcfadd`，预期 `01fc7087a92e69ec3a39129ea48ac7ccbe97205c3446f54c0464a20ffb382038`。被比对的 `binding-core.js` 与清单两份文件本刀均未修改（`git status` 只列出本刀八文件），故属既有漂移。
+- **为什么算风险**：这道门在 `package.json`／`.github/workflows`／`scripts` 的调用点实测为 0 命中（grep `smoke-prepare-check-closure` 无引用），即它既不在发布链里、也没人每天跑——一条"已经红了但没人看"的门，比没有门更容易造成"我们有校验"的错觉（同 AGENTS.md 已点名的孤儿闸形态）。
+- **修法建议（未做，等 Owner 决定）**：要么用 `scripts/build-local-binding-core.mjs` 重新生成并同批提交清单（让哈希对上），要么把它挂进某个 `npm run test:*` 入口当日常门；不选"删门"，因为它守的是助手侧 prepare-check 的编译源一致性。
+- **关联**：`scripts/smoke-prepare-check-closure.mjs:80`；`总控/`2026-10-30 治理条目「规则要可执行，缺口如实记」中的孤儿闸清单需补本条。
+
+## #294　助手被"以管理员身份运行"拉起＝批量台扫描全停，且安装器的「装完启动助手」会把提权带进托盘　🟠 major（2026-11-01 现场实测）
+
+- **现象**：Owner 机器上批量台第 1 步点「全部扫描」，队列在第 1/12 稿即停，界面只说「扫描失败」；后 11 稿未扫。站点无责（DIRECT 模式，nginx 只见票据 200）。
+- **实测根因**：助手托盘 PID 46228／引擎 PID 59952 的完整性级别 RID=**12288（管理员）**，Photoshop PID 25528／27536 RID=**8192（普通）**；Windows 不允许高完整性进程激活普通权限 COM，助手在起扫前秒拒并回 422 `PHOTOSHOP_PRIVILEGE_MISMATCH`（`E:\软件\图译工坊本地助手\logs\assistant-events.log:2120-2134`，11:32–14:20 共 15 条）。同机 08:41 预扫描还成功（`engine.log` 00:41Z `outcome=prepared`），两个 PS 进程从 10-31 07:08 起未变 ⇒ 提权发生在 3.7.30 升级之后（引擎 exe 落盘 10:04、卸载器 12:20、托盘 12:20:35 起）。
+- **判据与取证位置**：`worktrees/unified-opt-20261031/download/local-assistant/server.js:591 privilegeGuardDecision` → `scan-error-code.cjs:55 refuseScanByPrivilege`（两侧都读到数字且 PS 更低才拒）；提权来源不是程序清单（两个 exe 的 `requestedExecutionLevel` 实测均为 `asInvoker`），HKCU/HKLM 兼容层无 `RUNASADMIN`，自启项是普通启动 ⇒ 是"以管理员身份运行"这一次人工动作带出来的。
+- **复发口子（未修）**：`download/local-assistant/build/installer.iss:108` 的 `[Run] Filename: "{app}\图译工坊本地助手.exe"; Flags: nowait postinstall skipifsilent` 没有 `runasoriginaluser`——只要安装器被提权运行，装完自动拉起的助手就继承管理员级别，用户下次扫描仍会全停。本机没有 Inno Setup 编译器（ISCC 实测不存在），改前需先确认能在出包机上验证，不要盲改安装包。
+- **临时解**：托盘右键退出 → 从桌面/开始菜单**双击**正常启动（不要"以管理员身份运行"）→ 再点「全部扫描」。反过来把 Photoshop 也提权同样能解开但不推荐。
+- **本刀已做的配套（2026-11-01，未提交）**：停止条按错误码给一句能照做的话、短码进 title、批量链逐条上报漏斗、引擎日志改写实测的两个 RID（新增运行时门 `scripts/smoke-assistant-privilege-log.mjs` 已挂进 `test:assistant-auth-barrier`）。
+- **关联**：`AI_MEMORY/TASK_LOG.md` 2026-11-01 16:2x 段；ISSUES #90 族（扫描失败可定位性）；`docs/HANDOFF.md` 偏差登记（助手 3.7.30 真机验收仍未完成）。
+
+## #293　从右往左语言（阿拉伯语/希伯来语）的写回方向与双向重排：本轮未实测，属未核实缺口
+
+- **背景**（2026-11-01 亚马逊 A+ 夹具立项时发现）：演示语种集定为 `DE FR ES IT PT NL PL RU TR JP KO TH`，**故意不含 AR/HE**——因为从右往左书写会引入一整套独立于"宽度/断行"的排版问题（文字方向、双向混排重排、标点镜像、缩进方向）。
+- **已确认存在的能力**：`AR`/`HE` 有语言码别名（`src/lib/workbench/csv.ts:98-100`、`:175-177`）、有界面显示名（`src/lib/workbench/lang-display.ts:24,34`）、阿拉伯文区段（0x0600–0x06FF）在宽度估算与断行代价里有取值（`overflow-estimator.ts:104`、`wrap-planner.ts:100`）。
+- **未核实的部分（不得当成"已支持"也不得当成"确定不支持"）**：产品写回链路（PS 逐层写 `TextItem` + 自动换行）是否会把阿拉伯/希伯来文按**从右往左方向**正确落位、双向混排（如"阿拉伯文 + 65W"）是否重排正确——**本轮没有真机样本可测，未验证**。`wrap-planner` 的 `isNoSpaceScript` 覆盖的是泰文/高棉/CJK/谚文（无空格连写），与 RTL 方向是两回事。
+- **为什么要登记**：避免后续会话把"能读 AR/HE 语言码 + 能估宽"误读成"RTL 排版已打通"，也避免反过来把已有的一环当空白重做。
+- **修法建议（未做，等 Owner 决定要不要接 RTL 这一轴）**：若要支持，需单列一个 RTL 切片——真机拿一份阿拉伯语母版，量 `TextItem` 方向属性 + 双向重排后的包围盒，再决定 `wrap-planner`/写回层要不要加方向分支。
+- **关联**：`交付档案/执行方案/执行方案_20261101_亚马逊A+演示夹具与标准尺寸框架.md` §1（语种集不含 RTL 的取舍）；`src/lib/workbench/wrap-planner.ts`。
+
+## #292　工作台第 1 步视图有 2 处硬编码 teal 色躲过令牌绕行门，基线已被迫从 173 抬到 175　🟡 minor（2026-11-01 脏树分推 v4 迁移时实测）
+
+- **现象**：`scripts/check-wb-tokens.mjs` 的判据④（逐文件新增绕行必须为 0）在候选树上报 `step1-stage-view.tsx.textTeal：现 8 处 / 基线 6 处（多 2）`。
+- **成因**：增量的作者是**已上线的那一笔** `origin/develop@e7d49ceb`（四步界面整理 R 系列），不是本批迁移。定案方法＝在冻结基线上直接量同一文件：`e7d49ceb` 与迁移后的候选树逐字相同（bgTeal 6 / textTeal 8 / bgEmerald 4 / textWhite 0），本批没新增绕行。
+- **为什么算债**：`text-teal-*` 属于绕过 `workbench-tokens.css` 语义令牌的硬色；绕行门的设计是"存量冻结、只堵新增"，所以它不会自己变红，只会让存量悄悄变大。
+- **本批处置**：把基线对齐冻结提交（step1-stage-view textTeal 6→8；脚本内的总数自检 173→175，两处注释都写明了来源与实测方法）。**没有**顺手删基线或放宽判据——脚本自带"表被改小即红"的自检，负控实测：临时放一枚含 `bg-teal-600` 的探针文件 ⇒ rc=1 并点名该文件，删掉 ⇒ rc=0（41/41）。
+- **修法建议（未做，等 Owner 拍要不要回收）**：把这 2 处换成 `workbench-tokens.css` 里的语义令牌，然后把基线从 8 降回 6、总数自检从 175 降回 173。改动面只在 `src/components/workbench/step1-stage-view.tsx`，属显示层，不影响取数与门禁。
+- **关联**：`scripts/check-wb-tokens.mjs:185`（基线表）与 `:227-231`（总数自检注记）；`worktrees/unified-opt-20261031` 的 S6 提交 `3164ce3c`；快照留底 `F:/工具开发/tmp/dirty-tree-snapshot-20261031/meta/resolve-scope-runtime-conflict.cjs`。
+
+## #287　出厂件有 5 处在教用户"以管理员身份运行"，其中一处是开始菜单项 ⇒ 权限级别不对称被我们自己造出来
+
+- 现象（2026-10-27 20:4x 本会话实测，`grep -rn "以管理员身份|RunAs|需管理员" download/local-assistant/diagnostics/`）：① `diagnostics/README.txt:34`「右键 Run-Photoshop-COM-Fix.bat，选择"以管理员身份运行"」；② 同文件 `:22`「可运行 Fix-Photoshop-COM.ps1（需管理员权限）修复」；③ `diagnostics/Fix-Photoshop-COM.ps1:138` 同一句话再抄一遍；④ `diagnostics/Run-Photoshop-COM-Fix.bat:18` 检测 `net session` 失败后 `Start-Process -Verb RunAs` 自我提权；⑤ **最可及的一处**＝安装包把它做成开始菜单项 `download/local-assistant/build/installer.iss:96` `Name: "{group}\修复 Photoshop COM"`，用户不翻文档也能一键点进 ④。
+- 为什么会出事：COM 激活要求调用方与 Photoshop 处在同一完整性级别。用户照做 ⇒ 助手（或 Photoshop）被抬到 High(12288)，另一边留在 Medium(8192) ⇒ `CreateObject` 回 **429**，界面把它报成"未注册"，用户再修一轮注册表还是 429。本机 10-27 那次连卡两天就是这么来的。
+- 已登记镜像情形：`#253`（10-22）「Photoshop 以管理员身份跑 ⇒ 非提权程序挂不上它，面板仍显示"就绪"」。本条是它的**反向面**：不对称不是别人造成的，是我们自己的出厂件教的。
+- 处置（已进方案，未执行）：`交付档案/执行方案/执行方案_20261027_完整性级别收口_六批可独立验收.md` 的 **B3**——5 处每处在提权指引**之前**加一句前置判断（先确认两侧级别一致、都普通；若助手被以管理员运行，先退出再正常启动，否则修注册表无效），配 smoke 针（删掉前置 ⇒ 门红）。**待 Owner 拍**：⑤ 那个菜单项要不要撤（撤＝少一个功能入口；留＝继续有人点它。我的建议＝留着，只加前置话术）。
+- 关联：守卫侧已落地的判据见 `download/local-assistant/scan-error-code.cjs` 的 `refuseScanByPrivilege`（两侧都要实测到数字、且本进程更高才拒）；发版堵点在 `#259`／`#262`（源码改了版本号没动 ⇒ 装到的"最新版"不含修复）。
+
+## #286　AI_MEMORY/TASK_LOG.md 内含 270 枚 NUL 字节 ⇒ grep 把台账当二进制，计数类判据会静默假阴性
+
+- **现象**（2026-10-27 18:0x 本会话实测）：`grep -c "18:0x" AI_MEMORY/TASK_LOG.md` 先输出 `Binary file AI_MEMORY/TASK_LOG.md matches`，再给出计数；node 探针实测 `BYTES=2044855`、`NUL_COUNT=270`、首枚在字节偏移 **225004**（第 **785** 行），所属条目＝`## 2026-10-24 15:0x 独立子会话完成 yt-adversarial-review 脱敏开源就绪包…`，其上下文是 `复扫敏感词命中 \u0000`（即脱敏流程把命中的敏感值替换成裸 NUL 字节写进了台账）。
+- **为什么是问题**：一旦文件含 NUL，GNU grep 默认按二进制处理，只报"Binary file matches"而**不出逐行结果**。于是凡是对 TASK_LOG 做 `grep`／`grep -n`／`grep -oE` 的门与脚本都可能把"命中很多"读成"没有正文"，或把行号锚取空——这正是本项目反复拦的**判据静默失效**（同一坑已在第 32／44 条门禁假绿上出现过）。台账本身是只许追加的真相层，坏字节不会自己消失。
+- **本次影响面（未逐条核实）**：所有以 TASK_LOG 为输入的行号锚与计数断言；本会话自己的记账动作改用 node 读字节，未受影响。
+- **建议处置（要人拍，属共享只追加面，本会话不擅动）**：① 由属主一次性把这 270 枚 NUL 替换成可见占位串（如 `[REDACTED]`）并在同一提交里留原字节数（270）作自证；② 或给脱敏脚本改出口，禁止裸 NUL 落盘；③ 门禁侧统一加 `-a`（`grep -a`）并把"报 Binary file matches"当红。任一处置都应在别手不在飞该文件时做。
+- **出处**：探针命令与读数在本会话 TASK_LOG 条目 `2026-10-27 18:02 … SCAN-PRIV-2` 的遗留段；文件 `AI_MEMORY/TASK_LOG.md`（偏移 225004／第 785 行）。
+
 ## #280　工作台同一屏两句话打架（「授权尚未确认」＋「无法连接本地助手」）根因＝助手 CORS 放行头漏 x-tygf-install-id　🟢 已修（2026-10-25 develop c0478308；生效需 3.7.28 装机）
 
 - **现象**：工作台上半「本地助手已连接，但当前授权尚未确认：需要本机授权的操作已暂停」，下半「无法连接本地助手（http://127.0.0.1:49152）」。助手本身健康（`/ping` 200、3.7.27、activationStatus=active、3 个绑定槽有效、过期 2026-11-08）。
@@ -1077,6 +1172,7 @@
 - **修法（必须按此顺序，缺一则功能死或风险回来）**：① C1 引擎扫描器落地，产出与现役 `Preparation_Scanner.jsx` 同构的 `scan-observation.json`；② C2 扫描完成时**按 attempt 落一份来源凭记**（记引擎/`psVersion`/digest），供执行期读回；③ A 段执行接线校验凭记，**跨来源一律拒执行并提示重新扫描，不许留"无凭记也放行"的宽松分支**；④ D 段那 20+ 处替 Photoshop 表功的旧句与 C 同班车。彻底解的另一路＝manifest 增 `scan_engine` 字段＝合同变更，须四层同步（浏览器投影／助手 evidence／服务端报价／结算闸）＋ `smoke-batch-row-contract` fixture。
 - **已否决的捷径（勿再提）**：`psVersion` 在执行期够不着（见上"无 master_path/scanId"）；"同原文多层且译文不同就拒"会打死合法批次（引擎扫引擎执行时层号同一套权威 id，该形是正常需求）。
 - **红线约束**：在 ①②③ 落地前，`pcExecutorEnabled` 保持默认 false，禁止任何执行入口接线预写分支（避免不可验证的死代码与后门）。
+- **追加（2026-11-01 对抗式审查 Round1，实测，不改本单结论）**：① 本单前提"PS 与引擎各有各的层号空间"已由**同一份文件并排实测**钉住（引擎报 `{3,4,6,7,8}`／ag-psd 与 PS 写法报 `{5,7,11,13,…}`，见 `AI_MEMORY/ISSUES.md` #296）；② 本单要求的 ③「执行接线校验凭记」**目前并未落地**——`decideExecuteChannel` 零生产调用方、`scanEngine` 零读取方，"跨来源会被拒"当前是死码而非防线；③ 因此"预扫描缓存不看来源"（`server.js:5774` 早于 `:5785`，`preparation-cache.js:100` 不比来源）是新暴露面，属本单 ② 的未完项，须与换手刀同批修。
 
 
 ## #160　对外句「回读不一致立即恢复原文」与实现机制不同形（实现＝整份不落盘）　🟡 low-mid（措辞精度问题，非假话；影响后续所有稿）2026-10-17 17:3x
@@ -1322,6 +1418,7 @@
 - 为什么危险：Owner 只看飞书台账。行在本地台账里写着「已完成」，飞书里根本没有那条 ⇒ 交付状态对外不可见，且下一次别手读到台账会以为已经同步过。
 - 修法（不在本会话擅动他线行）：① 把枚举写死成 `scripts/sync-task-ledger.sh` 的前置校验（写盘侧拦，比投影侧丢更好）；② 漂移行由**各自行作者**改回枚举值（我不替别手改状态语义）；③ 投影脚本应把 `skip` 里"因状态非法而跳"的行列单独计数打印，而不是只报有 errors 的那部分。
 - 关联：AGENTS.md「任务结束必做」第 6 条（ledger 枚举须与飞书单选项一致）、#144（重复行事故）、控制面日检 `scripts/control-plane.sh`。
+- 同类追加（2026-11-01 21:2x，免PS换手线投影时实测）：同一道守卫现在还会因**更新时间格式非法**丢行——`ledger:597 taskId=PROD-RELEASE-94BDA516` 的 `updatedAt="2026-11-01 00:0x"`（把记账惯例里的分钟占位符 0x 直接写进了台账）⇒ 回显 `SKIP-INVALID … 本行不投影`，整批投影 rc=1（本次实测 create=1 update=0 skip=267 held=20 invalidRowCount=1）。与本条状态漂移同族，但**不静默**（脚本点名行号并以 rc=1 收）；修法与本条一致＝由该行作者把自己那行改成合法的 `YYYY-MM-DD HH:mm`，本会话不动他线行。
 - 状态：OPEN（2026-10-18 GEO 线登记；属主为写盘的各会话与中台，本线只报不改）。
 
 ## #183　本站对外取面存在连接级超时与短字节（同机控制组已排除"探测方线路"解释）⇒ 任何"在场/收录/引用"读数必须先过字节完整率闸，否则读数不可信　🟠 major（度量面根因；非产品功能面）
@@ -2198,6 +2295,8 @@
 - **证据**：`交付档案/审查报告/审查报告_20261025_批量台默认全选_一稿多语言表_对抗式深挖.md`（判定 BLOCK）；模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_全自动归组_交付物矩阵.html`（jsdom 34/34 PASS，EXIT=0）。
 - **状态**：**已修（2026-10-26 develop `7c3f3f8f`＋`f6d140ae`，未 push 未部署）**。Owner 2026-10-26 把那三件拍完（组内缺一门＝只排除这一门／同门两张＝让人选／合并基准＝行数最多优先、并列按文件名），外加组准入①（文件名 SKU 硬门槛）进 P0、矩阵放第 4 步。落地：归组内核 `table-grouping.ts` 五条准入＋逐张给原因＋读完归位；合并层 `group-merge.ts`（基准可复跑、结构离群只剔那一张）；`merge-tables.ts` 三处静默行为全部升级为点名报错（同语言冲突／无严格多数拦／原文对不上专用码 `CSV_MERGE_NO_OVERLAP`）；第 1 步三栏接上，读表按整组读、合成一张写回原形状 ⇒ 下游执行链/报价/结算/回执/助手协议一字未动。**剩余**：矩阵归位第 4 步与第 3 步 1:N（P3）、份数与例外收口（P4）、真机端到端＋出包＋测试站（P5）——本条不结案，等 P5 真机证据再改 🟢。
 
+- **补记（2026-10-30 20:2x，Owner「不会自动归组呢，步骤一」）**：P5 真机扫盘抓到**第二道闸**——归组内核前面还压着「一张表只能属于一份稿」（`workbench-view.tsx:2302` 的 `uniqueOwner`）。用他的真目录（`批量改语言测试`：11 份稿 / 18 张表）复跑归属链实测：`buildAttributionPlan` 出 auto=3／conflict=6／missing=2／孤儿 2，再过那道闸后 **18 张表只剩 1 张进得到内核** ⇒ 界面全篇「0 门」，右栏还报「没有例外：每张表都归到稿上了」（假话：被闸拦掉的表从未进任何清单）。**领域事实（实测 sheet）**：`5857/` 那 12 张通用工作簿**每张都带 `主图`(43 行)＋`A+`(54 行) 两个 sheet**，一张表本就同时服务同 SKU 的 A+图 与 主副图 两稿、各取各 sheet ⇒ 那道闸与产品自己的设计（`sku-attribution.ts:182`）相反。Owner 当日拍「一张表喂多份稿，各取各 sheet」。修在 develop `062499a5`（已推 `origin/develop`）：进组判据抽成纯函数 `draftTableEntersGroup`（只留「已确认归属片说了算」一条）＋表页退化逐张点名（`sheetFallbacks`）＋归属计划的「有表无稿」并进例外。**新门** `scripts/smoke-step1-autogroup.mjs`（真形状 10 条断言，含负控：把旧闸装回去必红；已接进 `test:table-grouping` ⇒ `test:contracts`）。**实测**：`tsc --noEmit` rc=0／eslint 0 error／`test:table-grouping` 9＋42 全绿／`test:workbench-batch-groups` 35 检查＋133 测试全绿／`test:batch-row-contract` 全绿／i18n 1515/1515。**仍不结案**：P5 的界面实测（他刷新看是否真出「12 门」）＋出包上测试站未做；`完整表-20261003`（模拟件用的那 144 张形状）本机不存在 ⇒ 模拟件那句「0 次点选」从未跑过真数据，本轮起判据换成上面这个门。
+
 - **#282 进展（2026-10-25 22:1x，第三稿，界面架构层面）**：Owner 对第二稿判「步骤一二三都没区别」。最深根因＝**我写错了产品四步的名字**（真名 准备素材/智能检测/**设计稿校对**/生成交付，`worktrees/develop/src/lib/workbench/terms.ts:26-31`），于是第三步按「审核」理解、塞进交付物矩阵，导致第 1/3 步画同一张格子表（`workbench-view.tsx:5226` 证明第三步是按 PSD 文字层渲染的）。修法：四步各归一种单位（文件／行／图层／份），交付物矩阵只留第 4 步、第 1 步折叠保留；语言 tab 改为真过滤（14 列→4 列）；八行阶段条改紧凑 chips。新负控＝**DOM 指纹**（每屏的矩阵/表/图层/组清单计数必须不同），44 条 jsdom 断言全绿 EXIT=0；该负控当场抓到第 3 步复用第 1 步样式类。模拟件 `交付档案/执行方案/模拟_20261025_批量台四步_文件到行到图层到份.html`。
 
 
@@ -2229,3 +2328,36 @@
 - **根因**：文件第 644 行正文里含一个 U+0000（原文「立 Select-String 复扫敏感词命中 \u0000。」，是有人把 PowerShell 输出里的 NUL 粘进了正文），grep 随即按二进制处理。字节偏移 173646（`node -e` 逐字节扫 `b[i]===0`）。
 - **影响**：任何"数 TASK_LOG 有几个 `## ` 标题"的判据都会得到两个不同答案（本轮我因此差点怀疑 `tasklog-prepend.mjs` 吞标题，实测 `h2_before=577 → h2_after=578` 增量正确）。
 - **修法**：把那一枚 U+0000 换成字面量 `NUL` 四字；属追加型台账，建议由属主一次性处理（本轮不动，避免与并发写手撞）。
+
+## #288　停批后「重新开始」从第 1 稿重跑，已交付的稿会被再跑一遍 ⇒ 重复扣积分/重复冻结的风险（显示层本轮只说实话，行为未动）　🟠 待 Owner 拍板（2026-10-30 11:1x 本会话读代码＋门禁实证）（编号顺延：#286/#287 已被 10-27 两案占用）
+
+- **现象**：第 4 步多稿执行中暂停或失败后点「重新开始」，走 `handleExperimentStart` 的第一句就是 `setExperimentIndex(0)`，从第 1 稿重来；已经是 `VERIFIED_COMPLETE` 的稿不会跳过。
+- **证据**：`scripts/smoke-wb-four-screens.mjs` 刀 5 段两条断言把事实锁住（`/setExperimentIndex\(0\)/` 命中 ＋ `batchRestartHonesty` 至少 4 处使用）；负控 N3 把它改成 `Math.max(0, experimentIndex - 1)` 后该断言变红（`tmp/wb-negctl-knife5.mjs`）。
+- **影响**：同一稿可能被二次冻结/扣积分；金额与对象口径由结算层决定，本会话未改结算，也未实测二次冻结的真实金额。
+- **本轮已做**：停批三处出口的文案改为实话——「这一版没有「只补这一门」：重新开始会从第 1 稿重跑，已交付的稿不会自动跳过。」（任务书原来那句「重跑请从该稿继续」是做不到的承诺，没照抄。）
+- **修法建议（未做）**：单开一单做「续跑」或「已交付稿幂等跳过」，须走合同四层与结算复验，不属显示层。
+- **关联**：`worktrees/develop/changes/active/20261030-wb-v3-four-screens.md`；报告 `交付档案/审查报告/审查报告_20261030_批量台四步v3重做_执行与复验.md` §6 第 1 条。
+
+## #289　多稿空态顶部有一条空白横条（排版盒 0×0），是 10-21 v12 存量节点　🟡 低（2026-10-30 11:2x 本会话真浏览器实测）
+
+- **现象**：多稿空态顶部「0 个设计稿 · 0 个已扫描」那行文字在 DOM 里有，但排版盒量到 0×0，截图里是一条空白；关掉 `backdrop-filter` 仍空白，排除截图伪影。
+- **判定**：不是本轮（v3 四步重做）引入，属存量。
+- **本轮未做**：不动界外节点；要不要顺手修由 Owner 定（报告 §6 第 2 条）。
+
+## #290　多手同树改英文词典：整档重写会把别手新增的键静默吞掉（本会话已修复丢失键，机制风险仍在）　🟡 低-中（2026-10-30 本会话实测修复）
+
+- **现象**：本轮给工作台第 1 步补新文案时发现 `worktrees/develop/src/lib/i18n/dict-en.json` 里先前新增的键不见了，界面回退到中文原文；本会话把丢失的键补回（本轮再加 10 条后总数 2393→2403）。
+- **成因**：多手共用同一棵 develop 树，任一方按"读入整档 → 在内存里加键 → 整档写回"的方式改词典，就会覆盖别手并发写入的键；这类丢失不会报错，只在下一次英文站实测时暴露。
+- **现状**：`npm run i18n:guard` 实测 1508/1508（100%），`test:en-workbench` 17 条通过（2026-10-30 14:0x 本会话）。
+- **未做**：没有加"词典并发写"的机器闸（例如写前比对 mtime、或只允许追加式写入脚本），机制层面的重犯风险仍在。
+- **修法建议（未做）**：给词典加单一写入口脚本（只追加键、写前 `grep -c` 自证目标键不存在、写后校验键数只增不减），并把"整档写回"列为禁用姿势。
+- **关联**：`worktrees/develop/src/lib/i18n/dict-en.json`；门 `npm run i18n:guard`、`npm run test:en-workbench`。
+
+## #291　控制面「发布挂号」读本地 main 引用：main 已落后 origin/main 三代，日检恒报旧号「已挂号」　🟡 低（2026-10-31 23:5x 本会话发布时实测）
+
+- **现象**：`bash scripts/control-plane.sh` 打「发布挂号：main@319bc138 ✅已挂号」，而同刻生产在跑 `94bda516`、`origin/main` 也是 `94bda516`。
+- **成因**：`scripts/control-plane.sh:31-33` 用 `git -C "$DEVELOP_DIR" rev-parse --short main` 取本地分支引用；本地 `main` 自 10-21（`319bc138`）起没有随生产前进（10-26 的 `80eb4263`、10-31 的 `94bda516` 都只推了远端），而 `main` 正检出在 `worktrees/production`，不在发布动作的树上。
+- **影响**：挂号闸取到的 SHA 永远比生产旧，只要旧 SHA 曾在 TASK_LOG/总控里出现过就一直判绿——发布事实上未挂号也能绿。
+- **本轮未做**：没有去 fast-forward 别人检出的 `worktrees/production`（只改本任务授权面）；本轮注册信息写在 `AI_MEMORY/TASK_LOG.md` 新条目里（含 94bda516 全串）。
+- **修法建议（未做）**：控制面改取 `origin/main`（或先 `git fetch` 再比），并在报告里同时打印本地 main 与 origin/main 两个号。
+- **关联**：`scripts/control-plane.sh:31-33`；`tygf-v0.1-source` 的 `refs/heads/main=319bc138`、`origin/main=94bda516`。

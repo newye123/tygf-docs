@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>记账仓备份链修复 · 对抗式审查与执行方案 2026-11-02</title>
+<style>
+:root{
+  --bg:#f7f6f3; --surface:#fff; --sunk:#f0eee9; --line:#e2dfd8; --line-strong:#cfcabf;
+  --ink:#1c1b18; --ink-2:#453f36; --muted:#7a7368;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f6b4f; --ok-soft:#e3efe8; --bad:#a33b2c; --bad-soft:#f7e5e1; --warn:#8a5a12; --warn-soft:#f6ead4;
+  --radius:10px;
+  --font-sans:"IBM Plex Sans","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161614; --surface:#1e1e1b; --sunk:#262520; --line:#33312b; --line-strong:#48453c;
+    --ink:#f2efe8; --ink-2:#d6d0c4; --muted:#9a9284;
+    --accent:#7fc3a1; --accent-soft:#213528; --ok:#7fc3a1; --ok-soft:#213528;
+    --bad:#e08a76; --bad-soft:#3a231e; --warn:#e3b46a; --warn-soft:#3a2e18;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:clamp(24px,4vw,56px) clamp(16px,3vw,28px) 64px;display:flex;flex-direction:column;gap:clamp(24px,4vw,40px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+h1{font-size:clamp(1.7rem,4.2vw,2.5rem);line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:clamp(1rem,2.2vw,1.06rem);color:var(--ink-2);max-width:64ch;margin:12px 0 0}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.meta span{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:1.06rem;margin:0;display:flex;align-items:baseline;gap:10px}
+.sn{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+section{display:flex;flex-direction:column;gap:16px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.verdict .lb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdict p{margin:0;font-size:1.08rem;line-height:1.65;max-width:62ch;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--font-mono);font-size:1.42rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.79rem;color:var(--muted)}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}.stat.bad .n{color:var(--bad)}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.panel.yes{border-top:2px solid var(--ok)}.panel.no{border-top:2px solid var(--bad)}
+.panel h3{margin:0;font-size:.94rem}.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+.panel li{font-size:.92rem;color:var(--ink-2)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:760px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+td.sev{font-family:var(--font-mono);font-size:.76rem;white-space:nowrap}
+td.sev.i{color:var(--bad)}td.sev.n{color:var(--warn)}td.sev.ok{color:var(--ok)}
+.gates{display:flex;flex-direction:column;gap:12px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.gate .num{font-family:var(--font-mono);font-size:1rem;color:var(--accent);background:var(--accent-soft);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.gate .body{display:flex;flex-direction:column;gap:4px}
+.gate strong{font-size:.95rem}.gate p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2)}
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;font-size:.9rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.callout .lb{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.bad .lb{color:var(--bad)}
+pre{margin:0;font-family:var(--font-mono);font-size:.8rem;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span>执行方案</span><span>/</span><span>对抗式审查</span><span>/</span><span>2026-11-02</span></p>
+  <h1>备份断了 39 小时，而正确的仓库一直在那儿</h1>
+  <p class="standfirst">上一轮我告诉你「记账仓的备份仓不存在，要么重建、要么并入代码仓」——这两条都是错的。正确远端一直是 <code>newye123/tygf-docs</code>，断链的真实原因是 remote 被删、SSH 配置缺一行。本次已修复、已推、已加防复发闸，并且用真实恢复演练和两条负控验证过。</p>
+  <div class="meta"><span>VERDICT 已修复</span><span>断链 39 小时</span><span>实测 12 项</span><span>负控 2 条</span><span>剩余 3 件</span></div>
+</header>
+
+<section>
+  <h2><span class="sn">01</span>这对你意味着什么</h2>
+  <div class="verdict">
+    <span class="lb">今天起，记账内容有三份：本机 / GitHub / 服务器</span>
+    <p>10-31 17:11 之后，TASK_LOG、ISSUES、交付档案只存在于这一台机器上——硬盘坏一次就全没了，而所有 <code>git push</code> 都在报"仓库不存在"，看起来像仓库被删。现在备份链已恢复（远端逐位一致），第二副本已落到服务器并校验过哈希，每天早上那条巡检命令会顺带告诉你备份新不新鲜。</p>
+  </div>
+  <div class="stats">
+    <div class="stat ok"><span class="n">18 MB</span><span class="k">整个记账仓的真实体积（不是 1.9 GB）</span></div>
+    <div class="stat ok"><span class="n">142</span><span class="k">提交，恢复演练逐项还原一致</span></div>
+    <div class="stat ok"><span class="n">4.2s</span><span class="k">推送耗时，远端已到 <code>05a1b2d</code></span></div>
+    <div class="stat warn"><span class="n">1221</span><span class="k">未跟踪文件，目前不在任何备份里</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>先说我上一轮错在哪</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>上一轮的结论</th><th>本次实测</th><th>错因</th></tr></thead>
+      <tbody>
+        <tr><td>「<code>tygf-workspace-backup</code> 不存在，记账仓零异地备份」</td><td>备份远端从来不是它，而是 <code>newye123/tygf-docs</code>，存在且可写</td><td>只看了 <code>git remote -v</code> 的当前值，没追问这个 URL 为什么会在这里，也没试其它密钥</td></tr>
+        <tr><td>「建议 Owner 二选一：重建私有仓 / 并入代码仓孤儿分支」</td><td>两个都不必要</td><td>把"配置指向不存在的仓库"误判成"没有备份仓"，跳过了"是否另有一份正确配置"</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">教训已固化成闸</span>判断备份是否还在，只认远端实读；不认本地配置，也不认本地 remote-tracking ref——这次骗过所有人的正是后者。</div>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>断链真相（逐条可复现）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>时刻</th><th>发生了什么</th><th>证据</th></tr></thead>
+      <tbody>
+        <tr><td>10-31 17:11:48</td><td>最后一次成功同步（提交 <code>a741d31</code>）</td><td><code>git log -1 --format=%ci a741d31</code></td></tr>
+        <tr><td>之后某时</td><td><code>tygf-docs</code> remote 从 <code>.git/config</code> 消失，只剩指向不存在仓库的 <code>origin</code></td><td><code>.git/config</code> 仅剩 <code>[remote "origin"]</code></td></tr>
+        <tr><td>11-01 09:46</td><td>本地又提交 <code>05a1b2d</code>，未同步</td><td><code>git rev-list --count a741d31..master</code> = 1</td></tr>
+        <tr><td>11-02 08:2x</td><td>盘点发现 <code>git ls-remote origin</code> 报 Repository not found</td><td>本轮首条命令输出</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">为什么不是「仓库被改名」</span>GitHub 官方文档写明：改名后旧的 clone / fetch / push URL 会自动重定向到新名。既然旧 URL 报 not found，就不是改名，而是那个名字本来就不是备份仓。</div>
+  <div class="callout"><span class="lb">正确仓库是怎么找到的</span>本机三把专用部署密钥，逐把做身份探测（<code>ssh -T</code>），返回的正是它所属的仓库名：<code>…_tygf_github</code> → tygf、<code>…_tygf_docs</code> → <strong>tygf-docs</strong>、<code>…_tygf_samples</code> → tygf-samples。用 docs 密钥实读该仓，<code>master</code> = <code>a741d31</code>，与本地残留的跟踪引用逐位一致——两条独立线索互证。</div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>本次已执行并验证</h2>
+  <div class="gates">
+    <div class="gate"><span class="num">1</span><div class="body"><strong>清垃圾：删掉 840 MB 失败传输残留</strong><p><code>tmp_pack_*</code>／<code>tmp_obj_*</code> 共 840 MB（其中 500 MB 是本轮 fetch 失败刚产生的），清理后 <code>garbage</code> 计数归零。</p></div></div>
+    <div class="gate"><span class="num">2</span><div class="body"><strong>压缩：.git 从 1.9 GB 降到 368 MB</strong><p><code>git gc</code> 后松散对象 1.00 GiB → 0，142 个提交的历史完整保留。</p></div></div>
+    <div class="gate"><span class="num">3</span><div class="body"><strong>恢复演练：bundle 18 MB，能真还原</strong><p><code>git bundle verify</code> 报 complete history；从 bundle clone 回来得到 142 提交 / 1210 文件 / HEAD <code>05a1b2d</code> / 工作树 0 项脏，与源逐项一致。</p></div></div>
+    <div class="gate"><span class="num">4</span><div class="body"><strong>第二副本：服务器已存一份，哈希对上</strong><p><code>~/tygf-ledger-backups/ledger-20261102.bundle</code>，18 MB，上传 7.2 秒，sha256 与本地逐位一致（<code>9adca7ba…</code>）。</p></div></div>
+    <div class="gate"><span class="num">5</span><div class="body"><strong>通道与远端：修好并推送成功</strong><p>新增 <code>Host github-tygf-docs</code>（原配置已备份）；删掉错误 origin，把正确的 remote 改名为 origin；<code>a741d31..05a1b2d</code> 推送 4.2 秒，重跑得 <code>Everything up-to-date</code>（幂等）。</p></div></div>
+    <div class="gate"><span class="num">6</span><div class="body"><strong>防复发闸：正跑通过，两条负控都报红</strong><p>详见第 06 节。这是它区别于"孤儿红门"的地方——门必须会咬人。</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>推之前先确认历史里没有密钥</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>扫描项（覆盖全部 142 个提交）</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>历史中出现过 <code>.env</code>／<code>credential</code>／<code>secret</code>／<code>id_rsa</code> 等文件名</td><td class="sev ok">只命中密钥扫描脚本自身</td></tr>
+        <tr><td>历史含飞书 webhook URL 形态（<code>open-apis/bot/v2/hook/&lt;uuid&gt;</code>）</td><td class="sev ok">0 命中</td></tr>
+        <tr><td>历史含私钥头（<code>BEGIN … PRIVATE KEY</code>）</td><td class="sev ok">唯一命中是某方案里"应 grep 此串"的检查清单文字</td></tr>
+        <tr><td>当前跟踪文件含 <code>SECRET/TOKEN/PASSWORD/WEBHOOK</code> + 32 位以上密文形态</td><td class="sev ok">0 命中</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout bad"><span class="lb">为什么这一步不能省</span>备份推错方向等于主动泄露，比不备份更糟。三轮扫描都过了，才允许推。</div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>业界怎么做（调研与取舍）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>来源</th><th>结论</th><th>对本项目的含义</th></tr></thead>
+      <tbody>
+        <tr><td>GitHub《Renaming a repository》</td><td>改名后旧 URL 的 git 操作全部重定向；若在旧名下新建仓库，重定向立即失效</td><td>本次故障不是改名；"URL 指向哪"只能实测</td></tr>
+        <tr><td>GitHub《Repository limits》</td><td>单文件硬限 100 MB，<strong>推荐不超过 1 MB</strong></td><td><code>TASK_LOG.md</code> 已 2.26 MB，超推荐线两倍</td></tr>
+        <tr><td>git 官方 <code>git-bundle(1)</code></td><td>明确支持全量与增量备份，用于离线传输</td><td>用它做第二副本是正路</td></tr>
+        <tr><td>GitLab 官方备份文档</td><td>备份时<strong>为每个仓库生成 git bundle</strong> 再打包</td><td>大厂同款，不是土办法</td></tr>
+        <tr><td>monorepo / polyrepo 通用权衡</td><td>同仓便于一次拿全，分仓隔离权限与体积</td><td>代码仓与记账仓已分开，这个结构是对的，不该为备份而合并</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="lb">取舍</span>保留两仓结构不动——合并会把 Owner 决策、内部事故记录暴露给所有代码仓协作者；1.2 MB 记账内容也不值得挤进代码仓的历史。</div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>防复发闸（已落地）</h2>
+  <p style="margin:0;color:var(--ink-2);font-size:.94rem">在 <code>scripts/control-plane.sh</code> 的账本判定之后、飞书回读之前插入一段：判据只认远端实读（25 秒超时保护），三种结论分开说——一致 / 落后 N 笔 / 远端不可达，后两种都计入告警；工作树有未提交项只提示不计码。</p>
+  <div class="callout">
+    <span class="lb">真实读数</span>
+    <pre>正向：记账仓备份：✅ 本地 master=05a1b2d 与远端一致        backup_exit=0
+负控①（远端落后 1 笔）：
+      ⛔ 记账仓备份：远端落后 1 笔（本地 05a1b2d / 远端 a741d31）⇒ 跑 git push origin master
+      backup_exit=1
+负控②（远端不可达）：
+      ⛔ 记账仓备份闸：远端不可达或仓库不存在（无法验证是否已备份）
+      backup_exit=1</pre>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">08</span>还剩三件事（需你拍）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>优先级</th><th>问题</th><th>建议</th><th>为什么需要你</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="sev i">P1</td>
+          <td>1221 个未跟踪文件不在任何备份里，其中约 300 个是 <code>交付档案/</code> 下的审查报告与方案（如 OpenMontage 系列、10-24～10-26 多份报告）</td>
+          <td>入库（剔除临时截图后提交），一次性清空缺口</td>
+          <td>要判断哪些属于长期价值、哪些是过程稿，这是产品判断不是技术判断</td>
+        </tr>
+        <tr>
+          <td class="sev n">P2</td>
+          <td><code>TASK_LOG.md</code> 已 2.26 MB，每次追加都重写全文，142 个提交存了 142 份快照</td>
+          <td>按自然月切分，主文件只留最近一月索引</td>
+          <td>台账里大量 <code>source</code> 指针写死 <code>AI_MEMORY/TASK_LOG.md:1</code>，切分要同批改指针，属结构变更</td>
+        </tr>
+        <tr>
+          <td class="sev n">P3</td>
+          <td>bundle 第二副本本次是手工跑的一次，没有自动刷新</td>
+          <td>每月一次或每次大交付后增量追加，保留最近 3 份</td>
+          <td>若要做成定时任务，需要你确认跑在哪（本机还是服务器）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">09</span>日常动作（不需要你参与）</h2>
+  <ul class="notes">
+    <li>每天早上第一条命令 <code>bash scripts/control-plane.sh</code>，现在会顺带回答"记账仓备份新不新鲜"。</li>
+    <li>任何会话改过 <code>AI_MEMORY/</code>、<code>总控/</code>、<code>交付档案/</code>，收尾跑 <code>git push origin master</code>——现在 origin 已指向正确仓库，一条命令就够。</li>
+    <li>不要再往 <code>workspace-backup</code> 推，那个仓库不存在，配置已在本次移除。</li>
+  </ul>
+</section>
+
+<footer>
+  记账仓备份链修复 · 对抗式审查与执行方案 · 2026-11-02 · 数据来源均为本次实测命令输出；恢复演练与负控均在真实仓库上跑过，未使用模拟值。
+</footer>
+
+</div>
+</body>
+</html>

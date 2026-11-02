@@ -39,6 +39,34 @@ node scripts/control-plane.mjs --release-sha "$RELEASE_SHA" --release-found "$RE
 code=$?
 echo "[control-plane] main(ref=$MAIN_REF full=${RELEASE_FULL:0:12}) found=$RELEASE_FOUND exit=$code" >&2
 
+# ---------- 记账仓备份闸（2026-11-02 加） ----------
+# 背景：本目录（记账仓）10-31 17:11 之后备份静默断链 —— remote 被删、ssh Host 缺失、
+# 而 origin 指向一个不存在的仓库，任何人 `git push` 都失败却没人发现（ISSUES #298）。
+# 判据只认「远端实读」（git ls-remote），不认本地 remote-tracking ref —— 后者正是这次骗过所有人的东西。
+echo
+bk_code=0
+if [ "${CONTROL_PLANE_SKIP_BACKUP:-0}" = "1" ]; then
+  echo "记账仓备份闸：按 CONTROL_PLANE_SKIP_BACKUP=1 跳过（离线时用，跳过即视为未验证）"
+else
+  bk_head="$(git rev-parse master 2>/dev/null)"
+  bk_remote="$(timeout 25 git ls-remote origin refs/heads/master 2>/dev/null | awk 'NR==1{print $1}')"
+  if [ -z "$bk_remote" ]; then
+    echo "⛔ 记账仓备份闸：远端不可达或仓库不存在（无法验证是否已备份）"
+    echo "    查：git remote -v 应为 newye123/tygf-docs；~/.ssh/config 需有 Host github-tygf-docs"
+    bk_code=1
+  elif [ "$bk_remote" = "$bk_head" ]; then
+    echo "记账仓备份：✅ 本地 master=${bk_head:0:7} 与远端一致"
+  else
+    bk_behind="$(git rev-list --count "$bk_remote..$bk_head" 2>/dev/null)"
+    echo "⛔ 记账仓备份：远端落后 ${bk_behind:-?} 笔（本地 ${bk_head:0:7} / 远端 ${bk_remote:0:7}）⇒ 跑 git push origin master"
+    bk_code=1
+  fi
+  bk_dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "${bk_dirty:-0}" != "0" ]; then
+    echo "    （提示：工作树还有 $bk_dirty 项未提交，未提交的改动不在任何备份里；本条不计告警）"
+  fi
+fi
+
 # ---------- 飞书回读闸（单向投影的反向对账） ----------
 rb_code=0
 echo
@@ -61,6 +89,20 @@ else
   rb_code=1
 fi
 
-echo "[control-plane] ledger_exit=$code readback_exit=$rb_code" >&2
+# ---------- 官网流量日读数（只读聚合；不可用只提示，不改变退出码） ----------
+echo
+if [ "${CONTROL_PLANE_SKIP_TRAFFIC:-0}" = "1" ]; then
+  echo "官网流量读数：按 CONTROL_PLANE_SKIP_TRAFFIC=1 跳过（要看就跑 node scripts/site-traffic-report.mjs）"
+else
+  tout="$(node scripts/site-traffic-report.mjs --quiet 2>&1)"; trc=$?
+  if [ "$trc" -eq 0 ]; then
+    echo "官网流量读数：$tout  （明细：node scripts/site-traffic-report.mjs）"
+  else
+    echo "⚠ 官网流量读数不可用（ssh/sudo/日志读取失败，不影响本巡检结论）：$(printf '%s' "$tout" | tail -1)"
+  fi
+fi
+
+echo "[control-plane] ledger_exit=$code readback_exit=$rb_code backup_exit=$bk_code" >&2
 if [ "$code" -ne 0 ]; then exit "$code"; fi
+if [ "$bk_code" -ne 0 ]; then exit "$bk_code"; fi
 exit "$rb_code"
