@@ -1,3 +1,13 @@
+## 2026-11-03 20:3x　退役「逐稿手动导入」旧扫描层：批量只剩第 1 步一套界面（代码 aea54021 已推 develop，未部署）
+
+- **触发**：Owner「现在工作台应该是有两套扫描系统，『添加 PSD』这一套就是，可以把这套旧的去掉了，其他的继续吧」。判断经查证成立：新四步台与旧手动录入层同时在，旧层整块 CSS `hidden` 挂在 DOM 里（扫描队列与轮询住在 `design-file-card` 内，卸载就丢结果），「添加 PSD」正属于这一层。
+- **改了什么**（16 文件 +205/−906）：① `design-file-card` 批量分支改 `return null`，hook 全留当引擎——随之消失：添加 PSD（x/12）／一次录入多个·粘贴路径／旧层「选择文件夹」面板与 FolderPickerDialog／清除全部／旧层全部扫描与停止按钮行／逐稿行列表；② 摘 `stageClassic` 状态、旧层横幅、三处 `onShowClassic`（第 1 步「更多」菜单、空状态门、表格选择框），旧容器判据 `batchMode && !stageClassic` → `batchMode ? hidden : undefined`；③ 删掉卡片自带的第二套文件夹入口（`listFolderDesigns`／`selectImportFolderDirect`／`handlePickFolder`／`handleAddFolderResults`／`onFolderSnapshot`／`onBulkImport`），加稿唯一入口＝新壳 `loadStageFolder`；`folderAction` 信号面收窄到 `scan-all`／`scan-stop`（`pick`／`system-pick`／`scan{path}` 实测本就 0 调用点）；④ 能力没静默消失：「加入并导入表格」搬进第 1 步本批行＝「一次配好本批表格」（`openFolderBulkImport`＋`onBulkPairTables`，条件＝文件夹有表且本批有稿），确认框、逐稿归属、"配对只是建议、确认才读表"一字未改；⑤ 文案与词典同步：删 7 条已无引用旧键、补 3 条新句镜像，`i18n:guard` 1536/1536。
+- **明确退役的两条捷径（不是搬家失败）**：单独添加一份稿、粘贴多行路径批量录入。新壳归属内核按「一个文件夹＝一批」组织（`workbench-view.tsx:2314-2316` 的 `stagePlan` 依赖 `folderSnapshot`），接进新壳等于重做跨文件夹归属＝新功能，需 Owner 拍。登记 **AI_MEMORY/ISSUES.md #304**（含孤儿 `draft-group-cards.tsx`／`deriveDraftGroups` 待删、单稿面那块批量面板的老问题＝退役前既存）。
+- **验证（真实读数）**：`npx vitest run` 49 文件／575 条 rc=0——`tests/unit/multi-scan-queue-removal.test.tsx` 改成驱动真信号 `folderAction`＋读真回调 `onScanStateChange`（旧写法点界面按钮，界面退役后测不到东西）；`test:batch-workbench-guards` 93 条 rc=0，[B] 组从"证明旧 UI 在"翻成"证明旧形态回不来"（`添加 PSD`／`handleMultiPickFile`／`multiPasteText`／`清除全部`／`FolderPickerDialog|DraftGroupCards|deriveDraftGroups`／`stageClassic`／`onShowClassic` 逐一反向锁死，锁只比对剥掉注释后的代码文本）；`test:batch-workbench-logic` 113／`smoke-preparation-scan-contract`／`smoke-preparation-bulk-import`（断言搬到新落点）／`test:workbench-scope` 54／`test:workbench-batch-groups`／`smoke-user-visible-copy` 49／`i18n:guard` 全 rc=0；`npx tsc --noEmit` 仅剩与本改动无关的陈旧 Prisma 客户端错；`npx eslint src tests` 0 error。反向锁死三次变异均 rc=1 后还原复绿（塞回 handleMultiPickFile／塞回 onShowClassic props／塞回 stageClassic）。
+- **未验证（如实）**：真实浏览器里第 1 步的观感（新按钮位置与宽度）、单稿面那块批量面板的实际表现（需 Owner 登录态＋本机助手＋真稿）。
+- **交付与推送**：代码 `aea54021` 已推 `origin/develop`（`git push` 输出 `50047525..aea54021`），**未部署、生产未动**；报告 `交付档案/执行报告/执行报告_20261103_退役旧手动录入层_对抗式审查与收口.md`（同名 .html，飞书已发）；合同文档 `changes/active/20261017-scan-queue.md` 追加 §7 增补。
+- **待 Owner 拍**：① 单份添加／粘贴录入要不要做成正式功能（需重做跨文件夹归属）；② 上一刀＋这一刀要不要一起上测试站；③ 「一次配好本批表格」放本批行这个位置认不认。
+
 ## 2026-11-03 19:5x　扫描进行中可实时移除 PSD：队列身份由数组下标改成稿路径（代码 50047525 已推 develop，未部署）
 
 - **触发**：Owner「使用对抗式审查看看，然后多个设计稿工作台无法实时移除 psd 文件，得全部扫描完才能移除，继续使用对抗式审查一起看看怎么解决」。
