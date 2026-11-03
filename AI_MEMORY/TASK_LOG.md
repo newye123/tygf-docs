@@ -1,3 +1,105 @@
+## 2026-11-03 11:1x　薄客户端收口：7 笔进 develop、出包全绿，部署停在迁移门（THIN-CLIENT-DEPLOY）
+
+- develop 推到 409b2cfe（b0baff91..409b2cfe，非 force），ls-remote 实读一致。
+- 出包：package-release test 17 门全 PASS，包 tygf-test-409b2cfe9a8d.zip 54,624,525 B / SHA-256 7F64F8EA…；上传后服务端 sha256 逐位一致。
+- 部署：DEPLOY_RC=1，停在 [migration-drift] missing=1（20261103120000_assistant_script_distribution 未进现役部署脚本的批准台账）。站点未切换、库未变、进程未重启；确读 .deploy-commit=b0baff91、provenance BOUND、健康 200、3 进程 online。
+- 为什么没硬推：脚本无 TYGF_ALLOW_COMMITTED_MIGRATIONS=1 时会跳过数据库变更 ⇒ 新代码配不存在的表 ⇒ 所有助手脚本分发 503，反而毁掉当晚测试。
+- 中间两次部署失败都是出包姿势/引号问题：一次收据 branch=codex/...（须 detached 出包才回填 develop），一次旧包占用（已清）。
+- 报告：交付档案/执行报告/执行报告_20261103_今晚可测状态与部署卡点.md（同名 .html，飞书 rc=0）。
+
+## 2026-11-03 10:5x　薄客户端 P3 第一刀：结算裁决函数＋三枚对照件（THIN-CLIENT-P3）
+
+- 新增 src/lib/trust-chain/settlement-verdict.ts：四条规则（成功／失败但带产物→按产物计／无产物有完成量→部分计／无产物无完成→释放），完成数夹到冻结工作量。
+- settlement-adapter 接裁决，仅 SETTLEMENT_VERDICT_MODE=enforce 采信；默认 off 时逐字沿用旧判据（测试第⑧条钉住）。
+- 验证：test:settlement-verdict rc=0（8 条）；test:contracts rc=0；test:trust-chain rc=0；tsc rc=0。
+- 已知边界写进代码头：outputFingerprint 仍是客户端上报事实，服务端看不到磁盘 ⇒ 抹掉产物证据的变体拦不住，需下一刀服务端可验证产物证据。
+- 发布：409b2cfe 已推；未合 develop、未部署、未翻开关、enforce 未启用、生产零操作。
+- 报告：交付档案/执行报告/执行报告_20261103_薄客户端P3裁决第一刀.md（同名 .html，飞书 rc=0）。
+
+## 2026-11-03 10:4x　薄客户端 P2 第一刀：绑定裁决上服务端＋口径同批改（THIN-CLIENT-P2）
+
+- 新增 POST /api/local-assistant/bindings/plan：assistantToken 鉴权、DB 桶限流 60/min、2MB 上限，用同一份 binding-core 重算并返回权威 bindingPlanDigest；当前无调用方，用户侧零变化。
+- binding-core.ts 的 layerPath/sourceText「不上传」注释改成事实口径（P2 起由裁决端点接收；PSD 字节仍不上行）；公共隐私政策本就披露过，未改。
+- 重生成 generated/* 与 MANIFEST（注释传导），--check 转绿。
+- 验证：test:bindings-plan-route rc=0（D1 认证/D2 权威 digest/D3 换字符必变/D4 形状/D5 第61次429）；test:contracts rc=0；tsc rc=0；build-local-binding-core --check rc=0。
+- P3 未开工：动结算入参来源属单向门，方案要求真机三枚对照件+灰度；下一步先写三枚夹具与断言在隔离库跑通「金额由服务端重算决定」。
+- 发布：origin/codex/thin-client-20261103@fc7d1ba5；未合 develop、未部署、未翻开关、未动结算代码。
+- 报告：交付档案/执行报告/执行报告_20261103_薄客户端P2第一刀.md（同名 .html，飞书 rc=0）。
+
+## 2026-11-03 10:0x　薄客户端 P1：函数归属清单 v1 定版，三笔已推 GitHub（THIN-CLIENT-P1）
+
+- 225 个函数定版：J 判断 68 / M 量测 21 / U 界面·IO 133 / D 死码 1 / T 工具 2；行号脚本现取（缺失即 exit 1）。清单：交付档案/执行方案/执行方案_20261103_薄客户端函数归属清单_v1.md（同名 .html，已发飞书 rc=0）。
+- manifest 补 planned 67 / stay 20，moved 保持空（「已搬」必须代码真搬才登记，否则门常红）。
+- 验证：test:judgement-boundary rc=0（10 文件/170 函数名/未定版 152）。
+- 发布：origin/codex/thin-client-20261103@4b8610e7（8f6d89e1/5997062c/4b8610e7），ls-remote 实读等于本地 HEAD；未合 develop、未部署、未翻开关。
+- 路上：push 前两次 SSH 超时/重置，第三次成功（非权限问题）。
+- 硬前提：P2 要搬 compileBindings 必然新增图层正文上行 ⇒ 先定 sourceText 上行对外口径（LEGAL-1），方案 §3 明写不能先改代码再补说法。
+
+## 2026-11-03 09:1x　薄客户端 P0 开工：反破解探针去假绿＋分发限流换 DB 桶＋分发审计建表（THIN-CLIENT-P0）
+
+- 授权：Owner「按这个来全部开工吧」（薄客户端路线 v3 定稿）。本批＝P0 三项 + P1 自动清点。
+- 做了什么：① 探针改按 __dirname 解析、加探针下限（达不到 exit 1）、补 generated/*.js 欠账探针（默认点名、--strict 才拦）、新增 --self-test；② package-release / publish-local-assistant 在出包与发安装包前扫内层引擎（安装包是压缩壳，扫壳不构证据）；③ 分发路由限流 Map→DB 桶（key=installId HMAC 摘要），每次分发落 AssistantScriptDistribution（含 exeSha256），落库失败 503；④ P1 判断边界清单 + 门（客户端 10 文件 / 170 函数名 / 0 定版）。
+- 验证读数：selftest rc=0；红控（develop 10-25 引擎）rc=1；仓外 cwd 同一红控 rc=1；test:script-distribution-audit rc=0；test:schema-catalog rc=0（22 迁移/69 表）；test:contracts rc=0；test:assistant-auth-barrier rc=0；test:assistant-script-distribution rc=0；tsc rc=0；lint 0 error/60 warning；vitest rc=0。
+- 代修存量红门：verify-schema-catalog 的 EXPECTED_MIGRATIONS 停在 20261009160000（缺 10-22、10-24 两条）且表数停在 67（实测 68）⇒ 补齐并改到 69，门转绿（归因写在文件注释里）。
+- 撞墙：删 0 调用点死码 buildLegacyHtmlReport 会改 jsx 字节 ⇒ 改 replacementScriptSha256（882a4a86 是现役 3.7.31 内置期望值）⇒ 装机用户会拒收脚本。test:contracts 当场红（6e3ed056≠882a4a86），已回滚；死码清理须随下一支助手包（新 runtime 身份）。
+- 遗留：P1 逐函数定版未做（170 个）；generated 明文仍在 exe 内（P5 撤 assets 后开 --strict）；P3 计费判定收服务端是单向门待 Owner 点头。
+- 边界：只动 worktrees/thin-client-20261103（基于 origin/develop@b0baff91），两笔本机提交（8f6d89e1、5997062c），未推远端、未部署、未翻开关、未对共享库跑迁移。
+- 报告：交付档案/执行报告/执行报告_20261103_薄客户端P0_P1开工.md（同名 .html 同目录，已发飞书 rc=0）。
+
+## 2026-11-02 22:1x　薄客户端路线 v3 定稿：函数归属清单 + 算力压测 + 两轮审查（登记 #301，未改代码）
+
+- **触发**：Owner 问"最一劳永逸的执行方案是怎样的"，并批准我提的流程（清单 → 对抗审查 → 交叉验证 → 反思 → 更深探查 → 定稿）。
+- **本质上要成什么**：把"判断"从客户端搬走，客户端只剩测量/执行/报事实；此后逆向照旧可能但**逆回来不再等于拿走能力**。唯一读不走的资产＝签发权＋一次性消费状态。
+- **本轮最大发现（不是防逆向，是收入面，登记 #301）**：已授权安装谎报"没成功"即全额释放冻结额度而成品已在盘上，四步可走通；根因是"是否成功"的判定权在客户端。逐段行号链见 ISSUES 与方案 §1。
+- **函数归属清单（四路并行，主审抽查）**：binding-core 43 函数中判断类 21、**全文件 0 处 Date/Math.random/require/process ⇒ 可原样搬服务端**（TS 源本就在 `src/lib/trust-chain/binding-core.ts`）；replacer 具名函数 62、判断约 24、内核约 490 行≈24%、死码仅 `buildLegacyHtmlReport`（1594-1716 共 123 行）；**推翻我"扫描器/执行器纯机械"的假设**——`Thin_Executor.applyTypography:60`/`pickTypographyProfile:157`、`Preparation_Scanner.typographyDerived:93`/`scanLayer:200` 都在客户端明文里做判断；必须留客户端的＝bounds、字体实脸、`app.open` 后 contents、saveAs 后 size/exists、sha256File、删盘、母版指纹、fsync。
+- **算力压测（脚本落盘可复跑）**：800 层×1500 行单门中位 **101 ms**，12 门合计 **1.19 s**，对照 PS 真跑一稿 ≈75 s ⇒ 判定耗时 **1.6%**，服务端算完全不是瓶颈；上行瘦投影 359,333 B，报价路由体上限 1 MiB 装得下；**把图层正文换成 64 位摘要反而更大**（387,205 B）⇒ "上行正文"体量省不掉，属新增出站，须与对外口径同批改。
+- **交付**：`交付档案/执行方案/执行方案_20261102_薄客户端路线_v3定稿.md` 与同名 `.html`；压测件 `附件_20261102_compile量级压测.mjs`；草案版保留并标被取代。刀法 P0 眼睛与止血前置 → P1 定界清单 → P2 `compileBindings` 上服务端（灰度）→ P3 判定权收服务端（止血，单向门）→ P4 搬扫描器/执行器判断 → P5 撤明文副本（此后 jsxbin/签名降为可选）。
+- **审查结论与我的复核（含推翻审查者）**：A 路 8 条，其中 F-3 限流桶真位置 `src/lib/auth/rate-limit-store.ts:17-49`（草案写的 server/ 路径不存在）、F-4 `exeSha256` 今天根本没存（schema 内 `grep -i exesha` 0 命中）⇒ P0 是从零建表、F-5 服务端重算 `objectEvidenceDigest` 会因行尾假红 ⇒ 从 P0 撤回改为 P3 前置、F-6 我原 P2 判据"改源+重生成换桩"**自毁**（服务端与助手同源，smoke-binding-core-generated:20/:48 照绿）⇒ 改为"桩只注入助手进程＋服务端权威 digest 与上报不等即拒结算"。**A 路 F-2 后半被我推翻**：成功路径在 `v15-runner.js:305/333/349/359` 写 REOPEN_VERIFIED，:255/:284 属失败分支 ⇒ 批链今天照收费，靶子在单文档链。B 路逐条复跑钱的路径／自报对自报／digest 不重算／函数计数与字节，并指出我 §2/§3 派生数口径问题。
+- **我自己这一轮的错（已写进方案 §6 反思）**：① 照抄子代理未披露区间的百分比（31.5%、62%）——违反我自己存过的"引别手的派生数要先复跑"；② 抄了不存在的文件路径；③ 压测脚本用完即删导致数字无出处 ⇒ 已落盘；④ 基线版本混用（树 3.7.30／HEAD 3.7.28／本机安装 3.7.31）；⑤ 只算判据没算产物去向，漏掉"诚实失败已 quarantine 完整成品"这条对漏洞成立性最关键的事实；⑥ 函数计数口径未锁（62/63/71）。
+- **验证**：本轮为研究与方案，无代码改动；关键读数全部实跑（钱的路径 sed 原文、`grep -ic exesha schema.prisma`=0、`git ls-files | grep rate-limit` 三条、`standardRowCount` 两径 0 命中 rc=1、三段明文 97,338 B、binding-core 43 函数、replacer 62 函数、压测四档）。
+- **待拍**：P0+P1 是否立刻开工（我推荐开工）；P3 单向门是否按"三枚对照件＋灰度"推进；`sourceText` 上行的对外口径要不要同批改 LEGAL-1 四条假话；Rust 成本墙要不要单独立项（品牌串 photocraft 偏移 35708723/35723686 未除净）；代码签名证书预算买不买；先前两刀代码仍未提交。
+
+## 2026-11-02 20:1x　反逆向路线三轮对抗探查与 v2 定稿（登记 #300，未改代码）
+
+- **触发**：Owner 追问"人人都能用 AI 逆向别人的软件，这个问题也挺大"，要求把每一步、每个坑、怎么调整想透给执行方案，并指定流程＝对抗式审查 → 另一路交叉验证 → 反思漏项 → 继续更深对抗探查。
+- **本质上要成什么（可判定一句）**：让"读走代码"不再等于"拿走能力"。推论＝唯一读不走的资产是"签发权 + 一次性消费状态"（`src/lib/server/execution-ticket.ts:18`、`billing-challenge.ts:89,248`）；动作不命中"读了没用／读了很贵／取了能被看见"三者之一即不进排期。
+- **过程**：事实底座实测（含我自己三条复跑）→ 草案 v1 → A 路对抗审查（10 条 findings）→ B 路独立交叉验证（7 条逐条复跑）→ 缺口反思 8 条 → C 路纵深 5 问 → v2 定稿。
+- **v1 被推翻的四处（都写进更正段，不许沿用旧口径）**：① "jsxbin 产物不在任何分支"＝假，分支 `codex/jsxbin-assets-20260922`(`f8ab98cd`) 带着 5 个 `.jsxbin`+builder+manifest；② "0.59%" 给 E3 排序＝分母混了客户数据 24 MB，逆向口径实为 jsx 50.9%／exe 内明文核心 49.1%；③ 握手正则指针 `server.js:2040` 漂移，真实 `:2054`/`:2056`；④ "裁决现跑在浏览器、要四层同改"＝浏览器根本不 import（`local-assistant-client.ts:2109` 自陈，`git grep` 0 引用者），改三层。另：我自己量的"最长连续可读 129 KB @21.3 MB"其实是 Node 运行时内置源码，度量必须锚定我方源标记。
+- **三轮挖出的最硬三条**：① **L-1 我们自己的出口**——明文引擎母本随 Web 发布包出门（`scripts/package-release.cjs:169` 走 `git archive HEAD`，实测 tar 列表 `.jsx` = 10 条含 replacer），拿到部署包＝不必装不必激活；互锁点是 `distribute/route.ts:56-68` 要在服务器读该目录，直接 export-ignore 会断分发。② **L1 装一次即得明文裁决核心**——`package.json:7-11` `pkg.assets` 无 compress，`generated/*` 三段 97,794 B 原样进 exe，偏移 38036515/38119608/38136364，CRLF→LF 后三段 sha256 与母本全等，抽出件零依赖跑通 `compileBindings`；installer 公网无门控（实测 200 / 25,545,674 B）且 `PrivilegesRequired=lowest` ⇒ Inno 压缩是假墙，从已安装到能跑核心＝1 步 0 工具。③ **名义闸会假绿**——`check-exe-no-plaintext.cjs` 探针不覆盖 `generated/*.js`、探针目录按 cwd 解析（同一枚红 exe 仓内 rc=1、`%TEMP%` rc=0，已复现）、空清单静默通过、无自动化入口（只有 `package.json:214` 定义）⇒ 现行"exe 无明文"说法不可信。
+- **顺带查出（待处置）**：运行码 HMAC 密钥公开回退串 `'tygf-assistant-fallback'`（`src/lib/invite/assistant-code.ts:22-25`，守卫是"两个 env 都缺才抛"）；分发限流是进程内存 Map（重启/多实例清零），而仓内已有 DB 限流桶只被 auth 用（`rate-limit-store.ts:21`）；分发审计不落库（只 console.log，schema 内 0 表）⇒ 现在无法回答"多少机器取走过明文"；服务端**早已**持确认表全文并重算 v3 作用域（`schema.prisma:896 tableJson`、`photoshop-billing.ts assertScopeMatchesSnapshot` 自陈"浏览器说什么不算数"）⇒ "设计文件不出本机"今天是假话，属对外承诺面，未擅改。
+- **交付**：`交付档案/执行方案/执行方案_20261102_反逆向分层路线_v2定稿.md` 与同名 `.html`（含暴露阶梯表、分刀卡、两天最小组合、不做清单、反思 8 条、待拍 5 件）；`AI_MEMORY/ISSUES.md` 新增 **#300**；台账新增 `ANTI-REVERSE-PLAN`（状态 等您定）。草案 v1 保留不删，其结论已被 v2 更正段覆盖。
+- **验证**：本条为研究与方案，无代码改动；所引全部读数来自本轮实测（我复跑：`git archive | tar -t | grep -c .jsx` = 10、闸 rc 双 cwd 对照、行号 2054/2056、jsx 2,043 行/101,528 B、jsx 与 binding 占比 50.9/49.1、`git branch -a --list *jsxbin*` 命中分支、`.next/static` 内 compileBindings 命中 0 但构建可能过期）。两路代理的自报未直接采信：A 路 F-1/F-6/F-7 我逐条复跑，B 路"2044 vs 2043 行"差异采纳实测值 2043。
+- **遗留与待拍**：① 排期取向 A/B/C（我推荐 A＝两天最小组合：E0′ 修闸 + E0.5 关自己的出口 + E4 审计落库与 DB 限流）；② 对外口径要不要改（"设计文件不出本机"）；③ Rust 免 PS 引擎那条真成本墙要不要复制（`bin/tygf-engine.exe` 43,252,736 B、0 处 JS 明文，但品牌串 `photocraft`@35708723/`PhotoCraft`@35723686 未除净，兼有第三方 fork 合规面）；④ 代码签名只差证书预算（工程已写好 `publish-local-assistant.cjs:61-102`）；⑤ 上一刀的临时件修复与内部件隐藏仍未提交。
+
+## 2026-11-02 17:5x　修「无痕删除从来没生效」：隐藏件覆盖写抛 EPERM 拖死 unlink（#299）
+
+- **触发**：Owner 问「`.tygf_script_cache` 里的内容大部分都不存用户电脑了吧？尤其改语言那个脚本」。实测推翻：5 个明文 jsx 全在（含 replacer 101,528 B = 缓存明文 53%），且当前发布件逐字节相同（`config/release-identity.json:9` = 缓存目录名 `882a4a86`）。
+- **顺手做全量明文体检（本机实测 59,491,198 B）**：`%TEMP%\multilang-studio` 残留 31,047,381 B（52%）＞ `.tygf_v15_journals` 24,180,459 B（41%，含客户稿名与原文/译文预览，明文）＞ logs 3,419,275 B（5.8%）＞ 脚本缓存 348,833 B（**0.59%**）。`preparation`/`learning_evidence`/`session` 已是 `v3.` 密文（09 月加密整改真生效）。⇒ jsx 上锁仍是第三档动作，主角是数据残留。
+- **根因（对抗式审查后定案，非"文件被占用"）**：临时件创建时都经 `hideFile()` 设 Hidden；Windows 下对隐藏件用 `'w'` 打开必抛 EPERM（仓内早已写下该结论：`download/local-assistant/preparation-cache.js:12-13`「写前先移除隐藏属性」）。旧 `secureDelete` 把「零覆盖→随机覆盖→unlink」三步塞同一个 `try`，第一步抛异常 ⇒ **unlink 永不执行**，运行期删除与启动清扫对所有隐藏件 100% 失效。实测：隐藏件 `openSync('r+')` 可写、`unlinkSync` 可删，杀掉的是覆盖写。
+- **证据**：本机 `%TEMP%\multilang-studio` 4,254 个隐藏件里 4,199 个符合旧清扫正则、跨 08-31→11-02 全存活；引擎今日 08:26 启动过且清扫确曾跑到（`engine.log` 同刻有 `retryPendingAttemptReceipts` 输出，调用行在清扫之后）。`engine.log` 的"临时脚本文件删除失败（可能被占用）"（`server.js:2221`）是猜的文案：5 个原件用 `FileShare.None` 独占打开全成功 ⇒ 无句柄持有。
+- **改哪五处**：① 新增 `download/local-assistant/secure-delete.cjs`（`secureDelete` 返回 `{ok,code}`、覆盖改用 `'r+'`、覆盖失败不阻断删除、`sweepStaleTempFiles` 带年龄闸与聚合读数）；② `server.js` 删除本地 `secureDelete` 副本改 `require('./secure-delete.cjs')`，`sweepTempScripts` 改走模块并补 `_fp` 前缀＋ 16 分钟年龄闸＋一行 `[sweep]` 聚合日志；③ `v15-runner.js:57` `removePrivateEnvelope` 同形缺陷改共用同一把删除；④ 新增 `scripts/test-tmp-secure-delete.mjs`；⑤ `package.json` 加 `test:tmp-secure-delete`。
+- **年龄闸是审查逼出来的**：临时件名只带随机数不带 `pid`，同 TEMP_DIR 上第二实例（`TYGF_ASSISTANT_PORT` 开发实例）在跑批时，"删除真生效"反而会删掉它正在写的件、丢执行细节与回执证据 ⇒ 只动超过 `SCAN_TIMEOUT_MS`(15min)+60s 的。
+- **第二刀（Owner 追加令 2026-11-02 18:1x「这些文件是要隐藏的，不能让用户感知到它们的存在」）**：新增 hideAll/hideTree/hideInternalArtifactsFor（同放 download/local-assistant/secure-delete.cjs），把安装目录内部件（.tygf*、logs、release-identity.json、.tray-intro-seen、配置读不出来.txt）与临时工作目录 multilang-studio 一律打隐藏位，内部目录里的**每一层文件**也递归打。调用点＝server.js 模块加载（TEMP_DIR 建好即打）＋启动 listen（hideInternalArtifacts() 先于 sweepTempScripts()）＋ script-distribution.cjs 建缓存分片当场打（不等下次启动）。判据沿用仓内既有（runtime-paths.js:41-49「Windows 认隐藏位、不认点前缀」）。实测两条 attrib 的坑写进注释与断言：① attrib +H 路径1 路径2 只处理第一个、其余静默忽略 ⇒ 逐路径起进程；② +H /S /D 裸目录只盖目录不下探、dir* 只下探不盖自己 ⇒ 两种形态都要来。
+- **本机已实打生效（不只等出包）**：hideInternalArtifactsFor 跑真机 ⇒ attempted=13 dirs=7 failed=0，耗时 1,076 ms（2,218 文件规模，幂等，每次启动跑）；复核边界正确——7 个内部目录 2,218 个文件未隐藏=0，bin/diagnostics/licenses 的 15 件仍可见（给用户看的没动）。回退：attrib -H /S /D "E:软件图译工坊本地助手<目录>*"。
+- **验证（真实输出）**：`npm run test:tmp-secure-delete` 12 条断言通过、rc=0（win32，隐藏属性/占用类断言已执行）；两条内置负控（旧形态夹具必须删不掉、年龄闸关掉必须连年轻件一起删）；变异测试四次均转红（rc=1：覆盖失败不阻断／年龄闸失效／attrib 多路径批处理／hideTree 不下探）后还原复绿（rc=0）；`node --check` 全部改动文件全过；`node scripts/smoke-v15-runner.mjs` rc=0；`npx eslint` 对新文件 0 error。只读预演新清扫上线后首启可清 4,254 件 / 31,046,798 B。
+- **未做与遗留**：① 真机效果要等下一次出助手包并启动后才能观测（现役 3.7.31 仍是旧码），未出包未提交（提交/发布/删除按 Owner 规矩逐次确认）；② `.tygf_v15_journals` 24 MB 明文（客户稿名+原文/译文预览，无保留期）建议套现成 `encodeState`＋保留期，属下一刀，动它必须真机验 #38 断点续跑；③ `readiness_*` 482 个空目录（`server.js:6672-6674` 的 `rmdirSync` 在 `report/` 子目录存在时必 ENOTEMPTY，我实读到该段与 13 个残留文件/2,535 B）与 `preparation_*` 早退路径不清理（子代理线索，`server.js:6066-6072` 我未独立复跑，标待复核），登记未修；④ `test:tmp-secure-delete` 未接进 `test:trust-chain`/CI（新建闸需 Owner 点头）。
+- **同发现象（不改代码，登记）**：`config/script-versions.json` 的 Thin_Executor 期望 `f985bfc1`，本机 manifest 现役 `39a3e280` ⇒ 出包侧脚本与 develop 配置不同步；develop 树 `git diff` 含其他会话在飞 hunk，本刀只提自己的改动。
+
+## 2026-11-02 11:1x　修「打开就默认全不选」：剔除记忆串档＋当前稿沿用不告知（`b0baff91` 已上测试站）
+
+- **目标**：Owner 拿截图问「怎么是默认都不选的？要改一下默认全选才行」——批量台某一份稿打开就是「剔除 1 门／可交付 0 份」，语言条上那枚「日语 不做」像是系统默认不给他做。
+- **根因（不是设计，是串档）**：`src/components/workbench/workbench-view.tsx:847`（改后行号）激活某一稿时取内容指纹曾写成 `entry?.summary?.fingerprint ?? psdSelection?.summary?.fingerprint`。批量台切稿那一刻 `psdSelection` **还是上一稿的**（`activateDraft` 与 `setPsdSelection` 同一批 state 更新，闭包里读到旧值），于是**上一稿**剔掉的门被当成**这一稿**的记忆去扣语言。截图那份稿正好「还没扫到文字图层」＝没有自己的指纹，最容易撞上；`exclusionsFor` 一命中，`deriveLanguages` 就从表列里减掉那门 ⇒ 界面「剔除 N 门／可交付 0 份」。
+- **第二条洞（同一条判据的另一半）**：`workbench-view.tsx:2470` 那段沿用告知（旧条件在改前的 `:2480`）按「有没有本会话现场」筛，条件 `key === activeDraftKey || …` **恰好跳过你正看着的那一稿** ⇒ 当前稿被记忆扣了语言时一句解释都没有，与 2026-10-27 定的「沿用必须明说」直接冲突（那条判据本身没错，是实现漏了当前稿）。
+- **改哪三处**：① 新增纯函数 `ownFingerprintOf`（`src/lib/workbench/language-exclusion-memory.ts:151`）——只认这一稿自己的指纹，唯一合法退回是**单稿槽** `__single__`（译表还没绑定设计稿，那时当前选中的那份就是它本身）；② `:847` 调用点换成它；③ `:2487` 告知判据改成「这一稿显示的门真的比表里的列少了被记住的那几门」（`dropped = remembered.filter(lang => columns.includes(lang) && !doing.includes(lang))`），当前稿一并覆盖，本会话刚加回来的门不再误报，报出来的也只报真被扣掉的那几门。
+- **口径未变（Owner 本轮再确认）**：「跨会话记住你剔掉的语言」这条**保留**（10-27 他要的「一劳永逸」），只把"串到别稿"和"用了不说"两个缺陷修掉；恢复仍走「全选回来」，恢复即删记忆。
+- **为什么不是假绿**：新增 5 条用例（`tests/unit/language-exclusion-memory.test.ts`）先跑红再跑绿——改前该文件 **5 failed**（`ownFingerprintOf` 不存在＋旧回退形状被源码门当场抓住）；另做一枚负控：把旧跳过条件塞回告知逻辑 ⇒ 新增那条源码门当场红 rc=1，还原后复绿。四格判据覆盖：没扫过的批量稿不得继承别稿记忆、扫过的批量稿只用自己的指纹、单稿槽仍可用当前那份、同一份稿自己的记忆照旧生效（防"顺手把功能废了"）。
+- **真实验证读数**：`npx vitest run tests/unit/language-exclusion-memory.test.ts` rc=0（22 条）；`npx vitest run` rc=0（48 文件／573 条）；`npx tsc --noEmit` rc=0；`npm run lint` rc=0（0 error／60 warning，与改前同数）；`test:workbench-batch-groups`／`test:batch-workbench-guards`／`test:workbench-scope`／`test:step1-mock-contract`／`test:table-grouping` 各 rc=0。
+- **发布（GitHub 三段轨）**：提交 `b0baff914d0d0b746785fc5982eb970f924a913c` 推 `origin/develop`（fast-forward，`20b7ec35..b0baff91`，非 force；`git ls-remote` 实读等于该号）。出包在独立 detached 树 `worktrees/pack-b0baff914d0d`：preflight 17 道门全绿，归档 `tygf-test-b0baff914d0d.zip` 54,609,177 B／SHA-256 `B2216D14…80D5`，收据 `RELEASE_PACKAGE_HYGIENE_GREEN`（归档内禁用路径 0／疑似密钥 0／缺执行位脚本 0）。**浏览器端改动，助手版本与安装包未变（仍 3.7.31／`ps-handoff-20261101-r1`）**。
+- **部署测试站**：两侧 `sha256sum` 逐位一致后跑 `deploy-test-release.sh`，按 ISSUES #297 带 `NODE_OPTIONS=--max-old-space-size=3072`（否则 Next 的 TS 检查会 OOM）。结果：`.deploy-commit`＝`b0baff91…`；健康 200 ×3（0.031／0.024／0.023 秒）；PM2 三进程 online、restarts=0；`/api/runtime-provenance` 回报 `webCommitSha=b0baff91…` 且期望助手版本仍 3.7.31；日志含 `skipping database mutation`（本批零迁移，库未动）；回滚点 `/var/www/tygf-test-backups/deploy-20261102_110229-b0baff914d0d`。
+- **出包路上两次红都不是代码**：① 新建 pack 树时 `cmd //c mklink /J node_modules "F:\…"` 造出的链接目标成了 `\F:\…`（无效），prisma 建模板库时找不到 `node_modules/prisma/build/index.js` ⇒ `test:contracts` 4 秒即红；改用相对目标 `..\unified-opt-20261031\node_modules` 后正常。② 第二次红在 `test:typography-picker` 里的 vitest 阶段——`[vitest-pool]: Failed to start forks worker … Timeout waiting for worker to respond`（本机 jsdom 环境创建慢，同形错误 08:39 也出现过、重试即好）；单独跑该文件 rc=0（17 条）后重跑整链转绿。
+- **仍未做（不藏）**：① 界面效果**未在真实浏览器实拍**——复现需要 Owner 的登录态＋本机助手＋那批真稿；证据是单测四格＋源码门＋部署后站点身份。② 若 Owner 那份稿确实是他**自己**早先剔过日语（同一份稿的记忆），这次修复不会改变他那屏，但界面现在会明说「沿用了上次剔掉的语言（日语）」，点「全选回来」即清除。③ ISSUES #297 的耐久修法（把构建堆上限写进部署脚本）仍未落码，本轮继续用环境变量绕过。
+- **边界**：未碰生产；未翻任何开关；支付 flag 未动；未删数据与备份；只提自己改的 3 个文件（同树别手 `20b7ec35` 的官网文案改动由它自己属主推送，我未改未并）。
+
 ## 2026-11-02 11:1x　代码仓备份缺口收口：91 笔未推送提交推为 45 个备份标签＋脏改动 8.9 MB 快照（CODE-BACKUP-CLOSURE）
 
 - **目标**：Owner 令「按你的来」，收口上一轮自己列出的两项剩余风险（代码仓未推送提交／未提交改动不在备份内）。

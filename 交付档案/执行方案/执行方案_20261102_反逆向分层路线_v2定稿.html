@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>反逆向分层路线 · v2 定稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.72;font-size:16px}
+.wrap{max-width:1080px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(25px,4.2vw,38px);line-height:1.18;margin:8px 0 10px;font-weight:700}
+.standfirst{font-size:17px;color:var(--ink-2);margin:0;max-width:76ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:14px}
+section{margin:32px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 14px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}
+h3{font-size:16px;margin:16px 0 8px}
+p{margin:0 0 12px;max-width:80ch}
+code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--accent-soft);border:1px solid var(--line-strong);border-left:5px solid var(--accent);border-radius:var(--radius);padding:20px 22px}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdictp{font-size:19px;font-weight:600;margin:8px 0 0;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat.k{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat.n{font-family:var(--font-display);font-size:25px;font-weight:700;line-height:1.2;margin-top:4px}
+.stat.bad.n{color:var(--bad)}.stat.ok.n{color:var(--ok)}.stat.warn.n{color:var(--warn)}
+.scrollx{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--sunk);color:var(--muted);font-weight:600}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:12px}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid var(--line-strong);color:var(--muted);white-space:nowrap}
+.tag.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}
+.tag.bad{color:var(--bad);background:var(--bad-soft);border-color:transparent}
+.tag.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.ladder td:first-child{font-family:var(--font-mono);font-weight:600;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.card.top{border-left:4px solid var(--accent)}
+.card.first{border-left:4px solid var(--bad)}
+.card.loc{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.card h3{margin:0 0 6px;font-size:15.5px}
+.card p{font-size:14px;color:var(--ink-2);margin:0 0 8px}
+.card .ev{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);line-height:1.6}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:780px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.panel.yes{border-left:4px solid var(--ok)}.panel.no{border-left:4px solid var(--bad)}
+.panel h3{margin-top:0;font-size:14px;font-family:var(--font-mono);letter-spacing:.05em}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:18px}.panel li{margin-bottom:8px;font-size:14.5px;color:var(--ink-2)}
+.notes{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:16px 18px}
+.notes ol{margin:0;padding-left:22px}.notes li{font-size:14.5px;color:var(--ink-2);margin-bottom:10px}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:14px 17px;margin-bottom:10px}
+.ask b{font-family:var(--font-display)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">三轮对抗探查 · v2 定稿 <span class="eyebrow sep">· A 路审查 + B 路交叉验证 + C 路纵深</span></div>
+  <h1>别人用 AI 逆向我们，到底要付几步</h1>
+  <p class="standfirst">答：从公网拿到安装包起算，<strong>2 步、0 专门工具</strong>就能得到 1,520 行零依赖、能独立跑出绑定摘要的裁决核心。而比安装包更近的出口是我们自己开的——明文引擎母本随 Web 发布包一起出门。这份方案回答的不是"怎么藏得更好"，而是"怎么让读走不再等于拿走能力"。</p>
+  <div class="meta">base worktrees/develop@71529c7c · 现役助手 3.7.31 · 取证 2026-11-02 18:4x–20:1x · 取代同日草案 v1（v1 有 4 处结论被推翻）</div>
+</div>
+
+<section>
+  <div class="verdict">
+    <div class="verdict.lb">最深处结论</div>
+    <p class="verdictp">唯一读不走的资产 = 签发权 + 一次性消费状态</p>
+    <p style="margin:10px 0 0;color:var(--ink-2);font-size:15px">HMAC 签名密钥（<code>EXECUTION_TICKET_SECRET</code>，现成件 <code>src/lib/server/execution-ticket.ts:18</code>）与 <code>BillingChallenge</code> 的 issued→consumed 状态（<code>billing-challenge.ts:89,248</code>）。凡落在用户机器或发布包里的字节，理论上都可读。所以动作只有三类值得做：让读出来<strong>没用</strong>（判断交服务端）、让读出来<strong>很贵</strong>（明文→编译件/native）、让取了<strong>能被看见能断能举证</strong>（观测·吊销·归因）。</p>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">暴露阶梯（每档都是本轮实测，不是推演）</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat.k">攻击者要付的步数</div><div class="stat.n bad">2 步</div><div class="stat.k">装一次 + 一段切片脚本</div></div>
+    <div class="stat"><div class="stat.k">exe 内明文核心</div><div class="stat.n bad">97,794 B</div><div class="stat.k">三段 JS 逐字节等于母本</div></div>
+    <div class="stat"><div class="stat.k">激活后落地 jsx</div><div class="stat.n warn">101,528 B</div><div class="stat.k">2,043 行 / 62 函数</div></div>
+    <div class="stat"><div class="stat.k">Web 包里的母本</div><div class="stat.n bad">10 个 .jsx</div><div class="stat.k">git archive 实测带出</div></div>
+    <div class="stat"><div class="stat.k">名义闸可信度</div><div class="stat.n bad">0</div><div class="stat.k">换目录跑就变绿</div></div>
+  </div>
+  <div class="scrollx"><table class="ladder">
+    <thead><tr><th>档</th><th>怎么到手</th><th>到手什么</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td>L-1</td><td>拿到部署到测试站/生产站的 Web 发布包，<b>什么都不用装</b></td><td>8 个活引擎脚本的明文母本（＝distribute 下发的同一份）</td><td class="mono">package-release.cjs:169 走 git archive HEAD；实测 tar -t | grep -c '\.jsx$' = 10；.gitattributes 未覆盖 download/local-assistant/scripts</td></tr>
+      <tr><td>L0</td><td>公网直下 installer，无需激活</td><td>只有 LZMA 压缩体，四个标记 0 命中</td><td class="mono">生产站 HEAD 实测 200 / 25,545,674 B；latest/route.ts:10,19-20 无鉴权；installer.iss PrivilegesRequired=lowest ⇒ 假墙</td></tr>
+      <tr><td>L1</td><td>双击安装（免管理员）</td><td>binding-core / prepare-batch-core / text-diff-core <b>原样明文</b>，抽出零依赖可跑</td><td class="mono">package.json:7-11 pkg.assets 无 compress；偏移 38036515/38119608/38136364；CRLF→LF 后三段 sha256 与母本全等；bindingPlanDigest 复现成功</td></tr>
+      <tr><td>L2</td><td>装完激活跑一次</td><td>5 个明文 jsx：findTranslation:718、processPSD:1197、replaceTextInLayer:1175</td><td class="mono">目录名 sha = release-identity.json:9 replacementScriptSha256</td></tr>
+      <tr><td>L3</td><td>常驻/取证读盘</td><td>客户数据明文（稿名＋每语种原文/译文预览）——属<b>隐私</b>不属逆向</td><td class="mono">.tygf_v15_journals 24,180,459 B（本轮全量体检）</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:12px"><strong>口径已改正</strong>：客户端可读"引擎逻辑"里 jsx 占 <strong>50.9%</strong>、exe 内明文核心占 <strong>49.1%</strong>（逆向口径）；混入客户数据后 jsx 只占 0.42%（隐私口径）。v1 用后者给 E3 排序是错的——<strong>jsx 不便宜，只是 L1 门槛更低</strong>。</p>
+</section>
+
+<section>
+  <h2 class="sn">死结：为什么"给 exe 加密"不解决问题</h2>
+  <p>三条互相咬着，顺序不能倒（只对 v15/绑定这一代成立；<strong>v3 计费早已服务端重算</strong>——<code>photoshop-billing.ts</code> 的 <code>assertScopeMatchesSnapshot</code> 自陈"浏览器说什么不算数"，<code>schema.prisma:896 tableJson</code> 存着确认表全文）：</p>
+  <div class="cards">
+    <div class="card"><div class="loc">① 客户端算、服务端核</div><p>助手本地跑 <code>compileBindings</code> 出绑定计划，服务端不重算这一段 ⇒ 客户端必须持有可读裁决代码。</p></div>
+    <div class="card"><div class="loc">server.js:122-141</div><p>完整性自校验要<b>读磁盘上的 JS 原文</b>才算哈希，期望值 <code>MANIFEST.json</code> 就放在同一可写目录 ⇒ 只要保留这层，明文副本撤不掉。</p><div class="ev">缺目录时 :143-145 把异常吞成 null-cores 静默降级 ⇒ 这道自证本身就是假绿温床</div></div>
+    <div class="card"><div class="loc">server.js:2023-2027</div><p>送脚本进 PS 只用 <code>DoJavaScriptFile</code>，执行前把内容<b>明文写出临时 .jsx</b> ⇒ jsxbin 之后外壳仍明文，逻辑进字节码；能测"磁盘有没有逻辑明文"，测不到内存态还原。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">分刀（每刀都带能红的判据）</h2>
+  <div class="cards">
+    <div class="card first"><h3>E0′ 先把假绿闸改成会咬人的</h3><p>探针按 <code>__dirname</code> 解析（废掉 cwd 依赖）；探针数为 0 ⇒ exit 1；补 <code>generated/*.js</code> 探针且取自构建输入、加"对照件 0 命中"自证；改结构度量（锚定我方源标记）；接进出包 preflight。</p><div class="ev">判据：仓外 cwd 跑红 exe ⇒ rc=1｜空清单 ⇒ rc=1｜塞入 binding-core ⇒ rc=1｜干净件 ⇒ rc=0<br>现状：:34 按 cwd 解析（我复现：同枚 exe 仓内 rc=1、%TEMP% rc=0）；CI 0 命中</div></div>
+    <div class="card first"><h3>E0.5 关掉我们自己的出口</h3><p>明文母本不再随 Web 包出门：<code>export-ignore</code> + 部署脚本单独把分发源同步到包外路径，路由改读新址。</p><div class="ev">判据两半都要：<code>git archive … | grep -c '.jsx$' = 0</code> 且 测试站 distribute 仍返 5 件、助手 /ping phase=ready（只验前半＝把线摘了）<br>互锁：route.ts:56-68 必须在服务器读到这些文件，直接 export-ignore 会打断分发</div></div>
+    <div class="card"><h3>E1 绑定与报价权威搬服务端</h3><p>只搬 <code>compileBindings</code>（binding-core.ts:758-773）与 v15 报价；v3 那半边已完成，不重复搬。复用现成件：一次性 challenge 原子消费 + DB 限流桶（rate-limit-store.ts:21，今天只有 auth 在用）。</p><div class="ev">判据：把源 <code>binding-core.ts</code> 改常量桩 + 重生成产物 ⇒ 端到端必须失败或与权威不一致（直接改 generated/*.js 会被哈希挡成 503，测不到本判据）<br>oracle 反制：任何"给判断"的端点若能不消耗持久一次性凭证、不经 DB 限流就返回 ⇒ 判为开放预言机，不收工<br>合同层数 3 不是 4：浏览器根本不 import（local-assistant-client.ts:2109）</div></div>
+    <div class="card"><h3>E2 撤 exe 里的明文核心</h3><p>二分：<b>可先于 E1</b>＝撤 <code>pkg.assets</code> 的 <code>generated/**/*</code> + 自校验换成构建期 pin；<b>必须等 E1</b>＝废掉"本地权威＋读原文自证"。</p><div class="ev">判据：E0′ 修好的闸 rc=0 且探针含三段；"含我方源标记的可读 run"降到阈值下；真机跑成一单；补一条包内容断言（publish-local-assistant.cjs:85 今天只防同版本不同字节，不管 assets）<br>失效场景：pin 与被校验物同盘可写 ⇒ 篡改者连核带期望值一起换，照绿</div></div>
+    <div class="card"><h3>E3 jsx 改编译件（更正：活已存在）</h3><p>v1 说"不在任何分支"是错的——分支 <code>codex/jsxbin-assets-20260922</code>（f8ab98cd）带着 5 个 <code>*.jsxbin</code>（头 <code>@JSXBIN@ES@2.0@</code>）+ builder + manifest。动作＝合并复核 + 切分发端。</p><div class="ev">硬阻塞实测：server.js:2054/2056 用正则从脚本源码文本读版本/schema，编译件下恒 unknown ⇒ 先迁 manifest；四件同批防 #74；PS 2021/2024/2026 各跑一单<br>上限：只能说"抬高成本"，"防破解成功"禁止出现</div></div>
+    <div class="card"><h3>E4 归因与止损</h3><p>分发审计落库（今天只 console.log，route.ts:122-124；schema 内 0 表）；<code>exeSha256</code> 存下来做多 sha 分歧；installId 粒度"只停分发"（今天只有账号级全断）；交付件溯源标记先实测 PS 是否保元数据。</p><div class="ev">判据：假 installId 打一次 ⇒ 库里出现该行；重启服务后限流仍生效；停一个测试 installId ⇒ 拿不到脚本但已授权执行不报错</div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">两天预算的最小组合（我的推荐）</h2>
+  <div class="split">
+    <div class="panel yes"><h3>投两天做什么</h3><ul>
+      <li>Day1：E0′（闸改到会咬人，含四条负控）＋ E0.5 起手（母本不再进 Web 包，两半判据同验）</li>
+      <li>Day2：E4 的落库 + DB 限流（分发审计、exeSha 分歧、内存 Map 换 DB 桶）</li>
+      <li>价值：第一次拿到"到底多少机器取走过明文"的真数，且后面每一步验收才有可信读数</li>
+    </ul></div>
+    <div class="panel no"><h3>明确放弃与后果</h3><ul>
+      <li>两天内不做 E1/E2/E3 ⇒ L1 的 97 KB 明文核心仍"装一次即得"，jsx 仍明文落地</li>
+      <li>不做的理由：E1/E2/E3 的判据全依赖 E0′ 那道闸与 E4 的读数，而它们现在不可信</li>
+      <li>顺带止损两个会误导决策的洞：假绿闸、裸限流（重启与多实例都清零）</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">不做（附理由，避免下轮重新发现）</h2>
+  <div class="scrollx"><table>
+    <thead><tr><th>不做</th><th>为什么</th><th>证据/口径</th></tr></thead>
+    <tbody>
+      <tr><td>盘上静态加密（旧 C 案）</td><td>对同权限攻击者增益≈0，且会被分发管道自动撤销</td><td class="mono">09-22 实测一条 reg.exe + 同派生 76 ms 还原（本轮未复跑，标未核实）</td></tr>
+      <tr><td>反调试 / 内存保护 / 自动重启助手</td><td>内存态还原是既定边界；Owner 已定"绝不自动重启或清 PS"</td><td class="mono">—</td></tr>
+      <tr><td>外置 findTranslation 的阈值表</td><td>实读 :718-768 是 exact→whitespace→linebreak→substring 纯结构逻辑，<b>没有可调权重</b></td><td class="mono">v1 把它列成候选＝没读代码的想当然</td></tr>
+      <tr><td>单做"激活后才给下载 URL"</td><td>仓内无 middleware.ts，public/downloads 静态可达，href 编译期常量直出 ⇒ 单做≈零收益</td><td class="mono">须连路由/签名 URL 一起改，并入 E0.5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2 class="sn">反思：这三轮我漏了什么、为什么</h2>
+  <div class="notes"><ol>
+    <li><b>把记忆当现状</b>：v1 断言 jsxbin"不在任何分支"，实际分支存在。原因：沿用 09-23 记忆没重跑。补法：否定式结论前必跑 <code>git branch -a</code> / <code>git log --all --grep</code>，命令与退出码进正文。</li>
+    <li><b>口径混用</b>：拿"jsx 占明文 0.59%"给 E3 排序，分母混了客户数据 24 MB。补法：拆逆向口径与隐私口径，各带分母定义。</li>
+    <li><b>引用未复跑的指针</b>：<code>server.js:2040</code> 系旧编号，真实 :2054/:2056。补法：正文只出现我自己跑过的行号。</li>
+    <li><b>探查范围只盯"用户机器上有什么"</b>：没查"我们主动分发什么"，于是 L-1（母本随 Web 包出门）到第三轮才挖到。补法：按<b>取得途径</b>枚举暴露面，不按磁盘形态。</li>
+    <li><b>未质疑测量工具就把读数当事实</b>："闸报 CLEAN"本身可能假绿。补法：任何验收先证测量工具会咬人（已落 E0′ 第一位）。</li>
+    <li><b>前提没覆盖所有代际</b>："服务端不重算"只对 v15 成立，v3 早就重算且全文已上行。补法：涉服务端化先列三条链（v3/v15/单语链）各自权威点。</li>
+    <li><b>度量法定义不严</b>：我自己量的"最长连续可读 129 KB @21.3 MB"其实是 Node 运行时内置源码。补法：度量锚定我方源标记。</li>
+    <li><b>浏览器面只查了可能过期的构建</b>：<code>.next/static</code> 内 <code>compileBindings</code> 0 命中，但那是旧构建 ⇒ <b>未核实</b>，写进 E1 验收前复扫。</li>
+  </ol></div>
+</section>
+
+<section>
+  <h2 class="sn">要你拍的五件</h2>
+  <div class="ask"><b>1｜先签哪个：</b>A. 两天最小组合（E0′+E0.5+E4）　B. 直上主线 E1　C. A 与 E1 并行。<b>我推荐 A</b>——E1/E2/E3 的判据全靠 E0′ 与 E4 的读数，而它们现在不可信。</div>
+  <div class="ask"><b>2｜对外说法：</b>服务端早就存着确认表全文，"设计文件不出本机"今天就是假的（LEGAL-1 已登记）。要不要顺手改口径？这属对外承诺，我不擅改。</div>
+  <div class="ask"><b>3｜Rust 那条成本墙：</b>实测 <code>bin/tygf-engine.exe</code>（43,252,736 B）0 处 JS 明文，逆向要反编译机器码——这才是"贵"的形状；但同一枚文件里 <code>photocraft</code>/<code>PhotoCraft</code> 品牌串<b>没除净</b>（偏移 35708723/35723686，neutralize-brand.patch 残留），既是成本墙也是第三方 fork 的合规面。要不要单独立项？</div>
+  <div class="ask"><b>4｜代码签名：</b>工程已写好（publish-local-assistant.cjs:61-102 真跑 Authenticode，release-preflight.cjs:136 会拦），现役件 <code>signatureStatus: UnsignedBeta</code>、signer 空 ⇒ 差的只是<b>证书预算</b>。买不买？</div>
+  <div class="ask"><b>5｜本会话已改的代码：</b>临时件删除修复与内部件隐藏都在 develop 树，<b>我没提交</b>；新用例要不要进 CI 也等你点头。</div>
+</section>
+
+<footer>过程与复跑：A 路对抗审查 10 条 findings（F-1 前提、F-2 层数、F-3 判据替换点、F-4 cwd 假绿、F-5 探针噪声、F-6 jsxbin 分支、F-7 E2 二分、F-8 口径、F-9 漏项、F-10 措辞）· B 路 7 条逐条复跑（仅"2044 行"与实测 2043 差 1）· C 路纵深 5 问（oracle 反制、jsxbin 上限、我们自己的出口、撤 assets 代价、两天组合）。全文 md 版同步存于同目录，已发飞书。</footer>
+</div>
+</body>
+</html>

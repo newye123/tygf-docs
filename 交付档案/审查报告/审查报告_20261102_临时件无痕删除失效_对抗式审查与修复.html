@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>临时件无痕删除失效 · 对抗式审查与修复</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --pad:clamp(18px,4vw,40px);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.72;font-size:16px}
+.wrap{max-width:1060px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(26px,4.4vw,40px);line-height:1.18;margin:8px 0 10px;font-weight:700}
+.standfirst{font-size:17px;color:var(--ink-2);margin:0;max-width:74ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:14px}
+section{margin:34px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 14px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}
+h3{font-size:16px;margin:18px 0 8px}
+p{margin:0 0 12px;max-width:78ch}
+code{font-family:var(--font-mono);font-size:.88em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--warn-soft);border:1px solid var(--line-strong);border-left:5px solid var(--warn);border-radius:var(--radius);padding:20px 22px;margin-bottom:8px}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--warn)}
+.verdictp{font-size:19px;font-weight:600;margin:8px 0 0;line-height:1.5}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.panel.yes{border-left:4px solid var(--ok)}
+.panel.no{border-left:4px solid var(--bad)}
+.panel h3{margin-top:0;font-size:14px;font-family:var(--font-mono);letter-spacing:.06em}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:18px}
+.panel li{margin-bottom:8px;font-size:15px;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat.k{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat.n{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1.2;margin-top:4px}
+.stat.bad.n{color:var(--bad)}
+.stat.ok.n{color:var(--ok)}
+.stat.warn.n{color:var(--warn)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid var(--line-strong);color:var(--muted)}
+.tag.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}
+.tag.bad{color:var(--bad);background:var(--bad-soft);border-color:transparent}
+.tag.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.scrollx{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--sunk);color:var(--muted);font-weight:600}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-size:12.5px;white-space:nowrap}
+.was{color:var(--bad);text-decoration:line-through}
+.now{color:var(--ok)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.card.top{border-left:4px solid var(--accent)}
+.card.loc{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.card p{font-size:14.5px;color:var(--ink-2);margin:0}
+.gates{display:grid;gap:10px}
+.gate{display:grid;grid-template-columns:190px 1fr auto;gap:14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 15px}
+.gate .lbl{font-family:var(--font-mono);font-size:12.5px;color:var(--ink)}
+.gate .ev{font-size:14px;color:var(--ink-2)}
+@media (max-width:700px){.gate{grid-template-columns:1fr;gap:4px}}
+.notes{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:16px 18px}
+.notes ul{margin:0;padding-left:20px}
+.notes li{font-size:14.5px;color:var(--ink-2);margin-bottom:9px}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">对抗式审查与修复 <span class="eyebrow sep">· Round 1/3 · 主审独立复跑</span></div>
+  <h1>临时件"无痕删除"从来没生效过</h1>
+  <p class="standfirst">31 MB、4,254 个明文临时件在这台机器上攒了 52 天。原因不是被 Photoshop 占用，是删除函数第一步就抛异常、后面的删除那步根本没轮到。代码已修，未出包。</p>
+  <div class="meta">base worktrees/develop @ 71529c7c · 取证 2026-11-02 17:0x–17:5x · 风险档 Medium · 现役助手 3.7.31</div>
+</div>
+
+<section>
+  <div class="verdict">
+    <div class="verdict.lb">Verdict</div>
+    <p class="verdictp">有条件放行 → 三条条件全部纳入本刀后已执行</p>
+    <p style="margin:10px 0 0;color:var(--ink-2);font-size:15px">① 覆盖改写用 <code>r+</code>（隐藏件实测可写，保住"防还原"原意，且不给每个文件起一次外部命令）；② 清扫必须自带 16 分钟年龄闸，否则"删除真生效"会反过来删掉同目录第二个助手实例正在跑的件；③ 自带回归用例 + 内置负控——这块此前零测试覆盖，改前改后都绿是假绿。</p>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">本机全量明文体检（59,491,198 B 可读明文，逐文件判明文/密文/二进制）</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat.k">临时残留 %TEMP%\multilang-studio</div><div class="stat.n bad">52.2%</div><div class="stat.k">31,047,381 B · 4,254 件</div></div>
+    <div class="stat"><div class="stat.k">.tygf_v15_journals</div><div class="stat.n bad">40.6%</div><div class="stat.k">24,180,459 B · 2,020 件（含客户稿名与原文/译文预览）</div></div>
+    <div class="stat"><div class="stat.k">logs 引擎日志</div><div class="stat.n warn">5.7%</div><div class="stat.k">3,419,275 B</div></div>
+    <div class="stat"><div class="stat.k">脚本缓存（含 stale）</div><div class="stat.n ok">0.59%</div><div class="stat.k">348,833 B · 5 个明文 jsx</div></div>
+  </div>
+  <p style="margin-top:14px">脚本明文只占 0.59% ⇒ <strong>"给 jsx 上锁"仍是第三档动作</strong>，主角是客户数据残留。另一面：准备缓存 9.66 MB、学习证据 4.97 MB、授权配置全是 <code>v3.</code> 密文 ⇒ 9 月那批加密整改是真生效了。</p>
+</section>
+
+<section>
+  <h2 class="sn">Findings（A=自跑命令或实读 file:line；C=条件性、待实测）</h2>
+  <div class="scrollx"><table>
+    <thead><tr><th>ID</th><th>严重度</th><th>落点</th><th>会怎么坏</th><th>证据</th><th>级</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">F1</td><td><span class="tag bad">Important·存量</span></td><td class="mono">server.js:441-452（旧）</td><td>隐藏件用 <code>'w'</code> 打开必抛 EPERM，三步共用一个 try ⇒ <code>unlink</code> 永不执行</td><td>覆盖写 FAIL EPERM／<code>openSync('r+')</code> OK／<code>unlinkSync</code> OK；残留 4,199 件符合旧正则跨 52 天</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F2</td><td><span class="tag bad">Important·存量</span></td><td class="mono">preparation-cache.js:12-13</td><td>仓内早已写下"隐藏件写前先 -H"的结论，server.js 是唯一没照做的写者</td><td>注释原文 + <code>:61-63</code>/<code>:73-76</code> 实现</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F3</td><td><span class="tag bad">Important·存量</span></td><td class="mono">旧清扫正则</td><td><code>_fp</code> 字体探针件天生不在清单 ⇒ 55 件/527,560 B 永不进清扫</td><td>本机实测计数</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F4</td><td><span class="tag warn">Important·本次会引入</span></td><td class="mono">tmpPath 无 pid</td><td>删除一旦真生效，同 TEMP_DIR 的第二实例（<code>TYGF_ASSISTANT_PORT</code>）在跑批的件会被开机清扫删掉，丢执行细节与回执证据</td><td>端口默认 49152；第二实例否则 EADDRINUSE；清扫无 busy 判断</td><td class="mono">A/C</td></tr>
+      <tr><td class="mono">F5</td><td><span class="tag warn">Nit·存量</span></td><td class="mono">server.js:2221 / :188-198</td><td>文案"可能被占用"是假线索；若逐件打 errno，开机 4,199 行会冲垮 2 MB 轮转的引擎日志</td><td>今日 360 条、轮转份 1,280 条；5 个原件独占打开全成功＝无句柄持有</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F6</td><td><span class="tag">Pre-existing</span></td><td class="mono">scripts/ contracts/ src/</td><td>这块零测试覆盖，改前改后 <code>test:contracts</code> 都绿</td><td>grep 唯一命中是把桩注入成 <code>rmSync</code>（smoke-pc-observation.mjs:155-156）</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F7</td><td><span class="tag">Pre-existing</span></td><td class="mono">worktrees/production@319bc138</td><td>生产树逐字节同形缺陷，本机现役 exe 实测 3.7.31 ⇒ 漏正在随生产跑</td><td><code>git log -1</code> + 两树函数原文比对</td><td class="mono">A</td></tr>
+      <tr><td class="mono">F8</td><td><span class="tag">未决</span></td><td class="mono">:6672-6674 / :6066-6072</td><td>readiness 的 <code>rmdirSync</code> 遇 <code>report/</code> 子目录必 ENOTEMPTY ⇒ 482 个空目录（内仅 13 文件/2,535 B，卫生问题非敞口）；preparation 早退路径不清理</td><td>目录数与内件实测；后者为子代理线索，未独立复跑</td><td class="mono">A/C</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2 class="sn">审查改掉了原方案什么</h2>
+  <div class="split">
+    <div class="panel no">
+      <h3>原方案（我第一版）</h3>
+      <ul>
+        <li><span class="was">隐藏属性让 unlink 失败</span> ⇒ 打算先 <code>attrib -H</code> 再删</li>
+        <li>只补 <code>_fp</code> 前缀 + 把 errno 打进日志</li>
+        <li>默认"删得掉"是纯收益，没考虑并发实例</li>
+        <li>把 readiness 目录当"482 个 0 字节明文泄漏件"报数</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>审查后（已落地）</h3>
+      <ul>
+        <li><span class="now">被挡住的是覆盖写</span> ⇒ 改用 <code>r+</code> 打开覆盖，隐藏件实测可写，不起外部命令</li>
+        <li>errno 聚合成一行 <code>[sweep]</code>，逐件告警只留在运行期</li>
+        <li>加 16 分钟年龄闸（压在最长在跑时限 15 分钟之上），并把"关掉闸门必须连年轻件一起删"做成负控</li>
+        <li>更正为 482 个目录、内 2,535 B；敞口结论收回，改判卫生问题</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">改动面</h2>
+  <div class="cards">
+    <div class="card top"><div class="loc">download/local-assistant/secure-delete.cjs（新）</div><p>单一真源：<code>secureDelete</code> 返回 <code>{ok,code}</code>；覆盖用 <code>r+</code>，失败不阻断删除；<code>sweepStaleTempFiles</code> 带前缀清单（含 <code>_fp</code>）、年龄闸与聚合读数。</p></div>
+    <div class="card top"><div class="loc">server.js:20 / :434-459</div><p>删掉本地旧删除函数，改接模块；开机清扫改走模块并只打一行 <code>[sweep] matched/deleted/skippedYoung/failed/firstErrorCode</code>。</p></div>
+    <div class="card top"><div class="loc">v15-runner.js:57</div><p><code>removePrivateEnvelope</code> 同形缺陷（覆盖失败即不删）改共用同一把删除。</p></div>
+    <div class="card top"><div class="loc">scripts/test-tmp-secure-delete.mjs + package.json</div><p>回归入口 <code>npm run test:tmp-secure-delete</code>：7 条断言、两条内置负控、一道"旧形态字符串不得复活"的反向守卫。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">验证门（真实读数）</h2>
+  <div class="gates">
+    <div class="gate"><div class="lbl">test:tmp-secure-delete</div><div class="ev">12 条断言通过 / 0 条平台跳过（win32；含"清单不越界、bin 与 exe 不许被隐藏"的边界断言）</div><div><span class="tag ok">rc=0</span></div></div>
+    <div class="gate"><div class="lbl">负控①·夹具真触发规则</div><div class="ev">旧形态复刻必须"删不掉隐藏件"，否则本用例失去意义</div><div><span class="tag ok">通过</span></div></div>
+    <div class="gate"><div class="lbl">负控②·保护来自闸门</div><div class="ev">年龄闸关掉后必须连年轻件一起删（matched=1 deleted=1）</div><div><span class="tag ok">通过</span></div></div>
+    <div class="gate"><div class="lbl">变异测试 ×4</div><div class="ev">覆盖失败不阻断删除改坏 ⇒ 红；年龄闸关掉 ⇒ 红；<code>hideAll</code> 退回多路径批处理 ⇒ 红；<code>hideTree</code> 改成不下探 ⇒ 红；全部还原 ⇒ 绿</div><div><span class="tag bad">rc=1 ×4</span> <span class="tag ok">rc=0</span></div></div>
+    <div class="gate"><div class="lbl">相邻链路未打破</div><div class="ev"><code>smoke-v15-runner</code>、<code>smoke-assistant-script-distribution</code> 及 <code>-module</code> 变体（跑的是共享树，含其他会话在飞改动，只作"没打破执行链与分发链"证据）</div><div><span class="tag ok">3 × rc=0</span></div></div>
+    <div class="gate"><div class="lbl">语法与静态</div><div class="ev"><code>node --check</code> ×4 全过；<code>npx eslint</code> 新文件 0 error（download/ 目录在 eslint ignore 内）</div><div><span class="tag ok">rc=0</span></div></div>
+    <div class="gate"><div class="lbl">上线后预期（只读预演，未删你任何文件）</div><div class="ev">首次启动可清 4,254 件 / 31,046,798 B，failed 预期 0</div><div><span class="tag warn">待真机</span></div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">第二刀 · 内部件此前根本没隐藏（Owner 追加令）</h2>
+  <p>只做到一半：执行期的一次性脚本带了隐藏位，<strong>装东西的文件夹一个都没隐藏</strong>。实测安装目录里 7 个内部落点属性只回 <code>Directory</code>，脚本缓存里 14 个明文 jsx 是 <code>14/14 Archive</code>——用户打开助手文件夹就看得见这排目录，点进去就是明文引擎脚本。Windows 不认点前缀，只认隐藏位（仓内 <code>runtime-paths.js:41-49</code> 早写过这条）。</p>
+  <div class="split">
+    <div class="panel no">
+      <h3>改前（真机属性实测）</h3>
+      <ul>
+        <li><code>.tygf_script_cache</code> · 14 件明文 jsx · 未隐藏 14</li>
+        <li><code>.tygf_v15_journals</code> 2,020 件（客户稿名与原文/译文预览）· 未隐藏 1,070</li>
+        <li><code>.tygf_preparation</code> 166 件、<code>logs</code> 3 件、<code>.tygf_failures</code> 5 件 · 目录本身全部可见</li>
+        <li>临时工作目录 <code>%TEMP%\multilang-studio</code> · 可见</li>
+      </ul>
+    </div>
+    <div class="panel yes">
+      <h3>改后（本机已实打，非只等出包）</h3>
+      <ul>
+        <li>7 个内部目录递归到每一层 + 临时工作目录 + 脚本缓存与 stale 残留：<strong>2,218 件未隐藏 = 0</strong></li>
+        <li>边界没越界：<code>bin</code>／<code>diagnostics</code>／<code>licenses</code> 的 15 件仍可见（那是给用户看的）</li>
+        <li>三处打点：模块加载（临时目录建好即打）、启动 listen（先隐藏再清扫）、脚本分片落盘当场打</li>
+        <li>成本实测 <code>attempted=13 dirs=7 failed=0</code>，1,076 ms，幂等每次启动</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:14px">两条 <code>attrib</code> 的坑是这轮实测出来的，都写进注释与断言：一条命令传多个路径时<strong>只有第一个生效</strong>，其余静默忽略（⇒ 逐路径起进程）；<code>+H /S /D 裸目录</code> 只盖目录不下探，<code>dir\*</code> 反过来只下探不盖目录（⇒ 两种形态都要来一次）。要还原：<code>attrib -H /S /D "&lt;目录&gt;\*"</code>。</p>
+</section>
+
+<section>
+  <h2 class="sn">要你拍的三件 + 覆盖缺口</h2>
+  <div class="notes"><ul>
+    <li><strong>提交与出包</strong>：代码只改在 develop 树，未提交、未出包；真机效果要等下一支助手包重启后看 <code>[sweep]</code> 行。同树有其他会话在飞的 hunk，我只提自己这 5 处。</li>
+    <li><strong>敞口最大的一刀没动</strong>：执行记录 24 MB 明文（客户稿名 + 原文/译文预览，无保留期，升级卸载一律不删）。建议套现成的机器绑定加密 + 设保留期，但断点恢复要吃它，必须真机验"中断后还能续跑"。</li>
+    <li><strong>新闸要不要进 CI</strong>：<code>test:tmp-secure-delete</code> 目前只是独立入口，没接进 <code>test:trust-chain</code>；按规矩新建闸等你点头。</li>
+    <li>覆盖缺口：未测其他用户机（新用户绝对量必然更小，但分发/落盘/清扫三段代码同一套，定性成立）；未跑 <code>npx tsc --noEmit</code>（本次零 TS 改动，且该门在本树被 tmp 污染known）；未出包未装未重启你的助手。</li>
+    <li>顺手量到、非本刀：台账 <code>PROD-RELEASE-94BDA516</code> 行的更新时间写成 <code>2026-11-01 00:0x</code>（掩码字符不是合法时间），投影被跳过；develop 的 <code>config/script-versions.json</code> 期望 Thin_Executor 为 <code>f985bfc1</code>，本机 manifest 现役是 <code>39a3e280</code> ⇒ 出包侧脚本与该配置不同步，留给属主核。飞书台账另有 20 行是你手改过的旧行，被对账闸拦下没动。</li>
+  </ul></div>
+</section>
+
+<footer>证据与账：AI_MEMORY/TASK_LOG.md（2026-11-02 17:5x 段）· AI_MEMORY/ISSUES.md #299 · AI_MEMORY/ledger.jsonl TMP-SECURE-DELETE-FIX（已投影，create=1）· 同文 md 版已发飞书</footer>
+</div>
+</body>
+</html>
