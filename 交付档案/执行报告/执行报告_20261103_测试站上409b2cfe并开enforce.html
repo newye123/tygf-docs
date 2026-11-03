@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>测试站上 409b2cfe 并开 enforce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.7;font-size:16px}
+.wrap{max-width:1000px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(23px,3.8vw,32px);margin:8px 0 10px;line-height:1.2}
+.standfirst{font-size:16.5px;color:var(--ink-2);margin:0;max-width:78ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
+section{margin:26px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}p{margin:0 0 11px;max-width:82ch}code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--ok-soft);border:1px solid var(--line-strong);border-left:5px solid var(--ok);border-radius:var(--radius);padding:18px 20px}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
+.verdictp{font-size:18px;font-weight:600;margin:6px 0 0}
+.steps{display:grid;gap:10px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 16px;font-size:14.5px;color:var(--ink-2)}
+.step b{color:var(--ink)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px}
+.panel.yes{border-left:4px solid var(--ok)}.panel.no{border-left:4px solid var(--bad)}.panel.warn{border-left:4px solid var(--warn)}
+.panel h3{margin:0 0 8px;font-size:14px;font-family:var(--font-mono)}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:18px}.panel li{font-size:14px;color:var(--ink-2);margin-bottom:7px}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style></head><body><div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">运维执行记录 <span class="eyebrow sep">· 测试站 · 生产未动</span></div>
+  <h1>结算裁决 enforce 已在测试站开着</h1>
+  <p class="standfirst">P0-P3 七笔现在跑在测试站上，分发审计表已建，开关已生效。你在测试站测的执行，从此走"服务端判定这单成没成"这条新链路。</p>
+  <div class="meta">2026-11-03 17:5x · origin/develop@9994e5dc（台账行）· 测试站 409b2cfe · 备份 deploy-20261103_174059</div>
+</div>
+
+<section>
+  <div class="verdict"><div class="verdict.lb">生效证明链</div>
+  <p class="verdictp">四项读数闭环：迁移落库 → 版本换过来 → 端点全 200 → 进程读到的就是那一份 .env</p>
+  <p style="margin:8px 0 0;color:var(--ink-2);font-size:14.5px">表 <code>AssistantScriptDistribution</code> ＋三个索引存在；<code>.deploy-commit</code>=<code>409b2cfe…</code>；<code>/</code>、<code>/api/runtime-provenance</code>、<code>/terms</code> 都 200；应用 exec cwd=<code>/var/www/tygf-test</code> 且启动参数含 <code>--env-file=.env</code>，<code>standalone/.env</code> 不存在 ⇒ 进程加载的就是我改的那份；同 cwd 下 <code>node --env-file=.env</code> 打印 <code>enforce</code>。</p></div>
+</section>
+
+<section>
+  <h2 class="sn">四步做了什么</h2>
+  <div class="steps">
+    <div class="step"><b>1 登记迁移批准台账</b>　按现有格式往 <code>deploy-test-release.sh</code> 的 Wave ledger 追加一行（<code>sha256=3f9bac02…</code> ＋ 4 个对象 ＋ 数量 4）。用脚本自带的漂移检查器复跑：登记前 <code>missing=1</code> 拒跑，登记后 <code>baseline=21 candidate=22 approved=11 missing=0</code> rc=0。仓侧 <code>9994e5dc</code> 已推 develop；服务器现役脚本同步同一行（设计上读"正在执行的这份"），改前留副本。</div>
+    <div class="step"><b>2 部署测试站</b>　候选包 54,624,525 B，SHA-256 与收据逐位一致；带 <code>TYGF_ALLOW_COMMITTED_MIGRATIONS=1</code> 跑完，日志 <code>deployed commit 409b2cfe</code>。</div>
+    <div class="step"><b>3 核迁移与身份</b>　表＋索引真落库；<code>.deploy-commit</code> 换过来；三个端点 200。</div>
+    <div class="step"><b>4 翻闸</b>　<code>.env</code> 追加 <code>SETTLEMENT_VERDICT_MODE=enforce</code>（先备份 <code>.env.before-enforce-20261103</code>），按服务名重启三个进程，健康 200。</div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">我的两次失败与它的性质</h2>
+  <div class="split">
+    <div class="panel warn"><h3>真因是我，不是构建</h3><ul>
+      <li>前两次在同一位置报 <code>failed candidate retained</code>；单独重跑 <code>npm run build</code> 是 <b>rc=0</b></li>
+      <li>改用 <code>setsid</code> 彻底脱管后<b>一次通过</b> ⇒ 崩的原因是<b>我的 ssh 会话被回收时把远端构建带崩</b></li>
+      <li>教训：远端长任务必须脱管启动，不能拿自己会话当壳</li>
+    </ul></div>
+    <div class="panel yes"><h3>但没伤到任何东西</h3><ul>
+      <li>脚本 fail-closed＋自动回滚：现役 <code>b0baff91</code> 全程健康 200</li>
+      <li>失败候选被保留（不删），回滚点在 <code>/var/www/tygf-test-backups/deploy-20261103_174059-…</code></li>
+      <li>我建的预检临时目录已清理</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">现在的边界</h2>
+  <div class="split">
+    <div class="panel yes"><h3>enforce 拦得住</h3><ul>
+      <li>只改 <code>status</code>、产物照发 PUBLISHED 的懒惰谎报：原来不扣钱，现在<b>全额扣</b>（上一轮实测）</li>
+      <li>诚实失败与中途失败：仍然不扣，<b>不会错扣用户</b></li>
+    </ul></div>
+    <div class="panel no"><h3>仍拦不住 / 还没验</h3><ul>
+      <li>把 <code>artifactDisposition</code> 一起改成 NONE 的彻底谎报——钱实质仍由那一个客户端枚举决定</li>
+      <li>要堵死需下一刀：服务端可验证的产物证据（写回带服务端签名 nonce）</li>
+      <li>真机三枚对照件未做：需助手侧接 P2 端点 ⇒ 要出 <b>3.7.32</b>，仍卡本机无 Inno Setup（ISCC）</li>
+      <li>生产站未动，且它现役件不含 P3 代码（<code>origin/main</code> 无 <code>409b2cfe</code>）；要在生产开这个闸得走完三段轨并单独请你点头</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>回滚：关闸＝还原 <code>/var/www/tygf-test/.env.before-enforce-20261103</code> 后 <code>pm2 restart tygf-test</code>；退版本＝用 <code>deploy-20261103_174059-409b2cfe9a8d</code> 内的 b0baff91 快照；撤台账＝<code>git revert 9994e5dc</code>（服务器侧有 <code>deploy-test-release.sh.before-ledger-20261103</code>）。同目录 md 版已发飞书。</footer>
+</div></body></html>

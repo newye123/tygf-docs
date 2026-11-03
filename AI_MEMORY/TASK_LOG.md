@@ -1,3 +1,13 @@
+## 2026-11-03 17:5x　测试站部署 409b2cfe 并开启结算裁决 enforce（THIN-CLIENT-DEPLOY 收口）
+
+- **触发**：Owner「开，按你的来」——批准开结算裁决灰度，并授权按我的建议处理前置（迁移批准台账登记＋重跑部署）。
+- **做了什么**：① 按现有格式把 `20261103120000_assistant_script_distribution` 追加进 `deploy/deploy-test-release.sh` 的 Wave ledger（`sha256(migration.sql)=3f9bac02…` ＋ 4 对象 ＋ 数量 4），仓侧提交 `9994e5dc` 推 `origin/develop`；服务器现役脚本同步同一行（漂移门设计上读"正在执行的这份"），改前留副本 `.before-ledger-20261103`。② 带 `TYGF_ALLOW_COMMITTED_MIGRATIONS=1` 部署候选包（54,624,525 B／SHA `7F64F8EA…` 与收据逐位一致）→ 日志 `deployed commit 409b2cfe`。③ 核迁移真落库：`AssistantScriptDistribution` 表＋3 索引在；`.deploy-commit`=409b2cfe；`/`、`/api/runtime-provenance`、`/terms` 均 200。④ 翻闸：`/var/www/tygf-test/.env` 追加 `SETTLEMENT_VERDICT_MODE=enforce`（备份 `.env.before-enforce-20261103`），按服务名重启 `tygf-test`/`-auth-mail`/`-smart-review`。
+- **生效证明链（不靠"应该生效"）**：应用 exec cwd=`/var/www/tygf-test` ＋ 启动参数含 `--env-file=.env` ＋ `standalone/.env` 不存在 ⇒ 进程加载的就是我改那份；同 cwd 下 `node --env-file=.env -p process.env.SETTLEMENT_VERDICT_MODE` = `enforce`；重启后健康 200。漂移检查器复跑：登记前 `missing=1`（拒跑），登记后 `baseline=21 candidate=22 approved=11 missing=0` rc=0。
+- **我造成的两次失败（诚实记账）**：前两次部署在同一位置报 `failed candidate retained …pre-switch`，我先怀疑构建坏，单独 `npm run build` 复跑得 rc=0 排除；真因＝**我的 ssh 会话被回收时把远端构建带崩**，改 `setsid` 彻底脱管后一次通过。现役站全程未受影响（fail-closed＋自动回滚，b0baff91 一直 200），只留下两个可回滚候选目录。**规矩：远端长任务必须脱管启动，不能拿自己会话当壳。**
+- **边界（别被"开了"误导）**：enforce 只拦住"只改 status、产物照发 PUBLISHED"的懒惰谎报（实测原来不扣→现在全额扣）；把 `artifactDisposition` 一起改 NONE 的彻底谎报**仍不扣**（钱实质由该客户端枚举单点决定，见 `settlement-adapter.ts:63-64`）——堵死需下一刀"服务端可验证产物证据（写回带服务端签名 nonce）"。真机三枚对照件未做，需助手接 P2 端点 ⇒ 要出 3.7.32，仍卡本机无 Inno Setup(ISCC)。生产未动（`origin/main` 不含 409b2cfe），生产开闸需另走三段轨＋Owner 点头。
+- **交付**：`交付档案/执行报告/执行报告_20261103_测试站上409b2cfe并开enforce.md` 与同名 `.html`（已发飞书）；台账 `THIN-CLIENT-DEPLOY` 追加收口行；`AI_MEMORY/ISSUES.md` #301 追加"enforce 已开测试站、生产未动、剩余变体未堵"。
+- **回滚**：关闸＝还原 `.env.before-enforce-20261103` 后 `pm2 restart tygf-test`；退版本＝`/var/www/tygf-test-backups/deploy-20261103_174059-409b2cfe9a8d` 快照；撤台账＝`git revert 9994e5dc`。
+
 ## 2026-11-03 16:0x　P3 灰度覆盖面实测：拦住懒惰谎报、绕得住彻底谎报（探针落盘，未翻闸未改码）
 
 - **触发**：Owner「来吧」——在我给的最低授权档内只做零风险可逆的一段：把"开 enforce 会怎样"用钱的路径实测出来，供他拍灰度。
