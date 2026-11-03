@@ -1,3 +1,14 @@
+## 2026-11-03 19:5x　扫描进行中可实时移除 PSD：队列身份由数组下标改成稿路径（代码 50047525 已推 develop，未部署）
+
+- **触发**：Owner「使用对抗式审查看看，然后多个设计稿工作台无法实时移除 psd 文件，得全部扫描完才能移除，继续使用对抗式审查一起看看怎么解决」。
+- **根因（不是那句提示）**：扫描队列、结果回写与轮询守卫全部按**数组下标**认稿——`MultiScanQueueStep{index}`、`entries[step.index]`、`i === index` 写入、`multiScanningIdx:number`。中途删一条后面全体前移一位 ⇒ 结果写到别的稿上；那条"列表已变化就停"的防御只判越界，删中间一条**拦不住**（已做成用例＋负控）。于是四处入口（移除／撤销移除／恢复同名稿／同名只留一份）被同一道 `stageScanBusy` 挡死。
+- **审查推翻了我自己的第一版方案**：原打算"移除在飞稿时向助手发取消"。三条实测把它打死——起扫闸门只判 scanning|hashing，cancelled 照样放行（`server.js:5782-5791`）；取消只写标志，生效点仅两处协作检查点（`:5925`、`:6015`），不杀 PS（`:2122`/`:2124`）；双跑共用模块级单槽，第二稿起扫会删第一稿正用的目录（`:5887`）、第一稿收尾无条件清 busy（`:6117`/`:6140`）。⇒ 本刀**不发取消**，被移除那稿的迟到结果在回写处落空，助手侧真取消另开一刀（登记 #303）。
+- **改了什么**：① 身份键统一 masterPath（`psd-selection.ts` 队列步与 `removeMultiPsdEntry`、`design-file-card.tsx` 的 `multiScanningPath`/`updateMultiEntry`/队列每泵用"计划∩当前列表"重算 `total/done/第 x/n`、卡住判据改读列表现值）；② 放开上述四处列表门，保留五处整批级门（换文件夹／重扫／页内选文件夹／换根／同名自动折叠），`stageScanBusy` 命中 10→6 由守卫钉住；③ 顺带修同族三处：「添加 PSD」绕过 `addMultiPsdEntry` 去重、起扫靠 `setTimeout(150)` 读渲染快照（**这条入口自 2026-10 起从未真正扫成功过**，旧写法抛 TypeError 被吞成内部文案）改由提交完成后的 effect 起扫、撤销移除会把 `state:'scanning'` 僵尸行加回（入池前归一 `stale`）；④ 文案去掉"队列/错位"这类内部词，移除在飞稿那句改成只说现象（"正在处理的这一份会自己结束，结果不计入本批，后面几份接着排"）。
+- **验证（真实读数）**：`npx vitest run` 49 文件／577 条 rc=0，含新增永久用例 `tests/unit/multi-scan-queue-removal.test.tsx` 4 条（移除中间稿不串稿／移除在飞稿结果不计且队列续跑／重复路径进不来／新加那稿真被起扫）；`test:batch-workbench-guards` 87 条（含 6 条反向锁死）、`test:batch-workbench-logic` 113 条（含按下标认稿必造成串稿与漏扫两条负控）、`smoke-preparation-scan-contract`、`test:workbench-scope` 54、`test:step1-mock-contract`、`smoke-user-visible-copy` 49、`test:workbench-batch-groups`、`test:table-grouping`、`i18n:guard` 词典 1616/1616 全 rc=0；`npx eslint` 0 error／60 warning＝改前基线；`npx tsc --noEmit` 仅剩 1 条与本改动无关的陈旧 Prisma 客户端错（`route.ts:130`）。变异复验六次均 rc=1 后还原复绿：塞回移除门／塞回 `entries[step.index]`／回写改按位置／拆掉回写路径比对／起扫改回读渲染快照／去掉停止提示错误码。
+- **未验证（如实）**：界面效果未在真实浏览器＋真机 Photoshop 实拍（需 Owner 登录态＋本机助手＋真稿）；助手侧"取消后双跑"的损坏只静态判定，无真机复现。
+- **交付与推送**：代码 `50047525` 已推 `origin/develop`（`git ls-remote` 核过＝远端同点），**未部署、生产未动**；报告 `交付档案/执行报告/执行报告_20261103_扫描中实时移除PSD_对抗式审查与修复.md`（同名 .html），飞书已发；合同文档 `changes/active/20261017-scan-queue.md` 加 §6 增补并在 §2/§4 挂指针；ISSUES 新增 **#303**（助手侧取消不安全＋409 冤枉下一稿＋移除≠数据消失＋列表写入两个口）。
+- **待 Owner 拍**：① 这一刀要不要现在上测试站；② 助手侧真取消开不开一刀（需版本门＋真机，属合同变更纪律）；③ 移出去的稿本机仍留观测缓存，对外说法是否要补一句。
+
 ## 2026-11-03 18:4x　结算证据可验证性对抗审查＋签名兜底密钥治理（#302，代码 f196af1f 已推 develop）
 
 - **触发**：Owner「使用对抗式审查后执行」。目标＝我上一轮提的"下一刀：写回带服务端签名 nonce"能不能真堵住变体④（回执四字段一起归零 ⇒ 白嫖）。

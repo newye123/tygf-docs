@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>扫描中实时移除设计稿 · 根因与修复</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.7;font-size:16px}
+.wrap{max-width:1000px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(23px,3.8vw,32px);margin:8px 0 10px;line-height:1.2}
+.standfirst{font-size:16.5px;color:var(--ink-2);margin:0;max-width:78ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
+section{margin:26px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}p{margin:0 0 11px;max-width:82ch}code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--bad-soft);border:1px solid var(--line-strong);border-left:5px solid var(--bad);border-radius:var(--radius);padding:18px 20px}
+.verdict.ok{background:var(--ok-soft);border-left-color:var(--ok)}.verdict.ok .verdict.lb{color:var(--ok)}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdictp{font-size:18px;font-weight:600;margin:6px 0 0;line-height:1.5}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px}
+.panel.yes{border-left:4px solid var(--ok)}.panel.no{border-left:4px solid var(--bad)}.panel.warn{border-left:4px solid var(--warn)}
+.panel h3{margin:0 0 8px;font-size:14px;font-family:var(--font-mono)}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:18px}.panel li{font-size:14px;color:var(--ink-2);margin-bottom:7px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media (max-width:760px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.stat .n{font-family:var(--font-display);font-size:22px;font-weight:700}
+.stat .k{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.gates{display:grid;gap:9px}
+.gate{display:grid;grid-template-columns:210px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 15px;font-size:14px}
+.gate .l{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
+.gate .r{color:var(--ink-2)}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:13px 17px;margin-bottom:10px;font-size:14.5px}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px}
+.notes ul{margin:0;padding-left:18px}.notes li{font-size:14.5px;color:var(--ink-2);margin-bottom:8px}
+.callout{background:var(--accent-soft);border:1px solid var(--line-strong);border-radius:var(--radius);padding:14px 18px;font-size:15px}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style></head><body><div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">对抗审查两轮 <span class="eyebrow sep">· 我自己那版方案被打回 <span class="eyebrow sep">· 六次变异复跑</span></span></div>
+  <h1>扫到一半想撤掉一份稿，过去做不到 —— 根因是队列用「第几条」认稿</h1>
+  <p class="standfirst">删一条，后面全体前移一位，结果就写到别的稿上，所以四处入口都被一句"等这一轮结束"挡死。这一刀把队列、回写、进度全部改成用<b>这份稿的路径</b>认身份，然后放开移除。纯前端，已推 develop，未上站、未动生产。</p>
+  <div class="meta">基线 origin/develop@f196af1f · 本刀 50047525（已推 origin/develop）· 树 worktrees/remove-draft-scan-20261103 · 零迁移 零助手包</div>
+</div>
+
+<section>
+  <div class="verdict ok"><div class="verdict.lb">现在的行为</div>
+  <p class="verdictp">扫描途中点「移除」立刻生效；撤销移除、同名稿取舍与恢复同样放行。正在处理的那一份会自己跑完，结果不计入本批，后面几份接着排。</p>
+  <p style="margin:8px 0 0;color:var(--ink-2);font-size:14.5px">仍保留的门是换文件夹、重新扫描、换根、同名自动折叠 —— 它们把整批改掉，必须等这一轮；<code>stageScanBusy</code> 命中数 10 → 6，由守卫钉住（<code>workbench-view.tsx:2303</code>）。</p></div>
+</section>
+
+<section>
+  <h2 class="sn">根因链条（改前的三处，全部按下标）</h2>
+  <div class="gates">
+    <div class="gate"><div class="l">psd-selection.ts:165-170</div><div class="r">队列步骤只存 <code>index</code> ⇒ 计划里没有"这是哪份稿"的身份，只有一个位置</div></div>
+    <div class="gate"><div class="l">design-file-card.tsx:607-613</div><div class="r">结果回写 <code>entries.map((e,i) =&gt; i === index ? 写入 : e)</code> ⇒ 中途删一条就写进邻居</div></div>
+    <div class="gate"><div class="l">design-file-card.tsx:773-779</div><div class="r">那条"列表已变化就停"的防御<b>只判下标越界</b>：删中间一条时下标仍有效，指到的是别的稿 —— 拦不住</div></div>
+  </div>
+  <p style="margin-top:12px">这条判断不是推理：已做成可复跑用例并带负控（<code>scripts/smoke-batch-workbench-logic.mjs</code> [J] 段）——按下标认稿时，计划里"第 2 步"实际落到别的稿（串稿），"第 3 步"越界被静默漏扫。</p>
+</section>
+
+<section>
+  <h2 class="sn">审查把我自己的方案打回了</h2>
+  <div class="split">
+    <div class="panel no"><h3>被打回（本轮不做）</h3><ul>
+      <li><b>移除时向助手发取消</b>：起扫闸门只拦 scanning/hashing，标成 cancelled <b>照样放行下一稿</b>（<code>server.js:5782-5791</code>）</li>
+      <li>取消只在两处协作检查点生效（<code>:5925</code> 哈希后、<code>:6015</code> PS 返回后），正在跑 Photoshop 那一段不看它，也不杀 PS（<code>:2122</code>／<code>:2124</code> 只打自家脚本进程）</li>
+      <li>双跑共用模块级单槽：第二稿起扫会删掉第一稿正在用的目录（<code>:5887</code>），第一稿收尾又无条件清 busy（<code>:6117</code>、<code>:6140</code>）</li>
+    </ul></div>
+    <div class="panel yes"><h3>改成的做法</h3><ul>
+      <li><b>不发取消</b>：被移除那稿的迟到结果在回写处落空，队列继续；界面只说现象，不承诺"立刻停止"</li>
+      <li>进度分母每泵重算＝计划 ∩ 当前列表；顺序按当前列表排 ⇒「第 x/n」等于看得见的那一行</li>
+      <li>卡住与否读列表现值（<code>next.state</code>），不再用计划时刻的快照</li>
+      <li>助手侧真取消另开一刀：需版本门＋真机验证，登记 <b>#303</b>，不在本刀伪装完成</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">顺带挖出的同族缺陷（有一条是老毛病）</h2>
+  <div class="notes"><ul>
+    <li><b>「添加 PSD」这条入口从 2026-10 起就没真正扫成功过。</b>它加完稿用 150 毫秒定时器起扫，而起扫函数读的是<b>那一刻渲染时的旧列表</b>，刚加那条查不到：旧写法抛 TypeError 被吞成一句内部文案，我改成路径认稿后变成"什么都不发生、那条永远挂着扫描中"。现在改由列表提交完成后的 effect 起扫，不再猜时长，用例第④条钉住。</li>
+    <li><b>「添加 PSD」绕过查重</b>：直接往列表 push，同一份稿能被选进两次。路径成为身份键后一条路径只能对应一份稿，第二条永远拿不到自己的结果 ⇒ 统一走查重函数，重复选会明说"这份稿已经在批次里了"。</li>
+    <li><b>撤销移除会造僵尸行</b>：扫描中移除正在跑的那稿，再撤销，就把 <code>state:'scanning'</code> 的快照原样加回，成为"扫描中但没有扫描在跑"的一行 ⇒ 入池前先归一成 <code>stale</code>。</li>
+  </ul></div>
+</section>
+
+<section>
+  <h2 class="sn">验证读数</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">577</div><div class="k">vitest 全绿 49 文件</div></div>
+    <div class="stat"><div class="n">87 + 113</div><div class="k">两道门（含反向锁死）</div></div>
+    <div class="stat"><div class="n">6 / 6</div><div class="k">变异转红后还原复绿</div></div>
+    <div class="stat"><div class="n">0</div><div class="k">eslint error（60 warning＝基线）</div></div>
+  </div>
+  <div class="gates" style="margin-top:12px">
+    <div class="gate"><div class="l">新永久用例</div><div class="r"><code>tests/unit/multi-scan-queue-removal.test.tsx</code> 4 条：移除中间稿不串稿／移除在飞稿结果不计且队列续跑／重复路径进不来／新加那稿真被起扫</div></div>
+    <div class="gate"><div class="l">相邻回归</div><div class="r"><code>smoke-preparation-scan-contract</code>、<code>test:workbench-scope</code> 54、<code>test:step1-mock-contract</code> 113 判据、<code>smoke-user-visible-copy</code> 49、<code>test:workbench-batch-groups</code>、<code>test:table-grouping</code>、<code>i18n:guard</code> 1616/1616 全 rc=0</div></div>
+    <div class="gate"><div class="l">类型</div><div class="r"><code>npx tsc --noEmit</code> 仅剩 1 条与本改动无关的陈旧 Prisma 客户端报错（<code>route.ts:130</code>，本机生成客户端未随 schema 重建）</div></div>
+    <div class="gate"><div class="l">六次变异</div><div class="r">塞回移除门／塞回 <code>entries[step.index]</code>／回写改按位置／拆掉回写路径比对／起扫改回读渲染快照／去掉停止提示的错误码 —— 均 rc=1，还原复绿</div></div>
+    <div class="gate"><div class="l">没跑的</div><div class="r">真实浏览器＋真机 Photoshop 的界面实拍（需 Owner 登录态与真稿）；助手侧"取消后双跑"的损坏只有静态判定，无真机复现（#303 已标未核实）</div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">待你拍</h2>
+  <div class="ask"><b>要不要现在上测试站</b>：纯前端、零迁移，上去你就能试"扫描中移除"的手感。生产按三段轨走，需你点头。</div>
+  <div class="ask"><b>助手侧真取消开不开一刀</b>：#303 主条。要抬助手最低版本并真机验证，属合同变更纪律（四层同步＋同批 fixture）。</div>
+  <div class="ask"><b>对外说法</b>：移出去的稿在本机助手缓存里仍留有观测，重新加回会秒命中。界面现在说"结果不计入本批"，要不要再加一句"素材记录仍留在本机"。</div>
+</section>
+
+<section>
+  <div class="callout">回滚：<code>git revert</code> 本笔即可。改动全在 <code>src/</code> 前端＋测试＋文案镜像＋一份合同文档增补，零数据库迁移、零服务端改动、零助手包。</div>
+</section>
+
+<footer>本轮取证：两路并行审查（正确性/并发、对外说法/回归面）＋主审独立复读 server.js 起扫闸门、取消路由、两处协作检查点与收尾清理；所有行号由主审自己复跑。台账 #303 · TASK_LOG 2026-11-03 · ledger SETTLEMENT 之后新增一行。</footer>
+</div></body></html>
