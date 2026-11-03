@@ -1,3 +1,14 @@
+## 2026-11-03 16:0x　P3 灰度覆盖面实测：拦住懒惰谎报、绕得住彻底谎报（探针落盘，未翻闸未改码）
+
+- **触发**：Owner「来吧」——在我给的最低授权档内只做零风险可逆的一段：把"开 enforce 会怎样"用钱的路径实测出来，供他拍灰度。
+- **做法**：另开干净 worktree @ `origin/develop@c0a5fbf5`（含别的会话的 P0-P3），用**真** `settlement-adapter.ts`（P3 裁决已接线 :7,22-34）＋**真** `settlement-receipt.ts:62` 校验器，六枚回执形状在 `SETTLEMENT_VERDICT_MODE=off/enforce` 下各过一遍，再用 `photoshop-billing.ts:650-657` 的 `resultUsable` 表达式逐字算钱。探针落盘 `交付档案/执行方案/附件_20261103_P3灰度覆盖面探针.mjs`（上轮"脚本用完即删导致数字无出处"的教训已改）。
+- **读数**：② 只改 status、产物照发 PUBLISHED ⇒ off 不扣 / **enforce 全额扣（拦住）**；③ 连 `artifactDisposition` 改成 NONE ⇒ 两模式都不扣（**绕得住**）；④ 抹掉一切证据 ⇒ 都不扣（绕得住）；⑤ 中途真失败、⑥ 诚实失败·隔离留档带指纹 ⇒ 两模式都释放（**不会错扣诚实用户**）；① 真成功两模式都全额扣。
+- **机制（精确到字段）**：`settlement-adapter.ts:63` `exportedFiles = artifactDisposition==='PUBLISHED'?1:0`、`:64 errorCount = usable?0:…`，`photoshop-billing.ts:650-657` 要求 `exportedFiles>0 && errorCount===0` ⇒ 钱的硬门实质是客户端那一个枚举；裁决 `usable` 只在"PUBLISHED 却判不可用"时起作用，而该组合按裁决规则不可能出现。⇒ **#301 只关掉一半**，剩余需下一刀的服务端可验证产物证据（写回带服务端签名 nonce），`settlement-verdict.ts:13-14` 自认未做。
+- **自我纠正**：我最初推断"⑥ 诚实失败会被 enforce 错扣全额"，把钱公式跑完后**推翻**（QUARANTINED ⇒ exportedFiles=0 ⇒ 仍释放）。结论以跑出来的为准。
+- **交付**：`交付档案/执行报告/执行报告_20261103_P3灰度覆盖面实测.md` 与同名 `.html`（已发飞书）；`AI_MEMORY/ISSUES.md` #301 追加覆盖面实测段；台账新增 `P3-ENFORCE-SCOPE`（等您定）。
+- **验证**：官方夹具 `test:settlement-verdict` 复跑 rc=0（8 条）；探针 rc=0。本轮未翻开关、未改代码、未提交业务代码、未部署；临时 worktree 与分支已清理。
+- **待拍**：① enforce 开不开（我推荐开·先白名单，实测零误伤）；② 下一刀"服务端可验证产物证据"排期（不开则 ③④ 永堵不住）；③ 把 ③④ 写成"必须红"的夹具，防止有人把 P3 当 #301 已结案；④ 真机三枚对照件那一半仍等 3.7.32，而 3.7.32 卡 `ASSISTANT-3732-BLOCKED` ①（本机无 Inno Setup/ISCC）——需要你给一句装哪台机。
+
 ## 2026-11-03 11:1x　薄客户端收口：7 笔进 develop、出包全绿，部署停在迁移门（THIN-CLIENT-DEPLOY）
 
 - develop 推到 409b2cfe（b0baff91..409b2cfe，非 force），ls-remote 实读一致。

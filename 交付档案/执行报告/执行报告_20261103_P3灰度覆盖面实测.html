@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P3 enforce 覆盖面实测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.72;font-size:16px}
+.wrap{max-width:1000px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:24px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(24px,4vw,34px);line-height:1.2;margin:8px 0 10px}
+.standfirst{font-size:16.5px;color:var(--ink-2);margin:0;max-width:78ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
+section{margin:28px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}p{margin:0 0 12px;max-width:82ch}code{font-family:var(--font-mono);font-size:.87em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--accent-soft);border:1px solid var(--line-strong);border-left:5px solid var(--accent);border-radius:var(--radius);padding:18px 20px}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.verdictp{font-size:18px;font-weight:600;margin:6px 0 0;line-height:1.5}
+.scrollx{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:left}
+thead th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--sunk);color:var(--muted)}
+tbody tr:last-child td{border-bottom:none}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid var(--line-strong);color:var(--muted);white-space:nowrap}
+.tag.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}.tag.bad{color:var(--bad);background:var(--bad-soft);border-color:transparent}.tag.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px}
+.panel.yes{border-left:4px solid var(--ok)}.panel.no{border-left:4px solid var(--bad)}
+.panel h3{margin:0 0 8px;font-size:14px;font-family:var(--font-mono)}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:18px}.panel li{font-size:14.5px;color:var(--ink-2);margin-bottom:7px}
+.notes{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:15px 18px}
+.notes ol{margin:0;padding-left:22px}.notes li{font-size:14.5px;color:var(--ink-2);margin-bottom:9px}
+footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">隔离实测 <span class="eyebrow sep">· 真适配器＋真校验器＋钱公式逐字复算</span></div>
+  <h1>P3 灰度打开后，到底拦住什么</h1>
+  <p class="standfirst">开灰度是纯收益（不伤诚实路径），但它只拦住"最省事的谎报"；把 <code>artifactDisposition</code> 一起改掉，绕过成本＝一个字段。</p>
+  <div class="meta">基线 origin/develop@c0a5fbf5（含 P3 409b2cfe 与我的两刀）· 探针 <code>交付档案/执行方案/附件_20261103_P3灰度覆盖面探针.mjs</code> · 未翻开关未改代码未部署</div>
+</div>
+
+<section>
+  <div class="verdict"><div class="verdict.lb">读表</div>
+  <div class="scrollx" style="margin-top:12px"><table>
+    <thead><tr><th>回执形状</th><th>off（现状）</th><th>enforce</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td>① 真成功</td><td>全额扣</td><td>全额扣</td><td><span class="tag">无变化</span></td></tr>
+      <tr><td>② 只改 status，产物照发 PUBLISHED</td><td>不扣（释放）</td><td>全额扣</td><td><span class="tag ok">P3 拦住</span></td></tr>
+      <tr><td>③ 改 status ＋ 改成 NONE（指纹还在）</td><td>不扣</td><td>不扣</td><td><span class="tag bad">绕得住</span></td></tr>
+      <tr><td>④ 抹掉一切证据（NONE＋无指纹＋完成 0）</td><td>不扣</td><td>不扣</td><td><span class="tag bad">绕得住</span></td></tr>
+      <tr><td>⑤ 中途真失败（完成 20，隔离无指纹）</td><td>不扣</td><td>不扣</td><td><span class="tag">没变坏</span></td></tr>
+      <tr><td>⑥ 诚实失败·隔离留档带指纹</td><td>不扣</td><td>不扣</td><td><span class="tag ok">不会错扣</span></td></tr>
+    </tbody>
+  </table></div></div>
+</section>
+
+<section>
+  <h2 class="sn">为什么 ③④ 绕得住（精确到字段）</h2>
+  <div class="split">
+    <div class="panel no"><h3>钱其实只认一个枚举</h3><ul>
+      <li><code>settlement-adapter.ts:63</code> ⇒ <code>exportedFiles = artifactDisposition === 'PUBLISHED' ? 1 : 0</code></li>
+      <li><code>photoshop-billing.ts:650-657</code> ⇒ 必须 <code>exportedFiles &gt; 0 &amp;&amp; errorCount === 0</code></li>
+      <li>而 <code>errorCount</code> 本身又由 <code>usable</code> 推（adapter <code>:64</code>）⇒ 循环里唯一的硬门是那个客户端枚举</li>
+      <li>裁决的 <code>usable</code> 只在"PUBLISHED 却被判不可用"时才起作用，而按裁决规则这组合不会出现 ⇒ 它改变的是 ②，不是 ③④</li>
+    </ul></div>
+    <div class="panel yes"><h3>但也不会误伤</h3><ul>
+      <li>⑥ 诚实失败：裁决给了 <code>usable=true</code>，可 <code>exportedFiles=0</code> ⇒ <b>仍然不扣</b>，没把真失败判成该付钱</li>
+      <li>⑤ 中途失败同样保持"释放"</li>
+      <li>⇒ 开 enforce 对诚实用户是<b>零风险</b>，这是"可以先开"的依据</li>
+      <li>（我原本担心 ⑥ 会被错扣，把钱公式跑完才否掉——结论以跑出来的为准，不以我推的为准）</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">建议（我不擅自翻闸）</h2>
+  <div class="notes"><ol>
+    <li><b>enforce 可以开，先白名单</b>：拦住最省事的那类白嫖（②），不伤诚实路径（⑤⑥）。</li>
+    <li><b>下一刀必须补"服务端可验证的产物证据"</b>（写回带服务端签名 nonce，回执含其摘要）——否则 ③④ 永远开着。<code>settlement-verdict.ts:13-14</code> 自己已写明，但请把优先级提到紧接着 ②之后，别让"开了灰度"被当成"堵了 #301"。</li>
+    <li><b>给 P3 补一条必须红的夹具</b>：把 ③④"改一个枚举就绕过"写成显式断言钉住现状。现有 8 条夹具测的是裁决函数，测不到钱——这次是走了钱的路径才看出差异。</li>
+    <li>真机三枚对照件那一半：当前只能验到 ② 类，验不到 ③④；别把它记成已完成。</li>
+  </ol></div>
+</section>
+
+<footer>本轮纯只读与隔离实测：未翻任何开关、未改代码、未提交、未部署。六枚形状为合成且能过 <code>settlement-receipt.ts:62</code> 的校验器；真机那一半仍等 3.7.32，而 3.7.32 卡在 <code>ASSISTANT-3732-BLOCKED</code> ①（本机无 Inno Setup/ISCC）。关联：ISSUES #300 #301 · 台账 THIN-CLIENT-P3。</footer>
+</div></body></html>
