@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>薄客户端 P0 开工报告 · 2026-11-03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;
+  --line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;
+  --ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;
+  --muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;
+  --ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding:clamp(28px,5vw,56px) clamp(18px,4vw,40px);display:flex;flex-direction:column;gap:clamp(32px,5vw,52px)}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.75rem,4.4vw,2.35rem);line-height:1.25;margin:10px 0 0;text-wrap:balance}
+.standfirst{margin:10px 0 0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+.verdict{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--radius);background:var(--surface)}
+.verdict[data-tone="warn"]{border-left-color:var(--warn)}
+.verdict b{font-family:var(--font-display)}
+.verdict .tag{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok);white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.stat .n{font-family:var(--font-display);font-weight:700;font-size:1.35rem;line-height:1.2}
+.stat .k{font-size:.78rem;color:var(--muted);margin-top:2px}
+h2{font-family:var(--font-display);font-size:1.18rem;margin:0 0 10px;letter-spacing:-.01em}
+h3{font-family:var(--font-display);font-size:1rem;margin:18px 0 6px}
+p{margin:0 0 10px}
+ul{margin:0 0 10px;padding-left:1.15em}
+li{margin:4px 0}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);padding:1px 5px;border-radius:5px}
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-weight:600;font-size:.84rem;color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+.callout{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;background:var(--surface)}
+.callout[data-tone="warn"]{background:var(--warn-soft);border-color:#e3c98d}
+.callout[data-tone="ok"]{background:var(--ok-soft);border-color:#b7ddc9}
+.callout[data-tone="bad"]{background:var(--bad-soft);border-color:#e8b9b3}
+.callout b{font-family:var(--font-display)}
+footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.84rem}
+.pill{font-family:var(--font-mono);font-size:.72rem;padding:1px 7px;border-radius:999px;background:var(--sunk);color:var(--ink-2)}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header>
+    <div class="eyebrow"><span>THIN CLIENT / P0</span><span>·</span><span>2026-11-03</span><span>·</span><span>worktrees/thin-client-20261103</span></div>
+    <h1>薄客户端 P0 开工：三只「眼睛」装上了，钱的口子还在</h1>
+    <p class="standfirst">范围＝《薄客户端路线 v3 定稿》P0（1–2 天）＋ P1 第一步。每一件都有真实退出码；没有推动生产、开关和计费。</p>
+  </header>
+
+  <section class="verdict" data-tone="warn">
+    <span class="tag">VERDICT</span>
+    <div><b>P0 已落地并验证；P1 只做了自动清点。</b>方案里那条「回执谎报失败 → 全额释放」的白嫖口子<b>今天仍然存在</b>，堵它的是 P3（单向门，等你点头）。P0 只是让「谁换了 exe、谁在刷分发」从此有据可查。</div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="n">2</div><div class="k">本机提交（未推远端）</div></div>
+    <div class="stat"><div class="n">4</div><div class="k">代码点 + 1 张表 + 1 枚新测试</div></div>
+    <div class="stat"><div class="n">rc=1</div><div class="k">红控：10-25 引擎仍能被抓到泄露</div></div>
+    <div class="stat"><div class="n">170</div><div class="k">P1 待定版函数名（0 已定版）</div></div>
+  </section>
+
+  <section>
+    <h2>① 反破解探针：先修「假绿」</h2>
+    <p>旧版按 <code>process.cwd()</code> 找脚本目录。换到别的目录跑（自动化里很常见），探针集静默变成空集，于是<b>任何 exe 都判「干净」</b>。</p>
+    <ul>
+      <li>探针改按脚本自身位置上溯仓库根；</li>
+      <li>探针数达不到下限（jsx ≥ 4、注释 ≥ 3）直接 <code>exit 1</code>，不再给「空集合=干净」；</li>
+      <li>新增 <code>--self-test</code>：空探针集必须被拒、植入泄露必须被抓、干净文件不得误报；</li>
+      <li><code>generated/*.js</code> 探针默认<b>只点名不拦</b>：这些明文资产今天确实还在包里（P5 才撤），现在变红等于让出包链停摆。每次出包都会打印 <code>DEBT</code> 行，P5 之后加 <code>--strict</code> 变硬门。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>② 出包与发布接线</h2>
+    <table>
+      <thead><tr><th>位置</th><th>行为</th></tr></thead>
+      <tbody>
+        <tr><td><code>package-release.cjs</code></td><td>本树有 <code>build/dist/图译工坊引擎.exe</code> 就必须过探针；没有则打印跳过原因，不写「已扫干净」</td></tr>
+        <tr><td><code>publish-local-assistant.cjs</code></td><td>发安装包前扫内层引擎，不过即拒发；引擎不在本机则明确告警</td></tr>
+      </tbody>
+    </table>
+    <p>扫内层引擎而不是扫安装包：安装包是压缩壳。实测现役 3.7.31 安装包扫出来是 CLEAN——那只能说明它压缩了，不能证明里面干净。</p>
+  </section>
+
+  <section>
+    <h2>③ 脚本分发：限流换 DB 桶 + 审计落库</h2>
+    <ul>
+      <li>限流：进程内 <code>Map</code>（重启清零、多实例各算各的）→ 仓里现成的 DB 桶，key 用安装号的 HMAC 摘要。</li>
+      <li>审计：每次成功分发落一行 <code>AssistantScriptDistribution</code>（安装号摘要/前缀、版本、<b>exe 摘要</b>、脚本名）。此前 <code>exeSha256</code> 只进 <code>console.log</code>。</li>
+      <li>落库失败返回 503，不发脚本——不制造「发过但查不到」的黑洞。</li>
+      <li>迁移只新增表，不动存量数据。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>④ P1：判断边界清单与门</h2>
+    <p><code>config/thin-client-function-ownership.json</code> 定义 <code>moved</code>（已搬走、客户端不许再有）与 <code>stay</code>（必须留客户端的量测）。<code>check-client-judgement-boundary.mjs</code> 扫客户端 10 个文件，<code>moved</code> 命中即红。</p>
+    <p>自动清点：<b>170 个函数名，0 个定版</b>。剩下的就是逐函数读定版——这才是 P1 的主体工作量。</p>
+  </section>
+
+  <section>
+    <h2>实测读数</h2>
+    <table>
+      <thead><tr><th>检查</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>test:exe-no-plaintext:selftest</code></td><td>rc=0（jsx 14 / generated 6 / 注释 4）</td></tr>
+        <tr><td>红控：develop 树 2026-10-25 引擎</td><td>rc=1（<code>TYGF_Fonts_Probe.jsx</code> 2 处泄露）</td></tr>
+        <tr><td>仓外目录跑同一枚红 exe</td><td>rc=1（不再随 cwd 消失）</td></tr>
+        <tr><td><code>test:script-distribution-audit</code></td><td>rc=0（30/31 语义、窗口过期、审计行不含原文）</td></tr>
+        <tr><td><code>test:schema-catalog</code></td><td>rc=0（22 迁移 / 69 表）</td></tr>
+        <tr><td><code>test:contracts</code></td><td>rc=0</td></tr>
+        <tr><td><code>test:assistant-auth-barrier</code></td><td>rc=0</td></tr>
+        <tr><td><code>test:assistant-script-distribution</code></td><td>rc=0</td></tr>
+        <tr><td><code>tsc</code> / <code>lint</code> / <code>vitest</code></td><td>rc=0 / 0 error 60 warning / rc=0</td></tr>
+        <tr><td><code>test:judgement-boundary</code></td><td>rc=0（未定版 170）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>撞到的墙（比做了什么更重要）</h2>
+    <div class="callout" data-tone="bad">
+      <p><b>删死码会撞助手脚本哈希。</b>P1 要删的 <code>buildLegacyHtmlReport</code>（123 行，全仓 0 调用点）我试删了，<code>test:contracts</code> 当场红：<code>6e3ed056… != 882a4a86…</code>。</p>
+      <p>原因：删代码改 jsx 字节 → 改脚本哈希；<code>replacementScriptSha256</code> 是现役 3.7.31 助手内置的期望值。服务端一发新哈希，装机用户会拒收脚本。</p>
+      <p><b>结论：死码清理必须随下一支助手包（新 runtime 身份）走，不能塞在服务端批次里。</b>已回滚。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>这对你意味着什么</h2>
+    <ul>
+      <li>P0 装的是「眼睛」，<b>不改任何用户可见行为</b>：不翻开关、不动计费、不动生产。</li>
+      <li>白嫖路径今天仍在，堵它的是 P3。P0 让取证有据，但不代偿 P3。</li>
+      <li>本批只在侧枝：两笔提交，<b>没推 GitHub、没部署、没对共享库跑迁移</b>。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>下一步，需要你拍的</h2>
+    <ol>
+      <li><b>P1 继续</b>：170 个函数逐个读定版，约 1 天；做完才能给 P2 划精确搬迁面。</li>
+      <li><b>P3（计费判定收服务端）</b>：单向门，方案要求「真机三枚对照件 + 灰度白名单」。按这个方式推进？</li>
+      <li><b><code>sourceText</code> 上行的对外口径</b>：P2 一旦把正文送服务端算，「设计文件不出本机」就得同批改（LEGAL-1）。现在改？</li>
+      <li>死码清理要不要排进下一支助手包（3.7.32）？</li>
+    </ol>
+  </section>
+
+  <footer>
+    边界：只动 <code>worktrees/thin-client-20261103</code>（基于 <code>origin/develop@b0baff91</code>）。未推远端、未部署、未翻开关、支付 flag 未动、生产零操作。补 <code>build/vendor/photocraft/tygf-engine.exe</code>（gitignore 件，sha256 与钉值逐位一致）才跑得动助手权限门。
+  </footer>
+
+</main>
+</body>
+</html>

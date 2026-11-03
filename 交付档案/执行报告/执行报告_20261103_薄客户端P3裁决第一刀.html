@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>薄客户端函数归属清单 v1 · 2026-11-03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--accent:#1b5bd0;
+--font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(24px,4vw,48px) clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,3.6vw,2.1rem);line-height:1.3;margin:0}
+h2{font-family:var(--font-display);font-size:1.15rem;margin:18px 0 4px;padding-top:10px;border-top:1px solid var(--line)}
+h3{font-family:var(--font-mono);font-size:.82rem;margin:16px 0 4px;color:var(--ink-2);word-break:break-all}
+p{margin:0}
+ul{margin:0;padding-left:1.2em}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--sunk);padding:1px 5px;border-radius:5px}
+table{width:100%;border-collapse:collapse;font-size:.86rem;background:var(--surface);border:1px solid var(--line)}
+th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-weight:600;font-size:.8rem;color:var(--ink-2);position:sticky;top:0}
+.quote{color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+</style></head><body><main class="wrap">
+<h1>薄客户端 P3 第一刀：把「算不算成功」变成服务端裁决（灰度默认关）</h1>
+<p>2026-11-03｜范围：<code>settlement-verdict.ts</code> + 适配器接线 + 三枚对照件测试｜VERDICT：裁决函数与夹具就位，<b>默认不生效</b>，现役计费一字未变。</p>
+<h2>一句话</h2>
+<p>以前「这次算不算成功」是回执自己说了算——回执说失败就全额释放冻结额度，于是真跑完再谎报失败就能白拿产物。现在这一步把这个判断抽成一个显式裁决：<b>先看产物证据，再看自报状态</b>。</p>
+<h2>裁决的四条规则（顺序即优先级）</h2>
+<table><thead><tr><th>优先级</th><th>回执长什么样</th><th>裁决</th><th>为什么</th></tr></thead><tbody>
+<tr><td>1</td><td>自报成功</td><td>可用</td><td>正常路径</td></tr>
+<tr><td>2</td><td>自报失败，但带产物证据（<code>PUBLISHED</code> 或 <code>outputFingerprint</code>）</td><td><b>可用，按产物计</b></td><td>这是白嫖路径的形状：说失败、东西却在</td></tr>
+<tr><td>3</td><td>自报失败、无产物、完成数 &gt; 0</td><td>部分完成计费</td><td>合理的中途失败，不能白干</td></tr>
+<tr><td>4</td><td>自报失败、无产物、完成数 = 0</td><td>释放冻结</td><td>真失败</td></tr>
+</tbody></table>
+<p>另外把完成数夹到服务端冻结的工作量，防止回执把分母放大。</p>
+<h2>为什么默认关</h2>
+<p>改的是<b>钱</b>。所以：<code>SETTLEMENT_VERDICT_MODE=enforce</code> 才采信裁决，默认 <code>off</code> 时适配器逐字沿用旧判据——测试第 ⑧ 条专门钉住这一点（<code>const usable = verdict ? verdict.usable : succeeded || partiallyCompleted</code>），谁把它改错，门立刻红。</p>
+<h2>我必须说清的边界（这条比做了什么重要）</h2>
+<p><code>outputFingerprint</code> 仍然是<b>客户端上报的事实</b>。服务端看不到用户磁盘，所以：</p>
+<ul>
+<li>能拦：说失败但保留产物证据的（第 2 条）；</li>
+<li><b>拦不住</b>：说失败、同时把产物证据一起抹掉的变体。</li>
+</ul>
+<p>要真正闭环，需要服务端可独立验证的产物证据——比如写回时用服务端签名的一次性 nonce，回执必须带该 nonce 的签名摘要。那是下一刀，我没在本模块里假装已经解决，代码头注释里写明了。</p>
+<h2>实测读数</h2>
+<table><thead><tr><th>检查</th><th>结果</th></tr></thead><tbody>
+<tr><td><code>test:settlement-verdict</code></td><td>rc=0（真成功／真失败／谎报带产物／仅指纹／部分完成／夹分母／灰度默认 off／接线门，8 条）</td></tr>
+<tr><td><code>test:contracts</code></td><td>rc=0</td></tr>
+<tr><td><code>test:trust-chain</code></td><td>rc=0</td></tr>
+<tr><td><code>tsc --noEmit</code></td><td>rc=0</td></tr>
+</tbody></table>
+<h2>还差什么才算 P3 过门</h2>
+<ul>
+<li><b>真机三枚对照件</b>：真成功、真失败、谎报失败但产物存在——要在真 Photoshop 上跑，落真实金额；这一半我做不了。</li>
+<li><b>灰度白名单</b>：<code>enforce</code> 只对白名单账号开，观察一轮再全量。</li>
+<li><b>服务端可验证的产物证据</b>（下一刀）：补上之后，抹掉证据的变体才拦得住。</li>
+</ul>
+<h2>边界</h2>
+<p>只在 <code>worktrees/thin-client-20261103</code>；已推 <code>origin/codex/thin-client-20261103@409b2cfe</code>。未合 develop、未部署、未翻开关、支付 flag 未动、生产零操作；<code>enforce</code> 未启用，现役计费行为与改动前相同。</p>
+</main></body></html>

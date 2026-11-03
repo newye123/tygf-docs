@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>结算证据可验证性 · 审查结论与加固</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--sunk:#eef1f5;--ink:#131820;--ink-2:#3d4757;--muted:#657084;--line:#dde2ea;--line-strong:#c3cbd8;--accent:#1b5bd0;--accent-soft:#e8effc;--ok:#0d6f4a;--ok-soft:#e6f4ec;--bad:#ae2318;--bad-soft:#fbeae8;--warn:#8a5a00;--warn-soft:#fbf1dc;--font-body:"Noto Sans SC","PingFang SC",system-ui,sans-serif;--font-display:"IBM Plex Sans","Noto Sans SC",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;--pad:clamp(18px,4vw,40px);--radius:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1015;--surface:#151a22;--sunk:#1b212b;--ink:#e8ecf3;--ink-2:#c2cad7;--muted:#8d97a8;--line:#252c38;--line-strong:#38414f;--accent:#78a8ff;--accent-soft:#17233a;--ok:#54cf96;--ok-soft:#12291f;--bad:#ff8d80;--bad-soft:#2c1614;--warn:#e0b64a;--warn-soft:#2a2110}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.7;font-size:16px}
+.wrap{max-width:1000px;margin:0 auto;padding:var(--pad)}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}.eyebrow.sep{color:var(--muted)}
+h1{font-family:var(--font-display);font-size:clamp(23px,3.8vw,32px);margin:8px 0 10px;line-height:1.2}
+.standfirst{font-size:16.5px;color:var(--ink-2);margin:0;max-width:78ch}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
+section{margin:26px 0}
+h2{font-family:var(--font-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h2.sn{color:var(--ink)}p{margin:0 0 11px;max-width:82ch}code{font-family:var(--font-mono);font-size:.86em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.verdict{background:var(--bad-soft);border:1px solid var(--line-strong);border-left:5px solid var(--bad);border-radius:var(--radius);padding:18px 20px}
+.verdict.lb{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad)}
+.verdictp{font-size:18px;font-weight:600;margin:6px 0 0;line-height:1.5}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px}
+.panel.yes{border-left:4px solid var(--ok)}.panel.no{border-left:4px solid var(--bad)}.panel.warn{border-left:4px solid var(--warn)}
+.panel h3{margin:0 0 8px;font-size:14px;font-family:var(--font-mono)}
+.panel.yes h3{color:var(--ok)}.panel.no h3{color:var(--bad)}.panel.warn h3{color:var(--warn)}
+.panel ul{margin:0;padding-left:18px}.panel li{font-size:14px;color:var(--ink-2);margin-bottom:7px}
+.gates{display:grid;gap:9px}
+.gate{display:grid;grid-template-columns:210px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 15px;font-size:14px}
+.gate .l{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
+.gate .r{color:var(--ink-2)}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--radius);padding:13px 17px;margin-bottom:10px;font-size:14.5px}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+</style></head><body><div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow">对抗审查 · 我推翻了自己的提案 <span class="eyebrow sep">· 两轮取证＋主审复跑</span></div>
+  <h1>"写回带服务端 nonce"堵不住白嫖</h1>
+  <p class="standfirst">我上一轮提的下一刀被证伪：nonce 和摘要算法都在客户端手里，攻击者不碰 Photoshop 也能算出合法摘要。真正的前提是——服务端要么能自己重算期望值，要么独立持有副本；产物字节我们一份都没有。</p>
+  <div class="meta">基线 origin/develop@9994e5dc · 修复 f196af1f（未部署，生产未动）· develop 树落后实为 35 笔（备忘写 33 未复算）</div>
+</div>
+
+<section>
+  <div class="verdict"><div class="verdict.lb">可验证性的必要条件</div>
+  <p class="verdictp">服务端能自行重算，或独立持有副本 —— 二者必居其一，否则任何"摘要类"方案都是同一种死法</p>
+  <p style="margin:8px 0 0;color:var(--ink-2);font-size:14.5px">正面先例：报价行集 <code>billing-challenge.ts:107-136</code> 的服务端重算是真校验，因为服务端握着确认表全文（<code>schema.prisma:896 tableJson</code>）。反面：产物 PSD 的字节服务端零副本 ⇒ <code>objectEvidenceDigest</code>／<code>outputFingerprint</code> 只能证明"客户端说它算了"。</p></div>
+</section>
+
+<section>
+  <h2 class="sn">四个提案的判决</h2>
+  <div class="split">
+    <div class="panel no"><h3>被证伪（别再当方案）</h3><ul>
+      <li><b>S1 nonce 混入摘要</b>：nonce 随派单发到客户端（<code>execution-ticket.ts:104,160,305</code> 解码即明文），摘要公式在客户端明文里 ⇒ 零交互即可伪造合法摘要。只剩"防重放/防跨 attempt 凑数"的价值</li>
+      <li><b>S2 抽样上传</b>：回执由助手主动 POST，服务端<b>无下行强制通道</b>；FAILED 分支当场释放关闭（<code>execution-batch.ts:1332/1337</code>）⇒ 对④有效抽样率≈0；<code>anonymousInstallId</code> 客户端可重置（<code>local-assistant-client.ts:403-406</code>）</li>
+      <li><b>"嵌服务端秘密"</b>：译文本就是客户自己的数据，密钥性无来源；<code>deviceSignature</code> 钩子 <code>download/</code> 内 0 调用且密钥必须下发</li>
+    </ul></div>
+    <div class="panel yes"><h3>真能改变结论的</h3><ul>
+      <li><b>FAILED 改冷却期</b>（纯服务端）：不立即释放冻结 ⇒ 白嫖者要拿回自己付过的额度就必须出示证据——这才是服务端缺的那根下行杠杆</li>
+      <li><b>成品经服务端</b>（S3）：唯一数学堵死，但与"设计文件不出本机"、离线可用、大体积出网正面冲突 ⇒ 属产品形态决策，不是一刀重构</li>
+      <li><b>可发现＋可止损</b>：异常失败率、exeSha 分歧、合同条款兜底</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">顺带查出的三处"我们自己的破口"（已登记 #302）</h2>
+  <div class="gates">
+    <div class="gate"><div class="l">execution-batch.ts:1425-1427</div><div class="r"><code>evidenceDigest = sha256(attemptId:rowToken:status)</code> —— 输入全是客户端自己的断言，<b>零信息量</b>；而收费门 <code>:1388</code> 只验它非空。禁止再当交付证据引用。</div></div>
+    <div class="gate"><div class="l">receipt/route.ts:49-50,182</div><div class="r">回执幂等号 <code>receiptEventId</code> 收下只回显，<b>schema 里根本没有这一列</b>（三个关键词 grep 全 0 命中）⇒ 幂等实际只靠状态不回退（<code>:1413-1419</code>）。</div></div>
+    <div class="gate"><div class="l">三处签名兜底（已修）</div><div class="r"><code>assistant-code.ts:22-25</code>／<code>execution-ticket.ts:18-21</code>／<code>execution-batch.ts:2410-2413</code> 原回退到仓库可读字符串 ⇒ 现改每进程随机＋共用一份＋首次告警。生产此前已由 <code>check-production-env.cjs:51-52</code>＋<code>deploy-release.sh:111</code> 拦，本次治的是偏离部署脚本的运行形态。</div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">本轮执行的验证门</h2>
+  <div class="gates">
+    <div class="gate"><div class="l">test:signing-secret</div><div class="r">7 条断言通过 rc=0（两条内置负控：扫描器必须命中合成字面量；跨进程取值必须不同）</div></div>
+    <div class="gate"><div class="l">变异测试</div><div class="r">把兜底字面量塞回一处 ⇒ <b>rc=1</b>（点名文件）；还原 ⇒ rc=0</div></div>
+    <div class="gate"><div class="l">相邻回归五条</div><div class="r">token-binding／security-hardening／admin-security／execution-ticket-v15／batch-row-contract 全 rc=0</div></div>
+    <div class="gate"><div class="l">推送与边界</div><div class="r"><code>f196af1f</code> 已推 origin/develop；<b>未部署</b>、生产未动；junction 借依赖已安全断开，develop 的 node_modules 完好</div></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sn">要你拍</h2>
+  <div class="ask"><b>1｜FAILED 冷却期做不做？</b>纯服务端、能真给服务端一根索证的杠杆；但它改动钱的行为（诚实失败的额度会晚点回来），且必须按合同变更同批抬 <code>minAssistantVersion</code>，否则旧助手会落到"活干完永不结算＝平台漏收"的方向。</div>
+  <div class="ask"><b>2｜receiptEventId 加唯一约束</b>？改动小但需要一次迁移 ⇒ 要走迁移批准台账（和今天那行一样的批准方式）。</div>
+  <div class="ask"><b>3｜成品经服务端</b>要不要作为产品方向立项？这是唯一能把白嫖数学上堵死的形状，代价是与"文件不出本机"、离线、带宽三个主张正面交换。</div>
+  <div class="ask"><b>4｜f196af1f 与前面几笔要不要现在一起部署测试站</b>（部署链已通，台账也在）；生产仍按三段轨走。</div>
+</section>
+
+<footer>过程账：A 路证伪 S1/S2 并给出必要条件与最小有效集；B 路取证接缝（ExecutionTicketNonce 已在 schema:860-874、回执新增字段＝硬四层、上传通道最大 8 MB、翻闸须同批抬版本下限）。主审复跑：三处兜底位置、自指摘要行号、receiptEventId 无列、check-production-env 覆盖、落后 35 笔。被审备忘与探针保留在同目录，可复跑。</footer>
+</div></body></html>

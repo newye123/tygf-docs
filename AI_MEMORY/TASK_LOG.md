@@ -1,3 +1,13 @@
+## 2026-11-03 18:4x　结算证据可验证性对抗审查＋签名兜底密钥治理（#302，代码 f196af1f 已推 develop）
+
+- **触发**：Owner「使用对抗式审查后执行」。目标＝我上一轮提的"下一刀：写回带服务端签名 nonce"能不能真堵住变体④（回执四字段一起归零 ⇒ 白嫖）。
+- **审查结论（我接受对自己的推翻）**：**S1 挡不住④**。nonce 随派单发到客户端、摘要算法在客户端明文里 ⇒ 攻击者不碰 Photoshop 也能算出合法摘要。一般形式：**证据可验证的必要条件是服务端能自行重算期望值或独立持有副本**；正面先例＝报价行集（服务端握 `prisma/schema.prisma:896 tableJson` 全文，故 `billing-challenge.ts:107-136` 的重算是真校验），而产物 PSD 字节服务端一份都没有 ⇒ 一切"摘要类"方案同死。S2 抽样也被否：回执由助手主动 POST，服务端无下行强制通道，且 FAILED 分支当场释放（`execution-batch.ts:1332/1337`）⇒ 对④有效抽样率≈0；`anonymousInstallId` 客户端可重置（`local-assistant-client.ts:403-406`）。⇒ **#301 关闭路径改判**为：① FAILED 改冷却期内可索证（纯服务端但动钱语义）；② 成品经服务端（唯一数学堵死，属产品形态变更）；③ 可发现＋可止损。
+- **顺带查出并登记 #302 的三处**：`evidenceDigest=sha256(attemptId:rowToken:status)`（`execution-batch.ts:1425-1427`）零信息量、不得再当交付证据；`receiptEventId` 收下只回显、schema 无该列（换三个关键词 grep 均 0 命中）⇒ 幂等靠状态不回退；`deviceSignature` 钩子 `download/` 内 0 调用且密钥须下发 ⇒ 双重无效。
+- **本轮执行的（安全、零语义变化）**：三处签名密钥兜底从"仓库里可读的字符串"改为每进程随机＋三处共用一份＋首次告警——新增 `src/lib/security/signing-secret.ts`，改接 `assistant-code.ts:22-25`／`execution-ticket.ts:18-21`／`execution-batch.ts:2410-2413`；并在批次 nonce 处注明"只证明票出自本服务端，不证明 PS 跑过"。生产侧原本已由 `check-production-env.cjs:51-52`＋`deploy-release.sh:111` 拦，本次治的是"偏离部署脚本的运行形态"。
+- **验证（真实读数）**：`npm run test:signing-secret` 7 断言 rc=0（两条内置负控：扫描器必须命中合成字面量、跨进程取值必须不同）；变异把字面量塞回 ⇒ rc=1、还原 ⇒ rc=0；相邻回归五条 rc=0（token-binding／security-hardening／admin-security／execution-ticket-v15／batch-row-contract）。基线核对：develop 树落后 origin/develop 实为 **35 笔**（备忘写 33 系我未复算）。
+- **交付与推送**：代码 `f196af1f` 已推 `origin/develop`（**未部署、生产未动**）；报告 `交付档案/执行报告/执行报告_20261103_结算证据可验证性_审查结论与加固.md`（同名 .html，飞书已发）；被审备忘 `交付档案/执行方案/备忘_20261103_结算证据可验证性_待证伪.md` 保留（含"待证伪"标注）；ISSUES 新增 **#302**。
+- **未做与待拍**：① FAILED 冷却期方案未实现（动钱语义，需 Owner 拍，且须按合同变更同批抬 `minAssistantVersion`，否则旧助手可能落到"活干完永不结算＝平台漏收"方向）；② `receiptEventId` 唯一约束需迁移（走批准台账，未擅自做）；③ 成品经服务端＝产品形态决策；④ f196af1f 未部署测试站（纯服务端加固，随下次正常部署带上）；⑤ 抽样/带宽成本为估算，未用真实账单核（未核实）。
+
 ## 2026-11-03 17:5x　测试站部署 409b2cfe 并开启结算裁决 enforce（THIN-CLIENT-DEPLOY 收口）
 
 - **触发**：Owner「开，按你的来」——批准开结算裁决灰度，并授权按我的建议处理前置（迁移批准台账登记＋重跑部署）。
