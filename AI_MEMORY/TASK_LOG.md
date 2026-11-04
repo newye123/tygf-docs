@@ -1,3 +1,16 @@
+## 2026-11-04 08:08　孤儿组件回收＋批量逐稿行补回「备用引擎读取」徽标（代码推 origin/develop，未部署）
+
+- **触发**：Owner「两个都同意，直接处理」——同意本刀（ISSUES #304 残料①）提交并推 `origin/develop`，同时同意把 `typography-panel.tsx` 的令牌绕行基线一并校准。
+- **查到的真缺陷（不是纯清理）**：旧 `draft-group-cards.tsx` 退役后，批量第 1 步逐稿行**丢了「备用引擎读取」徽标**——新壳列表取代旧卡片时没把这一列带过来，而 `smoke-preparation-scan-contract.mjs` 仍对已死文件断言（门绿、用户看不见＝假绿）。修法：在 `src/components/workbench/step1-stage-view.tsx` 用 `coverageDrafts[].summary.executorHand === 'engine'` 建 `engineReadPaths` 集合，逐稿行条件渲染 `data-testid="step1-executor-hand"` 徽标；文案与 tooltip 沿用单稿摘要条／第 2 步同一句，三面一致。
+- **孤儿清理**：删除 `src/components/workbench/draft-group-cards.tsx`（285 行，0 生产调用点）；`src/lib/workbench/draft-groups.ts` 删去 `DraftGroup`／`deriveDraftGroups`／`DraftGroupSummary`／`summarizeGroups` 与两处已无用 import（现在只剩 `groupItemsByDir` 等第 2 步稿表面板在用的导出）。
+- **测试改造（不靠删断言换绿）**：`deriveDraftGroups` 的单测改测仍在用的 `groupItemsByDir`（顺序/去重/规范化三组）＋`isDraftFullyReviewed`/`splitByAttention` 保留；`DraftGroupCards` 的 DOM 测全删，改在真壳上加两条：引擎读的稿标徽标（断言文案＋tooltip 含「出件仍需 Photoshop」）、全 Photoshop 时零徽标。
+- **门变反向锁**：`smoke-preparation-scan-contract` 增加 `existsSync(...) === false` 锁＋把徽标断言指向 `engineReadPaths.has(item.path)` 与三面清单；`smoke-batch-workbench-guards` 把「逐行扫描按钮」断言换成「孤儿文件不得复活」；`smoke-workbench-batch-groups` 删 groupCards 读取、加 `deriveDraftGroups`/`summarizeGroups` 反向锁。
+- **令牌门校准**：`check-wb-tokens` 删 `draft-group-cards.tsx` 配额（`textTeal: 2`）；`typography-panel.tsx` 存量基线由 `{ bgTeal: 5, textTeal: 4, textWhite: 2 }` 校准为 `{ bgTeal: 8, textTeal: 8, textWhite: 3 }`（该文件本刀未改，`origin/develop` 同一 blob 实测已是 8/8/3）；总量 175→173→**181**。
+- **验证（真实读数）**：`npx vitest run tests/unit/draft-groups.test.ts tests/unit/step1-stage-view.test.tsx tests/unit/workbench-batch-groups.test.tsx` 91/91 rc=0；官方入口 `npm run test:workbench-batch-groups` 132/132 rc=0；`node scripts/smoke-preparation-scan-contract.mjs` PASS；`smoke-batch-workbench-guards` 93 条；`smoke-workbench-batch-groups` 31 条；`node scripts/check-wb-tokens.mjs` PASS 41/41；`npx eslint` 本刀文件 0 error（15 条存量 warning）；`git diff --check` rc=0。
+- **反向控制（证明门会咬人）**：塞回孤儿文件 ⇒ prep/guards/groups 三门均 rc=1；去掉徽标 ⇒ prep 门 rc=1 且 vitest 1 条失败；还原后全绿。
+- **未验证（如实）**：`npx tsc --noEmit` 仍剩陈旧 Prisma 客户端错（`distribute/route.ts(130,14)`，`node_modules/.prisma` 停在 10-24、0 命中新模型；未跑 `prisma generate` 以免动多会话共享的 node_modules）；真实浏览器未点验（本刀只动徽标与门）。
+- **记录与遗留**：ISSUES #304 残料①标记已删（2026-11-03 决策、2026-11-04 落地），②（单份添加/粘贴无入口）与③（单稿面显示批量面板）仍开着等 Owner 拍。
+
 ## 2026-11-03 20:3x　退役「逐稿手动导入」旧扫描层：批量只剩第 1 步一套界面（代码 aea54021 已推 develop，未部署）
 
 - **触发**：Owner「现在工作台应该是有两套扫描系统，『添加 PSD』这一套就是，可以把这套旧的去掉了，其他的继续吧」。判断经查证成立：新四步台与旧手动录入层同时在，旧层整块 CSS `hidden` 挂在 DOM 里（扫描队列与轮询住在 `design-file-card` 内，卸载就丢结果），「添加 PSD」正属于这一层。
