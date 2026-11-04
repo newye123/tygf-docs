@@ -1,3 +1,30 @@
+## 2026-11-04 09:28　两刀一起上测试站：旧录入层退役（aea54021）＋孤儿回收与换手徽标（25deb91d）已部署并复验
+
+- **触发**：Owner「把这两刀一起出包上测试站」。范围＝`origin/develop@25deb91d`（父链含 `aea54021`），只动测试站，生产未碰。
+- **出包**：`release:preflight:test` 第一次红在「出厂引擎件不在树内」——隔离树缺 `download/local-assistant/build/vendor/photocraft/tygf-engine.exe`（gitignore 的构建产物）。从 develop 树复制并按 `engine.sha256` 逐字节核对 `3cb06ed1…` 相符后 PASS；第二次红在 `assistant-script-distribution` D3（503＋审计落库 `undefined.create`）＝共享 `node_modules/.prisma` 客户端停在 10-24、缺 `AssistantScriptDistribution` 模型，按 `25deb91d` 的 schema 跑 `npx prisma generate`（实测该 schema 相对 develop 树只多这一个模型，属纯增量，不动他人已用模型）后 PASS。
+- **部署被身份门拦一次（如实记）**：首包 receipt 的 `branch` 记为 `codex/orphan-cleanup-20261103`，服务器脚本硬拒「test receipt branch must be develop」。正确做法＝在目标提交上 `git checkout --detach 25deb91d` 后重出包（预检以 detached 通过、receipt 回填 `develop`），重出包 SHA-256 仍为 `A63BD259…`（同内容逐字节一致），旧包/旧 receipt 为本会话产物，删后重出。
+- **上传与部署**：zip 54,672,265 B，两侧 `sha256sum` 均为 `a63bd2599a4045689125d005d0a725c1c8a9cbcdaf2a916467eb55f06d8cc049`；receipt 两侧 `5977bdf8…` 一致。远端按规矩 `setsid` 脱管启动，`NODE_OPTIONS=--max-old-space-size=3072`；日志 `/home/ubuntu/deploy-25deb91d.log`。迁移门 `skipping database mutation`（本批零迁移），候选构建 TS 与 Next build 均通过，切换后备份 `/var/www/tygf-test-backups/deploy-20261104_091545-25deb91d73c0`。
+- **线上读数（复验，不靠脚本自报）**：`.deploy-commit`＝`25deb91d73c02cad9537396e7ae47708025da984`；回环首页 200 三次（0.037／0.033／0.035 秒）；`/api/runtime-provenance` 为 BOUND、`webCommitSha` 同提交、`webBuildId=tygf-test-25deb91d73c0.zip`、期望助手 3.7.32；PM2 三进程 online、restarts=0；部署日志 `blocked` 行数 0。启动瞬间有一次 `curl` 连接失败（PM2 刚拉起），部署脚本 30 次重试内转绿，现网独立复验 200。
+- **两刀都在线上的证据**：构建产物客户 chunk `static/chunks/3ysptzm5qcxfc.js` 同时含 `step1-executor-hand`（本刀徽标）与「一次配好本批表格」（上一刀搬进第 1 步的按钮）；`standalone` 里 `draft-group-cards.tsx` 已不存在（孤儿确已离去）。
+- **未验证（如实）**：徽标在真实浏览器里的渲染未点验——需要 Owner 登录态＋本机助手＋至少一稿「Photoshop 没响应改由备用引擎读」，本轮只证到源码与构建产物层。
+- **记录与遗留**：ISSUES #304 追加「已上测试站」状态；ledger 追加同任务行（待复验，owner＝Owner 测试站点验）。生产未动，回滚＝`/var/www/tygf-test-backups/deploy-20261104_091545-25deb91d73c0` 快照或 `git revert 25deb91d` 后重出包。
+
+## 2026-11-04 08:45 邮件线｜端到端发信验收：两封探针真发成功（SES 受理 http=200）；查清两个邮箱的身份
+
+- **目标**：验「客户/访客发往对外邮箱的信到底进不进信箱」，并回答 Owner「之前是不是转到 QQ」。
+- **实测事实（本轮新增，均可复跑）**：
+  - 发信地址来自测试站 `.env`：`MAIL_FROM=tuyigf@mail.tuyigf.com`（非密钥，本轮读出）；SES 凭据只在服务器 `/var/www/tygf-test/.env`，本机 `.env` 无（键名清单实测）。
+  - **两个不同性质的邮箱**：`tuyi@tuyigf.com` 的 MX=route1/2/3.mx.cloudflare.net + SPF `include:_spf.mx.cloudflare.net` ⇒ Cloudflare Email Routing，**地址本身无信箱、只做转发**；`mail.tuyigf.com` 的 MX=`mxbiz1.qq.com` + SPF `include:qcloudmail.com` ⇒ **腾讯企业邮真信箱**（Owner 口中的「email.tuyi」大概率是它）。
+  - 域名 `_dmarc.tuyigf.com` = `p=none`，rua 指向 Cloudflare 的 dmarc-reports（不投给 Owner 信箱）。
+- **动作与读数**：探针脚本 `tmp/e2e-mail-probe.mjs`（复用 `src/lib/server/mail/ses.ts` 的 TC3 签名＋邀请码模板 71985，邀请码位填明显无效的 `E2Ex-20261104-NOT-A-CODE`），base64 上传服务器 `/tmp` 后执行，两封均 `http=200 ok=true`：①→tuyi@tuyigf.com RequestId `5e061f6c-411f-46c2-8354-1734105af031`；②→tuyigf@mail.tuyigf.com RequestId `53a4b26c-b485-41e8-a7a9-decf74ce4de6`；送出钟点 `2026-11-04T00:43:17Z`（=`08:43:17+0800`）。
+- **两次失败与真因（不掩饰）**：第一、二版探针报 `Cannot convert argument to a ByteString … value of 65533`。先误判为 ssh 传输把中文转码坏（base64 重传后仍红），加 DRY 诊断才定位真因＝我把 HMAC 的 **Buffer** 未 `.toString('hex')` 直接插进 Authorization 头（DIAG 实测 hdr:auth nonAsciiAt=149）。**修法前零封邮件发出**，无假信污染。
+- **读信箱失败（如实记）**：用 `TENCENT_SES_SMTP_USER/PASSWORD` 走 `curl imaps://imap.exmail.qq.com` → `rc=67 Login denied`（STATUS 与 SEARCH 两次同码）⇒ SES 的 SMTP 发送口令不等于企业邮 IMAP 口令，本机没有后者；「信箱里到底有没有信」本轮**只能由 Owner 目视**。
+- **更正他会话表述**：ISSUES **#257** 原文第④点为「目标地址是否已验证、路由规则是否存在**当前无法核实**（不写'没有'，只写'未核实'）」，本会话一度据其标题误推「转发从来没通过」——已当面向 Owner 更正。
+- **CF 权限仍缺（与 10-22 同形）**：`GET /accounts/5c60acb98ca519b17b7e8a10f9d5b591/email/routing/{addresses,rules}` → **403**；`workers/scripts` → 200 但账号下 **0 个脚本**（邮件 Worker 至今未上传）；令牌 `/user/tokens/verify` active，但 `/accounts`、`/zones` 均返回 0 条 ⇒ **令牌连账号范围都没含该账号**，补权限时须同批勾 Account Resources。
+- **遗留/下一步**：① Owner 目视 08:43 两封探针落点（QQ＝①、企业邮＝②）；② ①未到即按上条补 CF 权限，我一次查规则＋目标地址 verified 状态；③ 是否加「每周自动发信断言」的沉默失败守卫（#257 建议 c）待 Owner 点头，未擅自建。
+- **验证**：`node --check` 通过；探针退出码 `RUN_RC=0`；IMAP 尝试 `IMAP_RC=0`（curl 单帧 rc=67 已如实登记）。未跑与本轮无关的测试。
+- **写冲突实测（同分钟并发追加）**：我 `fs.appendFileSync` 落盘的瞬间，别手 08:09 的 `ORPHAN-CLEANUP-20261104` 行与我这行被并成**同一物理行**（对方那次追加不带行尾换行），`ledger.jsonl` 一度 broken=1。定点拆分（备份 `tmp/ledger.jsonl.bak-20261104T0045Z`）后 parseable=629／broken=0、两行各归其位，`git diff --numstat`＝2 增 1 删（只动那一行）。飞书投影实测 `update=1`＋快照 `tmp/readback/last-projected.ndjson` 里 MAIL-INBOUND 标题＝本轮新值（已落台账）；同批 held=20 拦的是别手 10 月的行、另有 `PROD-RELEASE-94BDA516` 更新时间写成 `00:0x` 被脚本排除（别手遗留，本轮不代改）。
+
 ## 2026-11-04 08:08　孤儿组件回收＋批量逐稿行补回「备用引擎读取」徽标（代码推 origin/develop，未部署）
 
 - **触发**：Owner「两个都同意，直接处理」——同意本刀（ISSUES #304 残料①）提交并推 `origin/develop`，同时同意把 `typography-panel.tsx` 的令牌绕行基线一并校准。
