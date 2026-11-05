@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V15 页已上测试站 · 5389a7b7 · 图译工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: single reading column; verdict band on top, status-coded evidence ledger below */
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --sunk:#eef1f5;
+  --ink:#131820;
+  --ink-2:#3d4757;
+  --muted:#657084;
+  --line:#dde2ea;
+  --line-strong:#c3cbd8;
+  --accent:#1b5bd0;
+  --accent-soft:#e8effc;
+  --ok:#0d6f4a;
+  --ok-soft:#e6f4ec;
+  --bad:#ae2318;
+  --bad-soft:#fbeae8;
+  --warn:#8a5a00;
+  --warn-soft:#fbf1dc;
+
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"IBM Plex Sans","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --pad:clamp(18px,4vw,40px);
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d1015;
+    --surface:#151a22;
+    --sunk:#1b212b;
+    --ink:#e8ecf3;
+    --ink-2:#c2cad7;
+    --muted:#8d97a8;
+    --line:#252c38;
+    --line-strong:#38414f;
+    --accent:#78a8ff;
+    --accent-soft:#17233a;
+    --ok:#54cf96;
+    --ok-soft:#12291f;
+    --bad:#ff8d80;
+    --bad-soft:#2c1614;
+    --warn:#e0b64a;
+    --warn-soft:#2a2110;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1015;
+  --surface:#151a22;
+  --sunk:#1b212b;
+  --ink:#e8ecf3;
+  --ink-2:#c2cad7;
+  --muted:#8d97a8;
+  --line:#252c38;
+  --line-strong:#38414f;
+  --accent:#78a8ff;
+  --accent-soft:#17233a;
+  --ok:#54cf96;
+  --ok-soft:#12291f;
+  --bad:#ff8d80;
+  --bad-soft:#2c1614;
+  --warn:#e0b64a;
+  --warn-soft:#2a2110;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:940px;
+  margin:0 auto;
+  padding-block:clamp(28px,5vw,56px);
+  padding-inline:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(38px,6vw,60px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.eyebrow .sep{color:var(--line-strong)}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(1.85rem,4.6vw,2.5rem);
+  line-height:1.25;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.standfirst{
+  margin:0;
+  max-width:62ch;
+  color:var(--ink-2);
+  font-size:1.02rem;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 20px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:.76rem;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- sections ---------- */
+section{display:flex;flex-direction:column;gap:18px}
+h2{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.28rem;
+  line-height:1.35;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  text-wrap:balance;
+}
+h2 .sn{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  font-weight:500;
+  letter-spacing:.1em;
+  color:var(--accent);
+  flex:none;
+}
+h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1rem;
+  margin:0;
+  line-height:1.5;
+}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2)}
+strong{font-weight:700;color:var(--ink)}
+code{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+}
+
+/* ---------- verdict ---------- */
+.verdict{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  padding:clamp(18px,3.4vw,26px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.verdict .lb{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+.verdict p{
+  font-size:clamp(1.06rem,2.4vw,1.24rem);
+  line-height:1.6;
+  max-width:44ch;
+  font-weight:500;
+  text-wrap:balance;
+}
+
+/* ---------- panel pair ---------- */
+.split{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.panel.yes{border-top:2px solid var(--ok)}
+.panel.no{border-top:2px solid var(--bad)}
+.panel h3{display:flex;align-items:center;gap:8px;font-size:.94rem}
+.panel.yes h3{color:var(--ok)}
+.panel.no h3{color:var(--bad)}
+.panel ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:9px}
+.panel li::marker{color:var(--line-strong)}
+.panel li{font-size:.93rem;line-height:1.7;color:var(--ink-2)}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{
+  background:var(--surface);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .n{
+  font-family:var(--font-mono);
+  font-size:clamp(1.05rem,1.55vw,1.7rem);
+  font-weight:500;
+  line-height:1.15;
+  overflow-wrap:anywhere;
+  font-variant-numeric:tabular-nums;
+}
+.stat .k{font-size:.8rem;color:var(--muted);line-height:1.5}
+.stat.ok .n{color:var(--ok)}
+.stat.bad .n{color:var(--bad)}
+.stat.warn .n{color:var(--warn)}
+
+/* ---------- ledger ---------- */
+.tag{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-soft)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+
+/* ---------- tables ---------- */
+.scrollx{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+thead th{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:500;
+  background:var(--sunk);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono,th.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.was{color:var(--muted)}
+.now{color:var(--bad);font-weight:500}
+.fix{color:var(--ok);font-weight:500}
+
+/* ---------- cards ---------- */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.card .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .loc{
+  font-family:var(--font-mono);
+  font-size:.74rem;
+  color:var(--muted);
+  flex:none;
+}
+.card p{font-size:.93rem;color:var(--ink-2);max-width:66ch}
+
+/* ---------- timeline ---------- */
+.tl{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:16px;
+  padding-bottom:22px;
+  position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";
+  position:absolute;
+  left:12px;top:22px;bottom:0;
+  width:1px;
+  background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.dot{
+  width:11px;height:11px;border-radius:50%;
+  margin:7px 0 0 7px;
+  background:var(--bad);
+  box-shadow:0 0 0 4px var(--bad-soft);
+  position:relative;z-index:1;
+}
+.dot.partial{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.dot.blind{background:var(--muted);box-shadow:0 0 0 4px var(--sunk)}
+.tl-body{display:flex;flex-direction:column;gap:5px}
+.tl-body .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl-body .hd strong{font-size:.96rem}
+.tl-body p{font-size:.9rem;color:var(--ink-2)}
+.tl-body .after{
+  font-size:.86rem;
+  color:var(--muted);
+  border-left:2px solid var(--line);
+  padding-left:10px;
+}
+
+/* ---------- gates ---------- */
+.gates{display:flex;flex-direction:column;gap:14px;counter-reset:g}
+.gate{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+}
+.gate .num{
+  font-family:var(--font-mono);
+  font-size:1.05rem;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--accent-soft);
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  flex:none;
+}
+.gate .body{display:flex;flex-direction:column;gap:6px}
+.gate p{font-size:.92rem;color:var(--ink-2);max-width:64ch}
+.gate.first .num{background:var(--accent);color:var(--surface)}
+
+/* ---------- notes ---------- */
+.notes{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:.92rem;color:var(--ink-2);line-height:1.7}
+.notes li::marker{color:var(--line-strong)}
+
+.callout{
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 18px;
+  font-size:.9rem;
+  color:var(--ink-2);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.callout .lb{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  font-size:.83rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+footer p{max-width:70ch}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- additions for this deliverable (same design language) ---------- */
+.mono{
+  font-family:var(--font-mono);
+  font-size:.87em;
+  background:var(--sunk);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:1px 5px;
+  word-break:break-all;
+  font-variant-numeric:tabular-nums;
+}
+.card p .mono,.notes .mono,.callout .mono,.gate .mono{background:var(--surface)}
+.stat .n .was{font-size:1.12rem}
+.stat .n i{font-style:normal;font-size:1rem;color:var(--muted);padding:0 .18em}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+a:hover{border-bottom-color:var(--accent);text-decoration:none}
+.samples a{font-family:var(--font-mono);font-size:.86rem;word-break:break-all}
+.verdict .sub{font-size:.98rem;font-weight:400;color:var(--ink-2);max-width:60ch}
+.pill{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);vertical-align:2px}
+.card h3 .pill{margin-left:6px}
+.card p{margin:8px 0 0;font-size:.9rem;line-height:1.65}
+.card .loc{display:block;margin:6px 0 0;font-size:.78rem}
+.em{color:var(--ink-2)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<div class="masthead">
+  <div class="eyebrow"><span>执行报告</span><span class="sep">/</span><span>图译工坊</span><span class="sep">/</span><span>2026-11-05</span></div>
+  <h1>V15 页已上测试站</h1>
+  <p class="standfirst">页面推上 GitHub、打出发布包、部署完成，站点实测通过。生产站没动。</p>
+  <div class="meta">
+    <span>版本 5389a7b7</span>
+    <span>包 54,798,950 B</span>
+    <span>SHA-256 9F71533F…04C1</span>
+    <span>部署返回码 0</span>
+  </div>
+</div>
+
+<section>
+  <h2><span class="sn">01</span>结论</h2>
+  <div class="verdict">
+    <span class="lb">状态</span>
+    <p>之前点开是 404 的 <code>/v15/</code>，现在返回 200；页里三个真实演示框（一个演示工作台、两处排版定制）全部加载。12 条页内路由逐条跑过、12 条全部正常，<strong>控制台报错 0 个、横向溢出 0 像素</strong>。</p>
+    <p class="sub">生产站没动，收款开关和执行开关都没碰。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">02</span>你现在能看到的</h2>
+  <p>打开测试站的 <code>/v15/</code> 就是这次的新页面：一个讲产品、带真实界面预览的落地页。页里嵌的三块预览不是画上去的图，是真的打开测试站自己的演示工作台和排版面板——真实界面、演示数据，不执行 Photoshop、不扣积分。</p>
+  <p>除此之外的页面一个都没变：首页、英文站、下载页、隐私页、登录页全部照常。</p>
+  <ul class="notes">
+    <li><strong>演示工作台</strong>：<code>/demo/workbench</code>，页面里那框的标题是「工作台演示」。</li>
+    <li><strong>排版定制</strong>：<code>/demo/typography</code>，两处，标题是「排版定制演示」。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">03</span>一路卡住的三个门，都是真问题</h2>
+  <div class="cards">
+    <div class="card"><h3>字体子集少 21 个字 <span class="pill">已修</span></h3><p class="loc">public/fonts/shsc/*.woff2 · src/components/site/fonts-zh.generated.css</p><p>新页面样例译文里的日文（今すぐ購入／送料無料／詳細を見る…）加一个西班牙语 é，共 21 个字符不在已提交的中文字体子集里，出包门禁按字体自己的字符表核对后报红。</p><p>处置是<strong>重新生成子集</strong>，不是改文案绕门——出包门自己就写着这条，之前有过为了过门把发布说明里的字换掉的事，那等于让产品事实迁就构建产物。现在文案用到的 1236 个字符全部覆盖。</p></div>
+    <div class="card"><h3>出包树缺引擎文件 <span class="pill">已修</span></h3><p class="loc">download/local-assistant/build/vendor/photocraft/tygf-engine.exe</p><p>43 MB 的构建产物被 git 忽略，每开一棵新树都要手动放。这棵出包树是新建的，没人拷，门禁第一步就断言「出厂引擎件必须在树内」并停下。</p><p>从当前开发树拷入并核哈希：文件自带的 <code>engine.sha256</code> 是 <code>3cb06ed1…8829e</code>，实际文件哈希完全一致。</p></div>
+    <div class="card"><h3>服务器构建内存不够 <span class="pill">已修</span></h3><p class="loc">第一次部署 exit≠0 · 失败候选留在 /var/www/tygf-test-failed/</p><p>服务器 1.9 GB 内存跑 Next.js 构建，类型检查那步 <code>JavaScript heap out of memory</code> 挂掉。部署脚本按设计<strong>没有切换版本</strong>，站上仍是旧版、没受影响。</p><p>第二次给构建进程加 3 GB 堆上限（机器有 5.9 GB 交换空间兜底），构建通过、部署成功。<strong>只改运行参数，代码一行没动。</strong></p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">04</span>怎么验的</h2>
+  <p><strong>出包这一侧</strong>：门禁 20 道全部 PASS，包括最慢的契约测试与信任链测试；生成 <code>tygf-test-5389a7b73f01.zip</code>，54,798,950 字节；<strong>上传后在服务器上重算哈希，与本地和回执逐位相同</strong>才拿去部署；部署脚本返回码 0，服务器「当前版本」写的就是 <code>5389a7b7</code>，PM2 三个进程在线、重启次数 0。</p>
+  <p><strong>站点这一侧</strong>：走 SSH 隧道直连服务端口（绕开对公网的门禁），用真实 Chrome 打开实测，不是看日志。</p>
+  <ul class="notes">
+    <li><code>/v15/</code> 返回 200——<strong>部署前这一页是 404</strong>。</li>
+    <li>12 条页内路由逐条切换，12 条全部渲染出内容。</li>
+    <li>三个演示框全部加载：工作台「工作台演示」，排版两框「排版定制演示」。</li>
+    <li>页面里 <code>&lt;img&gt;</code> 0 个、模拟残留特征串 0 处——这页不放截图、不留模拟，是这轮的要求。</li>
+    <li>1440 与 390 两个宽度横向溢出都是 0 像素，控制台报错 0 个。</li>
+    <li>首页、英文首页、英文工作台、下载页、隐私页、登录页、本地扫描器页，7 个地址全部 200。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="sn">05</span>回滚</h2>
+  <div class="split">
+    <div class="panel"><h3>路一　从 GitHub 退回</h3><p>把 <code>5389a7b7</code> 之后回退，重新出包部署即可。</p></div>
+    <div class="panel"><h3>路二　用服务器备份</h3><p>直接用 <span class="loc">/var/www/tygf-test-backups/deploy-20261105_161335-5389a7b73f01</span> 退回上一版。</p><p class="sub">上一版是 <code>4b0e5ae7</code>。</p></div>
+  </div>
+  <div class="callout">
+    <span class="lb">风险门</span>
+    <p>生产站、收款开关、执行开关本轮全都没碰；没有删除任何线上文件。</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">06</span>两件要你知道的</h2>
+  <div class="cards">
+    <div class="card"><h3>另一个会话还有三个文件没提交 <span class="pill">待别人收口</span></h3><p>演示页原计划要「已登录的人打开演示页也强制按访客渲染」，那个开关在另一个会话的工作区里、还没落库，我不碰别人的未提交文件。</p><p>所以现在：没登录的人看到的是访客模式的真实工作台（正确）；<strong>已登录的人打开的演示页会是他自己的真实工作台</strong>，不是演示数据。同理，「演示页绕过排版面板白名单」也没提交，排版面板在演示页里可能还是关着的——如果你看到面板没展开，是这个原因，不是部署失败。</p></div>
+    <div class="card"><h3>第一次失败留下 1.4 GB 候选目录 <span class="pill">等你一句话</span></h3><p class="loc">/var/www/tygf-test-failed/20261105_160406-5389a7b73f01-pre-switch</p><p>部署脚本按设计保留失败构建供排查，我留着没删。删不删你说一声，现在磁盘还剩 11 GB。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="sn">07</span>这次上线包含什么</h2>
+  <p>相对站上原来的 <code>4b0e5ae7</code>，这次多了四个提交：V15 页去模拟化（演示页改真实说明、入口改链真实工作台、报告页脱敏）、顶栏文案改成「内测预览版」、演示页壳修到能过类型检查、中文字体子集。合计 <strong>14 个文件、新增 2027 行、删除 16 行</strong>。</p>
+</section>
+
+<footer>
+  <p>凭据与环境：部署走 GitHub 三段轨（先推远端 → 再从远端拿代码上测试站），出包门禁核过「HEAD 已在 origin/develop 上」；发布包与回执的哈希在服务器侧复算一致。</p>
+</footer>
+
+</div>
+</body>
+</html>
