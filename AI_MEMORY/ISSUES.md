@@ -2437,3 +2437,38 @@
 - **未核实**：真实浏览器里第 1 步的观感（按钮位置、宽度）没实拍；单稿面在真实使用里是否会看到那块批量面板，没做人工点验。
 - **状态更新（2026-11-04）**：残料①**已删**——`draft-group-cards.tsx` 整件删除、`deriveDraftGroups`／`summarizeGroups`／`DraftGroup` 一并摘除；删除前先发现并修掉一个真缺陷：旧卡片退役后批量第 1 步逐稿行丢了「备用引擎读取」徽标（门仍对已死文件断言＝假绿），现挂在 `step1-stage-view.tsx` 的 `engineReadPaths` 上，文案与单稿摘要条／第 2 步一致。四道门改成防复活锁（孤儿文件存在即 rc=1），令牌门基线 175→181（删 2、`typography-panel.tsx` 存量校准 +8）。残料②（单份添加／粘贴无入口）与残料③（单稿面显示批量面板）**仍开着**，等 Owner 拍。
 - **状态更新（2026-11-04 09:28）**：两刀一起上测试站——`aea54021`（退役旧录入层）＋`25deb91d`（本件残料①回收与徽标回迁）已部署，`.deploy-commit` 与 `/api/runtime-provenance` 均为 `25deb91d73c0`、BOUND，回环首页 200×3、PM2 三进程 online/restarts=0，备份 `deploy-20261104_091545-25deb91d73c0`。构建产物客户 chunk 同时含 `step1-executor-hand` 与「一次配好本批表格」，`standalone` 中孤儿组件已不存在。徽标的真实浏览器渲染仍待 Owner 用真稿点验（需一稿「备用引擎读取」才会出现）。生产未动。
+
+## #317　全产品体验走查 22 项（1 blocker／7 major／14 minor）：6 项已修在两棵隔离树待提交，16 项成 5 包方案　🟠 major（2026-11-09 走查立案）
+
+- **登记依据**：2026-11-09 Owner 令全产品主动体验走查。全案（逐条证据／机会点／可执行方案）在 `交付档案/审查报告/审查报告_20261109_全产品体验走查.md`（同名 HTML），证据三件套 27 组在 `交付档案/审查报告/证据_20261109_全产品体验走查/`。本条只作总指针，不复制内容。
+- **最重三条**：F-01 工作台点锁定阶段提示在视口外＝用户眼里「点了没反应」（blocker）；F-04 官网「可交互字体矩阵」是零接线静态假演示；F-07 FAQ 原型残留自相矛盾、失败指引不可行动。
+- **已修（未提交，待 Owner 确认后走三段轨）**：F-01/02/03 在 `worktrees/ux-audit-feedback`（提示滚入屏＋6 秒消退、徽标 done&&!locked）；F-04/05/07 在 `worktrees/ux-audit-copy`（假承诺删除、界面示意标注、FAQ 清残留、「测试站入口」改积分包页）。两树基线 origin/develop f13e1e6d，主审独立复跑 tsc／workbench 合同／zh-font 全 rc=0。
+- **仍开着**：F-06/08~22 共 16 项在报告 5 包方案；4 处口径待 Owner 拍（空案例卡导航撤否／访客看价格否／申请回复时限／macOS 承诺）。
+- **覆盖缺口**：登录后链路（真实扫描/执行/购买/后台）未走查——注册需邀请码；性能维度未仪器化；Windows 助手未走查。
+- **2026-11-09 21:5x 状态更新**：剩余 16 项已全部落地，仍**未提交**。A 树 8 项（F-09/F-10/F-11/F-12/F-13/F-14/F-22/F-16前半）＋B 树 8 项（F-06/F-08/F-15/F-17/F-18/F-19/F-20/F-16后半），另顺手修 5 处同类口令丢失。主审独立复跑：两树 `tsc` rc=0；A `workbench-ui-contract`/`workbench-flow`/`wb-four-screens` 41/41、dict 2,773 键硬伤 0、zh/en font OK；B `legal-pages-drift` 失败 0、marketing-footer 3/3、marketing-attribution PASS、dict 2,770 键硬伤 0、zh/en font OK。逐项与读数见报告「06 16 项修复执行与复验」。**F-21 整项作废**（申请表只有单条内联提示＋三表单 `novalidate`，无双弹窗），F-08 收窄为标题/中性框/配色三项，F-06 改为统一命名而非撤页。
+
+## #318　`smoke-smart-review-product-contract.mjs` 是孤儿闸，且本身就红（断言的字样已被删）　🟡 minor（2026-11-09 复验时实测）
+
+- **现象**：按写手给的命令直接跑会 `ERR_MODULE_NOT_FOUND: @/lib`；加 `--experimental-strip-types --experimental-loader ./scripts/ts-path-loader.mjs` 后在第 162 行断言失败——`assert.match(step, /reviewSmartSummaryTitle/)`，而该字样在 `review-step.tsx` 里已不存在。
+- **取证**：`git log -S reviewSmartSummaryTitle -- src/components/workbench/review-step.tsx` 显示 `611c53ce` 那一笔把它删掉；守卫文件最后一次改动是 `04da0611`（加守卫那一笔），此后没跟上。`grep -rn smoke-smart-review-product-contract package.json .github/workflows` = 0 命中 ⇒ 没有任何 npm / CI 入口跑它，所以它红了很久没人发现。
+- **影响**：这层「导入必须进智能检测」的产品守卫目前是假绿形态——写了、红了、没人跑。不等于该约束没人守（`handleCsvNext` 仍走 `goToStage('translation_review')`，UI 合同闸另有断言），但它的守卫效力为零。
+- **处置待定**：修断言＋接进入口属新增/修改闸，按「未得 Owner 授权前不新建闸」未擅自处理。建议：把 162 行断言改成现存等价物（`reviewSmartSummaryTitle` 的替代文案），并接进 `test:contracts`。
+
+## #319　官网首页缺 canonical / og / JSON-LD：V15 静态页接管了 `/`，Next 侧 metadata 没上去　🟠 major（2026-11-09 复验时实测）
+
+- **现象**：`test:seo-consistency` 在临时起服务（`NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3131`）后仍有 9 条失败，全部落在首页 `/`，内容是缺 canonical、缺 og 标签、缺 JSON-LD。
+- **根因**：`next.config.ts:86` 把 `/` 重写到 `public/v15/index.html`（静态 SPA），Next 的 `metadata` 导出对这条路由不再生效。
+- **漂移说明**：另 50 条失败是端口 3000 上跑的是别的树（其 sitemap 用生产域名）导致的口径不一致，与本项无关，不计。
+- **影响**：搜索结果里首页没有结构化数据，社交分享无卡片。是否补要看 Owner 愿不愿意把 V15 静态页的 head 手写全（canonical/og/JSON-LD 三件）。
+- **状态（2026-11-09 夜，`worktrees/ux-audit-copy` 未提交）**：已修。① head 改为 `index,follow,max-image-preview:large`，补 canonical + hreflang 三连 + og/twitter + 一段 JSON-LD（Organization/WebSite/SoftwareApplication）；FAQPage 有意不加——守卫按 `div.faq-item` 计数而本页用 `details`，加了必红 `faqCount===questions.length`；② 用**相对 URL**（canonical `/`、hreflang `/` 与 `/en`、og:url `/`、og:image `/og-cover.png`），同一份静态文件在测试站与生产站都能过「og:url/og:image 必须是目标域」；③ 补 `/en` 导航入口（守卫要求首页静态 HTML 链到每个一级 sitemap 路径）。复验：`SEO_TARGET=http://127.0.0.1:3131 npm run test:seo-consistency` → `assertion failures=0, fetch failures=0`（252 条 PASS；此前首页 9 条全红）。
+
+## #320　静态官网里 22 处站内绝对链接会把测试站访问口令 `?key=` 丢掉　🟡 minor（2026-11-09 复验时实测）
+
+- **取证**：`grep -o 'href="/[^"#]*"' public/v15/index.html | wc -l` = 22（`/workbench` 11、`/privacy` 3、`/download` 3，其余 `/terms` `/auth/login` `/auth/sessions` `/privacy/subprocessors` `/workbench?mode=batch` 各 1）。
+- **机制**：测试站由反代按 `?key=` 逐请求校验（`src/lib/access-key-link.ts` 注释写明），没有 cookie 兜底；静态页里写死的绝对路径不带查询串 ⇒ 测试站上从官网点进这些页会 403，看起来像「点了没反应」。
+- **已修部分**：React 侧的下载页/调研页/账户中心共 5 处已改用 `useAccessKeyHref`；英文下载页是服务端组件，转客户端会牵动 metadata，未动。
+- **待定**：静态页要修得加一段客户端脚本，在加载时给站内绝对链接补上当前 `?key=`。属新增机制，等 Owner 拍。
+- **状态（2026-11-09 夜，`worktrees/ux-audit-copy` 未提交）**：已修。静态页底部加了一段客户端脚本：读当前 `?key=`，给所有站内绝对链接补上；带捕获阶段 click 兜底；MutationObserver 同时看 childList 与 `attributes:['href']`——实测 hash 路由切换会重建登录链接（`/auth/login?next=%2F%23%2Fpricing`）并丢口令，只观察 childList 接不住。
+- **同类清扫（2026-11-09 夜）**：React 侧共 19 个文件改用新壳 `AccessKeyLink`（Next Link）/ `AccessKeyAnchor`（普通 a），覆盖英文下载页全部 7 处、英文 404×2、中英隐私页与处理方清单、教程页 7 处、中英营销页脚、中英工作台壳、英文账号菜单（含 `router.push`）、中英错误页、admin 登录与仪表盘；`grep -rnE '<(Link|a)[^>]*href="/' src --include=*.tsx` 现 0 命中（字体资源与 `/api/` 除外）。静态页脚本另加 `attributes:['href']` 观察——实测 hash 路由切换会重建登录链接（`/auth/login?next=%2F%23%2Fpricing`）并丢掉口令，只观察 childList 接不住。
+- **浏览器实测（Chrome + 本机 dev）**：带 `?key=test123` → 23 条站内绝对链接全部带 key、0 漏；切到 `#/pricing` 后仍 0 漏；不带 key 打开 → 23 条全部保持原样、0 被改写（生产零影响）。
+

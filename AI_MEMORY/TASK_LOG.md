@@ -1,3 +1,83 @@
+## 2026-11-09 22:16 · 补全首页 SEO ＋ 站内旧链接不再丢测试站口令（B 树未提交）
+
+**目标**：落实 Owner「补全首页 SEO 并修复旧链接」——收掉 11-09 走查复验时新登记的 ISSUES #319（V15 静态页接管 `/` 后首页没有 canonical/og/JSON-LD）与 #320（静态页 22 处站内绝对链接丢 `?key=`），并把同类的 React 侧硬链接一并扫掉。
+
+**方案**：全部改动落在既有隔离树 `worktrees/ux-audit-copy`（分支 `ux-audit/copy-20261109`，HEAD 仍 `f13e1e6d`），不新建树。
+- 首页 head：`robots` 由 `noindex,nofollow` 改 `index,follow,max-image-preview:large`；补 canonical、hreflang 三连、og/twitter 四件套、一段 JSON-LD（Organization/WebSite/SoftwareApplication）。**FAQPage 有意不加**：`scripts/smoke-seo-consistency.mjs` 的 `faqCount` 只数 `<div class="faq-item">`，而本页用 `<details class="faq-item">`（8 条），加了必红。
+- 站内链接统一用**相对 URL**（canonical `/`、hreflang `/` 与 `/en`、og:url `/`、og:image `/og-cover.png`）：同一份静态文件在测试站与生产站都能过「og:url/og:image 必须是目标域」的断言，不必写死 `tuyigf.com`。
+- 静态页底部加口令补全脚本：读 `location.search` 的 `key`，给 `a[href^="/"]` 补 `?key=`；捕获阶段 click 兜底；`MutationObserver` 同时观察 childList 与 `attributes:['href']`（实测 hash 路由会重建登录链接并丢口令，只看 childList 接不住）。
+- React 侧：新增客户端壳 `src/components/site/access-key-link.tsx`（`AccessKeyLink` 包 Next Link、`AccessKeyAnchor` 包普通 a，内部复用 `useAccessKeyHref`），把服务端组件和普通 `<a>` 上的硬链接统一换掉。
+
+**修改文件**（共 21 个：1 新建 + 20 修改）：
+- 新建 `src/components/site/access-key-link.tsx`。
+- `public/v15/index.html`：head 三件（robots/canonical+hreflang/og+twitter+JSON-LD）、导航补 `/en`、底部口令脚本。
+- 服务端组件：`src/app/en/download/page.tsx`（7 处 Link 全换）、`src/app/en/not-found.tsx`、`src/app/en/privacy/page.tsx`、`src/app/en/privacy/subprocessors/page.tsx`、`src/app/(zh)/not-found.tsx`、`src/app/(zh)/error.tsx`、`src/app/(zh)/privacy/page.tsx`、`src/app/(zh)/privacy/subprocessors/page.tsx`、`src/app/(zh)/guide/ps-batch-replace-text/page.tsx`（7 处）、`src/app/global-error.tsx`。
+- 客户端组件：`src/components/site/marketing-footer.tsx`、`home-view.tsx`、`home-view-en.tsx`、`site-footer.tsx`、`zh-workbench-shell.tsx`、`en-workbench-shell.tsx`、`en-account-menu.tsx`（含 `router.push`）、`src/components/admin/admin-login.tsx`、`admin-dashboard.tsx`。
+
+**原因**：#319 是 V15 静态页接管 `/` 后 Next metadata 不再生效留下的空档；#320 是测试站按 `?key=` 逐请求校验（`src/lib/access-key-link.ts` 注释）而无 cookie 兜底，写死的绝对路径一点过去就 403，用户感受是「点了没反应」。旧链接不止静态页——React 侧服务端组件与普通 `<a>` 同样丢口令，故一并清扫（举一反三）。
+
+**测试结果（本树实跑）**：
+- `npx tsc --noEmit` rc=0。
+- `SEO_TARGET=http://127.0.0.1:3131 node scripts/smoke-seo-consistency.mjs` → `assertion failures=0, fetch failures=0`，252 条 PASS；其中首页专项：`home has one JSON-LD script (1)`、`home JSON-LD parses as JSON`、`home Organization JSON-LD carries a contactPoint email`、`/ has exactly one canonical (1)`、`/ canonical matches its sitemap URL`、hreflang 三连、`/ og:url is the target origin /`、`/ og:image uses the target origin`、`home page links to /en|/download|/terms|/privacy (#169)` 全 PASS（此前首页 9 条全红）。
+- 浏览器实测（Chrome CDP + 本机 dev）：带 `?key=test123` → 23 条站内绝对链接 23/23 带 key、0 漏；切到 `#/pricing` 后仍 0 漏（补了 attributes 观察）；不带 key 打开 → 0 条被改写，生产零影响。
+- `test:legal-pages-drift` 断言失败 0；`test:content-studio-v1` PASS；`test:workbench-ui-contract` ok；`test:zh-font` OK（含 mail-notify 43 条）；`test:en-font` OK（33,976 B / 126 码位全覆盖）；`npx eslint` 改动文件 0 error（`public/v15/index.html` 无非 HTML 配置，ESLint 明确忽略）。
+- 判据 grep：`grep -rnE '<(Link|a)[^>]*href="/' src --include=*.tsx` 除字体资源与 `/api/` 外 0 命中。
+
+**遗留问题**：
+- 本树（含此前 16 项）**仍未提交、未推送、未部署**——提交/发布待 Owner 确认（三段轨）。
+- `test:seo-consistency` 的本地跑法必须同时给 `NEXT_PUBLIC_SITE_URL` 与 `SEO_TARGET` 同一个本机 origin，否则 React 页的 og:url 会指向生产域、断言口径不一致（#319 立案时那 50 条「端口 3000 是别的树」的噪音就是这个）。
+- 静态页没有 FAQPage 结构化数据：守卫的 `faqCount` 选择器与页面 `<details>` 不匹配，要加得先改守卫（未得 Owner 授权前不动闸）。
+
+## 2026-11-09 21:55 · 16 项剩余问题全部落地（A/B 两树未提交）＋F-21 更正
+
+**目标**：落实 Owner「使用对抗式审查给个执行方案，然后按方案执行」「继续」——把 11-09 走查剩下的 16 项在隔离树里做完并独立复验。
+
+**方案**：`交付档案/执行方案/执行方案_20261109_全产品体验走查剩余16项.md`（同名 HTML，VERDICT 有条件放行，含四段更正）。拆 A 树（工作台 8 项）＋B 树（官网与站点页 8 项），各从 origin/develop `f13e1e6d` 新建，审写解耦，主审独立复跑全部读数。
+
+**修改文件**：
+- A 树 `worktrees/ux-audit-feedback`（ux-audit/feedback-20261109）：`csv-step.tsx`（卡片底部条件渲染＋按钮降级，`onNext`/`handleCsvNext` 未动）、`workbench-view.tsx`（译文表前缀、行数与预览、访客横幅、换行约束、草稿横幅按批/单分叉）、`source-header.ts`（空表头走 `t('原文')`）、`siteContent.ts`（`csvStepTitle` → 添加译文）、`dict-en.json`（键改名＋新增英文句）。
+- B 树 `worktrees/ux-audit-copy`（ux-audit/copy-20261109）：`public/v15/index.html`（命名统一 5 处＋定价段去内部文档名）、`pack/page.tsx`＋`pack.css`（闸加 h1、中性信息框、紫色令牌换本站绿）、`download/page.tsx` 中英、`auth/login` 中英、`auth/sessions` 中英、`survey/page.tsx`、`en-workbench-shell.tsx`、`privacy/subprocessors` 中英、`guide/ps-batch-replace-text`。
+- 交付件：报告 `交付档案/审查报告/审查报告_20261109_全产品体验走查.md`＋`.html` 各追加「16 项修复执行与复验」一节；`AI_MEMORY/ISSUES.md` #317 状态更新＋新登记 #318/#319/#320。
+
+**原因**：16 项来自 22 条走查发现的剩余部分（F-06/F-08~F-22），F-21 经复核不成立整项作废，F-08 收窄为标题/中性框/配色三项，F-06 由撤页改为统一命名（footer、页面内链、marketing-footer 用例、allowedPages 都依赖该页存在）。
+
+**测试结果（主审独立复跑，非写手自报）**：
+- A 树：`npx tsc --noEmit` rc=0；`test:workbench-ui-contract` ok；`test:workbench-flow` rc=0；`test:wb-four-screens` 41/41；`i18n-dict-qa` 2,773 键硬伤 0；`test:zh-font` OK（4 片 400,036 B / 1,214 码位）；`test:en-font` OK；判据 grep「第 1 步：添加译文」0、裸「原文」0、`csvPreviewTitle` 命中。
+- B 树：`npx tsc --noEmit` rc=0；`test:legal-pages-drift` 断言失败 0；`marketing-footer` 3/3；`test:marketing-attribution` PASS；`i18n-dict-qa` 2,770 键硬伤 0；`test:zh-font` OK（含 mail-notify 43 条）；`test:en-font` OK；判据 grep 全 0（真实实测／交接资料／搜索结果／旧紫令牌／写死 `#workbench`／四个部署键名／"Batch workbench"）。
+- 归属核对：B 树 v15 共 16/16 行改动，其中写手 B 6/6，其余 10/10 是当日早先另一会话的未提交改动（TASK_LOG 顶部 +12/−12 含 payment-return 2/2），未计入本轮、未回退。
+
+**遗留问题**：
+- 两树**均未提交、未推送、未部署**——提交/发布待 Owner 确认（三段轨）。
+- 浏览器实测做不成：隔离树依赖是 junction，Turbopack 拒跨根，页面起不来；UI 效果只有代码与测试证据，无真页面截图。
+- 新登记 ISSUES #318（孤儿红闸 smoke-smart-review-product-contract，断言字样已被 611c53ce 删、package.json/CI 0 引用）、#319（官网首页缺 canonical/og/JSON-LD，V15 静态页接管 `/`）、#320（静态官网 22 处绝对链接丢 `?key=`）。
+- 英文下载页底部回工作台仍写死链接（服务端组件，未转客户端）。
+
+## 2026-11-09 · 全产品体验走查（22 findings）＋6 项高优先级修复（两树未提交）
+
+**目标**：Owner 令「主动走查产品每一个页面与交互细节，六维度审视，高优先级交子 Agent 修复，其余整理成可执行方案」。
+
+**方案与执行**：真实浏览器（Chrome CDP，playwright-core）访客身份逐页实测生产站，桌面 1427px＋移动 390px 双视口，27 组证据三件套落 `交付档案/审查报告/证据_20261109_全产品体验走查/`。22 个发现（1 blocker／7 major／14 minor）聚为 4 个机会点；6 项高优先级派两只写手在隔离 worktree 修复，主审独立复验（审写解耦）。
+
+**修改文件**：
+- 修复树 A `worktrees/ux-audit-feedback`（分支 ux-audit/feedback-20261109，基线 origin/develop f13e1e6d）：`src/components/workbench/workbench-view.tsx`（锁定提示滚入屏＋6 秒自动消退，:627-639）、`src/components/workbench/stage-rail.tsx`（完成态判定 done && !locked 三处）。+17/−3。
+- 修复树 B `worktrees/ux-audit-copy`（分支 ux-audit/copy-20261109，同基线）：`public/v15/index.html`（删「可交互」假承诺、两处「界面示意」标注、FAQ 原型残留全清、失败指引改 actionable）、`src/app/(zh)/payment-return/page.tsx`（两处「测试站入口」改「积分包页面」）。+12/−12。
+- 交付件：`交付档案/审查报告/审查报告_20261109_全产品体验走查.md`＋同名 `.html`（含 16 项剩余问题的 5 包可执行方案）；`spark-output/context/audit.json`＋`spark-output/dashboard.html`。
+- 飞书通知已发：`交付档案/审查报告/飞书通知_20261109_全产品体验走查.md`（send-feishu-report SENT chunks=1）。
+
+**主审复验中修正**：写手 B 一句过承诺「重复原文都会被标出」——相同原文＋相同译文按 Owner 11-05 令静默自动过，已改「原文相同但译文不同的行、以及空译文，都会被标出」（实证 review-step.tsx:4/:1820）。写手 A 两处两行注释按规范压成一行（纯注释）。
+
+**验证结果（主审独立复跑，真实退出码）**：
+- 树 A：`npx tsc --noEmit` rc=0；`test:workbench-ui-contract` rc=0；`test:workbench-flow` rc=0；写手另跑 `test:workbench-batch-groups` rc=0（31 smoke＋148 vitest）。
+- 树 B：`npx tsc --noEmit` rc=0；`test:zh-font` rc=0（1214 码位全覆盖，无需重生成子集）；grep「原型」「可交互」「测试站」均 0 命中（rc=1）；`git diff --check` 两树 rc=0。
+- 新文案事实断言逐条核出处：/pack 入口（pack/page.tsx:174）、客服邮箱（terms/page.tsx:191、download/page.tsx:38）、报告能力（execute-step.tsx:954/:5095）、「申请试跑」按钮真名。
+
+**遗留问题**：
+- 两修复树**均未提交**——提交/推送/部署待 Owner 确认（三段轨）。
+- 剩余 16 项在报告 5 包方案里，4 处口径待 Owner 拍（空案例卡导航撤否／访客看价格否／申请回复时限／macOS 承诺）。
+- 登录后链路（真实扫描/执行/购买/后台）未走查——注册需邀请码，已在报告与飞书如实声明。
+- 树 A 滚动/消退的实机观感留待测试站部署后实测（隔离树 junction 过不了 Turbopack 的已知约束）。
+- 新问题登记 ISSUES #317（走查总条，指针式）。
+
 ## 2026-11-04 09:28　两刀一起上测试站：旧录入层退役（aea54021）＋孤儿回收与换手徽标（25deb91d）已部署并复验
 
 - **触发**：Owner「把这两刀一起出包上测试站」。范围＝`origin/develop@25deb91d`（父链含 `aea54021`），只动测试站，生产未碰。

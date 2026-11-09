@@ -1,0 +1,319 @@
+{
+  "skill": "audit",
+  "generated_at": "2026-11-09T11:01:16.398Z",
+  "project_name": "图译工坊",
+  "target": {
+    "type": "url",
+    "reference": "https://www.tuyigf.com (生产) + 本地 CDP 浏览器实测",
+    "pages_audited": [
+      "/",
+      "/#how",
+      "/#typography",
+      "/#product",
+      "/#cases",
+      "/#security",
+      "/#pricing",
+      "/#guides",
+      "/#faq",
+      "/#pilot",
+      "/download",
+      "/auth/login",
+      "/auth/register",
+      "/auth/reset",
+      "/workbench",
+      "/workbench?mode=batch",
+      "/pack",
+      "/guide",
+      "/privacy",
+      "/terms",
+      "/subprocessors",
+      "/survey",
+      "/en",
+      "/en/workbench",
+      "/admin",
+      "/payment-return",
+      "移动端 390px: 首页/菜单/工作台/计费"
+    ]
+  },
+  "audit_framework": [
+    "Nielsen-10",
+    "responsive",
+    "performance"
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "heuristic": "visibility",
+      "severity": "blocker",
+      "description": "工作台点击未解锁阶段时，锁定提示渲染在页面顶部而点击入口在页面下方，视口内零反馈，用户以为按钮坏了",
+      "evidence": "证据_20261109/08 系列；workbench-view.tsx:644 setStageLockNotice，提示渲染 :6633 无 scrollIntoView",
+      "suggestion": "提示设置时 scrollIntoView 入屏",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-02",
+      "heuristic": "consistency",
+      "severity": "major",
+      "description": "阶段徽标「已完成✓」与「锁定」同时出现：无扫描时 allLanguagesReviewed 空真把 translation_review 推进 completedStages，但进入闸仍关",
+      "evidence": "证据_20261109/08；stage-rail.tsx:38/74/100 只看 item.done；workbench-machine.ts:35/92",
+      "suggestion": "完成态判定改为 done && !locked",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-03",
+      "heuristic": "visibility",
+      "severity": "major",
+      "description": "阶段锁定提示一旦设置永不清除，条件满足后仍残留，误导用户以为仍被锁",
+      "evidence": "workbench-view.tsx:6633 无清除逻辑",
+      "suggestion": "瞬态提示 6 秒自动清除",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-04",
+      "heuristic": "real-world-match",
+      "severity": "major",
+      "description": "官网字体矩阵演示的 tab/按钮全是静态 span 零接线，看着可点实则无反应；产品页还承诺「可交互字体矩阵」",
+      "evidence": "证据_20261109/25；public/v15/index.html:1218-1221/1248-1251/1259",
+      "suggestion": "改诚实文案＋加「界面示意」标注，不重建交互",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-05",
+      "heuristic": "real-world-match",
+      "severity": "major",
+      "description": "生产支付回跳页两处写「测试站入口」，内部词且指引错误",
+      "evidence": "证据_20261109/20；src/app/(zh)/payment-return/page.tsx:122/167",
+      "suggestion": "改为真实支付入口页名称",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-06",
+      "heuristic": "consistency",
+      "severity": "major",
+      "description": "官网导航「真实实测」点进去是 5 张「案例待补充」空卡；同一页面有导航名/页题/锚点三个名字",
+      "evidence": "证据_20261109 首页套件；v15/index.html cases 页",
+      "suggestion": "无真实案例前撤下该导航项或改为真实内容",
+      "effort": "medium"
+    },
+    {
+      "id": "F-07",
+      "heuristic": "help-docs",
+      "severity": "major",
+      "description": "FAQ 残留原型时代文案且自相矛盾（一条说原型已退役、一条教你用原型表单）；失败指引「以真实执行测试为准」不可行动",
+      "evidence": "v15/index.html FAQ 区",
+      "suggestion": "全部改为已上线产品口径，失败指引给「看报告→反馈」动作",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-08",
+      "heuristic": "user-control",
+      "severity": "major",
+      "description": "/pack 积分包页对访客是死墙（无登录引导出口）；且紫粉配色与全站蓝绿体系不一致",
+      "evidence": "证据_20261109/11",
+      "suggestion": "加登录/返回出口；配色归并设计令牌",
+      "effort": "medium"
+    },
+    {
+      "id": "F-09",
+      "heuristic": "aesthetic",
+      "severity": "minor",
+      "description": "工作台同屏两个「下一步」样式按钮主次不分",
+      "evidence": "证据_20261109/08 系列",
+      "suggestion": "保留一个主按钮，另一个降为文字链接",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-10",
+      "heuristic": "consistency",
+      "severity": "minor",
+      "description": "步骤内嵌套编号（1. 里面又有 1.），层级混乱",
+      "evidence": "证据_20261109/08 系列",
+      "suggestion": "内层改 bullet 或字母编号",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-11",
+      "heuristic": "visibility",
+      "severity": "minor",
+      "description": "状态信息重复展示，且「原文」被计入语言数，分母口径误导",
+      "evidence": "证据_20261109/08 系列",
+      "suggestion": "状态单一出处；语言数不含原文",
+      "effort": "medium"
+    },
+    {
+      "id": "F-12",
+      "heuristic": "recognition",
+      "severity": "minor",
+      "description": "CSV/Excel 导入后无行数与内容预览，用户无法确认导入对不对",
+      "evidence": "证据_20261109/08b-08j",
+      "suggestion": "导入后显示「共 N 行」＋前几行预览",
+      "effort": "medium"
+    },
+    {
+      "id": "F-13",
+      "heuristic": "consistency",
+      "severity": "minor",
+      "description": "访客横幅承诺「现在就能用」，但粘贴文本整理又需登录，预期落差",
+      "evidence": "证据_20261109/08 系列；csv-step.tsx:229/541",
+      "suggestion": "横幅写清哪些免登录哪些需登录",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-14",
+      "heuristic": "responsive",
+      "severity": "minor",
+      "description": "阶段锁定提示文案在窄栏被截断",
+      "evidence": "证据_20261109/08 系列",
+      "suggestion": "提示条允许换行",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-15",
+      "heuristic": "responsive",
+      "severity": "minor",
+      "description": "移动端重置密码链接竖排逐字换行",
+      "evidence": "证据_20261109/21 系列",
+      "suggestion": "链接容器加 whitespace-nowrap 或放宽",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-16",
+      "heuristic": "responsive",
+      "severity": "minor",
+      "description": "英文工作台 placeholder 截断成「pastin」；页题「Batch workbench」与中文口径不一",
+      "evidence": "证据_20261109/18",
+      "suggestion": "英文文案校对＋输入框宽度适配",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-17",
+      "heuristic": "consistency",
+      "severity": "minor",
+      "description": "下载页「返回工作台」回链错误；「macOS：即将支持」是无期限承诺",
+      "evidence": "证据_20261109 下载页",
+      "suggestion": "回链改官网首页；macOS 改「仅支持 Windows」或删除",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-18",
+      "heuristic": "real-world-match",
+      "severity": "minor",
+      "description": "定价页出现「交接资料」内部文档名",
+      "evidence": "v15/index.html pricing 页",
+      "suggestion": "改用户语言",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-19",
+      "heuristic": "real-world-match",
+      "severity": "minor",
+      "description": "指南页把 SEO 写作理由写给用户看",
+      "evidence": "证据_20261109/12",
+      "suggestion": "删内部理由，只留用户指引",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-20",
+      "heuristic": "real-world-match",
+      "severity": "minor",
+      "description": "子处理方页面暴露内部部署键名",
+      "evidence": "证据_20261109/15",
+      "suggestion": "键名改服务名，不暴露内部标识",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-21",
+      "heuristic": "error-recovery",
+      "severity": "minor",
+      "description": "申请表单浏览器原生校验与自定义校验双重弹窗；无回复时限预期",
+      "evidence": "证据_20261109/24/24b",
+      "suggestion": "统一一套校验；成功文案加回复时限",
+      "effort": "quick-win"
+    },
+    {
+      "id": "F-22",
+      "heuristic": "consistency",
+      "severity": "minor",
+      "description": "草稿横幅文案在单稿/批量两模式不一致",
+      "evidence": "证据_20261109/08/10",
+      "suggestion": "统一文案出处",
+      "effort": "quick-win"
+    }
+  ],
+  "opportunities": [
+    {
+      "title": "工作台状态反馈与阶段一致性重做",
+      "addresses_findings": [
+        "F-01",
+        "F-02",
+        "F-03",
+        "F-11",
+        "F-14"
+      ],
+      "priority": "high",
+      "rationale": "含唯一 blocker；用户在工作台第一步就遭遇「点了没反应」「✓却点不动」，直接摧毁对产品可靠性的信任"
+    },
+    {
+      "title": "官网对外口径诚实化（去原型残留/去内部词/去假交互）",
+      "addresses_findings": [
+        "F-04",
+        "F-05",
+        "F-06",
+        "F-07",
+        "F-18",
+        "F-19",
+        "F-20"
+      ],
+      "priority": "high",
+      "rationale": "生产官网是获客门面，假交互与原型残留让访客认为产品未完成；7 个 finding 同属「对外说了不该说的话」"
+    },
+    {
+      "title": "访客转化旅程疏通（死墙给出口、导入给反馈、申请给预期）",
+      "addresses_findings": [
+        "F-08",
+        "F-12",
+        "F-13",
+        "F-21"
+      ],
+      "priority": "high",
+      "rationale": "访客在 /pack 撞死墙、导入后无确认、申请后无预期——转化漏斗每个环节都在流失"
+    },
+    {
+      "title": "跨端跨语言组件一致性打磨",
+      "addresses_findings": [
+        "F-09",
+        "F-10",
+        "F-15",
+        "F-16",
+        "F-17",
+        "F-22"
+      ],
+      "priority": "medium",
+      "rationale": "6 个 minor 同属一致性/响应式，单个不致命但叠加拉低质感，适合一个打磨包统一处理"
+    }
+  ],
+  "summary": {
+    "total_findings": 22,
+    "by_severity": {
+      "blocker": 1,
+      "major": 7,
+      "minor": 14
+    },
+    "by_heuristic": {
+      "visibility": 3,
+      "real-world-match": 5,
+      "user-control": 1,
+      "consistency": 6,
+      "recognition": 1,
+      "aesthetic": 1,
+      "error-recovery": 1,
+      "help-docs": 1,
+      "responsive": 3
+    },
+    "top_opportunities": [
+      "工作台状态反馈与阶段一致性重做",
+      "官网对外口径诚实化",
+      "访客转化旅程疏通"
+    ]
+  }
+}
