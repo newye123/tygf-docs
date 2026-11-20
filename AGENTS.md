@@ -1,3 +1,9 @@
+## 硬护栏与视觉真源（强制）
+- **UI 唯一真源**：`docs/ui-reference/workbench-v3.html`（只读禁止修改）。
+- **自动硬拦截**：仓库已启用 `.claude/settings.json` Hooks（禁止前端泄露引擎词、禁止子分支改 `AI_MEMORY/*`、禁止直推 `main`、禁止前后端混塞同一大提交）。
+- **取消即终止**：严禁叠加网页假目录窗/老式 Win32 树形框 fallback；用户取消直接安静返回。
+- **实机验证铁律**：凡改工作台 UI，禁止只交无头单测，必须通过 Playwright MCP / Chrome DevTools MCP 实点验证并运行 `node scripts/e2e-workbench-v3-verify.mjs` + 4 道发布门禁全绿后方可汇报完成。
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

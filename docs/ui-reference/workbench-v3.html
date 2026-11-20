@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图译工坊 · 工作台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f8fafc;
+      --surface-2: #f1f5f9;
+      --hair: #f0f2f5;
+      --hair-strong: #e2e8f0;
+      --ink: #0f172a;
+      --ink2: #334155;
+      --mute: #64748b;
+      --subtle: #94a3b8;
+      --brand: #0b5c46;
+      --brand-hover: #084736;
+      --brand-soft: #ecfdf5;
+      --warn: #b45309;
+      --warn-soft: #fef3c7;
+      --warn-bg: #fffbeb;
+      --danger: #b91c1c;
+      --danger-soft: #fef2f2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+      font-size: 13px;
+      transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, opacity 0.14s ease;
+    }
+
+    button:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    /* 双层极简吸顶：48px 官网全局导航 + 44px 工作台流程栏 */
+    .header-shell {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .shell-inner {
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 clamp(16px, 3vw, 40px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .nav-global {
+      height: 48px;
+      border-bottom: 1px solid var(--hair);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      min-width: 0;
+    }
+
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--brand);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 14.5px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+    }
+
+    .site-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .site-nav-btn {
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--mute);
+      white-space: nowrap;
+    }
+
+    .site-nav-btn:hover { color: var(--ink); background: var(--surface); }
+    .site-nav-btn.active { color: var(--ink); font-weight: 600; background: var(--surface); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .helper-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--mute);
+      white-space: nowrap;
+    }
+
+    .dot-online {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #10b981;
+    }
+
+    .credits-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--brand);
+      background: var(--brand-soft);
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .avatar-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--hair-strong);
+      flex-shrink: 0;
+    }
+    .avatar-btn:hover { background: #e2e8f0; }
+
+    /* Layer 2: 工作台流程轻条 */
+    .nav-sub {
+      height: 44px;
+      border-bottom: 1px solid var(--hair-strong);
+      background: #ffffff;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+    }
+
+    .step-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--mute);
+      white-space: nowrap;
+    }
+
+    .step-btn:hover:not(:disabled) { color: var(--ink); background: var(--surface); }
+    .step-btn.active { color: var(--brand); font-weight: 600; background: var(--brand-soft); }
+
+    .step-idx {
+      width: 17px;
+      height: 17px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+      background: var(--surface-2);
+      color: var(--mute);
+    }
+
+    .step-btn.active .step-idx { background: var(--brand); color: #ffffff; }
+    .step-btn.done .step-idx { background: #d1fae5; color: var(--brand); }
+    .step-sep { color: #cbd5e1; font-size: 12px; user-select: none; }
+
+    .sub-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* 统一按钮体系（克制、层级分明） */
+    .btn-primary {
+      padding: 8px 16px;
+      border-radius: 7px;
+      background: var(--brand);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
+
+    .btn-secondary {
+      padding: 6px 12px;
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--ink);
+      font-weight: 500;
+      font-size: 12.5px;
+      border: 1px solid var(--hair-strong);
+      white-space: nowrap;
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--surface); border-color: #cbd5e1; }
+
+    .btn-text {
+      padding: 5px 8px;
+      border-radius: 6px;
+      color: var(--mute);
+      font-size: 12.5px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .btn-text:hover:not(:disabled) { color: var(--ink); background: var(--surface); }
+
+    /* Main Workspace */
+    .main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px clamp(20px, 3.5vw, 40px) 36px;
+    }
+
+    /* 顶部极简动作条（取代厚重双虚线盒，释放首屏） */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--hair);
+      flex-wrap: wrap;
+    }
+
+    .summary-line {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .summary-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+    }
+
+    .summary-meta {
+      font-size: 13px;
+      color: var(--mute);
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 极简语种筛选行（中性常态，不刷屏） */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--hair);
+      flex-wrap: wrap;
+    }
+
+    .lang-pills {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .lang-toggle {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--subtle);
+      background: transparent;
+    }
+    .lang-toggle:hover { background: var(--surface); color: var(--ink2); }
+    .lang-toggle.on {
+      background: var(--surface-2);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* 轻量状态提示条（仅在有真实操作反馈时出现，平时零噪音） */
+    .inline-notice {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12.5px;
+      color: var(--ink2);
+      flex-wrap: wrap;
+    }
+
+    .inline-notice.warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+    }
+
+    .inline-notice.brand {
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+
+    .inline-notice.danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    /* 统一单表 + 轻量分组行（Linear 风格，零重复表头、零重复边框下拉框） */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 12px 10px 0;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--subtle);
+      border-bottom: 1px solid var(--hair-strong);
+      white-space: nowrap;
+    }
+
+    tbody tr.group-row td {
+      background: var(--surface);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--hair);
+      border-top: 1px solid var(--hair);
+    }
+
+    .group-row-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .group-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .group-count {
+      font-weight: 400;
+      color: var(--mute);
+    }
+
+    tbody tr.data-row td {
+      padding: 12px 12px 12px 0;
+      border-bottom: 1px solid var(--hair);
+      vertical-align: middle;
+    }
+
+    tbody tr.data-row:hover td {
+      background: #fafbfc;
+    }
+
+    .draft-title {
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .draft-meta {
+      font-size: 12px;
+      color: var(--subtle);
+      margin-top: 2px;
+    }
+
+    /* 无边框轻下拉（仅悬停显轮廓，消除满屏方框） */
+    select.quiet-select {
+      font-family: inherit;
+      font-size: 12.5px;
+      color: var(--ink2);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin-left: -8px;
+      cursor: pointer;
+      max-width: 240px;
+    }
+    select.quiet-select:hover, select.quiet-select:focus {
+      background: #ffffff;
+      border-color: var(--hair-strong);
+      outline: none;
+    }
+
+    /* 顶级克制的语种微状态：常态中性灰，异常才亮琥珀色 */
+    .lang-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ldot {
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ldot.ok {
+      background: var(--surface);
+      color: var(--ink2);
+    }
+    .ldot.ok:hover { background: var(--surface-2); }
+
+    .ldot.issue {
+      background: var(--warn-soft);
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    .ldot.na {
+      background: transparent;
+      color: #cbd5e1;
+      border: 1px dashed #e2e8f0;
+    }
+    .ldot.na:hover { color: var(--mute); border-color: #cbd5e1; }
+
+    .dot-amber {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--warn);
+    }
+
+    /* Step 2 异常快捷条 & 全宽矩阵 */
+    .issue-strip {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-radius: 10px;
+    }
+
+    .issue-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .issue-pill {
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      background: #ffffff;
+      color: var(--ink2);
+      border: 1px solid var(--hair-strong);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .issue-pill:hover { border-color: #cbd5e1; }
+    .issue-pill.active {
+      background: var(--ink);
+      color: #ffffff;
+      border-color: var(--ink);
+    }
+    .issue-pill.active .dot-amber { background: #fbbf24; }
+
+    /* 全宽全景矩阵（低饱和常态 + 高对比焦点） */
+    .matrix-wrap { margin-top: 14px; overflow-x: auto; }
+    .matrix-grid { display: grid; gap: 4px; min-width: 620px; }
+
+    .mx-head {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--subtle);
+      text-align: center;
+      padding: 6px 2px;
+    }
+
+    .mx-row-label {
+      font-size: 12.5px;
+      color: var(--ink2);
+      display: flex;
+      align-items: center;
+      padding: 4px 10px 4px 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mx-cell {
+      height: 30px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mx-cell.selected { box-shadow: 0 0 0 1.5px var(--ink); font-weight: 600; }
+    .mx-cell.ready, .mx-cell.confirmed, .mx-cell.verified { background: #ffffff; color: var(--brand); border: 1px solid var(--hair); }
+    .mx-cell.has_issues, .mx-cell.review_needed, .mx-cell.dirty { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+    .mx-cell.failed { background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+    .mx-cell.running { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+    .mx-cell.queued { background: var(--surface-2); color: var(--subtle); }
+    .mx-cell.na { background: transparent; color: #cbd5e1; }
+
+    /* 极简数字指标行（无灰盒子堆砌） */
+    .stat-row {
+      display: flex;
+      align-items: baseline;
+      gap: 36px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--hair);
+      flex-wrap: wrap;
+    }
+
+    .stat-val { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+    .stat-lbl { font-size: 12px; color: var(--mute); margin-top: 4px; }
+
+    /* 细进度条 */
+    .progress-track {
+      width: 100%;
+      height: 3px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--brand);
+      transition: width 0.2s ease;
+    }
+
+    .inspector {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 9px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* 空状态大拖放区 */
+    .empty-state {
+      margin: 48px auto;
+      max-width: 560px;
+      text-align: center;
+      padding: 48px 32px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1.5px dashed #cbd5e1;
+    }
+    .empty-state h2 { margin: 0 0 8px; font-size: 17px; }
+    .empty-state p { margin: 0 0 20px; color: var(--mute); font-size: 13px; }
+
+    /* 全局拖拽遮罩（无感常驻，拖文件进窗口瞬间浮现） */
+    .global-drop-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      display: none;
+      place-items: center;
+      border: 3px dashed var(--brand);
+      margin: 12px;
+      border-radius: 14px;
+    }
+    .global-drop-mask.show { display: grid; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .badge-ok { background: var(--brand-soft); color: var(--brand); }
+    .badge-warn { background: var(--warn-soft); color: var(--warn); }
+    .badge-danger { background: var(--danger-soft); color: var(--danger); }
+
+    .pre-line { white-space: pre-line; }
+
+    .bottombar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--hair-strong);
+      height: 60px;
+    }
+
+    .bottom-info { font-size: 13px; color: var(--mute); }
+    .bottom-actions { display: flex; align-items: center; gap: 10px; }
+
+    .toast {
+      position: fixed;
+      bottom: 72px;
+      left: 50%;
+      transform: translate(-50%, 10px);
+      z-index: 60;
+      background: var(--ink);
+      color: #ffffff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .hidden-input { display: none; }
+
+    .home-wrap { padding: 64px 0; max-width: 680px; }
+    .home-wrap h1 { font-size: 34px; line-height: 1.24; margin: 0 0 14px; letter-spacing: -0.02em; }
+    .home-wrap p { font-size: 15.5px; color: var(--ink2); margin: 0 0 26px; }
+
+    /* 字体排版居中侧边悬浮 T 按钮 & 居中漂浮面板 */
+    .typo-fab {
+      position: fixed;
+      top: 50%;
+      right: max(18px, calc((100vw - 1320px) / 2 - 64px));
+      transform: translateY(-50%);
+      z-index: 45;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      font-weight: 700;
+      border: 1px solid var(--hair-strong);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .typo-fab:hover, .typo-fab.active {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+      box-shadow: 0 10px 28px rgba(11, 92, 70, 0.15);
+    }
+    .typo-fab-dot {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: #ffffff;
+      font-family: "Inter", sans-serif;
+      font-size: 10.5px;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      border: 2px solid #ffffff;
+    }
+
+    .typo-panel {
+      position: fixed;
+      top: 50%;
+      right: max(74px, calc((100vw - 1320px) / 2 - 4px));
+      transform: translateY(-50%);
+      z-index: 50;
+      width: min(420px, calc(100vw - 92px));
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid var(--hair-strong);
+      border-radius: 14px;
+      box-shadow: 0 20px 52px rgba(15, 23, 42, 0.14);
+      padding: 18px 20px;
+      display: none;
+    }
+
+    .src-font-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .src-font-item {
+      width: 100%;
+      text-align: left;
+      padding: 8px 11px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .src-font-item:hover { background: var(--surface-2); }
+    .src-font-item.active {
+      background: #ffffff;
+      border-color: var(--brand);
+      box-shadow: 0 1px 4px rgba(11, 92, 70, 0.10);
+    }
+    .src-font-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+    .src-font-sub { font-size: 11px; color: var(--mute); margin-top: 1px; }
+
+    .typo-grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .ps-input-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--hair-strong);
+      border-radius: 7px;
+      padding: 4px 8px;
+      background: #ffffff;
+    }
+    .ps-input-box:focus-within {
+      border-color: var(--brand);
+    }
+    .ps-icon {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--mute);
+      min-width: 24px;
+      text-align: center;
+      user-select: none;
+    }
+    .ps-num {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: "Inter", "Noto Sans SC", sans-serif;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--ink);
+      background: transparent;
+      min-width: 0;
+    }
+    .ps-unit {
+      font-size: 11.5px;
+      color: var(--subtle);
+      flex-shrink: 0;
+    }
+
+    /* 多文件夹导入下拉菜单 & 来源目录微条 */
+    .import-menu-wrap {
+      position: relative;
+    }
+    .import-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 45;
+      width: 232px;
+      background: #ffffff;
+      border: 1px solid var(--hair-strong);
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+      padding: 6px;
+      display: none;
+    }
+    .import-menu.open { display: block; }
+    .import-menu-item {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border-radius: 7px;
+      display: block;
+    }
+    .import-menu-item:hover { background: var(--surface); }
+    .import-menu-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .import-menu-sub { font-size: 11.5px; color: var(--mute); margin-top: 2px; }
+
+    .folder-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--hair);
+      font-size: 12px;
+    }
+    .folder-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink2);
+      border: 1px solid var(--hair);
+    }
+    .folder-chip-x {
+      color: var(--subtle);
+      font-size: 12px;
+      padding: 0 2px;
+    }
+    .folder-chip-x:hover { color: var(--danger); }
+    .typo-panel.open { display: block; }
+
+    .typo-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--hair);
+      margin-bottom: 14px;
+    }
+    .typo-head-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .typo-lang-tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .typo-lang-tab {
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--mute);
+      background: var(--surface);
+    }
+    .typo-lang-tab.active {
+      background: var(--brand);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .typo-field {
+      margin-bottom: 12px;
+    }
+    .typo-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink2);
+      margin-bottom: 5px;
+    }
+    .typo-val {
+      font-weight: 600;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+    }
+    .typo-select {
+      width: 100%;
+      font-family: inherit;
+      font-size: 12.5px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--hair-strong);
+      background: #ffffff;
+      color: var(--ink);
+    }
+    .typo-range {
+      width: 100%;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    .typo-preview {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--hair);
+      min-height: 62px;
+      color: var(--ink);
+    }
+
+    .typo-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--hair);
+    }
+
+    .mx-row-label {
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+      z-index: 2;
+    }
+
+    @media (max-width: 960px) {
+      .nav-left { gap: 14px; }
+      .site-nav-btn { padding: 5px 8px; font-size: 12.5px; }
+      .helper-status { display: none; }
+    }
+
+    @media (max-width: 680px) {
+      .site-links { display: none; }
+      .step-btn:not(.active) .step-label { display: none; }
+      .credits-pill { font-size: 11.5px; padding: 3px 8px; }
+      .stat-row { gap: 18px; }
+      .bottom-info { display: none; }
+      .bottombar .shell-inner { justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 双层极简吸顶壳层 -->
+  <div class="header-shell">
+    <header class="nav-global">
+      <div class="shell-inner">
+        <div class="nav-left">
+          <button class="brand-link" data-page="home">
+            <span class="brand-mark">图</span>
+            <span class="brand-name">图译工坊</span>
+          </button>
+          <nav class="site-links">
+            <button class="site-nav-btn" data-page="home" id="navHome">首页</button>
+            <button class="site-nav-btn active" data-page="workbench" id="navWorkbench">工作台</button>
+            <button class="site-nav-btn" data-page="pricing" id="navPricing">价格</button>
+            <button class="site-nav-btn" data-page="download" id="navDownload">下载助手</button>
+          </nav>
+        </div>
+        <div class="nav-right">
+          <span class="helper-status"><i class="dot-online"></i>本机助手在线</span>
+          <span class="credits-pill" id="creditsPill" title="当前可用积分">剩余 1,280 积分</span>
+          <button class="avatar-btn" id="btnAvatar" title="freedesignyes@gmail.com">F</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav-sub" id="subbar">
+      <div class="shell-inner">
+        <nav class="stepper" id="stepper"></nav>
+        <div class="sub-right">
+          <button class="btn-text" id="btnReset">恢复示例</button>
+          <button class="btn-text" id="btnClearAll">清空列表</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局隐藏文件选择器（真实支持选择并绑定） -->
+  <input type="file" id="inputAllFiles" class="hidden-input" multiple accept=".psd,.psb,.xlsx,.csv,.tsv,.txt" />
+  <input type="file" id="inputFolder" class="hidden-input" webkitdirectory directory multiple />
+
+  <!-- 全局拖拽遮罩 -->
+  <div class="global-drop-mask" id="dropMask">
+    <div style="text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--brand);margin-bottom:6px;">松手即可导入当前批次</div>
+      <div style="font-size:13px;color:var(--mute);">自动识别设计稿文件与译文表，设计稿本体留在本机不上传</div>
+    </div>
+  </div>
+
+  <main class="main" id="app"></main>
+
+  <!-- 字体排版居中悬浮 T 按钮与漂浮面板 -->
+  <button class="typo-fab" id="btnToggleTypo" title="字体排版映射（按原稿字体分组）">
+    <span>T</span>
+    <span class="typo-fab-dot" id="typoCountDot">2</span>
+  </button>
+  <aside class="typo-panel" id="typoPanel"></aside>
+
+  <footer class="bottombar" id="bottombar"></footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const LANGS = [
+      { code: "ES", short: "西", full: "西班牙语" },
+      { code: "VI", short: "越", full: "越南语" },
+      { code: "PL", short: "波", full: "波兰语" },
+      { code: "NL", short: "荷", full: "荷兰语" },
+      { code: "MS", short: "马", full: "马来语" },
+      { code: "JP", short: "日", full: "日语" }
+    ];
+    const langShort = c => (LANGS.find(l => l.code === c) || { short: c }).short;
+    const langFull = c => (LANGS.find(l => l.code === c) || { full: c }).full;
+
+    function createInitialState() {
+      const availableTables = [
+        "5857 合并译文表（6 份单语表）",
+        "6713 日文译文表",
+        "5385 / 5386 共享日文表",
+        "5389 高级详情日文表"
+      ];
+
+      const groupTables = {
+        "货号 5857": "5857 合并译文表（6 份单语表）",
+        "货号 6713": "6713 日文译文表",
+        "货号 5385 / 5386": "5385 / 5386 共享日文表",
+        "货号 5389": "5389 高级详情日文表"
+      };
+
+      const drafts = [
+        { id: "d01", group: "货号 5857", name: "5857_01_主图.psd", layers: 11, smartObj: 0, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d02", group: "货号 5857", name: "5857_02_功能操作卖点.psd", layers: 14, smartObj: 0, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d03", group: "货号 5857", name: "5857_03_人体工学与便携.psd", layers: 12, smartObj: 0, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d04", group: "货号 5857", name: "5857_04_包装清单.psd", layers: 15, smartObj: 1, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d05", group: "货号 5857", name: "5857_05_详情场景与耐用.psd", layers: 16, smartObj: 0, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d06", group: "货号 5857", name: "5857_06_尺寸重量参数.psd", layers: 18, smartObj: 0, customTable: null, onlyLangs: ["ES","VI","PL","NL","MS","JP"] },
+        { id: "d07", group: "货号 6713", name: "6713_01_电池手柄核心卖点.psd", layers: 21, smartObj: 0, customTable: null, onlyLangs: ["JP"] },
+        { id: "d08", group: "货号 6713", name: "6713_02_温控与无线麦对比.psd", layers: 29, smartObj: 1, customTable: null, onlyLangs: ["JP"] },
+        { id: "d09", group: "货号 6713", name: "6713_03_续航与兼容参数.psd", layers: 17, smartObj: 0, customTable: null, onlyLangs: ["JP"] },
+        { id: "d10", group: "货号 5385 / 5386", name: "5385_皮套套装详情.psd", layers: 22, smartObj: 0, customTable: null, onlyLangs: ["JP"], sharedWith: "5385、5386" },
+        { id: "d11", group: "货号 5385 / 5386", name: "5386_皮套套装配色版.psd", layers: 22, smartObj: 0, customTable: null, onlyLangs: ["JP"], sharedWith: "5385、5386" },
+        { id: "d12", group: "货号 5389", name: "5389_高级详情页.psd", layers: 36, smartObj: 2, customTable: null, onlyLangs: ["JP"] }
+      ];
+
+      const cells = {};
+      drafts.forEach(d => {
+        LANGS.forEach(l => {
+          const lang = l.code;
+          const key = `${d.id}::${lang}`;
+          const enabled = d.onlyLangs.includes(lang);
+          const issues = [];
+
+          if (enabled && d.id === "d06") {
+            const samples = {
+              ES: { cur: "Peso del\npaquete", fix: "Peso del paquete\n135,5 ± 5,0 g" },
+              VI: { cur: "Trọng\nlượng gói", fix: "Trọng lượng gói\n135.5 ± 5.0g / 4.8 ± 0.2oz" },
+              PL: { cur: "Waga\nopakowania", fix: "Waga opakowania\n135,5 ± 5,0 g" },
+              NL: { cur: "Verpak\nkingsgewicht", fix: "Verpakkingsgewicht\n135,5 ± 5,0 g" },
+              MS: { cur: "Berat\npakej", fix: "Berat pakej\n135.5 ± 5.0g / 4.8 ± 0.2oz" },
+              JP: { cur: "パッ\nケージ重量", fix: "パッケージ重量\n135.5 ± 5.0g / 4.8 ± 0.2oz" }
+            };
+            issues.push({
+              id: `iss_num_${lang}`,
+              sharedKey: "5857_MISSING_SPEC_NUM",
+              layer: "规格区 / 包装重量",
+              source: "Package Weight\n135.5 ± 5.0g / 4.8 ± 0.2oz",
+              currentTarget: samples[lang].cur,
+              type: "译文丢失规格数值与断词",
+              options: ["补回数值并合并断词", "按原表写入"],
+              fixPreview: samples[lang].fix,
+              chosen: null,
+              resolved: false
+            });
+          }
+
+          if (enabled && (d.id === "d02" || d.id === "d03") && lang === "ES") {
+            issues.push({
+              id: `iss_es_dup_${d.id}`,
+              sharedKey: "5857_ES_GRIP",
+              layer: "卖点区 / 人体工学标题",
+              source: "Ergonomic Grip for Stable Shooting",
+              currentTarget: "存在 2 种译法",
+              type: "同源多译",
+              options: ["Empuñadura ergonómica para una grabación estable", "Agarre ergonómico para un disparo estable"],
+              chosen: null,
+              resolved: false
+            });
+          }
+
+          if (enabled && d.id === "d04" && lang === "PL") {
+            issues.push({
+              id: "iss_pl_typo",
+              sharedKey: null,
+              layer: "清单区 / 配件一",
+              source: "Cage × 1",
+              currentTarget: "Kage × 1",
+              type: "术语拼写不一致",
+              options: ["改为 Klatka × 1", "保留 Kage × 1"],
+              chosen: null,
+              resolved: false
+            });
+          }
+
+          if (enabled && (d.id === "d10" || d.id === "d11") && lang === "JP") {
+            issues.push({
+              id: `iss_swap_${d.id}`,
+              sharedKey: "5385_5386_COL_SWAP",
+              layer: "规格区 / 标题与正文",
+              source: "仕様 / 製品寸法：122.8 x 60.0...",
+              currentTarget: "Specifications / Product Dimensions: 122.8...",
+              type: "原文与译文列疑似写反",
+              options: ["互换两列并写入日文", "跳过这两行"],
+              chosen: null,
+              resolved: false
+            });
+          }
+
+          if (enabled && d.id === "d07" && lang === "JP") {
+            issues.push({
+              id: "iss_6713_typo",
+              sharedKey: null,
+              layer: "主视觉 / 核心角标",
+              source: "设计稿为 Handheld（表中拼为 Handeid）",
+              currentTarget: "ハンドグリップ＆三脚",
+              type: "原文拼写微差",
+              options: ["确认绑定并写入日文", "暂不写入"],
+              chosen: null,
+              resolved: false
+            });
+          }
+
+          cells[key] = {
+            key, draftId: d.id, lang, enabled,
+            status: !enabled ? "na" : (issues.length > 0 ? "has_issues" : "ready"),
+            issues,
+            execStatus: !enabled ? "na" : "queued",
+            execNote: ""
+          };
+        });
+      });
+
+      return {
+        page: "workbench",
+        step: 1,
+        selectedLangs: LANGS.map(l => l.code),
+        availableTables,
+        groupTables,
+        drafts,
+        cells,
+        lastImportBanner: null,
+        activeCellKey: "d06::ES",
+        matrixExpanded: false,
+        onlyShowIssues: true,
+        lastSharedResolved: null,
+        patchCount: 0,
+        step3View: "list",
+        optionalSmartDetectPending: 1,
+        creditsBalance: 1280,
+        lastChargedCredits: 0,
+        importMenuOpen: false,
+        sourceFolders: [
+          { id: "f1", name: "5857_GO_Ultra_套图", count: 6 },
+          { id: "f2", name: "6713_A+_日文", count: 3 },
+          { id: "f3", name: "5385_5386_皮套", count: 2 },
+          { id: "f4", name: "5389_SigmaBF", count: 1 }
+        ],
+        typoOpen: false,
+        typoLang: "JP",
+        typoScope: "全部设计稿",
+        typoSourceId: "sf_title",
+        sourceFonts: [
+          { id: "sf_title", name: "Montserrat · Bold", role: "主标题 / 大号卖点", layerCount: 28, origSize: 100, origLeading: 120, missingIn: ["JP"] },
+          { id: "sf_sub", name: "Montserrat · SemiBold", role: "副标题 / 模块标题", layerCount: 46, origSize: 100, origLeading: 125, missingIn: ["JP"] },
+          { id: "sf_body", name: "Inter · Regular", role: "正文说明 / 规格参数", layerCount: 118, origSize: 100, origLeading: 135, missingIn: ["JP"] },
+          { id: "sf_num", name: "DIN Condensed · Bold", role: "数字角标 / 续航参数", layerCount: 34, origSize: 100, origLeading: 110, missingIn: [] }
+        ],
+        typoRules: {
+          "JP::sf_title": { font: "Noto Sans JP", weight: "Bold", sizePt: 92, leadingPt: 120, kerning: 0, tracking: -10, vScale: 100, hScale: 100, baselinePt: 0, color: "保持原色", customized: true },
+          "JP::sf_sub":   { font: "Noto Sans JP", weight: "SemiBold", sizePt: 95, leadingPt: 125, kerning: 0, tracking: 0, vScale: 100, hScale: 100, baselinePt: 0, color: "保持原色", customized: true },
+          "JP::sf_body":  { font: "Noto Sans JP", weight: "Regular", sizePt: 96, leadingPt: 135, kerning: 0, tracking: 0, vScale: 100, hScale: 100, baselinePt: 0, color: "保持原色", customized: true },
+          "JP::sf_num":   { font: "保持母稿原字体", weight: "Bold", sizePt: 100, leadingPt: 110, kerning: 0, tracking: 0, vScale: 100, hScale: 100, baselinePt: 0, color: "保持原色", customized: false },
+          "ES::sf_title": { font: "保持母稿原字体", weight: "Bold", sizePt: 94, leadingPt: 120, kerning: 0, tracking: -15, vScale: 100, hScale: 96, baselinePt: 0, color: "保持原色", customized: true }
+        },
+        isRunning: false,
+        hasCompletedOnce: false,
+        selectedStep4Cell: null,
+        runTimer: null
+      };
+    }
+
+    let state = createInitialState();
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function getActiveCells() {
+      const langSet = new Set(state.selectedLangs);
+      const draftSet = new Set(state.drafts.map(d => d.id));
+      return Object.values(state.cells).filter(c => draftSet.has(c.draftId) && langSet.has(c.lang));
+    }
+
+    function getStats() {
+      const all = getActiveCells();
+      const enabled = all.filter(c => c.enabled);
+      const na = all.filter(c => !c.enabled);
+      const issues = enabled.filter(c => c.status === "has_issues");
+      const ready = enabled.filter(c => c.status === "ready" || c.status === "confirmed");
+      const dirty = enabled.filter(c => c.status === "dirty");
+      const unpaired = state.drafts.filter(d => (d.customTable || state.groupTables[d.group]) === "未绑定").length;
+      return { enabledCount: enabled.length, naCount: na.length, issueCells: issues, readyCount: ready.length, dirtyCells: dirty, unpaired };
+    }
+
+    function canStep2() {
+      const s = getStats();
+      return state.selectedLangs.length > 0 && state.drafts.length > 0 && s.unpaired === 0 && s.enabledCount > 0;
+    }
+
+    function canStep3() {
+      return canStep2() && getStats().issueCells.length === 0;
+    }
+
+    function ingestFiles(fileList, fromFolder) {
+      const files = Array.from(fileList || []);
+      if (files.length === 0) return;
+      if (fromFolder) {
+        const rel = files[0].webkitRelativePath || "";
+        const folderName = rel.split("/")[0] || `文件夹_${state.sourceFolders.length + 1}`;
+        if (!state.sourceFolders.some(f => f.name === folderName)) {
+          state.sourceFolders.push({ id: `f_${Date.now()}`, name: folderName, count: files.length });
+        }
+      }
+
+      const psdFiles = files.filter(f => /\.(psd|psb)$/i.test(f.name));
+      const tableFiles = files.filter(f => /\.(xlsx|csv|tsv|txt)$/i.test(f.name));
+
+      if (tableFiles.length > 0) {
+        tableFiles.forEach(file => {
+          const label = file.name;
+          if (!state.availableTables.includes(label)) {
+            state.availableTables.unshift(label);
+          }
+          if (/\.(csv|tsv|txt)$/i.test(file.name)) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const lines = String(reader.result || "").split(/\r?\n/).filter(x => x.trim());
+              state.lastImportBanner = {
+                type: "table",
+                fileName: label,
+                detail: `已读入「${label}」（共 ${lines.length} 行），现已加入译文源列表`
+              };
+              render();
+            };
+            reader.readAsText(file, "utf-8");
+          } else {
+            const kb = Math.max(1, Math.round(file.size / 1024));
+            state.lastImportBanner = {
+              type: "table",
+              fileName: label,
+              detail: `已读入「${label}」（${kb > 1024 ? (kb/1024).toFixed(1) + " MB" : kb + " KB"}），现已加入译文源列表`
+            };
+            render();
+          }
+        });
+        showToast(`已导入 ${tableFiles.length} 份译文表`);
+      }
+
+      if (psdFiles.length > 0) {
+        let added = 0;
+        psdFiles.forEach((f, idx) => {
+          if (state.drafts.length >= 12) return;
+          const id = `d_new_${Date.now()}_${idx}`;
+          const m = f.name.match(/\b(\d{4})\b/);
+          const group = m ? `货号 ${m[1]}` : "待归类设计稿";
+          if (!state.groupTables[group]) {
+            state.groupTables[group] = state.availableTables[0] || "未绑定";
+          }
+          state.drafts.unshift({
+            id, group, name: f.name, layers: 14, smartObj: 0, customTable: null, onlyLangs: ["JP"]
+          });
+          LANGS.forEach(l => {
+            const key = `${id}::${l.code}`;
+            const enabled = l.code === "JP";
+            state.cells[key] = {
+              key, draftId: id, lang: l.code, enabled,
+              status: enabled ? "ready" : "na",
+              issues: [], execStatus: enabled ? "queued" : "na", execNote: ""
+            };
+          });
+          added++;
+        });
+        showToast(added > 0 ? `已加入 ${added} 份设计稿（本机直读路径）` : "单批已达 12 份设计稿上限");
+        render();
+      }
+    }
+
+    function renderHeader() {
+      ["Home", "Workbench", "Pricing", "Download"].forEach(k => {
+        const el = document.getElementById(`nav${k}`);
+        if (el) el.classList.toggle("active", state.page === k.toLowerCase());
+      });
+      const cp = document.getElementById("creditsPill");
+      if (cp) cp.textContent = `剩余 ${state.creditsBalance.toLocaleString()} 积分`;
+      const sub = document.getElementById("subbar");
+      sub.style.display = state.page === "workbench" ? "flex" : "none";
+      if (state.page !== "workbench") return;
+
+      const steps = [
+        { id: 1, label: "配稿配表" },
+        { id: 2, label: "智能检测" },
+        { id: 3, label: "审核确认" },
+        { id: 4, label: "生成交付" }
+      ];
+      document.getElementById("stepper").innerHTML = steps.map((st, idx) => {
+        const disabled = (st.id === 2 && !canStep2()) || (st.id >= 3 && !canStep3());
+        const cls = ["step-btn", state.step === st.id ? "active" : "", state.step > st.id ? "done" : ""].join(" ");
+        return `
+          ${idx > 0 ? `<span class="step-sep">›</span>` : ""}
+          <button class="${cls}" data-go-step="${st.id}" ${disabled ? "disabled" : ""}>
+            <span class="step-idx">${state.step > st.id ? "✓" : st.id}</span>
+            <span class="step-label">${st.label}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderStep1() {
+      if (state.drafts.length === 0) {
+        return `
+          <div class="empty-state">
+            <h2>拖入设计稿与译文表开始批量改图</h2>
+            <p>单批最多 12 份设计稿，文件留在本机不上传；支持多张单语译文表自动合并</p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+              <button class="btn-primary" id="btnPickFolder">添加文件夹（可多选不同目录）</button>
+              <button class="btn-secondary" id="btnPickFiles">选择单个文件</button>
+              <button class="btn-text" id="btnResetEmpty">载入示例批次</button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      const s = getStats();
+      const groups = {};
+      state.drafts.forEach(d => {
+        if (!groups[d.group]) groups[d.group] = [];
+        groups[d.group].push(d);
+      });
+
+      return `
+        <div class="action-bar">
+          <div class="summary-line">
+            <span class="summary-title">${state.drafts.length} 份设计稿</span>
+            <span class="summary-meta">有效生成 ${s.enabledCount} 门${s.issueCells.length > 0 ? ` · ${s.issueCells.length} 门待确认` : " · 全部就绪"}</span>
+          </div>
+          <div class="action-group import-menu-wrap">
+            <button class="btn-secondary" id="btnToggleImportMenu">+ 导入文件夹 / 文件 ▾</button>
+            <div class="import-menu ${state.importMenuOpen ? "open" : ""}" id="importMenu">
+              <button class="import-menu-item" id="btnPickFolder">
+                <div class="import-menu-title">继续添加文件夹</div>
+                <div class="import-menu-sub">可连续多次选择不同目录，自动合并进当前批次</div>
+              </button>
+              <button class="import-menu-item" id="btnPickFiles">
+                <div class="import-menu-title">选择单个或多个文件</div>
+                <div class="import-menu-sub">同时支持设计稿与译文表混合多选</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+
+        ${state.lastImportBanner ? `
+          <div class="inline-notice brand">
+            <span>${state.lastImportBanner.detail}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn-secondary" style="padding:4px 10px;font-size:12px;" id="btnApplyImportedToFirst">应用到「货号 5857」</button>
+              <button class="btn-text" id="btnCloseBanner">知道了</button>
+            </div>
+          </div>
+        ` : ""}
+
+        ${state.selectedLangs.length === 0 ? `<div class="inline-notice danger"><span>请至少保留 1 个目标语种。</span></div>` : ""}
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42%;">设计稿</th>
+                <th style="width:24%;">译文源</th>
+                <th style="width:28%;">有效语种</th>
+                <th style="width:6%;text-align:right;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(groups).map(([gName, list]) => {
+                const gTable = state.groupTables[gName] || "未绑定";
+                const gLangs = LANGS.filter(l => state.selectedLangs.includes(l.code) && list.some(d => state.cells[`${d.id}::${l.code}`].enabled));
+                const showLangs = gLangs.length > 0 ? gLangs : LANGS.filter(l => state.selectedLangs.includes(l.code));
+
+                return `
+                  <tr class="group-row">
+                    <td colspan="4">
+                      <div class="group-row-inner">
+                        <span class="group-label">${gName} <span class="group-count">· ${list.length} 份</span></span>
+                        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);">
+                          <span>整组译文：</span>
+                          <select class="quiet-select" data-group-table="${gName}" style="font-weight:500;color:var(--ink);">
+                            ${state.availableTables.map(tb => `<option value="${tb}" ${gTable === tb ? "selected" : ""}>${tb}</option>`).join("")}
+                            <option value="未绑定" ${gTable === "未绑定" ? "selected" : ""}>未绑定</option>
+                          </select>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  ${list.map(d => {
+                    const effectiveTable = d.customTable || gTable;
+                    const dotsHtml = showLangs.map(l => {
+                      const c = state.cells[`${d.id}::${l.code}`];
+                      if (!c.enabled) {
+                        return `<button class="ldot na" data-toggle-cell="${c.key}" title="${l.full}：不生成（点击启用）">${l.short}</button>`;
+                      }
+                      if (c.status === "has_issues") {
+                        return `<button class="ldot issue" data-toggle-cell="${c.key}" title="${l.full}：检测到待确认异常">${l.short}<i class="dot-amber"></i></button>`;
+                      }
+                      return `<button class="ldot ok" data-toggle-cell="${c.key}" title="${l.full}：已就绪（点击设为不生成）">${l.short}</button>`;
+                    }).join("");
+
+                    return `<tr class="data-row">
+                      <td>
+                        <div class="draft-title">${d.name}</div>
+                        <div class="draft-meta">${d.layers} 个文字层${d.smartObj > 0 ? ` · ${d.smartObj} 个智能对象` : ""}</div>
+                      </td>
+                      <td>
+                        <select class="quiet-select" data-draft-table="${d.id}" title="单稿单独指定译文表">
+                          <option value="__INHERIT__" ${!d.customTable ? "selected" : ""}>跟随分组（${gTable}）</option>
+                          ${state.availableTables.map(tb => `<option value="${tb}" ${d.customTable === tb ? "selected" : ""}>${tb}</option>`).join("")}
+                          <option value="未绑定" ${effectiveTable === "未绑定" && d.customTable ? "selected" : ""}>未绑定</option>
+                        </select>
+                      </td>
+                      <td><div class="lang-dots">${dotsHtml}</div></td>
+                      <td style="text-align:right;"><button class="btn-text" data-remove-draft="${d.id}">移除</button></td>
+                    </tr>`;
+                  }).join("")}
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderMatrix(mode) {
+      const langs = LANGS.filter(l => state.selectedLangs.includes(l.code));
+      return `
+        <div class="matrix-wrap">
+          <div class="matrix-grid" style="grid-template-columns: 220px repeat(${langs.length}, minmax(64px, 1fr));">
+            <div class="mx-head" style="text-align:left;">设计稿</div>
+            ${langs.map(l => `<div class="mx-head" title="${l.full}">${l.full}</div>`).join("")}
+            ${state.drafts.map(d => {
+              const rowCells = langs.map(l => {
+                const c = state.cells[`${d.id}::${l.code}`];
+                let cls = c.status;
+                let text = "✓";
+                if (!c.enabled) { cls = "na"; text = "·"; }
+                else if (mode === "step4") {
+                  cls = c.status === "dirty" ? "dirty" : c.execStatus;
+                  if (cls === "queued") text = "待";
+                  else if (cls === "running") text = "…";
+                  else if (cls === "verified") text = "✓";
+                  else if (cls === "review_needed") text = "复查";
+                  else if (cls === "failed") text = "隔离";
+                  else if (cls === "dirty") text = "变更";
+                } else {
+                  if (c.status === "has_issues") text = "待审";
+                  else if (c.status === "dirty") text = "变更";
+                  else text = "✓";
+                }
+                const isSel = (mode === "step4" ? state.selectedStep4Cell === c.key : state.activeCellKey === c.key);
+                return `<button class="mx-cell ${cls} ${isSel ? "selected" : ""}" data-pick-cell="${c.key}" data-pick-mode="${mode}" title="${d.name} · ${l.full}">${text}</button>`;
+              }).join("");
+              return `<div class="mx-row-label" title="${d.name}">${d.name.replace(/\.ps[db]$/i, "")}</div>${rowCells}`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStep2() {
+      const s = getStats();
+      let activeCell = state.cells[state.activeCellKey];
+      if (!activeCell || !activeCell.enabled) {
+        activeCell = s.issueCells[0] || getActiveCells().find(c => c.enabled);
+      }
+      if (activeCell) state.activeCellKey = activeCell.key;
+      const activeDraft = state.drafts.find(d => d.id === activeCell.draftId);
+
+      let syncBanner = "";
+      if (state.lastSharedResolved) {
+        const { sharedKey, label } = state.lastSharedResolved;
+        const peers = getActiveCells().filter(c => c.enabled && c.issues.some(i => i.sharedKey === sharedKey && !i.resolved));
+        if (peers.length > 0) {
+          syncBanner = `
+            <div class="inline-notice brand">
+              <span>其余 <strong>${peers.length} 门</strong> 也存在同类问题（${label}），可直接同步应用</span>
+              <button class="btn-primary" style="padding:5px 12px;font-size:12px;" id="btnSyncShared">一键同步其余 ${peers.length} 门</button>
+            </div>
+          `;
+        }
+      }
+
+      const normalRows = [
+        { layer: "主标题 / 核心卖点", source: "Multi-functional Operation", target: activeCell.lang === "JP" ? "多機能" : "已匹配译文", tag: "正常" },
+        { layer: "参数区 / 型号尺寸", source: "ID 5857 · 62.4 × 45.4 × 109.5mm", target: "保持原文", tag: "数字免改" }
+      ];
+
+      return `
+        <div class="action-bar">
+          <div class="summary-line">
+            <span class="summary-title">${s.issueCells.length > 0 ? `${s.issueCells.length} 门待确认` : "全部异常已处理"}</span>
+            <span class="summary-meta">其余 ${s.readyCount} 门无异常已自动就绪</span>
+          </div>
+          <div class="action-group">
+            <button class="btn-secondary" id="btnToggleMatrix">${state.matrixExpanded ? "收起全景矩阵" : "展开全景矩阵"}</button>
+            ${s.issueCells.length > 0 ? `<button class="btn-secondary" id="btnNextIssue">下一待审项 →</button>` : ""}
+          </div>
+        </div>
+
+        <div class="issue-strip">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--mute);">
+            <span>${s.issueCells.length > 0 ? "点击切换待确认项" : "全批已通过检测"}</span>
+            <span>当前：${activeDraft.name} · ${langFull(activeCell.lang)}</span>
+          </div>
+          ${s.issueCells.length > 0 ? `
+            <div class="issue-pills">
+              ${s.issueCells.map(c => {
+                const dr = state.drafts.find(d => d.id === c.draftId);
+                return `<button class="issue-pill ${c.key === state.activeCellKey ? "active" : ""}" data-pick-cell="${c.key}" data-pick-mode="step2">
+                  <i class="dot-amber"></i>${dr.name.replace(/\.ps[db]$/i, "").slice(0, 10)} · ${langShort(c.lang)}
+                </button>`;
+              }).join("")}
+            </div>
+          ` : ""}
+          ${state.matrixExpanded ? renderMatrix("step2") : ""}
+        </div>
+
+        ${activeDraft.sharedWith ? `
+          <div class="inline-notice warn">
+            <span>当前译文源同时关联 ${activeDraft.sharedWith} 共 2 份稿件，修改将同步生效</span>
+            <button class="btn-secondary" id="btnForkShared" style="padding:4px 10px;font-size:12px;">拆为独立副本</button>
+          </div>
+        ` : ""}
+
+        ${syncBanner}
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;margin-bottom:6px;">
+          <div style="font-weight:600;font-size:14.5px;">
+            ${activeDraft.name} · ${langFull(activeCell.lang)}
+          </div>
+          <button class="btn-text" id="btnFilterIssues">${state.onlyShowIssues ? "显示全部图层" : "仅看待确认项"}</button>
+        </div>
+
+        <div class="table-wrap" style="margin-top:0;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:18%;">图层</th>
+                <th style="width:26%;">母稿原文</th>
+                <th style="width:26%;">当前译文</th>
+                <th style="width:30%;">处理方式</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activeCell.issues.map(iss => `
+                <tr class="data-row">
+                  <td style="color:var(--mute);font-size:12.5px;">${iss.layer}</td>
+                  <td class="pre-line" style="font-weight:500;">${iss.source}</td>
+                  <td>
+                    <div style="margin-bottom:4px;"><span class="badge ${iss.resolved ? "badge-ok" : "badge-warn"}">${iss.resolved ? "已确认" : iss.type}</span></div>
+                    <div class="pre-line" style="font-size:12.5px;color:${iss.resolved ? "var(--brand)" : "var(--ink2)"};">${iss.resolved ? iss.chosen : iss.currentTarget}</div>
+                  </td>
+                  <td>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                      ${iss.options.map((opt, idx) => `
+                        <button class="${iss.chosen === (idx === 0 && iss.fixPreview ? iss.fixPreview : opt) ? "btn-primary" : "btn-secondary"}" style="padding:5px 10px;font-size:12px;" data-resolve-cell="${activeCell.key}" data-resolve-iss="${iss.id}" data-resolve-idx="${idx}">
+                          ${opt}
+                        </button>
+                      `).join("")}
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+              ${(!state.onlyShowIssues || activeCell.issues.length === 0) ? normalRows.map(r => `
+                <tr class="data-row">
+                  <td style="color:var(--mute);font-size:12.5px;">${r.layer}</td>
+                  <td>${r.source}</td>
+                  <td style="color:var(--mute);">${r.target}</td>
+                  <td><span class="badge badge-ok">${r.tag}</span></td>
+                </tr>
+              `).join("") : ""}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderStep3() {
+      const s = getStats();
+      const totalSmartObj = state.drafts.reduce((acc, d) => acc + d.smartObj, 0);
+
+      return `
+        <div class="action-bar">
+          <div class="summary-line">
+            <span class="summary-title">发车前确认</span>
+            <span class="summary-meta">仅在本机独立目录输出副本，绝不改动源设计稿</span>
+          </div>
+          <div class="action-group">
+            <button class="btn-secondary" data-step3-view="list" style="${state.step3View === "list" ? "border-color:var(--ink);font-weight:600;" : ""}">清单视图</button>
+            <button class="btn-secondary" data-step3-view="matrix" style="${state.step3View === "matrix" ? "border-color:var(--ink);font-weight:600;" : ""}">矩阵视图</button>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div><div class="stat-val" style="color:var(--brand);">${s.enabledCount}</div><div class="stat-lbl">待生成交付门数</div></div>
+          <div><div class="stat-val" style="color:var(--ink);">${s.enabledCount} <span style="font-size:13px;font-weight:500;color:var(--mute);">积分</span></div><div class="stat-lbl">本次预计消耗（失败隔离不扣费）</div></div>
+          <div><div class="stat-val">${state.drafts.length}</div><div class="stat-lbl">设计稿总数</div></div>
+          <div><div class="stat-val" style="color:var(--warn);">${totalSmartObj}</div><div class="stat-lbl">智能对象提醒</div></div>
+        </div>
+
+        ${state.optionalSmartDetectPending > 0 ? `
+          <div class="inline-notice">
+            <span>还有 ${state.optionalSmartDetectPending} 门未运行可选智能检测，不阻塞直接生成交付</span>
+            <button class="btn-secondary" id="btnFixOptionalDetect" style="padding:4px 10px;font-size:12px;">补跑此门</button>
+          </div>
+        ` : ""}
+
+        ${state.step3View === "matrix" ? `<div class="issue-strip">${renderMatrix("step3")}</div>` : `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>设计稿</th>
+                  <th>分组</th>
+                  <th>有效门数</th>
+                  <th>写前知情</th>
+                  <th style="text-align:right;">局部调整</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${state.drafts.map(d => {
+                  const en = state.selectedLangs.map(l => state.cells[`${d.id}::${l}`]).filter(c => c.enabled).length;
+                  return `<tr class="data-row">
+                    <td class="draft-title">${d.name}</td>
+                    <td style="color:var(--mute);">${d.group}</td>
+                    <td><span class="badge badge-ok">${en} 门就绪</span></td>
+                    <td style="color:var(--mute);font-size:12.5px;">${d.smartObj > 0 ? `含 ${d.smartObj} 个智能对象（报告标出）` : "全部可编辑"}</td>
+                    <td style="text-align:right;"><button class="btn-text" data-local-swap="${d.id}">仅重算此稿</button></td>
+                  </tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        `}
+      `;
+    }
+
+    function renderStep4() {
+      const enabled = getActiveCells().filter(c => c.enabled);
+      const verified = enabled.filter(c => c.execStatus === "verified" && c.status !== "dirty").length;
+      const running = enabled.filter(c => c.execStatus === "running").length;
+      const review = enabled.filter(c => c.execStatus === "review_needed" && c.status !== "dirty").length;
+      const failed = enabled.filter(c => c.execStatus === "failed" && c.status !== "dirty").length;
+      const dirty = enabled.filter(c => c.status === "dirty").length;
+      const donePct = enabled.length ? Math.round(((verified + review + failed) / enabled.length) * 100) : 0;
+
+      const selCell = state.selectedStep4Cell ? state.cells[state.selectedStep4Cell] : null;
+      const selDraft = selCell ? state.drafts.find(d => d.id === selCell.draftId) : null;
+
+      return `
+        <div class="action-bar">
+          <div class="summary-line">
+            <span class="summary-title">${state.isRunning ? "正在本机生成并核验" : (state.hasCompletedOnce ? "本机生成已完成" : "准备开始生成")}</span>
+            <span class="summary-meta">${state.isRunning ? "复杂版式精细处理中，源文件全程只读" : (state.hasCompletedOnce ? `本次实扣 ${state.lastChargedCredits} 积分（隔离门未扣费）· 点击任意格查看详情` : `本次预计消耗 ${enabled.length} 积分 · 仅成功产出扣费`)}</span>
+          </div>
+          <div class="action-group">
+            ${state.isRunning ? `<button class="btn-secondary" id="btnInstantFinish">立即完成</button>` : ""}
+            ${state.hasCompletedOnce && !state.isRunning ? `
+              <button class="btn-secondary" id="btnExportCleanTable">导出修正后译文表</button>
+              <button class="btn-secondary" id="btnSimReimport">重导更新后的译文表</button>
+            ` : ""}
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div><div class="stat-val" style="color:var(--brand);">${verified}</div><div class="stat-lbl">已核验通过</div></div>
+          <div><div class="stat-val" style="color:#1d4ed8;">${running}</div><div class="stat-lbl">处理中</div></div>
+          <div><div class="stat-val" style="color:var(--warn);">${review + dirty}</div><div class="stat-lbl">${dirty > 0 ? "复查 / 变更待重跑" : "需人工复查"}</div></div>
+          <div><div class="stat-val" style="color:var(--danger);">${failed}</div><div class="stat-lbl">已隔离不发布</div></div>
+        </div>
+
+        <div class="progress-track"><div class="progress-fill" style="width:${donePct}%;"></div></div>
+
+        <div class="issue-strip" style="margin-top:16px;">
+          ${renderMatrix("step4")}
+        </div>
+
+        ${selCell && selCell.enabled ? `
+          <div class="inspector">
+            <div>
+              <div style="font-weight:600;font-size:14px;">
+                ${selDraft.name} · ${langFull(selCell.lang)}
+                <span class="badge ${selCell.execStatus === "failed" ? "badge-danger" : (selCell.execStatus === "review_needed" || selCell.status === "dirty" ? "badge-warn" : "badge-ok")}" style="margin-left:8px;">
+                  ${selCell.status === "dirty" ? "已变更待重跑" : (selCell.execStatus === "failed" ? "已隔离" : selCell.execStatus === "review_needed" ? "溢框复查" : "已核验")}
+                </span>
+              </div>
+              <div style="font-size:12.5px;color:var(--mute);margin-top:4px;">${selCell.execNote || "源设计稿只读零污染"}</div>
+            </div>
+            <div>
+              ${(selCell.execStatus === "failed" || selCell.status === "dirty") ? `<button class="btn-primary" data-retry-cell="${selCell.key}">仅重新生成此门</button>` : ""}
+            </div>
+          </div>
+        ` : ""}
+      `;
+    }
+
+    function renderOtherPage() {
+      if (state.page === "home") {
+        return `<div class="home-wrap">
+          <h1>让设计师改语言变轻松</h1>
+          <p>不是把设计交给工具，是不再按语种一个个从头做。先把明确的文字批量写进设计稿图层，把撑版、换行和拿不准的地方集中留给你。</p>
+          <button class="btn-primary" data-page="workbench">进入工作台 →</button>
+        </div>`;
+      }
+      if (state.page === "pricing") {
+        return `<div class="home-wrap">
+          <h1>内测期间免费试跑</h1>
+          <p>当前为受控免费内测阶段，面向有真实多语言改图需求的设计团队开放。联系微信：tuyigf。</p>
+          <button class="btn-primary" data-page="workbench">返回工作台</button>
+        </div>`;
+      }
+      return `<div class="home-wrap">
+        <h1>下载本机助手</h1>
+        <p>本机助手直接读取电脑上的设计稿路径并完成本地写入与回读核验，设计稿本体不上传云端。</p>
+        <button class="btn-primary" data-page="workbench">助手已在线 · 返回工作台</button>
+      </div>`;
+    }
+
+    function renderBottombar() {
+      const bar = document.getElementById("bottombar");
+      if (state.page !== "workbench" || state.drafts.length === 0) {
+        bar.style.display = "none";
+        return;
+      }
+      bar.style.display = "block";
+      const s = getStats();
+
+      if (state.step === 1) {
+        const ok = canStep2();
+        bar.innerHTML = `<div class="shell-inner">
+          <div class="bottom-info">${ok ? `共 ${state.drafts.length} 份设计稿 · 有效生成 ${s.enabledCount} 门` : (state.selectedLangs.length === 0 ? "请至少选择 1 个目标语种" : `还有 ${s.unpaired} 份设计稿未绑定译文源`)}</div>
+          <div class="bottom-actions">
+            <button class="btn-primary" data-go-step="2" ${ok ? "" : "disabled"}>下一步：智能检测 →</button>
+          </div>
+        </div>`;
+      } else if (state.step === 2) {
+        const ok = canStep3();
+        bar.innerHTML = `<div class="shell-inner">
+          <div class="bottom-info">${ok ? `全部 ${s.enabledCount} 门已通过检测` : `还有 ${s.issueCells.length} 门待人工确认`}</div>
+          <div class="bottom-actions">
+            <button class="btn-secondary" data-go-step="1">返回配稿</button>
+            <button class="btn-primary" data-go-step="3" ${ok ? "" : "disabled"}>下一步：审核确认 →</button>
+          </div>
+        </div>`;
+      } else if (state.step === 3) {
+        bar.innerHTML = `<div class="shell-inner">
+          <div class="bottom-info">预计消耗 <strong>${s.enabledCount} 积分</strong>（当前剩余 ${state.creditsBalance.toLocaleString()} 积分）· 仅成功产出扣费</div>
+          <div class="bottom-actions">
+            <button class="btn-secondary" data-go-step="2">返回检测</button>
+            <button class="btn-primary" data-go-step="4">进入生成交付（预计 ${s.enabledCount} 积分）→</button>
+          </div>
+        </div>`;
+      } else {
+        const dirtyCount = s.dirtyCells.length;
+        const estCost = dirtyCount > 0 ? dirtyCount : s.enabledCount;
+        const label = state.isRunning ? "正在生成…" : (dirtyCount > 0 ? `仅重新生成变更的 ${dirtyCount} 门（${dirtyCount} 积分）` : (state.hasCompletedOnce ? `重新生成全部（${s.enabledCount} 积分）` : `开始本机生成（预计 ${s.enabledCount} 积分）`));
+        bar.innerHTML = `<div class="shell-inner">
+          <div class="bottom-info">本次预计消耗 <strong>${estCost} 积分</strong> · 当前剩余 ${state.creditsBalance.toLocaleString()} 积分（失败隔离不扣费）</div>
+          <div class="bottom-actions">
+            <button class="btn-secondary" data-go-step="3" ${state.isRunning ? "disabled" : ""}>返回审核</button>
+            <button class="btn-primary" id="btnRunBatch" ${state.isRunning ? "disabled" : ""}>${label}</button>
+          </div>
+        </div>`;
+      }
+    }
+
+    function getTypoRule(lang, srcId) {
+      const k = `${lang}::${srcId}`;
+      if (!state.typoRules[k]) {
+        const sf = state.sourceFonts.find(x => x.id === srcId) || state.sourceFonts[0];
+        const defWeight = srcId === "sf_title" || srcId === "sf_num" ? "Bold" : (srcId === "sf_sub" ? "SemiBold" : "Regular");
+        state.typoRules[k] = {
+          font: "保持母稿原字体", weight: defWeight,
+          sizePt: sf.origSize, leadingPt: sf.origLeading,
+          kerning: 0, tracking: 0, vScale: 100, hScale: 100, baselinePt: 0,
+          color: "保持原色", customized: false
+        };
+      }
+      return state.typoRules[k];
+    }
+
+    function renderTypographyPanel() {
+      const fab = document.getElementById("btnToggleTypo");
+      const panel = document.getElementById("typoPanel");
+      const dot = document.getElementById("typoCountDot");
+      const showFab = state.page === "workbench" && state.drafts.length > 0;
+      fab.style.display = showFab ? "inline-flex" : "none";
+      if (!showFab) { panel.classList.remove("open"); return; }
+
+      const customCount = Object.values(state.typoRules).filter(x => x.customized).length;
+      dot.textContent = String(customCount);
+      dot.style.display = customCount > 0 ? "grid" : "none";
+
+      fab.classList.toggle("active", state.typoOpen);
+      panel.classList.toggle("open", state.typoOpen);
+      if (!state.typoOpen) return;
+
+      const curSrc = state.sourceFonts.find(x => x.id === state.typoSourceId) || state.sourceFonts[0];
+      const cfg = getTypoRule(state.typoLang, curSrc.id);
+      const tRule = getTypoRule(state.typoLang, "sf_title");
+      const bRule = getTypoRule(state.typoLang, "sf_body");
+
+      const previews = {
+        JP: { title: "安定撮影を支える人間工学グリップ", body: "パッケージ重量 135.5 ± 5.0g · ワンタッチで素早く着脱" },
+        ES: { title: "Empuñadura ergonómica estable", body: "Peso del paquete 135,5 ± 5,0 g · Correa ajustable" },
+        VI: { title: "Tay cầm công thái học ổn định", body: "Trọng lượng gói 135.5 ± 5.0g · Gắn và tháo nhanh" },
+        PL: { title: "Ergonomiczny uchwyt do nagrywania", body: "Waga opakowania 135,5 ± 5,0 g · Szybki montaż" },
+        NL: { title: "Ergonomische grip voor stabiel filmen", body: "Verpakkingsgewicht 135,5 ± 5,0 g · Directe montage" },
+        MS: { title: "Cengkaman ergonomik yang stabil", body: "Berat pakej 135.5 ± 5.0g · Pasang dan lepas pantas" }
+      };
+      const pv = previews[state.typoLang] || previews.JP;
+      const scopes = ["全部设计稿", ...new Set(state.drafts.map(d => d.group)), ...state.drafts.slice(0, 4).map(d => d.name)];
+      const weightNum = w => w === "Bold" ? 700 : (w === "SemiBold" ? 600 : (w === "Medium" ? 500 : 400));
+
+      panel.innerHTML = `
+        <div class="typo-head">
+          <span class="typo-head-title">字体排版（按原稿字体分组）</span>
+          <button class="btn-text" id="btnCloseTypo">收起 ✕</button>
+        </div>
+
+        <div class="typo-field">
+          <div class="typo-label-row"><span>作用范围</span></div>
+          <select class="typo-select" id="selTypoScope">
+            ${scopes.map(g => `<option value="${g}" ${state.typoScope === g ? "selected" : ""}>${g}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="typo-lang-tabs">
+          ${LANGS.map(l => `<button class="typo-lang-tab ${state.typoLang === l.code ? "active" : ""}" data-typo-lang="${l.code}">${l.full}</button>`).join("")}
+        </div>
+
+        <div class="src-font-list">
+          ${state.sourceFonts.map(sf => {
+            const r = getTypoRule(state.typoLang, sf.id);
+            const missing = sf.missingIn.includes(state.typoLang) && r.font === "保持母稿原字体";
+            return `<button class="src-font-item ${sf.id === curSrc.id ? "active" : ""}" data-src-font="${sf.id}">
+              <div>
+                <div class="src-font-name">${sf.name} <span style="font-weight:400;color:var(--mute);">· ${sf.layerCount} 层</span></div>
+                <div class="src-font-sub">${r.font} · 字号 ${r.sizePt}% · 行距 ${r.leadingPt}%</div>
+              </div>
+              <span class="badge ${missing ? "badge-warn" : (r.customized ? "badge-ok" : "")}" style="${!missing && !r.customized ? "color:var(--subtle);background:transparent;" : ""}">
+                ${missing ? "缺字形" : (r.customized ? "已定制" : "原值")}
+              </span>
+            </button>`;
+          }).join("")}
+        </div>
+
+        <!-- 纯中文批量安全五维字符参数（按原图层比例缩放，避免跨尺寸图层炸版） -->
+        <div class="typo-grid2" style="margin-bottom:10px;">
+          <div>
+            <div class="typo-label-row"><span>目标字体</span></div>
+            <select class="typo-select" id="selTypoFont">
+              ${["保持母稿原字体", "Noto Sans JP", "Source Han Sans", "Montserrat", "Inter", "Roboto", "DIN Condensed"].map(f => `<option value="${f}" ${cfg.font === f ? "selected" : ""}>${f}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <div class="typo-label-row"><span>目标字重</span></div>
+            <select class="typo-select" id="selTypoWeight">
+              <option value="Regular" ${cfg.weight === "Regular" ? "selected" : ""}>常规</option>
+              <option value="Medium" ${cfg.weight === "Medium" ? "selected" : ""}>中等</option>
+              <option value="SemiBold" ${cfg.weight === "SemiBold" ? "selected" : ""}>半粗</option>
+              <option value="Bold" ${cfg.weight === "Bold" ? "selected" : ""}>粗体</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="typo-grid2" style="margin-bottom:8px;">
+          <label class="ps-input-box">
+            <span class="ps-icon" style="min-width:44px;text-align:left;font-weight:500;">字号</span>
+            <input type="number" class="ps-num" id="inpPsSize" value="${cfg.sizePt}" min="60" max="140" />
+            <span class="ps-unit">%</span>
+          </label>
+          <label class="ps-input-box">
+            <span class="ps-icon" style="min-width:44px;text-align:left;font-weight:500;">行距</span>
+            <input type="number" class="ps-num" id="inpPsLeading" value="${cfg.leadingPt}" min="80" max="200" step="5" />
+            <span class="ps-unit">%</span>
+          </label>
+        </div>
+
+        <div class="typo-grid2" style="margin-bottom:10px;">
+          <label class="ps-input-box">
+            <span class="ps-icon" style="min-width:44px;text-align:left;font-weight:500;">字距</span>
+            <input type="number" class="ps-num" id="inpPsTracking" value="${cfg.tracking}" min="-100" max="200" step="5" />
+            <span class="ps-unit">千分</span>
+          </label>
+          <div class="ps-input-box" style="justify-content:space-between;">
+            <span style="font-size:12px;color:var(--mute);">文字颜色</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);">
+              <i style="width:13px;height:13px;border-radius:3px;background:#1e3a5f;display:inline-block;border:1px solid var(--hair-strong);"></i>保持原色
+            </span>
+          </div>
+        </div>
+
+        <div class="typo-preview">
+          <div style="font-weight:${weightNum(tRule.weight)};font-size:${Math.round(15 * tRule.sizePt / 100)}px;line-height:${(tRule.leadingPt / 100).toFixed(2)};letter-spacing:${(tRule.tracking / 1000).toFixed(3)}em;transform:scale(${(tRule.hScale/100).toFixed(2)}, ${(tRule.vScale/100).toFixed(2)});transform-origin:left top;margin-bottom:4px;">${pv.title}</div>
+          <div style="font-weight:${weightNum(bRule.weight)};font-size:${Math.round(12.5 * bRule.sizePt / 100)}px;line-height:${(bRule.leadingPt / 100).toFixed(2)};letter-spacing:${(bRule.tracking / 1000).toFixed(3)}em;color:var(--ink2);">${pv.body}</div>
+        </div>
+
+        <div class="typo-foot">
+          <button class="btn-text" id="btnResetTypoLang">恢复母稿原值</button>
+          <button class="btn-primary" style="padding:6px 14px;font-size:12.5px;" id="btnSaveTypo">应用规则</button>
+        </div>
+      `;
+    }
+
+    function render() {
+      renderHeader();
+      const app = document.getElementById("app");
+      if (state.page !== "workbench") app.innerHTML = renderOtherPage();
+      else if (state.step === 1) app.innerHTML = renderStep1();
+      else if (state.step === 2) app.innerHTML = renderStep2();
+      else if (state.step === 3) app.innerHTML = renderStep3();
+      else app.innerHTML = renderStep4();
+      renderBottombar();
+      renderTypographyPanel();
+    }
+
+    function startBatchRun(dirtyOnly) {
+      clearInterval(state.runTimer);
+      const targets = getActiveCells().filter(c => c.enabled && (!dirtyOnly || c.status === "dirty"));
+      if (targets.length === 0) return;
+
+      state.isRunning = true;
+      targets.forEach(c => {
+        c.execStatus = "queued";
+        c.execNote = "";
+        if (c.status === "dirty") c.status = "confirmed";
+      });
+
+      let idx = 0;
+      render();
+
+      state.runTimer = setInterval(() => {
+        for (let k = 0; k < 4 && idx < targets.length; k++, idx++) {
+          const c = targets[idx];
+          if (!dirtyOnly && c.key === "d05::VI") {
+            c.execStatus = "failed";
+            c.execNote = "越语变音符号回读校验未通过，已隔离不发布";
+            state.selectedStep4Cell = c.key;
+          } else if (!dirtyOnly && c.key === "d06::NL") {
+            c.execStatus = "review_needed";
+            c.execNote = "荷语长复合词撑宽段落框，已写入源文件并标入复查";
+          } else {
+            c.execStatus = "verified";
+            c.execNote = "保存后重开回读一致";
+          }
+        }
+        if (idx < targets.length) targets[idx].execStatus = "running";
+        else {
+          clearInterval(state.runTimer);
+          state.isRunning = false;
+          state.hasCompletedOnce = true;
+          const succeeded = targets.filter(c => c.execStatus === "verified" || c.execStatus === "review_needed").length;
+          state.lastChargedCredits = succeeded;
+          state.creditsBalance = Math.max(0, state.creditsBalance - succeeded);
+          showToast(dirtyOnly ? `已完成 ${targets.length} 门增量更新，实扣 ${succeeded} 积分` : `本机生成完成，实扣 ${succeeded} 积分（隔离门未扣费）`);
+        }
+        render();
+      }, 150);
+    }
+
+    // 全局无感拖放（拖文件进任意位置自动呼出遮罩）
+    let dragDepth = 0;
+    const dropMask = document.getElementById("dropMask");
+    window.addEventListener("dragenter", e => {
+      e.preventDefault();
+      dragDepth++;
+      dropMask.classList.add("show");
+    });
+    window.addEventListener("dragover", e => e.preventDefault());
+    window.addEventListener("dragleave", () => {
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) dropMask.classList.remove("show");
+    });
+    window.addEventListener("drop", e => {
+      e.preventDefault();
+      dragDepth = 0;
+      dropMask.classList.remove("show");
+      if (state.page !== "workbench") state.page = "workbench";
+      state.step = 1;
+      ingestFiles(e.dataTransfer.files);
+    });
+
+    document.getElementById("inputAllFiles").addEventListener("change", e => { ingestFiles(e.target.files, false); e.target.value = ""; });
+    document.getElementById("inputFolder").addEventListener("change", e => { ingestFiles(e.target.files, true); e.target.value = ""; });
+
+    document.addEventListener("click", e => {
+      if (state.importMenuOpen && !e.target.closest(".import-menu-wrap")) {
+        state.importMenuOpen = false;
+        const m = document.getElementById("importMenu");
+        if (m) m.classList.remove("open");
+      }
+      const t = e.target.closest("button");
+      if (!t) return;
+
+      if (t.dataset.page) { state.page = t.dataset.page; render(); return; }
+      if (t.id === "btnReset" || t.id === "btnResetEmpty") {
+        clearInterval(state.runTimer);
+        state = createInitialState();
+        showToast("已恢复示例批次");
+        render();
+        return;
+      }
+      if (t.id === "btnClearAll") {
+        clearInterval(state.runTimer);
+        state.drafts = [];
+        state.step = 1;
+        state.lastImportBanner = null;
+        render();
+        return;
+      }
+      if (t.id === "btnToggleImportMenu") { state.importMenuOpen = !state.importMenuOpen; render(); return; }
+      if (t.id === "btnPickFolder" || t.id === "btnAddMoreFolder") { state.importMenuOpen = false; render(); document.getElementById("inputFolder").click(); return; }
+      if (t.id === "btnPickFiles") { state.importMenuOpen = false; render(); document.getElementById("inputAllFiles").click(); return; }
+      if (t.dataset.removeFolder) {
+        state.sourceFolders = state.sourceFolders.filter(f => f.id !== t.dataset.removeFolder);
+        showToast("已移除该来源目录");
+        render();
+        return;
+      }
+      if (t.id === "btnAvatar") { showToast(`当前账号：freedesignyes@gmail.com · 剩余 ${state.creditsBalance.toLocaleString()} 积分`); return; }
+      if (t.id === "btnToggleTypo") { state.typoOpen = !state.typoOpen; renderTypographyPanel(); return; }
+      if (t.id === "btnCloseTypo") { state.typoOpen = false; renderTypographyPanel(); return; }
+      if (t.dataset.typoLang) { state.typoLang = t.dataset.typoLang; renderTypographyPanel(); return; }
+      if (t.dataset.srcFont) { state.typoSourceId = t.dataset.srcFont; renderTypographyPanel(); return; }
+      if (t.id === "btnResetTypoLang") {
+        delete state.typoRules[`${state.typoLang}::${state.typoSourceId}`];
+        showToast(`已重置该字体组在${langFull(state.typoLang)}下的映射`);
+        renderTypographyPanel();
+        return;
+      }
+      if (t.id === "btnSaveTypo") {
+        const r = getTypoRule(state.typoLang, state.typoSourceId);
+        r.customized = true;
+        state.typoOpen = false;
+        showToast(`已保存字体映射至「${state.typoScope}」`);
+        renderTypographyPanel();
+        return;
+      }
+      if (t.id === "btnCloseBanner") { state.lastImportBanner = null; render(); return; }
+      if (t.id === "btnApplyImportedToFirst" && state.lastImportBanner) {
+        state.groupTables["货号 5857"] = state.lastImportBanner.fileName;
+        showToast(`已将「${state.lastImportBanner.fileName}」应用到货号 5857`);
+        state.lastImportBanner = null;
+        render();
+        return;
+      }
+      if (t.dataset.goStep) {
+        const next = Number(t.dataset.goStep);
+        if (next === 2 && !canStep2()) return;
+        if (next >= 3 && !canStep3()) return;
+        state.step = next;
+        render();
+        return;
+      }
+      if (t.dataset.toggleLang) {
+        const code = t.dataset.toggleLang;
+        if (state.selectedLangs.includes(code)) state.selectedLangs = state.selectedLangs.filter(x => x !== code);
+        else state.selectedLangs = LANGS.map(l => l.code).filter(x => state.selectedLangs.includes(x) || x === code);
+        render();
+        return;
+      }
+      if (t.dataset.toggleCell) {
+        const c = state.cells[t.dataset.toggleCell];
+        if (c) {
+          c.enabled = !c.enabled;
+          c.status = !c.enabled ? "na" : (c.issues.some(i => !i.resolved) ? "has_issues" : "ready");
+          render();
+        }
+        return;
+      }
+      if (t.dataset.removeDraft) {
+        state.drafts = state.drafts.filter(d => d.id !== t.dataset.removeDraft);
+        render();
+        return;
+      }
+      if (t.id === "btnToggleMatrix") { state.matrixExpanded = !state.matrixExpanded; render(); return; }
+      if (t.id === "btnFilterIssues") { state.onlyShowIssues = !state.onlyShowIssues; render(); return; }
+      if (t.id === "btnNextIssue") {
+        const issues = getStats().issueCells;
+        if (issues.length > 0) {
+          const cur = issues.findIndex(c => c.key === state.activeCellKey);
+          state.activeCellKey = issues[(cur + 1) % issues.length].key;
+          render();
+        }
+        return;
+      }
+      if (t.id === "btnForkShared") {
+        const c = state.cells[state.activeCellKey];
+        const d = state.drafts.find(x => x.id === c.draftId);
+        if (d) {
+          d.sharedWith = null;
+          d.customTable = `${d.name.slice(0, 4)} 独立副本`;
+          if (!state.availableTables.includes(d.customTable)) state.availableTables.push(d.customTable);
+          showToast(`已拆为 ${d.name} 独立译文副本`);
+          render();
+        }
+        return;
+      }
+      if (t.dataset.pickCell) {
+        if (t.dataset.pickMode === "step4") state.selectedStep4Cell = t.dataset.pickCell;
+        else state.activeCellKey = t.dataset.pickCell;
+        render();
+        return;
+      }
+      if (t.dataset.resolveCell) {
+        const c = state.cells[t.dataset.resolveCell];
+        const iss = c.issues.find(i => i.id === t.dataset.resolveIss);
+        const idx = Number(t.dataset.resolveIdx);
+        iss.chosen = (idx === 0 && iss.fixPreview) ? iss.fixPreview : iss.options[idx];
+        if (!iss.resolved) state.patchCount++;
+        iss.resolved = true;
+        if (c.issues.every(i => i.resolved)) c.status = "confirmed";
+        if (iss.sharedKey) state.lastSharedResolved = { sharedKey: iss.sharedKey, chosenIdx: idx, label: iss.type };
+        render();
+        return;
+      }
+      if (t.id === "btnSyncShared" && state.lastSharedResolved) {
+        const { sharedKey, chosenIdx } = state.lastSharedResolved;
+        let cnt = 0;
+        getActiveCells().forEach(c => {
+          if (!c.enabled) return;
+          c.issues.forEach(iss => {
+            if (iss.sharedKey === sharedKey && !iss.resolved) {
+              iss.chosen = (chosenIdx === 0 && iss.fixPreview) ? iss.fixPreview : iss.options[chosenIdx];
+              iss.resolved = true;
+              state.patchCount++;
+              cnt++;
+            }
+          });
+          if (c.issues.length > 0 && c.issues.every(i => i.resolved)) c.status = "confirmed";
+        });
+        state.lastSharedResolved = null;
+        showToast(`已同步处理其余 ${cnt} 门`);
+        render();
+        return;
+      }
+      if (t.dataset.step3View) { state.step3View = t.dataset.step3View; render(); return; }
+      if (t.id === "btnFixOptionalDetect") { state.optionalSmartDetectPending = 0; showToast("已补跑完成"); render(); return; }
+      if (t.dataset.localSwap) {
+        const d = state.drafts.find(x => x.id === t.dataset.localSwap);
+        showToast(`已仅重算 ${d.name}，其余稿件状态保留`);
+        return;
+      }
+      if (t.id === "btnRunBatch") { startBatchRun(getStats().dirtyCells.length > 0); return; }
+      if (t.id === "btnInstantFinish") {
+        clearInterval(state.runTimer);
+        state.isRunning = false;
+        state.hasCompletedOnce = true;
+        let charged = 0;
+        getActiveCells().forEach(c => {
+          if (!c.enabled) return;
+          if (c.key === "d05::VI") {
+            c.execStatus = "failed";
+            c.execNote = "越语变音符号回读校验未通过，已隔离不发布";
+            state.selectedStep4Cell = c.key;
+          } else if (c.key === "d06::NL") {
+            c.execStatus = "review_needed";
+            c.execNote = "荷语长复合词撑宽段落框，已写入源文件并标入复查";
+          } else {
+            c.execStatus = "verified";
+            c.execNote = "保存后重开回读一致";
+          }
+          if (c.execStatus === "verified" || c.execStatus === "review_needed") charged++;
+          if (c.status === "dirty") c.status = "confirmed";
+        });
+        state.lastChargedCredits = charged;
+        state.creditsBalance = Math.max(0, state.creditsBalance - charged);
+        showToast(`本机生成完成，实扣 ${charged} 积分（隔离门未扣费）`);
+        render();
+        return;
+      }
+      if (t.dataset.retryCell) {
+        const c = state.cells[t.dataset.retryCell];
+        c.execStatus = "verified";
+        c.status = "confirmed";
+        c.execNote = "单门重试通过 · 回读一致（已补扣 1 积分）";
+        state.lastChargedCredits += 1;
+        state.creditsBalance = Math.max(0, state.creditsBalance - 1);
+        showToast("单门重试成功，已补扣 1 积分");
+        render();
+        return;
+      }
+      if (t.id === "btnExportCleanTable") {
+        showToast(`已导出修正后译文表（含 ${state.patchCount} 项修复）`);
+        return;
+      }
+      if (t.id === "btnSimReimport") {
+        const c = state.cells["d02::ES"];
+        c.status = "dirty";
+        c.execNote = "仅检测到此门译文有更新，其余已完成门自动保留";
+        state.selectedStep4Cell = "d02::ES";
+        showToast("已识别变更：仅需重跑 5857_02 · 西班牙语");
+        render();
+        return;
+      }
+    });
+
+    document.addEventListener("change", e => {
+      const gSel = e.target.closest("select[data-group-table]");
+      if (gSel) {
+        state.groupTables[gSel.dataset.groupTable] = gSel.value;
+        showToast(`已更新「${gSel.dataset.groupTable}」整组译文源`);
+        render();
+        return;
+      }
+      const dSel = e.target.closest("select[data-draft-table]");
+      if (dSel) {
+        const d = state.drafts.find(x => x.id === dSel.dataset.draftTable);
+        if (d) {
+          d.customTable = dSel.value === "__INHERIT__" ? null : dSel.value;
+          render();
+        }
+        return;
+      }
+      if (e.target.id === "selTypoScope") { state.typoScope = e.target.value; renderTypographyPanel(); return; }
+      if (e.target.id === "selTypoFont") { const r = getTypoRule(state.typoLang, state.typoSourceId); r.font = e.target.value; r.customized = true; renderTypographyPanel(); return; }
+      if (e.target.id === "selTypoWeight") { const r = getTypoRule(state.typoLang, state.typoSourceId); r.weight = e.target.value; r.customized = true; renderTypographyPanel(); return; }
+    });
+
+    document.addEventListener("input", e => {
+      const id = e.target.id;
+      if (!id || !id.startsWith("inpPs")) return;
+      const r = getTypoRule(state.typoLang, state.typoSourceId);
+      const val = Number(e.target.value);
+      if (Number.isNaN(val)) return;
+      if (id === "inpPsSize") r.sizePt = val;
+      else if (id === "inpPsLeading") r.leadingPt = val;
+      else if (id === "inpPsKerning") r.kerning = val;
+      else if (id === "inpPsTracking") r.tracking = val;
+      else if (id === "inpPsVScale") r.vScale = val;
+      else if (id === "inpPsHScale") r.hScale = val;
+      else if (id === "inpPsBaseline") r.baselinePt = val;
+      r.customized = true;
+      // Update live preview without stealing input focus
+      const pv = document.querySelector(".typo-preview");
+      if (pv) {
+        const tRule = getTypoRule(state.typoLang, "sf_title");
+        const bRule = getTypoRule(state.typoLang, "sf_body");
+        const kids = pv.children;
+        if (kids[0]) {
+          kids[0].style.fontSize = `${Math.round(15 * tRule.sizePt / 100)}px`;
+          kids[0].style.lineHeight = (tRule.leadingPt / 100).toFixed(2);
+          kids[0].style.letterSpacing = `${(tRule.tracking / 1000).toFixed(3)}em`;
+          kids[0].style.transform = `scale(${(tRule.hScale/100).toFixed(2)}, ${(tRule.vScale/100).toFixed(2)})`;
+        }
+        if (kids[1]) {
+          kids[1].style.fontSize = `${Math.round(12.5 * bRule.sizePt / 100)}px`;
+          kids[1].style.lineHeight = (bRule.leadingPt / 100).toFixed(2);
+          kids[1].style.letterSpacing = `${(bRule.tracking / 1000).toFixed(3)}em`;
+        }
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
